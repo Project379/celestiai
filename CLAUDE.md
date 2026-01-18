@@ -2,40 +2,66 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Status
+## Project Overview
 
-This is a new project initialized with the GSD (Get Shit Done) workflow system. No application code has been written yet.
+**Celestia AI** is a subscription-based astrology application for the Bulgarian market. It combines Swiss Ephemeris astronomical precision with AI-powered readings (via Gemini/GPT-5), serving Web, iOS, and Android from a single codebase.
 
-## GSD Workflow System
+## Tech Stack
 
-This project uses GSD for structured planning and execution. Key commands:
+- **Monorepo**: Turborepo
+- **Universal Framework**: Solito (Next.js 15 + Expo SDK 52)
+- **Auth**: Clerk (handles Web cookies + Native tokens/biometrics)
+- **Database**: Supabase (PostgreSQL + Realtime)
+- **ORM**: Drizzle ORM
+- **Styling**: NativeWind v4
+- **Visualization**: React Native Skia (mobile), D3.js + Canvas (web)
+- **Astrology Engine**: swisseph-wasm (Swiss Ephemeris)
+- **Payments**: Stripe (web) + RevenueCat (mobile IAP)
 
-### Getting Started
-- `/gsd:new-project` - Initialize project with brief and configuration
-- `/gsd:create-roadmap` - Create roadmap with phases
-- `/gsd:plan-phase <number>` - Create detailed plan for a phase
-- `/gsd:execute-plan <path>` - Execute a plan file
+## Monorepo Structure
 
-### During Development
-- `/gsd:progress` - Check status and get routed to next action
-- `/gsd:resume-work` - Resume from previous session
-- `/gsd:debug [issue]` - Systematic debugging with persistent state
+```
+/
+├── apps/
+│   ├── web/          # Next.js 15 app
+│   │   └── app/api/  # API routes (astrology calculations, webhooks)
+│   └── mobile/       # Expo app
+├── packages/
+│   ├── astrology/    # Swiss Ephemeris wrapper (swisseph-wasm)
+│   └── db/           # Shared Drizzle ORM schema + Supabase client
+```
 
-### Planning Files Location
-All planning artifacts are stored in `.planning/`:
-- `PROJECT.md` - Project vision and requirements
-- `ROADMAP.md` - Phase breakdown
-- `STATE.md` - Project memory and context
-- `phases/` - Individual phase plans and summaries
+## Database Schema
+
+- `users` - Linked to Clerk ID, preferences, subscription_tier
+- `charts` - user_id, name, date_time, lat, lon, city_name
+- `daily_transits` - Cached calculations (date, planet_positions JSONB)
+- `journal_entries` - user_id, date, AI insight content
+
+## Key Architecture Decisions
+
+- Heavy WASM calculations (Swiss Ephemeris) run server-side via API routes, not in mobile bundle
+- Clerk JWT Templates configured for Supabase RLS
+- Stripe/RevenueCat webhooks update `users.subscription_tier`
+- 90% code sharing between web and mobile via Solito
 
 ## Build Commands
 
-Once the project is initialized, commands will depend on the chosen stack. The settings suggest a Node.js environment:
-
 ```bash
-npm install          # Install dependencies
-npm run dev          # Development server
-npm run build        # Production build
-npm test             # Run tests
-npm run test:e2e     # Run end-to-end tests (Playwright)
+npm install              # Install dependencies
+npm run dev              # Run dev servers (web + mobile)
+npm run build            # Production build
+npm test                 # Run tests
+npm run test:e2e         # Playwright e2e tests
 ```
+
+## GSD Workflow
+
+This project uses GSD (Get Shit Done) for structured planning:
+
+- `/gsd:progress` - Check status and next action
+- `/gsd:plan-phase <number>` - Create phase plan
+- `/gsd:execute-plan <path>` - Execute a plan
+- `/gsd:debug [issue]` - Systematic debugging
+
+Planning files are in `.planning/`.
