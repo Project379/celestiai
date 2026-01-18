@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run db:seed:*)",
+      "Bash(npx tsx:*)",
+      "WebSearch",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(powershell -Command \"Invoke-RestMethod -Uri http://localhost:3000/api/tables | ConvertTo-Json -Depth 5\")",
+      "Bash(powershell -Command \"Invoke-RestMethod -Uri http://localhost:3000/api/flavors | ConvertTo-Json -Depth 5\")",
+      "Bash(powershell -Command \"Invoke-RestMethod -Uri http://localhost:3000/api/presets | ConvertTo-Json -Depth 5\")",
+      "Bash(powershell -Command \"$body = @{pin=''1234''} | ConvertTo-Json; Invoke-RestMethod -Uri http://localhost:3000/api/auth/login -Method POST -Body $body -ContentType ''application/json'' | ConvertTo-Json -Depth 5\")",
+      "Bash(powershell -Command:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm install:*)",
+      "Bash(npm test:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(npx playwright install:*)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(node:*)"
+    ]
+  }
+}
