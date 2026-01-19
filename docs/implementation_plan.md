@@ -18,7 +18,7 @@ Build a state-of-the-art "Universal" astrology app (Web + iOS + Android) for the
 -   **Styling**: NativeWind v4
 
 ## Database Schema (Proposed - Supabase)
--   `users`: ID (linked to Clerk), preferences, subscription_tier.
+-   `users`: ID (linked to Clerk), preferences, is_premium (boolean), streak_current, streak_max, last_activity_date.
 -   `charts`: user_id, name, date_time, lat, lon, city_name.
 -   `daily_transits`: (Cached calculations) date, planet_positions (JSONB).
 -   `journal_entries`: user_id, date, content (AI insights).
@@ -30,8 +30,12 @@ Build a state-of-the-art "Universal" astrology app (Web + iOS + Android) for the
 -   Configure `clerk-expo` and `clerk-nextjs`.
 
 ### 2. Core Engine (`packages/astrology`)
--   `swisseph-wasm` wrapper.
+-   `swisseph-wasm` wrapper configured for **High Precision**:
+    -   Use `SEFLG_TOPOCTR` (Topocentric) for Moon calculations (parallax correction).
+    -   Use `SEFLG_TRUE_NODE` (not Mean).
+    -   **Orbs**: Implementation of "Applying" vs "Separating" logic with configurable degrees.
 -   **API Route**: `apps/web/app/api/astro/route.ts` used by mobile app to fetch heavy calculations (keeping the WASM bundle on server).
+-   **Social Generation**: Utility to generate "Quote Images" (potentially via `satori` on server or `react-native-view-shot` on client).
 
 ### 3. Data Layer (`packages/db`)
 -   Shared Drizzle ORM schema.
@@ -40,7 +44,8 @@ Build a state-of-the-art "Universal" astrology app (Web + iOS + Android) for the
 
 ### 4. Payments & Auth
 -   **Clerk**: Configured with "JWT Templates" for Supabase RLS.
--   **Stripe/RevenueCat**: Webhooks update `users.subscription_tier`.
+-   **Stripe/RevenueCat**: Webhooks update `users.is_premium`.
+-   **Ads**: Placeholder/Implementation for AdMob (Mobile) / AdSense (Web) for free tier.
 
 ## Verification Plan
 

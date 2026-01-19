@@ -14,15 +14,19 @@
 
 ## 3. Product Features
 
-### 3.1. Astronomical Engine
+### 3.1. Astronomical Engine (Scientific Grade)
 -   **Swiss Ephemeris Integration**:
     -   Backend uses `swisseph-wasm` for high-precision calculations.
-    -   Calculates: Natal Charts, Transits, Progressions, Solar Returns.
+    -   **Topocentric Moon**: Corrects for parallax (crucial for exact Moon transit timing).
+    -   **True Node**: Uses True North Node (not Mean) for karmic accuracy.
+    -   **Exact Aspects**: Distinguishes between "Applying" (building up) and "Separating" (fading) aspects.
+    -   **House Systems**: Placidus (Default for BG), Whole Sign, Koch.
     -   **Local Focus**: Precise coordinates for all Bulgarian cities/villages.
 
 ### 3.2. AI-Powered Readings (Localized)
 -   **The "Oracle" Engine**:
     -   **Context Injection**: Planetary aspects interpreted with a tone that respects local cultural wisdom (supportive, insightful, not overly "pop-astrology").
+    -   **Precision Citing**: The AI MUST reference the exact degrees and minutes (e.g., "Sun at 14°32' Leo") to ground the advice in data.
     -   **Language**: Native-level Bulgarian text generation via Gemini/GPT-5.
 
 ### 3.3. User Experience & Interface
@@ -39,12 +43,13 @@
 ### 3.5. Subscription & Monetization (EUR - 2026)
 *Bulgaria adopts Euro Jan 1, 2026*
 -   **Freemium Model**:
-    -   **Free**: Basic Natal Chart, Daily General Horoscope.
-    -   **Premium (€7.99/mo)**: Interactive Transits, AI Oracle (limited), Detailed Aspect Analysis.
-    -   **Pro (€14.99/mo)**: Synastry, Solar Returns, Unlimited AI.
+    -   **Free**: Basic Natal Chart, Daily General Horoscope, **Ad-Supported**.
+    -   **Premium (€9.99/mo)**: Ad-Free, Interactive Transits, Unlimited AI Oracle, Deep Analysis, Synastry.
 -   **Payment Gateway**:
     -   **Stripe**: Primary handler.
-    -   **In-App Purchases (IAP)**: RevenueCat integration for Apple/Google subscriptions (required for native apps).
+    -   **In-App Purchases (IAP)**: RevenueCat integration.
+-   **Ads Integration**:
+    -   Non-intrusive native ads in the feed for free users.
 
 ## 4. Technical Architecture
 
@@ -73,7 +78,14 @@
 8.  **Launch**: Web + TestFlight.
 
 ## 6. Social Features
--   *Deferred to Phase 2 per user request.* Focus strictly on personal utility and accuracy for MVP.
+### 3.6. Engagement & Social (New)
+-   **Daily Streak System**:
+    -   Visual "Fire/Star" counter for consecutive daily readings.
+    -   Gamification: Unlock "Cosmic Insights" or badges for 7/30/100 day streaks.
+-   **Shareable Quote of the Day**:
+    -   AI-generated, personalized spiritual quote based on daily transits.
+    -   **One-Tap Share**: Generates a beautiful "Instagram Story" ready image (background: cosmic glassmorphism) with the quote and branding.
+    -   **Incentive**: Unlock extra detail for the day if shared (optional growth loop).
 
 ---
 *Prepared by Antigravity (Google Deepmind)*
