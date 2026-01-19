@@ -20,7 +20,9 @@
       "Bash(timeout /t 5 /nobreak)",
       "Bash(npx playwright install:*)",
       "Bash(npm run test:e2e:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs"
     ]
   }
 }
