@@ -49,13 +49,13 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] Browser DevTools shows all security headers present on every response
 - [ ] Site loads over HTTPS with valid certificate
 
-**Research**: Unlikely (established patterns)
-**Plans**: TBD
+**Research**: Complete (01-RESEARCH.md)
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 01-01: Monorepo scaffold with Turborepo, Next.js 15, base configuration
-- [ ] 01-02: NativeWind v4 theme setup with cosmic glassmorphism design tokens
-- [ ] 01-03: Security headers middleware and responsive layout foundation
+- [ ] 01-01-PLAN.md — Monorepo scaffold with Turborepo, Next.js 15, shared packages
+- [ ] 01-02-PLAN.md — NativeWind v4 + Tailwind CSS with cosmic glassmorphism theme
+- [ ] 01-03-PLAN.md — Security headers middleware and responsive layout foundation
 
 ---
 
@@ -299,7 +299,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
+| 1. Foundation | 0/3 | Planned | - |
 | 2. Authentication | 0/3 | Not started | - |
 | 3. Birth Data & Database | 0/4 | Not started | - |
 | 4. Astrology Engine & Charts | 0/4 | Not started | - |
@@ -381,4 +381,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 ---
 
 *Roadmap created: 2026-01-21*
+*Phase 1 planned: 2026-01-21*
 *Milestone: v0.1 MVP*
