@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@celestia/ui": "workspace:*",
     "next": "^15.2.4",
     "nativewind": "^4.1.23",
     "react": "^19.0.0",
