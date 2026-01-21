@@ -150,72 +150,72 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LAND-01 | TBD | Pending |
-| LAND-02 | TBD | Pending |
-| LAND-03 | TBD | Pending |
-| LAND-04 | TBD | Pending |
-| AUTH-01 | TBD | Pending |
-| AUTH-02 | TBD | Pending |
-| AUTH-03 | TBD | Pending |
-| AUTH-04 | TBD | Pending |
-| AUTH-05 | TBD | Pending |
-| AUTH-06 | TBD | Pending |
-| BIRTH-01 | TBD | Pending |
-| BIRTH-02 | TBD | Pending |
-| BIRTH-03 | TBD | Pending |
-| BIRTH-04 | TBD | Pending |
-| BIRTH-05 | TBD | Pending |
-| BIRTH-06 | TBD | Pending |
-| CHART-01 | TBD | Pending |
-| CHART-02 | TBD | Pending |
-| CHART-03 | TBD | Pending |
-| CHART-04 | TBD | Pending |
-| CHART-05 | TBD | Pending |
-| AI-01 | TBD | Pending |
-| AI-02 | TBD | Pending |
-| AI-03 | TBD | Pending |
-| AI-04 | TBD | Pending |
-| AI-05 | TBD | Pending |
-| AI-06 | TBD | Pending |
-| DAILY-01 | TBD | Pending |
-| DAILY-02 | TBD | Pending |
-| DAILY-03 | TBD | Pending |
-| DAILY-04 | TBD | Pending |
-| PAY-01 | TBD | Pending |
-| PAY-02 | TBD | Pending |
-| PAY-03 | TBD | Pending |
-| PAY-04 | TBD | Pending |
-| PAY-05 | TBD | Pending |
-| SEC-01 | TBD | Pending |
-| SEC-02 | TBD | Pending |
-| SEC-03 | TBD | Pending |
-| SEC-04 | TBD | Pending |
-| SEC-05 | TBD | Pending |
-| SEC-06 | TBD | Pending |
-| SEC-07 | TBD | Pending |
-| SEC-08 | TBD | Pending |
-| SEC-09 | TBD | Pending |
-| SEC-10 | TBD | Pending |
-| SEC-11 | TBD | Pending |
-| SEC-12 | TBD | Pending |
-| SEC-13 | TBD | Pending |
-| SEC-14 | TBD | Pending |
-| SEC-15 | TBD | Pending |
-| SEC-16 | TBD | Pending |
-| SEC-17 | TBD | Pending |
-| SEC-18 | TBD | Pending |
-| SEC-19 | TBD | Pending |
-| SEC-20 | TBD | Pending |
-| SEC-21 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
+| LAND-01 | Phase 8 | Pending |
+| LAND-02 | Phase 8 | Pending |
+| LAND-03 | Phase 8 | Pending |
+| LAND-04 | Phase 8 | Pending |
+| AUTH-01 | Phase 2 | Pending |
+| AUTH-02 | Phase 2 | Pending |
+| AUTH-03 | Phase 2 | Pending |
+| AUTH-04 | Phase 2 | Pending |
+| AUTH-05 | Phase 2 | Pending |
+| AUTH-06 | Phase 2 | Pending |
+| BIRTH-01 | Phase 3 | Pending |
+| BIRTH-02 | Phase 3 | Pending |
+| BIRTH-03 | Phase 3 | Pending |
+| BIRTH-04 | Phase 3 | Pending |
+| BIRTH-05 | Phase 3 | Pending |
+| BIRTH-06 | Phase 3 | Pending |
+| CHART-01 | Phase 4 | Pending |
+| CHART-02 | Phase 4 | Pending |
+| CHART-03 | Phase 4 | Pending |
+| CHART-04 | Phase 4 | Pending |
+| CHART-05 | Phase 4 | Pending |
+| AI-01 | Phase 5 | Pending |
+| AI-02 | Phase 5 | Pending |
+| AI-03 | Phase 5 | Pending |
+| AI-04 | Phase 5 | Pending |
+| AI-05 | Phase 5 | Pending |
+| AI-06 | Phase 5 | Pending |
+| DAILY-01 | Phase 6 | Pending |
+| DAILY-02 | Phase 6 | Pending |
+| DAILY-03 | Phase 6 | Pending |
+| DAILY-04 | Phase 6 | Pending |
+| PAY-01 | Phase 7 | Pending |
+| PAY-02 | Phase 7 | Pending |
+| PAY-03 | Phase 7 | Pending |
+| PAY-04 | Phase 7 | Pending |
+| PAY-05 | Phase 7 | Pending |
+| SEC-01 | Phase 1 | Pending |
+| SEC-02 | Phase 3 | Pending |
+| SEC-03 | Phase 8 | Pending |
+| SEC-04 | Phase 8 | Pending |
+| SEC-05 | Phase 8 | Pending |
+| SEC-06 | Phase 3 | Pending |
+| SEC-07 | Phase 3 | Pending |
+| SEC-08 | Phase 3 | Pending |
+| SEC-09 | Phase 2 | Pending |
+| SEC-10 | Phase 2 | Pending |
+| SEC-11 | Phase 2 | Pending |
+| SEC-12 | Phase 2 | Pending |
+| SEC-13 | Phase 1 | Pending |
+| SEC-14 | Phase 1 | Pending |
+| SEC-15 | Phase 1 | Pending |
+| SEC-16 | Phase 1 | Pending |
+| SEC-17 | Phase 2 | Pending |
+| SEC-18 | Phase 3 | Pending |
+| SEC-19 | Phase 3 | Pending |
+| SEC-20 | Phase 8 | Pending |
+| SEC-21 | Phase 3 | Pending |
+| UI-01 | Phase 1 | Pending |
+| UI-02 | Phase 1 | Pending |
+| UI-03 | Phase 1 | Pending |
 
 **Coverage:**
 - v0.1 requirements: 54 total
-- Mapped to phases: 0
-- Unmapped: 54 (pending roadmap creation)
+- Mapped to phases: 54
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-21*
-*Last updated: 2026-01-21 after initial definition*
+*Last updated: 2026-01-21 after roadmap creation*
