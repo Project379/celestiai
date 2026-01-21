@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Celestia AI',
-  description: 'Вашият астрологичен спътник',
+  title: 'Celestia AI - Вашият астрологичен спътник',
+  description: 'Персонализирани хороскопи и астрологични прогнози',
 }
 
 export default function RootLayout({
@@ -11,8 +12,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="bg">
-      <body>{children}</body>
+    <html lang="bg" className="dark">
+      <body className="min-h-screen bg-background text-foreground antialiased">
+        {children}
+      </body>
     </html>
   )
 }

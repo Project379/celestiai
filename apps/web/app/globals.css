@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Cosmic Glassmorphism Theme - Dark Space Aesthetic */
+
+    /* Core colors (RGB values for Tailwind alpha support) */
+    --color-background: 10 8 25;          /* Deep space navy #0a0819 */
+    --color-surface: 20 16 45;            /* Elevated surface #14102d */
+    --color-surface-glass: 35 30 65;      /* Glassmorphism layer #231e41 */
+
+    /* Accent colors */
+    --color-primary: 139 92 246;          /* Violet #8b5cf6 */
+    --color-secondary: 236 72 153;        /* Pink #ec4899 */
+
+    /* Text colors */
+    --color-text: 255 255 255;            /* White */
+    --color-text-muted: 156 163 175;      /* Gray-400 */
+
+    /* Glassmorphism tokens */
+    --glass-blur: 16px;
+    --glass-opacity: 0.15;
+    --glass-border: rgba(255, 255, 255, 0.1);
+
+    /* Gradients */
+    --gradient-cosmic: linear-gradient(135deg, rgb(139, 92, 246) 0%, rgb(236, 72, 153) 100%);
+  }
+}
+
+/* Base body styles */
+body {
+  @apply bg-background text-foreground antialiased;
+  min-height: 100vh;
+}
+
+/* Glassmorphism utility class */
+.glass {
+  background: rgb(var(--color-surface-glass) / var(--glass-opacity));
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
