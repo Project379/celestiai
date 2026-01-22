@@ -9,12 +9,23 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 
 ## Current Position
 
-Phase: 1 of 8 (Foundation) - COMPLETE
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-21 - Completed 01-03-PLAN.md (Security Headers & Responsive UI)
+Phase: 2 of 8 (Authentication) - IN PROGRESS
+Plan: 1 of 3 in current phase (02-01 partially complete)
+Status: Blocked on user action
+Last activity: 2026-01-22 - Executing 02-01-PLAN.md (Clerk SDK Setup)
 
-Progress: [###.......] 12%
+Progress: [###.......] 15%
+
+### Active Checkpoint
+
+**Plan 02-01 Task 2:** Set up Clerk account and environment variables
+**Completed:** Task 1 (Clerk packages installed, .env.example created) - commit 065647a
+**Blocked on:** User needs to create Clerk account and add keys to .env.local
+
+**To resume:**
+1. Create Clerk app at https://dashboard.clerk.com
+2. Copy API keys to `apps/web/.env.local` (see .env.example for template)
+3. Run `/gsd:execute-phase 2` to continue
 
 ## Performance Metrics
 
@@ -73,10 +84,16 @@ Phase 1 (Foundation) is complete with all requirements satisfied:
 
 ## Session Continuity
 
-Last session: 2026-01-21T20:33:00Z
-Stopped at: Completed 01-03-PLAN.md (Phase 1 complete)
-Resume file: None
+Last session: 2026-01-22
+Stopped at: 02-01 Task 2 checkpoint (Clerk account setup)
+Resume agent: a7de048
 
 ---
 
-*Next action: `/gsd:plan-phase 02` to create Phase 2 (Authentication) plans*
+*Next action: Complete Clerk setup, then `/gsd:execute-phase 2` to continue*
+
+## Key Clarifications
+
+- `.env.local` is NOT hardcoded keys — it's gitignored and stays local only
+- `.env.example` (committed) shows what variables are needed with placeholders
+- This is standard Next.js secrets pattern
