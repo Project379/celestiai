@@ -123,15 +123,14 @@ Plans:
 - [ ] Database query for another user's data returns empty (RLS working)
 - [ ] Invalid input (bad dates, malformed data) is rejected with clear error
 
-**Research**: Likely (Supabase RLS with Clerk JWT, Bulgarian geocoding)
-**Research topics**: Clerk JWT templates for Supabase RLS, Bulgarian city database source, encryption at rest configuration
-**Plans**: TBD
+**Research**: Complete (03-RESEARCH.md)
+**Plans**: 4 plans in 3 waves
 
 Plans:
-- [ ] 03-01: Supabase setup with Drizzle ORM schema and encrypted columns
-- [ ] 03-02: RLS policies with Clerk JWT integration
-- [ ] 03-03: Birth data input form with Bulgarian city search
-- [ ] 03-04: Birth data API routes with Zod validation
+- [ ] 03-01-PLAN.md — @celestia/db package with Drizzle schema, RLS policies, Supabase client factory
+- [ ] 03-02-PLAN.md — Bulgarian city seed data and search API endpoint
+- [ ] 03-03-PLAN.md — Zod validation schemas and birth data CRUD API routes
+- [ ] 03-04-PLAN.md — Birth data wizard UI with city search and dashboard integration
 
 ---
 
@@ -300,7 +299,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-01-21 |
 | 2. Authentication | 3/3 | Complete | 2026-01-25 |
-| 3. Birth Data & Database | 0/4 | Not started | - |
+| 3. Birth Data & Database | 0/4 | Planned | - |
 | 4. Astrology Engine & Charts | 0/4 | Not started | - |
 | 5. AI Oracle | 0/3 | Not started | - |
 | 6. Daily Horoscope | 0/3 | Not started | - |
@@ -384,4 +383,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 *Phase 1 complete: 2026-01-21*
 *Phase 2 planned: 2026-01-22*
 *Phase 2 complete: 2026-01-25*
+*Phase 3 planned: 2026-01-25*
 *Milestone: v0.1 MVP*
