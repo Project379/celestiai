@@ -10,39 +10,29 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Phase: 2 of 8 (Authentication) - IN PROGRESS
-Plan: 1 of 3 in current phase (02-01 partially complete)
-Status: Blocked on user action
-Last activity: 2026-01-22 - Executing 02-01-PLAN.md (Clerk SDK Setup)
+Plan: 2 of 3 in current phase (02-02 complete)
+Status: In progress
+Last activity: 2026-01-25 - Completed 02-02-PLAN.md (Auth Page UI)
 
-Progress: [###.......] 15%
-
-### Active Checkpoint
-
-**Plan 02-01 Task 2:** Set up Clerk account and environment variables
-**Completed:** Task 1 (Clerk packages installed, .env.example created) - commit 065647a
-**Blocked on:** User needs to create Clerk account and add keys to .env.local
-
-**To resume:**
-1. Create Clerk app at https://dashboard.clerk.com
-2. Copy API keys to `apps/web/.env.local` (see .env.example for template)
-3. Run `/gsd:execute-phase 2` to continue
+Progress: [####......] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 7m
-- Total execution time: 0.35 hours
+- Total plans completed: 5
+- Average duration: 6m
+- Total execution time: 0.5 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 20m | 7m |
+| 02-authentication | 2 | 19m | 10m |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (7m), 01-02 (7m), 01-03 (6m)
-- Trend: Consistent
+- Last 5 plans: 01-02 (7m), 01-03 (6m), 02-01 (15m), 02-02 (4m)
+- Trend: Variable (02-01 included user checkpoint wait)
 
 *Updated after each plan completion*
 
@@ -64,6 +54,10 @@ Recent decisions affecting current work:
 - [01-03]: Nonce-based CSP with dynamic rendering via connection()
 - [01-03]: Dev mode allows unsafe-eval/unsafe-inline for hot reload
 - [01-03]: @celestia/ui as explicit workspace dependency
+- [02-01]: clerkMiddleware replaces custom CSP middleware
+- [02-01]: ClerkProvider with bgBG localization and dynamic prop
+- [02-02]: Canvas-based star animation for performance
+- [02-02]: Combined sign-up/sign-in on single /auth route
 
 ### Pending Todos
 
@@ -84,13 +78,13 @@ Phase 1 (Foundation) is complete with all requirements satisfied:
 
 ## Session Continuity
 
-Last session: 2026-01-22
-Stopped at: 02-01 Task 2 checkpoint (Clerk account setup)
-Resume agent: a7de048
+Last session: 2026-01-25
+Stopped at: Completed 02-02-PLAN.md
+Resume file: None
 
 ---
 
-*Next action: Complete Clerk setup, then `/gsd:execute-phase 2` to continue*
+*Next action: Execute 02-03-PLAN.md (Protected Layouts & User Menu)*
 
 ## Key Clarifications
 
