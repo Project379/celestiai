@@ -17,7 +17,7 @@ Celestia AI v0.1 delivers a web-first Bulgarian astrology MVP. The journey start
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Monorepo scaffold, theme, security headers, responsive base
-- [ ] **Phase 2: Authentication** - Clerk integration with secure session handling
+- [x] **Phase 2: Authentication** - Clerk integration with secure session handling
 - [ ] **Phase 3: Birth Data & Database** - User data collection, encryption, RLS policies
 - [ ] **Phase 4: Astrology Engine & Charts** - Swiss Ephemeris server-side, interactive visualization
 - [ ] **Phase 5: AI Oracle** - AI-powered personalized readings with tier restrictions
@@ -89,9 +89,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 02-01-PLAN.md — Clerk SDK setup, clerkMiddleware replacing Phase 1 CSP, ClerkProvider with Bulgarian localization
-- [ ] 02-02-PLAN.md — Combined auth page (/auth) with cosmic background and Celestia branding
-- [ ] 02-03-PLAN.md — Protected routes, user menu with logout, session expiry modal, API protection
+- [x] 02-01-PLAN.md — Clerk SDK setup, clerkMiddleware replacing Phase 1 CSP, ClerkProvider with Bulgarian localization
+- [x] 02-02-PLAN.md — Combined auth page (/auth) with cosmic background and Celestia branding
+- [x] 02-03-PLAN.md — Protected routes, user menu with logout, session expiry modal, API protection
 
 ---
 
@@ -299,7 +299,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-01-21 |
-| 2. Authentication | 0/3 | Planned | - |
+| 2. Authentication | 3/3 | Complete | 2026-01-25 |
 | 3. Birth Data & Database | 0/4 | Not started | - |
 | 4. Astrology Engine & Charts | 0/4 | Not started | - |
 | 5. AI Oracle | 0/3 | Not started | - |
@@ -383,4 +383,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 *Phase 1 planned: 2026-01-21*
 *Phase 1 complete: 2026-01-21*
 *Phase 2 planned: 2026-01-22*
+*Phase 2 complete: 2026-01-25*
 *Milestone: v0.1 MVP*

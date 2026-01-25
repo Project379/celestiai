@@ -16,12 +16,12 @@ Requirements for MVP web launch. Each maps to roadmap phases.
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can register with email and password
-- [ ] **AUTH-02**: User receives email verification after signup
-- [ ] **AUTH-03**: User can log in with email and password
-- [ ] **AUTH-04**: User can reset password via email link
-- [ ] **AUTH-05**: User session persists across browser refresh
-- [ ] **AUTH-06**: User can log out
+- [x] **AUTH-01**: User can register with email and password
+- [x] **AUTH-02**: User receives email verification after signup
+- [x] **AUTH-03**: User can log in with email and password
+- [x] **AUTH-04**: User can reset password via email link
+- [x] **AUTH-05**: User session persists across browser refresh
+- [x] **AUTH-06**: User can log out
 
 ### Birth Data
 
@@ -66,7 +66,7 @@ Requirements for MVP web launch. Each maps to roadmap phases.
 
 ### Privacy & Security - Core
 
-- [ ] **SEC-01**: All PII transmitted over HTTPS
+- [x] **SEC-01**: All PII transmitted over HTTPS
 - [ ] **SEC-02**: Birth data encrypted at rest (database-level)
 - [ ] **SEC-03**: Privacy policy accessible from landing and settings
 - [ ] **SEC-04**: User can request data export (GDPR)
@@ -80,18 +80,18 @@ Requirements for MVP web launch. Each maps to roadmap phases.
 
 ### Privacy & Security - Authentication
 
-- [ ] **SEC-09**: Rate limiting on sign-in attempts (Clerk built-in)
-- [ ] **SEC-10**: Rate limiting on verification attempts (Clerk built-in)
-- [ ] **SEC-11**: All protected routes use auth.protect() middleware
-- [ ] **SEC-12**: Session tokens are HttpOnly, Secure, SameSite cookies
+- [x] **SEC-09**: Rate limiting on sign-in attempts (Clerk built-in)
+- [x] **SEC-10**: Rate limiting on verification attempts (Clerk built-in)
+- [x] **SEC-11**: All protected routes use auth.protect() middleware
+- [x] **SEC-12**: Session tokens are HttpOnly, Secure, SameSite cookies
 
 ### Privacy & Security - Application
 
-- [ ] **SEC-13**: Content Security Policy (CSP) headers configured
-- [ ] **SEC-14**: X-Frame-Options: DENY header (prevent clickjacking)
-- [ ] **SEC-15**: X-Content-Type-Options: nosniff header
-- [ ] **SEC-16**: Referrer-Policy: strict-origin-when-cross-origin header
-- [ ] **SEC-17**: All API routes validate authentication before processing
+- [x] **SEC-13**: Content Security Policy (CSP) headers configured
+- [x] **SEC-14**: X-Frame-Options: DENY header (prevent clickjacking)
+- [x] **SEC-15**: X-Content-Type-Options: nosniff header
+- [x] **SEC-16**: Referrer-Policy: strict-origin-when-cross-origin header
+- [x] **SEC-17**: All API routes validate authentication before processing
 - [ ] **SEC-18**: Input validation on all user-submitted data (Zod schemas)
 
 ### Privacy & Security - Data Protection
@@ -102,9 +102,9 @@ Requirements for MVP web launch. Each maps to roadmap phases.
 
 ### UI/UX
 
-- [ ] **UI-01**: App uses "cosmic glassmorphism" dark theme
-- [ ] **UI-02**: All UI text in Bulgarian
-- [ ] **UI-03**: Responsive design works on desktop and mobile browsers
+- [x] **UI-01**: App uses "cosmic glassmorphism" dark theme
+- [x] **UI-02**: All UI text in Bulgarian
+- [x] **UI-03**: Responsive design works on desktop and mobile browsers
 
 ## v1.0 Requirements
 
@@ -154,12 +154,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LAND-02 | Phase 8 | Pending |
 | LAND-03 | Phase 8 | Pending |
 | LAND-04 | Phase 8 | Pending |
-| AUTH-01 | Phase 2 | Pending |
-| AUTH-02 | Phase 2 | Pending |
-| AUTH-03 | Phase 2 | Pending |
-| AUTH-04 | Phase 2 | Pending |
-| AUTH-05 | Phase 2 | Pending |
-| AUTH-06 | Phase 2 | Pending |
+| AUTH-01 | Phase 2 | Complete |
+| AUTH-02 | Phase 2 | Complete |
+| AUTH-03 | Phase 2 | Complete |
+| AUTH-04 | Phase 2 | Complete |
+| AUTH-05 | Phase 2 | Complete |
+| AUTH-06 | Phase 2 | Complete |
 | BIRTH-01 | Phase 3 | Pending |
 | BIRTH-02 | Phase 3 | Pending |
 | BIRTH-03 | Phase 3 | Pending |
@@ -186,7 +186,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PAY-03 | Phase 7 | Pending |
 | PAY-04 | Phase 7 | Pending |
 | PAY-05 | Phase 7 | Pending |
-| SEC-01 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Complete |
 | SEC-02 | Phase 3 | Pending |
 | SEC-03 | Phase 8 | Pending |
 | SEC-04 | Phase 8 | Pending |
@@ -194,22 +194,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-06 | Phase 3 | Pending |
 | SEC-07 | Phase 3 | Pending |
 | SEC-08 | Phase 3 | Pending |
-| SEC-09 | Phase 2 | Pending |
-| SEC-10 | Phase 2 | Pending |
-| SEC-11 | Phase 2 | Pending |
-| SEC-12 | Phase 2 | Pending |
-| SEC-13 | Phase 1 | Pending |
-| SEC-14 | Phase 1 | Pending |
-| SEC-15 | Phase 1 | Pending |
-| SEC-16 | Phase 1 | Pending |
-| SEC-17 | Phase 2 | Pending |
+| SEC-09 | Phase 2 | Complete |
+| SEC-10 | Phase 2 | Complete |
+| SEC-11 | Phase 2 | Complete |
+| SEC-12 | Phase 2 | Complete |
+| SEC-13 | Phase 1 | Complete |
+| SEC-14 | Phase 1 | Complete |
+| SEC-15 | Phase 1 | Complete |
+| SEC-16 | Phase 1 | Complete |
+| SEC-17 | Phase 2 | Complete |
 | SEC-18 | Phase 3 | Pending |
 | SEC-19 | Phase 3 | Pending |
 | SEC-20 | Phase 8 | Pending |
 | SEC-21 | Phase 3 | Pending |
-| UI-01 | Phase 1 | Pending |
-| UI-02 | Phase 1 | Pending |
-| UI-03 | Phase 1 | Pending |
+| UI-01 | Phase 1 | Complete |
+| UI-02 | Phase 1 | Complete |
+| UI-03 | Phase 1 | Complete |
 
 **Coverage:**
 - v0.1 requirements: 54 total
@@ -218,4 +218,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-21*
-*Last updated: 2026-01-21 after roadmap creation*
+*Last updated: 2026-01-25 after Phase 2 completion*
