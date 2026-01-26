@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Monorepo scaffold, theme, security headers, responsive base
 - [x] **Phase 2: Authentication** - Clerk integration with secure session handling
-- [ ] **Phase 3: Birth Data & Database** - User data collection, encryption, RLS policies
+- [x] **Phase 3: Birth Data & Database** - User data collection, encryption, RLS policies
 - [ ] **Phase 4: Astrology Engine & Charts** - Swiss Ephemeris server-side, interactive visualization
 - [ ] **Phase 5: AI Oracle** - AI-powered personalized readings with tier restrictions
 - [ ] **Phase 6: Daily Horoscope** - Personalized daily content with push notifications
@@ -124,13 +124,14 @@ Plans:
 - [ ] Invalid input (bad dates, malformed data) is rejected with clear error
 
 **Research**: Complete (03-RESEARCH.md)
-**Plans**: 4 plans in 3 waves
+**Plans**: 5 plans in 4 waves (COMPLETE)
 
 Plans:
-- [ ] 03-01-PLAN.md — @celestia/db package with Drizzle schema, RLS policies, Supabase client factory
-- [ ] 03-02-PLAN.md — Bulgarian city seed data and search API endpoint
-- [ ] 03-03-PLAN.md — Zod validation schemas and birth data CRUD API routes
-- [ ] 03-04-PLAN.md — Birth data wizard UI with city search and dashboard integration
+- [x] 03-01-PLAN.md — @celestia/db package with Drizzle schema, RLS policies, Supabase client factory
+- [x] 03-02-PLAN.md — Bulgarian city seed data and search API endpoint
+- [x] 03-03-PLAN.md — Zod validation schemas and birth data CRUD API routes
+- [x] 03-04-PLAN.md — Birth data wizard UI with city search
+- [x] 03-05-PLAN.md — Dashboard integration with birth data display and edit
 
 ---
 
@@ -299,7 +300,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-01-21 |
 | 2. Authentication | 3/3 | Complete | 2026-01-25 |
-| 3. Birth Data & Database | 0/4 | Planned | - |
+| 3. Birth Data & Database | 5/5 | Complete | 2026-01-26 |
 | 4. Astrology Engine & Charts | 0/4 | Not started | - |
 | 5. AI Oracle | 0/3 | Not started | - |
 | 6. Daily Horoscope | 0/3 | Not started | - |
@@ -384,4 +385,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 *Phase 2 planned: 2026-01-22*
 *Phase 2 complete: 2026-01-25*
 *Phase 3 planned: 2026-01-25*
+*Phase 3 complete: 2026-01-26*
 *Milestone: v0.1 MVP*
