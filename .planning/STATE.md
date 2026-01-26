@@ -78,7 +78,11 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- [ ] Human test Phase 3 birth data flow (wizard, city search, edit, RLS isolation) — deferred
+4 pending — run `/gsd:check-todos` to review:
+- Human test - Complete wizard flow
+- Human test - City search behavior
+- Human test - Edit flow with confirmation
+- Human test - RLS data isolation
 
 ### Blockers/Concerns
 
