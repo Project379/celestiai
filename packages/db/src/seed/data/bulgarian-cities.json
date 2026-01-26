@@ -1,0 +1,2032 @@
+[
+  {
+    "name": "София",
+    "nameAscii": "Sofia",
+    "oblast": "София-град",
+    "ekatte": "68134",
+    "type": "city",
+    "latitude": 42.6977,
+    "longitude": 23.3219,
+    "population": 1307000
+  },
+  {
+    "name": "Пловдив",
+    "nameAscii": "Plovdiv",
+    "oblast": "Пловдив",
+    "ekatte": "56784",
+    "type": "city",
+    "latitude": 42.1500,
+    "longitude": 24.7500,
+    "population": 346893
+  },
+  {
+    "name": "Варна",
+    "nameAscii": "Varna",
+    "oblast": "Варна",
+    "ekatte": "10135",
+    "type": "city",
+    "latitude": 43.2141,
+    "longitude": 27.9147,
+    "population": 335177
+  },
+  {
+    "name": "Бургас",
+    "nameAscii": "Burgas",
+    "oblast": "Бургас",
+    "ekatte": "07079",
+    "type": "city",
+    "latitude": 42.5048,
+    "longitude": 27.4626,
+    "population": 202434
+  },
+  {
+    "name": "Русе",
+    "nameAscii": "Ruse",
+    "oblast": "Русе",
+    "ekatte": "63427",
+    "type": "city",
+    "latitude": 43.8564,
+    "longitude": 25.9709,
+    "population": 144136
+  },
+  {
+    "name": "Стара Загора",
+    "nameAscii": "Stara Zagora",
+    "oblast": "Стара Загора",
+    "ekatte": "68850",
+    "type": "city",
+    "latitude": 42.4258,
+    "longitude": 25.6345,
+    "population": 137383
+  },
+  {
+    "name": "Плевен",
+    "nameAscii": "Pleven",
+    "oblast": "Плевен",
+    "ekatte": "56722",
+    "type": "city",
+    "latitude": 43.4170,
+    "longitude": 24.6067,
+    "population": 97861
+  },
+  {
+    "name": "Сливен",
+    "nameAscii": "Sliven",
+    "oblast": "Сливен",
+    "ekatte": "67338",
+    "type": "city",
+    "latitude": 42.6833,
+    "longitude": 26.3333,
+    "population": 84444
+  },
+  {
+    "name": "Добрич",
+    "nameAscii": "Dobrich",
+    "oblast": "Добрич",
+    "ekatte": "72624",
+    "type": "city",
+    "latitude": 43.5667,
+    "longitude": 27.8333,
+    "population": 86292
+  },
+  {
+    "name": "Шумен",
+    "nameAscii": "Shumen",
+    "oblast": "Шумен",
+    "ekatte": "83510",
+    "type": "city",
+    "latitude": 43.2667,
+    "longitude": 26.9333,
+    "population": 79882
+  },
+  {
+    "name": "Перник",
+    "nameAscii": "Pernik",
+    "oblast": "Перник",
+    "ekatte": "55871",
+    "type": "city",
+    "latitude": 42.6000,
+    "longitude": 23.0333,
+    "population": 74612
+  },
+  {
+    "name": "Хасково",
+    "nameAscii": "Haskovo",
+    "oblast": "Хасково",
+    "ekatte": "77195",
+    "type": "city",
+    "latitude": 41.9333,
+    "longitude": 25.5500,
+    "population": 71785
+  },
+  {
+    "name": "Ямбол",
+    "nameAscii": "Yambol",
+    "oblast": "Ямбол",
+    "ekatte": "87374",
+    "type": "city",
+    "latitude": 42.4833,
+    "longitude": 26.5000,
+    "population": 68484
+  },
+  {
+    "name": "Пазарджик",
+    "nameAscii": "Pazardzhik",
+    "oblast": "Пазарджик",
+    "ekatte": "55155",
+    "type": "city",
+    "latitude": 42.2000,
+    "longitude": 24.3333,
+    "population": 67928
+  },
+  {
+    "name": "Благоевград",
+    "nameAscii": "Blagoevgrad",
+    "oblast": "Благоевград",
+    "ekatte": "04279",
+    "type": "city",
+    "latitude": 42.0167,
+    "longitude": 23.1000,
+    "population": 67610
+  },
+  {
+    "name": "Велико Търново",
+    "nameAscii": "Veliko Tarnovo",
+    "oblast": "Велико Търново",
+    "ekatte": "10447",
+    "type": "city",
+    "latitude": 43.0833,
+    "longitude": 25.6333,
+    "population": 65920
+  },
+  {
+    "name": "Враца",
+    "nameAscii": "Vratsa",
+    "oblast": "Враца",
+    "ekatte": "12259",
+    "type": "city",
+    "latitude": 43.2000,
+    "longitude": 23.5500,
+    "population": 53524
+  },
+  {
+    "name": "Габрово",
+    "nameAscii": "Gabrovo",
+    "oblast": "Габрово",
+    "ekatte": "14218",
+    "type": "city",
+    "latitude": 42.8667,
+    "longitude": 25.3167,
+    "population": 49787
+  },
+  {
+    "name": "Видин",
+    "nameAscii": "Vidin",
+    "oblast": "Видин",
+    "ekatte": "10971",
+    "type": "city",
+    "latitude": 43.9833,
+    "longitude": 22.8833,
+    "population": 43251
+  },
+  {
+    "name": "Монтана",
+    "nameAscii": "Montana",
+    "oblast": "Монтана",
+    "ekatte": "48489",
+    "type": "city",
+    "latitude": 43.4167,
+    "longitude": 23.2333,
+    "population": 38265
+  },
+  {
+    "name": "Ловеч",
+    "nameAscii": "Lovech",
+    "oblast": "Ловеч",
+    "ekatte": "43952",
+    "type": "city",
+    "latitude": 43.1333,
+    "longitude": 24.7167,
+    "population": 33424
+  },
+  {
+    "name": "Разград",
+    "nameAscii": "Razgrad",
+    "oblast": "Разград",
+    "ekatte": "61710",
+    "type": "city",
+    "latitude": 43.5333,
+    "longitude": 26.5167,
+    "population": 31576
+  },
+  {
+    "name": "Търговище",
+    "nameAscii": "Targovishte",
+    "oblast": "Търговище",
+    "ekatte": "73626",
+    "type": "city",
+    "latitude": 43.2500,
+    "longitude": 26.5667,
+    "population": 34469
+  },
+  {
+    "name": "Силистра",
+    "nameAscii": "Silistra",
+    "oblast": "Силистра",
+    "ekatte": "66425",
+    "type": "city",
+    "latitude": 44.1167,
+    "longitude": 27.2500,
+    "population": 33695
+  },
+  {
+    "name": "Кърджали",
+    "nameAscii": "Kardzhali",
+    "oblast": "Кърджали",
+    "ekatte": "40909",
+    "type": "city",
+    "latitude": 41.6333,
+    "longitude": 25.3833,
+    "population": 42033
+  },
+  {
+    "name": "Смолян",
+    "nameAscii": "Smolyan",
+    "oblast": "Смолян",
+    "ekatte": "67653",
+    "type": "city",
+    "latitude": 41.5833,
+    "longitude": 24.6833,
+    "population": 28448
+  },
+  {
+    "name": "Кюстендил",
+    "nameAscii": "Kyustendil",
+    "oblast": "Кюстендил",
+    "ekatte": "41112",
+    "type": "city",
+    "latitude": 42.2833,
+    "longitude": 22.6833,
+    "population": 41892
+  },
+  {
+    "name": "Асеновград",
+    "nameAscii": "Asenovgrad",
+    "oblast": "Пловдив",
+    "ekatte": "00702",
+    "type": "city",
+    "latitude": 42.0167,
+    "longitude": 24.8667,
+    "population": 46337
+  },
+  {
+    "name": "Казанлък",
+    "nameAscii": "Kazanlak",
+    "oblast": "Стара Загора",
+    "ekatte": "35167",
+    "type": "city",
+    "latitude": 42.6167,
+    "longitude": 25.4000,
+    "population": 44618
+  },
+  {
+    "name": "Димитровград",
+    "nameAscii": "Dimitrovgrad",
+    "oblast": "Хасково",
+    "ekatte": "21052",
+    "type": "city",
+    "latitude": 42.0500,
+    "longitude": 25.6000,
+    "population": 33189
+  },
+  {
+    "name": "Дупница",
+    "nameAscii": "Dupnitsa",
+    "oblast": "Кюстендил",
+    "ekatte": "68789",
+    "type": "city",
+    "latitude": 42.2667,
+    "longitude": 23.1167,
+    "population": 33035
+  },
+  {
+    "name": "Петрич",
+    "nameAscii": "Petrich",
+    "oblast": "Благоевград",
+    "ekatte": "56126",
+    "type": "city",
+    "latitude": 41.4000,
+    "longitude": 23.2000,
+    "population": 26181
+  },
+  {
+    "name": "Сандански",
+    "nameAscii": "Sandanski",
+    "oblast": "Благоевград",
+    "ekatte": "65334",
+    "type": "city",
+    "latitude": 41.5667,
+    "longitude": 23.2833,
+    "population": 25535
+  },
+  {
+    "name": "Гоце Делчев",
+    "nameAscii": "Gotse Delchev",
+    "oblast": "Благоевград",
+    "ekatte": "17395",
+    "type": "city",
+    "latitude": 41.5667,
+    "longitude": 23.7333,
+    "population": 19200
+  },
+  {
+    "name": "Карлово",
+    "nameAscii": "Karlovo",
+    "oblast": "Пловдив",
+    "ekatte": "36498",
+    "type": "city",
+    "latitude": 42.6333,
+    "longitude": 24.8000,
+    "population": 22180
+  },
+  {
+    "name": "Велинград",
+    "nameAscii": "Velingrad",
+    "oblast": "Пазарджик",
+    "ekatte": "10450",
+    "type": "city",
+    "latitude": 42.0167,
+    "longitude": 23.9833,
+    "population": 20945
+  },
+  {
+    "name": "Самоков",
+    "nameAscii": "Samokov",
+    "oblast": "София",
+    "ekatte": "65231",
+    "type": "city",
+    "latitude": 42.3333,
+    "longitude": 23.5500,
+    "population": 23788
+  },
+  {
+    "name": "Свищов",
+    "nameAscii": "Svishtov",
+    "oblast": "Велико Търново",
+    "ekatte": "65766",
+    "type": "city",
+    "latitude": 43.6167,
+    "longitude": 25.3500,
+    "population": 26353
+  },
+  {
+    "name": "Горна Оряховица",
+    "nameAscii": "Gorna Oryahovitsa",
+    "oblast": "Велико Търново",
+    "ekatte": "16359",
+    "type": "city",
+    "latitude": 43.1167,
+    "longitude": 25.6833,
+    "population": 27021
+  },
+  {
+    "name": "Нова Загора",
+    "nameAscii": "Nova Zagora",
+    "oblast": "Сливен",
+    "ekatte": "51809",
+    "type": "city",
+    "latitude": 42.4833,
+    "longitude": 26.0000,
+    "population": 21602
+  },
+  {
+    "name": "Троян",
+    "nameAscii": "Troyan",
+    "oblast": "Ловеч",
+    "ekatte": "73198",
+    "type": "city",
+    "latitude": 42.8833,
+    "longitude": 24.7167,
+    "population": 19889
+  },
+  {
+    "name": "Лом",
+    "nameAscii": "Lom",
+    "oblast": "Монтана",
+    "ekatte": "44238",
+    "type": "city",
+    "latitude": 43.8167,
+    "longitude": 23.2333,
+    "population": 20251
+  },
+  {
+    "name": "Севлиево",
+    "nameAscii": "Sevlievo",
+    "oblast": "Габрово",
+    "ekatte": "65927",
+    "type": "city",
+    "latitude": 42.9333,
+    "longitude": 25.1000,
+    "population": 19626
+  },
+  {
+    "name": "Провадия",
+    "nameAscii": "Provadia",
+    "oblast": "Варна",
+    "ekatte": "58503",
+    "type": "city",
+    "latitude": 43.1833,
+    "longitude": 27.4333,
+    "population": 15060
+  },
+  {
+    "name": "Девня",
+    "nameAscii": "Devnya",
+    "oblast": "Варна",
+    "ekatte": "20482",
+    "type": "city",
+    "latitude": 43.2333,
+    "longitude": 27.5500,
+    "population": 7541
+  },
+  {
+    "name": "Несебър",
+    "nameAscii": "Nesebar",
+    "oblast": "Бургас",
+    "ekatte": "51500",
+    "type": "city",
+    "latitude": 42.6500,
+    "longitude": 27.7333,
+    "population": 12200
+  },
+  {
+    "name": "Поморие",
+    "nameAscii": "Pomorie",
+    "oblast": "Бургас",
+    "ekatte": "57491",
+    "type": "city",
+    "latitude": 42.5500,
+    "longitude": 27.6333,
+    "population": 13200
+  },
+  {
+    "name": "Созопол",
+    "nameAscii": "Sozopol",
+    "oblast": "Бургас",
+    "ekatte": "67800",
+    "type": "city",
+    "latitude": 42.4167,
+    "longitude": 27.6833,
+    "population": 4500
+  },
+  {
+    "name": "Приморско",
+    "nameAscii": "Primorsko",
+    "oblast": "Бургас",
+    "ekatte": "58356",
+    "type": "city",
+    "latitude": 42.2667,
+    "longitude": 27.7667,
+    "population": 2800
+  },
+  {
+    "name": "Царево",
+    "nameAscii": "Tsarevo",
+    "oblast": "Бургас",
+    "ekatte": "48619",
+    "type": "city",
+    "latitude": 42.1667,
+    "longitude": 27.8500,
+    "population": 5700
+  },
+  {
+    "name": "Айтос",
+    "nameAscii": "Aytos",
+    "oblast": "Бургас",
+    "ekatte": "00151",
+    "type": "city",
+    "latitude": 42.7000,
+    "longitude": 27.2500,
+    "population": 20260
+  },
+  {
+    "name": "Карнобат",
+    "nameAscii": "Karnobat",
+    "oblast": "Бургас",
+    "ekatte": "36525",
+    "type": "city",
+    "latitude": 42.6500,
+    "longitude": 26.9833,
+    "population": 18313
+  },
+  {
+    "name": "Раднево",
+    "nameAscii": "Radnevo",
+    "oblast": "Стара Загора",
+    "ekatte": "61460",
+    "type": "city",
+    "latitude": 42.2833,
+    "longitude": 25.9333,
+    "population": 12145
+  },
+  {
+    "name": "Чирпан",
+    "nameAscii": "Chirpan",
+    "oblast": "Стара Загора",
+    "ekatte": "81414",
+    "type": "city",
+    "latitude": 42.2000,
+    "longitude": 25.3167,
+    "population": 11680
+  },
+  {
+    "name": "Гълъбово",
+    "nameAscii": "Galabovo",
+    "oblast": "Стара Загора",
+    "ekatte": "18280",
+    "type": "city",
+    "latitude": 42.1333,
+    "longitude": 25.8667,
+    "population": 10080
+  },
+  {
+    "name": "Мадан",
+    "nameAscii": "Madan",
+    "oblast": "Смолян",
+    "ekatte": "46045",
+    "type": "city",
+    "latitude": 41.5000,
+    "longitude": 24.9333,
+    "population": 6200
+  },
+  {
+    "name": "Рудозем",
+    "nameAscii": "Rudozem",
+    "oblast": "Смолян",
+    "ekatte": "63207",
+    "type": "city",
+    "latitude": 41.4833,
+    "longitude": 24.8500,
+    "population": 5200
+  },
+  {
+    "name": "Девин",
+    "nameAscii": "Devin",
+    "oblast": "Смолян",
+    "ekatte": "20465",
+    "type": "city",
+    "latitude": 41.7333,
+    "longitude": 24.4000,
+    "population": 6500
+  },
+  {
+    "name": "Златоград",
+    "nameAscii": "Zlatograd",
+    "oblast": "Смолян",
+    "ekatte": "31111",
+    "type": "city",
+    "latitude": 41.3833,
+    "longitude": 25.1000,
+    "population": 6100
+  },
+  {
+    "name": "Момчилград",
+    "nameAscii": "Momchilgrad",
+    "oblast": "Кърджали",
+    "ekatte": "48996",
+    "type": "city",
+    "latitude": 41.5333,
+    "longitude": 25.4167,
+    "population": 7900
+  },
+  {
+    "name": "Крумовград",
+    "nameAscii": "Krumovgrad",
+    "oblast": "Кърджали",
+    "ekatte": "40021",
+    "type": "city",
+    "latitude": 41.4833,
+    "longitude": 25.6500,
+    "population": 4200
+  },
+  {
+    "name": "Ардино",
+    "nameAscii": "Ardino",
+    "oblast": "Кърджали",
+    "ekatte": "00607",
+    "type": "city",
+    "latitude": 41.5833,
+    "longitude": 25.1333,
+    "population": 3600
+  },
+  {
+    "name": "Свиленград",
+    "nameAscii": "Svilengrad",
+    "oblast": "Хасково",
+    "ekatte": "65677",
+    "type": "city",
+    "latitude": 41.7667,
+    "longitude": 26.2000,
+    "population": 17200
+  },
+  {
+    "name": "Харманли",
+    "nameAscii": "Harmanli",
+    "oblast": "Хасково",
+    "ekatte": "77181",
+    "type": "city",
+    "latitude": 41.9333,
+    "longitude": 25.9000,
+    "population": 18080
+  },
+  {
+    "name": "Тополовград",
+    "nameAscii": "Topolovgrad",
+    "oblast": "Хасково",
+    "ekatte": "72761",
+    "type": "city",
+    "latitude": 42.0833,
+    "longitude": 26.3333,
+    "population": 5900
+  },
+  {
+    "name": "Ивайловград",
+    "nameAscii": "Ivaylovgrad",
+    "oblast": "Хасково",
+    "ekatte": "32024",
+    "type": "city",
+    "latitude": 41.5333,
+    "longitude": 26.1167,
+    "population": 3800
+  },
+  {
+    "name": "Симеоновград",
+    "nameAscii": "Simeonovgrad",
+    "oblast": "Хасково",
+    "ekatte": "66131",
+    "type": "city",
+    "latitude": 42.0333,
+    "longitude": 25.8333,
+    "population": 7100
+  },
+  {
+    "name": "Любимец",
+    "nameAscii": "Lyubimets",
+    "oblast": "Хасково",
+    "ekatte": "44570",
+    "type": "city",
+    "latitude": 41.8333,
+    "longitude": 26.0667,
+    "population": 6200
+  },
+  {
+    "name": "Първомай",
+    "nameAscii": "Parvomay",
+    "oblast": "Пловдив",
+    "ekatte": "59080",
+    "type": "city",
+    "latitude": 42.1000,
+    "longitude": 25.2167,
+    "population": 12950
+  },
+  {
+    "name": "Садово",
+    "nameAscii": "Sadovo",
+    "oblast": "Пловдив",
+    "ekatte": "65139",
+    "type": "town",
+    "latitude": 42.1333,
+    "longitude": 24.9333,
+    "population": 5400
+  },
+  {
+    "name": "Раковски",
+    "nameAscii": "Rakovski",
+    "oblast": "Пловдив",
+    "ekatte": "62075",
+    "type": "city",
+    "latitude": 42.2833,
+    "longitude": 24.9333,
+    "population": 15100
+  },
+  {
+    "name": "Съединение",
+    "nameAscii": "Saedinenie",
+    "oblast": "Пловдив",
+    "ekatte": "70528",
+    "type": "city",
+    "latitude": 42.2667,
+    "longitude": 24.5500,
+    "population": 6800
+  },
+  {
+    "name": "Куклен",
+    "nameAscii": "Kuklen",
+    "oblast": "Пловдив",
+    "ekatte": "40467",
+    "type": "town",
+    "latitude": 42.0333,
+    "longitude": 24.7833,
+    "population": 6200
+  },
+  {
+    "name": "Брезово",
+    "nameAscii": "Brezovo",
+    "oblast": "Пловдив",
+    "ekatte": "06361",
+    "type": "town",
+    "latitude": 42.3500,
+    "longitude": 25.0833,
+    "population": 2100
+  },
+  {
+    "name": "Калофер",
+    "nameAscii": "Kalofer",
+    "oblast": "Пловдив",
+    "ekatte": "35496",
+    "type": "town",
+    "latitude": 42.6167,
+    "longitude": 24.9833,
+    "population": 3200
+  },
+  {
+    "name": "Сопот",
+    "nameAscii": "Sopot",
+    "oblast": "Пловдив",
+    "ekatte": "68080",
+    "type": "city",
+    "latitude": 42.6500,
+    "longitude": 24.7500,
+    "population": 7800
+  },
+  {
+    "name": "Хисаря",
+    "nameAscii": "Hisarya",
+    "oblast": "Пловдив",
+    "ekatte": "77270",
+    "type": "city",
+    "latitude": 42.5000,
+    "longitude": 24.7000,
+    "population": 7300
+  },
+  {
+    "name": "Панагюрище",
+    "nameAscii": "Panagyurishte",
+    "oblast": "Пазарджик",
+    "ekatte": "55302",
+    "type": "city",
+    "latitude": 42.5000,
+    "longitude": 24.1833,
+    "population": 17700
+  },
+  {
+    "name": "Пещера",
+    "nameAscii": "Peshtera",
+    "oblast": "Пазарджик",
+    "ekatte": "56277",
+    "type": "city",
+    "latitude": 42.0333,
+    "longitude": 24.3000,
+    "population": 16400
+  },
+  {
+    "name": "Септември",
+    "nameAscii": "Septemvri",
+    "oblast": "Пазарджик",
+    "ekatte": "66264",
+    "type": "city",
+    "latitude": 42.2167,
+    "longitude": 24.1333,
+    "population": 8100
+  },
+  {
+    "name": "Брацигово",
+    "nameAscii": "Bratsigovo",
+    "oblast": "Пазарджик",
+    "ekatte": "06207",
+    "type": "city",
+    "latitude": 42.0333,
+    "longitude": 24.3667,
+    "population": 4700
+  },
+  {
+    "name": "Ракитово",
+    "nameAscii": "Rakitovo",
+    "oblast": "Пазарджик",
+    "ekatte": "62004",
+    "type": "town",
+    "latitude": 41.9833,
+    "longitude": 24.0833,
+    "population": 6200
+  },
+  {
+    "name": "Батак",
+    "nameAscii": "Batak",
+    "oblast": "Пазарджик",
+    "ekatte": "02837",
+    "type": "city",
+    "latitude": 41.9500,
+    "longitude": 24.2167,
+    "population": 3200
+  },
+  {
+    "name": "Белово",
+    "nameAscii": "Belovo",
+    "oblast": "Пазарджик",
+    "ekatte": "03592",
+    "type": "city",
+    "latitude": 42.1500,
+    "longitude": 23.9667,
+    "population": 5400
+  },
+  {
+    "name": "Сърница",
+    "nameAscii": "Sarnitsa",
+    "oblast": "Пазарджик",
+    "ekatte": "70648",
+    "type": "city",
+    "latitude": 41.9333,
+    "longitude": 24.0167,
+    "population": 4500
+  },
+  {
+    "name": "Разлог",
+    "nameAscii": "Razlog",
+    "oblast": "Благоевград",
+    "ekatte": "61813",
+    "type": "city",
+    "latitude": 41.8833,
+    "longitude": 23.4667,
+    "population": 11700
+  },
+  {
+    "name": "Банско",
+    "nameAscii": "Bansko",
+    "oblast": "Благоевград",
+    "ekatte": "02676",
+    "type": "city",
+    "latitude": 41.8333,
+    "longitude": 23.4833,
+    "population": 9000
+  },
+  {
+    "name": "Симитли",
+    "nameAscii": "Simitli",
+    "oblast": "Благоевград",
+    "ekatte": "66460",
+    "type": "city",
+    "latitude": 41.8833,
+    "longitude": 23.1167,
+    "population": 7300
+  },
+  {
+    "name": "Белица",
+    "nameAscii": "Belitsa",
+    "oblast": "Благоевград",
+    "ekatte": "03504",
+    "type": "city",
+    "latitude": 41.9333,
+    "longitude": 23.5667,
+    "population": 3700
+  },
+  {
+    "name": "Якоруда",
+    "nameAscii": "Yakoruda",
+    "oblast": "Благоевград",
+    "ekatte": "87338",
+    "type": "city",
+    "latitude": 42.0167,
+    "longitude": 23.6667,
+    "population": 5500
+  },
+  {
+    "name": "Хаджидимово",
+    "nameAscii": "Hadzhidimovo",
+    "oblast": "Благоевград",
+    "ekatte": "77058",
+    "type": "town",
+    "latitude": 41.5167,
+    "longitude": 23.8500,
+    "population": 3000
+  },
+  {
+    "name": "Добринище",
+    "nameAscii": "Dobrinishte",
+    "oblast": "Благоевград",
+    "ekatte": "21498",
+    "type": "town",
+    "latitude": 41.8167,
+    "longitude": 23.5667,
+    "population": 2800
+  },
+  {
+    "name": "Кресна",
+    "nameAscii": "Kresna",
+    "oblast": "Благоевград",
+    "ekatte": "39935",
+    "type": "town",
+    "latitude": 41.7333,
+    "longitude": 23.1667,
+    "population": 3200
+  },
+  {
+    "name": "Струмяни",
+    "nameAscii": "Strumyani",
+    "oblast": "Благоевград",
+    "ekatte": "70396",
+    "type": "village",
+    "latitude": 41.6333,
+    "longitude": 23.2000,
+    "population": 2100
+  },
+  {
+    "name": "Рила",
+    "nameAscii": "Rila",
+    "oblast": "Кюстендил",
+    "ekatte": "62671",
+    "type": "town",
+    "latitude": 42.1333,
+    "longitude": 23.1333,
+    "population": 2600
+  },
+  {
+    "name": "Бобов дол",
+    "nameAscii": "Bobov Dol",
+    "oblast": "Кюстендил",
+    "ekatte": "04813",
+    "type": "city",
+    "latitude": 42.3667,
+    "longitude": 23.0000,
+    "population": 6100
+  },
+  {
+    "name": "Сапарева баня",
+    "nameAscii": "Sapareva Banya",
+    "oblast": "Кюстендил",
+    "ekatte": "65365",
+    "type": "city",
+    "latitude": 42.2833,
+    "longitude": 23.2667,
+    "population": 4000
+  },
+  {
+    "name": "Кочериново",
+    "nameAscii": "Kocherinovo",
+    "oblast": "Кюстендил",
+    "ekatte": "39116",
+    "type": "town",
+    "latitude": 42.0833,
+    "longitude": 23.0500,
+    "population": 3100
+  },
+  {
+    "name": "Радомир",
+    "nameAscii": "Radomir",
+    "oblast": "Перник",
+    "ekatte": "61577",
+    "type": "city",
+    "latitude": 42.5500,
+    "longitude": 22.9667,
+    "population": 13300
+  },
+  {
+    "name": "Брезник",
+    "nameAscii": "Breznik",
+    "oblast": "Перник",
+    "ekatte": "06286",
+    "type": "city",
+    "latitude": 42.7333,
+    "longitude": 22.9000,
+    "population": 3200
+  },
+  {
+    "name": "Трън",
+    "nameAscii": "Tran",
+    "oblast": "Перник",
+    "ekatte": "73273",
+    "type": "city",
+    "latitude": 42.8333,
+    "longitude": 22.6500,
+    "population": 2500
+  },
+  {
+    "name": "Земен",
+    "nameAscii": "Zemen",
+    "oblast": "Перник",
+    "ekatte": "30732",
+    "type": "town",
+    "latitude": 42.4667,
+    "longitude": 22.7500,
+    "population": 2000
+  },
+  {
+    "name": "Ботевград",
+    "nameAscii": "Botevgrad",
+    "oblast": "София",
+    "ekatte": "05815",
+    "type": "city",
+    "latitude": 42.9000,
+    "longitude": 23.7833,
+    "population": 22300
+  },
+  {
+    "name": "Ихтиман",
+    "nameAscii": "Ihtiman",
+    "oblast": "София",
+    "ekatte": "32901",
+    "type": "city",
+    "latitude": 42.4333,
+    "longitude": 23.8167,
+    "population": 11500
+  },
+  {
+    "name": "Костенец",
+    "nameAscii": "Kostenets",
+    "oblast": "София",
+    "ekatte": "38916",
+    "type": "city",
+    "latitude": 42.3000,
+    "longitude": 23.8500,
+    "population": 7600
+  },
+  {
+    "name": "Етрополе",
+    "nameAscii": "Etropole",
+    "oblast": "София",
+    "ekatte": "27070",
+    "type": "city",
+    "latitude": 42.8333,
+    "longitude": 24.0000,
+    "population": 8700
+  },
+  {
+    "name": "Своге",
+    "nameAscii": "Svoge",
+    "oblast": "София",
+    "ekatte": "65869",
+    "type": "city",
+    "latitude": 42.9667,
+    "longitude": 23.3500,
+    "population": 6100
+  },
+  {
+    "name": "Правец",
+    "nameAscii": "Pravets",
+    "oblast": "София",
+    "ekatte": "58030",
+    "type": "city",
+    "latitude": 42.8833,
+    "longitude": 23.9167,
+    "population": 4400
+  },
+  {
+    "name": "Пирдоп",
+    "nameAscii": "Pirdop",
+    "oblast": "София",
+    "ekatte": "56407",
+    "type": "city",
+    "latitude": 42.7000,
+    "longitude": 24.1833,
+    "population": 7600
+  },
+  {
+    "name": "Елин Пелин",
+    "nameAscii": "Elin Pelin",
+    "oblast": "София",
+    "ekatte": "27303",
+    "type": "city",
+    "latitude": 42.6667,
+    "longitude": 23.6000,
+    "population": 7500
+  },
+  {
+    "name": "Костинброд",
+    "nameAscii": "Kostinbrod",
+    "oblast": "София",
+    "ekatte": "38978",
+    "type": "city",
+    "latitude": 42.8167,
+    "longitude": 23.2167,
+    "population": 11300
+  },
+  {
+    "name": "Сливница",
+    "nameAscii": "Slivnitsa",
+    "oblast": "София",
+    "ekatte": "67372",
+    "type": "city",
+    "latitude": 42.8500,
+    "longitude": 23.0333,
+    "population": 7800
+  },
+  {
+    "name": "Годеч",
+    "nameAscii": "Godech",
+    "oblast": "София",
+    "ekatte": "15309",
+    "type": "town",
+    "latitude": 43.0167,
+    "longitude": 23.0500,
+    "population": 4500
+  },
+  {
+    "name": "Драгоман",
+    "nameAscii": "Dragoman",
+    "oblast": "София",
+    "ekatte": "23409",
+    "type": "town",
+    "latitude": 42.9333,
+    "longitude": 22.9333,
+    "population": 3800
+  },
+  {
+    "name": "Златица",
+    "nameAscii": "Zlatitsa",
+    "oblast": "София",
+    "ekatte": "31099",
+    "type": "city",
+    "latitude": 42.7167,
+    "longitude": 24.1333,
+    "population": 4600
+  },
+  {
+    "name": "Копривщица",
+    "nameAscii": "Koprivshtitsa",
+    "oblast": "София",
+    "ekatte": "38558",
+    "type": "town",
+    "latitude": 42.6333,
+    "longitude": 24.3500,
+    "population": 2200
+  },
+  {
+    "name": "Долна баня",
+    "nameAscii": "Dolna Banya",
+    "oblast": "София",
+    "ekatte": "22006",
+    "type": "town",
+    "latitude": 42.3000,
+    "longitude": 23.7667,
+    "population": 4200
+  },
+  {
+    "name": "Боровец",
+    "nameAscii": "Borovets",
+    "oblast": "София",
+    "ekatte": "05568",
+    "type": "village",
+    "latitude": 42.2667,
+    "longitude": 23.6000,
+    "population": 450
+  },
+  {
+    "name": "Банкя",
+    "nameAscii": "Bankya",
+    "oblast": "София-град",
+    "ekatte": "02659",
+    "type": "city",
+    "latitude": 42.7000,
+    "longitude": 23.1333,
+    "population": 10200
+  },
+  {
+    "name": "Нови Искър",
+    "nameAscii": "Novi Iskar",
+    "oblast": "София-град",
+    "ekatte": "52035",
+    "type": "city",
+    "latitude": 42.8000,
+    "longitude": 23.3667,
+    "population": 18100
+  },
+  {
+    "name": "Мездра",
+    "nameAscii": "Mezdra",
+    "oblast": "Враца",
+    "ekatte": "47714",
+    "type": "city",
+    "latitude": 43.1500,
+    "longitude": 23.7167,
+    "population": 12200
+  },
+  {
+    "name": "Бяла Слатина",
+    "nameAscii": "Byala Slatina",
+    "oblast": "Враца",
+    "ekatte": "07702",
+    "type": "city",
+    "latitude": 43.4667,
+    "longitude": 23.9333,
+    "population": 11500
+  },
+  {
+    "name": "Козлодуй",
+    "nameAscii": "Kozloduy",
+    "oblast": "Враца",
+    "ekatte": "37798",
+    "type": "city",
+    "latitude": 43.7667,
+    "longitude": 23.7333,
+    "population": 12800
+  },
+  {
+    "name": "Оряхово",
+    "nameAscii": "Oryahovo",
+    "oblast": "Враца",
+    "ekatte": "54020",
+    "type": "city",
+    "latitude": 43.7333,
+    "longitude": 23.9500,
+    "population": 6000
+  },
+  {
+    "name": "Криводол",
+    "nameAscii": "Krivodol",
+    "oblast": "Враца",
+    "ekatte": "39846",
+    "type": "town",
+    "latitude": 43.3667,
+    "longitude": 23.4833,
+    "population": 3200
+  },
+  {
+    "name": "Роман",
+    "nameAscii": "Roman",
+    "oblast": "Враца",
+    "ekatte": "62923",
+    "type": "town",
+    "latitude": 43.1500,
+    "longitude": 23.9167,
+    "population": 3200
+  },
+  {
+    "name": "Берковица",
+    "nameAscii": "Berkovitsa",
+    "oblast": "Монтана",
+    "ekatte": "03928",
+    "type": "city",
+    "latitude": 43.2333,
+    "longitude": 23.1333,
+    "population": 12500
+  },
+  {
+    "name": "Вършец",
+    "nameAscii": "Varshets",
+    "oblast": "Монтана",
+    "ekatte": "12961",
+    "type": "city",
+    "latitude": 43.2000,
+    "longitude": 23.2833,
+    "population": 5200
+  },
+  {
+    "name": "Чипровци",
+    "nameAscii": "Chiprovtsi",
+    "oblast": "Монтана",
+    "ekatte": "81390",
+    "type": "town",
+    "latitude": 43.3833,
+    "longitude": 22.8833,
+    "population": 2000
+  },
+  {
+    "name": "Белоградчик",
+    "nameAscii": "Belogradchik",
+    "oblast": "Видин",
+    "ekatte": "03616",
+    "type": "city",
+    "latitude": 43.6333,
+    "longitude": 22.6833,
+    "population": 5100
+  },
+  {
+    "name": "Кула",
+    "nameAscii": "Kula",
+    "oblast": "Видин",
+    "ekatte": "40525",
+    "type": "city",
+    "latitude": 43.8833,
+    "longitude": 22.5167,
+    "population": 3400
+  },
+  {
+    "name": "Брегово",
+    "nameAscii": "Bregovo",
+    "oblast": "Видин",
+    "ekatte": "06224",
+    "type": "town",
+    "latitude": 44.1500,
+    "longitude": 22.6500,
+    "population": 2100
+  },
+  {
+    "name": "Дунавци",
+    "nameAscii": "Dunavtsi",
+    "oblast": "Видин",
+    "ekatte": "24061",
+    "type": "town",
+    "latitude": 43.9500,
+    "longitude": 22.8500,
+    "population": 2200
+  },
+  {
+    "name": "Тетевен",
+    "nameAscii": "Teteven",
+    "oblast": "Ловеч",
+    "ekatte": "72343",
+    "type": "city",
+    "latitude": 42.9167,
+    "longitude": 24.2667,
+    "population": 9700
+  },
+  {
+    "name": "Луковит",
+    "nameAscii": "Lukovit",
+    "oblast": "Ловеч",
+    "ekatte": "44327",
+    "type": "city",
+    "latitude": 43.2000,
+    "longitude": 24.1667,
+    "population": 7900
+  },
+  {
+    "name": "Априлци",
+    "nameAscii": "Apriltsi",
+    "oblast": "Ловеч",
+    "ekatte": "00535",
+    "type": "city",
+    "latitude": 42.8333,
+    "longitude": 24.9167,
+    "population": 2500
+  },
+  {
+    "name": "Ябланица",
+    "nameAscii": "Yablanitsa",
+    "oblast": "Ловеч",
+    "ekatte": "87014",
+    "type": "town",
+    "latitude": 43.0333,
+    "longitude": 24.0833,
+    "population": 2200
+  },
+  {
+    "name": "Угърчин",
+    "nameAscii": "Ugarchin",
+    "oblast": "Ловеч",
+    "ekatte": "75054",
+    "type": "town",
+    "latitude": 43.1000,
+    "longitude": 24.4167,
+    "population": 2900
+  },
+  {
+    "name": "Летница",
+    "nameAscii": "Letnitsa",
+    "oblast": "Ловеч",
+    "ekatte": "43476",
+    "type": "town",
+    "latitude": 43.3000,
+    "longitude": 25.0667,
+    "population": 2400
+  },
+  {
+    "name": "Никопол",
+    "nameAscii": "Nikopol",
+    "oblast": "Плевен",
+    "ekatte": "51723",
+    "type": "city",
+    "latitude": 43.7000,
+    "longitude": 24.8833,
+    "population": 4500
+  },
+  {
+    "name": "Левски",
+    "nameAscii": "Levski",
+    "oblast": "Плевен",
+    "ekatte": "43236",
+    "type": "city",
+    "latitude": 43.3667,
+    "longitude": 25.1333,
+    "population": 9700
+  },
+  {
+    "name": "Червен бряг",
+    "nameAscii": "Cherven Bryag",
+    "oblast": "Плевен",
+    "ekatte": "80501",
+    "type": "city",
+    "latitude": 43.2667,
+    "longitude": 24.0833,
+    "population": 12400
+  },
+  {
+    "name": "Кнежа",
+    "nameAscii": "Knezha",
+    "oblast": "Плевен",
+    "ekatte": "37376",
+    "type": "city",
+    "latitude": 43.5000,
+    "longitude": 24.0833,
+    "population": 10200
+  },
+  {
+    "name": "Белене",
+    "nameAscii": "Belene",
+    "oblast": "Плевен",
+    "ekatte": "03366",
+    "type": "city",
+    "latitude": 43.6500,
+    "longitude": 25.1333,
+    "population": 6800
+  },
+  {
+    "name": "Гулянци",
+    "nameAscii": "Gulyantsi",
+    "oblast": "Плевен",
+    "ekatte": "18099",
+    "type": "town",
+    "latitude": 43.6500,
+    "longitude": 24.7000,
+    "population": 2900
+  },
+  {
+    "name": "Долни Дъбник",
+    "nameAscii": "Dolni Dabnik",
+    "oblast": "Плевен",
+    "ekatte": "22240",
+    "type": "town",
+    "latitude": 43.4000,
+    "longitude": 24.4167,
+    "population": 4200
+  },
+  {
+    "name": "Дряново",
+    "nameAscii": "Dryanovo",
+    "oblast": "Габрово",
+    "ekatte": "23947",
+    "type": "city",
+    "latitude": 42.9667,
+    "longitude": 25.4667,
+    "population": 7500
+  },
+  {
+    "name": "Трявна",
+    "nameAscii": "Tryavna",
+    "oblast": "Габрово",
+    "ekatte": "73403",
+    "type": "city",
+    "latitude": 42.8667,
+    "longitude": 25.5000,
+    "population": 7300
+  },
+  {
+    "name": "Павликени",
+    "nameAscii": "Pavlikeni",
+    "oblast": "Велико Търново",
+    "ekatte": "55052",
+    "type": "city",
+    "latitude": 43.2333,
+    "longitude": 25.3167,
+    "population": 11300
+  },
+  {
+    "name": "Елена",
+    "nameAscii": "Elena",
+    "oblast": "Велико Търново",
+    "ekatte": "27190",
+    "type": "city",
+    "latitude": 42.9333,
+    "longitude": 25.8667,
+    "population": 5700
+  },
+  {
+    "name": "Лясковец",
+    "nameAscii": "Lyaskovets",
+    "oblast": "Велико Търново",
+    "ekatte": "44793",
+    "type": "city",
+    "latitude": 43.1000,
+    "longitude": 25.7167,
+    "population": 8300
+  },
+  {
+    "name": "Полски Тръмбеш",
+    "nameAscii": "Polski Trambesh",
+    "oblast": "Велико Търново",
+    "ekatte": "57354",
+    "type": "town",
+    "latitude": 43.3667,
+    "longitude": 25.6333,
+    "population": 4000
+  },
+  {
+    "name": "Стражица",
+    "nameAscii": "Strazhitsa",
+    "oblast": "Велико Търново",
+    "ekatte": "69732",
+    "type": "city",
+    "latitude": 43.2333,
+    "longitude": 25.9667,
+    "population": 5600
+  },
+  {
+    "name": "Сухиндол",
+    "nameAscii": "Suhindol",
+    "oblast": "Велико Търново",
+    "ekatte": "70295",
+    "type": "town",
+    "latitude": 43.1833,
+    "longitude": 25.1667,
+    "population": 2000
+  },
+  {
+    "name": "Златарица",
+    "nameAscii": "Zlataritsa",
+    "oblast": "Велико Търново",
+    "ekatte": "31104",
+    "type": "town",
+    "latitude": 43.0333,
+    "longitude": 25.9000,
+    "population": 2400
+  },
+  {
+    "name": "Попово",
+    "nameAscii": "Popovo",
+    "oblast": "Търговище",
+    "ekatte": "57649",
+    "type": "city",
+    "latitude": 43.3500,
+    "longitude": 26.2333,
+    "population": 13700
+  },
+  {
+    "name": "Омуртаг",
+    "nameAscii": "Omurtag",
+    "oblast": "Търговище",
+    "ekatte": "53535",
+    "type": "city",
+    "latitude": 43.1167,
+    "longitude": 26.4167,
+    "population": 8400
+  },
+  {
+    "name": "Антоново",
+    "nameAscii": "Antonovo",
+    "oblast": "Търговище",
+    "ekatte": "00518",
+    "type": "town",
+    "latitude": 43.1500,
+    "longitude": 26.1667,
+    "population": 2100
+  },
+  {
+    "name": "Исперих",
+    "nameAscii": "Isperih",
+    "oblast": "Разград",
+    "ekatte": "32874",
+    "type": "city",
+    "latitude": 43.7167,
+    "longitude": 26.8333,
+    "population": 10200
+  },
+  {
+    "name": "Кубрат",
+    "nameAscii": "Kubrat",
+    "oblast": "Разград",
+    "ekatte": "40422",
+    "type": "city",
+    "latitude": 43.8000,
+    "longitude": 26.5000,
+    "population": 6700
+  },
+  {
+    "name": "Завет",
+    "nameAscii": "Zavet",
+    "oblast": "Разград",
+    "ekatte": "30106",
+    "type": "town",
+    "latitude": 43.7667,
+    "longitude": 26.6833,
+    "population": 3200
+  },
+  {
+    "name": "Лозница",
+    "nameAscii": "Loznitsa",
+    "oblast": "Разград",
+    "ekatte": "44166",
+    "type": "town",
+    "latitude": 43.3667,
+    "longitude": 26.5833,
+    "population": 2200
+  },
+  {
+    "name": "Самуил",
+    "nameAscii": "Samuil",
+    "oblast": "Разград",
+    "ekatte": "65276",
+    "type": "village",
+    "latitude": 43.5500,
+    "longitude": 26.8000,
+    "population": 2100
+  },
+  {
+    "name": "Тутракан",
+    "nameAscii": "Tutrakan",
+    "oblast": "Силистра",
+    "ekatte": "73496",
+    "type": "city",
+    "latitude": 44.0500,
+    "longitude": 26.6167,
+    "population": 9200
+  },
+  {
+    "name": "Дулово",
+    "nameAscii": "Dulovo",
+    "oblast": "Силистра",
+    "ekatte": "24030",
+    "type": "city",
+    "latitude": 43.8167,
+    "longitude": 27.1500,
+    "population": 8200
+  },
+  {
+    "name": "Главиница",
+    "nameAscii": "Glavinitsa",
+    "oblast": "Силистра",
+    "ekatte": "14962",
+    "type": "town",
+    "latitude": 44.0500,
+    "longitude": 26.8167,
+    "population": 2300
+  },
+  {
+    "name": "Ситово",
+    "nameAscii": "Sitovo",
+    "oblast": "Силистра",
+    "ekatte": "66696",
+    "type": "village",
+    "latitude": 44.0333,
+    "longitude": 27.0167,
+    "population": 2000
+  },
+  {
+    "name": "Алфатар",
+    "nameAscii": "Alfatar",
+    "oblast": "Силистра",
+    "ekatte": "00415",
+    "type": "town",
+    "latitude": 43.9500,
+    "longitude": 27.2833,
+    "population": 2200
+  },
+  {
+    "name": "Балчик",
+    "nameAscii": "Balchik",
+    "oblast": "Добрич",
+    "ekatte": "02508",
+    "type": "city",
+    "latitude": 43.4167,
+    "longitude": 28.1667,
+    "population": 11600
+  },
+  {
+    "name": "Каварна",
+    "nameAscii": "Kavarna",
+    "oblast": "Добрич",
+    "ekatte": "35064",
+    "type": "city",
+    "latitude": 43.4333,
+    "longitude": 28.3500,
+    "population": 9700
+  },
+  {
+    "name": "Генерал Тошево",
+    "nameAscii": "General Toshevo",
+    "oblast": "Добрич",
+    "ekatte": "14711",
+    "type": "city",
+    "latitude": 43.7000,
+    "longitude": 28.0333,
+    "population": 6500
+  },
+  {
+    "name": "Тервел",
+    "nameAscii": "Tervel",
+    "oblast": "Добрич",
+    "ekatte": "72271",
+    "type": "city",
+    "latitude": 43.7500,
+    "longitude": 27.4000,
+    "population": 5100
+  },
+  {
+    "name": "Шабла",
+    "nameAscii": "Shabla",
+    "oblast": "Добрич",
+    "ekatte": "83017",
+    "type": "town",
+    "latitude": 43.5333,
+    "longitude": 28.5333,
+    "population": 3000
+  },
+  {
+    "name": "Каспичан",
+    "nameAscii": "Kaspichan",
+    "oblast": "Шумен",
+    "ekatte": "36587",
+    "type": "city",
+    "latitude": 43.3000,
+    "longitude": 27.1500,
+    "population": 3200
+  },
+  {
+    "name": "Нови пазар",
+    "nameAscii": "Novi Pazar",
+    "oblast": "Шумен",
+    "ekatte": "52009",
+    "type": "city",
+    "latitude": 43.3500,
+    "longitude": 27.2000,
+    "population": 12100
+  },
+  {
+    "name": "Велики Преслав",
+    "nameAscii": "Veliki Preslav",
+    "oblast": "Шумен",
+    "ekatte": "10182",
+    "type": "city",
+    "latitude": 43.1667,
+    "longitude": 26.8167,
+    "population": 8900
+  },
+  {
+    "name": "Смядово",
+    "nameAscii": "Smyadovo",
+    "oblast": "Шумен",
+    "ekatte": "67708",
+    "type": "town",
+    "latitude": 43.0667,
+    "longitude": 27.0167,
+    "population": 3400
+  },
+  {
+    "name": "Плиска",
+    "nameAscii": "Pliska",
+    "oblast": "Шумен",
+    "ekatte": "56770",
+    "type": "village",
+    "latitude": 43.3833,
+    "longitude": 27.1167,
+    "population": 2000
+  },
+  {
+    "name": "Мадара",
+    "nameAscii": "Madara",
+    "oblast": "Шумен",
+    "ekatte": "46021",
+    "type": "village",
+    "latitude": 43.2667,
+    "longitude": 27.1167,
+    "population": 2100
+  },
+  {
+    "name": "Котел",
+    "nameAscii": "Kotel",
+    "oblast": "Сливен",
+    "ekatte": "39030",
+    "type": "city",
+    "latitude": 42.8833,
+    "longitude": 26.4500,
+    "population": 5800
+  },
+  {
+    "name": "Твърдица",
+    "nameAscii": "Tvarditsa",
+    "oblast": "Сливен",
+    "ekatte": "72165",
+    "type": "city",
+    "latitude": 42.7000,
+    "longitude": 25.9000,
+    "population": 5200
+  },
+  {
+    "name": "Кермен",
+    "nameAscii": "Kermen",
+    "oblast": "Сливен",
+    "ekatte": "36854",
+    "type": "town",
+    "latitude": 42.5000,
+    "longitude": 26.2500,
+    "population": 2100
+  },
+  {
+    "name": "Елхово",
+    "nameAscii": "Elhovo",
+    "oblast": "Ямбол",
+    "ekatte": "27382",
+    "type": "city",
+    "latitude": 42.1667,
+    "longitude": 26.5667,
+    "population": 10500
+  },
+  {
+    "name": "Стралджа",
+    "nameAscii": "Straldzha",
+    "oblast": "Ямбол",
+    "ekatte": "69660",
+    "type": "city",
+    "latitude": 42.6000,
+    "longitude": 26.6833,
+    "population": 6600
+  },
+  {
+    "name": "Болярово",
+    "nameAscii": "Bolyarovo",
+    "oblast": "Ямбол",
+    "ekatte": "05284",
+    "type": "town",
+    "latitude": 42.1500,
+    "longitude": 26.8167,
+    "population": 2100
+  },
+  {
+    "name": "Средец",
+    "nameAscii": "Sredets",
+    "oblast": "Бургас",
+    "ekatte": "68607",
+    "type": "city",
+    "latitude": 42.3500,
+    "longitude": 27.1833,
+    "population": 5600
+  },
+  {
+    "name": "Камено",
+    "nameAscii": "Kameno",
+    "oblast": "Бургас",
+    "ekatte": "35883",
+    "type": "town",
+    "latitude": 42.5667,
+    "longitude": 27.3000,
+    "population": 5200
+  },
+  {
+    "name": "Сунгурларе",
+    "nameAscii": "Sungurlare",
+    "oblast": "Бургас",
+    "ekatte": "70247",
+    "type": "town",
+    "latitude": 42.7667,
+    "longitude": 26.7833,
+    "population": 4800
+  },
+  {
+    "name": "Руен",
+    "nameAscii": "Ruen",
+    "oblast": "Бургас",
+    "ekatte": "63249",
+    "type": "village",
+    "latitude": 42.8000,
+    "longitude": 27.2833,
+    "population": 2100
+  },
+  {
+    "name": "Ахелой",
+    "nameAscii": "Aheloy",
+    "oblast": "Бургас",
+    "ekatte": "00833",
+    "type": "town",
+    "latitude": 42.6333,
+    "longitude": 27.6500,
+    "population": 2600
+  },
+  {
+    "name": "Бяла",
+    "nameAscii": "Byala",
+    "oblast": "Варна",
+    "ekatte": "07598",
+    "type": "city",
+    "latitude": 42.8667,
+    "longitude": 27.8833,
+    "population": 3200
+  },
+  {
+    "name": "Дългопол",
+    "nameAscii": "Dalgopol",
+    "oblast": "Варна",
+    "ekatte": "24565",
+    "type": "city",
+    "latitude": 43.0500,
+    "longitude": 27.3500,
+    "population": 4100
+  },
+  {
+    "name": "Суворово",
+    "nameAscii": "Suvorovo",
+    "oblast": "Варна",
+    "ekatte": "70175",
+    "type": "city",
+    "latitude": 43.3333,
+    "longitude": 27.6000,
+    "population": 4600
+  },
+  {
+    "name": "Аксаково",
+    "nameAscii": "Aksakovo",
+    "oblast": "Варна",
+    "ekatte": "00182",
+    "type": "city",
+    "latitude": 43.2500,
+    "longitude": 27.8167,
+    "population": 6200
+  },
+  {
+    "name": "Златни пясъци",
+    "nameAscii": "Zlatni Pyasatsi",
+    "oblast": "Варна",
+    "ekatte": "31072",
+    "type": "village",
+    "latitude": 43.2833,
+    "longitude": 28.0333,
+    "population": 800
+  },
+  {
+    "name": "Слънчев бряг",
+    "nameAscii": "Slanchev Bryag",
+    "oblast": "Бургас",
+    "ekatte": "67339",
+    "type": "village",
+    "latitude": 42.6833,
+    "longitude": 27.7167,
+    "population": 1200
+  },
+  {
+    "name": "Черноморец",
+    "nameAscii": "Chernomorets",
+    "oblast": "Бургас",
+    "ekatte": "81178",
+    "type": "town",
+    "latitude": 42.4500,
+    "longitude": 27.6333,
+    "population": 2300
+  },
+  {
+    "name": "Свети Влас",
+    "nameAscii": "Sveti Vlas",
+    "oblast": "Бургас",
+    "ekatte": "11538",
+    "type": "town",
+    "latitude": 42.7167,
+    "longitude": 27.7500,
+    "population": 4200
+  },
+  {
+    "name": "Равда",
+    "nameAscii": "Ravda",
+    "oblast": "Бургас",
+    "ekatte": "61056",
+    "type": "village",
+    "latitude": 42.6333,
+    "longitude": 27.6833,
+    "population": 2400
+  },
+  {
+    "name": "Китен",
+    "nameAscii": "Kiten",
+    "oblast": "Бургас",
+    "ekatte": "36986",
+    "type": "town",
+    "latitude": 42.2333,
+    "longitude": 27.7833,
+    "population": 2200
+  },
+  {
+    "name": "Лозенец",
+    "nameAscii": "Lozenets",
+    "oblast": "Бургас",
+    "ekatte": "44094",
+    "type": "village",
+    "latitude": 42.2167,
+    "longitude": 27.8000,
+    "population": 2000
+  },
+  {
+    "name": "Обзор",
+    "nameAscii": "Obzor",
+    "oblast": "Бургас",
+    "ekatte": "53045",
+    "type": "city",
+    "latitude": 42.8167,
+    "longitude": 27.8833,
+    "population": 2100
+  },
+  {
+    "name": "Свищов",
+    "nameAscii": "Svishtov",
+    "oblast": "Велико Търново",
+    "ekatte": "65766",
+    "type": "city",
+    "latitude": 43.6167,
+    "longitude": 25.3500,
+    "population": 26353
+  }
+]
