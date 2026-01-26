@@ -78,7 +78,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- [ ] Human test Phase 3 birth data flow (wizard, city search, edit, RLS isolation) — deferred
 
 ### Blockers/Concerns
 
