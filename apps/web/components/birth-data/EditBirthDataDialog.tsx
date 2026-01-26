@@ -1,0 +1,356 @@
+'use client'
+
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { useForm, FormProvider } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { updateBirthDataSchema, type UpdateBirthData, approximateTimeRanges } from '@/lib/validators/birth-data'
+import { CitySearch } from './CitySearch'
+
+interface ChartData {
+  id: string
+  name: string
+  birth_date: string
+  birth_time_known: boolean
+  birth_time: string | null
+  approximate_time_range: string | null
+  city_name: string
+  latitude: number
+  longitude: number
+  city_id: string | null
+}
+
+interface EditBirthDataDialogProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+  chart: ChartData
+}
+
+const TIME_RANGE_LABELS: Record<string, string> = {
+  morning: 'Sutrin (06:00-12:00)',
+  afternoon: 'Sled obiad (12:00-18:00)',
+  evening: 'Vecher (18:00-24:00)',
+  night: 'Nosht (00:00-06:00)',
+}
+
+export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditBirthDataDialogProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  const methods = useForm<UpdateBirthData>({
+    resolver: zodResolver(updateBirthDataSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      name: chart.name,
+      birthDate: chart.birth_date,
+      birthTimeKnown: chart.birth_time_known,
+      birthTime: chart.birth_time,
+      approximateTimeRange: chart.approximate_time_range as UpdateBirthData['approximateTimeRange'],
+      cityId: chart.city_id,
+      cityName: chart.city_name,
+      latitude: chart.latitude,
+      longitude: chart.longitude,
+    },
+  })
+
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = methods
+  const birthTimeKnown = watch('birthTimeKnown')
+
+  // Reset form when chart changes or dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      methods.reset({
+        name: chart.name,
+        birthDate: chart.birth_date,
+        birthTimeKnown: chart.birth_time_known,
+        birthTime: chart.birth_time,
+        approximateTimeRange: chart.approximate_time_range as UpdateBirthData['approximateTimeRange'],
+        cityId: chart.city_id,
+        cityName: chart.city_name,
+        latitude: chart.latitude,
+        longitude: chart.longitude,
+      })
+      setError(null)
+      setShowConfirm(false)
+    }
+  }, [isOpen, chart, methods])
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (isOpen) {
+      dialog.showModal()
+    } else {
+      dialog.close()
+    }
+  }, [isOpen])
+
+  const handleCitySelect = useCallback((city: { id: string; name: string; latitude: number; longitude: number }) => {
+    setValue('cityId', city.id)
+    setValue('cityName', city.name)
+    setValue('latitude', city.latitude)
+    setValue('longitude', city.longitude)
+  }, [setValue])
+
+  const onSubmit = async (data: UpdateBirthData) => {
+    // Show confirmation dialog first
+    if (!showConfirm) {
+      setShowConfirm(true)
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/birth-data/${chart.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Greshka pri zapazvane')
+      }
+
+      onSuccess()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Neizvestna greshka')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
+    const rect = dialogRef.current?.getBoundingClientRect()
+    if (rect && (
+      e.clientX < rect.left ||
+      e.clientX > rect.right ||
+      e.clientY < rect.top ||
+      e.clientY > rect.bottom
+    )) {
+      if (!showConfirm) {
+        onClose()
+      }
+    }
+  }, [onClose, showConfirm])
+
+  const handleCancel = useCallback(() => {
+    if (showConfirm) {
+      setShowConfirm(false)
+    } else {
+      onClose()
+    }
+  }, [showConfirm, onClose])
+
+  if (!isOpen) return null
+
+  return (
+    <dialog
+      ref={dialogRef}
+      onClick={handleBackdropClick}
+      onClose={onClose}
+      className="fixed inset-0 z-[100] m-auto max-h-[90vh] max-w-lg overflow-y-auto rounded-xl border border-slate-700/50 bg-slate-900/95 p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+    >
+      <FormProvider {...methods}>
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6">
+          {/* Header */}
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-slate-100">
+              {showConfirm ? 'Potvardete promianite' : 'Redaktirane na danni'}
+            </h2>
+            <p className="mt-1 text-sm text-slate-400">
+              {showConfirm
+                ? 'Sigurni li ste, che iskate da zapasite tezi promeni?'
+                : 'Promenete dannite za razhdane'}
+            </p>
+          </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+              {error}
+            </div>
+          )}
+
+          {showConfirm ? (
+            /* Confirmation view */
+            <div className="mb-6 rounded-lg bg-slate-800/50 p-4">
+              <p className="text-sm text-slate-300">
+                Dannite za razhdane shte badat aktualizirani. Tova mozhe da promeni rezultatite ot astrologichnite izchisleniia.
+              </p>
+            </div>
+          ) : (
+            /* Edit form fields */
+            <div className="space-y-4">
+              {/* Name */}
+              <div>
+                <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-300">
+                  Ime
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  {...register('name')}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                />
+                {errors.name && (
+                  <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>
+                )}
+              </div>
+
+              {/* Birth date */}
+              <div>
+                <label htmlFor="birthDate" className="mb-1.5 block text-sm font-medium text-slate-300">
+                  Data na razhdane
+                </label>
+                <input
+                  id="birthDate"
+                  type="date"
+                  {...register('birthDate')}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                />
+                {errors.birthDate && (
+                  <p className="mt-1 text-xs text-red-400">{errors.birthDate.message}</p>
+                )}
+              </div>
+
+              {/* Time known toggle */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-300">
+                  Znaete li tochnoto vreme?
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 text-sm text-slate-300">
+                    <input
+                      type="radio"
+                      value="true"
+                      checked={birthTimeKnown === true}
+                      onChange={() => {
+                        setValue('birthTimeKnown', true)
+                        setValue('approximateTimeRange', null)
+                      }}
+                      className="h-4 w-4 border-slate-700 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                    />
+                    Da
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-slate-300">
+                    <input
+                      type="radio"
+                      value="false"
+                      checked={birthTimeKnown === false}
+                      onChange={() => {
+                        setValue('birthTimeKnown', false)
+                        setValue('birthTime', null)
+                      }}
+                      className="h-4 w-4 border-slate-700 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                    />
+                    Ne
+                  </label>
+                </div>
+              </div>
+
+              {/* Birth time or approximate range */}
+              {birthTimeKnown ? (
+                <div>
+                  <label htmlFor="birthTime" className="mb-1.5 block text-sm font-medium text-slate-300">
+                    Chas na razhdane
+                  </label>
+                  <input
+                    id="birthTime"
+                    type="time"
+                    {...register('birthTime')}
+                    className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  {errors.birthTime && (
+                    <p className="mt-1 text-xs text-red-400">{errors.birthTime.message}</p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor="approximateTimeRange" className="mb-1.5 block text-sm font-medium text-slate-300">
+                    Priblizitelen period
+                  </label>
+                  <select
+                    id="approximateTimeRange"
+                    {...register('approximateTimeRange')}
+                    className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  >
+                    <option value="">Izberete period</option>
+                    {approximateTimeRanges.map((range) => (
+                      <option key={range} value={range}>
+                        {TIME_RANGE_LABELS[range]}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.approximateTimeRange && (
+                    <p className="mt-1 text-xs text-red-400">{errors.approximateTimeRange.message}</p>
+                  )}
+                </div>
+              )}
+
+              {/* City search */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-300">
+                  Miasto na razhdane
+                </label>
+                <CitySearch
+                  onSelect={handleCitySelect}
+                  value={watch('cityName') || ''}
+                  error={errors.cityName?.message}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="mt-6 flex gap-3">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={isLoading}
+              className="flex-1 rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
+            >
+              {showConfirm ? 'Vurni se' : 'Otkaz'}
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Zapazvane...
+                </span>
+              ) : showConfirm ? (
+                'Potvardiavam'
+              ) : (
+                'Zapazi'
+              )}
+            </button>
+          </div>
+        </form>
+      </FormProvider>
+    </dialog>
+  )
+}

@@ -1,0 +1,200 @@
+'use client'
+
+import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { BirthDataCard } from '../birth-data/BirthDataCard'
+
+interface ChartData {
+  id: string
+  name: string
+  birth_date: string
+  birth_time_known: boolean
+  birth_time: string | null
+  approximate_time_range: string | null
+  city_name: string
+  latitude: number
+  longitude: number
+  city_id: string | null
+}
+
+interface DashboardContentProps {
+  firstName: string
+  userId: string | null
+  initialBirthChart: ChartData | null
+}
+
+export function DashboardContent({ firstName, userId, initialBirthChart }: DashboardContentProps) {
+  const router = useRouter()
+  const [birthChart, setBirthChart] = useState<ChartData | null>(initialBirthChart)
+
+  const handleBirthDataUpdate = useCallback(() => {
+    // Refresh the page to get updated data from server
+    router.refresh()
+    // Also refetch client-side for immediate update
+    fetch('/api/birth-data')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.length > 0) {
+          setBirthChart(data[0])
+        }
+      })
+      .catch((err) => console.error('Error refetching birth data:', err))
+  }, [router])
+
+  return (
+    <div className="mx-auto max-w-4xl">
+      {/* Welcome section */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-100">
+          Dobre doshli, {firstName}!
+        </h1>
+        <p className="mt-2 text-slate-400">
+          Vasheto tablo za astrologichni prognozi
+        </p>
+      </div>
+
+      {/* Birth data section */}
+      <div className="mb-8">
+        {birthChart ? (
+          <BirthDataCard chart={birthChart} onUpdate={handleBirthDataUpdate} />
+        ) : (
+          /* CTA to add birth data */
+          <div className="rounded-xl border border-dashed border-purple-500/50 bg-purple-500/5 p-8 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-purple-500/10">
+              <svg
+                className="h-7 w-7 text-purple-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-slate-200">
+              Dobavete danni za razhdane
+            </h3>
+            <p className="mb-6 text-sm text-slate-400">
+              Za da poluchite personalizirani astrologichni prognozi, moliia vavedete dannite si za razhdane.
+            </p>
+            <Link
+              href="/birth-data"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Vavedete danni za razhdane
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Dashboard cards */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Today's horoscope card */}
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
+              <svg
+                className="h-5 w-5 text-purple-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                />
+              </svg>
+            </div>
+            <h2 className="font-semibold text-slate-200">
+              Dneven horoskop
+            </h2>
+          </div>
+          <p className="text-sm text-slate-400">
+            Skoro: personalizirani dnevni prognozi
+          </p>
+        </div>
+
+        {/* Birth chart card */}
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10">
+              <svg
+                className="h-5 w-5 text-violet-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+            </div>
+            <h2 className="font-semibold text-slate-200">
+              Natalna karta
+            </h2>
+          </div>
+          <p className="text-sm text-slate-400">
+            Skoro: detailen analiz na razhdaneto vi
+          </p>
+        </div>
+
+        {/* Transits card */}
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10">
+              <svg
+                className="h-5 w-5 text-indigo-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+            </div>
+            <h2 className="font-semibold text-slate-200">
+              Tranziti
+            </h2>
+          </div>
+          <p className="text-sm text-slate-400">
+            Skoro: planetarni vliianiia za deniia
+          </p>
+        </div>
+      </div>
+
+      {/* User info section (for debugging/verification) */}
+      <div className="mt-8 rounded-xl border border-slate-700/50 bg-slate-800/20 p-4">
+        <p className="text-xs text-slate-500">
+          User ID: {userId}
+        </p>
+      </div>
+    </div>
+  )
+}
