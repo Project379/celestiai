@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 - [03-01]: pgTable().enableRLS() with pgPolicy() helpers for type-safe RLS
 - [03-01]: auth.jwt()->>'sub' for Clerk user ID (not auth.uid())
 - [03-01]: Separate server/client Supabase factories for different contexts
+- [03-02]: 203 settlements with mix of cities/towns/villages for comprehensive coverage
+- [03-02]: Client-side re-sort for proper type ordering (city > town > village)
 - [03-03]: Zod v4 error syntax uses { error: string } not { message: string }
 - [03-03]: superRefine for conditional cross-field validation (time/range)
 - [03-03]: RLS handles user isolation; API routes don't manually filter by user_id
