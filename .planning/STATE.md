@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Phase: 3 of 8 (Birth Data & Database)
-Plan: 1 of 5 in current phase
+Plan: 3 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-26 - Completed 03-01-PLAN.md (Database Schema & Supabase Setup)
+Last activity: 2026-01-26 - Completed 03-03-PLAN.md (Birth Data Validation & API)
 
-Progress: [#######...] 35%
+Progress: [########..] 45%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 9
 - Average duration: 6m
-- Total execution time: 0.7 hours
+- Total execution time: 0.8 hours
 
 **By Phase:**
 
@@ -29,10 +29,10 @@ Progress: [#######...] 35%
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 20m | 7m |
 | 02-authentication | 3 | 25m | 8m |
-| 03-birth-data-database | 1 | 5m | 5m |
+| 03-birth-data-database | 3 | 9m | 3m |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (15m), 02-02 (4m), 02-03 (6m), 03-01 (5m)
+- Last 5 plans: 02-02 (4m), 02-03 (6m), 03-01 (5m), 03-03 (4m)
 - Trend: Consistent execution
 
 *Updated after each plan completion*
@@ -65,6 +65,9 @@ Recent decisions affecting current work:
 - [03-01]: pgTable().enableRLS() with pgPolicy() helpers for type-safe RLS
 - [03-01]: auth.jwt()->>'sub' for Clerk user ID (not auth.uid())
 - [03-01]: Separate server/client Supabase factories for different contexts
+- [03-03]: Zod v4 error syntax uses { error: string } not { message: string }
+- [03-03]: superRefine for conditional cross-field validation (time/range)
+- [03-03]: RLS handles user isolation; API routes don't manually filter by user_id
 
 ### Pending Todos
 
@@ -95,12 +98,12 @@ Phase 2 (Authentication) is complete with all requirements satisfied:
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed 03-01-PLAN.md (Database Schema & Supabase Setup)
+Stopped at: Completed 03-03-PLAN.md (Birth Data Validation & API)
 Resume file: None
 
 ---
 
-*Next action: Execute 03-02-PLAN.md (Bulgarian Cities Data)*
+*Next action: Execute 03-04-PLAN.md (Birth Data Wizard UI)*
 
 ## Key Clarifications
 
