@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-21)
 
 **Core value:** Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.
-**Current focus:** Phase 4 - Swiss Ephemeris Integration (Phase 3 complete)
+**Current focus:** Phase 3.1 - Bugfixes & Landing Page (INSERTED)
 
 ## Current Position
 
-Phase: 3 of 8 (Birth Data & Database) - COMPLETE
-Plan: 5 of 5 in phase 3 (all complete)
-Status: Phase 3 complete, ready for Phase 4
-Last activity: 2026-01-26 - Completed 03-05-PLAN.md (Dashboard Integration)
+Phase: 3.1 of 8 (Bugfixes & Landing Page) - INSERTED
+Plan: 1 of 3 in phase 3.1 (in progress)
+Status: Plan 01 complete - Route protection and API error handling fixed
+Last activity: 2026-01-31 - Completed 03.1-01-PLAN.md (Route Protection & API Error Handling)
 
-Progress: [###########] 55%
+Progress: [############] 57%
 
 ## Performance Metrics
 
@@ -75,6 +75,8 @@ Recent decisions affecting current work:
 - [03-04]: 300ms debounce for city search autocomplete
 - [03-05]: Server/client split for dashboard with initial data fetch
 - [03-05]: Two-step confirmation for edit dialog (form -> confirm -> save)
+- [03.1-01]: auth() instead of auth.protect() in API routes for JSON error responses
+- [03.1-01]: Bulgarian error message "Неоторизиран достъп" for 401 responses
 
 ### Pending Todos
 
@@ -83,6 +85,16 @@ Recent decisions affecting current work:
 - Human test - City search behavior
 - Human test - Edit flow with confirmation
 - Human test - RLS data isolation
+
+### Roadmap Evolution
+
+- Phase 3.1 inserted after Phase 3: Bugfixes & Landing Page (URGENT)
+  - Two logout buttons in UI
+  - JSON parsing errors (HTML returned instead of JSON)
+  - /birth-data accessible without auth
+  - City search fails for unauthenticated users
+  - Remaining Latin text issues
+  - Landing page needs proper structure with nav tabs
 
 ### Blockers/Concerns
 
@@ -119,8 +131,8 @@ Phase 3 (Birth Data & Database) is complete with all requirements satisfied:
 
 ## Session Continuity
 
-Last session: 2026-01-26
-Stopped at: Completed 03-05-PLAN.md (Dashboard Integration)
+Last session: 2026-01-31
+Stopped at: Completed 03.1-01-PLAN.md (Route Protection & API Error Handling)
 Resume file: None
 
 ---
