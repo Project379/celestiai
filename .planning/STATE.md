@@ -78,6 +78,7 @@ Recent decisions affecting current work:
 - [03-05]: Two-step confirmation for edit dialog (form -> confirm -> save)
 - [03.1-01]: auth() instead of auth.protect() in API routes for JSON error responses
 - [03.1-01]: Bulgarian error message "Неоторизиран достъп" for 401 responses
+- [03.1-02]: UserButton.MenuItems to explicitly list menu items (hides default signOut)
 - [03.1-03]: Use /auth for both login and register CTAs (unified auth route)
 - [03.1-03]: Sticky navigation with glassmorphism blur effect
 - [03.1-03]: Landing section components with id attributes for anchor navigation
