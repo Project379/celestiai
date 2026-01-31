@@ -29,8 +29,9 @@ export function UserMenu() {
           },
         }}
       >
-        {/* Custom menu item for logout with confirmation */}
+        {/* Custom menu items - reorder to exclude default signOut and add custom logout with confirmation */}
         <UserButton.MenuItems>
+          <UserButton.Action label="manageAccount" />
           <UserButton.Action
             label="Изход"
             labelIcon={
