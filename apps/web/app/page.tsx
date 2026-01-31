@@ -18,7 +18,7 @@ export default function HomePage() {
           Вашият персонален астрологичен спътник. Открийте тайните на звездите.
         </p>
         <Link
-          href="/auth"
+          href="/sign-up"
           className="inline-flex rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-8 py-4 text-lg font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500"
         >
           Започнете безплатно

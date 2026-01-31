@@ -100,7 +100,7 @@ export function PricingSection() {
               </ul>
 
               <Link
-                href="/auth"
+                href="/sign-up"
                 className={`block w-full rounded-lg py-3 text-center font-medium transition-all ${
                   plan.highlight
                     ? 'bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-500 hover:to-violet-500'

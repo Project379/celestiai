@@ -46,13 +46,13 @@ export function LandingNav() {
         {/* CTA */}
         <div className="flex items-center gap-3">
           <Link
-            href="/auth"
+            href="/sign-in"
             className="text-sm text-slate-300 transition-colors hover:text-white"
           >
             Вход
           </Link>
           <Link
-            href="/auth"
+            href="/sign-up"
             className="rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-4 py-2 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500"
           >
             Регистрация
