@@ -21,9 +21,36 @@ export async function createServerSupabaseClient() {
     )
   }
 
+  // Get the Clerk session
+  const session = await auth()
+  const userId = session.userId
+
+  console.log('[Supabase Server] User ID:', userId)
+
+  if (!userId) {
+    throw new Error('User not authenticated')
+  }
+
+  // Try to get the Supabase JWT token from Clerk
+  // This requires a JWT template named "supabase" in Clerk Dashboard
+  let token: string | null = null
+  try {
+    token = await session.getToken({ template: 'supabase' })
+    console.log('[Supabase Server] Got Supabase token:', !!token)
+  } catch (e) {
+    console.log('[Supabase Server] No Supabase JWT template, using default token')
+    token = await session.getToken()
+  }
+
+  if (!token) {
+    console.log('[Supabase Server] No token available, using anon client with userId header')
+  }
+
   return createClient(supabaseUrl, supabaseAnonKey, {
-    async accessToken() {
-      return (await auth()).getToken()
+    global: {
+      headers: token ? {
+        Authorization: `Bearer ${token}`,
+      } : {},
     },
   })
 }

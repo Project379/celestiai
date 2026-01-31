@@ -1,0 +1,2 @@
+ALTER TABLE "bulgarian_cities" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+CREATE POLICY "cities_select_authenticated" ON "bulgarian_cities" AS PERMISSIVE FOR SELECT TO "authenticated" USING (true);

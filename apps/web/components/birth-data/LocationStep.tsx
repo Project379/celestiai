@@ -102,7 +102,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
               {...register('cityName')}
               type="text"
               id="manualCityName"
-              placeholder="New York, USA"
+              placeholder="Лондон, Великобритания"
               className="mt-1 block w-full rounded-lg border border-slate-600 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
             />
             {errors.cityName && (

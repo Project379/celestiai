@@ -24,21 +24,21 @@ export type ApproximateTimeRange = (typeof approximateTimeRanges)[number]
 export const birthDataSchema = z
   .object({
     name: z
-      .string({ error: 'Molia, vavedete ime' })
-      .min(1, { error: 'Molia, vavedete ime' })
-      .max(100, { error: 'Imeto ne mozhe da e po-dalgo ot 100 simvola' }),
+      .string({ error: 'Моля, въведете име' })
+      .min(1, { error: 'Моля, въведете име' })
+      .max(100, { error: 'Името не може да е по-дълго от 100 символа' }),
 
     birthDate: z
-      .string({ error: 'Molia, izberete data na razhdane' })
+      .string({ error: 'Моля, изберете дата на раждане' })
       .regex(/^\d{4}-\d{2}-\d{2}$/, {
-        error: 'Datata triabva da e vav format YYYY-MM-DD',
+        error: 'Датата трябва да е във формат YYYY-MM-DD',
       })
       .refine(
         (val) => {
           const date = new Date(val)
           return !isNaN(date.getTime())
         },
-        { error: 'Nevalidna data' }
+        { error: 'Невалидна дата' }
       )
       .refine(
         (val) => {
@@ -47,41 +47,41 @@ export const birthDataSchema = z
           today.setHours(23, 59, 59, 999)
           return date <= today
         },
-        { error: 'Datata triabva da e v minaloto' }
+        { error: 'Датата трябва да е в миналото' }
       ),
 
-    birthTimeKnown: z.boolean({ error: 'Molia, posochete dali znaete chasa na razhdane' }),
+    birthTimeKnown: z.boolean({ error: 'Моля, посочете дали знаете часа на раждане' }),
 
     birthTime: z
       .string()
       .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
-        error: 'Chasat triabva da e vav format HH:MM',
+        error: 'Часът трябва да е във формат HH:MM',
       })
       .nullable()
       .optional(),
 
     approximateTimeRange: z
       .enum(approximateTimeRanges, {
-        error: 'Izberete validna stoinost za priblizitelen period',
+        error: 'Изберете валидна стойност за приблизителен период',
       })
       .nullable()
       .optional(),
 
-    cityId: z.string().uuid({ error: 'Nevliden identifikator na grad' }).nullable().optional(),
+    cityId: z.string().uuid({ error: 'Невалиден идентификатор на град' }).nullable().optional(),
 
     cityName: z
-      .string({ error: 'Molia, izberete naseleno miasto' })
-      .min(1, { error: 'Molia, izberete naseleno miasto' }),
+      .string({ error: 'Моля, изберете населено място' })
+      .min(1, { error: 'Моля, изберете населено място' }),
 
     latitude: z
-      .number({ error: 'Molia, vavedete shirina' })
-      .min(-90, { error: 'Shirinata triabva da e mezhdu -90 i 90' })
-      .max(90, { error: 'Shirinata triabva da e mezhdu -90 i 90' }),
+      .number({ error: 'Моля, въведете ширина' })
+      .min(-90, { error: 'Ширината трябва да е между -90 и 90' })
+      .max(90, { error: 'Ширината трябва да е между -90 и 90' }),
 
     longitude: z
-      .number({ error: 'Molia, vavedete dalzhina' })
-      .min(-180, { error: 'Dalzhinata triabva da e mezhdu -180 i 180' })
-      .max(180, { error: 'Dalzhinata triabva da e mezhdu -180 i 180' }),
+      .number({ error: 'Моля, въведете дължина' })
+      .min(-180, { error: 'Дължината трябва да е между -180 и 180' })
+      .max(180, { error: 'Дължината трябва да е между -180 и 180' }),
 
     manualCoordinates: z.boolean().optional(),
   })
@@ -91,7 +91,7 @@ export const birthDataSchema = z
       if (!data.birthTime) {
         ctx.addIssue({
           code: 'custom',
-          message: 'Molia, vavedete chas ili izberete priblizitelen period',
+          message: 'Моля, въведете час или изберете приблизителен период',
           path: ['birthTime'],
         })
       }
@@ -101,7 +101,7 @@ export const birthDataSchema = z
       if (!data.approximateTimeRange) {
         ctx.addIssue({
           code: 'custom',
-          message: 'Molia, vavedete chas ili izberete priblizitelen period',
+          message: 'Моля, въведете час или изберете приблизителен период',
           path: ['approximateTimeRange'],
         })
       }
@@ -127,21 +127,21 @@ export const updateBirthDataSchema = z
   .object({
     name: z
       .string()
-      .min(1, { error: 'Molia, vavedete ime' })
-      .max(100, { error: 'Imeto ne mozhe da e po-dalgo ot 100 simvola' })
+      .min(1, { error: 'Моля, въведете име' })
+      .max(100, { error: 'Името не може да е по-дълго от 100 символа' })
       .optional(),
 
     birthDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, {
-        error: 'Datata triabva da e vav format YYYY-MM-DD',
+        error: 'Датата трябва да е във формат YYYY-MM-DD',
       })
       .refine(
         (val) => {
           const date = new Date(val)
           return !isNaN(date.getTime())
         },
-        { error: 'Nevalidna data' }
+        { error: 'Невалидна дата' }
       )
       .refine(
         (val) => {
@@ -150,7 +150,7 @@ export const updateBirthDataSchema = z
           today.setHours(23, 59, 59, 999)
           return date <= today
         },
-        { error: 'Datata triabva da e v minaloto' }
+        { error: 'Датата трябва да е в миналото' }
       )
       .optional(),
 
@@ -159,32 +159,32 @@ export const updateBirthDataSchema = z
     birthTime: z
       .string()
       .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
-        error: 'Chasat triabva da e vav format HH:MM',
+        error: 'Часът трябва да е във формат HH:MM',
       })
       .nullable()
       .optional(),
 
     approximateTimeRange: z
       .enum(approximateTimeRanges, {
-        error: 'Izberete validna stoinost za priblizitelen period',
+        error: 'Изберете валидна стойност за приблизителен период',
       })
       .nullable()
       .optional(),
 
-    cityId: z.string().uuid({ error: 'Nevliden identifikator na grad' }).nullable().optional(),
+    cityId: z.string().uuid({ error: 'Невалиден идентификатор на град' }).nullable().optional(),
 
-    cityName: z.string().min(1, { error: 'Molia, izberete naseleno miasto' }).optional(),
+    cityName: z.string().min(1, { error: 'Моля, изберете населено място' }).optional(),
 
     latitude: z
       .number()
-      .min(-90, { error: 'Shirinata triabva da e mezhdu -90 i 90' })
-      .max(90, { error: 'Shirinata triabva da e mezhdu -90 i 90' })
+      .min(-90, { error: 'Ширината трябва да е между -90 и 90' })
+      .max(90, { error: 'Ширината трябва да е между -90 и 90' })
       .optional(),
 
     longitude: z
       .number()
-      .min(-180, { error: 'Dalzhinata triabva da e mezhdu -180 i 180' })
-      .max(180, { error: 'Dalzhinata triabva da e mezhdu -180 i 180' })
+      .min(-180, { error: 'Дължината трябва да е между -180 и 180' })
+      .max(180, { error: 'Дължината трябва да е между -180 и 180' })
       .optional(),
 
     manualCoordinates: z.boolean().optional(),

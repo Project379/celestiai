@@ -1,5 +1,5 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { UserMenu } from '../../../components/auth/UserMenu'
 import { SessionExpiryModal } from '../../../components/auth/SessionExpiryModal'
 import { DashboardContent } from '../../../components/dashboard/DashboardContent'
@@ -26,10 +26,11 @@ export default async function DashboardPage() {
   // Fetch user's birth data
   let birthChart: ChartData | null = null
   try {
-    const supabase = await createServerSupabaseClient()
+    const supabase = createServiceSupabaseClient()
     const { data, error } = await supabase
       .from('charts')
       .select('*')
+      .eq('user_id', userId) // Filter by user_id
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
