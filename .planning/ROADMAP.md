@@ -19,6 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Monorepo scaffold, theme, security headers, responsive base
 - [x] **Phase 2: Authentication** - Clerk integration with secure session handling
 - [x] **Phase 3: Birth Data & Database** - User data collection, encryption, RLS policies
+- [ ] **Phase 3.1: Bugfixes & Landing Page** (INSERTED) - Route protection, UI fixes, landing page
 - [ ] **Phase 4: Astrology Engine & Charts** - Swiss Ephemeris server-side, interactive visualization
 - [ ] **Phase 5: AI Oracle** - AI-powered personalized readings with tier restrictions
 - [ ] **Phase 6: Daily Horoscope** - Personalized daily content with push notifications
@@ -135,11 +136,43 @@ Plans:
 
 ---
 
+### Phase 3.1: Bugfixes & Landing Page (INSERTED)
+
+**Goal**: Fix critical bugs discovered during testing and create proper landing page with navigation
+
+**Depends on**: Phase 3
+
+**Issues to Fix**:
+- BUG-01: Two logout buttons displayed in UI
+- BUG-02: JSON parsing error ("Unexpected token '<'") - HTML returned instead of JSON
+- BUG-03: /birth-data accessible without authentication
+- BUG-04: City search API fails when not logged in
+- BUG-05: Remaining Latin text elements need Cyrillic conversion
+- FEAT-01: Landing page with navigation tabs (Features, Pricing, About)
+
+**Success Criteria**:
+- [ ] Only one logout button visible
+- [ ] No JSON parsing errors - APIs return proper JSON or redirect
+- [ ] /birth-data redirects to /auth when not logged in
+- [ ] City search only accessible to authenticated users
+- [ ] All visible text is in Bulgarian Cyrillic
+- [ ] Landing page has proper navigation tabs and structure
+
+**Research**: None needed
+**Plans**: 3 plans in 1 wave
+
+Plans:
+- [ ] 03.1-01-PLAN.md — Route protection and API fixes (BUG-02, BUG-03, BUG-04)
+- [ ] 03.1-02-PLAN.md — UI bugfixes (BUG-01 duplicate logout, BUG-05 Latin text)
+- [ ] 03.1-03-PLAN.md — Landing page with navigation tabs (FEAT-01)
+
+---
+
 ### Phase 4: Astrology Engine & Charts
 
 **Goal**: Users see their natal chart with interactive planet exploration and Big Three prominently displayed
 
-**Depends on**: Phase 3
+**Depends on**: Phase 3.1
 
 **Requirements**:
 - CHART-01: System calculates natal chart via Swiss Ephemeris (server-side)
@@ -294,20 +327,21 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
+Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-01-21 |
 | 2. Authentication | 3/3 | Complete | 2026-01-25 |
 | 3. Birth Data & Database | 5/5 | Complete | 2026-01-26 |
+| 3.1 Bugfixes & Landing Page | 0/3 | Planned | - |
 | 4. Astrology Engine & Charts | 0/4 | Not started | - |
 | 5. AI Oracle | 0/3 | Not started | - |
 | 6. Daily Horoscope | 0/3 | Not started | - |
 | 7. Payments | 0/3 | Not started | - |
 | 8. Launch Prep | 0/3 | Not started | - |
 
-**Total Plans:** 26
+**Total Plans:** 29
 **Requirements Coverage:** 54/54 (100%)
 
 ---
@@ -386,4 +420,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 *Phase 2 complete: 2026-01-25*
 *Phase 3 planned: 2026-01-25*
 *Phase 3 complete: 2026-01-26*
+*Phase 3.1 planned: 2026-01-31*
 *Milestone: v0.1 MVP*
