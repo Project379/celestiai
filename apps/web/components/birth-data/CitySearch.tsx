@@ -18,9 +18,9 @@ interface CitySearchProps {
 }
 
 const TYPE_LABELS: Record<City['type'], string> = {
-  city: 'grad',
-  town: 'gradche',
-  village: 'selo',
+  city: 'град',
+  town: 'градче',
+  village: 'село',
 }
 
 export function CitySearch({ onSelect, value, error }: CitySearchProps) {
@@ -50,7 +50,7 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
       const response = await fetch(`/api/cities/search?q=${encodeURIComponent(searchQuery)}`)
 
       if (!response.ok) {
-        throw new Error('Greshka pri tarsene')
+        throw new Error('Грешка при търсене')
       }
 
       const data = await response.json()
@@ -58,7 +58,7 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
       setIsOpen(true)
       setHighlightedIndex(-1)
     } catch (err) {
-      setFetchError('Greshka pri tarsene')
+      setFetchError('Грешка при търсене')
       setResults([])
     } finally {
       setIsLoading(false)
@@ -146,7 +146,7 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
               inputRef.current?.focus()
             }}
             className="text-slate-400 hover:text-slate-200"
-            aria-label="Iztrii izbora"
+            aria-label="Изтрий избора"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -165,13 +165,13 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => query.length >= 1 && results.length > 0 && setIsOpen(true)}
             onKeyDown={handleKeyDown}
-            placeholder="Tarsete grad..."
+            placeholder="Търсете град..."
             className={`block w-full rounded-lg border bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 ${
               error
                 ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                 : 'border-slate-600 focus:border-purple-500 focus:ring-purple-500'
             }`}
-            aria-label="Tarsene na grad"
+            aria-label="Търсене на град"
             aria-autocomplete="list"
             aria-expanded={isOpen}
           />
@@ -194,7 +194,7 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
           {/* Empty state */}
           {results.length === 0 && !isLoading && !fetchError && query.length >= 1 && (
             <div className="px-4 py-3 text-sm text-slate-400">
-              Niama namereni rezultati
+              Няма намерени резултати
             </div>
           )}
 
@@ -208,7 +208,7 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
           {/* Min chars hint */}
           {query.length < 1 && (
             <div className="px-4 py-3 text-sm text-slate-400">
-              Vavedete pone 1 simvol
+              Въведете поне 1 символ
             </div>
           )}
 

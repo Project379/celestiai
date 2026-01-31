@@ -27,10 +27,10 @@ interface EditBirthDataDialogProps {
 }
 
 const TIME_RANGE_LABELS: Record<string, string> = {
-  morning: 'Sutrin (06:00-12:00)',
-  afternoon: 'Sled obiad (12:00-18:00)',
-  evening: 'Vecher (18:00-24:00)',
-  night: 'Nosht (00:00-06:00)',
+  morning: 'Сутрин (06:00-12:00)',
+  afternoon: 'Следобед (12:00-18:00)',
+  evening: 'Вечер (18:00-24:00)',
+  night: 'Нощ (00:00-06:00)',
 }
 
 export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditBirthDataDialogProps) {
@@ -114,12 +114,12 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Greshka pri zapazvane')
+        throw new Error(errorData.error || 'Грешка при запазване')
       }
 
       onSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Neizvestna greshka')
+      setError(err instanceof Error ? err.message : 'Неизвестна грешка')
     } finally {
       setIsLoading(false)
     }
@@ -161,12 +161,12 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
           {/* Header */}
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-slate-100">
-              {showConfirm ? 'Potvardete promianite' : 'Redaktirane na danni'}
+              {showConfirm ? 'Потвърдете промените' : 'Редактиране на данни'}
             </h2>
             <p className="mt-1 text-sm text-slate-400">
               {showConfirm
-                ? 'Sigurni li ste, che iskate da zapasite tezi promeni?'
-                : 'Promenete dannite za razhdane'}
+                ? 'Сигурни ли сте, че искате да запазите тези промени?'
+                : 'Променете данните за раждане'}
             </p>
           </div>
 
@@ -181,7 +181,7 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
             /* Confirmation view */
             <div className="mb-6 rounded-lg bg-slate-800/50 p-4">
               <p className="text-sm text-slate-300">
-                Dannite za razhdane shte badat aktualizirani. Tova mozhe da promeni rezultatite ot astrologichnite izchisleniia.
+                Данните за раждане ще бъдат актуализирани. Това може да промени резултатите от астрологичните изчисления.
               </p>
             </div>
           ) : (
@@ -190,7 +190,7 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
               {/* Name */}
               <div>
                 <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-300">
-                  Ime
+                  Име
                 </label>
                 <input
                   id="name"
@@ -206,7 +206,7 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
               {/* Birth date */}
               <div>
                 <label htmlFor="birthDate" className="mb-1.5 block text-sm font-medium text-slate-300">
-                  Data na razhdane
+                  Дата на раждане
                 </label>
                 <input
                   id="birthDate"
@@ -222,7 +222,7 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
               {/* Time known toggle */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                  Znaete li tochnoto vreme?
+                  Знаете ли точното време?
                 </label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 text-sm text-slate-300">
@@ -236,7 +236,7 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
                       }}
                       className="h-4 w-4 border-slate-700 bg-slate-800 text-purple-500 focus:ring-purple-500"
                     />
-                    Da
+                    Да
                   </label>
                   <label className="flex items-center gap-2 text-sm text-slate-300">
                     <input
@@ -249,7 +249,7 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
                       }}
                       className="h-4 w-4 border-slate-700 bg-slate-800 text-purple-500 focus:ring-purple-500"
                     />
-                    Ne
+                    Не
                   </label>
                 </div>
               </div>
@@ -258,7 +258,7 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
               {birthTimeKnown ? (
                 <div>
                   <label htmlFor="birthTime" className="mb-1.5 block text-sm font-medium text-slate-300">
-                    Chas na razhdane
+                    Час на раждане
                   </label>
                   <input
                     id="birthTime"
@@ -273,14 +273,14 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
               ) : (
                 <div>
                   <label htmlFor="approximateTimeRange" className="mb-1.5 block text-sm font-medium text-slate-300">
-                    Priblizitelen period
+                    Приблизителен период
                   </label>
                   <select
                     id="approximateTimeRange"
                     {...register('approximateTimeRange')}
                     className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                   >
-                    <option value="">Izberete period</option>
+                    <option value="">Изберете период</option>
                     {approximateTimeRanges.map((range) => (
                       <option key={range} value={range}>
                         {TIME_RANGE_LABELS[range]}
@@ -296,7 +296,7 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
               {/* City search */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                  Miasto na razhdane
+                  Място на раждане
                 </label>
                 <CitySearch
                   onSelect={handleCitySelect}
@@ -315,7 +315,7 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
               disabled={isLoading}
               className="flex-1 rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
             >
-              {showConfirm ? 'Vurni se' : 'Otkaz'}
+              {showConfirm ? 'Върни се' : 'Отказ'}
             </button>
             <button
               type="submit"
@@ -340,12 +340,12 @@ export function EditBirthDataDialog({ isOpen, onClose, onSuccess, chart }: EditB
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                     />
                   </svg>
-                  Zapazvane...
+                  Запазване...
                 </span>
               ) : showConfirm ? (
-                'Potvardiavam'
+                'Потвърждавам'
               ) : (
-                'Zapazi'
+                'Запази'
               )}
             </button>
           </div>

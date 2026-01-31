@@ -10,10 +10,10 @@ interface ConfirmStepProps {
 }
 
 const TIME_RANGE_LABELS: Record<ApproximateTimeRange, string> = {
-  morning: 'Sutrin (06:00-12:00)',
-  afternoon: 'Sledobed (12:00-18:00)',
-  evening: 'Vecher (18:00-24:00)',
-  night: 'Nosht (00:00-06:00)',
+  morning: 'Сутрин (06:00-12:00)',
+  afternoon: 'Следобед (12:00-18:00)',
+  evening: 'Вечер (18:00-24:00)',
+  night: 'Нощ (00:00-06:00)',
 }
 
 export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepProps) {
@@ -48,7 +48,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
     if (!birthTimeKnown && approximateTimeRange) {
       return TIME_RANGE_LABELS[approximateTimeRange as ApproximateTimeRange]
     }
-    return 'Ne e posocheno'
+    return 'Не е посочено'
   }
 
   // Check if there are validation errors
@@ -58,10 +58,10 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-100">
-          Pregled na dannite
+          Преглед на данните
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Izglezhda dobre? Proverete dannite predi da zapazite.
+          Изглежда добре? Проверете данните преди да запазите.
         </p>
       </div>
 
@@ -69,13 +69,13 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
       <div className="space-y-4 rounded-lg border border-slate-600/50 bg-slate-800/50 p-4">
         {/* Name */}
         <div className="flex justify-between">
-          <span className="text-sm text-slate-400">Ime na kartata</span>
+          <span className="text-sm text-slate-400">Име на картата</span>
           <span className="text-sm font-medium text-slate-100">{name || '-'}</span>
         </div>
 
         {/* Birth date */}
         <div className="flex justify-between">
-          <span className="text-sm text-slate-400">Data na razhdane</span>
+          <span className="text-sm text-slate-400">Дата на раждане</span>
           <span className="text-sm font-medium text-slate-100">
             {formatDate(birthDate as string) || '-'}
           </span>
@@ -83,7 +83,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
 
         {/* Birth time */}
         <div className="flex justify-between">
-          <span className="text-sm text-slate-400">Chas na razhdane</span>
+          <span className="text-sm text-slate-400">Час на раждане</span>
           <span className="text-sm font-medium text-slate-100">
             {getTimeDisplay()}
           </span>
@@ -91,7 +91,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
 
         {/* Location */}
         <div className="flex justify-between">
-          <span className="text-sm text-slate-400">Miasto</span>
+          <span className="text-sm text-slate-400">Място</span>
           <span className="text-sm font-medium text-slate-100">
             {cityName || '-'}
           </span>
@@ -100,7 +100,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
         {/* Coordinates */}
         {(manualCoordinates || latitude || longitude) && (
           <div className="flex justify-between">
-            <span className="text-sm text-slate-400">Koordinati</span>
+            <span className="text-sm text-slate-400">Координати</span>
             <span className="text-sm font-medium text-slate-100">
               {typeof latitude === 'number' ? latitude.toFixed(4) : '0'}, {typeof longitude === 'number' ? longitude.toFixed(4) : '0'}
             </span>
@@ -112,7 +112,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
       {hasErrors && (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
           <p className="text-sm text-red-400">
-            Molia, popalnete vsichki zadaljitelni poleta predi da zapazite.
+            Моля, попълнете всички задължителни полета преди да запазите.
           </p>
         </div>
       )}
@@ -132,7 +132,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
           disabled={isSubmitting}
           className="rounded-lg border border-slate-600 px-6 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
         >
-          Nazad
+          Назад
         </button>
         <button
           type="submit"
@@ -160,10 +160,10 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              Zapazvane...
+              Запазване...
             </span>
           ) : (
-            'Zapazi'
+            'Запази'
           )}
         </button>
       </div>

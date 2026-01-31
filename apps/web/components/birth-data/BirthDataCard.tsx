@@ -22,10 +22,10 @@ interface BirthDataCardProps {
 }
 
 const TIME_RANGE_LABELS: Record<string, string> = {
-  morning: 'Sutrin (06:00-12:00)',
-  afternoon: 'Sled obiad (12:00-18:00)',
-  evening: 'Vecher (18:00-24:00)',
-  night: 'Nosht (00:00-06:00)',
+  morning: 'Сутрин (06:00-12:00)',
+  afternoon: 'Следобед (12:00-18:00)',
+  evening: 'Вечер (18:00-24:00)',
+  night: 'Нощ (00:00-06:00)',
 }
 
 export function BirthDataCard({ chart, onUpdate }: BirthDataCardProps) {
@@ -48,7 +48,7 @@ export function BirthDataCard({ chart, onUpdate }: BirthDataCardProps) {
     if (!chart.birth_time_known && chart.approximate_time_range) {
       return TIME_RANGE_LABELS[chart.approximate_time_range] || chart.approximate_time_range
     }
-    return 'Neizvestno'
+    return 'Неизвестно'
   }
 
   const handleEditClose = () => {
@@ -83,7 +83,7 @@ export function BirthDataCard({ chart, onUpdate }: BirthDataCardProps) {
             </div>
             <div>
               <h3 className="font-semibold text-slate-200">{chart.name}</h3>
-              <p className="text-xs text-slate-500">Danni za razhdane</p>
+              <p className="text-xs text-slate-500">Данни за раждане</p>
             </div>
           </div>
           <button
@@ -91,22 +91,22 @@ export function BirthDataCard({ chart, onUpdate }: BirthDataCardProps) {
             onClick={() => setIsEditOpen(true)}
             className="rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
           >
-            Redaktirai
+            Редактирай
           </button>
         </div>
 
         {/* Birth data details */}
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <dt className="text-slate-400">Data:</dt>
+            <dt className="text-slate-400">Дата:</dt>
             <dd className="text-slate-200">{formatDate(chart.birth_date)}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-slate-400">Chas:</dt>
+            <dt className="text-slate-400">Час:</dt>
             <dd className="text-slate-200">{getTimeDisplay()}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-slate-400">Miasto:</dt>
+            <dt className="text-slate-400">Място:</dt>
             <dd className="text-slate-200">{chart.city_name}</dd>
           </div>
         </dl>

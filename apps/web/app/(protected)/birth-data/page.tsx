@@ -58,7 +58,7 @@ export default function BirthDataPage() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             />
           </svg>
-          <span>Zarejdane...</span>
+          <span>Зареждане...</span>
         </div>
       </div>
     )
@@ -69,10 +69,10 @@ export default function BirthDataPage() {
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-slate-100">
-          Vavedete dannite si za razhdane
+          Въведете данните си за раждане
         </h1>
         <p className="mt-2 text-slate-400">
-          Tezi danni sa neobhodimi za tochnite astrologichni izchisleniia
+          Тези данни са необходими за точните астрологични изчисления
         </p>
       </div>
 

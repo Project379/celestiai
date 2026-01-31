@@ -9,10 +9,10 @@ interface TimeStepProps {
 }
 
 const TIME_RANGES: { value: ApproximateTimeRange; label: string }[] = [
-  { value: 'morning', label: 'Sutrin (06:00-12:00)' },
-  { value: 'afternoon', label: 'Sledobed (12:00-18:00)' },
-  { value: 'evening', label: 'Vecher (18:00-24:00)' },
-  { value: 'night', label: 'Nosht (00:00-06:00)' },
+  { value: 'morning', label: 'Сутрин (06:00-12:00)' },
+  { value: 'afternoon', label: 'Следобед (12:00-18:00)' },
+  { value: 'evening', label: 'Вечер (18:00-24:00)' },
+  { value: 'night', label: 'Нощ (00:00-06:00)' },
 ]
 
 export function TimeStep({ onNext, onPrev }: TimeStepProps) {
@@ -44,10 +44,10 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-100">
-          Chas na razhdane
+          Час на раждане
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Tochniiat chas podobriava pretsiznostta na kartata
+          Точният час подобрява прецизността на картата
         </p>
       </div>
 
@@ -61,7 +61,7 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
           className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-900"
         />
         <label htmlFor="birthTimeKnown" className="text-sm text-slate-300">
-          Znam tochniya chas na razhdane
+          Знам точния час на раждане
         </label>
       </div>
 
@@ -72,7 +72,7 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
             htmlFor="birthTime"
             className="block text-sm font-medium text-slate-300"
           >
-            Chas (HH:MM)
+            Час (HH:MM)
           </label>
           <input
             {...register('birthTime')}
@@ -92,7 +92,7 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
       {!birthTimeKnown && (
         <div>
           <label className="block text-sm font-medium text-slate-300">
-            Priblizitelen period
+            Приблизителен период
           </label>
           <div className="mt-2 grid grid-cols-2 gap-3">
             {TIME_RANGES.map(({ value, label }) => (
@@ -125,14 +125,14 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
           onClick={onPrev}
           className="rounded-lg border border-slate-600 px-6 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-slate-500"
         >
-          Nazad
+          Назад
         </button>
         <button
           type="button"
           onClick={onNext}
           className="rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-600 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900"
         >
-          Napred
+          Напред
         </button>
       </div>
     </div>

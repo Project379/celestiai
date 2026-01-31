@@ -17,10 +17,10 @@ export function DateStep({ onNext }: DateStepProps) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-100">
-          Data na razhdane
+          Дата на раждане
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Vavedete datata i ime za kartata
+          Въведете датата и име за картата
         </p>
       </div>
 
@@ -30,13 +30,13 @@ export function DateStep({ onNext }: DateStepProps) {
           htmlFor="name"
           className="block text-sm font-medium text-slate-300"
         >
-          Ime na kartata
+          Име на картата
         </label>
         <input
           {...register('name')}
           type="text"
           id="name"
-          placeholder="Moiata karta"
+          placeholder="Моята карта"
           className="mt-1 block w-full rounded-lg border border-slate-600 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
         />
         {errors.name && (
@@ -52,7 +52,7 @@ export function DateStep({ onNext }: DateStepProps) {
           htmlFor="birthDate"
           className="block text-sm font-medium text-slate-300"
         >
-          Data na razhdane
+          Дата на раждане
         </label>
         <input
           {...register('birthDate')}
@@ -75,7 +75,7 @@ export function DateStep({ onNext }: DateStepProps) {
           onClick={onNext}
           className="rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-600 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900"
         >
-          Napred
+          Напред
         </button>
       </div>
     </div>

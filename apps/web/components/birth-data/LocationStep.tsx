@@ -48,10 +48,10 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-100">
-          Miasto na razhdane
+          Място на раждане
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Izberete miasto ili vavedete koordinati rachno
+          Изберете място или въведете координати ръчно
         </p>
       </div>
 
@@ -65,7 +65,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
           className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-900"
         />
         <label htmlFor="manualCoordinates" className="text-sm text-slate-300">
-          Rachni koordinati (za chuzhdestranno razhdane)
+          Ръчни координати (за чуждестранно раждане)
         </label>
       </div>
 
@@ -73,7 +73,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
       {!manualCoordinates && (
         <div>
           <label className="block text-sm font-medium text-slate-300">
-            Tarsene na grad
+            Търсене на град
           </label>
           <CitySearch
             onSelect={handleCitySelect}
@@ -96,7 +96,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
               htmlFor="manualCityName"
               className="block text-sm font-medium text-slate-300"
             >
-              Ime na mistoto
+              Име на мястото
             </label>
             <input
               {...register('cityName')}
@@ -118,7 +118,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
                 htmlFor="latitude"
                 className="block text-sm font-medium text-slate-300"
               >
-                Shirina (lat)
+                Ширина (lat)
               </label>
               <input
                 {...register('latitude', { valueAsNumber: true })}
@@ -139,7 +139,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
                 htmlFor="longitude"
                 className="block text-sm font-medium text-slate-300"
               >
-                Dalzhina (lon)
+                Дължина (lon)
               </label>
               <input
                 {...register('longitude', { valueAsNumber: true })}
@@ -166,14 +166,14 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
           onClick={onPrev}
           className="rounded-lg border border-slate-600 px-6 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-slate-500"
         >
-          Nazad
+          Назад
         </button>
         <button
           type="button"
           onClick={onNext}
           className="rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-600 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900"
         >
-          Napred
+          Напред
         </button>
       </div>
     </div>
