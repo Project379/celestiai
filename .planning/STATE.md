@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Phase: 3.1 of 8 (Bugfixes & Landing Page) - INSERTED
-Plan: 1 of 3 in phase 3.1 (in progress)
-Status: Plan 01 complete - Route protection and API error handling fixed
-Last activity: 2026-01-31 - Completed 03.1-01-PLAN.md (Route Protection & API Error Handling)
+Plan: 3 of 3 in phase 3.1 (complete)
+Status: Phase 3.1 complete - All bugfixes and landing page done
+Last activity: 2026-01-31 - Completed 03.1-03-PLAN.md (Landing Page)
 
-Progress: [############] 57%
+Progress: [##############] 70%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 6m
-- Total execution time: 1.0 hours
+- Total plans completed: 14
+- Average duration: 5m
+- Total execution time: 1.2 hours
 
 **By Phase:**
 
@@ -30,9 +30,10 @@ Progress: [############] 57%
 | 01-foundation | 3 | 20m | 7m |
 | 02-authentication | 3 | 25m | 8m |
 | 03-birth-data-database | 5 | 17m | 3m |
+| 03.1-bugfixes-and-landing-page | 3 | 10m | 3m |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (5m), 03-02 (4m), 03-03 (4m), 03-04 (4m), 03-05 (4m)
+- Last 5 plans: 03-04 (4m), 03-05 (4m), 03.1-01 (3m), 03.1-02 (4m), 03.1-03 (3m)
 - Trend: Consistent fast execution
 
 *Updated after each plan completion*
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [03-05]: Two-step confirmation for edit dialog (form -> confirm -> save)
 - [03.1-01]: auth() instead of auth.protect() in API routes for JSON error responses
 - [03.1-01]: Bulgarian error message "Неоторизиран достъп" for 401 responses
+- [03.1-03]: Use /auth for both login and register CTAs (unified auth route)
+- [03.1-03]: Sticky navigation with glassmorphism blur effect
+- [03.1-03]: Landing section components with id attributes for anchor navigation
 
 ### Pending Todos
 
@@ -129,10 +133,18 @@ Phase 3 (Birth Data & Database) is complete with all requirements satisfied:
 **Dashboard:** Birth data card or CTA based on user state, edit dialog with confirmation
 **Security:** SEC-19 verified - no PII sent to third-party services
 
+## Phase 3.1 Completion Summary
+
+Phase 3.1 (Bugfixes & Landing Page) is complete with all issues fixed:
+
+**Bugfixes:** API routes return JSON 401 errors, duplicate logout button removed
+**Landing Page:** Sticky navigation with tabs, Features/Pricing/About sections
+**UI:** All text in Bulgarian Cyrillic, smooth scroll anchor navigation
+
 ## Session Continuity
 
 Last session: 2026-01-31
-Stopped at: Completed 03.1-01-PLAN.md (Route Protection & API Error Handling)
+Stopped at: Completed 03.1-03-PLAN.md (Landing Page)
 Resume file: None
 
 ---
