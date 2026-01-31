@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   // Middleware already protects this route, but we get user info here
   const { userId } = await auth()
   const user = await currentUser()
-  const firstName = user?.firstName || 'Potrebitel'
+  const firstName = user?.firstName || 'Потребител'
 
   // Fetch user's birth data
   let birthChart: ChartData | null = null

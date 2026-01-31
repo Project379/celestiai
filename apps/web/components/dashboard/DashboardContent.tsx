@@ -47,10 +47,10 @@ export function DashboardContent({ firstName, userId, initialBirthChart }: Dashb
       {/* Welcome section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-100">
-          Dobre doshli, {firstName}!
+          Добре дошли, {firstName}!
         </h1>
         <p className="mt-2 text-slate-400">
-          Vasheto tablo za astrologichni prognozi
+          Вашето табло за астрологични прогнози
         </p>
       </div>
 
@@ -77,10 +77,10 @@ export function DashboardContent({ firstName, userId, initialBirthChart }: Dashb
               </svg>
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-200">
-              Dobavete danni za razhdane
+              Добавете данни за раждане
             </h3>
             <p className="mb-6 text-sm text-slate-400">
-              Za da poluchite personalizirani astrologichni prognozi, moliia vavedete dannite si za razhdane.
+              За да получите персонализирани астрологични прогнози, моля въведете данните си за раждане.
             </p>
             <Link
               href="/birth-data"
@@ -99,7 +99,7 @@ export function DashboardContent({ firstName, userId, initialBirthChart }: Dashb
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              Vavedete danni za razhdane
+              Въведете данни за раждане
             </Link>
           </div>
         )}
@@ -126,11 +126,11 @@ export function DashboardContent({ firstName, userId, initialBirthChart }: Dashb
               </svg>
             </div>
             <h2 className="font-semibold text-slate-200">
-              Dneven horoskop
+              Дневен хороскоп
             </h2>
           </div>
           <p className="text-sm text-slate-400">
-            Skoro: personalizirani dnevni prognozi
+            Скоро: персонализирани дневни прогнози
           </p>
         </div>
 
@@ -153,11 +153,11 @@ export function DashboardContent({ firstName, userId, initialBirthChart }: Dashb
               </svg>
             </div>
             <h2 className="font-semibold text-slate-200">
-              Natalna karta
+              Натална карта
             </h2>
           </div>
           <p className="text-sm text-slate-400">
-            Skoro: detailen analiz na razhdaneto vi
+            Скоро: детайлен анализ на раждането ви
           </p>
         </div>
 
@@ -180,11 +180,11 @@ export function DashboardContent({ firstName, userId, initialBirthChart }: Dashb
               </svg>
             </div>
             <h2 className="font-semibold text-slate-200">
-              Tranziti
+              Транзити
             </h2>
           </div>
           <p className="text-sm text-slate-400">
-            Skoro: planetarni vliianiia za deniia
+            Скоро: планетарни влияния за деня
           </p>
         </div>
       </div>
