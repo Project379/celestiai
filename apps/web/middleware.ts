@@ -12,6 +12,7 @@ const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
   '/settings(.*)',
   '/chart(.*)',
+  '/birth-data(.*)',
 ])
 
 export default clerkMiddleware(
