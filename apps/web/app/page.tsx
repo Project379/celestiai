@@ -1,55 +1,40 @@
-import { GlassCard, Text } from '@celestia/ui'
+import Link from 'next/link'
+import { LandingNav } from '@/components/landing/LandingNav'
+import { FeaturesSection } from '@/components/landing/FeaturesSection'
+import { PricingSection } from '@/components/landing/PricingSection'
+import { AboutSection } from '@/components/landing/AboutSection'
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen p-4 md:p-8 lg:p-12">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-purple-900/20">
+      <LandingNav />
+
       {/* Hero section */}
-      <section className="text-center mb-12">
-        <Text variant="h1" className="mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+      <section className="container mx-auto px-4 py-20 text-center">
+        <h1 className="mb-6 bg-gradient-to-r from-purple-400 to-violet-400 bg-clip-text text-4xl font-bold text-transparent md:text-6xl">
           Celestia AI
-        </Text>
-        <Text variant="muted" className="max-w-2xl mx-auto">
+        </h1>
+        <p className="mx-auto mb-8 max-w-2xl text-xl text-slate-300">
           Вашият персонален астрологичен спътник. Открийте тайните на звездите.
-        </Text>
+        </p>
+        <Link
+          href="/auth"
+          className="inline-flex rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-8 py-4 text-lg font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500"
+        >
+          Започнете безплатно
+        </Link>
       </section>
 
-      {/* Feature cards - responsive grid */}
-      {/* Mobile: 1 column, Tablet: 2 columns, Desktop: 3 columns (UI-03) */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        <GlassCard>
-          <Text variant="h3" className="mb-2">
-            Натална карта
-          </Text>
-          <Text variant="muted">
-            Разкрийте вашата уникална астрологична карта на раждане с точни планетарни позиции.
-          </Text>
-        </GlassCard>
-
-        <GlassCard>
-          <Text variant="h3" className="mb-2">
-            Дневен хороскоп
-          </Text>
-          <Text variant="muted">
-            Персонализирани дневни прогнози базирани на вашата натална карта и текущите транзити.
-          </Text>
-        </GlassCard>
-
-        <GlassCard>
-          <Text variant="h3" className="mb-2">
-            AI Оракул
-          </Text>
-          <Text variant="muted">
-            Интелигентни астрологични тълкувания, създадени специално за вас.
-          </Text>
-        </GlassCard>
-      </section>
+      <FeaturesSection />
+      <PricingSection />
+      <AboutSection />
 
       {/* Footer */}
-      <footer className="text-center mt-16">
-        <Text variant="muted">
+      <footer className="border-t border-slate-800/50 py-8">
+        <p className="text-center text-sm text-slate-500">
           &copy; 2026 Celestia AI. Всички права запазени.
-        </Text>
+        </p>
       </footer>
-    </main>
+    </div>
   )
 }
