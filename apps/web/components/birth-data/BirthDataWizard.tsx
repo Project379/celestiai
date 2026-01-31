@@ -14,10 +14,10 @@ const STEPS = ['date', 'time', 'location', 'confirm'] as const
 type Step = (typeof STEPS)[number]
 
 const STEP_LABELS: Record<Step, string> = {
-  date: 'Data',
-  time: 'Chas',
-  location: 'Miasto',
-  confirm: 'Pregled',
+  date: 'Дата',
+  time: 'Час',
+  location: 'Място',
+  confirm: 'Преглед',
 }
 
 // Fields to validate per step
@@ -88,14 +88,14 @@ export function BirthDataWizard() {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Greshka pri zapazvane')
+        throw new Error(error.error || 'Грешка при запазване')
       }
 
       // Success - redirect to dashboard
       router.push('/dashboard')
       router.refresh()
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Neizvestna greshka')
+      setSubmitError(error instanceof Error ? error.message : 'Неизвестна грешка')
     } finally {
       setIsSubmitting(false)
     }
