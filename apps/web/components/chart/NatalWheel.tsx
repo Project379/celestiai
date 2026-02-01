@@ -269,8 +269,31 @@ export function NatalWheel({
         const planetGroup = g
           .append('g')
           .attr('class', 'planet-group')
+          .attr('role', 'button')
+          .attr('tabindex', '0')
+          .attr('aria-label', `${PLANETS_BG[planet.planet as Planet]} - натисни за детайли`)
           .style('cursor', 'pointer')
           .on('click', () => handlePlanetClick(planet))
+          .on('keydown', (event: KeyboardEvent) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              handlePlanetClick(planet)
+            }
+          })
+
+        // Selection glow effect
+        if (isSelected) {
+          planetGroup
+            .append('circle')
+            .attr('cx', planet.x)
+            .attr('cy', planet.y)
+            .attr('r', size * 0.045)
+            .attr('fill', 'none')
+            .attr('stroke', PLANET_COLORS[planet.planet])
+            .attr('stroke-width', 2)
+            .attr('stroke-opacity', 0.5)
+            .attr('class', 'selection-glow')
+        }
 
         // Planet circle background
         planetGroup

@@ -46,6 +46,25 @@ interface BigThreeCardProps {
   onClick?: () => void
 }
 
+// Color configurations for selected state
+const SELECTED_COLORS: Record<string, { border: string; bg: string; glow: string }> = {
+  yellow: {
+    border: 'rgba(250, 204, 21, 0.5)',
+    bg: 'rgba(250, 204, 21, 0.15)',
+    glow: '0 0 20px rgba(250, 204, 21, 0.3)',
+  },
+  slate: {
+    border: 'rgba(148, 163, 184, 0.5)',
+    bg: 'rgba(148, 163, 184, 0.15)',
+    glow: '0 0 20px rgba(148, 163, 184, 0.3)',
+  },
+  cyan: {
+    border: 'rgba(34, 211, 238, 0.5)',
+    bg: 'rgba(34, 211, 238, 0.15)',
+    glow: '0 0 20px rgba(34, 211, 238, 0.3)',
+  },
+}
+
 function BigThreeCard({
   title,
   sign,
@@ -56,24 +75,29 @@ function BigThreeCard({
   isSelected,
   onClick,
 }: BigThreeCardProps) {
+  const selectedStyle = SELECTED_COLORS[color] || SELECTED_COLORS.slate
+
   return (
     <button
       onClick={onClick}
       className={`
-        w-full rounded-xl border p-4 text-left transition-all
+        w-full rounded-xl border p-4 text-left transition-all duration-200
         backdrop-blur-sm
+        focus:outline-none focus:ring-2 focus:ring-purple-500/50
         ${isSelected
-          ? `border-${color}-500/70 bg-${color}-500/20`
+          ? 'scale-[1.02]'
           : 'border-slate-700/50 bg-slate-800/30 hover:border-slate-600/50 hover:bg-slate-800/50'
         }
       `}
-      style={{
-        borderColor: isSelected ? `var(--${color}-glow)` : undefined,
-        backgroundColor: isSelected ? `var(--${color}-bg)` : undefined,
-      }}
+      style={isSelected ? {
+        borderColor: selectedStyle.border,
+        backgroundColor: selectedStyle.bg,
+        boxShadow: selectedStyle.glow,
+      } : undefined}
+      aria-pressed={isSelected}
     >
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-400">
+        <span className={`text-sm font-medium ${isSelected ? 'text-slate-200' : 'text-slate-400'}`}>
           {isApproximate ? '~' : ''}{title}
         </span>
         {isApproximate && (
@@ -88,7 +112,7 @@ function BigThreeCard({
           {Math.floor(degree)}°
         </span>
       </div>
-      <div className="text-sm text-slate-400">
+      <div className={`text-sm ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
         {trait}
       </div>
     </button>

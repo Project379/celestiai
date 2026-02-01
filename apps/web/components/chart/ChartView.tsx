@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useChart } from '@/hooks/useChart'
 import { NatalWheel } from './NatalWheel'
 import { BigThreeCards } from './BigThreeCards'
-import type { PlanetPosition } from '@celestia/astrology/client'
+import { PlanetDetail } from './PlanetDetail'
+import type { PlanetPosition, PointData } from '@celestia/astrology/client'
 import { UNKNOWN_TIME_DISCLAIMER_BG } from '@celestia/astrology/client'
 
 interface ChartViewProps {
@@ -86,25 +87,58 @@ export function ChartView({ chartId }: ChartViewProps) {
   const { chart, isLoading, error } = useChart(chartId)
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null)
   const [selectedBigThree, setSelectedBigThree] = useState<'sun' | 'moon' | 'rising' | null>(null)
+  const [selectedPlanetData, setSelectedPlanetData] = useState<PlanetPosition | PointData | null>(null)
 
   // Handle planet selection from wheel
-  const handlePlanetSelect = (planet: PlanetPosition) => {
-    setSelectedPlanet((prev) => (prev === planet.planet ? null : planet.planet))
-    setSelectedBigThree(null)
-    console.log('Selected planet:', planet)
-  }
+  const handlePlanetSelect = useCallback((planet: PlanetPosition) => {
+    if (selectedPlanet === planet.planet) {
+      // Deselect if clicking same planet
+      setSelectedPlanet(null)
+      setSelectedPlanetData(null)
+      setSelectedBigThree(null)
+    } else {
+      setSelectedPlanet(planet.planet)
+      setSelectedPlanetData(planet)
+      // Clear Big Three selection if selecting a different planet
+      if (planet.planet !== 'sun' && planet.planet !== 'moon') {
+        setSelectedBigThree(null)
+      } else {
+        setSelectedBigThree(planet.planet as 'sun' | 'moon')
+      }
+    }
+  }, [selectedPlanet])
 
   // Handle Big Three card selection
-  const handleBigThreeSelect = (type: 'sun' | 'moon' | 'rising') => {
-    setSelectedBigThree((prev) => (prev === type ? null : type))
-    if (type === 'sun') {
-      setSelectedPlanet('sun')
-    } else if (type === 'moon') {
-      setSelectedPlanet('moon')
-    } else {
+  const handleBigThreeSelect = useCallback((type: 'sun' | 'moon' | 'rising') => {
+    if (selectedBigThree === type) {
+      // Deselect if clicking same card
+      setSelectedBigThree(null)
       setSelectedPlanet(null)
+      setSelectedPlanetData(null)
+    } else {
+      setSelectedBigThree(type)
+      if (type === 'sun' && chart) {
+        const sun = chart.planets.find((p) => p.planet === 'sun')
+        setSelectedPlanet('sun')
+        setSelectedPlanetData(sun || null)
+      } else if (type === 'moon' && chart) {
+        const moon = chart.planets.find((p) => p.planet === 'moon')
+        setSelectedPlanet('moon')
+        setSelectedPlanetData(moon || null)
+      } else if (type === 'rising' && chart) {
+        // Rising uses ascendant data
+        setSelectedPlanet(null)
+        setSelectedPlanetData(chart.ascendant)
+      }
     }
-  }
+  }, [selectedBigThree, chart])
+
+  // Handle closing the detail panel
+  const handleCloseDetail = useCallback(() => {
+    setSelectedPlanet(null)
+    setSelectedBigThree(null)
+    setSelectedPlanetData(null)
+  }, [])
 
   if (isLoading) {
     return <ChartSkeleton />
@@ -173,18 +207,18 @@ export function ChartView({ chartId }: ChartViewProps) {
         </div>
       </div>
 
-      {/* Planet interpretation placeholder */}
-      {selectedPlanet && (
-        <div className="mt-6 rounded-xl border border-purple-500/30 bg-purple-500/10 p-4">
-          <h3 className="mb-2 font-semibold text-purple-300">
-            {chart.planets.find((p) => p.planet === selectedPlanet)?.planet &&
-              `${selectedPlanet.charAt(0).toUpperCase()}${selectedPlanet.slice(1)}`}
-          </h3>
-          <p className="text-sm text-slate-400">
-            Пълна интерпретация скоро...
-          </p>
-        </div>
-      )}
+      {/* Planet interpretation panel */}
+      <PlanetDetail
+        planet={selectedPlanetData}
+        onClose={handleCloseDetail}
+        type={selectedBigThree}
+        birthTimeKnown={chart.birthTimeKnown}
+        house={
+          selectedPlanetData && 'planet' in selectedPlanetData
+            ? chart.planets.find((p) => p.planet === (selectedPlanetData as PlanetPosition).planet)?.house
+            : undefined
+        }
+      />
     </div>
   )
 }
