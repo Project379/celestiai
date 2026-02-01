@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Phase: 4 of 8 (Astrology Engine & Charts)
-Plan: 1 of 3 in phase 4 (complete)
-Status: In progress - Plan 1 complete (Swiss Ephemeris package)
-Last activity: 2026-02-01 - Completed 04-01-PLAN.md (Swiss Ephemeris Package)
+Plan: 2 of 3 in phase 4 (complete)
+Status: In progress - Plan 2 complete (Chart Calculation API)
+Last activity: 2026-02-01 - Completed 04-02-PLAN.md (Chart Calculation API)
 
-Progress: [###############-] 75%
+Progress: [################] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: 5m
-- Total execution time: 1.4 hours
+- Total plans completed: 16
+- Average duration: 9m
+- Total execution time: 2.5 hours
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [###############-] 75%
 | 02-authentication | 3 | 25m | 8m |
 | 03-birth-data-database | 5 | 17m | 3m |
 | 03.1-bugfixes-and-landing-page | 3 | 10m | 3m |
-| 04-astrology-engine-charts | 1 | 12m | 12m |
+| 04-astrology-engine-charts | 2 | 77m | 39m |
 
 **Recent Trend:**
-- Last 5 plans: 03.1-01 (3m), 03.1-02 (4m), 03.1-03 (3m), 04-01 (12m)
-- Trend: Plan 04-01 longer due to native compilation and API investigation
+- Last 5 plans: 03.1-02 (4m), 03.1-03 (3m), 04-01 (12m), 04-02 (65m)
+- Trend: Plan 04-02 longer due to drizzle-kit push slow network issue
 
 *Updated after each plan completion*
 
@@ -88,6 +88,10 @@ Recent decisions affecting current work:
 - [04-01]: Access sweph constants via sweph.constants object
 - [04-01]: Houses result points array uses indices (SE_ASC=0, SE_MC=1)
 - [04-01]: Aspect orbs: conjunction 8deg, sextile 5deg, square/trine 7deg, opposition 8deg
+- [04-02]: Service role client for chart_calculations (internal cache table)
+- [04-02]: Cache-first pattern: check cache before calculation
+- [04-02]: JSONB columns for flexible chart data storage
+- [04-02]: Unique constraint on chart_id (one calculation per chart)
 
 ### Pending Todos
 
@@ -158,19 +162,24 @@ Phase 4 (Astrology Engine & Charts) in progress:
 - Bulgarian translations for all signs, planets, aspects
 - Package integrated as web app dependency
 
+**Plan 2 complete:** Chart Calculation API
+- POST /api/chart/calculate endpoint with authentication
+- chart_calculations table for caching calculated charts
+- Cache-first pattern: returns cached if exists, calculates if missing
+- Ownership verification: users can only calculate their own charts
+
 **Remaining plans:**
-- Plan 2: Chart calculation API endpoint
 - Plan 3: Chart visualization with D3.js
 
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 04-01-PLAN.md (Swiss Ephemeris Package)
+Stopped at: Completed 04-02-PLAN.md (Chart Calculation API)
 Resume file: None
 
 ---
 
-*Next action: Execute Phase 4 Plan 2 (Chart Calculation API)*
+*Next action: Execute Phase 4 Plan 3 (Chart Visualization)*
 
 ## Key Clarifications
 
