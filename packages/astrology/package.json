@@ -1,0 +1,30 @@
+{
+  "name": "@celestia/astrology",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./types": {
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
+    },
+    "./constants": {
+      "types": "./src/constants.ts",
+      "default": "./src/constants.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "sweph": "^2.10.3-4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.10",
+    "typescript": "^5.7.3"
+  }
+}

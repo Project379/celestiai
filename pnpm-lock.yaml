@@ -79,6 +79,19 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
+  packages/astrology:
+    dependencies:
+      sweph:
+        specifier: ^2.10.3-4
+        version: 2.10.3-b-1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.10
+        version: 22.19.7
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
   packages/config: {}
 
   packages/db:
@@ -2286,6 +2299,10 @@ packages:
       sass:
         optional: true
 
+  node-addon-api@8.5.0:
+    resolution: {integrity: sha512-/bRZty2mXUIFY/xU5HLvveNHlswNJej+RnxBjOMkidWfwZzgTbPG1E3K5TOxRLOR+5hX7bSofy8yf1hZevMS8A==}
+    engines: {node: ^18 || ^20 || >= 21}
+
   node-int64@0.4.0:
     resolution: {integrity: sha512-O5lz91xSOeoXP6DulyHfllpq+Eg00MWitZIbtPfoSEvqIHdl5gfcY6hYzDWnj0qD5tz52PI08u9qUvSVeUBeHw==}
 
@@ -2725,6 +2742,9 @@ packages:
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
+
+  sweph@2.10.3-b-1:
+    resolution: {integrity: sha512-5dgBQv+h+wBvD2HQHplgRJaQ8A1m5EAfemWiocc/CdVtO8VwKly3OL0v0TUf0IKLOkLFk6IT2AzyyJCrec5yJQ==}
 
   swr@2.3.4:
     resolution: {integrity: sha512-bYd2lrhc+VarcpkgWclcUi92wYCpOgMws9Sd1hG1ntAu0NEy+14CbotuFjshBU2kt9rYj9TSmDcybpxpeTU1fg==}
@@ -5026,6 +5046,8 @@ snapshots:
       - '@babel/core'
       - babel-plugin-macros
 
+  node-addon-api@8.5.0: {}
+
   node-int64@0.4.0: {}
 
   node-releases@2.0.27: {}
@@ -5493,6 +5515,10 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  sweph@2.10.3-b-1:
+    dependencies:
+      node-addon-api: 8.5.0
 
   swr@2.3.4(react@19.2.3):
     dependencies:
