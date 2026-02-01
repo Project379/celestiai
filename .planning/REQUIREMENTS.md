@@ -34,11 +34,11 @@ Requirements for MVP web launch. Each maps to roadmap phases.
 
 ### Natal Chart
 
-- [ ] **CHART-01**: System calculates natal chart via Swiss Ephemeris (server-side)
-- [ ] **CHART-02**: User sees interactive natal chart visualization
-- [ ] **CHART-03**: User can tap planets to see interpretation
-- [ ] **CHART-04**: User sees Big Three (Sun, Moon, Rising) prominently
-- [ ] **CHART-05**: Chart displays all 10 major planets with positions
+- [x] **CHART-01**: System calculates natal chart via Swiss Ephemeris (server-side)
+- [x] **CHART-02**: User sees interactive natal chart visualization
+- [x] **CHART-03**: User can tap planets to see interpretation
+- [x] **CHART-04**: User sees Big Three (Sun, Moon, Rising) prominently
+- [x] **CHART-05**: Chart displays all 10 major planets with positions
 
 ### AI Oracle
 
@@ -166,11 +166,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BIRTH-04 | Phase 3 | Pending |
 | BIRTH-05 | Phase 3 | Pending |
 | BIRTH-06 | Phase 3 | Pending |
-| CHART-01 | Phase 4 | Pending |
-| CHART-02 | Phase 4 | Pending |
-| CHART-03 | Phase 4 | Pending |
-| CHART-04 | Phase 4 | Pending |
-| CHART-05 | Phase 4 | Pending |
+| CHART-01 | Phase 4 | Complete |
+| CHART-02 | Phase 4 | Complete |
+| CHART-03 | Phase 4 | Complete |
+| CHART-04 | Phase 4 | Complete |
+| CHART-05 | Phase 4 | Complete |
 | AI-01 | Phase 5 | Pending |
 | AI-02 | Phase 5 | Pending |
 | AI-03 | Phase 5 | Pending |

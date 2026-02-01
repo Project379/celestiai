@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Authentication** - Clerk integration with secure session handling
 - [x] **Phase 3: Birth Data & Database** - User data collection, encryption, RLS policies
 - [x] **Phase 3.1: Bugfixes & Landing Page** (INSERTED) - Route protection, UI fixes, landing page
-- [ ] **Phase 4: Astrology Engine & Charts** - Swiss Ephemeris server-side, interactive visualization
+- [x] **Phase 4: Astrology Engine & Charts** - Swiss Ephemeris server-side, interactive visualization
 - [ ] **Phase 5: AI Oracle** - AI-powered personalized readings with tier restrictions
 - [ ] **Phase 6: Daily Horoscope** - Personalized daily content with push notifications
 - [ ] **Phase 7: Payments** - Stripe integration, subscription lifecycle management
@@ -182,20 +182,20 @@ Plans:
 - CHART-05: Chart displays all 10 major planets with positions
 
 **Success Criteria**:
-- [ ] User with birth data sees calculated natal chart within seconds of request
-- [ ] Chart visualization shows all 10 planets positioned correctly
-- [ ] User can tap/click any planet to see interpretation popup
-- [ ] Big Three (Sun, Moon, Rising) are visually prominent above other planets
-- [ ] Chart renders correctly on both desktop and mobile viewports
+- [x] User with birth data sees calculated natal chart within seconds of request
+- [x] Chart visualization shows all 10 planets positioned correctly
+- [x] User can tap/click any planet to see interpretation popup
+- [x] Big Three (Sun, Moon, Rising) are visually prominent above other planets
+- [x] Chart renders correctly on both desktop and mobile viewports
 
 **Research**: Complete (04-RESEARCH.md)
-**Plans**: 4 plans in 4 waves
+**Plans**: 4 plans in 4 waves (COMPLETE)
 
 Plans:
-- [ ] 04-01-PLAN.md — @celestia/astrology package with sweph bindings and calculation utilities
-- [ ] 04-02-PLAN.md — Chart calculation API route with database caching
-- [ ] 04-03-PLAN.md — Interactive chart visualization with D3.js and Big Three cards
-- [ ] 04-04-PLAN.md — Planet interpretation popups with placeholder text
+- [x] 04-01-PLAN.md — @celestia/astrology package with sweph bindings and calculation utilities
+- [x] 04-02-PLAN.md — Chart calculation API route with database caching
+- [x] 04-03-PLAN.md — Interactive chart visualization with D3.js and Big Three cards
+- [x] 04-04-PLAN.md — Planet interpretation popups with placeholder text
 
 ---
 
@@ -334,7 +334,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 | 2. Authentication | 3/3 | Complete | 2026-01-25 |
 | 3. Birth Data & Database | 5/5 | Complete | 2026-01-26 |
 | 3.1 Bugfixes & Landing Page | 3/3 | Complete | 2026-01-31 |
-| 4. Astrology Engine & Charts | 0/4 | Planned | - |
+| 4. Astrology Engine & Charts | 4/4 | Complete | 2026-02-01 |
 | 5. AI Oracle | 0/3 | Not started | - |
 | 6. Daily Horoscope | 0/3 | Not started | - |
 | 7. Payments | 0/3 | Not started | - |
