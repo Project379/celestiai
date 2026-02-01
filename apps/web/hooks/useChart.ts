@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { ChartData } from '@celestia/astrology'
+import type { ChartData } from '@celestia/astrology/client'
 
 interface UseChartResult {
   /** Calculated chart data */

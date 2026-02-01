@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { useChart } from '@/hooks/useChart'
 import { NatalWheel } from './NatalWheel'
 import { BigThreeCards } from './BigThreeCards'
-import type { PlanetPosition } from '@celestia/astrology'
-import { UNKNOWN_TIME_DISCLAIMER_BG } from '@celestia/astrology'
+import type { PlanetPosition } from '@celestia/astrology/client'
+import { UNKNOWN_TIME_DISCLAIMER_BG } from '@celestia/astrology/client'
 
 interface ChartViewProps {
   /** Chart ID to fetch and display */

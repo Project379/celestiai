@@ -3,9 +3,9 @@
 import { useMemo, useCallback } from 'react'
 import * as d3 from 'd3'
 import { useD3 } from '@/hooks/useD3'
-import type { ChartData, PlanetPosition, AspectData } from '@celestia/astrology'
-import { ZODIAC_SIGNS_BG, PLANETS_BG, ZODIAC_SIGNS_ORDER } from '@celestia/astrology'
-import type { ZodiacSign, Planet, AspectType } from '@celestia/astrology'
+import type { ChartData, PlanetPosition, AspectData } from '@celestia/astrology/client'
+import { ZODIAC_SIGNS_BG, PLANETS_BG, ZODIAC_SIGNS_ORDER } from '@celestia/astrology/client'
+import type { ZodiacSign, Planet, AspectType } from '@celestia/astrology/client'
 
 interface NatalWheelProps {
   /** Calculated chart data */

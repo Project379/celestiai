@@ -1,8 +1,8 @@
 'use client'
 
-import type { PlanetPosition, PointData } from '@celestia/astrology'
-import { ZODIAC_SIGNS_BG, PLANETS_BG } from '@celestia/astrology'
-import type { ZodiacSign, Planet } from '@celestia/astrology'
+import type { PlanetPosition, PointData } from '@celestia/astrology/client'
+import { ZODIAC_SIGNS_BG, PLANETS_BG } from '@celestia/astrology/client'
+import type { ZodiacSign } from '@celestia/astrology/client'
 
 interface BigThreeCardsProps {
   /** Sun planet position */
