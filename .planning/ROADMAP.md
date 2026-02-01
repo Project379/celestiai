@@ -188,15 +188,14 @@ Plans:
 - [ ] Big Three (Sun, Moon, Rising) are visually prominent above other planets
 - [ ] Chart renders correctly on both desktop and mobile viewports
 
-**Research**: Likely (swisseph-wasm server-side integration, D3.js interactive chart)
-**Research topics**: swisseph-wasm API usage, Placidus house calculation, D3.js interactive wheel chart
-**Plans**: TBD
+**Research**: Complete (04-RESEARCH.md)
+**Plans**: 4 plans in 4 waves
 
 Plans:
-- [ ] 04-01: Swiss Ephemeris API route with swisseph-wasm
-- [ ] 04-02: Chart calculation service (planets, houses, aspects)
-- [ ] 04-03: Interactive chart visualization with D3.js
-- [ ] 04-04: Planet interpretation popups with Big Three emphasis
+- [ ] 04-01-PLAN.md — @celestia/astrology package with sweph bindings and calculation utilities
+- [ ] 04-02-PLAN.md — Chart calculation API route with database caching
+- [ ] 04-03-PLAN.md — Interactive chart visualization with D3.js and Big Three cards
+- [ ] 04-04-PLAN.md — Planet interpretation popups with placeholder text
 
 ---
 
@@ -335,7 +334,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 | 2. Authentication | 3/3 | Complete | 2026-01-25 |
 | 3. Birth Data & Database | 5/5 | Complete | 2026-01-26 |
 | 3.1 Bugfixes & Landing Page | 3/3 | Complete | 2026-01-31 |
-| 4. Astrology Engine & Charts | 0/4 | Not started | - |
+| 4. Astrology Engine & Charts | 0/4 | Planned | - |
 | 5. AI Oracle | 0/3 | Not started | - |
 | 6. Daily Horoscope | 0/3 | Not started | - |
 | 7. Payments | 0/3 | Not started | - |
@@ -422,4 +421,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 *Phase 3 complete: 2026-01-26*
 *Phase 3.1 planned: 2026-01-31*
 *Phase 3.1 complete: 2026-01-31*
+*Phase 4 planned: 2026-02-01*
 *Milestone: v0.1 MVP*
