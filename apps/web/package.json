@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@celestia/astrology": "workspace:*",
     "@celestia/ui": "workspace:*",
     "@clerk/localizations": "^3.35.1",
     "@clerk/nextjs": "^6.36.9",

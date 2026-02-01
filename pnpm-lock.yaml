@@ -17,6 +17,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@celestia/astrology':
+        specifier: workspace:*
+        version: link:../../packages/astrology
       '@celestia/ui':
         specifier: workspace:*
         version: link:../../packages/ui
