@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-21)
 
 **Core value:** Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.
-**Current focus:** Phase 3.1 - Bugfixes & Landing Page (INSERTED)
+**Current focus:** Phase 4 - Astrology Engine & Charts
 
 ## Current Position
 
-Phase: 3.1 of 8 (Bugfixes & Landing Page) - INSERTED
-Plan: 3 of 3 in phase 3.1 (complete)
-Status: Phase 3.1 complete - All bugfixes and landing page done
-Last activity: 2026-01-31 - Completed 03.1-03-PLAN.md (Landing Page)
+Phase: 4 of 8 (Astrology Engine & Charts)
+Plan: 1 of 3 in phase 4 (complete)
+Status: In progress - Plan 1 complete (Swiss Ephemeris package)
+Last activity: 2026-02-01 - Completed 04-01-PLAN.md (Swiss Ephemeris Package)
 
-Progress: [##############] 70%
+Progress: [###############-] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 5m
-- Total execution time: 1.2 hours
+- Total execution time: 1.4 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [##############] 70%
 | 02-authentication | 3 | 25m | 8m |
 | 03-birth-data-database | 5 | 17m | 3m |
 | 03.1-bugfixes-and-landing-page | 3 | 10m | 3m |
+| 04-astrology-engine-charts | 1 | 12m | 12m |
 
 **Recent Trend:**
-- Last 5 plans: 03-04 (4m), 03-05 (4m), 03.1-01 (3m), 03.1-02 (4m), 03.1-03 (3m)
-- Trend: Consistent fast execution
+- Last 5 plans: 03.1-01 (3m), 03.1-02 (4m), 03.1-03 (3m), 04-01 (12m)
+- Trend: Plan 04-01 longer due to native compilation and API investigation
 
 *Updated after each plan completion*
 
@@ -82,6 +83,11 @@ Recent decisions affecting current work:
 - [03.1-03]: Use /auth for both login and register CTAs (unified auth route)
 - [03.1-03]: Sticky navigation with glassmorphism blur effect
 - [03.1-03]: Landing section components with id attributes for anchor navigation
+- [04-01]: Use sweph native Node.js bindings (not WASM) for server-side calculations
+- [04-01]: Use Moshier ephemeris (built-in, no external files needed)
+- [04-01]: Access sweph constants via sweph.constants object
+- [04-01]: Houses result points array uses indices (SE_ASC=0, SE_MC=1)
+- [04-01]: Aspect orbs: conjunction 8deg, sextile 5deg, square/trine 7deg, opposition 8deg
 
 ### Pending Todos
 
@@ -93,17 +99,17 @@ Recent decisions affecting current work:
 
 ### Roadmap Evolution
 
-- Phase 3.1 inserted after Phase 3: Bugfixes & Landing Page (URGENT)
-  - Two logout buttons in UI
-  - JSON parsing errors (HTML returned instead of JSON)
-  - /birth-data accessible without auth
-  - City search fails for unauthenticated users
-  - Remaining Latin text issues
-  - Landing page needs proper structure with nav tabs
+- Phase 3.1 inserted after Phase 3: Bugfixes & Landing Page (COMPLETE)
+  - Two logout buttons in UI - FIXED
+  - JSON parsing errors (HTML returned instead of JSON) - FIXED
+  - /birth-data accessible without auth - FIXED
+  - City search fails for unauthenticated users - FIXED
+  - Remaining Latin text issues - FIXED
+  - Landing page needs proper structure with nav tabs - DONE
 
 ### Blockers/Concerns
 
-None yet.
+None.
 
 ## Phase 1 Completion Summary
 
@@ -142,15 +148,29 @@ Phase 3.1 (Bugfixes & Landing Page) is complete with all issues fixed:
 **Landing Page:** Sticky navigation with tabs, Features/Pricing/About sections
 **UI:** All text in Bulgarian Cyrillic, smooth scroll anchor navigation
 
+## Phase 4 Progress
+
+Phase 4 (Astrology Engine & Charts) in progress:
+
+**Plan 1 complete:** @celestia/astrology package with Swiss Ephemeris
+- sweph native bindings with Moshier ephemeris
+- calculateNatalChart() for planet positions, houses, aspects
+- Bulgarian translations for all signs, planets, aspects
+- Package integrated as web app dependency
+
+**Remaining plans:**
+- Plan 2: Chart calculation API endpoint
+- Plan 3: Chart visualization with D3.js
+
 ## Session Continuity
 
-Last session: 2026-01-31
-Stopped at: Completed 03.1-03-PLAN.md (Landing Page)
+Last session: 2026-02-01
+Stopped at: Completed 04-01-PLAN.md (Swiss Ephemeris Package)
 Resume file: None
 
 ---
 
-*Next action: Plan Phase 4 (Swiss Ephemeris Integration)*
+*Next action: Execute Phase 4 Plan 2 (Chart Calculation API)*
 
 ## Key Clarifications
 
