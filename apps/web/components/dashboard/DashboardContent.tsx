@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { BirthDataCard } from '../birth-data/BirthDataCard'
 import { DailyHoroscope } from '@/components/horoscope/DailyHoroscope'
+import { PushNotificationBanner } from '@/components/horoscope/PushNotificationBanner'
 
 interface ChartData {
   id: string
@@ -110,6 +111,13 @@ export function DashboardContent({ firstName, userId, initialBirthChart }: Dashb
       {birthChart && (
         <div className="mb-8">
           <DailyHoroscope chartId={birthChart.id} />
+        </div>
+      )}
+
+      {/* Push notification opt-in — shown below horoscope when user has a birth chart */}
+      {birthChart && (
+        <div className="mb-8">
+          <PushNotificationBanner />
         </div>
       )}
 
