@@ -95,10 +95,12 @@ export function useDailyHoroscope(chartId: string) {
     const yesterdayStr = getYesterdayString()
 
     try {
-      const res = await fetch('/api/horoscope/generate', {
+      // API route reads date from query param: ?date=YYYY-MM-DD
+      const url = `/api/horoscope/generate?date=${encodeURIComponent(yesterdayStr)}`
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chartId, date: yesterdayStr }),
+        body: JSON.stringify({ chartId }),
       })
 
       if (!res.ok) {
