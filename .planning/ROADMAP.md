@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Birth Data & Database** - User data collection, encryption, RLS policies
 - [x] **Phase 3.1: Bugfixes & Landing Page** (INSERTED) - Route protection, UI fixes, landing page
 - [x] **Phase 4: Astrology Engine & Charts** - Swiss Ephemeris server-side, interactive visualization
-- [ ] **Phase 5: AI Oracle** - AI-powered personalized readings with tier restrictions
+- [x] **Phase 5: AI Oracle** - AI-powered personalized readings with tier restrictions
 - [ ] **Phase 6: Daily Horoscope** - Personalized daily content with push notifications
 - [ ] **Phase 7: Payments** - Stripe integration, subscription lifecycle management
 - [ ] **Phase 8: Launch Prep** - Landing page, GDPR compliance, audit logging, final polish
@@ -221,12 +221,12 @@ Plans:
 - [ ] Readings feel personalized, not generic horoscope content
 
 **Research**: Complete (05-RESEARCH.md)
-**Plans**: 3 plans in 3 waves
+**Plans**: 3 plans in 3 waves (COMPLETE)
 
 Plans:
-- [ ] 05-01-PLAN.md — Database schema (users + ai_readings tables) and Oracle prompt utilities
-- [ ] 05-02-PLAN.md — Streaming API route (Gemini), readings/teaser endpoints, client hook
-- [ ] 05-03-PLAN.md — Oracle UI components, chart page integration, cross-highlighting
+- [x] 05-01-PLAN.md — Database schema (users + ai_readings tables) and Oracle prompt utilities
+- [x] 05-02-PLAN.md — Streaming API route (Gemini), readings/teaser endpoints, client hook
+- [x] 05-03-PLAN.md — Oracle UI components, chart page integration, cross-highlighting
 
 ---
 
@@ -334,7 +334,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 | 3. Birth Data & Database | 5/5 | Complete | 2026-01-26 |
 | 3.1 Bugfixes & Landing Page | 3/3 | Complete | 2026-01-31 |
 | 4. Astrology Engine & Charts | 4/4 | Complete | 2026-02-01 |
-| 5. AI Oracle | 0/3 | Planned | - |
+| 5. AI Oracle | 3/3 | Complete | 2026-02-15 |
 | 6. Daily Horoscope | 0/3 | Not started | - |
 | 7. Payments | 0/3 | Not started | - |
 | 8. Launch Prep | 0/3 | Not started | - |

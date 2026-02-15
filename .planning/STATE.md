@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 
 ## Current Position
 
-Phase: 5 of 8 (AI Oracle) - IN PROGRESS
-Plan: 3 of 4 in phase 5 (checkpoint:human-verify — Tasks 1+2 complete, awaiting user verification)
-Status: Phase 5 Plan 3 paused at checkpoint — Oracle UI components built, awaiting end-to-end verification
-Last activity: 2026-02-15 - Completed Tasks 1+2 of 05-03-PLAN.md (Oracle UI Components + ChartView integration)
+Phase: 5 of 8 (AI Oracle) - COMPLETE
+Plan: 3 of 3 in phase 5 (complete)
+Status: Phase 5 complete - AI Oracle built (human verification deferred to batch testing)
+Last activity: 2026-02-15 - Completed 05-03-PLAN.md (Oracle UI Components + ChartView integration)
 
-Progress: [####################] 93%
+Progress: [####################] 95%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20
+- Total plans completed: 21
 - Average duration: 9m
-- Total execution time: 2.98 hours
+- Total execution time: 3.1 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [####################] 93%
 | 03-birth-data-database | 5 | 17m | 3m |
 | 03.1-bugfixes-and-landing-page | 3 | 10m | 3m |
 | 04-astrology-engine-charts | 4 | 104m | 26m |
-| 05-ai-oracle | 2 | 10m | 5m |
+| 05-ai-oracle | 3 | 20m | 7m |
 
 **Recent Trend:**
-- Last 5 plans: 04-03 (18m), 04-04 (9m), 05-01 (5m), 05-02 (5m)
-- Trend: Phase 5 executing fast — both data layer and API layer done in 5m each
+- Last 5 plans: 04-04 (9m), 05-01 (5m), 05-02 (5m), 05-03 (10m)
+- Trend: Phase 5 complete in ~20m — fast execution across all 3 plans
 
 *Updated after each plan completion*
 
@@ -184,24 +184,25 @@ Phase 4 (Astrology Engine & Charts) is complete with all requirements satisfied:
 **Accessibility:** Keyboard navigable chart with focus management
 **UI:** Responsive /chart page with loading skeleton and error states
 
-## Phase 5 Progress
+## Phase 5 Completion Summary
 
-Phase 5 (AI Oracle) in progress - 2 of 4 plans complete (Plan 3 at checkpoint):
+Phase 5 (AI Oracle) is complete with all requirements built (human verification deferred):
 
-**Plan 01 (complete):** users + ai_readings tables, Oracle prompt utilities (buildSystemPrompt, chartToPromptText, extractPlanetMentions, stripSentinels)
-**Plan 02 (complete):** Gemini streaming API (POST /api/oracle/generate), readings GET, teaser POST, useOracleReading hook
-**Plan 03 (checkpoint:human-verify):** Oracle UI components (TopicCard, TopicCards, ReadingStream, LockedTopicTeaser, OraclePanel) + ChartView integration — Tasks 1+2 done, awaiting user verification
-**Plan 04:** (if any remaining work after verification)
+**Database:** users table (subscription_tier), ai_readings table (7-day expiry cache, unique per chart+topic)
+**Prompt Engineering:** Bulgarian mystical guide persona, sentinel markers for cross-highlighting, topic suffixes
+**Streaming API:** Gemini 2.5 Flash via Vercel AI SDK v6, tier gating, cache-first, 24h regen rate limit
+**UI:** TopicCards (4 topics with lock states), ReadingStream (streaming + cross-highlight), LockedTopicTeaser (blurred + CTA), OraclePanel
+**Integration:** ChartView with responsive Oracle panel, planet cross-highlighting bridge to NatalWheel
 
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Checkpoint in 05-03-PLAN.md Task 3 (human-verify: AI Oracle end-to-end)
+Stopped at: Completed Phase 5 (AI Oracle)
 Resume file: None
 
 ---
 
-*Next action: Human verifies AI Oracle end-to-end (Task 3 checkpoint in 05-03-PLAN.md)*
+*Next action: Plan Phase 6 (Daily Horoscope)*
 
 ## Key Clarifications
 
