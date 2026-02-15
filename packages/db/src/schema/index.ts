@@ -22,3 +22,8 @@ export {
   type DailyHoroscope,
   type NewDailyHoroscope,
 } from './daily-horoscopes'
+export {
+  pushSubscriptions,
+  type PushSubscription,
+  type NewPushSubscription,
+} from './push-subscriptions'
