@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-21)
 
 **Core value:** Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.
-**Current focus:** Phase 5 - AI Oracle
+**Current focus:** Phase 6 - Daily Horoscope
 
 ## Current Position
 
-Phase: 5 of 8 (AI Oracle) - COMPLETE
-Plan: 3 of 3 in phase 5 (complete)
-Status: Phase 5 complete - AI Oracle built (human verification deferred to batch testing)
-Last activity: 2026-02-15 - Completed 05-03-PLAN.md (Oracle UI Components + ChartView integration)
+Phase: 6 of 8 (Daily Horoscope) - IN PROGRESS
+Plan: 1 of 3 in phase 6 (complete)
+Status: Phase 6 plan 1 complete - backend pipeline built (transit calc, DB schema, streaming API)
+Last activity: 2026-02-15 - Completed 06-01-PLAN.md (Transit Calculation + DB Schema + Streaming API)
 
-Progress: [####################] 95%
+Progress: [####################] 96%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
+- Total plans completed: 22
 - Average duration: 9m
-- Total execution time: 3.1 hours
+- Total execution time: 3.2 hours
 
 **By Phase:**
 
@@ -33,10 +33,11 @@ Progress: [####################] 95%
 | 03.1-bugfixes-and-landing-page | 3 | 10m | 3m |
 | 04-astrology-engine-charts | 4 | 104m | 26m |
 | 05-ai-oracle | 3 | 20m | 7m |
+| 06-daily-horoscope | 1 | 5m | 5m |
 
 **Recent Trend:**
-- Last 5 plans: 04-04 (9m), 05-01 (5m), 05-02 (5m), 05-03 (10m)
-- Trend: Phase 5 complete in ~20m — fast execution across all 3 plans
+- Last 5 plans: 05-01 (5m), 05-02 (5m), 05-03 (10m), 06-01 (5m)
+- Trend: Phase 6 backend pipeline complete in 5m
 
 *Updated after each plan completion*
 
@@ -112,6 +113,11 @@ Recent decisions affecting current work:
 - [05-03]: Cross-highlight bridge in ChartView maps Oracle planet keys to NatalWheel selection state via existing setSelectedPlanet flow
 - [05-03]: chart/page.tsx wraps users table query in try/catch — silently defaults to 'free' if Supabase paused or row missing
 - [05-03]: TOPIC_META in TopicCard.tsx is single source of truth for labels + icons across Oracle components
+- [06-01]: Sofia timezone date key (Intl.DateTimeFormat en-CA) prevents UTC boundary mismatch for Bulgarian users
+- [06-01]: Two-layer transit cache: global daily_transits by date + per-chart daily_horoscopes by chart+date
+- [06-01]: Yesterday horoscope returns unavailable if no prior cache — no retroactive AI generation
+- [06-01]: Transit orbs separate from natal: inner planets 2-3deg, outer 3-4deg via TRANSIT_ASPECT_DEFINITIONS
+- [06-01]: daily_transits + daily_horoscopes use service role only (no RLS) — consistent with ai_readings pattern
 
 ### Pending Todos
 
@@ -197,12 +203,12 @@ Phase 5 (AI Oracle) is complete with all requirements built (human verification 
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed Phase 5 (AI Oracle)
+Stopped at: Completed 06-01-PLAN.md (Daily Horoscope Backend — transit calc, DB schema, streaming API)
 Resume file: None
 
 ---
 
-*Next action: Plan Phase 6 (Daily Horoscope)*
+*Next action: Execute 06-02-PLAN.md (Daily Horoscope UI)*
 
 ## Key Clarifications
 
