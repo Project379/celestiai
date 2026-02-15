@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Phase: 5 of 8 (AI Oracle) - IN PROGRESS
-Plan: 2 of 4 in phase 5 (complete)
-Status: Phase 5 Plan 2 complete - Streaming API routes and client hook done
-Last activity: 2026-02-15 - Completed 05-02-PLAN.md (Streaming API and Client Hook)
+Plan: 3 of 4 in phase 5 (checkpoint:human-verify — Tasks 1+2 complete, awaiting user verification)
+Status: Phase 5 Plan 3 paused at checkpoint — Oracle UI components built, awaiting end-to-end verification
+Last activity: 2026-02-15 - Completed Tasks 1+2 of 05-03-PLAN.md (Oracle UI Components + ChartView integration)
 
 Progress: [####################] 93%
 
@@ -108,6 +108,10 @@ Recent decisions affecting current work:
 - [05-02]: AI SDK v6 uses maxOutputTokens not maxTokens for token limits
 - [05-02]: useCompletion streamProtocol: 'text' pairs with toTextStreamResponse() in v6
 - [05-02]: Teaser upsert creates row with empty content to hold teaser_content until full generation
+- [05-03]: OraclePanel mounted twice (desktop + mobile) — share same DB cache via useOracleReading(chartId)
+- [05-03]: Cross-highlight bridge in ChartView maps Oracle planet keys to NatalWheel selection state via existing setSelectedPlanet flow
+- [05-03]: chart/page.tsx wraps users table query in try/catch — silently defaults to 'free' if Supabase paused or row missing
+- [05-03]: TOPIC_META in TopicCard.tsx is single source of truth for labels + icons across Oracle components
 
 ### Pending Todos
 
@@ -182,22 +186,22 @@ Phase 4 (Astrology Engine & Charts) is complete with all requirements satisfied:
 
 ## Phase 5 Progress
 
-Phase 5 (AI Oracle) in progress - 1 of 4 plans complete:
+Phase 5 (AI Oracle) in progress - 2 of 4 plans complete (Plan 3 at checkpoint):
 
 **Plan 01 (complete):** users + ai_readings tables, Oracle prompt utilities (buildSystemPrompt, chartToPromptText, extractPlanetMentions, stripSentinels)
 **Plan 02 (complete):** Gemini streaming API (POST /api/oracle/generate), readings GET, teaser POST, useOracleReading hook
-**Plan 03 (next):** Topic cards UI and reading panel with streaming display
-**Plan 04:** Cross-highlighting between reading text and natal wheel
+**Plan 03 (checkpoint:human-verify):** Oracle UI components (TopicCard, TopicCards, ReadingStream, LockedTopicTeaser, OraclePanel) + ChartView integration — Tasks 1+2 done, awaiting user verification
+**Plan 04:** (if any remaining work after verification)
 
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 05-02-PLAN.md (Streaming API and Client Hook)
+Stopped at: Checkpoint in 05-03-PLAN.md Task 3 (human-verify: AI Oracle end-to-end)
 Resume file: None
 
 ---
 
-*Next action: Execute Phase 5 Plan 03 (Topic Cards UI and Reading Panel)*
+*Next action: Human verifies AI Oracle end-to-end (Task 3 checkpoint in 05-03-PLAN.md)*
 
 ## Key Clarifications
 
