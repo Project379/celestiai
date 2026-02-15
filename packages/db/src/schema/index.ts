@@ -12,3 +12,13 @@ export {
   type AiReading,
   type NewAiReading,
 } from './ai-readings'
+export {
+  dailyTransits,
+  type DailyTransit,
+  type NewDailyTransit,
+} from './daily-transits'
+export {
+  dailyHoroscopes,
+  type DailyHoroscope,
+  type NewDailyHoroscope,
+} from './daily-horoscopes'

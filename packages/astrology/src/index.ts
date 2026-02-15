@@ -53,6 +53,10 @@ export type { AspectDefinition } from './constants'
 // Calculator (will be added in Task 2)
 export { calculateNatalChart } from './calculator'
 
+// Transit calculation
+export type { TransitData, TransitAspect } from './transit'
+export { calculateDailyTransits, calculateTransitAspects } from './transit'
+
 // Utilities (will be added in Task 2)
 export { getJulianDay } from './utils/julian-day'
 export { getZodiacSign, longitudeToSignDegree } from './utils/zodiac'
