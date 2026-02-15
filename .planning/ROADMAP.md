@@ -248,14 +248,13 @@ Plans:
 - [ ] User can navigate to view yesterday's horoscope
 - [ ] User who enabled notifications receives morning push with horoscope preview
 
-**Research**: Likely (transit calculations, web push notifications)
-**Research topics**: Daily transit calculation approach, caching strategy, Web Push API for browser notifications
-**Plans**: TBD
+**Research**: Complete (06-RESEARCH.md)
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 06-01: Daily transit calculation and horoscope generation
-- [ ] 06-02: Horoscope display with yesterday navigation
-- [ ] 06-03: Web push notification setup for morning delivery
+- [ ] 06-01-PLAN.md — Transit calculation, DB schema (daily_transits + daily_horoscopes), streaming generation API
+- [ ] 06-02-PLAN.md — Horoscope UI components, client hook, yesterday navigation, dashboard integration
+- [ ] 06-03-PLAN.md — Web Push notifications: service worker, subscribe/unsubscribe API, cron job, opt-in banner
 
 ---
 
@@ -335,7 +334,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 | 3.1 Bugfixes & Landing Page | 3/3 | Complete | 2026-01-31 |
 | 4. Astrology Engine & Charts | 4/4 | Complete | 2026-02-01 |
 | 5. AI Oracle | 3/3 | Complete | 2026-02-15 |
-| 6. Daily Horoscope | 0/3 | Not started | - |
+| 6. Daily Horoscope | 0/3 | Planned | - |
 | 7. Payments | 0/3 | Not started | - |
 | 8. Launch Prep | 0/3 | Not started | - |
 
@@ -421,4 +420,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 *Phase 3.1 planned: 2026-01-31*
 *Phase 3.1 complete: 2026-01-31*
 *Phase 4 planned: 2026-02-01*
+*Phase 6 planned: 2026-02-15*
 *Milestone: v0.1 MVP*
