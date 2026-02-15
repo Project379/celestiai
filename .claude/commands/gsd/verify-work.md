@@ -9,14 +9,14 @@ allowed-tools:
   - Grep
   - Edit
   - Write
+  - Task
 ---
-
 <objective>
 Validate built features through conversational testing with persistent state.
 
-Purpose: Confirm what Claude built actually works from user's perspective. One test at a time, plain text responses, no interrogation.
+Purpose: Confirm what Claude built actually works from user's perspective. One test at a time, plain text responses, no interrogation. When issues are found, automatically diagnose, plan fixes, and prepare for execution.
 
-Output: {phase}-UAT.md tracking all test results, issues logged for /gsd:plan-fix
+Output: {phase}-UAT.md tracking all test results. If issues found: diagnosed gaps, verified fix plans ready for /gsd:execute-phase
 </objective>
 
 <execution_context>
@@ -34,32 +34,6 @@ Phase: $ARGUMENTS (optional)
 </context>
 
 <process>
-1. Check for active UAT sessions (resume or start new)
-2. Find SUMMARY.md files for the phase
-3. Extract testable deliverables (user-observable outcomes)
-4. Create {phase}-UAT.md with test list
-5. Present tests one at a time:
-   - Show expected behavior
-   - Wait for plain text response
-   - "yes/y/next" = pass, anything else = issue (severity inferred)
-6. Update UAT.md after each response
-7. On completion: commit, present summary, offer next steps
+Execute the verify-work workflow from @./.claude/get-shit-done/workflows/verify-work.md end-to-end.
+Preserve all workflow gates (session management, test presentation, diagnosis, fix planning, routing).
 </process>
-
-<anti_patterns>
-- Don't use AskUserQuestion for test responses — plain text conversation
-- Don't ask severity — infer from description
-- Don't present full checklist upfront — one test at a time
-- Don't run automated tests — this is manual user validation
-- Don't fix issues during testing — log for /gsd:plan-fix
-</anti_patterns>
-
-<success_criteria>
-- [ ] UAT.md created with tests from SUMMARY.md
-- [ ] Tests presented one at a time with expected behavior
-- [ ] Plain text responses (no structured forms)
-- [ ] Severity inferred, never asked
-- [ ] File updated after each response (survives /clear)
-- [ ] Committed on completion
-- [ ] Clear next steps based on results
-</success_criteria>

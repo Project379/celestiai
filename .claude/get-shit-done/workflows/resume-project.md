@@ -7,26 +7,27 @@ Use this workflow when:
 </trigger>
 
 <purpose>
-Instantly restore full project context and present clear status.
-Enables seamless session continuity for fully autonomous workflows.
-
-"Where were we?" should have an immediate, complete answer.
+Instantly restore full project context so "Where were we?" has an immediate, complete answer.
 </purpose>
+
+<required_reading>
+@./.claude/get-shit-done/references/continuation-format.md
+</required_reading>
 
 <process>
 
-<step name="detect_existing_project">
-Check if this is an existing project:
+<step name="initialize">
+Load all context in one call:
 
 ```bash
-ls .planning/STATE.md 2>/dev/null && echo "Project exists"
-ls .planning/ROADMAP.md 2>/dev/null && echo "Roadmap exists"
-ls .planning/PROJECT.md 2>/dev/null && echo "Project file exists"
+INIT=$(node ./.claude/get-shit-done/bin/gsd-tools.js init resume)
 ```
 
-**If STATE.md exists:** Proceed to load_state
-**If only ROADMAP.md/PROJECT.md exist:** Offer to reconstruct STATE.md
-**If .planning/ doesn't exist:** This is a new project - route to /gsd:new-project
+Parse JSON for: `state_exists`, `roadmap_exists`, `project_exists`, `planning_exists`, `has_interrupted_agent`, `interrupted_agent_id`, `commit_docs`.
+
+**If `state_exists` is true:** Proceed to load_state
+**If `state_exists` is false but `roadmap_exists` or `project_exists` is true:** Offer to reconstruct STATE.md
+**If `planning_exists` is false:** This is a new project - route to /gsd:new-project
 </step>
 
 <step name="load_state">
@@ -70,10 +71,9 @@ for plan in .planning/phases/*/*-PLAN.md; do
   [ ! -f "$summary" ] && echo "Incomplete: $plan"
 done 2>/dev/null
 
-# Check for interrupted agents
-if [ -f .planning/current-agent-id.txt ] && [ -s .planning/current-agent-id.txt ]; then
-  AGENT_ID=$(cat .planning/current-agent-id.txt | tr -d '\n')
-  echo "Interrupted agent: $AGENT_ID"
+# Check for interrupted agents (use has_interrupted_agent and interrupted_agent_id from init)
+if [ "$has_interrupted_agent" = "true" ]; then
+  echo "Interrupted agent: $interrupted_agent_id"
 fi
 ```
 
@@ -121,7 +121,7 @@ Present complete project status to user:
     Task: [task description from agent-history.json]
     Interrupted: [timestamp]
 
-    Resume with: /gsd:resume-task
+    Resume with: Task tool (resume parameter with agent ID)
 
 [If pending todos exist:]
 📋 [N] pending todos — /gsd:check-todos to review
@@ -141,7 +141,7 @@ Present complete project status to user:
 Based on project state, determine the most logical next action:
 
 **If interrupted agent exists:**
-→ Primary: Resume interrupted agent (/gsd:resume-task)
+→ Primary: Resume interrupted agent (Task tool with resume parameter)
 → Option: Start fresh (abandon agent work)
 
 **If .continue-here file exists:**
@@ -178,11 +178,9 @@ Present contextual options based on project state:
 What would you like to do?
 
 [Primary action based on state - e.g.:]
-1. Resume interrupted agent (/gsd:resume-task) [if interrupted agent found]
+1. Resume interrupted agent [if interrupted agent found]
    OR
-1. Resume from checkpoint (/gsd:execute-plan .planning/phases/XX-name/.continue-here-02-01.md)
-   OR
-1. Execute next plan (/gsd:execute-plan .planning/phases/XX-name/02-02-PLAN.md)
+1. Execute phase (/gsd:execute-phase {phase})
    OR
 1. Discuss Phase 3 context (/gsd:discuss-phase 3) [if CONTEXT.md missing]
    OR
@@ -198,7 +196,7 @@ What would you like to do?
 **Note:** When offering phase planning, check for CONTEXT.md existence first:
 
 ```bash
-ls .planning/phases/XX-name/CONTEXT.md 2>/dev/null
+ls .planning/phases/XX-name/*-CONTEXT.md 2>/dev/null
 ```
 
 If missing, suggest discuss-phase before plan. If exists, offer plan directly.
@@ -217,7 +215,7 @@ Based on user selection, route to appropriate workflow:
 
   **{phase}-{plan}: [Plan Name]** — [objective from PLAN.md]
 
-  `/gsd:execute-plan [path]`
+  `/gsd:execute-phase {phase}`
 
   <sub>`/clear` first → fresh context window</sub>
 
@@ -288,17 +286,12 @@ This handles cases where:
   </reconstruction>
 
 <quick_resume>
-For users who want minimal friction:
-
-If user says just "continue" or "go":
-
+If user says "continue" or "go":
 - Load state silently
 - Determine primary action
 - Execute immediately without presenting options
 
 "Continuing from [state]... [action]"
-
-This enables fully autonomous "just keep going" workflow.
 </quick_resume>
 
 <success_criteria>

@@ -22,7 +22,25 @@
       "Bash(npm run test:e2e:*)",
       "Bash(node:*)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__query-docs"
+      "mcp__context7__query-docs",
+      "Bash(cat:*)",
+      "Bash(timeout:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm why:*)",
+      "WebFetch(domain:clerk.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "Bash(pnpm --filter web build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm --filter web exec tsc:*)",
+      "Bash(printf '%s\\\\n' '' '### Required Artifacts' '' '| Artifact | Expected | Status | Details |' '|----------|----------|--------|---------|' '| packages/db/src/schema/charts.ts | Charts table with RLS policies | VERIFIED \\(72 lines\\) | RLS-enabled pgTable with 4 policies using auth.jwt sub |' '| packages/db/src/schema/cities.ts | Bulgarian cities lookup table | VERIFIED \\(29 lines\\) | pgTable with name, nameAscii, oblast, type, lat/lon fields + indexes |' '| apps/web/lib/supabase/server.ts | Server Supabase client with Clerk token | VERIFIED \\(30 lines\\) | Uses auth\\(\\).getToken\\(\\) in accessToken callback |' '| apps/web/lib/supabase/client.ts | Client Supabase hook with Clerk session | VERIFIED \\(39 lines\\) | Uses session.getToken\\(\\) in accessToken callback |' '| apps/web/lib/validators/birth-data.ts | Zod validation schemas | VERIFIED \\(207 lines\\) | birthDataSchema, createBirthDataSchema, updateBirthDataSchema with Bulgarian errors |' '| apps/web/app/api/birth-data/route.ts | Birth data CRUD API | VERIFIED \\(106 lines\\) | GET/POST with auth.protect\\(\\), Zod validation |' '| apps/web/app/api/birth-data/[id]/route.ts | Single record operations | VERIFIED \\(155 lines\\) | GET/PATCH/DELETE with auth.protect\\(\\) |' '| apps/web/app/api/cities/search/route.ts | City search endpoint | VERIFIED \\(77 lines\\) | ILIKE search with type prioritization |' '| packages/db/src/seed/data/bulgarian-cities.json | Bulgarian city data | VERIFIED \\(2032 lines\\) | 203 settlements with name, nameAscii, oblast, ekatte, type, lat/lon, population |' '| apps/web/components/birth-data/BirthDataWizard.tsx | Multi-step wizard | VERIFIED \\(149 lines\\) | FormProvider, step validation, POST to API on submit |' '| apps/web/components/birth-data/CitySearch.tsx | City autocomplete | VERIFIED \\(247 lines\\) | 300ms debounce, keyboard navigation, dropdown results |' '| apps/web/components/birth-data/BirthDataCard.tsx | Display saved data | VERIFIED \\(125 lines\\) | Shows date, time, city with edit button |' '| apps/web/components/birth-data/EditBirthDataDialog.tsx | Edit dialog | VERIFIED \\(357 lines\\) | Two-step confirmation, PATCH to API |' '| apps/web/app/\\(protected\\)/birth-data/page.tsx | Birth data entry page | VERIFIED \\(84 lines\\) | Checks existing data, renders BirthDataWizard |' '| apps/web/app/\\(protected\\)/dashboard/page.tsx | Dashboard page | VERIFIED \\(64 lines\\) | Server component fetching birth data |' '| apps/web/components/dashboard/DashboardContent.tsx | Dashboard client | VERIFIED \\(201 lines\\) | Shows CTA or BirthDataCard based on user state |' '| packages/db/drizzle/0000_slow_invaders.sql | Migration SQL | VERIFIED \\(36 lines\\) | CREATE TABLE, ENABLE RLS, CREATE POLICY statements |')",
+      "Bash(printf:*)",
+      "Bash(pnpm seed:*)",
+      "Bash(pnpm db:push:*)",
+      "Bash(pnpm exec tsc:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(echo:*)"
     ]
   }
 }
