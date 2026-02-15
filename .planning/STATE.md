@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Phase: 6 of 8 (Daily Horoscope) - IN PROGRESS
-Plan: 2 of 3 in phase 6 (complete)
-Status: Phase 6 plan 2 complete - daily horoscope UI built (hook, streaming components, dashboard integration)
-Last activity: 2026-02-15 - Completed 06-02-PLAN.md (Daily Horoscope UI — hook, HoroscopeStream, DailyHoroscope, dashboard integration)
+Plan: 3 of 3 in phase 6 (at checkpoint — awaiting human verification)
+Status: Phase 6 plan 3 tasks 1-2 complete — push schema, service worker, API routes, banner UI done; checkpoint human-verify pending
+Last activity: 2026-02-15 - Executing 06-03-PLAN.md (Push Notifications — tasks 1-2 committed, checkpoint Task 3 pending)
 
 Progress: [####################] 96%
 
@@ -122,6 +122,9 @@ Recent decisions affecting current work:
 - [06-02]: parseSentinels() returns React.ReactNode[] to render planet names with accent colors inline — no DOM manipulation
 - [06-02]: PLANET_COLORS map uses Tailwind text- classes per planet key — reuses cosmic theme palette
 - [06-02]: DailyHoroscope placed after BirthDataCard section and before 3-column grid — first astrology content section
+- [06-03]: Generic push notification body avoids N concurrent AI calls at cron time — personalized content generated on dashboard visit
+- [06-03]: 410/404 error codes from web-push trigger automatic subscription cleanup in batch after cron run
+- [06-03]: Uint8Array<ArrayBuffer> explicit generic required for TypeScript 5.7 compatibility with PushManager.subscribe applicationServerKey
 
 ### Pending Todos
 
@@ -207,7 +210,7 @@ Phase 5 (AI Oracle) is complete with all requirements built (human verification 
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 06-02-PLAN.md (Daily Horoscope UI — hook, streaming components, dashboard integration)
+Stopped at: 06-03-PLAN.md Task 3 checkpoint (human-verify) — tasks 1-2 committed (8a7a180, fd15199)
 Resume file: None
 
 ---
