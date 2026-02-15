@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3.1: Bugfixes & Landing Page** (INSERTED) - Route protection, UI fixes, landing page
 - [x] **Phase 4: Astrology Engine & Charts** - Swiss Ephemeris server-side, interactive visualization
 - [x] **Phase 5: AI Oracle** - AI-powered personalized readings with tier restrictions
-- [ ] **Phase 6: Daily Horoscope** - Personalized daily content with push notifications
+- [x] **Phase 6: Daily Horoscope** - Personalized daily content with push notifications
 - [ ] **Phase 7: Payments** - Stripe integration, subscription lifecycle management
 - [ ] **Phase 8: Launch Prep** - Landing page, GDPR compliance, audit logging, final polish
 
@@ -252,9 +252,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 06-01-PLAN.md — Transit calculation, DB schema (daily_transits + daily_horoscopes), streaming generation API
-- [ ] 06-02-PLAN.md — Horoscope UI components, client hook, yesterday navigation, dashboard integration
-- [ ] 06-03-PLAN.md — Web Push notifications: service worker, subscribe/unsubscribe API, cron job, opt-in banner
+- [x] 06-01-PLAN.md — Transit calculation, DB schema (daily_transits + daily_horoscopes), streaming generation API
+- [x] 06-02-PLAN.md — Horoscope UI components, client hook, yesterday navigation, dashboard integration
+- [x] 06-03-PLAN.md — Web Push notifications: service worker, subscribe/unsubscribe API, cron job, opt-in banner
 
 ---
 
@@ -334,7 +334,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 | 3.1 Bugfixes & Landing Page | 3/3 | Complete | 2026-01-31 |
 | 4. Astrology Engine & Charts | 4/4 | Complete | 2026-02-01 |
 | 5. AI Oracle | 3/3 | Complete | 2026-02-15 |
-| 6. Daily Horoscope | 0/3 | Planned | - |
+| 6. Daily Horoscope | 3/3 | Complete | 2026-02-15 |
 | 7. Payments | 0/3 | Not started | - |
 | 8. Launch Prep | 0/3 | Not started | - |
 
@@ -421,4 +421,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 *Phase 3.1 complete: 2026-01-31*
 *Phase 4 planned: 2026-02-01*
 *Phase 6 planned: 2026-02-15*
+*Phase 6 complete: 2026-02-15*
 *Milestone: v0.1 MVP*
