@@ -11,15 +11,17 @@ interface ChartData {
 }
 
 /**
- * Chart page - displays user's natal chart visualization
+ * Chart page - displays user's natal chart visualization with AI Oracle panel
  *
- * Server component that fetches user's primary chart and passes
- * chartId to the ChartView client component for rendering.
+ * Server component that:
+ * - Fetches user's primary chart
+ * - Fetches subscription tier from users table
+ * - Passes chartId and subscriptionTier to ChartView client component
  */
 export default async function ChartPage() {
   const { userId } = await auth()
 
-  // Fetch user's primary chart (first chart)
+  // Fetch user's primary chart (most recent)
   let chart: ChartData | null = null
   try {
     const supabase = createServiceSupabaseClient()
@@ -38,6 +40,26 @@ export default async function ChartPage() {
     console.error('Error fetching chart:', error)
   }
 
+  // Fetch user's subscription tier from users table
+  // Default to 'free' if user row doesn't exist yet (created on first Oracle generation)
+  let subscriptionTier: 'free' | 'premium' = 'free'
+  if (userId) {
+    try {
+      const supabase = createServiceSupabaseClient()
+      const { data } = await supabase
+        .from('users')
+        .select('subscription_tier')
+        .eq('clerk_id', userId)
+        .single()
+
+      if (data?.subscription_tier === 'premium') {
+        subscriptionTier = 'premium'
+      }
+    } catch {
+      // User row doesn't exist yet — defaults to 'free'
+    }
+  }
+
   return (
     <>
       {/* Session expiry modal */}
@@ -48,8 +70,8 @@ export default async function ChartPage() {
         <UserMenu />
       </div>
 
-      {/* Page content */}
-      <div className="mx-auto max-w-5xl">
+      {/* Page content — widened to max-w-7xl to accommodate Oracle panel */}
+      <div className="mx-auto max-w-7xl">
         {/* Page header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-100">
@@ -62,7 +84,7 @@ export default async function ChartPage() {
 
         {/* Chart view or CTA */}
         {chart ? (
-          <ChartView chartId={chart.id} />
+          <ChartView chartId={chart.id} subscriptionTier={subscriptionTier} />
         ) : (
           /* CTA to add birth data */
           <div className="rounded-xl border border-dashed border-purple-500/50 bg-purple-500/5 p-8 text-center">

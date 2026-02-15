@@ -5,12 +5,15 @@ import { useChart } from '@/hooks/useChart'
 import { NatalWheel } from './NatalWheel'
 import { BigThreeCards } from './BigThreeCards'
 import { PlanetDetail } from './PlanetDetail'
+import { OraclePanel } from '../oracle/OraclePanel'
 import type { PlanetPosition, PointData } from '@celestia/astrology/client'
 import { UNKNOWN_TIME_DISCLAIMER_BG } from '@celestia/astrology/client'
 
 interface ChartViewProps {
   /** Chart ID to fetch and display */
   chartId: string
+  /** User's subscription tier for Oracle gating */
+  subscriptionTier?: 'free' | 'premium'
 }
 
 /**
@@ -35,9 +38,9 @@ function ChartSkeleton() {
           <div className="mx-auto aspect-square max-w-[500px] rounded-full border border-slate-700/50 bg-slate-800/20" />
         </div>
 
-        {/* Big Three cards skeleton - desktop */}
-        <div className="hidden w-64 space-y-4 lg:block">
-          {[1, 2, 3].map((i) => (
+        {/* Right column skeleton - desktop */}
+        <div className="hidden w-96 space-y-4 lg:block">
+          {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
               className="h-24 rounded-xl border border-slate-700/50 bg-slate-800/30"
@@ -77,13 +80,16 @@ function ChartError({ message }: { message: string }) {
 }
 
 /**
- * Combined chart view with natal wheel and Big Three cards
+ * Combined chart view with natal wheel, Big Three cards, and Oracle panel.
  *
  * Layout:
- * - Desktop (lg+): Big Three cards on right, wheel on left
- * - Mobile: Big Three cards above, wheel below
+ * - Desktop (lg+): wheel (flex-1) | right column (w-96): BigThree + OraclePanel
+ * - Mobile: BigThree above wheel, OraclePanel below wheel
  */
-export function ChartView({ chartId }: ChartViewProps) {
+export function ChartView({
+  chartId,
+  subscriptionTier = 'free',
+}: ChartViewProps) {
   const { chart, isLoading, error } = useChart(chartId)
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null)
   const [selectedBigThree, setSelectedBigThree] = useState<'sun' | 'moon' | 'rising' | null>(null)
@@ -140,6 +146,30 @@ export function ChartView({ chartId }: ChartViewProps) {
     setSelectedPlanetData(null)
   }, [])
 
+  /**
+   * Bridge Oracle planet cross-highlighting to NatalWheel selection state.
+   * Maps a planet key (e.g. 'mars') to the matching PlanetPosition in chart.planets
+   * and calls the same setSelectedPlanet/setSelectedPlanetData flow used by wheel clicks.
+   */
+  const handleOraclePlanetHighlight = useCallback(
+    (planetKey: string) => {
+      if (!chart) return
+
+      const planet = chart.planets.find((p) => p.planet === planetKey)
+      if (planet) {
+        setSelectedPlanet(planet.planet)
+        setSelectedPlanetData(planet)
+        // Sync Big Three if applicable
+        if (planet.planet === 'sun' || planet.planet === 'moon') {
+          setSelectedBigThree(planet.planet as 'sun' | 'moon')
+        } else {
+          setSelectedBigThree(null)
+        }
+      }
+    },
+    [chart]
+  )
+
   if (isLoading) {
     return <ChartSkeleton />
   }
@@ -194,8 +224,8 @@ export function ChartView({ chartId }: ChartViewProps) {
           />
         </div>
 
-        {/* Big Three cards - desktop (beside wheel) */}
-        <div className="hidden w-64 lg:block">
+        {/* Right column - desktop: BigThree cards + Oracle panel stacked vertically */}
+        <div className="hidden w-96 lg:flex lg:flex-col lg:gap-4">
           <BigThreeCards
             sun={sun}
             moon={moon}
@@ -204,7 +234,21 @@ export function ChartView({ chartId }: ChartViewProps) {
             onSelect={handleBigThreeSelect}
             selected={selectedBigThree}
           />
+          <OraclePanel
+            chartId={chartId}
+            subscriptionTier={subscriptionTier}
+            onPlanetHighlight={handleOraclePlanetHighlight}
+          />
         </div>
+      </div>
+
+      {/* Oracle panel - mobile (below wheel, full width) */}
+      <div className="mt-6 lg:hidden">
+        <OraclePanel
+          chartId={chartId}
+          subscriptionTier={subscriptionTier}
+          onPlanetHighlight={handleOraclePlanetHighlight}
+        />
       </div>
 
       {/* Planet interpretation panel */}
