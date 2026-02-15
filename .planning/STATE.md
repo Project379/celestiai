@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-21)
 
 **Core value:** Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.
-**Current focus:** Phase 4 - Astrology Engine & Charts
+**Current focus:** Phase 5 - AI Oracle
 
 ## Current Position
 
-Phase: 4 of 8 (Astrology Engine & Charts) - COMPLETE
-Plan: 4 of 4 in phase 4 (complete)
-Status: Phase 4 complete - Planet interactions done
-Last activity: 2026-02-01 - Completed 04-04-PLAN.md (Planet Interpretations)
+Phase: 5 of 8 (AI Oracle) - IN PROGRESS
+Plan: 1 of 4 in phase 5 (complete)
+Status: Phase 5 Plan 1 complete - Schema and prompt utilities done
+Last activity: 2026-02-15 - Completed 05-01-PLAN.md (Schema and Prompt Utilities)
 
-Progress: [##################] 90%
+Progress: [####################] 93%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 18
-- Average duration: 10m
-- Total execution time: 2.9 hours
+- Total plans completed: 19
+- Average duration: 9m
+- Total execution time: 2.98 hours
 
 **By Phase:**
 
@@ -32,10 +32,11 @@ Progress: [##################] 90%
 | 03-birth-data-database | 5 | 17m | 3m |
 | 03.1-bugfixes-and-landing-page | 3 | 10m | 3m |
 | 04-astrology-engine-charts | 4 | 104m | 26m |
+| 05-ai-oracle | 1 | 5m | 5m |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (12m), 04-02 (65m), 04-03 (18m), 04-04 (9m)
-- Trend: Phase 4 plans longer due to complex calculations and visualization
+- Last 5 plans: 04-02 (65m), 04-03 (18m), 04-04 (9m), 05-01 (5m)
+- Trend: Phase 5 starting fast with data/utility layer
 
 *Updated after each plan completion*
 
@@ -99,6 +100,10 @@ Recent decisions affecting current work:
 - [04-04]: Interpretation data layer in lib/interpretations/ for localized content
 - [04-04]: Accessible SVG elements with role=button, tabindex, keyboard events
 - [04-04]: Selection glow ring on wheel planets, scale transform on Big Three cards
+- [05-01]: No RLS on users or ai_readings — service role access only (consistent with chart_calculations)
+- [05-01]: Sentinel markers use English planet keys [planet:KEY]Bulgarian[/planet] for chart cross-highlighting
+- [05-01]: Fresh RegExp per call (not module-level) to avoid stateful lastIndex bugs with 'g' flag
+- [05-01]: Topic suffixes appended to base system prompt for voice consistency across reading types
 
 ### Pending Todos
 
@@ -120,7 +125,7 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None.
+- Supabase free tier project auto-paused (14 days inactive). Apply migration 0004_parched_lizard.sql manually via Supabase dashboard SQL Editor after unpausing. All TypeScript code is correct.
 
 ## Phase 1 Completion Summary
 
@@ -171,15 +176,24 @@ Phase 4 (Astrology Engine & Charts) is complete with all requirements satisfied:
 **Accessibility:** Keyboard navigable chart with focus management
 **UI:** Responsive /chart page with loading skeleton and error states
 
+## Phase 5 Progress
+
+Phase 5 (AI Oracle) in progress - 1 of 4 plans complete:
+
+**Plan 01 (complete):** users + ai_readings tables, Oracle prompt utilities (buildSystemPrompt, chartToPromptText, extractPlanetMentions, stripSentinels)
+**Plan 02 (next):** Gemini streaming API route POST /api/oracle/reading
+**Plan 03:** Topic cards UI and reading panel with streaming display
+**Plan 04:** Cross-highlighting between reading text and natal wheel
+
 ## Session Continuity
 
-Last session: 2026-02-01
-Stopped at: Completed 04-04-PLAN.md (Planet Interpretations)
+Last session: 2026-02-15
+Stopped at: Completed 05-01-PLAN.md (Schema and Prompt Utilities)
 Resume file: None
 
 ---
 
-*Next action: Plan Phase 5 (AI Oracle)*
+*Next action: Execute Phase 5 Plan 02 (Gemini Streaming API Route)*
 
 ## Key Clarifications
 
