@@ -220,14 +220,13 @@ Plans:
 - [ ] All readings cite specific degree positions (e.g., "Your Sun at 15 degrees Leo...")
 - [ ] Readings feel personalized, not generic horoscope content
 
-**Research**: Likely (AI prompt engineering, tier-based access)
-**Research topics**: Gemini/GPT-5 API integration, prompt engineering for astrological accuracy, caching strategy
-**Plans**: TBD
+**Research**: Complete (05-RESEARCH.md)
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 05-01: AI service integration (Gemini/GPT-5) with prompt templates
-- [ ] 05-02: General reading generation for all users
-- [ ] 05-03: Premium topic readings (love, career, health) with tier gate
+- [ ] 05-01-PLAN.md — Database schema (users + ai_readings tables) and Oracle prompt utilities
+- [ ] 05-02-PLAN.md — Streaming API route (Gemini), readings/teaser endpoints, client hook
+- [ ] 05-03-PLAN.md — Oracle UI components, chart page integration, cross-highlighting
 
 ---
 
@@ -335,7 +334,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 | 3. Birth Data & Database | 5/5 | Complete | 2026-01-26 |
 | 3.1 Bugfixes & Landing Page | 3/3 | Complete | 2026-01-31 |
 | 4. Astrology Engine & Charts | 4/4 | Complete | 2026-02-01 |
-| 5. AI Oracle | 0/3 | Not started | - |
+| 5. AI Oracle | 0/3 | Planned | - |
 | 6. Daily Horoscope | 0/3 | Not started | - |
 | 7. Payments | 0/3 | Not started | - |
 | 8. Launch Prep | 0/3 | Not started | - |
