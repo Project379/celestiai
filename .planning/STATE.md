@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Phase: 6 of 8 (Daily Horoscope) - IN PROGRESS
-Plan: 1 of 3 in phase 6 (complete)
-Status: Phase 6 plan 1 complete - backend pipeline built (transit calc, DB schema, streaming API)
-Last activity: 2026-02-15 - Completed 06-01-PLAN.md (Transit Calculation + DB Schema + Streaming API)
+Plan: 2 of 3 in phase 6 (complete)
+Status: Phase 6 plan 2 complete - daily horoscope UI built (hook, streaming components, dashboard integration)
+Last activity: 2026-02-15 - Completed 06-02-PLAN.md (Daily Horoscope UI — hook, HoroscopeStream, DailyHoroscope, dashboard integration)
 
 Progress: [####################] 96%
 
@@ -33,11 +33,11 @@ Progress: [####################] 96%
 | 03.1-bugfixes-and-landing-page | 3 | 10m | 3m |
 | 04-astrology-engine-charts | 4 | 104m | 26m |
 | 05-ai-oracle | 3 | 20m | 7m |
-| 06-daily-horoscope | 1 | 5m | 5m |
+| 06-daily-horoscope | 2 | 8m | 4m |
 
 **Recent Trend:**
-- Last 5 plans: 05-01 (5m), 05-02 (5m), 05-03 (10m), 06-01 (5m)
-- Trend: Phase 6 backend pipeline complete in 5m
+- Last 5 plans: 05-02 (5m), 05-03 (10m), 06-01 (5m), 06-02 (3m)
+- Trend: Phase 6 UI layer complete in 3m
 
 *Updated after each plan completion*
 
@@ -118,6 +118,10 @@ Recent decisions affecting current work:
 - [06-01]: Yesterday horoscope returns unavailable if no prior cache — no retroactive AI generation
 - [06-01]: Transit orbs separate from natal: inner planets 2-3deg, outer 3-4deg via TRANSIT_ASPECT_DEFINITIONS
 - [06-01]: daily_transits + daily_horoscopes use service role only (no RLS) — consistent with ai_readings pattern
+- [06-02]: Date param passed as URL query string (?date=YYYY-MM-DD) to match API route searchParams parsing — not in POST body
+- [06-02]: parseSentinels() returns React.ReactNode[] to render planet names with accent colors inline — no DOM manipulation
+- [06-02]: PLANET_COLORS map uses Tailwind text- classes per planet key — reuses cosmic theme palette
+- [06-02]: DailyHoroscope placed after BirthDataCard section and before 3-column grid — first astrology content section
 
 ### Pending Todos
 
@@ -203,12 +207,12 @@ Phase 5 (AI Oracle) is complete with all requirements built (human verification 
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 06-01-PLAN.md (Daily Horoscope Backend — transit calc, DB schema, streaming API)
+Stopped at: Completed 06-02-PLAN.md (Daily Horoscope UI — hook, streaming components, dashboard integration)
 Resume file: None
 
 ---
 
-*Next action: Execute 06-02-PLAN.md (Daily Horoscope UI)*
+*Next action: Execute 06-03-PLAN.md (Daily Horoscope — remaining phase plan, if exists)*
 
 ## Key Clarifications
 
