@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-01-21)
 
 **Core value:** Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.
-**Current focus:** Phase 6 - Daily Horoscope
+**Current focus:** Phase 7 (next phase — Phase 6 complete)
 
 ## Current Position
 
-Phase: 6 of 8 (Daily Horoscope) - IN PROGRESS
-Plan: 3 of 3 in phase 6 (at checkpoint — awaiting human verification)
-Status: Phase 6 plan 3 tasks 1-2 complete — push schema, service worker, API routes, banner UI done; checkpoint human-verify pending
-Last activity: 2026-02-15 - Executing 06-03-PLAN.md (Push Notifications — tasks 1-2 committed, checkpoint Task 3 pending)
+Phase: 7 of 8 (next phase) - READY
+Plan: 1 of ? in phase 7
+Status: Phase 6 complete (all automated tasks done; Task 3 human-verify deferred to post-Phase 7 batch testing)
+Last activity: 2026-02-15 - Completed 06-03-PLAN.md (Push Notifications — all code committed; human verification deferred)
 
 Progress: [####################] 96%
 
@@ -33,11 +33,11 @@ Progress: [####################] 96%
 | 03.1-bugfixes-and-landing-page | 3 | 10m | 3m |
 | 04-astrology-engine-charts | 4 | 104m | 26m |
 | 05-ai-oracle | 3 | 20m | 7m |
-| 06-daily-horoscope | 2 | 8m | 4m |
+| 06-daily-horoscope | 3 | 11m | 4m |
 
 **Recent Trend:**
-- Last 5 plans: 05-02 (5m), 05-03 (10m), 06-01 (5m), 06-02 (3m)
-- Trend: Phase 6 UI layer complete in 3m
+- Last 5 plans: 05-03 (10m), 06-01 (5m), 06-02 (3m), 06-03 (3m)
+- Trend: Phase 6 fully complete — push pipeline in 3m
 
 *Updated after each plan completion*
 
@@ -128,11 +128,12 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-4 pending — run `/gsd:check-todos` to review:
+5 pending — run `/gsd:check-todos` to review:
 - Human test - Complete wizard flow
 - Human test - City search behavior
 - Human test - Edit flow with confirmation
 - Human test - RLS data isolation
+- Human test - Push notification end-to-end flow (06-03 Task 3 deferred to post-Phase 7 batch)
 
 ### Roadmap Evolution
 
@@ -207,15 +208,25 @@ Phase 5 (AI Oracle) is complete with all requirements built (human verification 
 **UI:** TopicCards (4 topics with lock states), ReadingStream (streaming + cross-highlight), LockedTopicTeaser (blurred + CTA), OraclePanel
 **Integration:** ChartView with responsive Oracle panel, planet cross-highlighting bridge to NatalWheel
 
+## Phase 6 Completion Summary
+
+Phase 6 (Daily Horoscope) is complete with all automated tasks done (human verification of push flow deferred to post-Phase 7):
+
+**Database:** daily_transits + daily_horoscopes tables (service role, two-layer cache); push_subscriptions table (endpoint uniqueness, user_id index)
+**API:** POST /api/horoscope/generate (streaming, Sofia timezone, 24h cache), GET /api/cron/daily-horoscope (CRON_SECRET auth, batch send, expired cleanup), POST /api/push/subscribe + unsubscribe
+**Service Worker:** apps/web/public/sw.js — push event handler (showNotification) + notificationclick (openWindow /dashboard)
+**UI:** DailyHoroscope card with today/yesterday tabs, HoroscopeStream with planet sentinel color highlighting, PushNotificationBanner with Bulgarian UI
+**Infrastructure:** vercel.json cron at 06:00 UTC; web-push library; generic notification body avoids N AI calls at cron time
+
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: 06-03-PLAN.md Task 3 checkpoint (human-verify) — tasks 1-2 committed (8a7a180, fd15199)
+Stopped at: 06-03-PLAN.md complete — all automated tasks done; Task 3 human-verify deferred to post-Phase 7 batch testing
 Resume file: None
 
 ---
 
-*Next action: Execute 06-03-PLAN.md (Daily Horoscope — remaining phase plan, if exists)*
+*Next action: Begin Phase 7 planning and execution*
 
 ## Key Clarifications
 
