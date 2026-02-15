@@ -40,7 +40,10 @@
       "Bash(pnpm db:push:*)",
       "Bash(pnpm exec tsc:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(git push:*)",
+      "Bash(python3:*)",
+      "Bash(git status:*)"
     ]
   }
 }
