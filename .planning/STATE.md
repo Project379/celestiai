@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Phase: 5 of 8 (AI Oracle) - IN PROGRESS
-Plan: 1 of 4 in phase 5 (complete)
-Status: Phase 5 Plan 1 complete - Schema and prompt utilities done
-Last activity: 2026-02-15 - Completed 05-01-PLAN.md (Schema and Prompt Utilities)
+Plan: 2 of 4 in phase 5 (complete)
+Status: Phase 5 Plan 2 complete - Streaming API routes and client hook done
+Last activity: 2026-02-15 - Completed 05-02-PLAN.md (Streaming API and Client Hook)
 
 Progress: [####################] 93%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 19
+- Total plans completed: 20
 - Average duration: 9m
 - Total execution time: 2.98 hours
 
@@ -32,11 +32,11 @@ Progress: [####################] 93%
 | 03-birth-data-database | 5 | 17m | 3m |
 | 03.1-bugfixes-and-landing-page | 3 | 10m | 3m |
 | 04-astrology-engine-charts | 4 | 104m | 26m |
-| 05-ai-oracle | 1 | 5m | 5m |
+| 05-ai-oracle | 2 | 10m | 5m |
 
 **Recent Trend:**
-- Last 5 plans: 04-02 (65m), 04-03 (18m), 04-04 (9m), 05-01 (5m)
-- Trend: Phase 5 starting fast with data/utility layer
+- Last 5 plans: 04-03 (18m), 04-04 (9m), 05-01 (5m), 05-02 (5m)
+- Trend: Phase 5 executing fast — both data layer and API layer done in 5m each
 
 *Updated after each plan completion*
 
@@ -104,6 +104,10 @@ Recent decisions affecting current work:
 - [05-01]: Sentinel markers use English planet keys [planet:KEY]Bulgarian[/planet] for chart cross-highlighting
 - [05-01]: Fresh RegExp per call (not module-level) to avoid stateful lastIndex bugs with 'g' flag
 - [05-01]: Topic suffixes appended to base system prompt for voice consistency across reading types
+- [05-02]: AI SDK v6 uses toTextStreamResponse() — toDataStreamResponse() was removed in v6
+- [05-02]: AI SDK v6 uses maxOutputTokens not maxTokens for token limits
+- [05-02]: useCompletion streamProtocol: 'text' pairs with toTextStreamResponse() in v6
+- [05-02]: Teaser upsert creates row with empty content to hold teaser_content until full generation
 
 ### Pending Todos
 
@@ -181,19 +185,19 @@ Phase 4 (Astrology Engine & Charts) is complete with all requirements satisfied:
 Phase 5 (AI Oracle) in progress - 1 of 4 plans complete:
 
 **Plan 01 (complete):** users + ai_readings tables, Oracle prompt utilities (buildSystemPrompt, chartToPromptText, extractPlanetMentions, stripSentinels)
-**Plan 02 (next):** Gemini streaming API route POST /api/oracle/reading
-**Plan 03:** Topic cards UI and reading panel with streaming display
+**Plan 02 (complete):** Gemini streaming API (POST /api/oracle/generate), readings GET, teaser POST, useOracleReading hook
+**Plan 03 (next):** Topic cards UI and reading panel with streaming display
 **Plan 04:** Cross-highlighting between reading text and natal wheel
 
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 05-01-PLAN.md (Schema and Prompt Utilities)
+Stopped at: Completed 05-02-PLAN.md (Streaming API and Client Hook)
 Resume file: None
 
 ---
 
-*Next action: Execute Phase 5 Plan 02 (Gemini Streaming API Route)*
+*Next action: Execute Phase 5 Plan 03 (Topic Cards UI and Reading Panel)*
 
 ## Key Clarifications
 
