@@ -277,14 +277,13 @@ Plans:
 - [ ] User can view subscription status and cancel from settings
 - [ ] After subscription ends, premium features are locked with upgrade prompt
 
-**Research**: Likely (Stripe subscription webhooks)
-**Research topics**: Stripe Checkout integration, webhook handling for subscription lifecycle, subscription_tier database updates
-**Plans**: TBD
+**Research**: Complete (07-RESEARCH.md)
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 07-01: Stripe products/prices setup and checkout integration
-- [ ] 07-02: Webhook handling for subscription lifecycle events
-- [ ] 07-03: Subscription management UI (status, cancel)
+- [ ] 07-01-PLAN.md — Stripe SDK setup, DB schema (users columns + webhook idempotency table), checkout API, /pricing page with monthly/annual toggle
+- [ ] 07-02-PLAN.md — Webhook handler for subscription lifecycle events (checkout, update, delete, invoice), /subscription/success page with activating state
+- [ ] 07-03-PLAN.md — Subscription management /settings page (cancel, reactivate, portal), reusable UpgradePrompt component, dashboard and horoscope upgrade integration
 
 ---
 
