@@ -27,3 +27,8 @@ export {
   type PushSubscription,
   type NewPushSubscription,
 } from './push-subscriptions'
+export {
+  processedWebhookEvents,
+  type ProcessedWebhookEvent,
+  type NewProcessedWebhookEvent,
+} from './webhooks'
