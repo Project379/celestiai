@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Phase: 7 of 8 - IN PROGRESS
-Plan: 2 of ? in phase 7
-Status: Phase 7 Plan 1 complete — Stripe SDK, checkout API, pricing page, DB schema
-Last activity: 2026-02-17 - Completed 07-01-PLAN.md (Stripe Foundation — SDK, schema, checkout, pricing page)
+Plan: 3 of ? in phase 7
+Status: Phase 7 Plan 2 complete — Stripe webhook handler, subscription lifecycle, success page
+Last activity: 2026-02-17 - Completed 07-02-PLAN.md (Stripe Webhooks — webhook handler, subscription lifecycle, success page)
 
 Progress: [####################] 96%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22
+- Total plans completed: 23
 - Average duration: 9m
 - Total execution time: 3.2 hours
 
@@ -34,11 +34,11 @@ Progress: [####################] 96%
 | 04-astrology-engine-charts | 4 | 104m | 26m |
 | 05-ai-oracle | 3 | 20m | 7m |
 | 06-daily-horoscope | 3 | 11m | 4m |
-| 07-payments | 1 | 5m | 5m |
+| 07-payments | 2 | 10m | 5m |
 
 **Recent Trend:**
-- Last 5 plans: 06-01 (5m), 06-02 (3m), 06-03 (3m), 07-01 (5m)
-- Trend: Phase 7 started — Stripe foundation in 5m
+- Last 5 plans: 06-02 (3m), 06-03 (3m), 07-01 (5m), 07-02 (5m)
+- Trend: Phase 7 progressing steadily — webhook handler and success page in 5m
 
 *Updated after each plan completion*
 
@@ -130,6 +130,9 @@ Recent decisions affecting current work:
 - [07-01]: drizzle-kit updated to latest to resolve drizzle-orm 0.40.1 incompatibility with 0.31.8
 - [07-01]: PricingContent extracted to separate file (not inline with page.tsx) for clean server/client component separation
 - [07-01]: clerkUserId metadata set on both checkout session and subscription_data for reliable webhook correlation in 07-02
+- [07-02]: stripe@20.x moves current_period_end from Subscription to SubscriptionItem (sub.items.data[0].current_period_end)
+- [07-02]: stripe@20.x moves invoice.subscription to invoice.parent.subscription_details.subscription (new parent union type)
+- [07-02]: SuccessContent extracted to separate file for clean server/client component separation (consistent with PricingContent pattern from 07-01)
 
 ### Pending Todos
 
@@ -225,18 +228,21 @@ Phase 6 (Daily Horoscope) is complete with all automated tasks done (human verif
 
 ## Phase 7 In-Progress Summary
 
-Phase 7 (Payments) — Plan 1 complete:
+Phase 7 (Payments) — Plans 1 and 2 complete:
 
 **Stripe SDK:** stripe@20.3.1 installed in apps/web; singleton client with API version 2026-01-28.clover
 **Database:** users table extended with 3 Stripe columns; processed_webhook_events table for webhook idempotency; migration 0005_slow_blue_shield.sql generated
 **Checkout API:** POST /api/stripe/checkout with priceId allowlist validation, clerkUserId metadata on session + subscription_data, returning-customer support
 **Pricing Page:** /pricing server page + PricingContent client component; Free/Premium side-by-side cards; monthly/annual toggle; cancelled=true URL param handling; active badge for premium users
 **Environment:** Stripe env vars documented in .env.example (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_MONTHLY, STRIPE_PRICE_ANNUAL, NEXT_PUBLIC_APP_URL)
+**Webhook Handler:** POST /api/webhooks/stripe — raw body text() for signature verification, idempotency via processed_webhook_events, 5 event types, 500 on errors (Stripe retries)
+**Subscription Lifecycle:** handleCheckoutComplete/Updated/Deleted/InvoicePaid — updates users table tier, Stripe IDs, expiry; stripe@20.x API fixes applied
+**Success Page:** /subscription/success — server fetches initial tier, client polls /api/stripe/status every 2s until premium; 30s timeout; 3 Bulgarian UI states
 
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: 07-01-PLAN.md complete — Stripe foundation established; proceed to 07-02 (webhook handler)
+Stopped at: 07-02-PLAN.md complete — Webhook handler and success page built; proceed to 07-03 (customer portal / account management) if planned
 Resume file: None
 
 ---
