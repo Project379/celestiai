@@ -3,9 +3,12 @@
 import Link from 'next/link'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { HoroscopeStream } from './HoroscopeStream'
+import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
 
 interface DailyHoroscopeProps {
   chartId: string
+  subscriptionTier?: string
+  priceMonthly?: string
 }
 
 /**
@@ -17,10 +20,11 @@ interface DailyHoroscopeProps {
  * - Streaming or cached horoscope text via HoroscopeStream
  * - Loading skeleton while generating
  * - Error state with Bulgarian message
+ * - Inline UpgradePrompt for free users after content
  *
  * Glassmorphism card styling matching existing dashboard cards.
  */
-export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
+export function DailyHoroscope({ chartId, subscriptionTier = 'free', priceMonthly = '' }: DailyHoroscopeProps) {
   const {
     completion,
     isLoading,
@@ -32,6 +36,8 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
     fetchError,
     getTodayString,
   } = useDailyHoroscope(chartId)
+
+  const isPremium = subscriptionTier !== 'free'
 
   // Format today's date in Bulgarian locale for the header
   const todayFormatted = new Intl.DateTimeFormat('bg-BG', {
@@ -170,6 +176,13 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
           <HoroscopeStream text={displayText} isStreaming={isStreaming} />
         )}
       </div>
+
+      {/* Inline upgrade prompt for free users — additive, after horoscope content */}
+      {!isPremium && (
+        <div className="mt-5 border-t border-white/5 pt-5">
+          <UpgradePrompt context="horoscope" priceMonthly={priceMonthly} />
+        </div>
+      )}
     </div>
   )
 }

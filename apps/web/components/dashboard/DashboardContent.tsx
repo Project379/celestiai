@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { BirthDataCard } from '../birth-data/BirthDataCard'
 import { DailyHoroscope } from '@/components/horoscope/DailyHoroscope'
 import { PushNotificationBanner } from '@/components/horoscope/PushNotificationBanner'
+import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
 
 interface ChartData {
   id: string
@@ -24,11 +25,21 @@ interface DashboardContentProps {
   firstName: string
   userId: string | null
   initialBirthChart: ChartData | null
+  subscriptionTier: string
+  priceMonthly: string
 }
 
-export function DashboardContent({ firstName, userId, initialBirthChart }: DashboardContentProps) {
+export function DashboardContent({
+  firstName,
+  userId,
+  initialBirthChart,
+  subscriptionTier,
+  priceMonthly,
+}: DashboardContentProps) {
   const router = useRouter()
   const [birthChart, setBirthChart] = useState<ChartData | null>(initialBirthChart)
+
+  const isPremium = subscriptionTier !== 'free'
 
   const handleBirthDataUpdate = useCallback(() => {
     // Refresh the page to get updated data from server
@@ -48,9 +59,17 @@ export function DashboardContent({ firstName, userId, initialBirthChart }: Dashb
     <div className="mx-auto max-w-4xl">
       {/* Welcome section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-100">
-          Добре дошли, {firstName}!
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-slate-100">
+            Добре дошли, {firstName}!
+          </h1>
+          {/* Premium badge — subtle accent for premium users */}
+          {isPremium && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-medium text-purple-300 ring-1 ring-purple-500/30">
+              <span aria-hidden>✦</span> Премиум
+            </span>
+          )}
+        </div>
         <p className="mt-2 text-slate-400">
           Вашето табло за астрологични прогнози
         </p>
@@ -107,10 +126,21 @@ export function DashboardContent({ firstName, userId, initialBirthChart }: Dashb
         )}
       </div>
 
+      {/* Upgrade prompt for free users — after birth data, before main content */}
+      {!isPremium && (
+        <div className="mb-8">
+          <UpgradePrompt context="dashboard" priceMonthly={priceMonthly} />
+        </div>
+      )}
+
       {/* Daily Horoscope — primary content, shown only when user has a birth chart */}
       {birthChart && (
         <div className="mb-8">
-          <DailyHoroscope chartId={birthChart.id} />
+          <DailyHoroscope
+            chartId={birthChart.id}
+            subscriptionTier={subscriptionTier}
+            priceMonthly={priceMonthly}
+          />
         </div>
       )}
 

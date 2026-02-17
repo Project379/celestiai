@@ -23,25 +23,38 @@ export default async function DashboardPage() {
   const user = await currentUser()
   const firstName = user?.firstName || 'Потребител'
 
-  // Fetch user's birth data
+  // Fetch user's birth data and subscription tier
   let birthChart: ChartData | null = null
+  let subscriptionTier = 'free'
   try {
     const supabase = createServiceSupabaseClient()
-    const { data, error } = await supabase
-      .from('charts')
-      .select('*')
-      .eq('user_id', userId) // Filter by user_id
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+    const [chartsResult, userResult] = await Promise.all([
+      supabase
+        .from('charts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single(),
+      supabase
+        .from('users')
+        .select('subscription_tier')
+        .eq('clerk_id', userId)
+        .single(),
+    ])
 
-    if (!error && data) {
-      birthChart = data as ChartData
+    if (!chartsResult.error && chartsResult.data) {
+      birthChart = chartsResult.data as ChartData
+    }
+    if (!userResult.error && userResult.data) {
+      subscriptionTier = userResult.data.subscription_tier ?? 'free'
     }
   } catch (error) {
-    // No birth data or error fetching - birthChart stays null
-    console.error('Error fetching birth chart:', error)
+    // No birth data or error fetching - birthChart stays null, tier stays free
+    console.error('Error fetching dashboard data:', error)
   }
+
+  const priceMonthly = process.env.STRIPE_PRICE_MONTHLY ?? ''
 
   return (
     <>
@@ -58,6 +71,8 @@ export default async function DashboardPage() {
         firstName={firstName}
         userId={userId}
         initialBirthChart={birthChart}
+        subscriptionTier={subscriptionTier}
+        priceMonthly={priceMonthly}
       />
     </>
   )
