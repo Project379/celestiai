@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 
 ## Current Position
 
-Phase: 7 of 8 (next phase) - READY
-Plan: 1 of ? in phase 7
-Status: Phase 6 complete (all automated tasks done; Task 3 human-verify deferred to post-Phase 7 batch testing)
-Last activity: 2026-02-15 - Completed 06-03-PLAN.md (Push Notifications — all code committed; human verification deferred)
+Phase: 7 of 8 - IN PROGRESS
+Plan: 2 of ? in phase 7
+Status: Phase 7 Plan 1 complete — Stripe SDK, checkout API, pricing page, DB schema
+Last activity: 2026-02-17 - Completed 07-01-PLAN.md (Stripe Foundation — SDK, schema, checkout, pricing page)
 
 Progress: [####################] 96%
 
@@ -34,10 +34,11 @@ Progress: [####################] 96%
 | 04-astrology-engine-charts | 4 | 104m | 26m |
 | 05-ai-oracle | 3 | 20m | 7m |
 | 06-daily-horoscope | 3 | 11m | 4m |
+| 07-payments | 1 | 5m | 5m |
 
 **Recent Trend:**
-- Last 5 plans: 05-03 (10m), 06-01 (5m), 06-02 (3m), 06-03 (3m)
-- Trend: Phase 6 fully complete — push pipeline in 3m
+- Last 5 plans: 06-01 (5m), 06-02 (3m), 06-03 (3m), 07-01 (5m)
+- Trend: Phase 7 started — Stripe foundation in 5m
 
 *Updated after each plan completion*
 
@@ -125,6 +126,10 @@ Recent decisions affecting current work:
 - [06-03]: Generic push notification body avoids N concurrent AI calls at cron time — personalized content generated on dashboard visit
 - [06-03]: 410/404 error codes from web-push trigger automatic subscription cleanup in batch after cron run
 - [06-03]: Uint8Array<ArrayBuffer> explicit generic required for TypeScript 5.7 compatibility with PushManager.subscribe applicationServerKey
+- [07-01]: stripe@20.3.1 installed (latest); API version is '2026-01-28.clover' not '2025-01-27.acacia' — plan referenced older SDK version
+- [07-01]: drizzle-kit updated to latest to resolve drizzle-orm 0.40.1 incompatibility with 0.31.8
+- [07-01]: PricingContent extracted to separate file (not inline with page.tsx) for clean server/client component separation
+- [07-01]: clerkUserId metadata set on both checkout session and subscription_data for reliable webhook correlation in 07-02
 
 ### Pending Todos
 
@@ -218,10 +223,20 @@ Phase 6 (Daily Horoscope) is complete with all automated tasks done (human verif
 **UI:** DailyHoroscope card with today/yesterday tabs, HoroscopeStream with planet sentinel color highlighting, PushNotificationBanner with Bulgarian UI
 **Infrastructure:** vercel.json cron at 06:00 UTC; web-push library; generic notification body avoids N AI calls at cron time
 
+## Phase 7 In-Progress Summary
+
+Phase 7 (Payments) — Plan 1 complete:
+
+**Stripe SDK:** stripe@20.3.1 installed in apps/web; singleton client with API version 2026-01-28.clover
+**Database:** users table extended with 3 Stripe columns; processed_webhook_events table for webhook idempotency; migration 0005_slow_blue_shield.sql generated
+**Checkout API:** POST /api/stripe/checkout with priceId allowlist validation, clerkUserId metadata on session + subscription_data, returning-customer support
+**Pricing Page:** /pricing server page + PricingContent client component; Free/Premium side-by-side cards; monthly/annual toggle; cancelled=true URL param handling; active badge for premium users
+**Environment:** Stripe env vars documented in .env.example (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_MONTHLY, STRIPE_PRICE_ANNUAL, NEXT_PUBLIC_APP_URL)
+
 ## Session Continuity
 
-Last session: 2026-02-15
-Stopped at: 06-03-PLAN.md complete — all automated tasks done; Task 3 human-verify deferred to post-Phase 7 batch testing
+Last session: 2026-02-17
+Stopped at: 07-01-PLAN.md complete — Stripe foundation established; proceed to 07-02 (webhook handler)
 Resume file: None
 
 ---
