@@ -43,7 +43,16 @@
       "Bash(echo:*)",
       "Bash(git push:*)",
       "Bash(python3:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Skill(gsd:update)",
+      "WebFetch(domain:docs.stripe.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.pedroalonso.net)",
+      "WebFetch(domain:www.hookrelay.io)",
+      "WebFetch(domain:www.wisp.blog)",
+      "Bash(dir:*)",
+      "Bash(npx drizzle-kit generate:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
