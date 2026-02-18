@@ -43,6 +43,13 @@
       "when": 1771346675120,
       "tag": "0005_slow_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771431830742,
+      "tag": "0006_living_morg",
+      "breakpoints": true
     }
   ]
 }

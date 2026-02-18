@@ -10,6 +10,9 @@ import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
  *
  * Phase 7 additions: Stripe customer/subscription columns for
  * webhook-driven subscription lifecycle management.
+ *
+ * Phase 8 additions: GDPR soft delete columns for account deletion
+ * with 30-day grace period.
  */
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -21,6 +24,9 @@ export const users = pgTable('users', {
   stripeCustomerId: text('stripe_customer_id').unique(),
   stripeSubscriptionId: text('stripe_subscription_id'),
   subscriptionExpiresAt: timestamp('subscription_expires_at', { withTimezone: true }),
+  // Phase 8: GDPR soft delete columns
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletionScheduledAt: timestamp('deletion_scheduled_at', { withTimezone: true }),
 })
 
 export type User = typeof users.$inferSelect
