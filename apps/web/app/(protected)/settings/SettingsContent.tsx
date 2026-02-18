@@ -260,6 +260,22 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
         )}
       </div>
 
+      {/* Privacy and data link */}
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+        <Link
+          href="/settings/privacy"
+          className="flex items-center justify-between text-white/80 transition-colors hover:text-white"
+        >
+          <div>
+            <h2 className="text-lg font-semibold text-white">Поверителност и данни</h2>
+            <p className="mt-1 text-sm text-white/50">
+              Експорт на данни, изтриване на акаунт, политика за поверителност
+            </p>
+          </div>
+          <span className="text-white/40">&rarr;</span>
+        </Link>
+      </div>
+
       {/* Cancellation dialog */}
       <dialog
         ref={dialogRef}
