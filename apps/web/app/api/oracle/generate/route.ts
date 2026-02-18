@@ -7,6 +7,7 @@ import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
 import { stripSentinels } from '@/lib/oracle/planet-parser'
 import type { ChartData } from '@celestia/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
+import { logAuditEvent } from '@/lib/audit'
 
 /**
  * POST /api/oracle/generate
@@ -208,6 +209,8 @@ export async function POST(req: Request) {
         }
       },
     })
+
+    logAuditEvent(userId, 'data.ai_reading', { chartId, topic: validatedTopic })
 
     // Return streaming response — toTextStreamResponse() is the v6 API
     // useCompletion with streamProtocol: 'text' reads this format

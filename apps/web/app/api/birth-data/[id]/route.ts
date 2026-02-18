@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { updateBirthDataSchema } from '@/lib/validators/birth-data'
+import { logAuditEvent } from '@/lib/audit'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -120,6 +121,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         { status: 404 }
       )
     }
+
+    logAuditEvent(userId, 'account.birth_data_edit', { chartId: id })
 
     return Response.json(data)
   } catch (error) {

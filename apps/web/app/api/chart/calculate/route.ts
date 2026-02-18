@@ -3,6 +3,7 @@ import { calculateNatalChart } from '@celestia/astrology'
 import type { ChartData } from '@celestia/astrology'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { chartCalculationSchema } from '@/lib/validators/chart'
+import { logAuditEvent } from '@/lib/audit'
 
 /**
  * POST /api/chart/calculate
@@ -116,6 +117,8 @@ export async function POST(request: Request) {
       } else {
         console.log('[Chart Calculate] Cached calculation for:', chartId)
       }
+
+      logAuditEvent(userId, 'data.chart_calculation', { chartId: chart.id })
 
       return Response.json(chartData)
     } catch (calcError) {

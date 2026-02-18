@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { stripe } from '@/lib/stripe/client'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { logAuditEvent } from '@/lib/audit'
 
 /**
  * POST /api/stripe/cancel
@@ -41,6 +42,8 @@ export async function POST(req: Request) {
     await stripe.subscriptions.update(subscriptionId, {
       cancel_at_period_end: true,
     })
+
+    logAuditEvent(userId, 'payment.subscription_cancelled', { reason })
 
     if (reason) {
       console.log(`[Cancel] User ${userId} cancelled subscription. Reason: ${reason}`)
@@ -83,6 +86,8 @@ export async function DELETE() {
     await stripe.subscriptions.update(subscriptionId, {
       cancel_at_period_end: false,
     })
+
+    logAuditEvent(userId, 'payment.subscription_reactivated')
 
     return Response.json({ success: true })
   } catch (error) {

@@ -7,6 +7,7 @@ import {
   handleSubscriptionDeleted,
   handleInvoicePaid,
 } from '@/lib/stripe/subscription'
+import { logAuditEvent } from '@/lib/audit'
 
 /**
  * POST /api/webhooks/stripe
@@ -56,6 +57,9 @@ export async function POST(request: Request) {
     return new Response('OK', { status: 200 })
   }
 
+  // Audit log all webhook events (fire-and-forget, null userId for webhooks)
+  logAuditEvent(null, 'payment.webhook_received', { eventType: event.type, eventId: event.id })
+
   // Process event — return 500 on error so Stripe retries
   try {
     switch (event.type) {
@@ -64,6 +68,8 @@ export async function POST(request: Request) {
         // Only process subscription checkouts — not one-time payments
         if (session.mode === 'subscription') {
           await handleCheckoutComplete(session)
+          const clerkUserId = session.metadata?.clerkUserId ?? null
+          logAuditEvent(clerkUserId, 'payment.subscription_created', { stripeSubscriptionId: session.subscription })
         }
         break
       }
@@ -77,6 +83,8 @@ export async function POST(request: Request) {
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription
         await handleSubscriptionDeleted(sub)
+        const clerkUserId = sub.metadata?.clerkUserId ?? null
+        logAuditEvent(clerkUserId, 'payment.subscription_cancelled', { stripeSubscriptionId: sub.id })
         break
       }
 

@@ -6,6 +6,7 @@ import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
 import type { PlanetPosition } from '@celestia/astrology/client'
 import type { TransitAspect } from '@celestia/astrology'
+import { logAuditEvent } from '@/lib/audit'
 
 /**
  * POST /api/horoscope/generate
@@ -212,6 +213,8 @@ export async function POST(req: Request) {
         }
       },
     })
+
+    logAuditEvent(userId, 'data.horoscope_generation', { chartId, date: requestedDate })
 
     // Return streaming response — toTextStreamResponse() is the v6 AI SDK API
     return result.toTextStreamResponse()
