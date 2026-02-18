@@ -32,3 +32,8 @@ export {
   type ProcessedWebhookEvent,
   type NewProcessedWebhookEvent,
 } from './webhooks'
+export {
+  auditLogs,
+  type AuditLog,
+  type NewAuditLog,
+} from './audit-logs'
