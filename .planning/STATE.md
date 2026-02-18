@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-21)
 
 **Core value:** Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.
-**Current focus:** Phase 7 (next phase — Phase 6 complete)
+**Current focus:** Phase 8 (launch prep — Phase 7 complete)
 
 ## Current Position
 
-Phase: 7 of 8 - IN PROGRESS
-Plan: 3 of ? in phase 7
-Status: Phase 7 Plan 2 complete — Stripe webhook handler, subscription lifecycle, success page
-Last activity: 2026-02-17 - Completed 07-02-PLAN.md (Stripe Webhooks — webhook handler, subscription lifecycle, success page)
+Phase: 8 of 8 - IN PROGRESS
+Plan: 1 of 3 in phase 8 - COMPLETE
+Status: Phase 8 Plan 1 complete — landing page conversion upgrade with starfield hero, Lucide icons, Premium badges
+Last activity: 2026-02-18 - Completed 08-01-PLAN.md (Landing page upgrade — StarCanvas, Bulgarian motto, dual CTAs, Lucide features, privacy link)
 
-Progress: [####################] 96%
+Progress: [####################] 97%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23
+- Total plans completed: 24
 - Average duration: 9m
-- Total execution time: 3.2 hours
+- Total execution time: 3.3 hours
 
 **By Phase:**
 
@@ -34,11 +34,12 @@ Progress: [####################] 96%
 | 04-astrology-engine-charts | 4 | 104m | 26m |
 | 05-ai-oracle | 3 | 20m | 7m |
 | 06-daily-horoscope | 3 | 11m | 4m |
-| 07-payments | 2 | 10m | 5m |
+| 07-payments | 3 | 15m | 5m |
+| 08-launch-prep | 1 | 5m | 5m |
 
 **Recent Trend:**
-- Last 5 plans: 06-02 (3m), 06-03 (3m), 07-01 (5m), 07-02 (5m)
-- Trend: Phase 7 progressing steadily — webhook handler and success page in 5m
+- Last 5 plans: 07-01 (5m), 07-02 (5m), 07-03 (5m), 08-01 (5m)
+- Trend: Consistent 5m execution pace continuing into Phase 8
 
 *Updated after each plan completion*
 
@@ -133,6 +134,12 @@ Recent decisions affecting current work:
 - [07-02]: stripe@20.x moves current_period_end from Subscription to SubscriptionItem (sub.items.data[0].current_period_end)
 - [07-02]: stripe@20.x moves invoice.subscription to invoice.parent.subscription_details.subscription (new parent union type)
 - [07-02]: SuccessContent extracted to separate file for clean server/client component separation (consistent with PricingContent pattern from 07-01)
+- [07-03]: SettingsContent extracted to separate file for clean server/client split (consistent with PricingContent and SuccessContent patterns)
+- [07-03]: UpgradePrompt uses inline expansion — collapsed teaser expands in-place to show pricing and checkout button, no modal or full-page redirect
+- [07-03]: DashboardContent receives subscriptionTier and priceMonthly from server page to avoid client-side fetch for initial render
+- [07-03]: Promise.all used in dashboard page to fetch charts + users rows concurrently (was sequential before)
+- [08-01]: 2x2 grid layout (md:grid-cols-2 max-w-4xl) for 4 feature cards — cleaner than 4-in-a-row or 3+1 orphan
+- [08-01]: lucide-react for consistent, tree-shakeable icon library across landing page
 
 ### Pending Todos
 
@@ -226,9 +233,9 @@ Phase 6 (Daily Horoscope) is complete with all automated tasks done (human verif
 **UI:** DailyHoroscope card with today/yesterday tabs, HoroscopeStream with planet sentinel color highlighting, PushNotificationBanner with Bulgarian UI
 **Infrastructure:** vercel.json cron at 06:00 UTC; web-push library; generic notification body avoids N AI calls at cron time
 
-## Phase 7 In-Progress Summary
+## Phase 7 Completion Summary
 
-Phase 7 (Payments) — Plans 1 and 2 complete:
+Phase 7 (Payments) — All 3 plans complete:
 
 **Stripe SDK:** stripe@20.3.1 installed in apps/web; singleton client with API version 2026-01-28.clover
 **Database:** users table extended with 3 Stripe columns; processed_webhook_events table for webhook idempotency; migration 0005_slow_blue_shield.sql generated
@@ -238,16 +245,22 @@ Phase 7 (Payments) — Plans 1 and 2 complete:
 **Webhook Handler:** POST /api/webhooks/stripe — raw body text() for signature verification, idempotency via processed_webhook_events, 5 event types, 500 on errors (Stripe retries)
 **Subscription Lifecycle:** handleCheckoutComplete/Updated/Deleted/InvoicePaid — updates users table tier, Stripe IDs, expiry; stripe@20.x API fixes applied
 **Success Page:** /subscription/success — server fetches initial tier, client polls /api/stripe/status every 2s until premium; 30s timeout; 3 Bulgarian UI states
+**Cancel API:** POST /api/stripe/cancel (cancel_at_period_end: true) + DELETE (reactivate); optional reason logging
+**Portal API:** POST /api/stripe/portal — Stripe Customer Portal session returning URL
+**Settings Page:** /settings with 4 subscription states (free, active, cancelling, expired); native dialog cancellation with 4-option reason dropdown; billing date, payment method display
+**UpgradePrompt:** Reusable inline expand/collapse CTA component; context-specific Bulgarian copy for dashboard/horoscope/oracle; calls /api/stripe/checkout
+**Dashboard:** Premium badge for premium users; UpgradePrompt for free users; parallel fetch of tier + chart data
+**DailyHoroscope:** Inline UpgradePrompt after content for free users; additive only
 
 ## Session Continuity
 
-Last session: 2026-02-17
-Stopped at: 07-02-PLAN.md complete — Webhook handler and success page built; proceed to 07-03 (customer portal / account management) if planned
+Last session: 2026-02-18
+Stopped at: Completed 08-01-PLAN.md — landing page conversion upgrade
 Resume file: None
 
 ---
 
-*Next action: Begin Phase 7 planning and execution*
+*Next action: Execute 08-02-PLAN.md*
 
 ## Key Clarifications
 
