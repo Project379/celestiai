@@ -23,8 +23,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Astrology Engine & Charts** - Swiss Ephemeris server-side, interactive visualization
 - [x] **Phase 5: AI Oracle** - AI-powered personalized readings with tier restrictions
 - [x] **Phase 6: Daily Horoscope** - Personalized daily content with push notifications
-- [ ] **Phase 7: Payments** - Stripe integration, subscription lifecycle management
-- [ ] **Phase 8: Launch Prep** - Landing page, GDPR compliance, audit logging, final polish
+- [x] **Phase 7: Payments** - Stripe integration, subscription lifecycle management
+- [x] **Phase 8: Launch Prep** - Landing page, GDPR compliance, audit logging, final polish
 
 ## Phase Details
 
@@ -281,9 +281,9 @@ Plans:
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 07-01-PLAN.md — Stripe SDK setup, DB schema (users columns + webhook idempotency table), checkout API, /pricing page with monthly/annual toggle
-- [ ] 07-02-PLAN.md — Webhook handler for subscription lifecycle events (checkout, update, delete, invoice), /subscription/success page with activating state
-- [ ] 07-03-PLAN.md — Subscription management /settings page (cancel, reactivate, portal), reusable UpgradePrompt component, dashboard and horoscope upgrade integration
+- [x] 07-01-PLAN.md — Stripe SDK setup, DB schema (users columns + webhook idempotency table), checkout API, /pricing page with monthly/annual toggle
+- [x] 07-02-PLAN.md — Webhook handler for subscription lifecycle events (checkout, update, delete, invoice), /subscription/success page with activating state
+- [x] 07-03-PLAN.md — Subscription management /settings page (cancel, reactivate, portal), reusable UpgradePrompt component, dashboard and horoscope upgrade integration
 
 ---
 
@@ -314,9 +314,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 08-01-PLAN.md — Landing page hero with starfield, Lucide icon feature showcase with Premium badges, CTA touchpoints, footer privacy link
-- [ ] 08-02-PLAN.md — Privacy policy page, GDPR privacy settings (data export + account deletion), hard-delete cron, users soft-delete columns
-- [ ] 08-03-PLAN.md — Audit logging schema, fire-and-forget helper, integration into all sensitive API routes
+- [x] 08-01-PLAN.md — Landing page hero with starfield, Lucide icon feature showcase with Premium badges, CTA touchpoints, footer privacy link
+- [x] 08-02-PLAN.md — Privacy policy page, GDPR privacy settings (data export + account deletion), hard-delete cron, users soft-delete columns
+- [x] 08-03-PLAN.md — Audit logging schema, fire-and-forget helper, integration into all sensitive API routes
 
 ---
 
@@ -334,8 +334,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 | 4. Astrology Engine & Charts | 4/4 | Complete | 2026-02-01 |
 | 5. AI Oracle | 3/3 | Complete | 2026-02-15 |
 | 6. Daily Horoscope | 3/3 | Complete | 2026-02-15 |
-| 7. Payments | 0/3 | Not started | - |
-| 8. Launch Prep | 0/3 | Not started | - |
+| 7. Payments | 3/3 | Complete | 2026-02-17 |
+| 8. Launch Prep | 3/3 | Complete | 2026-02-19 |
 
 **Total Plans:** 29
 **Requirements Coverage:** 54/54 (100%)
@@ -421,4 +421,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 *Phase 4 planned: 2026-02-01*
 *Phase 6 planned: 2026-02-15*
 *Phase 6 complete: 2026-02-15*
+*Phase 7 complete: 2026-02-17*
+*Phase 8 planned: 2026-02-19*
+*Phase 8 complete: 2026-02-19*
 *Milestone: v0.1 MVP*
