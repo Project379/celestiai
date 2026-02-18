@@ -310,13 +310,13 @@ Plans:
 - [ ] User can request data export and account deletion from settings
 - [ ] Sensitive operations (login, data access, deletion) appear in audit logs
 
-**Research**: Unlikely (established patterns)
-**Plans**: TBD
+**Research**: Complete (08-RESEARCH.md)
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 08-01: Landing page with hero, pricing comparison, feature showcase
-- [ ] 08-02: Privacy policy page and GDPR request handling
-- [ ] 08-03: Audit logging implementation for sensitive operations
+- [ ] 08-01-PLAN.md — Landing page hero with starfield, Lucide icon feature showcase with Premium badges, CTA touchpoints, footer privacy link
+- [ ] 08-02-PLAN.md — Privacy policy page, GDPR privacy settings (data export + account deletion), hard-delete cron, users soft-delete columns
+- [ ] 08-03-PLAN.md — Audit logging schema, fire-and-forget helper, integration into all sensitive API routes
 
 ---
 
