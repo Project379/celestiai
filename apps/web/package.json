@@ -21,6 +21,7 @@
     "@supabase/supabase-js": "^2.49.1",
     "ai": "^6.0.86",
     "d3": "^7.9.0",
+    "lucide-react": "^0.574.0",
     "nativewind": "^4.1.23",
     "next": "^15.2.4",
     "react": "^19.0.0",
