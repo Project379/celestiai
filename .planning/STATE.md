@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Phase: 8 of 8 - IN PROGRESS
-Plan: 1 of 3 in phase 8 - COMPLETE
-Status: Phase 8 Plan 1 complete — landing page conversion upgrade with starfield hero, Lucide icons, Premium badges
-Last activity: 2026-02-18 - Completed 08-01-PLAN.md (Landing page upgrade — StarCanvas, Bulgarian motto, dual CTAs, Lucide features, privacy link)
+Plan: 2 of 3 in phase 8 - COMPLETE
+Status: Phase 8 Plan 2 complete — GDPR compliance with privacy policy, data export, account deletion, hard-delete cron
+Last activity: 2026-02-18 - Completed 08-02-PLAN.md (GDPR compliance — privacy policy, data export, soft-delete account deletion, cleanup cron)
 
-Progress: [####################] 97%
+Progress: [####################] 98%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
+- Total plans completed: 25
 - Average duration: 9m
-- Total execution time: 3.3 hours
+- Total execution time: 3.4 hours
 
 **By Phase:**
 
@@ -35,11 +35,11 @@ Progress: [####################] 97%
 | 05-ai-oracle | 3 | 20m | 7m |
 | 06-daily-horoscope | 3 | 11m | 4m |
 | 07-payments | 3 | 15m | 5m |
-| 08-launch-prep | 1 | 5m | 5m |
+| 08-launch-prep | 2 | 12m | 6m |
 
 **Recent Trend:**
-- Last 5 plans: 07-01 (5m), 07-02 (5m), 07-03 (5m), 08-01 (5m)
-- Trend: Consistent 5m execution pace continuing into Phase 8
+- Last 5 plans: 07-02 (5m), 07-03 (5m), 08-01 (5m), 08-02 (7m)
+- Trend: Consistent execution pace through Phase 8
 
 *Updated after each plan completion*
 
@@ -140,6 +140,10 @@ Recent decisions affecting current work:
 - [07-03]: Promise.all used in dashboard page to fetch charts + users rows concurrently (was sequential before)
 - [08-01]: 2x2 grid layout (md:grid-cols-2 max-w-4xl) for 4 feature cards — cleaner than 4-in-a-row or 3+1 orphan
 - [08-01]: lucide-react for consistent, tree-shakeable icon library across landing page
+- [08-02]: daily_horoscopes and ai_readings both have user_id — queried directly for GDPR export and hard-delete
+- [08-02]: Soft delete with 30-day grace period: deleted_at marks deactivation, deletion_scheduled_at sets hard-delete date
+- [08-02]: Cascading hard-delete order: horoscopes/calculations by chart_id, then readings/charts/push by user_id, then users, then Clerk
+- [08-02]: await clerkClient() per Clerk v6 pattern for server-side Clerk API calls in cron job
 
 ### Pending Todos
 
@@ -255,12 +259,12 @@ Phase 7 (Payments) — All 3 plans complete:
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 08-01-PLAN.md — landing page conversion upgrade
+Stopped at: Completed 08-02-PLAN.md — GDPR compliance (privacy policy, data export, account deletion, cleanup cron)
 Resume file: None
 
 ---
 
-*Next action: Execute 08-02-PLAN.md*
+*Next action: Execute 08-03-PLAN.md*
 
 ## Key Clarifications
 
