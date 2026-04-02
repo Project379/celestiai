@@ -71,7 +71,7 @@ export function PricingSection() {
                   <span className="text-4xl font-bold text-white">
                     {plan.price}
                   </span>
-                  <span className="text-slate-400">лв/{plan.period}</span>
+                  <span className="text-slate-400">€/{plan.period}</span>
                 </div>
                 <Text variant="muted" className="mt-2">
                   {plan.description}

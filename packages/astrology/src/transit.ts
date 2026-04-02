@@ -68,6 +68,7 @@ const OUTER_PLANETS = new Set([
   'uranus',
   'neptune',
   'pluto',
+  'northNode',
 ])
 
 /**

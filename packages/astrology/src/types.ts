@@ -134,6 +134,7 @@ export type Planet =
   | 'uranus'
   | 'neptune'
   | 'pluto'
+  | 'northNode'
 
 /**
  * Aspect type identifier

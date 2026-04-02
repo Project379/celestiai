@@ -56,6 +56,7 @@ export const PLANETS_BG: Record<Planet, string> = {
   uranus: 'Уран',
   neptune: 'Нептун',
   pluto: 'Плутон',
+  northNode: 'Северен възел',
 } as const
 
 /**
@@ -72,6 +73,7 @@ export const PLANETS_ORDER: Planet[] = [
   'uranus',
   'neptune',
   'pluto',
+  'northNode',
 ]
 
 /**
@@ -89,6 +91,7 @@ export const PLANET_IDS: Record<Planet, number> = {
   uranus: 7, // SE_URANUS
   neptune: 8, // SE_NEPTUNE
   pluto: 9, // SE_PLUTO
+  northNode: 11, // SE_TRUE_NODE
 } as const
 
 /**

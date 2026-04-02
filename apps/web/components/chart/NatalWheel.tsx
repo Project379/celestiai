@@ -30,6 +30,7 @@ const PLANET_COLORS: Record<string, string> = {
   uranus: '#22d3ee', // cyan
   neptune: '#3b82f6', // blue
   pluto: '#6b21a8', // dark purple
+  northNode: '#a855f7', // violet
 }
 
 // Aspect line colors

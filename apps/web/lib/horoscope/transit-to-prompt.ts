@@ -50,9 +50,10 @@ function formatTransitPlanetLine(
 ): string {
   const planetName = PLANETS_BG[planet.planet as Planet] ?? planet.planet
   const signName = ZODIAC_SIGNS_BG[planet.sign as ZodiacSign] ?? planet.sign
-  const degree = Math.round(planet.signDegree * 10) / 10
+  const degrees = Math.floor(planet.signDegree)
+  const minutes = Math.floor((planet.signDegree - degrees) * 60)
   const retrograde = planet.speed < 0 ? ' (ретроградна)' : ''
-  return `${planetName}: ${degree}° ${signName}${retrograde} (транзит)`
+  return `${planetName}: ${degrees}°${minutes.toString().padStart(2, '0')}' ${signName}${retrograde} (транзит)`
 }
 
 /**
@@ -62,9 +63,10 @@ function formatTransitPlanetLine(
 function formatNatalPlanetLine(planet: PlanetPosition): string {
   const planetName = PLANETS_BG[planet.planet as Planet] ?? planet.planet
   const signName = ZODIAC_SIGNS_BG[planet.sign as ZodiacSign] ?? planet.sign
-  const degree = Math.round(planet.signDegree * 10) / 10
+  const degrees = Math.floor(planet.signDegree)
+  const minutes = Math.floor((planet.signDegree - degrees) * 60)
   const retrograde = planet.speed < 0 ? ' (ретроградна)' : ''
-  return `${planetName}: ${degree}° ${signName}, дом ${planet.house}${retrograde}`
+  return `${planetName}: ${degrees}°${minutes.toString().padStart(2, '0')}' ${signName}, дом ${planet.house}${retrograde}`
 }
 
 /**

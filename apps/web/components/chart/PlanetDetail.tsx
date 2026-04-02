@@ -106,6 +106,7 @@ export function PlanetDetail({
     uranus: 'border-cyan-400/50 bg-cyan-400/10',
     neptune: 'border-blue-500/50 bg-blue-500/10',
     pluto: 'border-purple-600/50 bg-purple-600/10',
+    northNode: 'border-violet-400/50 bg-violet-400/10',
     rising: 'border-cyan-400/50 bg-cyan-400/10',
   }
 

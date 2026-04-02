@@ -18,6 +18,7 @@ const PLANET_COLORS: Record<string, string> = {
   uranus: 'text-teal-300',
   neptune: 'text-blue-400',
   pluto: 'text-purple-400',
+  northNode: 'text-violet-400',
 }
 
 /**

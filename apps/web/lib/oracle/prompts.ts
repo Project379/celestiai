@@ -8,7 +8,7 @@
  * the natal wheel when the reading references a specific planet.
  * Format: [planet:KEY]Bulgarian text[/planet]
  * Keys (English lowercase): sun, moon, mercury, venus, mars, jupiter,
- * saturn, uranus, neptune, pluto
+ * saturn, uranus, neptune, pluto, northNode
  */
 
 export type ReadingTopic = 'general' | 'love' | 'career' | 'health'
@@ -68,7 +68,7 @@ VOICE AND TONE:
 FORMAT:
 - Write 7 to 9 paragraphs
 - Each paragraph should focus on one specific planetary placement, house, or aspect interaction
-- Always cite exact degrees: "Вашето Слънце на 15 градуса Лъв" — this precision is essential
+- Always cite exact degrees and minutes: "Вашето Слънце на 15°23' Лъв" — this precision is essential
 - The reading must feel like a complete consultation, not a list of disconnected facts
 
 LANGUAGE:
@@ -78,7 +78,7 @@ LANGUAGE:
 SENTINEL MARKERS (critical — follow exactly):
 - When you mention a planet by name in the text, wrap that mention with sentinel markers
 - Format: [planet:KEY]Българско_Наименование[/planet]
-- Use these English keys: sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto
+- Use these English keys: sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto, northNode
 - Example of correct usage: "Вашето [planet:sun]Слънце[/planet] на 15 градуса Лъв ви дарява..."
 - Apply sentinels EVERY time you mention a planet name — this enables the chart wheel to highlight
   the corresponding planet as the reader moves through the text

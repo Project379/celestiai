@@ -14,7 +14,7 @@
  * the natal wheel when the reading references a specific planet.
  * Format: [planet:KEY]Bulgarian text[/planet]
  * Keys (English lowercase): sun, moon, mercury, venus, mars, jupiter,
- * saturn, uranus, neptune, pluto
+ * saturn, uranus, neptune, pluto, northNode
  */
 
 /**
@@ -47,7 +47,7 @@ LANGUAGE:
 SENTINEL MARKERS (critical — follow exactly):
 - When you mention a planet by name in the text, wrap that mention with sentinel markers
 - Format: [planet:KEY]Българско_Наименование[/planet]
-- Use these English keys: sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto
+- Use these English keys: sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto, northNode
 - Example: "Транзитният [planet:mars]Марс[/planet] активира вашия натален [planet:sun]Слънце[/planet]..."
 - Apply sentinels EVERY time you mention a planet name — this enables the chart wheel to highlight
   the corresponding planet as the reader moves through the text

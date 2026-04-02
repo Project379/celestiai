@@ -35,10 +35,15 @@ import { getZodiacSign, longitudeToSignDegree } from './utils/zodiac'
 function calculatePlanetPosition(
   jd: number,
   planetId: number,
-  planetName: string
+  planetName: string,
+  useTopocentric: boolean = false
 ): Omit<PlanetPosition, 'house'> {
   // Use Moshier ephemeris (built-in, no files needed) with speed calculation
-  const flags = sweph.constants.SEFLG_MOSEPH | sweph.constants.SEFLG_SPEED
+  let flags = sweph.constants.SEFLG_MOSEPH | sweph.constants.SEFLG_SPEED
+  // Topocentric correction for Moon — corrects for parallax (up to ~1° shift)
+  if (useTopocentric && planetId === 1) {
+    flags |= sweph.constants.SEFLG_TOPOCTR
+  }
   const result = sweph.calc_ut(jd, planetId, flags)
 
   // result.data = [longitude, latitude, distance, lonSpeed, latSpeed, distSpeed]
@@ -129,6 +134,9 @@ export function calculateNatalChart(input: ChartInput): ChartData {
   // Calculate Julian Day
   const jd = getJulianDay(input.date, time)
 
+  // Set topocentric position for parallax-corrected Moon calculations
+  sweph.set_topo(input.lon, input.lat, 0)
+
   // Calculate house cusps using Placidus
   const housesResult = sweph.houses(
     jd,
@@ -153,10 +161,10 @@ export function calculateNatalChart(input: ChartInput): ChartData {
   const ascendant = createPointData(housesResult.data.points[sweph.constants.SE_ASC])
   const mc = createPointData(housesResult.data.points[sweph.constants.SE_MC])
 
-  // Calculate all planet positions
+  // Calculate all planet positions (topocentric correction for Moon)
   const planetsWithoutHouse = PLANETS_ORDER.map((planetName) => {
     const planetId = PLANET_IDS[planetName]
-    return calculatePlanetPosition(jd, planetId, planetName)
+    return calculatePlanetPosition(jd, planetId, planetName, true)
   })
 
   // Add house placements to planets

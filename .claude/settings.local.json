@@ -52,7 +52,9 @@
       "WebFetch(domain:www.wisp.blog)",
       "Bash(dir:*)",
       "Bash(npx drizzle-kit generate:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx turbo:*)",
+      "Bash(cd:*)"
     ]
   }
 }

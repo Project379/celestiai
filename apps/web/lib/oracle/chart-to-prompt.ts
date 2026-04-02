@@ -31,9 +31,10 @@ import type { Planet, ZodiacSign, AspectType } from '@celestia/astrology/client'
 function formatPlanetLine(position: PlanetPosition): string {
   const planetName = PLANETS_BG[position.planet as Planet] ?? position.planet
   const signName = ZODIAC_SIGNS_BG[position.sign as ZodiacSign] ?? position.sign
-  const degree = Math.round(position.signDegree * 10) / 10
+  const degrees = Math.floor(position.signDegree)
+  const minutes = Math.floor((position.signDegree - degrees) * 60)
   const retrograde = position.speed < 0 ? ' (ретроградна)' : ''
-  return `${planetName}: ${degree}° ${signName}, дом ${position.house}${retrograde}`
+  return `${planetName}: ${degrees}°${minutes.toString().padStart(2, '0')}' ${signName}, дом ${position.house}${retrograde}`
 }
 
 /**
@@ -66,14 +67,16 @@ export function chartToPromptText(chartData: ChartData): string {
   // Ascendant
   const asc = chartData.ascendant
   const ascSign = ZODIAC_SIGNS_BG[asc.sign as ZodiacSign] ?? asc.sign
-  const ascDegree = Math.round(asc.degree * 10) / 10
-  lines.push(`Асцендент: ${ascDegree}° ${ascSign}`)
+  const ascDeg = Math.floor(asc.degree)
+  const ascMin = Math.floor((asc.degree - ascDeg) * 60)
+  lines.push(`Асцендент: ${ascDeg}°${ascMin.toString().padStart(2, '0')}' ${ascSign}`)
 
   // MC (Midheaven)
   const mc = chartData.mc
   const mcSign = ZODIAC_SIGNS_BG[mc.sign as ZodiacSign] ?? mc.sign
-  const mcDegree = Math.round(mc.degree * 10) / 10
-  lines.push(`MC (Среднебо): ${mcDegree}° ${mcSign}`)
+  const mcDeg = Math.floor(mc.degree)
+  const mcMin = Math.floor((mc.degree - mcDeg) * 60)
+  lines.push(`MC (Среднебо): ${mcDeg}°${mcMin.toString().padStart(2, '0')}' ${mcSign}`)
 
   // Birth time note
   if (!chartData.birthTimeKnown) {
