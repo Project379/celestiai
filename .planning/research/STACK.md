@@ -392,7 +392,7 @@ export async function purchaseSubscription(packageId: string) {
 ```json
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
+  "globalDependencies": ["**/.env.local.*local"],
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],

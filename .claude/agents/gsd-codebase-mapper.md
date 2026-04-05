@@ -85,9 +85,9 @@ Explore the codebase thoroughly for your focus area.
 ls package.json requirements.txt Cargo.toml go.mod pyproject.toml 2>/dev/null
 cat package.json 2>/dev/null | head -100
 
-# Config files (list only - DO NOT read .env contents)
+# Config files (list only - DO NOT read .env.local contents)
 ls -la *.config.* tsconfig.json .nvmrc .python-version 2>/dev/null
-ls .env* 2>/dev/null  # Note existence only, never read contents
+ls .env.local* 2>/dev/null  # Note existence only, never read contents
 
 # Find SDK/API imports
 grep -r "import.*stripe\|import.*supabase\|import.*aws\|import.*@" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -50

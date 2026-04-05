@@ -306,17 +306,17 @@ grep -r "$hook_name()" src/ --include="*.tsx" --include="*.ts" | grep -v "$hook_
 
 **Existence check:**
 ```bash
-# .env file exists
+# .env.local file exists
 [ -f ".env" ] || [ -f ".env.local" ]
 
 # Required variable is defined
-grep -E "^$VAR_NAME=" .env .env.local 2>/dev/null
+grep -E "^$VAR_NAME=" .env.local .env.local.local 2>/dev/null
 ```
 
 **Substantive check:**
 ```bash
 # Variable has actual value (not placeholder)
-grep -E "^$VAR_NAME=.+" .env .env.local 2>/dev/null | grep -v "your-.*-here|xxx|placeholder|TODO" -i
+grep -E "^$VAR_NAME=.+" .env.local .env.local.local 2>/dev/null | grep -v "your-.*-here|xxx|placeholder|TODO" -i
 
 # Value looks valid for type:
 # - URLs should start with http
