@@ -65,6 +65,35 @@ const SIGN_ELEMENTS: Record<ZodiacSign, keyof typeof ELEMENT_COLORS> = {
   pisces: 'water',
 }
 
+const PLANET_GLYPHS: Record<Planet, string> = {
+  sun: '☉︎',
+  moon: '☽︎',
+  mercury: '☿︎',
+  venus: '♀︎',
+  mars: '♂︎',
+  jupiter: '♃︎',
+  saturn: '♄︎',
+  uranus: '♅︎',
+  neptune: '♆︎',
+  pluto: '♇︎',
+  northNode: '☊︎',
+}
+
+const ZODIAC_GLYPHS: Record<ZodiacSign, string> = {
+  aries: '♈︎',
+  taurus: '♉︎',
+  gemini: '♊︎',
+  cancer: '♋︎',
+  leo: '♌︎',
+  virgo: '♍︎',
+  libra: '♎︎',
+  scorpio: '♏︎',
+  sagittarius: '♐︎',
+  capricorn: '♑︎',
+  aquarius: '♒︎',
+  pisces: '♓︎',
+}
+
 /**
  * Interactive natal chart wheel visualization using D3.js
  *
@@ -74,19 +103,15 @@ const SIGN_ELEMENTS: Record<ZodiacSign, keyof typeof ELEMENT_COLORS> = {
  * - Inner: Planet positions (clickable)
  * - Center: Aspect lines connecting planets
  */
-export function NatalWheel({
-  chart,
-  onPlanetSelect,
-  selectedPlanet,
-  size = 500,
-}: NatalWheelProps) {
+export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}: NatalWheelProps) {
   const center = size / 2
   const outerRadius = size * 0.48
   const zodiacOuterRadius = size * 0.46
   const zodiacInnerRadius = size * 0.38
   const houseInnerRadius = size * 0.2
   const planetRadius = size * 0.32
-  const aspectRadius = size * 0.18
+  const aspectRadius = houseInnerRadius * 0.9
+  const aspectAnchorRadius = houseInnerRadius * 0.96
 
   // Memoize planet positions to avoid recalculating
   const planetPositions = useMemo(() => {
@@ -164,9 +189,9 @@ export function NatalWheel({
           .attr('text-anchor', 'middle')
           .attr('dominant-baseline', 'middle')
           .attr('fill', 'rgba(226, 232, 240, 0.8)')
-          .attr('font-size', size * 0.024)
+          .attr('font-size', size * 0.034)
           .attr('font-weight', '500')
-          .text(ZODIAC_SIGNS_BG[d.sign].substring(0, 2))
+          .text(ZODIAC_GLYPHS[d.sign])
       })
 
       // Draw inner zodiac ring border
@@ -255,6 +280,15 @@ export function NatalWheel({
           .attr('stroke-dasharray', aspect.aspect === 'square' || aspect.aspect === 'opposition' ? '4,2' : 'none')
       })
 
+      // Draw subtle aspect anchor ring to show where aspect lines connect
+      g.append('circle')
+        .attr('cx', center)
+        .attr('cy', center)
+        .attr('r', aspectAnchorRadius)
+        .attr('fill', 'none')
+        .attr('stroke', 'rgba(148, 163, 184, 0.08)')
+        .attr('stroke-width', 1)
+
       // Draw inner circle border
       g.append('circle')
         .attr('cx', center)
@@ -267,6 +301,8 @@ export function NatalWheel({
       // Draw planets
       planetPositions.forEach((planet) => {
         const isSelected = selectedPlanet === planet.planet
+        const anchorX = center + Math.cos(planet.angle) * aspectAnchorRadius
+        const anchorY = center + Math.sin(planet.angle) * aspectAnchorRadius
         const planetGroup = g
           .append('g')
           .attr('class', 'planet-group')
@@ -274,6 +310,7 @@ export function NatalWheel({
           .attr('tabindex', '0')
           .attr('aria-label', `${PLANETS_BG[planet.planet as Planet]} - натисни за детайли`)
           .style('cursor', 'pointer')
+          .style('outline', 'none')
           .on('click', () => handlePlanetClick(planet))
           .on('keydown', (event: KeyboardEvent) => {
             if (event.key === 'Enter' || event.key === ' ') {
@@ -282,19 +319,16 @@ export function NatalWheel({
             }
           })
 
-        // Selection glow effect
-        if (isSelected) {
-          planetGroup
-            .append('circle')
-            .attr('cx', planet.x)
-            .attr('cy', planet.y)
-            .attr('r', size * 0.045)
-            .attr('fill', 'none')
-            .attr('stroke', PLANET_COLORS[planet.planet])
-            .attr('stroke-width', 2)
-            .attr('stroke-opacity', 0.5)
-            .attr('class', 'selection-glow')
-        }
+        // Anchor point showing the exact aspect connection location for this planet
+        planetGroup
+          .append('circle')
+          .attr('cx', anchorX)
+          .attr('cy', anchorY)
+          .attr('r', size * 0.0085)
+          .attr('fill', PLANET_COLORS[planet.planet])
+          .attr('stroke', 'rgba(15, 23, 42, 0.9)')
+          .attr('stroke-width', 1)
+          .attr('opacity', isSelected ? 1 : 0.75)
 
         // Planet circle background
         planetGroup
@@ -314,9 +348,9 @@ export function NatalWheel({
           .attr('text-anchor', 'middle')
           .attr('dominant-baseline', 'middle')
           .attr('fill', isSelected ? '#0f172a' : PLANET_COLORS[planet.planet])
-          .attr('font-size', size * 0.018)
+          .attr('font-size', size * 0.03)
           .attr('font-weight', '600')
-          .text(PLANETS_BG[planet.planet as Planet].substring(0, 2))
+          .text(PLANET_GLYPHS[planet.planet as Planet])
 
         // Retrograde indicator
         if (planet.speed < 0) {
@@ -332,7 +366,7 @@ export function NatalWheel({
         }
       })
     },
-    [chart, center, size, planetPositions, selectedPlanet, handlePlanetClick]
+    [chart, center, size, planetPositions, selectedPlanet, handlePlanetClick, aspectAnchorRadius]
   )
 
   return (

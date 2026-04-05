@@ -1,53 +1,75 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import type { PlanetPosition, PointData } from '@celestia/astrology/client'
-import { PLANETS_BG, ZODIAC_SIGNS_BG } from '@celestia/astrology/client'
-import type { Planet, ZodiacSign } from '@celestia/astrology/client'
+import {
+  PLANETS_BG,
+  ZODIAC_SIGNS_BG,
+  type AspectData,
+  type Planet,
+  type PlanetPosition,
+  type PointData,
+  type ZodiacSign,
+} from '@celestia/astrology/client'
 import {
   getPlanetInterpretation,
   getRisingInterpretation,
 } from '@/lib/interpretations/planets'
 
 interface PlanetDetailProps {
-  /** Planet data to display (null to hide panel) */
   planet: PlanetPosition | PointData | null
-  /** Close handler */
   onClose: () => void
-  /** Type for Big Three special handling */
   type?: 'sun' | 'moon' | 'rising' | null
-  /** Whether birth time is known (for Rising disclaimer) */
   birthTimeKnown?: boolean
-  /** House number for the planet (if available) */
   house?: number
+  aspects?: AspectData[]
 }
 
-/**
- * Planet interpretation panel
- *
- * Displays detailed information about a selected planet/point.
- * Shows position, brief trait, and placeholder text for AI interpretation.
- *
- * Styling: Glassmorphism card matching app theme
- * Animation: Fade in and slide up from below
- */
+const PLANET_GLYPHS: Record<Planet | 'rising', string> = {
+  sun: '☉︎',
+  moon: '☽︎',
+  mercury: '☿︎',
+  venus: '♀︎',
+  mars: '♂︎',
+  jupiter: '♃︎',
+  saturn: '♄︎',
+  uranus: '♅︎',
+  neptune: '♆︎',
+  pluto: '♇︎',
+  northNode: '☊︎',
+  rising: '↗',
+}
+
+const ZODIAC_GLYPHS: Record<ZodiacSign, string> = {
+  aries: '♈︎',
+  taurus: '♉︎',
+  gemini: '♊︎',
+  cancer: '♋︎',
+  leo: '♌︎',
+  virgo: '♍︎',
+  libra: '♎︎',
+  scorpio: '♏︎',
+  sagittarius: '♐︎',
+  capricorn: '♑︎',
+  aquarius: '♒︎',
+  pisces: '♓︎',
+}
+
 export function PlanetDetail({
   planet,
   onClose,
   type,
   birthTimeKnown = true,
   house,
+  aspects = [],
 }: PlanetDetailProps) {
   const panelRef = useRef<HTMLDivElement>(null)
 
-  // Focus panel when shown for keyboard accessibility
   useEffect(() => {
     if (planet && panelRef.current) {
       panelRef.current.focus()
     }
   }, [planet])
 
-  // Handle escape key to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -61,40 +83,29 @@ export function PlanetDetail({
     }
   }, [planet, onClose])
 
-  // Don't render if no planet selected
   if (!planet) {
     return null
   }
 
-  // Determine if this is a planet or a point (Ascendant)
   const isPlanetPosition = 'planet' in planet
   const isRising = type === 'rising'
 
-  // Get interpretation data
-  let interpretation
-  if (isRising) {
-    interpretation = getRisingInterpretation(
-      planet.sign,
-      'degree' in planet ? planet.degree : (planet as PlanetPosition).signDegree,
-      !birthTimeKnown
-    )
-  } else {
-    const planetKey = isPlanetPosition
-      ? (planet as PlanetPosition).planet
-      : type || 'sun'
-    const degree = isPlanetPosition
-      ? (planet as PlanetPosition).signDegree
-      : (planet as PointData).degree
+  const interpretation = isRising
+    ? getRisingInterpretation(
+        planet.sign,
+        'degree' in planet ? planet.degree : (planet as PlanetPosition).signDegree,
+        !birthTimeKnown
+      )
+    : getPlanetInterpretation(
+        isPlanetPosition ? (planet as PlanetPosition).planet : type || 'sun',
+        planet.sign,
+        isPlanetPosition
+          ? (planet as PlanetPosition).signDegree
+          : (planet as PointData).degree,
+        house,
+        aspects
+      )
 
-    interpretation = getPlanetInterpretation(
-      planetKey,
-      planet.sign,
-      degree,
-      house
-    )
-  }
-
-  // Get planet color for accent
   const planetColors: Record<string, string> = {
     sun: 'border-yellow-500/50 bg-yellow-500/10',
     moon: 'border-slate-400/50 bg-slate-400/10',
@@ -110,12 +121,27 @@ export function PlanetDetail({
     rising: 'border-cyan-400/50 bg-cyan-400/10',
   }
 
-  const colorKey = isRising
+  const colorKey: Planet | 'rising' = isRising
     ? 'rising'
     : isPlanetPosition
-      ? (planet as PlanetPosition).planet
+      ? ((planet as PlanetPosition).planet as Planet)
       : 'sun'
   const colorClass = planetColors[colorKey] || 'border-purple-500/50 bg-purple-500/10'
+  const signKey = planet.sign.toLowerCase() as ZodiacSign
+  const displayTitle = isRising
+    ? interpretation.title
+    : isPlanetPosition
+      ? PLANETS_BG[(planet as PlanetPosition).planet as Planet]
+      : interpretation.title
+  const titleGlyph = PLANET_GLYPHS[colorKey] || '✦'
+  const signGlyph = ZODIAC_GLYPHS[signKey]
+  const signLabel = ZODIAC_SIGNS_BG[signKey] || planet.sign
+
+  const hasOverview = Boolean(interpretation.overview.trim())
+  const hasStrengths = interpretation.strengths.length > 0
+  const hasChallenges = interpretation.challenges.length > 0
+  const hasAspectInsights = interpretation.aspectInsights.length > 0
+  const hasGrowth = Boolean(interpretation.growth.trim())
 
   return (
     <div
@@ -132,9 +158,23 @@ export function PlanetDetail({
       aria-labelledby="planet-detail-title"
       aria-describedby="planet-detail-desc"
     >
-      {/* Header with title and close button */}
       <div className="mb-4 flex items-start justify-between">
-        <div>
+        <div className="min-w-0">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/60 px-3 py-1 text-sm font-medium text-slate-100">
+              <span className="text-base leading-none">{titleGlyph}</span>
+              <span>{displayTitle}</span>
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-3 py-1 text-sm text-slate-300">
+              <span className="text-base leading-none">{signGlyph}</span>
+              <span>{signLabel}</span>
+            </span>
+            {house !== undefined && (
+              <span className="inline-flex items-center rounded-full border border-white/10 bg-slate-900/60 px-3 py-1 text-sm text-slate-400">
+                Дом {house}
+              </span>
+            )}
+          </div>
           <h3
             id="planet-detail-title"
             className="text-lg font-semibold text-slate-100"
@@ -171,30 +211,75 @@ export function PlanetDetail({
         </button>
       </div>
 
-      {/* Brief trait */}
       {interpretation.brief && (
         <p className="mb-4 text-base font-medium text-slate-200">
           {interpretation.brief.charAt(0).toUpperCase() + interpretation.brief.slice(1)}
         </p>
       )}
 
-      {/* Placeholder interpretation text */}
-      <div
-        id="planet-detail-desc"
-        className="text-sm leading-relaxed text-slate-400"
-      >
-        {interpretation.placeholder.split('\n\n').map((paragraph, i) => (
-          <p key={i} className={i > 0 ? 'mt-3 italic text-slate-500' : ''}>
-            {paragraph}
-          </p>
-        ))}
+      <div id="planet-detail-desc" className="space-y-4 text-sm leading-relaxed text-slate-300">
+        {hasOverview && (
+          <section>
+            <h4 className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Общ поглед
+            </h4>
+            <p>{interpretation.overview}</p>
+          </section>
+        )}
+
+        {hasStrengths && (
+          <section>
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Силни страни
+            </h4>
+            <ul className="space-y-1">
+              {interpretation.strengths.map((item) => (
+                <li key={item}>- {item}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {hasChallenges && (
+          <section>
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Предизвикателства
+            </h4>
+            <ul className="space-y-1">
+              {interpretation.challenges.map((item) => (
+                <li key={item}>- {item}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {hasAspectInsights && (
+          <section>
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Аспекти
+            </h4>
+            <ul className="space-y-2">
+              {interpretation.aspectInsights.map((item) => (
+                <li key={item}>- {item}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {hasGrowth && (
+          <section>
+            <h4 className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Насока за развитие
+            </h4>
+            <p>{interpretation.growth}</p>
+          </section>
+        )}
       </div>
 
-      {/* Unknown birth time note for Rising */}
       {isRising && !birthTimeKnown && (
         <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
           <p className="text-xs text-amber-300">
-            Без точен час на раждане, възходящият знак е приблизителен.
+            Часът на раждане е приблизителен, затова и тълкуването на възходящия знак е ориентировъчно.
           </p>
         </div>
       )}

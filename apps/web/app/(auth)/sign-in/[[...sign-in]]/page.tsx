@@ -1,6 +1,6 @@
 import { SignIn } from '@clerk/nextjs'
-import { AuthBackground } from '../../../../components/auth/AuthBackground'
-import { AuthHeader } from '../../../../components/auth/AuthHeader'
+import { AuthBackground } from '@/components/auth'
+import { AuthHeader } from '@/components/auth'
 
 const clerkAppearance = {
   elements: {

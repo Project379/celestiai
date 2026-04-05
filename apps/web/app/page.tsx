@@ -1,3 +1,5 @@
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { LandingNav } from '@/components/landing/LandingNav'
 import { FeaturesSection } from '@/components/landing/FeaturesSection'
@@ -5,7 +7,13 @@ import { PricingSection } from '@/components/landing/PricingSection'
 import { AboutSection } from '@/components/landing/AboutSection'
 import { StarCanvas } from '@/components/StarCanvas'
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { userId } = await auth()
+
+  if (userId) {
+    redirect('/dashboard')
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-purple-900/20">
       <LandingNav />
@@ -24,7 +32,7 @@ export default function HomePage() {
             Персонализирана астрология, задвижвана от изкуствен интелект
           </p>
           <Link
-            href="/auth"
+            href="/sign-in"
             className="inline-flex rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-8 py-4 text-lg font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500"
           >
             Открийте звездите

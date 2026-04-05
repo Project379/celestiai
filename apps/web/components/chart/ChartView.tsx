@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useChart } from '@/hooks/useChart'
 import { NatalWheel } from './NatalWheel'
+import { NatalWheelLegend } from './NatalWheelLegend'
 import { BigThreeCards } from './BigThreeCards'
 import { PlanetDetail } from './PlanetDetail'
 import { OraclePanel } from '../oracle/OraclePanel'
@@ -215,7 +216,8 @@ export function ChartView({
 
       <div className="lg:flex lg:items-start lg:gap-8">
         {/* Natal wheel */}
-        <div className="flex-1">
+        <div className="relative flex-1">
+          <NatalWheelLegend />
           <NatalWheel
             chart={chart}
             onPlanetSelect={handlePlanetSelect}
@@ -257,6 +259,15 @@ export function ChartView({
         onClose={handleCloseDetail}
         type={selectedBigThree}
         birthTimeKnown={chart.birthTimeKnown}
+        aspects={
+          selectedPlanetData && 'planet' in selectedPlanetData
+            ? chart.aspects.filter(
+                (aspect) =>
+                  aspect.planet1 === selectedPlanetData.planet ||
+                  aspect.planet2 === selectedPlanetData.planet
+              )
+            : []
+        }
         house={
           selectedPlanetData && 'planet' in selectedPlanetData
             ? chart.planets.find((p) => p.planet === (selectedPlanetData as PlanetPosition).planet)?.house

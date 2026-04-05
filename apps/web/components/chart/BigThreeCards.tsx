@@ -5,21 +5,14 @@ import { ZODIAC_SIGNS_BG, PLANETS_BG } from '@celestia/astrology/client'
 import type { ZodiacSign } from '@celestia/astrology/client'
 
 interface BigThreeCardsProps {
-  /** Sun planet position */
   sun: PlanetPosition
-  /** Moon planet position */
   moon: PlanetPosition
-  /** Ascendant (Rising) data */
   ascendant: PointData
-  /** Whether birth time is known (affects Rising display) */
   birthTimeKnown: boolean
-  /** Callback when a card is selected */
   onSelect?: (type: 'sun' | 'moon' | 'rising') => void
-  /** Currently selected type */
   selected?: 'sun' | 'moon' | 'rising' | null
 }
 
-// Brief trait keywords per sign (in Bulgarian)
 const SIGN_TRAITS: Record<ZodiacSign, string> = {
   aries: 'лидер',
   taurus: 'стабилен',
@@ -35,7 +28,29 @@ const SIGN_TRAITS: Record<ZodiacSign, string> = {
   pisces: 'интуитивен',
 }
 
+const PLANET_GLYPHS: Record<'sun' | 'moon' | 'rising', string> = {
+  sun: '☉︎',
+  moon: '☽︎',
+  rising: '↗',
+}
+
+const ZODIAC_GLYPHS: Record<ZodiacSign, string> = {
+  aries: '♈︎',
+  taurus: '♉︎',
+  gemini: '♊︎',
+  cancer: '♋︎',
+  leo: '♌︎',
+  virgo: '♍︎',
+  libra: '♎︎',
+  scorpio: '♏︎',
+  sagittarius: '♐︎',
+  capricorn: '♑︎',
+  aquarius: '♒︎',
+  pisces: '♓︎',
+}
+
 interface BigThreeCardProps {
+  glyph: string
   title: string
   sign: string
   degree: number
@@ -46,7 +61,6 @@ interface BigThreeCardProps {
   onClick?: () => void
 }
 
-// Color configurations for selected state
 const SELECTED_COLORS: Record<string, { border: string; bg: string; glow: string }> = {
   yellow: {
     border: 'rgba(250, 204, 21, 0.5)',
@@ -66,6 +80,7 @@ const SELECTED_COLORS: Record<string, { border: string; bg: string; glow: string
 }
 
 function BigThreeCard({
+  glyph,
   title,
   sign,
   degree,
@@ -89,16 +104,21 @@ function BigThreeCard({
           : 'border-slate-700/50 bg-slate-800/30 hover:border-slate-600/50 hover:bg-slate-800/50'
         }
       `}
-      style={isSelected ? {
-        borderColor: selectedStyle.border,
-        backgroundColor: selectedStyle.bg,
-        boxShadow: selectedStyle.glow,
-      } : undefined}
+      style={
+        isSelected
+          ? {
+              borderColor: selectedStyle.border,
+              backgroundColor: selectedStyle.bg,
+              boxShadow: selectedStyle.glow,
+            }
+          : undefined
+      }
       aria-pressed={isSelected}
     >
       <div className="mb-2 flex items-center justify-between">
-        <span className={`text-sm font-medium ${isSelected ? 'text-slate-200' : 'text-slate-400'}`}>
-          {isApproximate ? '~' : ''}{title}
+        <span className={`inline-flex items-center gap-2 text-sm font-medium ${isSelected ? 'text-slate-200' : 'text-slate-400'}`}>
+          <span className="text-base leading-none">{glyph}</span>
+          <span>{isApproximate ? '~' : ''}{title}</span>
         </span>
         {isApproximate && (
           <span className="text-xs text-slate-500" title="приблизително">
@@ -107,7 +127,10 @@ function BigThreeCard({
         )}
       </div>
       <div className="mb-1 text-lg font-semibold text-slate-100">
-        {ZODIAC_SIGNS_BG[sign as ZodiacSign]}
+        <span className="inline-flex items-center gap-2">
+          <span className="text-xl leading-none">{ZODIAC_GLYPHS[sign as ZodiacSign]}</span>
+          <span>{ZODIAC_SIGNS_BG[sign as ZodiacSign]}</span>
+        </span>
         <span className="ml-2 text-sm font-normal text-slate-400">
           {Math.floor(degree)}°
         </span>
@@ -119,13 +142,6 @@ function BigThreeCard({
   )
 }
 
-/**
- * Big Three cards displaying Sun, Moon, and Rising signs
- *
- * Prominent display of the most important chart positions.
- * Shows sign in Bulgarian with brief trait keyword.
- * Rising shows "~" prefix if birth time unknown.
- */
 export function BigThreeCards({
   sun,
   moon,
@@ -137,6 +153,7 @@ export function BigThreeCards({
   return (
     <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 lg:gap-4">
       <BigThreeCard
+        glyph={PLANET_GLYPHS.sun}
         title={PLANETS_BG.sun}
         sign={sun.sign}
         degree={sun.signDegree}
@@ -146,6 +163,7 @@ export function BigThreeCards({
         onClick={() => onSelect?.('sun')}
       />
       <BigThreeCard
+        glyph={PLANET_GLYPHS.moon}
         title={PLANETS_BG.moon}
         sign={moon.sign}
         degree={moon.signDegree}
@@ -155,6 +173,7 @@ export function BigThreeCards({
         onClick={() => onSelect?.('moon')}
       />
       <BigThreeCard
+        glyph={PLANET_GLYPHS.rising}
         title="Възходящ"
         sign={ascendant.sign}
         degree={ascendant.degree}

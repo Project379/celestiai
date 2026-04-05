@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { BirthDataCard } from '../birth-data/BirthDataCard'
 import { DailyHoroscope } from '@/components/horoscope/DailyHoroscope'
 import { PushNotificationBanner } from '@/components/horoscope/PushNotificationBanner'
@@ -42,9 +42,7 @@ export function DashboardContent({
   const isPremium = subscriptionTier !== 'free'
 
   const handleBirthDataUpdate = useCallback(() => {
-    // Refresh the page to get updated data from server
     router.refresh()
-    // Also refetch client-side for immediate update
     fetch('/api/birth-data')
       .then((res) => res.json())
       .then((data) => {
@@ -57,30 +55,26 @@ export function DashboardContent({
 
   return (
     <div className="mx-auto max-w-4xl">
-      {/* Welcome section */}
       <div className="mb-8">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold text-slate-100">
-            Добре дошли, {firstName}!
+            Welcome, {firstName}!
           </h1>
-          {/* Premium badge — subtle accent for premium users */}
           {isPremium && (
             <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-medium text-purple-300 ring-1 ring-purple-500/30">
-              <span aria-hidden>✦</span> Премиум
+              <span aria-hidden>*</span> Premium
             </span>
           )}
         </div>
         <p className="mt-2 text-slate-400">
-          Вашето табло за астрологични прогнози
+          Your dashboard for astrology insights and forecasts.
         </p>
       </div>
 
-      {/* Birth data section */}
       <div className="mb-8">
         {birthChart ? (
           <BirthDataCard chart={birthChart} onUpdate={handleBirthDataUpdate} />
         ) : (
-          /* CTA to add birth data */
           <div className="rounded-xl border border-dashed border-purple-500/50 bg-purple-500/5 p-8 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-purple-500/10">
               <svg
@@ -98,10 +92,10 @@ export function DashboardContent({
               </svg>
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-200">
-              Добавете данни за раждане
+              Add your birth data
             </h3>
             <p className="mb-6 text-sm text-slate-400">
-              За да получите персонализирани астрологични прогнози, моля въведете данните си за раждане.
+              To unlock personalized astrology features, first add your birth details.
             </p>
             <Link
               href="/birth-data"
@@ -120,20 +114,18 @@ export function DashboardContent({
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              Въведете данни за раждане
+              Add birth data
             </Link>
           </div>
         )}
       </div>
 
-      {/* Upgrade prompt for free users — after birth data, before main content */}
       {!isPremium && (
         <div className="mb-8">
           <UpgradePrompt context="dashboard" priceMonthly={priceMonthly} />
         </div>
       )}
 
-      {/* Daily Horoscope — primary content, shown only when user has a birth chart */}
       {birthChart && (
         <div className="mb-8">
           <DailyHoroscope
@@ -144,18 +136,17 @@ export function DashboardContent({
         </div>
       )}
 
-      {/* Push notification opt-in — shown below horoscope when user has a birth chart */}
       {birthChart && (
         <div className="mb-8">
           <PushNotificationBanner />
         </div>
       )}
 
-      {/* Dashboard cards */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-
-        {/* Birth chart card */}
-        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm">
+        <Link
+          href={birthChart ? '/chart' : '/birth-data'}
+          className="group rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm transition-colors hover:border-violet-500/40 hover:bg-slate-800/40"
+        >
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10">
               <svg
@@ -172,17 +163,37 @@ export function DashboardContent({
                 />
               </svg>
             </div>
-            <h2 className="font-semibold text-slate-200">
-              Натална карта
-            </h2>
+            <div className="flex-1">
+              <h2 className="font-semibold text-slate-200">Natal Chart</h2>
+              <p className="text-sm text-slate-400">
+                {birthChart
+                  ? 'Open your calculated wheel and natal chart details.'
+                  : 'Add birth data first to generate your natal chart.'}
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-slate-400">
-            Скоро: детайлен анализ на раждането ви
-          </p>
-        </div>
+          <span className="inline-flex items-center gap-2 text-sm font-medium text-violet-300 transition-colors group-hover:text-violet-200">
+            {birthChart ? 'Open chart' : 'Add birth data'}
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </span>
+        </Link>
 
-        {/* Transits card */}
-        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm">
+        <Link
+          href={birthChart ? '/transits' : '/birth-data'}
+          className="group rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm transition-colors hover:border-indigo-500/40 hover:bg-slate-800/40"
+        >
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10">
               <svg
@@ -199,17 +210,34 @@ export function DashboardContent({
                 />
               </svg>
             </div>
-            <h2 className="font-semibold text-slate-200">
-              Транзити
-            </h2>
+            <div className="flex-1">
+              <h2 className="font-semibold text-slate-200">Transits</h2>
+              <p className="text-sm text-slate-400">
+                {birthChart
+                  ? 'Open current transits, upcoming peaks, and lunar events.'
+                  : 'Add birth data first to unlock your transit page.'}
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-slate-400">
-            Скоро: планетарни влияния за деня
-          </p>
-        </div>
+          <span className="inline-flex items-center gap-2 text-sm font-medium text-indigo-300 transition-colors group-hover:text-indigo-200">
+            {birthChart ? 'Open transits' : 'Add birth data'}
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </span>
+        </Link>
       </div>
 
-      {/* User info section (for debugging/verification) */}
       <div className="mt-8 rounded-xl border border-slate-700/50 bg-slate-800/20 p-4">
         <p className="text-xs text-slate-500">
           User ID: {userId}
