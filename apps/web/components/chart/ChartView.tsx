@@ -23,19 +23,19 @@ function ChartSkeleton() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-24 rounded-xl border border-slate-700/50 bg-slate-800/30"
+            className="h-24 rounded-xl bg-slate-800/30"
           />
         ))}
       </div>
       <div className="lg:flex lg:gap-8">
         <div className="flex-1">
-          <div className="mx-auto aspect-square max-w-[500px] rounded-full border border-slate-700/50 bg-slate-800/20" />
+          <div className="mx-auto aspect-square max-w-[500px] rounded-full bg-slate-800/20" />
         </div>
         <div className="hidden w-80 space-y-4 lg:block">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-24 rounded-xl border border-slate-700/50 bg-slate-800/30"
+              className="h-24 rounded-xl bg-slate-800/30"
             />
           ))}
         </div>
