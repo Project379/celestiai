@@ -20,7 +20,7 @@ export function DateStep({ onNext }: DateStepProps) {
           Дата на раждане
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Въведете дата и име за вашата карта
+          Въведи дата и име за картата си
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export function DateStep({ onNext }: DateStepProps) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Изберете ден
+                Избери ден
               </p>
               <input
                 {...register('birthDate')}

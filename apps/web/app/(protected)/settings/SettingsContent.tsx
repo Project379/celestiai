@@ -139,7 +139,7 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
               </span>
             </div>
             <p className="mb-6 text-sm text-white/60">
-              С премиум абонамент получавате достъп до пълен транзитен анализ, планетарни влияния, неограничени четения от Оракула и приоритетно обслужване.
+              С Премиум получаваш пълен транзитен анализ, планетарни влияния, неограничени четения от Оракула и приоритетно обслужване.
             </p>
             <Link
               href="/pricing"
@@ -160,12 +160,12 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
             </div>
             {subscriptionExpiresAt && (
               <p className="mb-4 text-sm text-white/60">
-                Абонаментът ви изтече на{' '}
+                Абонаментът ти изтече на{' '}
                 <span className="text-white/80">{formatBgDateFromString(subscriptionExpiresAt)}</span>.
               </p>
             )}
             <p className="mb-6 text-sm text-white/60">
-              Абонирайте се отново, за да продължите да се наслаждавате на пълния достъп до Celestia.
+              Абонирай се отново и продължи да се наслаждаваш на пълния достъп до Celestia.
             </p>
             <Link
               href="/pricing"
@@ -233,7 +233,7 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
 
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
               <p className="text-sm text-amber-300">
-                Премиум достъпът ви изтича на{' '}
+                Премиум достъпът ти изтича на{' '}
                 <span className="font-medium">{formatBgDate(subscriptionData.currentPeriodEnd)}</span>.
               </p>
             </div>
@@ -282,11 +282,11 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
         className="rounded-2xl border border-white/10 bg-[#0f0f1a] p-6 text-white backdrop:bg-black/60 max-w-md w-full"
       >
         <h3 className="mb-2 text-lg font-semibold text-white">
-          Сигурни ли сте, че искате да се откажете?
+          Сигурен/а ли си, че искаш да се откажеш?
         </h3>
         {subscriptionData && (
           <p className="mb-5 text-sm text-white/60">
-            Достъпът ви до премиум функциите ще продължи до{' '}
+            Достъпът ти до премиум функциите ще продължи до{' '}
             <span className="text-white/80">{formatBgDate(subscriptionData.currentPeriodEnd)}</span>.
           </p>
         )}
@@ -294,7 +294,7 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
         {/* Optional reason dropdown */}
         <div className="mb-6">
           <label htmlFor="cancel-reason" className="mb-2 block text-sm text-white/60">
-            Защо се отказвате? <span className="text-white/30">(по желание)</span>
+            Защо се отказваш? <span className="text-white/30">(по желание)</span>
           </label>
           <select
             id="cancel-reason"
@@ -302,10 +302,10 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
             onChange={(e) => setCancelReason(e.target.value)}
             className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
           >
-            <option value="">Изберете причина...</option>
+            <option value="">Избери причина...</option>
             <option value="too_expensive">Твърде скъпо</option>
             <option value="not_using_enough">Не използвам достатъчно</option>
-            <option value="not_meeting_expectations">Не отговаря на очакванията ми</option>
+            <option value="not_meeting_expectations">Не отговаря на очакванията</option>
             <option value="other">Друга причина</option>
           </select>
         </div>

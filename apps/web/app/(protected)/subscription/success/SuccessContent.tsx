@@ -85,7 +85,7 @@ function ActivatingState() {
       </div>
 
       <h1 className="text-2xl font-semibold text-white mb-3">
-        Активираме вашия премиум достъп...
+        Активираме премиум достъпа ти...
       </h1>
       <p className="text-white/60 text-sm">
         Това обикновено отнема няколко секунди
@@ -116,7 +116,7 @@ function ActivatedState() {
         Добре дошли в Celestia Премиум! ✨
       </h1>
       <p className="text-white/60 text-sm mb-6">
-        Вашият премиум достъп е активен
+        Премиум достъпът ти е активен
       </p>
 
       {/* Unlocked features summary */}

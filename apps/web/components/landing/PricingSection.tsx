@@ -7,21 +7,21 @@ export function PricingSection() {
       name: 'Безплатен',
       price: '0',
       period: 'завинаги',
-      description: 'Идеален за начинаещи',
+      description: 'Идеален за първи стъпки',
       features: [
         'Основна натална карта',
         'Дневен хороскоп',
         'Позиции на планетите',
         'Основни аспекти',
       ],
-      cta: 'Започнете безплатно',
+      cta: 'Започни безплатно',
       highlight: false,
     },
     {
       name: 'Премиум',
       price: '9.99',
       period: 'месец',
-      description: 'За сериозни ентусиасти',
+      description: 'За любителите на звездите',
       features: [
         'Всичко от Безплатен план',
         'Детайлна натална карта',
@@ -30,7 +30,7 @@ export function PricingSection() {
         'Съвместимост партньори',
         'Приоритетна поддръжка',
       ],
-      cta: 'Опитайте Премиум',
+      cta: 'Опитай Премиум',
       highlight: true,
     },
   ]
@@ -43,7 +43,7 @@ export function PricingSection() {
             Цени
           </Text>
           <Text variant="muted" className="mx-auto max-w-2xl">
-            Изберете плана, който отговаря на вашите нужди. Без скрити такси.
+            Избери плана, който ти подхожда. Без скрити такси.
           </Text>
         </div>
 

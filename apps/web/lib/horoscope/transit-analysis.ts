@@ -539,6 +539,12 @@ function formatSign(sign: ZodiacSign): string {
   return ZODIAC_SIGNS_BG[sign] ?? sign
 }
 
+/** "в" → "във" before в/ф; "с" → "със" before с/з */
+function bgPrep(prep: 'в' | 'с', nextWord: string): string {
+  if (prep === 'в') return /^[вВфФ]/.test(nextWord) ? 'във' : 'в'
+  return /^[сСзЗ]/.test(nextWord) ? 'със' : 'с'
+}
+
 function houseTheme(house: number): string {
   switch (house) {
     case 1:
@@ -622,7 +628,7 @@ function enrichUpcomingTransit(item: UpcomingTransitDetail): UpcomingTransitDeta
     summary: `Наближава точен пик по теми като ${theme}.`,
     detail: `${transit} се движи към точен ${aspect.toLowerCase()} с вашия натален ${natal.toLowerCase()}. Това подсказва, че през следващите ${
       item.hoursUntil
-    } часа ще се изостри тема, свързана с ${theme}. ${aspectMeaning(item.aspect)} ${speedMeaning(
+    } часа ще се изостри тема, свързана ${bgPrep('с', theme)} ${theme}. ${aspectMeaning(item.aspect)} ${speedMeaning(
       item.speedBand
     )}`,
   }
@@ -645,9 +651,9 @@ function enrichLunarEvent(item: LunarEventDetail): LunarEventDetail {
 
   return {
     ...item,
-    title: `${phase} в ${sign}`,
+    title: `${phase} ${bgPrep('в', sign)} ${sign}`,
     summary: `${phase} осветява ${theme}.`,
-    detail: `${phase} в ${sign} активира ${theme}. ${
+    detail: `${phase} ${bgPrep('в', sign)} ${sign} активира ${theme}. ${
       item.type === 'new_moon'
         ? 'Това е момент за засяване на намерение и нова посока.'
         : 'Това е момент за кулминация, яснота и емоционално осъзнаване.'
@@ -708,7 +714,7 @@ export function transitOverviewToPromptText(overview: TransitOverview): string {
       lines.push(
         `${event.type === 'new_moon' ? 'Новолуние' : 'Пълнолуние'} около ${
           event.exactAt
-        } в ${formatSign(event.sign)} ${Math.floor(event.signDegree)}° в дом ${event.house}${aspectsText}`
+        } ${bgPrep('в', formatSign(event.sign))} ${formatSign(event.sign)} ${Math.floor(event.signDegree)}° в дом ${event.house}${aspectsText}`
       )
     }
   }

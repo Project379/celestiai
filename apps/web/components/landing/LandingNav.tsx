@@ -1,18 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import {useClerk, useSession} from '@clerk/nextjs'
+import {useSession} from '@clerk/nextjs'
 
 export function LandingNav() {
-    const {signOut} = useClerk();
     const session = useSession();
     let authContent: React.ReactNode;
     if (!session.isLoaded) {
         authContent = null;
     } else if (session.isSignedIn) {
-        authContent =    <button onClick={() => signOut({ redirectUrl: '/' })}>Изход</button>;
+        authContent = <Link href="/dashboard" className="rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-4 py-2 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500">Таблото ми</Link>;
     } else {
-        authContent = <div>
+        authContent = <div className="flex items-center gap-4">
             <Link
                 href="/sign-in"
                 className="text-sm text-slate-300 transition-colors hover:text-white"
@@ -20,7 +19,7 @@ export function LandingNav() {
                 Вход
             </Link>
             <Link
-                href="/sign-in"
+                href="/sign-up"
                 className="rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-4 py-2 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500"
             >
                 Регистрация

@@ -51,7 +51,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
           Място на раждане
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Изберете място или въведете координати ръчно
+          Избери място или въведи координати ръчно
         </p>
       </div>
 

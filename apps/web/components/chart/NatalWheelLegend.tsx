@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
-const PLANET_GLYPHS = ['☉︎', '☽︎', '☿︎', '♀︎', '♂︎']
-const ZODIAC_GLYPHS = ['♈︎', '♉︎', '♊︎', '♋︎', '♌︎', '♍︎']
+const PLANET_ICONS = ['sun', 'moon', 'mercury', 'venus', 'mars']
+const ZODIAC_ICONS = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo']
 
 export function NatalWheelLegend() {
   const [open, setOpen] = useState(false)
@@ -46,8 +47,8 @@ export function NatalWheelLegend() {
           <div className="space-y-3">
             <div>
               <div className="mb-1 flex items-center gap-2">
-                <span className="rounded-lg bg-slate-900/80 px-2 py-1 text-base text-slate-200">
-                  {ZODIAC_GLYPHS.join(' ')}
+                <span className="inline-flex gap-1 rounded-lg bg-slate-900/80 px-2 py-1 text-slate-200">
+                  {ZODIAC_ICONS.map(name => <CelestialIcon key={name} name={name} size={18} />)}
                 </span>
                 <p className="font-medium text-slate-200">Зодиакален пръстен</p>
               </div>
@@ -65,8 +66,8 @@ export function NatalWheelLegend() {
 
             <div>
               <div className="mb-1 flex items-center gap-2">
-                <span className="rounded-lg bg-slate-900/80 px-2 py-1 text-base text-slate-200">
-                  {PLANET_GLYPHS.join(' ')}
+                <span className="inline-flex gap-1 rounded-lg bg-slate-900/80 px-2 py-1 text-slate-200">
+                  {PLANET_ICONS.map(name => <CelestialIcon key={name} name={name} size={18} />)}
                 </span>
                 <p className="font-medium text-slate-200">Планети</p>
               </div>

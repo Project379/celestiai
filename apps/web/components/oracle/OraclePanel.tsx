@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useOracleReading } from '@/hooks/useOracleReading'
 import { TopicCards } from './TopicCards'
 import { ReadingStream } from './ReadingStream'
@@ -33,6 +33,10 @@ export function OraclePanel({
   const [lockedTopicShown, setLockedTopicShown] = useState<OracleTopic | null>(null)
   const [teaserContent, setTeaserContent] = useState<Record<string, string | null>>({})
   const [loadingTeaser, setLoadingTeaser] = useState<Record<string, boolean>>({})
+  const teaserContentRef = useRef(teaserContent)
+  teaserContentRef.current = teaserContent
+  const loadingTeaserRef = useRef(loadingTeaser)
+  loadingTeaserRef.current = loadingTeaser
 
   const handleTopicSelect = useCallback(
     (topic: OracleTopic) => {
@@ -63,7 +67,7 @@ export function OraclePanel({
 
   const handleRequestTeaser = useCallback(
     async (topic: OracleTopic) => {
-      if (teaserContent[topic] !== undefined || loadingTeaser[topic]) return
+      if (teaserContentRef.current[topic] !== undefined || loadingTeaserRef.current[topic]) return
 
       setLoadingTeaser((prev) => ({ ...prev, [topic]: true }))
       try {
@@ -87,7 +91,7 @@ export function OraclePanel({
         setLoadingTeaser((prev) => ({ ...prev, [topic]: false }))
       }
     },
-    [chartId, teaserContent, loadingTeaser]
+    [chartId]
   )
 
   const isGenerating = isLoading
@@ -129,7 +133,7 @@ export function OraclePanel({
             Оракул
           </h3>
           <p className="mt-1 text-sm text-slate-400">
-            Изберете тема и четенето ще се отвори в отделен прозорец.
+            Избери тема и четенето ще се отвори в отделен прозорец.
           </p>
         </div>
 
@@ -227,8 +231,8 @@ export function OraclePanel({
                   disabled={!canRegenerate}
                   title={
                     canRegenerate
-                      ? 'Генерирайте ново четене'
-                      : 'Можете да регенерирате веднъж на ден'
+                      ? 'Ново четене'
+                      : 'Можеш да обновиш веднъж на ден'
                   }
                   className={[
                     'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-all',

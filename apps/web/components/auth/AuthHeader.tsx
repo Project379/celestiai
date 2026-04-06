@@ -17,7 +17,7 @@ export function AuthHeader() {
 
       {/* Bulgarian tagline */}
       <p className="mt-2 text-slate-400">
-        Вашият астрологичен спътник
+        Твоят астрологичен приятел
       </p>
     </div>
   )

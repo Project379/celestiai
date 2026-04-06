@@ -109,7 +109,7 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  Изберете час
+                  Избери час
                 </p>
                 <input
                   {...register('birthTime')}

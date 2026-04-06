@@ -75,10 +75,10 @@ export default async function ChartPage() {
         {/* Page header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-100">
-            Вашата натална карта
+            Твоята натална карта
           </h1>
           <p className="mt-2 text-slate-400">
-            Интерактивна визуализация на вашия астрологичен профил
+            Натисни на планета или знак, за да видиш какво означава за теб
           </p>
         </div>
 
@@ -104,10 +104,10 @@ export default async function ChartPage() {
               </svg>
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-200">
-              Добавете рождени данни
+              Добави рождени данни
             </h3>
             <p className="mb-6 text-sm text-slate-400">
-              За да видите вашата натална карта, моля първо въведете данните си за раждане.
+              За да видиш картата си, първо ми кажи кога и къде си роден/а.
             </p>
             <Link
               href="/birth-data"
@@ -126,7 +126,7 @@ export default async function ChartPage() {
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              Въведете данни за раждане
+              Въведи данни за раждане
             </Link>
           </div>
         )}
@@ -137,7 +137,7 @@ export default async function ChartPage() {
             href="/dashboard"
             className="text-sm text-slate-400 hover:text-slate-300 transition-colors"
           >
-            &larr; Назад към таблото
+            &larr; Обратно към таблото
           </Link>
         </div>
       </div>

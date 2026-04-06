@@ -6,24 +6,18 @@ import { NatalWheel } from './NatalWheel'
 import { NatalWheelLegend } from './NatalWheelLegend'
 import { BigThreeCards } from './BigThreeCards'
 import { PlanetDetail } from './PlanetDetail'
-import { OraclePanel } from '../oracle/OraclePanel'
+import { OracleButton } from '../oracle/OracleButton'
 import type { PlanetPosition, PointData } from '@celestia/astrology/client'
 import { UNKNOWN_TIME_DISCLAIMER_BG } from '@celestia/astrology/client'
 
 interface ChartViewProps {
-  /** Chart ID to fetch and display */
   chartId: string
-  /** User's subscription tier for Oracle gating */
   subscriptionTier?: 'free' | 'premium'
 }
 
-/**
- * Loading skeleton for chart view
- */
 function ChartSkeleton() {
   return (
     <div className="animate-pulse">
-      {/* Big Three cards skeleton - mobile */}
       <div className="mb-6 grid gap-3 sm:grid-cols-3 lg:hidden">
         {[1, 2, 3].map((i) => (
           <div
@@ -32,16 +26,12 @@ function ChartSkeleton() {
           />
         ))}
       </div>
-
       <div className="lg:flex lg:gap-8">
-        {/* Wheel skeleton */}
         <div className="flex-1">
           <div className="mx-auto aspect-square max-w-[500px] rounded-full border border-slate-700/50 bg-slate-800/20" />
         </div>
-
-        {/* Right column skeleton - desktop */}
-        <div className="hidden w-96 space-y-4 lg:block">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="hidden w-80 space-y-4 lg:block">
+          {[1, 2, 3].map((i) => (
             <div
               key={i}
               className="h-24 rounded-xl border border-slate-700/50 bg-slate-800/30"
@@ -53,9 +43,6 @@ function ChartSkeleton() {
   )
 }
 
-/**
- * Error display component
- */
 function ChartError({ message }: { message: string }) {
   return (
     <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center">
@@ -81,11 +68,12 @@ function ChartError({ message }: { message: string }) {
 }
 
 /**
- * Combined chart view with natal wheel, Big Three cards, and Oracle panel.
+ * Combined chart view with natal wheel, Big Three cards, and floating Oracle button.
  *
  * Layout:
- * - Desktop (lg+): wheel (flex-1) | right column (w-96): BigThree + OraclePanel
- * - Mobile: BigThree above wheel, OraclePanel below wheel
+ * - Desktop (lg+): wheel (flex-1) | right column (w-80): BigThree cards
+ * - Mobile: BigThree above wheel
+ * - Oracle: floating button (bottom-right) opens modal
  */
 export function ChartView({
   chartId,
@@ -96,34 +84,30 @@ export function ChartView({
   const [selectedBigThree, setSelectedBigThree] = useState<'sun' | 'moon' | 'rising' | null>(null)
   const [selectedPlanetData, setSelectedPlanetData] = useState<PlanetPosition | PointData | null>(null)
 
-  // Handle planet selection from wheel
   const handlePlanetSelect = useCallback((planet: PlanetPosition) => {
-    if (selectedPlanet === planet.planet) {
-      // Deselect if clicking same planet
-      setSelectedPlanet(null)
-      setSelectedPlanetData(null)
-      setSelectedBigThree(null)
-    } else {
-      setSelectedPlanet(planet.planet)
-      setSelectedPlanetData(planet)
-      // Clear Big Three selection if selecting a different planet
-      if (planet.planet !== 'sun' && planet.planet !== 'moon') {
+    setSelectedPlanet((prev) => {
+      if (prev === planet.planet) {
+        setSelectedPlanetData(null)
         setSelectedBigThree(null)
-      } else {
-        setSelectedBigThree(planet.planet as 'sun' | 'moon')
+        return null
       }
-    }
-  }, [selectedPlanet])
+      setSelectedPlanetData(planet)
+      if (planet.planet === 'sun' || planet.planet === 'moon') {
+        setSelectedBigThree(planet.planet as 'sun' | 'moon')
+      } else {
+        setSelectedBigThree(null)
+      }
+      return planet.planet
+    })
+  }, [])
 
-  // Handle Big Three card selection
   const handleBigThreeSelect = useCallback((type: 'sun' | 'moon' | 'rising') => {
-    if (selectedBigThree === type) {
-      // Deselect if clicking same card
-      setSelectedBigThree(null)
-      setSelectedPlanet(null)
-      setSelectedPlanetData(null)
-    } else {
-      setSelectedBigThree(type)
+    setSelectedBigThree((prev) => {
+      if (prev === type) {
+        setSelectedPlanet(null)
+        setSelectedPlanetData(null)
+        return null
+      }
       if (type === 'sun' && chart) {
         const sun = chart.planets.find((p) => p.planet === 'sun')
         setSelectedPlanet('sun')
@@ -133,34 +117,26 @@ export function ChartView({
         setSelectedPlanet('moon')
         setSelectedPlanetData(moon || null)
       } else if (type === 'rising' && chart) {
-        // Rising uses ascendant data
         setSelectedPlanet(null)
         setSelectedPlanetData(chart.ascendant)
       }
-    }
-  }, [selectedBigThree, chart])
+      return type
+    })
+  }, [chart])
 
-  // Handle closing the detail panel
   const handleCloseDetail = useCallback(() => {
     setSelectedPlanet(null)
     setSelectedBigThree(null)
     setSelectedPlanetData(null)
   }, [])
 
-  /**
-   * Bridge Oracle planet cross-highlighting to NatalWheel selection state.
-   * Maps a planet key (e.g. 'mars') to the matching PlanetPosition in chart.planets
-   * and calls the same setSelectedPlanet/setSelectedPlanetData flow used by wheel clicks.
-   */
   const handleOraclePlanetHighlight = useCallback(
     (planetKey: string) => {
       if (!chart) return
-
       const planet = chart.planets.find((p) => p.planet === planetKey)
       if (planet) {
         setSelectedPlanet(planet.planet)
         setSelectedPlanetData(planet)
-        // Sync Big Three if applicable
         if (planet.planet === 'sun' || planet.planet === 'moon') {
           setSelectedBigThree(planet.planet as 'sun' | 'moon')
         } else {
@@ -171,21 +147,17 @@ export function ChartView({
     [chart]
   )
 
-  if (isLoading) {
-    return <ChartSkeleton />
-  }
+  if (isLoading) return <ChartSkeleton />
+  if (error) return <ChartError message={error} />
+  if (!chart) return <ChartError message="Картата не е намерена" />
 
-  if (error) {
-    return <ChartError message={error} />
+  let sun: PlanetPosition | undefined
+  let moon: PlanetPosition | undefined
+  for (const p of chart.planets) {
+    if (p.planet === 'sun') sun = p
+    else if (p.planet === 'moon') moon = p
+    if (sun && moon) break
   }
-
-  if (!chart) {
-    return <ChartError message="Картата не е намерена" />
-  }
-
-  // Find Sun and Moon from planets array
-  const sun = chart.planets.find((p) => p.planet === 'sun')
-  const moon = chart.planets.find((p) => p.planet === 'moon')
 
   if (!sun || !moon) {
     return <ChartError message="Липсват данни за планетите" />
@@ -193,7 +165,6 @@ export function ChartView({
 
   return (
     <div>
-      {/* Unknown birth time disclaimer */}
       {!chart.birthTimeKnown && (
         <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
           <p className="text-sm text-amber-300">
@@ -226,8 +197,8 @@ export function ChartView({
           />
         </div>
 
-        {/* Right column - desktop: BigThree cards + Oracle panel stacked vertically */}
-        <div className="hidden w-96 lg:flex lg:flex-col lg:gap-4">
+        {/* Right column - desktop: BigThree cards only (Oracle moved to floating button) */}
+        <div className="hidden w-80 lg:flex lg:flex-col lg:gap-4">
           <BigThreeCards
             sun={sun}
             moon={moon}
@@ -236,21 +207,7 @@ export function ChartView({
             onSelect={handleBigThreeSelect}
             selected={selectedBigThree}
           />
-          <OraclePanel
-            chartId={chartId}
-            subscriptionTier={subscriptionTier}
-            onPlanetHighlight={handleOraclePlanetHighlight}
-          />
         </div>
-      </div>
-
-      {/* Oracle panel - mobile (below wheel, full width) */}
-      <div className="mt-6 lg:hidden">
-        <OraclePanel
-          chartId={chartId}
-          subscriptionTier={subscriptionTier}
-          onPlanetHighlight={handleOraclePlanetHighlight}
-        />
       </div>
 
       {/* Planet interpretation panel */}
@@ -273,6 +230,13 @@ export function ChartView({
             ? chart.planets.find((p) => p.planet === (selectedPlanetData as PlanetPosition).planet)?.house
             : undefined
         }
+      />
+
+      {/* Floating Oracle Button */}
+      <OracleButton
+        chartId={chartId}
+        subscriptionTier={subscriptionTier}
+        onPlanetHighlight={handleOraclePlanetHighlight}
       />
     </div>
   )

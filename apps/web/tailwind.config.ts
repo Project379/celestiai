@@ -1,14 +1,20 @@
 import type { Config } from 'tailwindcss'
+import nativewindPreset from 'nativewind/preset'
 
 const config: Config = {
   content: [
     './app/**/*.{ts,tsx,mdx}',
     './components/**/*.{ts,tsx,mdx}',
-    '../../packages/ui/**/*.{ts,tsx}',
+    '../../packages/ui/primitives/**/*.{ts,tsx}',
+    '../../packages/ui/index.ts',
   ],
-  presets: [require('nativewind/preset')],
+  presets: [nativewindPreset as any],
   theme: {
     extend: {
+      fontFamily: {
+        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
+        body: ['var(--font-body)', 'var(--font-display)', 'system-ui', 'sans-serif'],
+      },
       colors: {
         // Cosmic theme colors using CSS variables
         background: 'rgb(var(--color-background) / <alpha-value>)',

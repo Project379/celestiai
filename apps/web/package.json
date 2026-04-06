@@ -22,7 +22,9 @@
     "@prisma/client": "^7.5.0",
     "@supabase/supabase-js": "^2.49.1",
     "ai": "^6.0.86",
-    "d3": "^7.9.0",
+    "d3-selection": "^3.0.0",
+    "d3-shape": "^3.2.0",
+    "framer-motion": "^12.38.0",
     "lucide-react": "^0.574.0",
     "nativewind": "^4.1.23",
     "next": "^15.2.4",
@@ -36,7 +38,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/d3": "^7.4.3",
+    "@types/d3-selection": "^3.0.11",
+    "@types/d3-shape": "^3.1.8",
     "@types/node": "^22.10.10",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
