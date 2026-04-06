@@ -578,18 +578,57 @@ function MenacingSymbols({ element, isActive }: { element: 'fire' | 'earth' | 'a
 
 /* ═══════════════════════════════════════════════════════════════
    GIANT GLYPH REVEAL — Planet symbol spirals from top-left to center
-   Smooth logarithmic spiral path with scale-down and rotation
+   Mathematically computed logarithmic spiral with 40 sample points
+   for buttery-smooth interpolation via Framer Motion keyframes.
    ═══════════════════════════════════════════════════════════════ */
+
+// Pre-compute spiral path once (40 points along a logarithmic spiral)
+// Starts at top-left (~2.5 turns out) and converges to center
+const SPIRAL_STEPS = 40
+const SPIRAL_PATH = (() => {
+  const xs: number[] = []
+  const ys: number[] = []
+  const rotations: number[] = []
+  const scales: number[] = []
+  const opacities: number[] = []
+
+  const startRadius = 320    // pixels from center at start
+  const totalRotation = 900  // degrees of spiral rotation (2.5 turns)
+  const startAngle = Math.PI + Math.PI / 4 // begin from top-left quadrant (~225°)
+
+  for (let i = 0; i <= SPIRAL_STEPS; i++) {
+    // t goes from 0 (start) to 1 (center) with ease-in curve for deceleration
+    const linear = i / SPIRAL_STEPS
+    // Ease: fast at start, slow approach to center
+    const t = 1 - Math.pow(1 - linear, 1.8)
+
+    // Radius shrinks exponentially
+    const radius = startRadius * Math.pow(1 - t, 2.2)
+    // Angle advances through the spiral
+    const angle = startAngle + (totalRotation * Math.PI / 180) * t
+
+    xs.push(Math.cos(angle) * radius)
+    ys.push(Math.sin(angle) * radius)
+    rotations.push(-totalRotation * (1 - t))
+    scales.push(0.25 + 0.75 * t)
+
+    // Opacity: fade in over first 15%, hold, then slight dim at end
+    if (linear < 0.12) opacities.push(linear / 0.12)
+    else if (linear > 0.92) opacities.push(0.3 + 0.7 * ((1 - linear) / 0.08))
+    else opacities.push(1)
+  }
+  return { xs, ys, rotations, scales, opacities }
+})()
+
 function GiantGlyphReveal({ iconName, element }: { iconName: string; element: 'fire' | 'earth' | 'air' | 'water' }) {
   const theme = ELEMENT_THEMES[element]
+  const { xs, ys, rotations, scales, opacities } = SPIRAL_PATH
 
-  // Spiral keyframes: start top-left, arc through intermediate points, land at center
-  // Using a logarithmic spiral path with decreasing radius
-  const spiralX = [-280, -200, -80, 60, 40, -15, 0]
-  const spiralY = [-220, -100, -140, -60, 30, 10, 0]
-  const spiralRotate = [-540, -380, -240, -140, -60, -15, 0]
-  const spiralScale = [0.3, 0.5, 0.7, 0.9, 1.1, 1.05, 1]
-  const spiralOpacity = [0, 0.4, 0.7, 0.9, 1, 1, 0.9]
+  // Afterimage opacity: lower and fades to 0 faster
+  const afterOpacities = opacities.map((o, i) => {
+    const t = i / SPIRAL_STEPS
+    return o * Math.max(0, 0.45 - t * 0.5)
+  })
 
   return (
     <motion.div
@@ -597,59 +636,52 @@ function GiantGlyphReveal({ iconName, element }: { iconName: string; element: 'f
       aria-hidden="true"
       initial={{ opacity: 1 }}
       animate={{ opacity: 0 }}
-      transition={{ duration: 0.8, delay: 1.0, ease: 'easeIn' }}
+      transition={{ duration: 0.6, delay: 1.1, ease: 'easeIn' }}
     >
-      {/* Giant SVG icon — afterimage trail (follows slightly behind) */}
+      {/* Afterimage trail — blurred, follows the same path */}
       <motion.div
         className="absolute select-none"
-        style={{
-          color: theme.accentColor,
-          filter: `blur(4px)`,
-        }}
-        initial={{ x: spiralX[0], y: spiralY[0], scale: spiralScale[0], opacity: 0, rotate: spiralRotate[0] }}
+        style={{ color: theme.accentColor, filter: 'blur(6px)' }}
+        initial={{ x: xs[0], y: ys[0], scale: scales[0] * 1.2, opacity: 0, rotate: rotations[0] }}
         animate={{
-          x: spiralX,
-          y: spiralY,
-          scale: spiralScale.map(s => s * 1.15),
-          opacity: [0, 0.3, 0.4, 0.35, 0.2, 0.1, 0],
-          rotate: spiralRotate,
+          x: xs,
+          y: ys,
+          scale: scales.map(s => s * 1.2),
+          opacity: afterOpacities,
+          rotate: rotations,
         }}
-        transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1], delay: 0.04 }}
+        transition={{ duration: 1.3, ease: 'linear', delay: 0.03 }}
       >
         <CelestialIcon name={iconName} size={180} />
       </motion.div>
-      {/* Giant SVG icon — main spiral */}
+      {/* Main icon — crisp, follows the spiral */}
       <motion.div
         className="absolute select-none"
-        style={{
-          color: theme.symbolColor,
-        }}
-        initial={{ x: spiralX[0], y: spiralY[0], scale: spiralScale[0], opacity: 0, rotate: spiralRotate[0] }}
+        style={{ color: theme.symbolColor }}
+        initial={{ x: xs[0], y: ys[0], scale: scales[0], opacity: 0, rotate: rotations[0] }}
         animate={{
-          x: spiralX,
-          y: spiralY,
-          scale: spiralScale,
-          opacity: [...spiralOpacity.slice(0, -1), 0.3],
-          rotate: spiralRotate,
+          x: xs,
+          y: ys,
+          scale: scales,
+          opacity: opacities.map((o, i) => i === opacities.length - 1 ? 0.3 : o),
+          rotate: rotations,
         }}
-        transition={{ duration: 1.0, ease: [0.25, 0.1, 0.25, 1] }}
+        transition={{ duration: 1.1, ease: 'linear' }}
       >
         <CelestialIcon name={iconName} size={180} />
       </motion.div>
-      {/* Spiral trail particles — small dots along the path */}
-      {[0, 1, 2, 3, 4].map((i) => (
+      {/* Small trail particles left behind at intervals along the spiral */}
+      {[6, 12, 18, 24, 30].map((idx, i) => (
         <motion.div
           key={`trail-${i}`}
           className="absolute h-2 w-2 rounded-full"
           style={{ background: theme.accentColor }}
-          initial={{ x: spiralX[0], y: spiralY[0], scale: 0, opacity: 0 }}
+          initial={{ x: xs[idx], y: ys[idx], scale: 0, opacity: 0 }}
           animate={{
-            x: spiralX.slice(0, 4 + i),
-            y: spiralY.slice(0, 4 + i),
-            scale: [0, 1.5, 1, 0.5, 0],
-            opacity: [0, 0.8, 0.5, 0.2, 0],
+            scale: [0, 1.5, 0.8, 0],
+            opacity: [0, 0.7, 0.3, 0],
           }}
-          transition={{ duration: 0.6 + i * 0.1, delay: i * 0.06, ease: 'easeOut' }}
+          transition={{ duration: 0.8, delay: (idx / SPIRAL_STEPS) * 1.1, ease: 'easeOut' }}
         />
       ))}
     </motion.div>
