@@ -24,15 +24,14 @@ export function CelestialBackground() {
   const positionsRef = useRef<Map<string, { x: number; y: number; stars: { sx: number; sy: number }[] }>>(new Map())
   // State version only bumped on significant changes (resize) to trigger button repositioning
   const [positionsVersion, setPositionsVersion] = useState(0)
-  // Track mouse globally for parallax — only when interactive
+  // Track mouse globally for parallax — always active for smooth star movement
   useEffect(() => {
-    if (!interactive) return
     const handler = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY }
     }
     window.addEventListener('mousemove', handler, { passive: true })
     return () => window.removeEventListener('mousemove', handler)
-  }, [interactive])
+  }, [])
 
   // Bump positionsVersion on window resize so buttons reposition
   useEffect(() => {
@@ -91,9 +90,9 @@ export function CelestialBackground() {
       <div className="fixed inset-0 z-[-1]">
         <CelestialCanvas
           className="absolute inset-0"
-          interactive={interactive}
-          starCount={interactive ? 350 : 200}
-          externalMouseRef={interactive ? mouseRef : undefined}
+          interactive
+          starCount={350}
+          externalMouseRef={mouseRef}
           hoveredConstellationId={interactive ? hoveredId : null}
           selectedConstellationId={interactive ? (selectedConstellation?.id ?? null) : null}
           onPositionsUpdate={interactive ? handlePositionsUpdate : undefined}

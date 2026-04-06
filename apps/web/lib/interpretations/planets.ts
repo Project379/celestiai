@@ -166,7 +166,7 @@ function getAspectInsights(planet: Planet, aspects: AspectData[]): string[] {
 
 export function getPlanetInterpretation(planet: string, sign: string, degree?: number,
                                         house?: number, aspects: AspectData[] = []): InterpretationData {
-    const planetKey = planet.toLowerCase() as Planet
+    const planetKey = planet as Planet
     const signKey = sign.toLowerCase() as ZodiacSign
 
     const planetName = PLANETS_BG[planetKey] || planet

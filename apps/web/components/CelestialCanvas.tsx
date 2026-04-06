@@ -504,20 +504,7 @@ export function CelestialCanvas({
         }
       }
 
-      /* ═══ CONSTELLATIONS (only when interactive) ═══ */
-      if (!interactive) {
-        /* Non-interactive: skip constellations, planets, shooting stars — just stars + milky way + horizon haze */
-        const hazeGrad = ctx.createLinearGradient(0, h * 0.88, 0, h)
-        hazeGrad.addColorStop(0, 'transparent')
-        hazeGrad.addColorStop(1, 'rgba(8, 12, 25, 0.35)')
-        ctx.fillStyle = hazeGrad
-        ctx.fillRect(0, h * 0.88, w, h * 0.12)
-
-        // 30fps is plenty for a non-interactive twinkling background
-        setTimeout(() => { animId = requestAnimationFrame(animate) }, 33)
-        return
-      }
-
+      /* ═══ CONSTELLATIONS ═══ */
       positionsMap.clear()
 
       for (const c of dynamicConstellations) {
