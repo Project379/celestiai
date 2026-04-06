@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { HoroscopeStream } from './HoroscopeStream'
-import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
 
 const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   day: 'numeric',
@@ -14,8 +13,6 @@ const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
 
 interface DailyHoroscopeProps {
   chartId: string
-  subscriptionTier?: string
-  priceMonthly?: string
 }
 
 /**
@@ -31,7 +28,7 @@ interface DailyHoroscopeProps {
  *
  * Glassmorphism card styling matching existing dashboard cards.
  */
-export function DailyHoroscope({ chartId, subscriptionTier = 'free', priceMonthly = '' }: DailyHoroscopeProps) {
+export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
   const {
     completion,
     isLoading,
@@ -43,8 +40,6 @@ export function DailyHoroscope({ chartId, subscriptionTier = 'free', priceMonthl
     fetchError,
     getTodayString,
   } = useDailyHoroscope(chartId)
-
-  const isPremium = subscriptionTier !== 'free'
 
   const todayFormatted = BG_DATE_FORMAT.format(new Date())
 
@@ -178,12 +173,6 @@ export function DailyHoroscope({ chartId, subscriptionTier = 'free', priceMonthl
         )}
       </div>
 
-      {/* Inline upgrade prompt for free users — additive, after horoscope content */}
-      {!isPremium && (
-        <div className="mt-5 border-t border-white/5 pt-5">
-          <UpgradePrompt context="horoscope" priceMonthly={priceMonthly} />
-        </div>
-      )}
     </div>
   )
 }

@@ -130,8 +130,6 @@ export function DashboardContent({
         <div className="mb-8">
           <DailyHoroscope
             chartId={birthChart.id}
-            subscriptionTier={subscriptionTier}
-            priceMonthly={priceMonthly}
           />
         </div>
       )}

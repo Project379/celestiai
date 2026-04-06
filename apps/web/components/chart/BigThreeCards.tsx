@@ -235,15 +235,15 @@ function BigThreeCard({
         backgroundColor: auraStyle.bg,
       } : {
         scale: 1,
-        borderColor: 'rgba(51, 65, 85, 0.5)',
+        borderColor: 'rgba(0, 0, 0, 0)',
         backgroundColor: 'rgba(30, 41, 59, 0.3)',
       }}
       transition={{ duration: 0.3 }}
       className={`
-        w-full rounded-xl border p-4 text-left relative overflow-hidden
+        w-full rounded-xl border border-transparent p-4 text-left relative overflow-hidden
         backdrop-blur-sm
         focus:outline-none focus:ring-2 focus:ring-purple-500/50
-        ${!isSelected ? 'hover:border-slate-600/50 hover:bg-slate-800/50' : ''}
+        ${!isSelected ? 'hover:bg-slate-800/50' : ''}
       `}
       style={{ willChange: 'transform' }}
       aria-pressed={isSelected}

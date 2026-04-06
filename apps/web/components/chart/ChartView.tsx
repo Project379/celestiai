@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { useChart } from '@/hooks/useChart'
 import { NatalWheel } from './NatalWheel'
 import { NatalWheelLegend } from './NatalWheelLegend'
@@ -173,8 +174,17 @@ export function ChartView({
         </div>
       )}
 
-      {/* Big Three cards - mobile (above wheel) */}
-      <div className="mb-6 lg:hidden">
+      {/* Big Three cards - mobile (above wheel) — zoom from stars */}
+      <motion.div
+        className="mb-6 lg:hidden"
+        initial={{ scale: 0.02, opacity: 0, filter: 'blur(20px)' }}
+        animate={{
+          scale: [0.02, 0.06, 0.25, 0.7, 1.03, 1],
+          opacity: [0, 0.15, 0.4, 0.75, 1, 1],
+          filter: ['blur(20px)', 'blur(16px)', 'blur(10px)', 'blur(4px)', 'blur(1px)', 'blur(0px)'],
+        }}
+        transition={{ duration: 2.8, delay: 1.0, ease: [0.22, 0.68, 0.35, 1], times: [0, 0.15, 0.4, 0.7, 0.9, 1] }}
+      >
         <BigThreeCards
           sun={sun}
           moon={moon}
@@ -183,11 +193,30 @@ export function ChartView({
           onSelect={handleBigThreeSelect}
           selected={selectedBigThree}
         />
-      </div>
+      </motion.div>
 
       <div className="lg:flex lg:items-start lg:gap-8">
-        {/* Natal wheel */}
-        <div className="relative flex-1">
+        {/* Natal wheel — zoom from the stars */}
+        <motion.div
+          className="relative flex-1"
+          initial={{ scale: 0.01, opacity: 0, filter: 'blur(24px)' }}
+          animate={{
+            scale: [0.01, 0.04, 0.18, 0.6, 1.02, 1],
+            opacity: [0, 0.1, 0.35, 0.7, 1, 1],
+            filter: ['blur(24px)', 'blur(20px)', 'blur(12px)', 'blur(5px)', 'blur(1px)', 'blur(0px)'],
+          }}
+          transition={{ duration: 3.2, ease: [0.22, 0.68, 0.35, 1], times: [0, 0.12, 0.35, 0.65, 0.88, 1] }}
+        >
+          {/* Arrival glow flash */}
+          <motion.div
+            className="pointer-events-none absolute inset-0 z-20 rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(168, 85, 247, 0.3), rgba(99, 102, 241, 0.15) 40%, transparent 70%)',
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0, 0.6, 0] }}
+            transition={{ duration: 3.2, times: [0, 0.6, 0.85, 1], ease: 'easeOut' }}
+          />
           <NatalWheelLegend />
           <NatalWheel
             chart={chart}
@@ -195,10 +224,19 @@ export function ChartView({
             selectedPlanet={selectedPlanet}
             size={500}
           />
-        </div>
+        </motion.div>
 
-        {/* Right column - desktop: BigThree cards only (Oracle moved to floating button) */}
-        <div className="hidden w-80 lg:flex lg:flex-col lg:gap-4">
+        {/* Right column - desktop: BigThree cards — zoom from stars with stagger */}
+        <motion.div
+          className="hidden w-80 lg:flex lg:flex-col lg:gap-4"
+          initial={{ scale: 0.02, opacity: 0, filter: 'blur(20px)' }}
+          animate={{
+            scale: [0.02, 0.06, 0.25, 0.7, 1.03, 1],
+            opacity: [0, 0.15, 0.4, 0.75, 1, 1],
+            filter: ['blur(20px)', 'blur(16px)', 'blur(10px)', 'blur(4px)', 'blur(1px)', 'blur(0px)'],
+          }}
+          transition={{ duration: 2.8, delay: 0.8, ease: [0.22, 0.68, 0.35, 1], times: [0, 0.15, 0.4, 0.7, 0.9, 1] }}
+        >
           <BigThreeCards
             sun={sun}
             moon={moon}
@@ -207,7 +245,7 @@ export function ChartView({
             onSelect={handleBigThreeSelect}
             selected={selectedBigThree}
           />
-        </div>
+        </motion.div>
       </div>
 
       {/* Planet interpretation panel */}
