@@ -148,7 +148,7 @@ export function ChartView({
     [chart]
   )
 
-  if (isLoading) return <ChartSkeleton />
+  if (isLoading) return null
   if (error) return <ChartError message={error} />
   if (!chart) return <ChartError message="Картата не е намерена" />
 
