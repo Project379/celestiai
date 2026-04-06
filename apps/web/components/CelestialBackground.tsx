@@ -15,7 +15,7 @@ import { CelestialCanvas, CONSTELLATIONS, type ConstellationData } from './Celes
  */
 export function CelestialBackground() {
   const pathname = usePathname()
-  const interactive = pathname === '/dashboard'
+  const interactive = pathname === '/dashboard' || pathname === '/' || pathname === '/sign-in' || pathname === '/sign-up'
 
   const mouseRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 })
   const [hoveredId, setHoveredId] = useState<string | null>(null)

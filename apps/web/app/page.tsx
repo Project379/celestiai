@@ -5,7 +5,7 @@ import { LandingNav } from '@/components/landing/LandingNav'
 import { FeaturesSection } from '@/components/landing/FeaturesSection'
 import { PricingSection } from '@/components/landing/PricingSection'
 import { AboutSection } from '@/components/landing/AboutSection'
-import { CelestialCanvasLazy as CelestialCanvas } from '@/components/CelestialCanvasLazy'
+import { CelestialBackgroundLazy } from '@/components/CelestialBackgroundLazy'
 
 export default async function HomePage() {
   const { userId } = await auth()
@@ -15,12 +15,14 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-purple-900/20">
+    <div className="relative min-h-screen">
+      <CelestialBackgroundLazy />
+
+      <div className="relative z-10">
       <LandingNav />
 
-      {/* Hero section with animated starfield */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-indigo-950/50 to-slate-900">
-        <CelestialCanvas className="absolute inset-0" interactive />
+      {/* Hero section */}
+      <section className="relative overflow-hidden">
         <div className="container relative mx-auto px-4 py-32 text-center md:py-40">
           <h1 className="mb-6 bg-gradient-to-r from-purple-400 to-violet-400 bg-clip-text text-4xl font-bold text-transparent md:text-6xl">
             Celestia AI
@@ -74,6 +76,7 @@ export default async function HomePage() {
           </Link>
         </div>
       </footer>
+      </div>
     </div>
   )
 }
