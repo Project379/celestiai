@@ -1,9 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { UserMenu } from '../../../components/auth/UserMenu'
-import { SessionExpiryModal } from '../../../components/auth/SessionExpiryModal'
-import { ChartView } from '../../../components/chart/ChartView'
+import { UserMenu } from '@/components/auth/UserMenu'
+import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
+import { ChartView } from '@/components/chart/ChartView'
 
 interface ChartData {
   id: string

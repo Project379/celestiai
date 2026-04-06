@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { generateText } from 'ai'
-import { google } from '@ai-sdk/google'
+import { createOpenAI } from '@ai-sdk/openai'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
 import type { ChartData } from '@celestia/astrology/client'
@@ -17,6 +17,12 @@ import type { ReadingTopic } from '@/lib/oracle/prompts'
  */
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
+const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
+
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
+})
 
 export async function POST(req: Request) {
   // Auth check
@@ -111,7 +117,7 @@ export async function POST(req: Request) {
             : 'здраве и жизнена сила'
 
     const { text: teaserText } = await generateText({
-      model: google('gemini-2.5-flash'),
+      model: openrouter(LLAMA_MODEL),
       system: `Ти си Celestia — мистичен астрологически оракул. Пишеш интригуващи, поетични прогнози на български.`,
       prompt: `Напиши 2-3 изречения на български като мистично астрологическо предзнаменование за "${topicNameBg}" за тази натална карта. Бъди примамлив и загадъчен, но не разкривай конкретни детайли. Целта е да събудиш любопитство.
 
@@ -134,7 +140,7 @@ ${chartPromptText}`,
         teaser_content: teaserText,
         generated_at: now.toISOString(),
         expires_at: expiresAt.toISOString(),
-        model_version: 'gemini-2.5-flash',
+        model_version: LLAMA_MODEL,
       },
       {
         onConflict: 'chart_id,topic',

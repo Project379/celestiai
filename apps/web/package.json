@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.29",
+    "@ai-sdk/openai": "^3.0.0",
     "@ai-sdk/react": "^3.0.88",
     "@celestia/astrology": "workspace:*",
     "@celestia/ui": "workspace:*",

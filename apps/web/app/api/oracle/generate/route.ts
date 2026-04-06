@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { streamText } from 'ai'
-import { google } from '@ai-sdk/google'
+import { createOpenAI } from '@ai-sdk/openai'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
@@ -26,6 +26,12 @@ import { logAuditEvent } from '@/lib/audit'
  * 10. onFinish: upsert completed reading into ai_readings
  */
 export const maxDuration = 60
+const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
+
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
+})
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
 const PREMIUM_TOPICS: ReadingTopic[] = ['love', 'career', 'health']
@@ -172,7 +178,7 @@ export async function POST(req: Request) {
 
     // 9. Stream via Gemini gemini-2.5-flash
     const result = streamText({
-      model: google('gemini-2.5-flash'),
+      model: openrouter(LLAMA_MODEL),
       system: systemPrompt,
       prompt: chartPromptText,
       temperature: 0.85,
@@ -197,7 +203,7 @@ export async function POST(req: Request) {
               last_regenerated_at: regenerate
                 ? generatedAt.toISOString()
                 : null,
-              model_version: 'gemini-2.5-flash',
+              model_version: LLAMA_MODEL,
             },
             {
               onConflict: 'chart_id,topic',
