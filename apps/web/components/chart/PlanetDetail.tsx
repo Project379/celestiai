@@ -158,8 +158,9 @@ function simpleNoise(x: number, y: number, z: number): number {
   return (n - Math.floor(n))
 }
 
-function StandParticleEngine({ element, isActive }: { element: 'fire' | 'earth' | 'air' | 'water'; isActive: boolean }) {
+function StandParticleEngine({ element, isActive, delayMs = 0 }: { element: 'fire' | 'earth' | 'air' | 'water'; isActive: boolean; delayMs?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [ready, setReady] = useState(delayMs === 0)
   const stateRef = useRef<{
     particles: Particle[]
     speedLines: SpeedLine[]
@@ -171,7 +172,15 @@ function StandParticleEngine({ element, isActive }: { element: 'fire' | 'earth' 
     phaseTimer: number
   } | null>(null)
 
+  // Delay particle engine start so the panel finishes its entrance animation
   useEffect(() => {
+    if (delayMs <= 0) { setReady(true); return }
+    const t = setTimeout(() => setReady(true), delayMs)
+    return () => clearTimeout(t)
+  }, [delayMs])
+
+  useEffect(() => {
+    if (!ready) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -509,12 +518,13 @@ function StandParticleEngine({ element, isActive }: { element: 'fire' | 'earth' 
       document.removeEventListener('visibilitychange', handleFxVisibility)
       cancelAnimationFrame(animId)
     }
-  }, [element, isActive])
+  }, [element, isActive, ready])
 
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none absolute inset-0 rounded-xl"
+      className="pointer-events-none absolute inset-0 rounded-xl transition-opacity duration-700"
+      style={{ opacity: ready ? 1 : 0 }}
       aria-hidden="true"
     />
   )
@@ -836,8 +846,8 @@ export function PlanetDetail({
           aria-labelledby="planet-detail-title"
           aria-describedby="planet-detail-desc"
         >
-          {/* ─── Full Stand Particle Engine ─── */}
-          <StandParticleEngine element={element} isActive={showMenacing} />
+          {/* ─── Full Stand Particle Engine (delayed until panel entrance finishes) ─── */}
+          <StandParticleEngine element={element} isActive={showMenacing} delayMs={600} />
 
           {/* ─── Menacing floating symbols ─── */}
           <MenacingSymbols element={element} isActive={showMenacing} />
