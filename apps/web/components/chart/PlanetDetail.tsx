@@ -577,44 +577,81 @@ function MenacingSymbols({ element, isActive }: { element: 'fire' | 'earth' | 'a
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   GIANT GLYPH REVEAL — Planet symbol appears massive, zooms in
-   Like a Stand name card / Pokemon evolution silhouette
+   GIANT GLYPH REVEAL — Planet symbol spirals from top-left to center
+   Smooth logarithmic spiral path with scale-down and rotation
    ═══════════════════════════════════════════════════════════════ */
 function GiantGlyphReveal({ iconName, element }: { iconName: string; element: 'fire' | 'earth' | 'air' | 'water' }) {
   const theme = ELEMENT_THEMES[element]
+
+  // Spiral keyframes: start top-left, arc through intermediate points, land at center
+  // Using a logarithmic spiral path with decreasing radius
+  const spiralX = [-280, -200, -80, 60, 40, -15, 0]
+  const spiralY = [-220, -100, -140, -60, 30, 10, 0]
+  const spiralRotate = [-540, -380, -240, -140, -60, -15, 0]
+  const spiralScale = [0.3, 0.5, 0.7, 0.9, 1.1, 1.05, 1]
+  const spiralOpacity = [0, 0.4, 0.7, 0.9, 1, 1, 0.9]
+
   return (
     <motion.div
       className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
       aria-hidden="true"
       initial={{ opacity: 1 }}
       animate={{ opacity: 0 }}
-      transition={{ duration: 1.2, delay: 0.6, ease: 'easeIn' }}
+      transition={{ duration: 0.8, delay: 1.0, ease: 'easeIn' }}
     >
-      {/* Giant SVG icon — afterimage outline */}
+      {/* Giant SVG icon — afterimage trail (follows slightly behind) */}
       <motion.div
         className="absolute select-none"
         style={{
           color: theme.accentColor,
-          opacity: 0.5,
+          filter: `blur(4px)`,
         }}
-        initial={{ scale: 5, opacity: 0, rotate: 30 }}
-        animate={{ scale: [5, 1.4, 1], opacity: [0, 0.5, 0], rotate: [30, -5, 0] }}
-        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+        initial={{ x: spiralX[0], y: spiralY[0], scale: spiralScale[0], opacity: 0, rotate: spiralRotate[0] }}
+        animate={{
+          x: spiralX,
+          y: spiralY,
+          scale: spiralScale.map(s => s * 1.15),
+          opacity: [0, 0.3, 0.4, 0.35, 0.2, 0.1, 0],
+          rotate: spiralRotate,
+        }}
+        transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1], delay: 0.04 }}
       >
         <CelestialIcon name={iconName} size={180} />
       </motion.div>
-      {/* Giant SVG icon — main */}
+      {/* Giant SVG icon — main spiral */}
       <motion.div
         className="absolute select-none"
         style={{
           color: theme.symbolColor,
         }}
-        initial={{ scale: 4, opacity: 0, rotate: -45 }}
-        animate={{ scale: [4, 1.2, 0.8], opacity: [0, 1, 0.3], rotate: [-45, 5, 0] }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ x: spiralX[0], y: spiralY[0], scale: spiralScale[0], opacity: 0, rotate: spiralRotate[0] }}
+        animate={{
+          x: spiralX,
+          y: spiralY,
+          scale: spiralScale,
+          opacity: [...spiralOpacity.slice(0, -1), 0.3],
+          rotate: spiralRotate,
+        }}
+        transition={{ duration: 1.0, ease: [0.25, 0.1, 0.25, 1] }}
       >
         <CelestialIcon name={iconName} size={180} />
       </motion.div>
+      {/* Spiral trail particles — small dots along the path */}
+      {[0, 1, 2, 3, 4].map((i) => (
+        <motion.div
+          key={`trail-${i}`}
+          className="absolute h-2 w-2 rounded-full"
+          style={{ background: theme.accentColor }}
+          initial={{ x: spiralX[0], y: spiralY[0], scale: 0, opacity: 0 }}
+          animate={{
+            x: spiralX.slice(0, 4 + i),
+            y: spiralY.slice(0, 4 + i),
+            scale: [0, 1.5, 1, 0.5, 0],
+            opacity: [0, 0.8, 0.5, 0.2, 0],
+          }}
+          transition={{ duration: 0.6 + i * 0.1, delay: i * 0.06, ease: 'easeOut' }}
+        />
+      ))}
     </motion.div>
   )
 }
@@ -894,16 +931,18 @@ export function PlanetDetail({
                       clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
                     }}
                   >
-                    {/* Planet glyph with dramatic pop */}
+                    {/* Planet glyph with spiral-in */}
                     <motion.span
                       className="text-lg leading-none"
-                      initial={{ scale: 3, opacity: 0, rotate: -180 }}
+                      initial={{ scale: 2.5, opacity: 0, rotate: -360, x: -20, y: -12 }}
                       animate={{
-                        scale: revealPhase >= 4 ? [3, 1.5, 1] : 3,
-                        opacity: revealPhase >= 4 ? [0, 1, 1] : 0,
-                        rotate: revealPhase >= 4 ? [-180, 15, 0] : -180,
+                        scale: revealPhase >= 4 ? [2.5, 1.8, 1.2, 1] : 2.5,
+                        opacity: revealPhase >= 4 ? [0, 0.6, 1, 1] : 0,
+                        rotate: revealPhase >= 4 ? [-360, -180, -30, 0] : -360,
+                        x: revealPhase >= 4 ? [-20, -10, 3, 0] : -20,
+                        y: revealPhase >= 4 ? [-12, -6, 2, 0] : -12,
                       }}
-                      transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                      transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 0.68, 0.36, 1] }}
                       style={{ textShadow: `0 0 12px ${theme.glowColor}` }}
                     >
                       <CelestialIcon name={titleIconName} size={18} />
