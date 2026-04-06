@@ -12,9 +12,9 @@ interface UpgradePromptProps {
 }
 
 const COPY: Record<UpgradeContext, string> = {
-  dashboard: 'Отключете пълната картина на вашето космическо пътешествие',
-  horoscope: 'Отключете подробен транзитен анализ и планетарни влияния',
-  oracle: 'Отключете всички теми на Оракула',
+  dashboard: 'Отключи пълната картина на твоето космическо пътешествие',
+  horoscope: 'Отключи подробен транзитен анализ и планетарни влияния',
+  oracle: 'Отключи всички теми на Оракула',
 }
 
 /**
@@ -94,7 +94,7 @@ export function UpgradePrompt({ context, priceMonthly, className = '' }: Upgrade
             <div>
               <p className="text-sm font-medium text-white/90">{COPY[context]}</p>
               <p className="mt-1 text-xs text-white/50">
-                Отключете целия потенциал на Celestia с Премиум достъп.
+                Отключи пълния потенциал на Celestia с Премиум достъп.
               </p>
             </div>
             <button
@@ -125,7 +125,7 @@ export function UpgradePrompt({ context, priceMonthly, className = '' }: Upgrade
               href="/pricing"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-sm text-white/60 transition-all hover:bg-white/5 hover:text-white/80"
             >
-              Виж всички предимства
+              Виж какво получаваш
             </Link>
           </div>
         </div>

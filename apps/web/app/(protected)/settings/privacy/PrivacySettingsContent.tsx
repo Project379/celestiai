@@ -117,7 +117,7 @@ export function PrivacySettingsContent({
           Експорт на данни
         </h2>
         <p className="mb-5 text-sm text-white/60">
-          Изтеглете копие на всички ваши данни във формат JSON.
+          Изтегли копие на всичките си данни във формат JSON.
         </p>
         <button
           type="button"
@@ -138,8 +138,8 @@ export function PrivacySettingsContent({
         {!hasPendingDeletion ? (
           <>
             <p className="mb-5 text-sm text-white/60">
-              Внимание: Заявката за изтриване включва 30-дневен гратисен период.
-              През този период можете да отмените заявката.
+              Внимание: Заявката за изтриване включва 30-дневен период.
+              През това време можеш да отмениш заявката, ако промениш решението си.
             </p>
             <button
               type="button"
@@ -153,11 +153,11 @@ export function PrivacySettingsContent({
           <div className="space-y-4">
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
               <p className="text-sm text-amber-300">
-                Вашият акаунт е маркиран за изтриване.
+                Акаунтът ти е маркиран за изтриване.
               </p>
               {deletionScheduledAt && (
                 <p className="mt-1 text-sm text-amber-300/80">
-                  Данните ви ще бъдат окончателно изтрити на:{' '}
+                  Данните ти ще бъдат окончателно изтрити на:{' '}
                   <span className="font-medium text-amber-200">
                     {formatBgDate(deletionScheduledAt)}
                   </span>
@@ -192,10 +192,10 @@ export function PrivacySettingsContent({
         className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0f0f1a] p-6 text-white backdrop:bg-black/60"
       >
         <h3 className="mb-2 text-lg font-semibold text-white">
-          Сигурни ли сте?
+          Сигурен/а ли си?
         </h3>
         <p className="mb-6 text-sm text-white/60">
-          Вашият акаунт ще бъде деактивиран незабавно и всички данни ще бъдат
+          Акаунтът ти ще бъде деактивиран незабавно и всички данни ще бъдат
           изтрити след 30 дни.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row-reverse">

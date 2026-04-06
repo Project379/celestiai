@@ -5,7 +5,7 @@ import { LandingNav } from '@/components/landing/LandingNav'
 import { FeaturesSection } from '@/components/landing/FeaturesSection'
 import { PricingSection } from '@/components/landing/PricingSection'
 import { AboutSection } from '@/components/landing/AboutSection'
-import { StarCanvas } from '@/components/StarCanvas'
+import { CelestialCanvasLazy as CelestialCanvas } from '@/components/CelestialCanvasLazy'
 
 export default async function HomePage() {
   const { userId } = await auth()
@@ -20,22 +20,22 @@ export default async function HomePage() {
 
       {/* Hero section with animated starfield */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-indigo-950/50 to-slate-900">
-        <StarCanvas className="absolute inset-0" />
+        <CelestialCanvas className="absolute inset-0" interactive />
         <div className="container relative mx-auto px-4 py-32 text-center md:py-40">
           <h1 className="mb-6 bg-gradient-to-r from-purple-400 to-violet-400 bg-clip-text text-4xl font-bold text-transparent md:text-6xl">
             Celestia AI
           </h1>
           <p className="mx-auto mb-4 max-w-2xl text-xl text-slate-200 md:text-2xl">
-            Звездите разказват вашата история. Ние я превеждаме.
+            Звездите имат какво да ти кажат. Ние просто превеждаме.
           </p>
           <p className="mx-auto mb-8 max-w-2xl text-lg text-slate-400">
-            Персонализирана астрология, задвижвана от изкуствен интелект
+            Твоят личен астрологичен приятел, подсилен от AI
           </p>
           <Link
             href="/sign-in"
             className="inline-flex rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-8 py-4 text-lg font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500"
           >
-            Открийте звездите
+            Открий звездите си
           </Link>
         </div>
       </section>
@@ -46,13 +46,13 @@ export default async function HomePage() {
       <section className="py-16">
         <div className="container mx-auto px-4 text-center">
           <p className="mx-auto mb-8 max-w-2xl text-xl text-slate-300 md:text-2xl">
-            Готови ли сте да разберете какво ви казват звездите?
+            Любопитно ти е какво казват звездите за теб?
           </p>
           <Link
             href="/auth"
             className="inline-flex rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-10 py-4 text-lg font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500"
           >
-            Започнете безплатно
+            Започни безплатно
           </Link>
         </div>
       </section>

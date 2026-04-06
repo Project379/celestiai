@@ -46,11 +46,11 @@ export function DashboardContent({
     fetch('/api/birth-data')
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.length > 0) {
+        if (data?.length > 0) {
           setBirthChart(data[0])
         }
       })
-      .catch((err) => console.error('Error refetching birth data:', err))
+      .catch(() => {})
   }, [router])
 
   return (
@@ -58,7 +58,7 @@ export function DashboardContent({
       <div className="mb-8">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold text-slate-100">
-            Welcome, {firstName}!
+            Здравей, {firstName}!
           </h1>
           {isPremium && (
             <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-medium text-purple-300 ring-1 ring-purple-500/30">
@@ -67,7 +67,7 @@ export function DashboardContent({
           )}
         </div>
         <p className="mt-2 text-slate-400">
-          Your dashboard for astrology insights and forecasts.
+          Ето какво ти казват звездите днес.
         </p>
       </div>
 
@@ -92,10 +92,10 @@ export function DashboardContent({
               </svg>
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-200">
-              Add your birth data
+              Добави рождените си данни
             </h3>
             <p className="mb-6 text-sm text-slate-400">
-              To unlock personalized astrology features, first add your birth details.
+              За да ти покажа какво разкриват звездите за теб, ми трябва датата и часът ти на раждане.
             </p>
             <Link
               href="/birth-data"
@@ -114,7 +114,7 @@ export function DashboardContent({
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              Add birth data
+              Въведи данни за раждане
             </Link>
           </div>
         )}
@@ -164,16 +164,16 @@ export function DashboardContent({
               </svg>
             </div>
             <div className="flex-1">
-              <h2 className="font-semibold text-slate-200">Natal Chart</h2>
+              <h2 className="font-semibold text-slate-200">Натална карта</h2>
               <p className="text-sm text-slate-400">
                 {birthChart
-                  ? 'Open your calculated wheel and natal chart details.'
-                  : 'Add birth data first to generate your natal chart.'}
+                  ? 'Отвори картата си и разгледай планетите.'
+                  : 'Първо добави рождени данни, за да видиш картата си.'}
               </p>
             </div>
           </div>
           <span className="inline-flex items-center gap-2 text-sm font-medium text-violet-300 transition-colors group-hover:text-violet-200">
-            {birthChart ? 'Open chart' : 'Add birth data'}
+            {birthChart ? 'Виж картата' : 'Добави данни'}
             <svg
               className="h-4 w-4"
               fill="none"
@@ -211,16 +211,16 @@ export function DashboardContent({
               </svg>
             </div>
             <div className="flex-1">
-              <h2 className="font-semibold text-slate-200">Transits</h2>
+              <h2 className="font-semibold text-slate-200">Транзити</h2>
               <p className="text-sm text-slate-400">
                 {birthChart
-                  ? 'Open current transits, upcoming peaks, and lunar events.'
-                  : 'Add birth data first to unlock your transit page.'}
+                  ? 'Виж какво ти влияе сега — транзити и лунни фази.'
+                  : 'Първо добави рождени данни, за да отключиш транзитите.'}
               </p>
             </div>
           </div>
           <span className="inline-flex items-center gap-2 text-sm font-medium text-indigo-300 transition-colors group-hover:text-indigo-200">
-            {birthChart ? 'Open transits' : 'Add birth data'}
+            {birthChart ? 'Виж транзитите' : 'Добави данни'}
             <svg
               className="h-4 w-4"
               fill="none"

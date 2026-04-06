@@ -159,7 +159,7 @@ export function PushNotificationBanner() {
             </p>
           ) : (
             <p className="text-sm text-slate-300">
-              Получавайте сутрешен хороскоп
+              Получавай сутрешен хороскоп
             </p>
           )}
         </div>

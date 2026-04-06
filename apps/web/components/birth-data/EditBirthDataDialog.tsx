@@ -251,7 +251,7 @@ export function EditBirthDataDialog({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                        Изберете дата
+                        Избери дата
                       </p>
                       <input
                         id="birthDate"
@@ -332,7 +332,7 @@ export function EditBirthDataDialog({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                          Изберете час
+                          Избери час
                         </p>
                         <input
                           id="birthTime"
@@ -360,7 +360,7 @@ export function EditBirthDataDialog({
                     {...register('approximateTimeRange')}
                     className="w-full rounded-xl border border-slate-700 bg-slate-800/70 px-4 py-3 text-sm text-slate-100 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                   >
-                    <option value="">Изберете период</option>
+                    <option value="">Избери период</option>
                     {approximateTimeRanges.map((range) => (
                       <option key={range} value={range}>
                         {TIME_RANGE_LABELS[range]}

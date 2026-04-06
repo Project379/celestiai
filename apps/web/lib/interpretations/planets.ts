@@ -12,6 +12,12 @@ export interface InterpretationData {
     aspectInsights: string[]
 }
 
+/** "в" → "във" before в/ф; "с" → "със" before с/з */
+function bgPrep(prep: 'в' | 'с', nextWord: string): string {
+    if (prep === 'в') return /^[вВфФ]/.test(nextWord) ? 'във' : 'в'
+    return /^[сСзЗ]/.test(nextWord) ? 'със' : 'с'
+}
+
 const PLANET_OVERVIEW: Record<Planet, string> = {
     sun: 'Слънцето показва вашата същност, жизнена сила, увереност и начина, по който искате да се изразите.',
     moon: 'Луната описва емоционалния ви свят, вътрешните нужди, паметта и начина, по който търсите сигурност.',
@@ -100,19 +106,27 @@ const HOUSE_MEANING: Record<number, string> = {
 }
 
 const ASPECT_LABEL: Record<AspectData['aspect'], string> = {
-    conjunction: 'Съвпад с',
-    sextile: 'Секстил с',
-    square: 'Квадрат с',
-    trine: 'Тригон с',
-    opposition: 'Опозиция с',
+    conjunction: 'Съвпад',
+    sextile: 'Секстил',
+    square: 'Квадрат',
+    trine: 'Тригон',
+    opposition: 'Опозиция',
 }
 
 const ASPECT_TONE: Record<AspectData['aspect'], string> = {
-    conjunction: 'се слива директно с',
+    conjunction: 'се слива директно',
     sextile: 'получава подкрепа и възможност чрез',
     square: 'среща напрежение и натиск за развитие чрез',
-    trine: 'тече естествено заедно с',
+    trine: 'тече естествено заедно',
     opposition: 'влиза в полярност и осъзнаване чрез',
+}
+
+const ASPECT_TONE_PREP: Record<AspectData['aspect'], 'с' | null> = {
+    conjunction: 'с',
+    sextile: null,
+    square: null,
+    trine: 'с',
+    opposition: null,
 }
 
 function formatPosition(sign: string, degree?: number, house?: number): string {
@@ -143,7 +157,9 @@ function getAspectInsights(planet: Planet, aspects: AspectData[]): string[] {
                 ? 'Този аспект е по-активен и се усилва.'
                 : 'Този аспект е по-устойчив и вече добре познат във вътрешния ви модел.'
 
-            return `${ASPECT_LABEL[aspect.aspect]} ${otherPlanet}. Тук това положение ${ASPECT_TONE[aspect.aspect]} ${otherPlanet.toLowerCase()}, с орбис ${aspect.orb.toFixed(1)}°. ${applyingText}`
+            const tonePrep = ASPECT_TONE_PREP[aspect.aspect]
+            const toneSuffix = tonePrep ? ` ${bgPrep(tonePrep, otherPlanet.toLowerCase())}` : ''
+            return `${ASPECT_LABEL[aspect.aspect]} ${bgPrep('с', otherPlanet)} ${otherPlanet}. Тук това положение ${ASPECT_TONE[aspect.aspect]}${toneSuffix} ${otherPlanet.toLowerCase()}, с орбис ${aspect.orb.toFixed(1)}°. ${applyingText}`
         })
         .slice(0, 3)
 }
@@ -155,7 +171,7 @@ export function getPlanetInterpretation(planet: string, sign: string, degree?: n
 
     const planetName = PLANETS_BG[planetKey] || planet
     const signName = ZODIAC_SIGNS_BG[signKey] || sign
-    const title = `${planetName} в ${signName}`
+    const title = `${planetName} ${bgPrep('в', signName)} ${signName}`
     const position = formatPosition(sign, degree, house)
     const brief = SIGN_BRIEF[signKey] || ''
 
@@ -171,7 +187,7 @@ export function getPlanetInterpretation(planet: string, sign: string, degree?: n
         overview,
         strengths: PLANET_STRENGTHS[planetKey] || [],
         challenges: PLANET_CHALLENGES[planetKey] || [],
-        growth: `Зрелият израз на ${planetName.toLowerCase()} в ${signName} идва, когато използвате силните му страни съзнателно, а не по навик. Търсете по-зрялата версия на това положение: осъзнат отговор вместо автоматична реакция, вътрешна последователност вместо импулсивност и доверие вместо нужда от доказване.`,
+        growth: `Зрелият израз на ${planetName.toLowerCase()} ${bgPrep('в', signName)} ${signName} идва, когато използвате силните му страни съзнателно, а не по навик. Търсете по-зрялата версия на това положение: осъзнат отговор вместо автоматична реакция, вътрешна последователност вместо импулсивност и доверие вместо нужда от доказване.`,
         aspectInsights: getAspectInsights(planetKey, aspects),
     }
 }

@@ -17,14 +17,16 @@ interface TransitOverviewCardProps {
 
 type TransitEvent = ActiveTransitDetail | UpcomingTransitDetail | LunarEventDetail
 
+const BG_DATETIME_FORMAT = new Intl.DateTimeFormat('bg-BG', {
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'Europe/Sofia',
+})
+
 function formatDateTime(value: string): string {
-  return new Intl.DateTimeFormat('bg-BG', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Europe/Sofia',
-  }).format(new Date(value))
+  return BG_DATETIME_FORMAT.format(new Date(value))
 }
 
 function formatActiveTransit(item: ActiveTransitDetail): string {
@@ -35,10 +37,14 @@ function formatUpcoming(item: UpcomingTransitDetail): string {
   return `${PLANETS_BG[item.transitPlanet]} ${ASPECTS_BG[item.aspect]} ${PLANETS_BG[item.natalPlanet]}`
 }
 
+function bgPrep(prep: 'в' | 'с', nextWord: string): string {
+  if (prep === 'в') return /^[вВфФ]/.test(nextWord) ? 'във' : 'в'
+  return /^[сСзЗ]/.test(nextWord) ? 'със' : 'с'
+}
+
 function formatLunarEvent(item: LunarEventDetail): string {
-  const base = `${item.type === 'new_moon' ? 'Новолуние' : 'Пълнолуние'} в ${
-    ZODIAC_SIGNS_BG[item.sign]
-  }`
+  const signName = ZODIAC_SIGNS_BG[item.sign]
+  const base = `${item.type === 'new_moon' ? 'Новолуние' : 'Пълнолуние'} ${bgPrep('в', signName)} ${signName}`
 
   if (item.aspects.length === 0) return base
 

@@ -5,6 +5,13 @@ import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { HoroscopeStream } from './HoroscopeStream'
 import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
 
+const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'Europe/Sofia',
+})
+
 interface DailyHoroscopeProps {
   chartId: string
   subscriptionTier?: string
@@ -39,13 +46,7 @@ export function DailyHoroscope({ chartId, subscriptionTier = 'free', priceMonthl
 
   const isPremium = subscriptionTier !== 'free'
 
-  // Format today's date in Bulgarian locale for the header
-  const todayFormatted = new Intl.DateTimeFormat('bg-BG', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'Europe/Sofia',
-  }).format(new Date())
+  const todayFormatted = BG_DATE_FORMAT.format(new Date())
 
   // Determine content to display
   const todayContent = cachedContent.today
@@ -200,7 +201,7 @@ export function DailyHoroscopeEmpty() {
         <div>
           <h2 className="text-lg font-semibold text-white">Дневен хороскоп</h2>
           <p className="mt-0.5 text-sm text-white/50">
-            Добавете данни за раждане
+            Добави данни за раждане
           </p>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/10">
@@ -221,13 +222,13 @@ export function DailyHoroscopeEmpty() {
       </div>
       <div className="flex flex-col items-center justify-center gap-3 py-4 text-center">
         <p className="text-sm text-white/50">
-          Първо добавете данни за раждане, за да получите дневен хороскоп
+          Първо добави данни за раждане, за да получиш дневен хороскоп
         </p>
         <Link
           href="/birth-data"
           className="mt-2 inline-flex items-center gap-2 rounded-lg bg-purple-600/80 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-600"
         >
-          Въведете данни за раждане
+          Въведи данни за раждане
         </Link>
       </div>
     </div>

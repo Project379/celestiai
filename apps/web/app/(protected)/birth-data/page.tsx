@@ -69,7 +69,7 @@ export default function BirthDataPage() {
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-slate-100">
-          Въведете данните си за раждане
+          Въведи данните си за раждане
         </h1>
         <p className="mt-2 text-slate-400">
           Тези данни са необходими за точните астрологични изчисления

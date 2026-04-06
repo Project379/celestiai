@@ -26,6 +26,7 @@ export function UserMenu() {
             userButtonPopoverActionButtonText: 'text-slate-300',
             userButtonPopoverActionButtonIcon: 'text-slate-400',
             userButtonPopoverFooter: 'hidden',
+            userButtonPopoverActionButton__signOut: 'hidden',
           },
         }}
       >
