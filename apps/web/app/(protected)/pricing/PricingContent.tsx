@@ -75,16 +75,16 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
 
         {/* Header */}
         <div className="mb-12 text-center">
-          <h1 className="mb-3 text-4xl font-bold text-white">Изберете своя план</h1>
+          <h1 className="mb-3 text-4xl font-bold text-white">Избери своя план</h1>
           <p className="text-lg text-white/60">
-            Отключете пълния потенциал на вашата астрална карта
+            Отключи пълния потенциал на звездната си карта
           </p>
         </div>
 
         {/* Cancelled payment notice */}
         {wasCancelled && (
           <div className="mb-8 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-white/60">
-            Плащането не беше завършено. Опитайте отново когато сте готови.
+            Плащането не беше завършено. Опитай отново, когато си готов/а.
           </div>
         )}
 
@@ -118,7 +118,7 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
             </ul>
 
             <div className="rounded-xl border border-white/10 px-4 py-3 text-center text-sm text-white/40">
-              {isPremium ? 'Базов план' : 'Вашият текущ план'}
+              {isPremium ? 'Базов план' : 'Твоят текущ план'}
             </div>
           </div>
 
@@ -199,7 +199,7 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
 
         {/* Footer note */}
         <p className="mt-10 text-center text-xs text-white/30">
-          Сигурно плащане чрез Stripe. Можете да прекратите абонамента си по всяко време.
+          Сигурно плащане чрез Stripe. Можеш да прекратиш абонамента си по всяко време.
         </p>
       </div>
     </div>

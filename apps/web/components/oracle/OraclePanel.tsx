@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useOracleReading } from '@/hooks/useOracleReading'
 import { TopicCards } from './TopicCards'
 import { ReadingStream } from './ReadingStream'
@@ -11,20 +11,9 @@ import { stripSentinels } from '@/lib/oracle/planet-parser'
 interface OraclePanelProps {
   chartId: string
   subscriptionTier: 'free' | 'premium'
-  /** Called when a planet is mentioned in the reading, for cross-highlighting */
   onPlanetHighlight: (planet: string) => void
 }
 
-/**
- * Main Oracle side panel.
- *
- * Orchestrates all Oracle UI states:
- * - Topic card grid
- * - Streaming reading display (active generation)
- * - Saved reading display (cached)
- * - Locked topic teaser (premium gating)
- * - Regenerate button with rate limit tooltip
- */
 export function OraclePanel({
   chartId,
   subscriptionTier,
@@ -33,6 +22,7 @@ export function OraclePanel({
   const {
     completion,
     isLoading,
+    stop,
     savedReadings,
     activeTopic,
     setActiveTopic,
@@ -40,13 +30,13 @@ export function OraclePanel({
     fetchSavedReadings,
   } = useOracleReading(chartId)
 
-  // Topic being shown in locked teaser state
   const [lockedTopicShown, setLockedTopicShown] = useState<OracleTopic | null>(null)
-  // Teaser content per topic (fetched from /api/oracle/teaser)
   const [teaserContent, setTeaserContent] = useState<Record<string, string | null>>({})
   const [loadingTeaser, setLoadingTeaser] = useState<Record<string, boolean>>({})
-
-  // --- Handlers ---
+  const teaserContentRef = useRef(teaserContent)
+  teaserContentRef.current = teaserContent
+  const loadingTeaserRef = useRef(loadingTeaser)
+  loadingTeaserRef.current = loadingTeaser
 
   const handleTopicSelect = useCallback(
     (topic: OracleTopic) => {
@@ -54,21 +44,21 @@ export function OraclePanel({
 
       const saved = savedReadings[topic]
       if (saved) {
-        // View saved reading without re-streaming
         setActiveTopic(topic)
       } else {
-        // Generate a new reading
         void generateReading(topic)
       }
     },
     [savedReadings, setActiveTopic, generateReading]
   )
 
-  const handleLockedTopicTap = useCallback((topic: OracleTopic) => {
-    setLockedTopicShown(topic)
-    // Clear any active streaming topic so the teaser panel is shown
-    setActiveTopic(null)
-  }, [setActiveTopic])
+  const handleLockedTopicTap = useCallback(
+    (topic: OracleTopic) => {
+      setLockedTopicShown(topic)
+      setActiveTopic(null)
+    },
+    [setActiveTopic]
+  )
 
   const handleRegenerate = useCallback(() => {
     if (!activeTopic) return
@@ -77,7 +67,7 @@ export function OraclePanel({
 
   const handleRequestTeaser = useCallback(
     async (topic: OracleTopic) => {
-      if (teaserContent[topic] !== undefined || loadingTeaser[topic]) return
+      if (teaserContentRef.current[topic] !== undefined || loadingTeaserRef.current[topic]) return
 
       setLoadingTeaser((prev) => ({ ...prev, [topic]: true }))
       try {
@@ -87,7 +77,7 @@ export function OraclePanel({
           body: JSON.stringify({ chartId, topic }),
         })
         if (res.ok) {
-          const data = await res.json() as { teaserContent?: string }
+          const data = (await res.json()) as { teaserContent?: string }
           setTeaserContent((prev) => ({
             ...prev,
             [topic]: data.teaserContent ?? null,
@@ -101,18 +91,15 @@ export function OraclePanel({
         setLoadingTeaser((prev) => ({ ...prev, [topic]: false }))
       }
     },
-    [chartId, teaserContent, loadingTeaser]
+    [chartId]
   )
-
-  // --- Derived state ---
 
   const isGenerating = isLoading
   const savedReading = activeTopic ? savedReadings[activeTopic] : null
-  const showSavedReading =
-    !isGenerating && activeTopic && savedReading && !completion
+  const showSavedReading = !isGenerating && activeTopic && savedReading && !completion
   const showStream = activeTopic && (isGenerating || Boolean(completion))
+  const isModalOpen = Boolean(activeTopic || lockedTopicShown)
 
-  // Check if regeneration is within the 24h rate limit
   const canRegenerate =
     activeTopic && savedReading
       ? (() => {
@@ -124,133 +111,156 @@ export function OraclePanel({
         })()
       : false
 
+  const handleCloseModal = useCallback(() => {
+    if (isGenerating) {
+      stop()
+    }
+    setLockedTopicShown(null)
+    setActiveTopic(null)
+  }, [isGenerating, stop, setActiveTopic])
+
+  const modalTitle = activeTopic
+    ? TOPIC_META[activeTopic as OracleTopic]?.label ?? activeTopic
+    : lockedTopicShown
+      ? TOPIC_META[lockedTopicShown]?.label
+      : 'Оракул'
+
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-slate-700/50 bg-slate-900/60 p-6 backdrop-blur-xl">
-      {/* Topic selector */}
-      <TopicCards
-        subscriptionTier={subscriptionTier}
-        activeTopic={activeTopic}
-        savedReadings={savedReadings}
-        onTopicSelect={handleTopicSelect}
-        onLockedTopicTap={handleLockedTopicTap}
-      />
+    <>
+      <div className="rounded-xl border border-slate-700/50 bg-slate-900/60 p-5 backdrop-blur-xl">
+        <div className="mb-3">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-purple-300">
+            Оракул
+          </h3>
+          <p className="mt-1 text-sm text-slate-400">
+            Избери тема и четенето ще се отвори в отделен прозорец.
+          </p>
+        </div>
 
-      {/* Reading content area */}
-      <div className="max-h-[70vh] overflow-y-auto">
-        {/* Locked topic teaser */}
-        {lockedTopicShown && !activeTopic && (
-          <LockedTopicTeaser
-            topic={lockedTopicShown}
-            teaserContent={teaserContent[lockedTopicShown] ?? null}
-            isLoadingTeaser={loadingTeaser[lockedTopicShown] ?? false}
-            onRequestTeaser={() => void handleRequestTeaser(lockedTopicShown)}
-          />
-        )}
-
-        {/* Streaming reading or saved reading display */}
-        {showStream && (
-          <ReadingStream
-            completion={completion}
-            isLoading={isGenerating}
-            onPlanetHighlight={onPlanetHighlight}
-            onComplete={fetchSavedReadings}
-          />
-        )}
-
-        {/* Saved reading (non-streaming, from cache) */}
-        {showSavedReading && (
-          <div>
-            {/* Reading header */}
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-300">
-                  {TOPIC_META[activeTopic as OracleTopic]?.label ?? activeTopic}
-                </h4>
-                <p className="text-xs text-slate-500">
-                  {new Date(savedReading.generatedAt).toLocaleDateString(
-                    'bg-BG',
-                    { day: 'numeric', month: 'long', year: 'numeric' }
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* Saved reading text */}
-            <div className="space-y-4 text-slate-200">
-              {stripSentinels(savedReading.content)
-                .split(/\n\n+/)
-                .filter(Boolean)
-                .map((paragraph, index) => (
-                  <p key={index} className="text-sm leading-7">
-                    {paragraph.trim()}
-                  </p>
-                ))}
-            </div>
-          </div>
-        )}
-
-        {/* Empty state: no topic selected */}
-        {!activeTopic && !lockedTopicShown && (
-          <div className="py-8 text-center">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/80">
-              <svg
-                className="h-5 w-5 text-slate-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                />
-              </svg>
-            </div>
-            <p className="text-sm text-slate-500">
-              Изберете тема, за да получите вашето персонализирано четене
-            </p>
-          </div>
-        )}
+        <TopicCards
+          subscriptionTier={subscriptionTier}
+          activeTopic={activeTopic}
+          savedReadings={savedReadings}
+          onTopicSelect={handleTopicSelect}
+          onLockedTopicTap={handleLockedTopicTap}
+        />
       </div>
 
-      {/* Regenerate button — shown only after a completed reading */}
-      {showSavedReading && !isGenerating && (
-        <div className="border-t border-slate-700/50 pt-3">
-          <button
-            type="button"
-            onClick={handleRegenerate}
-            disabled={!canRegenerate}
-            title={
-              canRegenerate
-                ? 'Генерирайте ново четене'
-                : 'Можете да регенерирате веднъж на ден'
-            }
-            className={[
-              'flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-all',
-              canRegenerate
-                ? 'border border-slate-700/50 bg-slate-800/60 text-slate-300 hover:bg-slate-800'
-                : 'cursor-not-allowed border border-slate-700/30 bg-slate-800/20 text-slate-600',
-            ].join(' ')}
-          >
-            {/* Refresh icon */}
-            <svg
-              className={['h-3.5 w-3.5', canRegenerate ? '' : 'opacity-40'].join(' ')}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-            Ново четене
-          </button>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-700/70 bg-slate-900/95 shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+            <div className="flex items-start justify-between border-b border-slate-800 px-6 py-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-purple-300">
+                  Астрологичен оракул
+                </p>
+                <h4 className="mt-1 text-xl font-semibold text-slate-100">
+                  {modalTitle}
+                </h4>
+                {showSavedReading && savedReading && (
+                  <p className="mt-1 text-sm text-slate-400">
+                    {new Date(savedReading.generatedAt).toLocaleDateString('bg-BG', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                aria-label="Затвори"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              {lockedTopicShown && !activeTopic && (
+                <LockedTopicTeaser
+                  topic={lockedTopicShown}
+                  teaserContent={teaserContent[lockedTopicShown] ?? null}
+                  isLoadingTeaser={loadingTeaser[lockedTopicShown] ?? false}
+                  onRequestTeaser={() => void handleRequestTeaser(lockedTopicShown)}
+                />
+              )}
+
+              {showStream && (
+                <ReadingStream
+                  completion={completion}
+                  isLoading={isGenerating}
+                  onPlanetHighlight={onPlanetHighlight}
+                  onComplete={fetchSavedReadings}
+                />
+              )}
+
+              {showSavedReading && savedReading && (
+                <div className="space-y-4 text-slate-200">
+                  {stripSentinels(savedReading.content)
+                    .split(/\n\n+/)
+                    .filter(Boolean)
+                    .map((paragraph, index) => (
+                      <p key={index} className="text-sm leading-7">
+                        {paragraph.trim()}
+                      </p>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {showSavedReading && !isGenerating && (
+              <div className="border-t border-slate-800 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={handleRegenerate}
+                  disabled={!canRegenerate}
+                  title={
+                    canRegenerate
+                      ? 'Ново четене'
+                      : 'Можеш да обновиш веднъж на ден'
+                  }
+                  className={[
+                    'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-all',
+                    canRegenerate
+                      ? 'border border-slate-700/50 bg-slate-800/60 text-slate-300 hover:bg-slate-800'
+                      : 'cursor-not-allowed border border-slate-700/30 bg-slate-800/20 text-slate-600',
+                  ].join(' ')}
+                >
+                  <svg
+                    className={['h-3.5 w-3.5', canRegenerate ? '' : 'opacity-40'].join(' ')}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  Ново четене
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

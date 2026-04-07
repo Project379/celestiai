@@ -39,7 +39,7 @@ key_files:
   modified:
     - packages/db/src/schema/users.ts (added 3 Stripe columns)
     - packages/db/src/schema/index.ts (added webhooks export)
-    - apps/web/.env.example (added Stripe env var placeholders)
+    - apps/web/.env.local.example (added Stripe env var placeholders)
     - apps/web/package.json (added stripe@20.3.1)
     - packages/db/package.json (drizzle-kit updated to latest)
 decisions:

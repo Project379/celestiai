@@ -208,7 +208,7 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
           {/* Min chars hint */}
           {query.length < 1 && (
             <div className="px-4 py-3 text-sm text-slate-400">
-              Въведете поне 1 символ
+              Въведи поне 1 символ
             </div>
           )}
 

@@ -20,11 +20,10 @@ export function DateStep({ onNext }: DateStepProps) {
           Дата на раждане
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Въведете датата и име за картата
+          Въведи дата и име за картата си
         </p>
       </div>
 
-      {/* Name field */}
       <div>
         <label
           htmlFor="name"
@@ -37,7 +36,7 @@ export function DateStep({ onNext }: DateStepProps) {
           type="text"
           id="name"
           placeholder="Моята карта"
-          className="mt-1 block w-full rounded-lg border border-slate-600 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          className="mt-2 block w-full rounded-xl border border-slate-600 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
         />
         {errors.name && (
           <p className="mt-1 text-sm text-red-400">
@@ -46,7 +45,6 @@ export function DateStep({ onNext }: DateStepProps) {
         )}
       </div>
 
-      {/* Birth date field */}
       <div>
         <label
           htmlFor="birthDate"
@@ -54,13 +52,37 @@ export function DateStep({ onNext }: DateStepProps) {
         >
           Дата на раждане
         </label>
-        <input
-          {...register('birthDate')}
-          type="date"
-          id="birthDate"
-          max={new Date().toISOString().split('T')[0]}
-          className="mt-1 block w-full rounded-lg border border-slate-600 bg-slate-800/50 px-4 py-3 text-slate-100 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 [&::-webkit-calendar-picker-indicator]:invert"
-        />
+        <div className="mt-2 rounded-2xl border border-slate-700/70 bg-slate-900/70 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="flex items-center gap-3 rounded-[calc(1rem-2px)] bg-gradient-to-r from-slate-800/95 to-slate-800/70 px-4 py-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/12 text-violet-300">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.8}
+                  d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Избери ден
+              </p>
+              <input
+                {...register('birthDate')}
+                type="date"
+                id="birthDate"
+                max={new Date().toISOString().split('T')[0]}
+                className="block w-full border-0 bg-transparent px-0 py-0 text-base text-slate-100 focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert"
+              />
+            </div>
+          </div>
+        </div>
         {errors.birthDate && (
           <p className="mt-1 text-sm text-red-400">
             {errors.birthDate.message}
@@ -68,7 +90,6 @@ export function DateStep({ onNext }: DateStepProps) {
         )}
       </div>
 
-      {/* Next button */}
       <div className="flex justify-end pt-4">
         <button
           type="button"

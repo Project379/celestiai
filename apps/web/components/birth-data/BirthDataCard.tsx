@@ -2,22 +2,10 @@
 
 import { useState } from 'react'
 import { EditBirthDataDialog } from './EditBirthDataDialog'
-
-interface ChartData {
-  id: string
-  name: string
-  birth_date: string
-  birth_time_known: boolean
-  birth_time: string | null
-  approximate_time_range: string | null
-  city_name: string
-  latitude: number
-  longitude: number
-  city_id: string | null
-}
+import type { ChartRow } from '@/lib/types/chart'
 
 interface BirthDataCardProps {
-  chart: ChartData
+  chart: ChartRow
   onUpdate: () => void
 }
 

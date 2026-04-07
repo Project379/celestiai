@@ -1,7 +1,6 @@
 'use client'
 
-import { useCompletion } from '@ai-sdk/react'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 export type HoroscopeDate = 'today' | 'yesterday'
 
@@ -15,49 +14,20 @@ export interface CachedHoroscopeState {
   yesterday?: CachedHoroscope
 }
 
-/**
- * useDailyHoroscope
- *
- * Client hook that drives the daily horoscope experience:
- * - Streams a horoscope via POST /api/horoscope/generate using useCompletion
- * - Manages cached horoscope content per date (today / yesterday)
- * - Handles date switching between today and yesterday
- * - Tracks unavailability of yesterday's horoscope (not generated at the time)
- *
- * @param chartId - The chart UUID to generate the horoscope for
- */
 export function useDailyHoroscope(chartId: string) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
   const [selectedDate, setSelectedDate] = useState<HoroscopeDate>('today')
   const [cachedContent, setCachedContent] = useState<CachedHoroscopeState>({})
   const [yesterdayUnavailable, setYesterdayUnavailable] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
 
-  // Track previous isLoading to detect transition from true -> false
-  const wasLoadingRef = useRef(false)
-  // Track selectedDate in a ref to access in isLoading effect without stale closure
-  const selectedDateRef = useRef<HoroscopeDate>(selectedDate)
-  selectedDateRef.current = selectedDate
-
-  const { completion, isLoading, error, complete, setCompletion } =
-    useCompletion({
-      api: '/api/horoscope/generate',
-      // Use 'text' protocol to match toTextStreamResponse() on the server
-      // AI SDK v6 removed the 'data' stream protocol for useCompletion
-      streamProtocol: 'text',
-    })
-
-  /**
-   * Returns the date string (YYYY-MM-DD) for today in Sofia timezone.
-   */
   const getTodayString = useCallback((): string => {
     return new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Europe/Sofia',
     }).format(new Date())
   }, [])
 
-  /**
-   * Returns the date string (YYYY-MM-DD) for yesterday in Sofia timezone.
-   */
   const getYesterdayString = useCallback((): string => {
     const todayDate = new Date(getTodayString())
     todayDate.setDate(todayDate.getDate() - 1)
@@ -66,57 +36,44 @@ export function useDailyHoroscope(chartId: string) {
     }).format(todayDate)
   }, [getTodayString])
 
-  /**
-   * Triggers generation of today's horoscope via streaming.
-   * Clears previous completion and initiates the streaming POST.
-   */
-  const generateHoroscope = useCallback(async () => {
-    if (!chartId) return
-    setFetchError(null)
-    setCompletion('')
+  const requestHoroscope = useCallback(
+    async (date: HoroscopeDate, options?: { forceGenerate?: boolean }) => {
+      if (!chartId) return
 
-    try {
-      await complete('', {
-        body: { chartId },
-      })
-    } catch {
-      // Error is surfaced via the `error` state from useCompletion
-    }
-  }, [chartId, complete, setCompletion])
+      const isToday = date === 'today'
+      const dateValue = isToday ? getTodayString() : getYesterdayString()
+      const params = new URLSearchParams()
+      params.set('date', dateValue)
+      params.set('format', 'json')
 
-  /**
-   * Fetches yesterday's horoscope from the server.
-   * If no cache exists for yesterday, marks it as unavailable.
-   */
-  const fetchYesterday = useCallback(async () => {
-    if (!chartId) return
-    setFetchError(null)
-
-    const yesterdayStr = getYesterdayString()
-
-    try {
-      // API route reads date from query param: ?date=YYYY-MM-DD
-      const url = `/api/horoscope/generate?date=${encodeURIComponent(yesterdayStr)}`
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chartId }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setFetchError(data.error ?? 'Грешка при зареждане на хороскопа')
-        return
+      if (!options?.forceGenerate) {
+        params.set('peek', '1')
       }
 
-      // Check Content-Type — cached horoscopes return JSON, not a stream
-      const contentType = res.headers.get('content-type') ?? ''
-      if (contentType.includes('application/json')) {
-        const data = await res.json() as {
+      setFetchError(null)
+      setError(null)
+      setIsLoading(true)
+
+      try {
+        const res = await fetch(`/api/horoscope/generate?${params.toString()}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chartId }),
+        })
+
+        const data = (await res.json().catch(() => ({}))) as {
           content?: string | null
-          unavailable?: boolean
           cached?: boolean
           generatedAt?: string
+          unavailable?: boolean
+          error?: string
+        }
+
+        if (!res.ok) {
+          const message = data.error ?? 'Failed to load horoscope.'
+          setFetchError(message)
+          setError(new Error(message))
+          return
         }
 
         if (data.unavailable) {
@@ -124,126 +81,57 @@ export function useDailyHoroscope(chartId: string) {
           return
         }
 
-        if (data.content && data.generatedAt) {
+        if (!options?.forceGenerate && !data.content && isToday) {
+          await requestHoroscope('today', { forceGenerate: true })
+          return
+        }
+
+        if (typeof data.content === 'string') {
+          const generatedAt = data.generatedAt ?? new Date().toISOString()
           setCachedContent((prev) => ({
             ...prev,
-            yesterday: {
-              content: data.content as string,
-              generatedAt: data.generatedAt as string,
+            [date]: {
+              content: data.content!,
+              generatedAt,
             },
           }))
         }
+      } catch {
+        const message = 'Failed to load horoscope.'
+        setFetchError(message)
+        setError(new Error(message))
+      } finally {
+        setIsLoading(false)
       }
-    } catch {
-      setFetchError('Грешка при зареждане на хороскопа')
-    }
-  }, [chartId, getYesterdayString])
+    },
+    [chartId, getTodayString, getYesterdayString]
+  )
 
-  /**
-   * Checks if there is a cached horoscope for today.
-   * If cached, loads it; otherwise triggers streaming generation.
-   */
-  const initializeToday = useCallback(async () => {
-    if (!chartId) return
-    setFetchError(null)
+  const generateHoroscope = useCallback(async () => {
+    await requestHoroscope('today', { forceGenerate: true })
+  }, [requestHoroscope])
 
-    try {
-      const res = await fetch('/api/horoscope/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chartId }),
-      })
-
-      if (!res.ok) {
-        // If 404 (no chart calculation), show error but don't crash
-        const data = await res.json().catch(() => ({}))
-        setFetchError(data.error ?? 'Грешка при зареждане на хороскопа')
-        return
-      }
-
-      const contentType = res.headers.get('content-type') ?? ''
-      if (contentType.includes('application/json')) {
-        const data = await res.json() as {
-          content?: string | null
-          cached?: boolean
-          generatedAt?: string
-        }
-
-        if (data.content && data.generatedAt) {
-          // Cached horoscope available — store it
-          setCachedContent((prev) => ({
-            ...prev,
-            today: {
-              content: data.content as string,
-              generatedAt: data.generatedAt as string,
-            },
-          }))
-        }
-        // If content is null, we need to stream — handled below
-        return
-      }
-
-      // Response is a stream (no cache yet) — let useCompletion handle it
-      // However initializeToday uses fetch directly, so we just trigger streaming
-    } catch {
-      setFetchError('Грешка при зареждане на хороскопа')
-    }
-
-    // No cached content found — trigger streaming generation
-    await generateHoroscope()
-  }, [chartId, generateHoroscope])
-
-  // On mount: check for cached today horoscope or start generation
   useEffect(() => {
-    void initializeToday()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chartId])
+    void requestHoroscope('today')
+  }, [requestHoroscope])
 
-  // When selectedDate changes to 'yesterday', fetch that day's data
   useEffect(() => {
     if (selectedDate === 'yesterday' && !cachedContent.yesterday && !yesterdayUnavailable) {
-      void fetchYesterday()
+      void requestHoroscope('yesterday')
     }
-  }, [selectedDate, cachedContent.yesterday, yesterdayUnavailable, fetchYesterday])
-
-  // After streaming completes (isLoading true -> false), cache the completed text
-  useEffect(() => {
-    if (wasLoadingRef.current && !isLoading && completion) {
-      const date = selectedDateRef.current
-      const now = new Date().toISOString()
-      setCachedContent((prev) => ({
-        ...prev,
-        [date]: {
-          content: completion,
-          generatedAt: now,
-        },
-      }))
-    }
-    wasLoadingRef.current = isLoading
-  }, [isLoading, completion])
+  }, [selectedDate, cachedContent.yesterday, yesterdayUnavailable, requestHoroscope])
 
   return {
-    /** Streaming text from the current generation (resets each call) */
-    completion,
-    /** True while generation is in progress */
+    completion: '',
     isLoading,
-    /** Error from the streaming API, if any */
     error,
-    /** Cached horoscope content keyed by date */
     cachedContent,
-    /** Currently selected date tab */
     selectedDate,
-    /** Switch between 'today' and 'yesterday' */
     setSelectedDate,
-    /** Whether yesterday's horoscope is unavailable (not generated at the time) */
     yesterdayUnavailable,
-    /** Error from fetching, if any */
     fetchError,
-    /** Manually trigger today's horoscope generation */
     generateHoroscope,
-    /** Today's date string in Sofia timezone */
     getTodayString,
-    /** Yesterday's date string in Sofia timezone */
     getYesterdayString,
   }
 }

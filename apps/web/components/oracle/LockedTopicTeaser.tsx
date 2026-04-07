@@ -12,10 +12,10 @@ interface LockedTopicTeaserProps {
 
 /** Fallback teaser texts when the API is unavailable */
 const FALLBACK_TEASERS: Record<OracleTopic, string> = {
-  general: 'Открийте какво звездите разкриват за вашата личност...',
-  love: 'Открийте какво звездите разкриват за вашата любов...',
-  career: 'Открийте какво звездите разкриват за вашата кариера...',
-  health: 'Открийте какво звездите разкриват за вашето здраве...',
+  general: 'Звездите имат какво да ти кажат за характера ти...',
+  love: 'Звездите имат какво да ти кажат за любовния ти живот...',
+  career: 'Звездите имат какво да ти кажат за кариерата ти...',
+  health: 'Звездите имат какво да ти кажат за здравето ти...',
 }
 
 /**
@@ -109,7 +109,7 @@ export function LockedTopicTeaser({
               d="M5 3l14 9-14 9V3z"
             />
           </svg>
-          Отключете с Premium
+          Отключи с Премиум
         </button>
       </div>
     </div>

@@ -629,7 +629,7 @@ export default defineConfig({
 
 ### Environment Variables
 ```bash
-# .env.local
+# .env.local.local
 
 # Supabase (from Dashboard > Settings > API)
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co

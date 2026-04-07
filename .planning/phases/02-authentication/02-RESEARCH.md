@@ -305,7 +305,7 @@ Verified patterns from official sources:
 ### Environment Variables
 ```bash
 # Source: https://clerk.com/docs/nextjs/getting-started/quickstart
-# .env.local
+# .env.local.local
 
 # From Clerk Dashboard > API Keys
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...

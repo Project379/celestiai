@@ -51,7 +51,7 @@ npm install --save-dev @types/web-push
 **VAPID key generation (one-time setup):**
 ```bash
 npx web-push generate-vapid-keys
-# Add to apps/web/.env.local:
+# Add to apps/web/.env.local.local:
 # NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
 # VAPID_PRIVATE_KEY=...
 ```

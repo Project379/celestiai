@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useEffect, DependencyList } from 'react'
-import * as d3 from 'd3'
+import { select, type Selection } from 'd3-selection'
 
 /**
  * Hook for integrating D3.js with React
@@ -15,7 +15,7 @@ import * as d3 from 'd3'
  * @returns Ref to attach to SVG element
  */
 export function useD3<T extends SVGSVGElement = SVGSVGElement>(
-  renderFn: (svg: d3.Selection<T, unknown, null, undefined>) => void,
+  renderFn: (svg: Selection<T, unknown, null, undefined>) => void,
   deps: DependencyList = []
 ) {
   const ref = useRef<T>(null)
@@ -24,10 +24,10 @@ export function useD3<T extends SVGSVGElement = SVGSVGElement>(
     if (!ref.current) return
 
     // Clear previous content
-    d3.select(ref.current).selectAll('*').remove()
+    select(ref.current).selectAll('*').remove()
 
     // Render new content
-    renderFn(d3.select(ref.current))
+    renderFn(select(ref.current))
   }, deps)
 
   return ref

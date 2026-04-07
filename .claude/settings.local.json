@@ -54,7 +54,21 @@
       "Bash(npx drizzle-kit generate:*)",
       "Bash(npx tsc:*)",
       "Bash(npx turbo:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(xargs grep:*)",
+      "Bash(pnpm add:*)",
+      "Bash(npx next:*)",
+      "Bash(netstat -ano)",
+      "Bash(grep -o \"framer-motion\\\\|motion\\\\\\\\.div\\\\|motion\\\\\\\\.button\")",
+      "WebFetch(domain:localhost)",
+      "Bash(grep -oE '\\(error|Error|ERROR|exception|Exception\\)[^<]{0,200}')",
+      "Bash(kill %1)",
+      "Bash(grep -rn --include=\"*.ts\" --include=\"*.tsx\" 'в ${' apps/web/lib/oracle/)",
+      "Bash(grep -rn --include=\"*.ts\" --include=\"*.tsx\" -P 'в \\\\$\\\\{|с \\\\$\\\\{' apps/web/lib/oracle/ apps/web/components/chart/)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm remove:*)"
     ]
   }
 }

@@ -65,18 +65,18 @@ export default function PrivacyPage() {
             {/* Your rights */}
             <section>
               <Text variant="h2" className="mb-3">
-                Вашите права
+                Твоите права
               </Text>
               <ul className="list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-white/70">
                 <li>
-                  <strong className="text-white/90">Право на експорт на данни</strong> — Можете да
-                  изтеглите всички ваши данни по всяко време чрез моментален JSON файл от
+                  <strong className="text-white/90">Право на експорт на данни</strong> — Можеш да
+                  изтеглиш всичките си данни по всяко време чрез JSON файл от
                   настройките за поверителност.
                 </li>
                 <li>
-                  <strong className="text-white/90">Право на изтриване на акаунт</strong> — Можете да
-                  заявите изтриване на акаунта си с 30-дневен гратисен период, през който
-                  можете да отмените заявката.
+                  <strong className="text-white/90">Право на изтриване на акаунт</strong> — Можеш да
+                  заявиш изтриване на акаунта си с 30-дневен период, през който
+                  можеш да отмениш заявката.
                 </li>
                 <li>
                   <strong className="text-white/90">Право на отмяна на изтриване</strong> — През

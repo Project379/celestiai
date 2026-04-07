@@ -1,6 +1,6 @@
 import { SignUp } from '@clerk/nextjs'
-import { AuthBackground } from '../../../../components/auth/AuthBackground'
-import { AuthHeader } from '../../../../components/auth/AuthHeader'
+import { AuthHeader } from '@/components/auth/AuthHeader'
+import { AuthFormWrapper } from '@/components/auth/AuthFormWrapper'
 
 const clerkAppearance = {
   elements: {
@@ -28,19 +28,17 @@ const clerkAppearance = {
 
 export default function SignUpPage() {
   return (
-    <>
-      <AuthBackground />
+    <div className="w-full max-w-md">
+      <AuthHeader />
 
-      <div className="relative z-10 w-full max-w-md">
-        <AuthHeader />
-
+      <AuthFormWrapper>
         <SignUp
           appearance={clerkAppearance}
           routing="path"
           path="/sign-up"
           signInUrl="/sign-in"
         />
-      </div>
-    </>
+      </AuthFormWrapper>
+    </div>
   )
 }

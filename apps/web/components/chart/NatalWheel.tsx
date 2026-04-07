@@ -1,11 +1,13 @@
 'use client'
 
-import { useMemo, useCallback } from 'react'
-import * as d3 from 'd3'
+import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
+import { select } from 'd3-selection'
+import { arc } from 'd3-shape'
 import { useD3 } from '@/hooks/useD3'
 import type { ChartData, PlanetPosition, AspectData } from '@celestia/astrology/client'
 import { ZODIAC_SIGNS_BG, PLANETS_BG, ZODIAC_SIGNS_ORDER } from '@celestia/astrology/client'
 import type { ZodiacSign, Planet, AspectType } from '@celestia/astrology/client'
+import { GlyphDefs } from '@/components/icons/CelestialIcons'
 
 interface NatalWheelProps {
   /** Calculated chart data */
@@ -65,6 +67,17 @@ const SIGN_ELEMENTS: Record<ZodiacSign, keyof typeof ELEMENT_COLORS> = {
   pisces: 'water',
 }
 
+// Element color palettes for canvas FX (hoisted to module level per rerender-no-inline-components)
+const ELEMENT_FX: Record<string, { core: number[]; mid: number[]; outer: number[]; symbols: string[] }> = {
+  fire:  { core: [255, 200, 60],  mid: [239, 68, 68],   outer: [180, 20, 10],   symbols: ['\u2736', '\u2600', '\u2605'] },
+  earth: { core: [180, 200, 120], mid: [16, 185, 129],  outer: [60, 80, 40],    symbols: ['\u2726', '\u25C6', '\u2742'] },
+  air:   { core: [200, 240, 255], mid: [34, 211, 238],  outer: [60, 80, 180],   symbols: ['\u2727', '\u2604', '\u2738'] },
+  water: { core: [180, 160, 255], mid: [59, 130, 246],  outer: [40, 20, 120],   symbols: ['\u2744', '\u273C', '\u2756'] },
+}
+
+// Glyph rendering now uses <use href="#glyph-{name}"> referencing <GlyphDefs />
+// defined in CelestialIcons.tsx — sharp custom SVG line art per symbol.
+
 /**
  * Interactive natal chart wheel visualization using D3.js
  *
@@ -74,19 +87,15 @@ const SIGN_ELEMENTS: Record<ZodiacSign, keyof typeof ELEMENT_COLORS> = {
  * - Inner: Planet positions (clickable)
  * - Center: Aspect lines connecting planets
  */
-export function NatalWheel({
-  chart,
-  onPlanetSelect,
-  selectedPlanet,
-  size = 500,
-}: NatalWheelProps) {
+export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}: NatalWheelProps) {
   const center = size / 2
   const outerRadius = size * 0.48
   const zodiacOuterRadius = size * 0.46
   const zodiacInnerRadius = size * 0.38
   const houseInnerRadius = size * 0.2
   const planetRadius = size * 0.32
-  const aspectRadius = size * 0.18
+  const aspectRadius = houseInnerRadius * 0.9
+  const aspectAnchorRadius = houseInnerRadius * 0.96
 
   // Memoize planet positions to avoid recalculating
   const planetPositions = useMemo(() => {
@@ -127,8 +136,7 @@ export function NatalWheel({
         .attr('stroke-width', 1)
 
       // Draw zodiac segments
-      const zodiacArc = d3
-        .arc<{ index: number }>()
+      const zodiacArc = arc<{ index: number }>()
         .innerRadius(zodiacInnerRadius)
         .outerRadius(zodiacOuterRadius)
         .startAngle((d) => ((d.index * 30 - 90) * Math.PI) / 180)
@@ -151,22 +159,26 @@ export function NatalWheel({
         .attr('stroke', 'rgba(148, 163, 184, 0.2)')
         .attr('stroke-width', 1)
 
-      // Draw zodiac labels
+      // Draw zodiac labels (custom SVG glyphs via <use>)
       const labelRadius = (zodiacInnerRadius + zodiacOuterRadius) / 2
+      const zodiacGlyphSize = size * 0.055
       zodiacData.forEach((d) => {
         const angle = ((d.index * 30 + 15 - 90) * Math.PI) / 180
         const x = center + Math.cos(angle) * labelRadius
         const y = center + Math.sin(angle) * labelRadius
 
-        g.append('text')
-          .attr('x', x)
-          .attr('y', y)
-          .attr('text-anchor', 'middle')
-          .attr('dominant-baseline', 'middle')
-          .attr('fill', 'rgba(226, 232, 240, 0.8)')
-          .attr('font-size', size * 0.024)
-          .attr('font-weight', '500')
-          .text(ZODIAC_SIGNS_BG[d.sign].substring(0, 2))
+        g.append('use')
+          .attr('href', `#glyph-${d.sign}`)
+          .attr('x', x - zodiacGlyphSize / 2)
+          .attr('y', y - zodiacGlyphSize / 2)
+          .attr('width', zodiacGlyphSize)
+          .attr('height', zodiacGlyphSize)
+          .attr('fill', 'none')
+          .attr('stroke', 'rgba(226, 232, 240, 0.8)')
+          .attr('stroke-width', 1.5)
+          .attr('stroke-linecap', 'round')
+          .attr('stroke-linejoin', 'round')
+          .style('color', 'rgba(226, 232, 240, 0.8)')
       })
 
       // Draw inner zodiac ring border
@@ -255,6 +267,15 @@ export function NatalWheel({
           .attr('stroke-dasharray', aspect.aspect === 'square' || aspect.aspect === 'opposition' ? '4,2' : 'none')
       })
 
+      // Draw subtle aspect anchor ring to show where aspect lines connect
+      g.append('circle')
+        .attr('cx', center)
+        .attr('cy', center)
+        .attr('r', aspectAnchorRadius)
+        .attr('fill', 'none')
+        .attr('stroke', 'rgba(148, 163, 184, 0.08)')
+        .attr('stroke-width', 1)
+
       // Draw inner circle border
       g.append('circle')
         .attr('cx', center)
@@ -266,7 +287,8 @@ export function NatalWheel({
 
       // Draw planets
       planetPositions.forEach((planet) => {
-        const isSelected = selectedPlanet === planet.planet
+        const anchorX = center + Math.cos(planet.angle) * aspectAnchorRadius
+        const anchorY = center + Math.sin(planet.angle) * aspectAnchorRadius
         const planetGroup = g
           .append('g')
           .attr('class', 'planet-group')
@@ -274,6 +296,7 @@ export function NatalWheel({
           .attr('tabindex', '0')
           .attr('aria-label', `${PLANETS_BG[planet.planet as Planet]} - натисни за детайли`)
           .style('cursor', 'pointer')
+          .style('outline', 'none')
           .on('click', () => handlePlanetClick(planet))
           .on('keydown', (event: KeyboardEvent) => {
             if (event.key === 'Enter' || event.key === ' ') {
@@ -282,41 +305,50 @@ export function NatalWheel({
             }
           })
 
-        // Selection glow effect
-        if (isSelected) {
-          planetGroup
-            .append('circle')
-            .attr('cx', planet.x)
-            .attr('cy', planet.y)
-            .attr('r', size * 0.045)
-            .attr('fill', 'none')
-            .attr('stroke', PLANET_COLORS[planet.planet])
-            .attr('stroke-width', 2)
-            .attr('stroke-opacity', 0.5)
-            .attr('class', 'selection-glow')
-        }
+        // Anchor point showing the exact aspect connection location for this planet
+        planetGroup
+          .append('circle')
+          .attr('class', 'planet-anchor')
+          .attr('data-planet', planet.planet)
+          .attr('cx', anchorX)
+          .attr('cy', anchorY)
+          .attr('r', size * 0.0085)
+          .attr('fill', PLANET_COLORS[planet.planet])
+          .attr('stroke', 'rgba(15, 23, 42, 0.9)')
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.75)
 
         // Planet circle background
         planetGroup
           .append('circle')
+          .attr('class', 'planet-bg')
+          .attr('data-planet', planet.planet)
           .attr('cx', planet.x)
           .attr('cy', planet.y)
           .attr('r', size * 0.03)
-          .attr('fill', isSelected ? PLANET_COLORS[planet.planet] : 'rgba(15, 23, 42, 0.9)')
+          .attr('fill', 'rgba(15, 23, 42, 0.9)')
           .attr('stroke', PLANET_COLORS[planet.planet])
-          .attr('stroke-width', isSelected ? 3 : 2)
+          .attr('stroke-width', 2)
 
-        // Planet abbreviation
+        // Planet glyph (custom SVG via <use>)
+        const planetGlyphSize = size * 0.038
+        const glyphColor = PLANET_COLORS[planet.planet]
         planetGroup
-          .append('text')
-          .attr('x', planet.x)
-          .attr('y', planet.y)
-          .attr('text-anchor', 'middle')
-          .attr('dominant-baseline', 'middle')
-          .attr('fill', isSelected ? '#0f172a' : PLANET_COLORS[planet.planet])
-          .attr('font-size', size * 0.018)
-          .attr('font-weight', '600')
-          .text(PLANETS_BG[planet.planet as Planet].substring(0, 2))
+          .append('use')
+          .attr('class', 'planet-glyph')
+          .attr('data-planet', planet.planet)
+          .attr('data-base-color', glyphColor)
+          .attr('href', `#glyph-${planet.planet}`)
+          .attr('x', planet.x - planetGlyphSize / 2)
+          .attr('y', planet.y - planetGlyphSize / 2)
+          .attr('width', planetGlyphSize)
+          .attr('height', planetGlyphSize)
+          .attr('fill', 'none')
+          .attr('stroke', glyphColor)
+          .attr('stroke-width', 1.5)
+          .attr('stroke-linecap', 'round')
+          .attr('stroke-linejoin', 'round')
+          .style('color', glyphColor)
 
         // Retrograde indicator
         if (planet.speed < 0) {
@@ -332,17 +364,177 @@ export function NatalWheel({
         }
       })
     },
-    [chart, center, size, planetPositions, selectedPlanet, handlePlanetClick]
+    [chart, center, size, planetPositions, handlePlanetClick, aspectAnchorRadius]
   )
 
+  // Secondary effect to only toggle styles when selectedPlanet changes without tearing down the D3 graph
+  useEffect(() => {
+    if (!svgRef.current) return
+    const svg = select(svgRef.current)
+
+    // Reset all planets to unselected map styles
+    svg.selectAll('.planet-anchor').attr('opacity', 0.75)
+    svg.selectAll('.planet-bg').attr('fill', 'rgba(15, 23, 42, 0.9)').attr('stroke-width', 2)
+    svg.selectAll('.planet-glyph').each(function() {
+      const el = select(this)
+      const color = el.attr('data-base-color')
+      el.attr('stroke', color).style('color', color)
+    })
+
+    // Apply active highlight to selected
+    if (selectedPlanet) {
+      svg.select(`.planet-anchor[data-planet="${selectedPlanet}"]`).attr('opacity', 1)
+      svg.select(`.planet-bg[data-planet="${selectedPlanet}"]`)
+        .attr('fill', PLANET_COLORS[selectedPlanet])
+        .attr('stroke-width', 3)
+      svg.select(`.planet-glyph[data-planet="${selectedPlanet}"]`)
+        .attr('stroke', '#0f172a')
+        .style('color', '#0f172a')
+    }
+  }, [selectedPlanet])
+
+  // Track selected planet for aura effect
+  const selectedPlanetColor = selectedPlanet ? PLANET_COLORS[selectedPlanet] : null
+  const prevSelectedRef = useRef<string | null>(null)
+  const fxCanvasRef = useRef<HTMLCanvasElement>(null)
+  const fxAnimRef = useRef<number>(0)
+
+  // Derive primitives for the FX effect dependencies (rerender-dependencies)
+  const selectedElement = useMemo(() => {
+    if (!selectedPlanet) return null
+    const planet = chart.planets.find(p => p.planet === selectedPlanet)
+    if (!planet) return null
+    return SIGN_ELEMENTS[planet.sign as ZodiacSign] || null
+  }, [selectedPlanet, chart.planets])
+
+  const selectedPlanetPos = useMemo(() => {
+    if (!selectedPlanet) return null
+    const p = planetPositions.find(pp => pp.planet === selectedPlanet)
+    return p ? { x: p.x, y: p.y } : null
+  }, [selectedPlanet, planetPositions])
+  const spx = selectedPlanetPos?.x ?? center
+  const spy = selectedPlanetPos?.y ?? center
+
+  // Stand FX canvas — speed lines, aura orbs, menacing glyphs on planet selection
+  useEffect(() => {
+    const canvas = fxCanvasRef.current
+    if (!canvas) return
+
+    // Cancel any prior animation
+    if (fxAnimRef.current) cancelAnimationFrame(fxAnimRef.current)
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    canvas.width = size * dpr
+    canvas.height = size * dpr
+    canvas.style.width = `${size}px`
+    canvas.style.height = `${size}px`
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+    // If no planet selected, clear and stop
+    if (!selectedPlanet || !selectedElement) {
+      ctx.clearRect(0, 0, size, size)
+      prevSelectedRef.current = selectedPlanet ?? null
+      return
+    }
+
+    prevSelectedRef.current = selectedPlanet ?? null
+
+    const pal = ELEMENT_FX[selectedElement] || ELEMENT_FX.fire
+    const cx = size / 2
+    const cy = size / 2
+    const wheelR = size * 0.46
+
+    // ─── Aura orbs (orbiting ring around wheel) ───
+    type AuraOrb = { angle: number; baseR: number; speed: number; sz: number; breathPhase: number; breathSpd: number }
+    const auraOrbs: AuraOrb[] = []
+    for (let i = 0; i < 20; i++) {
+      auraOrbs.push({
+        angle: (i / 20) * Math.PI * 2 + (Math.random() - 0.5) * 0.2,
+        baseR: wheelR * (0.95 + Math.random() * 0.15),
+        speed: (0.003 + Math.random() * 0.008) * (Math.random() < 0.5 ? 1 : -1),
+        sz: 0.8 + Math.random() * 1.5,
+        breathPhase: Math.random() * Math.PI * 2,
+        breathSpd: 0.5 + Math.random() * 0.4,
+      })
+    }
+    const startTime = performance.now()
+    let fxPaused = false
+
+    const handleFxVisibility = () => {
+      fxPaused = document.hidden
+      if (!fxPaused) fxAnimRef.current = requestAnimationFrame(draw)
+    }
+    document.addEventListener('visibilitychange', handleFxVisibility)
+
+    const noise = (x: number, y: number, z: number) => {
+      const n = Math.sin(x * 12.9898 + y * 78.233 + z * 45.164) * 43758.5453
+      return n - Math.floor(n)
+    }
+
+    const draw = () => {
+      if (fxPaused) return
+      const t = (performance.now() - startTime) / 1000
+      ctx.clearRect(0, 0, size, size)
+
+      // ─── Aura orbs — subtle breathing ring ───
+      for (const orb of auraOrbs) {
+        orb.angle += orb.speed
+        const breathe = Math.sin(t * orb.breathSpd + orb.breathPhase) * wheelR * 0.015
+        const nOff = noise(orb.angle * 2, t * 0.3, 0) * wheelR * 0.02
+        const r = orb.baseR + breathe + nOff
+        const ox = cx + Math.cos(orb.angle) * r
+        const oy = cy + Math.sin(orb.angle) * r
+        const pulse = Math.sin(t * 1.2 + orb.breathPhase) * 0.25 + 0.7
+
+        // Soft glow
+        ctx.fillStyle = `rgba(${pal.mid[0]}, ${pal.mid[1]}, ${pal.mid[2]}, ${pulse * 0.04})`
+        ctx.beginPath()
+        ctx.arc(ox, oy, orb.sz * 3, 0, Math.PI * 2)
+        ctx.fill()
+
+        // Core dot
+        ctx.fillStyle = `rgba(${pal.core[0]}, ${pal.core[1]}, ${pal.core[2]}, ${pulse * 0.3})`
+        ctx.beginPath()
+        ctx.arc(ox, oy, orb.sz, 0, Math.PI * 2)
+        ctx.fill()
+      }
+
+      // Throttle to 30fps — subtle animation doesn't need 60
+      setTimeout(() => { fxAnimRef.current = requestAnimationFrame(draw) }, 33)
+    }
+
+    draw()
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleFxVisibility)
+      if (fxAnimRef.current) cancelAnimationFrame(fxAnimRef.current)
+    }
+  }, [selectedPlanet, selectedElement, size, spx, spy])
+
   return (
-    <svg
-      ref={svgRef}
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      className="mx-auto"
-      style={{ maxWidth: '100%', height: 'auto' }}
-    />
+    <div className="relative mx-auto" style={{ maxWidth: size, width: '100%' }}>
+      {/* Hidden SVG for glyph definitions so d3 doesn't clear it */}
+      <svg width="0" height="0" className="absolute">
+        <GlyphDefs />
+      </svg>
+      {/* Stand FX canvas overlay */}
+      <canvas
+        ref={fxCanvasRef}
+        className="pointer-events-none absolute inset-0 z-10"
+        style={{ width: size, height: size }}
+        aria-hidden="true"
+      />
+      <svg
+        ref={svgRef}
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="mx-auto"
+        style={{ maxWidth: '100%', height: 'auto' }}
+      />
+    </div>
   )
 }
