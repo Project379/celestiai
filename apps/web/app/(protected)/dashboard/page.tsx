@@ -1,21 +1,9 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import type { ChartRow } from '@/lib/types/chart'
 import { UserMenu } from '../../../components/auth/UserMenu'
 import { SessionExpiryModal } from '../../../components/auth/SessionExpiryModal'
 import { DashboardContent } from '../../../components/dashboard/DashboardContent'
-
-interface ChartData {
-  id: string
-  name: string
-  birth_date: string
-  birth_time_known: boolean
-  birth_time: string | null
-  approximate_time_range: string | null
-  city_name: string
-  latitude: number
-  longitude: number
-  city_id: string | null
-}
 
 export default async function DashboardPage() {
   // Middleware already protects this route, but we get user info here
@@ -24,7 +12,7 @@ export default async function DashboardPage() {
   const firstName = user?.firstName || 'Потребител'
 
   // Fetch user's birth data and subscription tier
-  let birthChart: ChartData | null = null
+  let birthChart: ChartRow | null = null
   let subscriptionTier = 'free'
   try {
     const supabase = createServiceSupabaseClient()
@@ -44,7 +32,7 @@ export default async function DashboardPage() {
     ])
 
     if (!chartsResult.error && chartsResult.data) {
-      birthChart = chartsResult.data as ChartData
+      birthChart = chartsResult.data as ChartRow
     }
     if (!userResult.error && userResult.data) {
       subscriptionTier = userResult.data.subscription_tier ?? 'free'

@@ -1,19 +1,15 @@
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import type { ChartRow } from '@/lib/types/chart'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
 
-interface ChartData {
-  id: string
-  name: string
-}
-
 export default async function TransitsPage() {
   const { userId } = await auth()
 
-  let chart: ChartData | null = null
+  let chart: Pick<ChartRow, 'id' | 'name'> | null = null
   try {
     const supabase = createServiceSupabaseClient()
     const { data, error } = await supabase
@@ -25,7 +21,7 @@ export default async function TransitsPage() {
       .single()
 
     if (!error && data) {
-      chart = data as ChartData
+      chart = data as Pick<ChartRow, 'id' | 'name'>
     }
   } catch (error) {
     console.error('Error fetching chart for transit page:', error)

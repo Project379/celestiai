@@ -1,9 +1,8 @@
 'use client'
 
-import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { HoroscopeStream } from './HoroscopeStream'
-import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
 
 const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   day: 'numeric',
@@ -14,8 +13,6 @@ const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
 
 interface DailyHoroscopeProps {
   chartId: string
-  subscriptionTier?: string
-  priceMonthly?: string
 }
 
 /**
@@ -31,7 +28,7 @@ interface DailyHoroscopeProps {
  *
  * Glassmorphism card styling matching existing dashboard cards.
  */
-export function DailyHoroscope({ chartId, subscriptionTier = 'free', priceMonthly = '' }: DailyHoroscopeProps) {
+export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
   const {
     completion,
     isLoading,
@@ -43,8 +40,6 @@ export function DailyHoroscope({ chartId, subscriptionTier = 'free', priceMonthl
     fetchError,
     getTodayString,
   } = useDailyHoroscope(chartId)
-
-  const isPremium = subscriptionTier !== 'free'
 
   const todayFormatted = BG_DATE_FORMAT.format(new Date())
 
@@ -161,14 +156,18 @@ export function DailyHoroscope({ chartId, subscriptionTier = 'free', priceMonthl
           </div>
         )}
 
-        {/* Loading skeleton — waiting for first stream token while not yet streaming */}
+        {/* Loading — subtle pulsing star while waiting for content */}
         {!isStreaming && !displayText && !errorMessage && selectedDate === 'today' && (
-          <div className="space-y-3 animate-pulse">
-            <div className="h-3 w-full rounded-full bg-white/5" />
-            <div className="h-3 w-5/6 rounded-full bg-white/5" />
-            <div className="h-3 w-4/6 rounded-full bg-white/5" />
-            <div className="mt-4 h-3 w-full rounded-full bg-white/5" />
-            <div className="h-3 w-3/4 rounded-full bg-white/5" />
+          <div className="flex items-center justify-center py-10">
+            <motion.div
+              className="text-purple-400/60"
+              animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.95, 1.05, 0.95] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            </motion.div>
           </div>
         )}
 
@@ -178,59 +177,6 @@ export function DailyHoroscope({ chartId, subscriptionTier = 'free', priceMonthl
         )}
       </div>
 
-      {/* Inline upgrade prompt for free users — additive, after horoscope content */}
-      {!isPremium && (
-        <div className="mt-5 border-t border-white/5 pt-5">
-          <UpgradePrompt context="horoscope" priceMonthly={priceMonthly} />
-        </div>
-      )}
-    </div>
-  )
-}
-
-/**
- * DailyHoroscopeEmpty
- *
- * Shown on dashboard when user has no birth chart yet.
- * Guides user to add birth data to unlock daily horoscope.
- */
-export function DailyHoroscopeEmpty() {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-      <div className="mb-5 flex items-start justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Дневен хороскоп</h2>
-          <p className="mt-0.5 text-sm text-white/50">
-            Добави данни за раждане
-          </p>
-        </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/10">
-          <svg
-            className="h-5 w-5 text-purple-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-            />
-          </svg>
-        </div>
-      </div>
-      <div className="flex flex-col items-center justify-center gap-3 py-4 text-center">
-        <p className="text-sm text-white/50">
-          Първо добави данни за раждане, за да получиш дневен хороскоп
-        </p>
-        <Link
-          href="/birth-data"
-          className="mt-2 inline-flex items-center gap-2 rounded-lg bg-purple-600/80 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-600"
-        >
-          Въведи данни за раждане
-        </Link>
-      </div>
     </div>
   )
 }
