@@ -151,10 +151,10 @@ export function PlutoIcon({ size, className }: IconProps) {
 export function NorthNodeIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <path d="M5 7a7 7 0 0 1 14 0" />
-      <circle cx={7} cy={16} r={3} />
-      <circle cx={17} cy={16} r={3} />
-      <path d="M5 7v6M19 7v6" />
+      <path d="M5 9a7 7 0 0 1 14 0" />
+      <circle cx={7} cy={17} r={3} />
+      <circle cx={17} cy={17} r={3} />
+      <path d="M5 9v5M19 9v5" />
     </Svg>
   )
 }
@@ -250,7 +250,7 @@ export function ScorpioIcon({ size, className }: IconProps) {
       <path d="M4 20V8c0-3 3-4 4-1v13" />
       <path d="M8 20V8c0-3 3-4 4-1v13" />
       <path d="M12 20V8c0-3 3-4 4-1v8c0 3 2 5 4 4" />
-      <path d="M18 17l3 3M18 23l3-3" />
+      <path d="M18 17l3 3M18 22l3-2.5" />
     </Svg>
   )
 }

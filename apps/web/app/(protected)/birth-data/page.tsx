@@ -2,13 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BirthDataWizard } from '@/components/birth-data'
-
-interface ChartData {
-  id: string
-  name: string
-  birth_date: string
-}
+import { BirthDataWizard } from '@/components/birth-data/BirthDataWizard'
+import type { ChartRow } from '@/lib/types/chart'
 
 export default function BirthDataPage() {
   const router = useRouter()
@@ -20,7 +15,7 @@ export default function BirthDataPage() {
       try {
         const response = await fetch('/api/birth-data')
         if (response.ok) {
-          const data: ChartData[] = await response.json()
+          const data: Pick<ChartRow, 'id' | 'name' | 'birth_date'>[] = await response.json()
           if (data && data.length > 0) {
             // User already has birth data, redirect to dashboard
             setHasData(true)

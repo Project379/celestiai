@@ -16,34 +16,6 @@ interface ChartViewProps {
   subscriptionTier?: 'free' | 'premium'
 }
 
-function ChartSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="mb-6 grid gap-3 sm:grid-cols-3 lg:hidden">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="h-24 rounded-xl bg-slate-800/30"
-          />
-        ))}
-      </div>
-      <div className="lg:flex lg:gap-8">
-        <div className="flex-1">
-          <div className="mx-auto aspect-square max-w-[500px] rounded-full bg-slate-800/20" />
-        </div>
-        <div className="hidden w-80 space-y-4 lg:block">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-24 rounded-xl bg-slate-800/30"
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function ChartError({ message }: { message: string }) {
   return (
     <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center">

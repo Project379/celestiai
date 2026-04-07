@@ -3,28 +3,17 @@
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { BirthDataCard } from '../birth-data/BirthDataCard'
 import { DailyHoroscope } from '@/components/horoscope/DailyHoroscope'
 import { PushNotificationBanner } from '@/components/horoscope/PushNotificationBanner'
 import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
-
-interface ChartData {
-  id: string
-  name: string
-  birth_date: string
-  birth_time_known: boolean
-  birth_time: string | null
-  approximate_time_range: string | null
-  city_name: string
-  latitude: number
-  longitude: number
-  city_id: string | null
-}
+import type { ChartRow } from '@/lib/types/chart'
 
 interface DashboardContentProps {
   firstName: string
   userId: string | null
-  initialBirthChart: ChartData | null
+  initialBirthChart: ChartRow | null
   subscriptionTier: string
   priceMonthly: string
 }
@@ -37,7 +26,7 @@ export function DashboardContent({
   priceMonthly,
 }: DashboardContentProps) {
   const router = useRouter()
-  const [birthChart, setBirthChart] = useState<ChartData | null>(initialBirthChart)
+  const [birthChart, setBirthChart] = useState<ChartRow | null>(initialBirthChart)
 
   const isPremium = subscriptionTier !== 'free'
 
@@ -54,7 +43,12 @@ export function DashboardContent({
   }, [router])
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <motion.div
+      className="mx-auto max-w-4xl"
+      initial={{ opacity: 0, y: 16, filter: 'blur(6px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      transition={{ duration: 0.7, ease: [0.22, 0.68, 0.35, 1] }}
+    >
       <div className="mb-8">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold text-slate-100">
@@ -241,6 +235,6 @@ export function DashboardContent({
           User ID: {userId}
         </p>
       </div>
-    </div>
+    </motion.div>
   )
 }
