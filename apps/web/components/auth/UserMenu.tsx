@@ -1,7 +1,8 @@
 'use client'
 
 import { UserButton } from '@clerk/nextjs'
-import { useState, useCallback } from 'react'
+import { useCallback, useState } from 'react'
+import { AccountSubscriptionPage } from './AccountSubscriptionPage'
 import { LogoutConfirmDialog } from './LogoutConfirmDialog'
 
 export function UserMenu() {
@@ -30,7 +31,29 @@ export function UserMenu() {
           },
         }}
       >
-        {/* Custom menu items - reorder to exclude default signOut and add custom logout with confirmation */}
+        <UserButton.UserProfilePage label="account" />
+        <UserButton.UserProfilePage
+          label="Абонамент"
+          url="subscription"
+          labelIcon={
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7h8M8 12h8M8 17h5"
+              />
+            </svg>
+          }
+        >
+          <AccountSubscriptionPage />
+        </UserButton.UserProfilePage>
+        <UserButton.UserProfilePage label="security" />
         <UserButton.MenuItems>
           <UserButton.Action label="manageAccount" />
           <UserButton.Action

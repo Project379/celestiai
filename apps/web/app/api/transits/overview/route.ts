@@ -19,6 +19,19 @@ export async function GET(req: Request) {
 
     const supabase = createServiceSupabaseClient()
 
+    const { data: user } = await supabase
+      .from('users')
+      .select('subscription_tier')
+      .eq('clerk_id', userId)
+      .single()
+
+    if (user?.subscription_tier !== 'premium') {
+      return Response.json(
+        { error: 'Premium subscription required.', code: 'PREMIUM_REQUIRED' },
+        { status: 403 }
+      )
+    }
+
     const { data: chart, error: chartError } = await supabase
       .from('charts')
       .select('id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude')

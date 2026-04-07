@@ -183,7 +183,7 @@ export function DashboardContent({
         </Link>
 
         <Link
-          href={birthChart ? '/transits' : '/birth-data'}
+          href={!birthChart ? '/birth-data' : isPremium ? '/transits' : '/pricing'}
           className="group rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm transition-colors hover:border-indigo-500/40 hover:bg-slate-800/40"
         >
           <div className="mb-4 flex items-center gap-3">
@@ -203,16 +203,29 @@ export function DashboardContent({
               </svg>
             </div>
             <div className="flex-1">
-              <h2 className="font-semibold text-slate-200">Транзити</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold text-slate-200">Транзити</h2>
+                {!isPremium && (
+                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-amber-300">
+                    Premium
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-slate-400">
-                {birthChart
-                  ? 'Виж какво ти влияе сега — транзити и лунни фази.'
-                  : 'Първо добави рождени данни, за да отключиш транзитите.'}
+                {!birthChart
+                  ? 'Първо добави рождени данни, за да отключиш транзитите.'
+                  : isPremium
+                  ? 'Виж какво ти влияе сега - транзити и лунни фази.'
+                  : 'Транзитите са Premium функция. Отключи пълния транзитен анализ.'}
               </p>
             </div>
           </div>
           <span className="inline-flex items-center gap-2 text-sm font-medium text-indigo-300 transition-colors group-hover:text-indigo-200">
-            {birthChart ? 'Виж транзитите' : 'Добави данни'}
+            {!birthChart
+              ? 'Добави данни'
+              : isPremium
+              ? 'Виж транзитите'
+              : 'Отключи Premium'}
             <svg
               className="h-4 w-4"
               fill="none"

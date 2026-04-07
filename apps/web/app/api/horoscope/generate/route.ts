@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { generateText, streamText } from 'ai'
-import { google } from '@ai-sdk/google'
+import { createOpenAI } from '@ai-sdk/openai'
 import type { TransitAspect } from '@celestia/astrology'
 import type { PlanetPosition } from '@celestia/astrology/client'
 import { logAuditEvent } from '@/lib/audit'
@@ -10,6 +10,12 @@ import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 
 export const maxDuration = 60
+const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
+
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
+})
 
 export async function POST(req: Request) {
   const { userId } = await auth()
@@ -31,7 +37,6 @@ export async function POST(req: Request) {
 
     const url = new URL(req.url)
     const dateParam = url.searchParams.get('date')
-    const peekOnly = url.searchParams.get('peek') === '1'
     const jsonOnly = url.searchParams.get('format') === 'json'
     let requestedDate = today
 
@@ -89,10 +94,6 @@ export async function POST(req: Request) {
 
     if (requestedDate !== today) {
       return Response.json({ content: null, unavailable: true }, { status: 200 })
-    }
-
-    if (peekOnly) {
-      return Response.json({ content: null, cached: false }, { status: 200 })
     }
 
     let transitPlanets: Omit<PlanetPosition, 'house'>[]
@@ -190,7 +191,7 @@ export async function POST(req: Request) {
 
     if (jsonOnly) {
       const result = await generateText({
-        model: google('gemini-2.5-flash'),
+        model: openrouter(LLAMA_MODEL),
         system: systemPrompt,
         prompt: promptText,
         temperature: 0.85,
@@ -198,13 +199,16 @@ export async function POST(req: Request) {
       })
 
       try {
-        await supabase.from('daily_horoscopes').insert({
-          chart_id: chartId,
-          user_id: userId,
-          date: today,
-          content: result.text,
-          model_version: 'gemini-2.5-flash',
-        })
+        await supabase.from('daily_horoscopes').upsert(
+          {
+            chart_id: chartId,
+            user_id: userId,
+            date: requestedDate,
+            content: result.text,
+            model_version: LLAMA_MODEL,
+          },
+          { onConflict: 'chart_id,date' }
+        )
       } catch (err) {
         console.error('[Horoscope Generate] Failed to save horoscope:', err)
       }
@@ -217,20 +221,23 @@ export async function POST(req: Request) {
     }
 
     const result = streamText({
-      model: google('gemini-2.5-flash'),
+      model: openrouter(LLAMA_MODEL),
       system: systemPrompt,
       prompt: promptText,
       temperature: 0.85,
       maxOutputTokens: 1500,
       onFinish: async ({ text }) => {
         try {
-          await supabase.from('daily_horoscopes').insert({
-            chart_id: chartId,
-            user_id: userId,
-            date: today,
-            content: text,
-            model_version: 'gemini-2.5-flash',
-          })
+          await supabase.from('daily_horoscopes').upsert(
+            {
+              chart_id: chartId,
+              user_id: userId,
+              date: requestedDate,
+              content: text,
+              model_version: LLAMA_MODEL,
+            },
+            { onConflict: 'chart_id,date' }
+          )
         } catch (err) {
           console.error('[Horoscope Generate] Failed to save horoscope:', err)
         }

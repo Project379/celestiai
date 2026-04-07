@@ -50,7 +50,6 @@ export async function POST(req: Request) {
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
       customer: user?.stripe_customer_id ?? undefined,
-      customer_creation: user?.stripe_customer_id ? undefined : 'always',
       metadata: {
         clerkUserId: userId,
       },
