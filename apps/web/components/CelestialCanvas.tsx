@@ -17,7 +17,6 @@ export interface ConstellationData {
   description: string
   season: string
   brightestStar: string
-  brightestStar: string
   element?: string
   L0: number; D0: number  // Ecliptic Longitude and Declination offset
   stars: ConstellationStar[]

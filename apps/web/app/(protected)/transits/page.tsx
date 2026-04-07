@@ -4,6 +4,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
+import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
 
 interface ChartData {
   id: string
@@ -14,22 +15,36 @@ export default async function TransitsPage() {
   const { userId } = await auth()
 
   let chart: ChartData | null = null
+  let subscriptionTier = 'free'
   try {
     const supabase = createServiceSupabaseClient()
-    const { data, error } = await supabase
-      .from('charts')
-      .select('id, name')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+    const [chartResult, userResult] = await Promise.all([
+      supabase
+        .from('charts')
+        .select('id, name')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single(),
+      supabase
+        .from('users')
+        .select('subscription_tier')
+        .eq('clerk_id', userId)
+        .single(),
+    ])
 
-    if (!error && data) {
-      chart = data as ChartData
+    if (!chartResult.error && chartResult.data) {
+      chart = chartResult.data as ChartData
+    }
+    if (!userResult.error && userResult.data?.subscription_tier) {
+      subscriptionTier = userResult.data.subscription_tier
     }
   } catch (error) {
     console.error('Error fetching chart for transit page:', error)
   }
+
+  const priceMonthly = process.env.STRIPE_PRICE_MONTHLY ?? ''
+  const isPremium = subscriptionTier === 'premium'
 
   return (
     <>
@@ -43,12 +58,39 @@ export default async function TransitsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-100">Транзити</h1>
           <p className="mt-2 text-slate-400">
-            Какво те влияе точно сега — виж активните транзити към картата ти.
+            Какво те влияе точно сега - виж активните транзити към картата ти.
           </p>
         </div>
 
-        {chart ? (
+        {chart && isPremium ? (
           <TransitOverviewCard chartId={chart.id} />
+        ) : chart && !isPremium ? (
+          <div className="space-y-6">
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-8 text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/15">
+                <svg
+                  className="h-7 w-7 text-amber-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 11c0-1.657 1.343-3 3-3h1a3 3 0 013 3v5a3 3 0 01-3 3H8a3 3 0 01-3-3v-5a3 3 0 013-3h1m3 0V8a3 3 0 10-6 0v3m6 0H9"
+                  />
+                </svg>
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-slate-100">
+                Транзитите са Premium функция
+              </h3>
+              <p className="mx-auto max-w-2xl text-sm text-slate-300">
+                Подробният преглед на активните влияния, идващите точни аспекти и лунните събития е заключен за Premium.
+              </p>
+            </div>
+            <UpgradePrompt context="horoscope" priceMonthly={priceMonthly} />
+          </div>
         ) : (
           <div className="rounded-xl border border-dashed border-purple-500/50 bg-purple-500/5 p-8 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-purple-500/10">
