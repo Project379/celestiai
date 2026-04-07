@@ -440,33 +440,12 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
       return
     }
 
-    const isNewSelection = selectedPlanet !== prevSelectedRef.current
     prevSelectedRef.current = selectedPlanet ?? null
 
     const pal = ELEMENT_FX[selectedElement] || ELEMENT_FX.fire
     const cx = size / 2
     const cy = size / 2
     const wheelR = size * 0.46
-
-    const planetScreenX = spx
-    const planetScreenY = spy
-
-    // ─── Speed lines (only on new selection) ───
-    type SpeedLine = { angle: number; len: number; w: number; offset: number; life: number; delay: number }
-    const speedLines: SpeedLine[] = []
-    if (isNewSelection) {
-      for (let i = 0; i < 12; i++) {
-        const angle = Math.random() * Math.PI * 2
-        speedLines.push({
-          angle,
-          len: (0.2 + Math.random() * 0.5) * wheelR,
-          w: 0.5 + Math.random() * 2,
-          offset: 15 + Math.random() * 10,
-          life: 1.0,
-          delay: Math.random() * 0.06,
-        })
-      }
-    }
 
     // ─── Aura orbs (orbiting ring around wheel) ───
     type AuraOrb = { angle: number; baseR: number; speed: number; sz: number; breathPhase: number; breathSpd: number }
@@ -475,34 +454,12 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
       auraOrbs.push({
         angle: (i / 20) * Math.PI * 2 + (Math.random() - 0.5) * 0.2,
         baseR: wheelR * (0.95 + Math.random() * 0.15),
-        speed: (0.004 + Math.random() * 0.012) * (Math.random() < 0.5 ? 1 : -1),
-        sz: 1 + Math.random() * 2,
+        speed: (0.003 + Math.random() * 0.008) * (Math.random() < 0.5 ? 1 : -1),
+        sz: 0.8 + Math.random() * 1.5,
         breathPhase: Math.random() * Math.PI * 2,
-        breathSpd: 0.7 + Math.random() * 0.6,
+        breathSpd: 0.5 + Math.random() * 0.4,
       })
     }
-
-    // ─── Menacing glyphs (float up from planet, only on new selection) ───
-    type MenGlyph = { x: number; y: number; vx: number; vy: number; char: string; sz: number; life: number; fadeRate: number; rot: number; rotSpd: number }
-    const glyphs: MenGlyph[] = []
-    if (isNewSelection) {
-      for (let i = 0; i < 4; i++) {
-        glyphs.push({
-          x: planetScreenX + (Math.random() - 0.5) * 20,
-          y: planetScreenY,
-          vx: (Math.random() - 0.5) * 0.4,
-          vy: -(0.6 + Math.random() * 1.2),
-          char: pal.symbols[Math.floor(Math.random() * pal.symbols.length)],
-          sz: 10 + Math.random() * 14,
-          life: 1.0,
-          fadeRate: 0.005 + Math.random() * 0.004,
-          rot: (Math.random() - 0.5) * 0.3,
-          rotSpd: (Math.random() - 0.5) * 0.012,
-        })
-      }
-    }
-
-    let flash = isNewSelection ? 2.0 : 0
     const startTime = performance.now()
     let fxPaused = false
 
@@ -521,91 +478,32 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
       if (fxPaused) return
       const t = (performance.now() - startTime) / 1000
       ctx.clearRect(0, 0, size, size)
-      flash *= 0.93
 
-      // ─── Aura orbs ───
+      // ─── Aura orbs — subtle breathing ring ───
       for (const orb of auraOrbs) {
         orb.angle += orb.speed
-        const breathe = Math.sin(t * orb.breathSpd + orb.breathPhase) * wheelR * 0.02
-        const nOff = noise(orb.angle * 2, t * 0.5, 0) * wheelR * 0.025
+        const breathe = Math.sin(t * orb.breathSpd + orb.breathPhase) * wheelR * 0.015
+        const nOff = noise(orb.angle * 2, t * 0.3, 0) * wheelR * 0.02
         const r = orb.baseR + breathe + nOff
         const ox = cx + Math.cos(orb.angle) * r
         const oy = cy + Math.sin(orb.angle) * r
-        const pulse = Math.sin(t * 1.5 + orb.breathPhase) * 0.3 + 0.7
+        const pulse = Math.sin(t * 1.2 + orb.breathPhase) * 0.25 + 0.7
 
-        // Glow
-        ctx.fillStyle = `rgba(${pal.mid[0]}, ${pal.mid[1]}, ${pal.mid[2]}, ${pulse * 0.05})`
+        // Soft glow
+        ctx.fillStyle = `rgba(${pal.mid[0]}, ${pal.mid[1]}, ${pal.mid[2]}, ${pulse * 0.04})`
         ctx.beginPath()
-        ctx.arc(ox, oy, orb.sz * 4, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.fillStyle = `rgba(${pal.mid[0]}, ${pal.mid[1]}, ${pal.mid[2]}, ${pulse * 0.08})`
-        ctx.beginPath()
-        ctx.arc(ox, oy, orb.sz * 2, 0, Math.PI * 2)
+        ctx.arc(ox, oy, orb.sz * 3, 0, Math.PI * 2)
         ctx.fill()
 
         // Core dot
-        ctx.fillStyle = `rgba(${pal.core[0]}, ${pal.core[1]}, ${pal.core[2]}, ${pulse * 0.45})`
+        ctx.fillStyle = `rgba(${pal.core[0]}, ${pal.core[1]}, ${pal.core[2]}, ${pulse * 0.3})`
         ctx.beginPath()
         ctx.arc(ox, oy, orb.sz, 0, Math.PI * 2)
         ctx.fill()
       }
 
-      // ─── Speed lines from selected planet ───
-      for (const sl of speedLines) {
-        sl.life -= 0.02
-        if (sl.life <= 0 || t < sl.delay) continue
-        const a = sl.life * sl.life
-        const startR = sl.offset
-        const endR = sl.offset + sl.len * (1 - sl.life * 0.5)
-        ctx.strokeStyle = `rgba(${pal.core[0]}, ${pal.core[1]}, ${pal.core[2]}, ${a * 0.6})`
-        ctx.lineWidth = sl.w * sl.life
-        ctx.lineCap = 'round'
-        ctx.beginPath()
-        ctx.moveTo(planetScreenX + Math.cos(sl.angle) * startR, planetScreenY + Math.sin(sl.angle) * startR)
-        ctx.lineTo(planetScreenX + Math.cos(sl.angle) * endR, planetScreenY + Math.sin(sl.angle) * endR)
-        ctx.stroke()
-      }
-
-      // ─── Menacing glyphs ───
-      for (const mg of glyphs) {
-        mg.x += mg.vx
-        mg.y += mg.vy
-        mg.life -= mg.fadeRate
-        mg.rot += mg.rotSpd
-        if (mg.life <= 0) continue
-        const a = mg.life * mg.life
-        ctx.save()
-        ctx.translate(mg.x, mg.y)
-        ctx.rotate(mg.rot)
-        ctx.font = `bold ${mg.sz * (1 + (1 - mg.life) * 0.25)}px sans-serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillStyle = `rgba(${pal.core[0]}, ${pal.core[1]}, ${pal.core[2]}, ${a * 0.65})`
-        ctx.fillText(mg.char, 0, 0)
-        ctx.restore()
-      }
-
-      // ─── Flash overlay (selection burst) ───
-      if (flash > 0.05) {
-        ctx.fillStyle = `rgba(${pal.core[0]}, ${pal.core[1]}, ${pal.core[2]}, ${flash * 0.05})`
-        ctx.beginPath()
-        ctx.arc(planetScreenX, planetScreenY, wheelR * 0.6, 0, Math.PI * 2)
-        ctx.fill()
-        
-        ctx.fillStyle = `rgba(${pal.core[0]}, ${pal.core[1]}, ${pal.core[2]}, ${flash * 0.1})`
-        ctx.beginPath()
-        ctx.arc(planetScreenX, planetScreenY, wheelR * 0.3, 0, Math.PI * 2)
-        ctx.fill()
-      }
-
-      // After one-shot effects finish (~3s), throttle to 30fps for aura-only phase
-      const hasOneShots = speedLines.some(sl => sl.life > 0) || glyphs.some(g => g.life > 0) || flash > 0.05
-      if (hasOneShots) {
-        fxAnimRef.current = requestAnimationFrame(draw)
-      } else {
-        // 30fps is enough for the subtle aura orb animation
-        setTimeout(() => { fxAnimRef.current = requestAnimationFrame(draw) }, 33)
-      }
+      // Throttle to 30fps — subtle animation doesn't need 60
+      setTimeout(() => { fxAnimRef.current = requestAnimationFrame(draw) }, 33)
     }
 
     draw()

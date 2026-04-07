@@ -9,25 +9,13 @@ import {
   approximateTimeRanges,
 } from '@/lib/validators/birth-data'
 import { CitySearch } from './CitySearch'
-
-interface ChartData {
-  id: string
-  name: string
-  birth_date: string
-  birth_time_known: boolean
-  birth_time: string | null
-  approximate_time_range: string | null
-  city_name: string
-  latitude: number
-  longitude: number
-  city_id: string | null
-}
+import type { ChartRow } from '@/lib/types/chart'
 
 interface EditBirthDataDialogProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
-  chart: ChartData
+  chart: ChartRow
 }
 
 const TIME_RANGE_LABELS: Record<string, string> = {

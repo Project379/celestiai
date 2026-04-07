@@ -1,14 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { UserMenu } from '@/components/auth/UserMenu'
-import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
-import { ChartView } from '@/components/chart/ChartView'
-
-interface ChartData {
-  id: string
-  name: string
-}
+import type { ChartRow } from '@/lib/types/chart'
+import { UserMenu } from '../../../components/auth/UserMenu'
+import { SessionExpiryModal } from '../../../components/auth/SessionExpiryModal'
+import { ChartView } from '../../../components/chart/ChartView'
 
 /**
  * Chart page - displays user's natal chart visualization with AI Oracle panel
@@ -22,7 +18,7 @@ export default async function ChartPage() {
   const { userId } = await auth()
 
   // Fetch user's primary chart (most recent)
-  let chart: ChartData | null = null
+  let chart: Pick<ChartRow, 'id' | 'name'> | null = null
   try {
     const supabase = createServiceSupabaseClient()
     const { data, error } = await supabase
@@ -34,7 +30,7 @@ export default async function ChartPage() {
       .single()
 
     if (!error && data) {
-      chart = data as ChartData
+      chart = data as Pick<ChartRow, 'id' | 'name'>
     }
   } catch (error) {
     console.error('Error fetching chart:', error)

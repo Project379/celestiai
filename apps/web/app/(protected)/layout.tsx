@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { CelestialBackgroundLazy } from '@/components/CelestialBackgroundLazy'
+import { NavigationTransition } from '@/components/NavigationTransition'
 
 export default async function ProtectedLayout({
   children,
@@ -29,9 +30,11 @@ export default async function ProtectedLayout({
           </div>
         </header>
 
-        {/* Main content */}
+        {/* Main content with navigation transition */}
         <main className="pointer-events-auto container mx-auto px-4 py-8">
-          {children}
+          <NavigationTransition>
+            {children}
+          </NavigationTransition>
         </main>
       </div>
     </div>

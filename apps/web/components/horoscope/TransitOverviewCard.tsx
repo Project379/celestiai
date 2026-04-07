@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { ASPECTS_BG, PLANETS_BG, ZODIAC_SIGNS_BG } from '@celestia/astrology/client'
 import type { Planet } from '@celestia/astrology/client'
 import type {
@@ -234,10 +235,16 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
         </div>
 
         {isLoading && (
-          <div className="space-y-3 animate-pulse">
-            <div className="h-3 w-full rounded-full bg-white/5" />
-            <div className="h-3 w-5/6 rounded-full bg-white/5" />
-            <div className="h-3 w-4/6 rounded-full bg-white/5" />
+          <div className="flex items-center justify-center py-10">
+            <motion.div
+              className="text-indigo-400/60"
+              animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.95, 1.05, 0.95] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </motion.div>
           </div>
         )}
 
@@ -248,7 +255,12 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
         )}
 
         {overview && !isLoading && !error && (
-          <div className="space-y-6">
+          <motion.div
+            className="space-y-6"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 0.68, 0.35, 1] }}
+          >
             <section>
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Активни транзити
@@ -324,7 +336,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                 )}
               </div>
             </section>
-          </div>
+          </motion.div>
         )}
       </div>
 
