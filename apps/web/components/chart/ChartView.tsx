@@ -7,7 +7,6 @@ import { NatalWheel } from './NatalWheel'
 import { NatalWheelLegend } from './NatalWheelLegend'
 import { BigThreeCards } from './BigThreeCards'
 import { PlanetDetail } from './PlanetDetail'
-import { OracleButton } from '../oracle/OracleButton'
 import type { PlanetPosition, PointData } from '@celestia/astrology/client'
 import { UNKNOWN_TIME_DISCLAIMER_BG } from '@celestia/astrology/client'
 
@@ -103,22 +102,7 @@ export function ChartView({
     setSelectedPlanetData(null)
   }, [])
 
-  const handleOraclePlanetHighlight = useCallback(
-    (planetKey: string) => {
-      if (!chart) return
-      const planet = chart.planets.find((p) => p.planet === planetKey)
-      if (planet) {
-        setSelectedPlanet(planet.planet)
-        setSelectedPlanetData(planet)
-        if (planet.planet === 'sun' || planet.planet === 'moon') {
-          setSelectedBigThree(planet.planet as 'sun' | 'moon')
-        } else {
-          setSelectedBigThree(null)
-        }
-      }
-    },
-    [chart]
-  )
+
 
   if (isLoading) return null
   if (error) return <ChartError message={error} />
@@ -242,12 +226,6 @@ export function ChartView({
         }
       />
 
-      {/* Floating Oracle Button */}
-      <OracleButton
-        chartId={chartId}
-        subscriptionTier={subscriptionTier}
-        onPlanetHighlight={handleOraclePlanetHighlight}
-      />
     </div>
   )
 }

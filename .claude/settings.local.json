@@ -68,7 +68,11 @@
       "Bash(grep -rn --include=\"*.ts\" --include=\"*.tsx\" 'в ${' apps/web/lib/oracle/)",
       "Bash(grep -rn --include=\"*.ts\" --include=\"*.tsx\" -P 'в \\\\$\\\\{|с \\\\$\\\\{' apps/web/lib/oracle/ apps/web/components/chart/)",
       "Bash(pnpm run:*)",
-      "Bash(pnpm remove:*)"
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm install:*)",
+      "Bash(claude --version)",
+      "Bash(claude config:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

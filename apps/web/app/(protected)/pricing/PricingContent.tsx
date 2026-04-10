@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { PricingToggle } from '@/components/upgrade/PricingToggle'
 
 interface PricingContentProps {
@@ -70,36 +71,56 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-background))] px-4 py-16">
+    <div className="px-4 py-16">
       <div className="mx-auto max-w-5xl">
 
         {/* Header */}
-        <div className="mb-12 text-center">
+        <motion.div
+          className="mb-12 text-center"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 0.68, 0.35, 1] }}
+        >
           <h1 className="mb-3 text-4xl font-bold text-white">Избери своя план</h1>
           <p className="text-lg text-white/60">
             Отключи пълния потенциал на звездната си карта
           </p>
-        </div>
+        </motion.div>
 
         {/* Cancelled payment notice */}
         {wasCancelled && (
-          <div className="mb-8 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-white/60">
+          <motion.div
+            className="mb-8 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-white/60"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
             Плащането не беше завършено. Опитай отново, когато си готов/а.
-          </div>
+          </motion.div>
         )}
 
         {/* Error message */}
         {errorMessage && (
-          <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-300">
+          <motion.div
+            className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-300"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             {errorMessage}
-          </div>
+          </motion.div>
         )}
 
         {/* Pricing cards */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch lg:gap-8">
 
           {/* Free plan card */}
-          <div className="glass flex flex-1 flex-col rounded-2xl p-8">
+          <motion.div
+            className="glass flex flex-1 flex-col rounded-2xl p-8"
+            initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 0.68, 0.35, 1] }}
+          >
             <div className="mb-6">
               <div className="mb-1 text-sm font-medium uppercase tracking-widest text-white/40">
                 Безплатен
@@ -120,11 +141,14 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
             <div className="rounded-xl border border-white/10 px-4 py-3 text-center text-sm text-white/40">
               {isPremium ? 'Базов план' : 'Твоят текущ план'}
             </div>
-          </div>
+          </motion.div>
 
           {/* Premium plan card */}
-          <div
+          <motion.div
             className="flex flex-1 flex-col rounded-2xl p-8"
+            initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 0.68, 0.35, 1] }}
             style={{
               background: 'rgb(var(--color-surface-glass) / 0.25)',
               backdropFilter: 'blur(16px)',
@@ -194,13 +218,18 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
                 {isLoading ? 'Зареждане...' : 'Отключи Премиум'}
               </button>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* Footer note */}
-        <p className="mt-10 text-center text-xs text-white/30">
+        <motion.p
+          className="mt-10 text-center text-xs text-white/30"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
           Сигурно плащане чрез Stripe. Можеш да прекратиш абонамента си по всяко време.
-        </p>
+        </motion.p>
       </div>
     </div>
   )
