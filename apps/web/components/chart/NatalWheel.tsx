@@ -16,7 +16,7 @@ interface NatalWheelProps {
   onPlanetSelect?: (planet: PlanetPosition) => void
   /** Selected planet (for highlighting) */
   selectedPlanet?: string | null
-  /** Chart size in pixels (default 500) */
+  /** Chart size in pixels (default 600) */
   size?: number
 }
 
@@ -87,7 +87,7 @@ const ELEMENT_FX: Record<string, { core: number[]; mid: number[]; outer: number[
  * - Inner: Planet positions (clickable)
  * - Center: Aspect lines connecting planets
  */
-export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}: NatalWheelProps) {
+export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}: NatalWheelProps) {
   const center = size / 2
   const outerRadius = size * 0.48
   const zodiacOuterRadius = size * 0.46
@@ -97,12 +97,40 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
   const aspectRadius = houseInnerRadius * 0.9
   const aspectAnchorRadius = houseInnerRadius * 0.96
 
-  // Memoize planet positions to avoid recalculating
+  // Minimum angular separation between planet glyphs (degrees).
+  // When two or more planets are within this distance their display
+  // angles are fanned out so glyphs never overlap.
+  const MIN_SEPARATION_DEG = 8
+
+  // Memoize planet positions with de-clumping to prevent overlap
   const planetPositions = useMemo(() => {
-    return chart.planets.map((planet) => {
-      // Convert longitude to angle (Aries starts at 9 o'clock = 180 degrees)
-      // We rotate -90 to put Aries at the left (9 o'clock position)
-      const angle = ((planet.longitude - 90) * Math.PI) / 180
+    // 1. Compute raw angles
+    const raw = chart.planets.map((planet) => ({
+      ...planet,
+      rawAngle: planet.longitude,
+      displayAngle: planet.longitude,
+    }))
+
+    // 2. Sort by raw angle so we can detect clusters
+    raw.sort((a, b) => a.rawAngle - b.rawAngle)
+
+    // 3. De-clump: walk through sorted list and push apart when too close
+    for (let pass = 0; pass < 4; pass++) {
+      for (let i = 0; i < raw.length; i++) {
+        const next = (i + 1) % raw.length
+        let diff = raw[next].displayAngle - raw[i].displayAngle
+        if (next === 0) diff += 360 // wrap-around
+        if (diff < MIN_SEPARATION_DEG) {
+          const shift = (MIN_SEPARATION_DEG - diff) / 2
+          raw[i].displayAngle -= shift
+          raw[next].displayAngle += shift
+        }
+      }
+    }
+
+    // 4. Convert to pixel positions
+    return raw.map((planet) => {
+      const angle = ((planet.displayAngle - 90) * Math.PI) / 180
       return {
         ...planet,
         x: center + Math.cos(angle) * planetRadius,
@@ -294,7 +322,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
           .attr('class', 'planet-group')
           .attr('role', 'button')
           .attr('tabindex', '0')
-          .attr('aria-label', `${PLANETS_BG[planet.planet as Planet]} - натисни за детайли`)
+          .attr('aria-label', `${PLANETS_BG[planet.planet as Planet]} — натисни за тълкуване`)
           .style('cursor', 'pointer')
           .style('outline', 'none')
           .on('click', () => handlePlanetClick(planet))
@@ -325,13 +353,13 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
           .attr('data-planet', planet.planet)
           .attr('cx', planet.x)
           .attr('cy', planet.y)
-          .attr('r', size * 0.03)
+          .attr('r', size * 0.035)
           .attr('fill', 'rgba(15, 23, 42, 0.9)')
           .attr('stroke', PLANET_COLORS[planet.planet])
           .attr('stroke-width', 2)
 
         // Planet glyph (custom SVG via <use>)
-        const planetGlyphSize = size * 0.038
+        const planetGlyphSize = size * 0.042
         const glyphColor = PLANET_COLORS[planet.planet]
         planetGroup
           .append('use')

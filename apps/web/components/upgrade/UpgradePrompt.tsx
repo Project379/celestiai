@@ -142,8 +142,8 @@ export function UpgradePrompt({ context, priceMonthly, className = '' }: Upgrade
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
-              <p className="text-base font-semibold text-white">€9,99<span className="text-sm font-normal text-white/50">/мес</span></p>
-              <p className="text-xs text-white/40">или €99,99/год — спестете 2 месеца</p>
+              <p className="text-base font-semibold text-white">€6,99<span className="text-sm font-normal text-white/50">/мес</span></p>
+              <p className="text-xs text-white/40">или €59,99/год — спестете ~28%</p>
             </motion.div>
 
             <motion.div

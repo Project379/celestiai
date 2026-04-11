@@ -24,9 +24,7 @@ export function NatalWheelLegend() {
   return (
     <div
       ref={containerRef}
-      className="absolute right-3 top-3 z-20"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      className="absolute right-3 top-3 z-[60]"
     >
       <button
         type="button"
@@ -41,7 +39,7 @@ export function NatalWheelLegend() {
       {open && (
         <div className="absolute right-0 mt-2 w-[340px] rounded-2xl border border-slate-700/70 bg-slate-950/95 p-4 text-sm text-slate-300 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl">
           <h4 className="mb-3 text-sm font-semibold text-slate-100">
-            Как да четете колелото
+            Как да четете наталната карта
           </h4>
 
           <div className="space-y-3">
@@ -50,10 +48,10 @@ export function NatalWheelLegend() {
                 <span className="inline-flex gap-1 rounded-lg bg-slate-900/80 px-2 py-1 text-slate-200">
                   {ZODIAC_ICONS.map(name => <CelestialIcon key={name} name={name} size={18} />)}
                 </span>
-                <p className="font-medium text-slate-200">Зодиакален пръстен</p>
+                <p className="font-medium text-slate-200">Зодиак</p>
               </div>
               <p className="text-slate-400">
-                Външният кръг е разделен на 12 знака. Той показва в кой знак попада всяка планета.
+                Външният пояс е разделен на 12 зодиакални знака. Той показва в кой знак попада всяка планета.
               </p>
             </div>
 
@@ -72,7 +70,7 @@ export function NatalWheelLegend() {
                 <p className="font-medium text-slate-200">Планети</p>
               </div>
               <p className="text-slate-400">
-                Цветните символи по кръга са планетите. Натиснете върху тях, за да видите тълкуване отдолу.
+                Цветните символи в картата са планетите. Натиснете върху тях, за да видите тълкуване.
               </p>
             </div>
 
@@ -84,7 +82,7 @@ export function NatalWheelLegend() {
             </div>
 
             <div>
-              <p className="font-medium text-slate-200">Точките по вътрешния кръг</p>
+              <p className="font-medium text-slate-200">Аспектни точки</p>
               <p className="text-slate-400">
                 Малките цветни точки показват откъде точно започва аспектът за всяка планета. Цветът им съвпада със съответната планета.
               </p>

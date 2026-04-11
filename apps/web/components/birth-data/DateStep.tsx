@@ -20,7 +20,7 @@ export function DateStep({ onNext }: DateStepProps) {
           Дата на раждане
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Въведи дата и име за картата си
+          Въведи дата и име за наталната си карта
         </p>
       </div>
 

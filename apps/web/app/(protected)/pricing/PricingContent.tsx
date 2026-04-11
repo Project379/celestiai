@@ -171,13 +171,13 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
 
               {isAnnual ? (
                 <>
-                  <div className="text-4xl font-bold text-white">€99<span className="text-2xl">,99</span></div>
-                  <div className="mt-1 text-sm text-white/50">€99,99/год — спестявате ~€20</div>
+                  <div className="text-4xl font-bold text-white">€59<span className="text-2xl">,99</span></div>
+                  <div className="mt-1 text-sm text-white/50">€59,99/год — спестявате ~€24</div>
                 </>
               ) : (
                 <>
-                  <div className="text-4xl font-bold text-white">€9<span className="text-2xl">,99</span></div>
-                  <div className="mt-1 text-sm text-white/50">€9,99/мес</div>
+                  <div className="text-4xl font-bold text-white">€6<span className="text-2xl">,99</span></div>
+                  <div className="mt-1 text-sm text-white/50">€6,99/мес</div>
                 </>
               )}
             </div>

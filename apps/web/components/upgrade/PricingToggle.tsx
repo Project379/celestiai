@@ -64,7 +64,7 @@ export function PricingToggle({ priceMonthly, priceAnnual, onPriceChange }: Pric
             exit={{ opacity: 0, y: -8, scale: 0.8 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
-            ~17% спестявате
+            ~28% спестявате
           </motion.span>
         )}
       </AnimatePresence>

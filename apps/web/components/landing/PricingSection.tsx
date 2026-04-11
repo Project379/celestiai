@@ -19,7 +19,7 @@ export function PricingSection() {
     },
     {
       name: 'Премиум',
-      price: '9.99',
+      price: '6.99',
       period: 'месец',
       description: 'За любителите на звездите',
       features: [
