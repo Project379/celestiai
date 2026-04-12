@@ -76,7 +76,7 @@ export function chartToPromptText(chartData: ChartData): string {
   const mcSign = ZODIAC_SIGNS_BG[mc.sign as ZodiacSign] ?? mc.sign
   const mcDeg = Math.floor(mc.degree)
   const mcMin = Math.floor((mc.degree - mcDeg) * 60)
-  lines.push(`MC (Среднебо): ${mcDeg}°${mcMin.toString().padStart(2, '0')}' ${mcSign}`)
+  lines.push(`Медиум Цели (MC): ${mcDeg}°${mcMin.toString().padStart(2, '0')}' ${mcSign}`)
 
   // Birth time note
   if (!chartData.birthTimeKnown) {

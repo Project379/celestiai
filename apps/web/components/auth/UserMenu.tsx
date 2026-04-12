@@ -1,12 +1,22 @@
 'use client'
 
 import { UserButton, ClerkLoaded, ClerkLoading } from '@clerk/nextjs'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AccountSubscriptionPage } from './AccountSubscriptionPage'
 import { LogoutConfirmDialog } from './LogoutConfirmDialog'
 
 export function UserMenu() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  // Clerk's <ClerkLoaded>/<ClerkLoading> gate resolves differently on the
+  // server (always "loading") vs. the client (real session state), which
+  // causes a hydration mismatch on the rendered UserButton wrapper. Gate
+  // the whole menu on a post-mount flag so the server and initial client
+  // render both emit the placeholder, then swap in the real menu after
+  // hydration.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleOpenLogout = useCallback(() => {
     setShowLogoutDialog(true)
@@ -15,6 +25,14 @@ export function UserMenu() {
   const handleCloseLogout = useCallback(() => {
     setShowLogoutDialog(false)
   }, [])
+
+  if (!mounted) {
+    return (
+      <div className="flex items-center gap-4">
+        <div className="h-9 w-9 animate-pulse rounded-full bg-slate-800" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-center gap-4">

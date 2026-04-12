@@ -88,6 +88,18 @@ export function NatalWheelLegend() {
               </p>
             </div>
 
+            <div>
+              <div className="mb-1 flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-slate-900/80 text-xs font-bold text-red-400">
+                  R
+                </span>
+                <p className="font-medium text-slate-200">Ретрограден (R)</p>
+              </div>
+              <p className="text-slate-400">
+                Малкото червено „R“ до планета означава, че тя е ретроградна – от Земята изглежда сякаш се движи назад. Тази енергия обикновено се проявява по-вътрешно или изисква преосмисляне.
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-900/70 p-3">
               <div>
                 <div className="mb-1 flex items-center gap-2">
@@ -95,7 +107,7 @@ export function NatalWheelLegend() {
                   <span className="font-medium text-slate-200">Синя линия</span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Асцендент. Показва как се проявявате и как ви възприемат първоначално.
+                  Асцендент (Изгряващ знак). Това е знакът, изгрял на хоризонта в момента на раждането. Олицетворява външното ви "Аз", спонтанния ви подход към света и първото впечатление, което оставяте – "маската", с която посрещате живота.
                 </p>
               </div>
 
@@ -105,7 +117,7 @@ export function NatalWheelLegend() {
                   <span className="font-medium text-slate-200">Розова линия</span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  MC. Свързан е с посока, призвание, репутация и обществен образ.
+                  Медиум Цели (MC). Най-високата точка в картата. Показва вашата кариера, житейско призвание, най-високи амбиции, социален статус и ролята ви в обществото.
                 </p>
               </div>
             </div>

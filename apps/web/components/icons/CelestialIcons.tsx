@@ -50,8 +50,8 @@ function Svg({ size = 24, className, children }: IconProps & { children: ReactNo
 export function SunIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <circle cx={12} cy={12} r={7} />
-      <circle cx={12} cy={12} r={1.5} fill="currentColor" stroke="none" />
+      <circle cx={12} cy={12} r={6} />
+      <circle cx={12} cy={12} r={1.2} fill="currentColor" stroke="none" />
     </Svg>
   )
 }
@@ -60,19 +60,19 @@ export function SunIcon({ size, className }: IconProps) {
 export function MoonIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <path d="M18 12a7 7 0 1 1-5-6.7A5.5 5.5 0 0 0 18 12z" />
+      <path d="M15 4 A 8 8 0 0 0 15 20 A 6.5 6.5 0 0 1 15 4 Z" />
     </Svg>
   )
 }
 
-/** ☿ Mercury — circle + cross below + crescent above */
+/** ☿ Mercury — circle + cross below + crescent horns above */
 export function MercuryIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
       <circle cx={12} cy={12} r={3.5} />
-      <path d="M12 15.5v5" />
-      <path d="M9 18.5h6" />
-      <path d="M8.5 7a3.5 2.5 0 0 1 7 0" />
+      <path d="M12 15.5V21" />
+      <path d="M9.5 18h5" />
+      <path d="M7 5 C 7 9.5, 17 9.5, 17 5" />
     </Svg>
   )
 }
@@ -81,9 +81,9 @@ export function MercuryIcon({ size, className }: IconProps) {
 export function VenusIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <circle cx={12} cy={9} r={5} />
-      <path d="M12 14v7" />
-      <path d="M9 18h6" />
+      <circle cx={12} cy={8.5} r={5} />
+      <path d="M12 13.5v7.5" />
+      <path d="M9 17.5h6" />
     </Svg>
   )
 }
@@ -92,84 +92,78 @@ export function VenusIcon({ size, className }: IconProps) {
 export function MarsIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <circle cx={10} cy={14} r={5.5} />
-      <path d="M14 10L20 4" />
+      <circle cx={9.5} cy={14.5} r={5} />
+      <path d="M13.5 10.5L20 4" />
       <path d="M15 4h5v5" />
     </Svg>
   )
 }
 
-/** ♃ Jupiter — stylised 4/2-shape */
+/** ♃ Jupiter — "2" shape with vertical bar */
 export function JupiterIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <path d="M5 9c3-5 8-5 10-2" />
-      <path d="M4 14h12" />
-      <path d="M15 4v16" />
+      <path d="M5.5 7.5 C 5.5 1.5, 13.5 1.5, 13.5 7.5 C 13.5 12, 6 13.5, 6 15 H 17" />
+      <path d="M14 10V21" />
     </Svg>
   )
 }
 
-/** ♄ Saturn — cross-topped sickle */
+/** ♄ Saturn — cross on top + sickle curve */
 export function SaturnIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <path d="M7 3h6" />
-      <path d="M10 3v7" />
-      <path d="M10 10c4 0 7 2 7 5.5S14 21 10 20" />
+      <path d="M7 4h6" />
+      <path d="M10 4v6" />
+      <path d="M10 10c5 0 8 2 8 5s-3 5.5-7 5c-2-.3-3-1.5-3-3" />
     </Svg>
   )
 }
 
-/** ♅ Uranus — circle with dot + vertical line + horizontal arms */
+/** ♅ Uranus — H-shape with circle at bottom */
 export function UranusIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <circle cx={12} cy={19} r={2.5} />
-      <circle cx={12} cy={19} r={0.8} fill="currentColor" stroke="none" />
-      <path d="M12 16.5V5" />
-      <path d="M7 5v5" />
-      <path d="M17 5v5" />
-      <path d="M7 5h10" />
+      <circle cx={12} cy={20} r={2} />
+      <path d="M12 18V4" />
+      <path d="M7 10h10" />
+      <path d="M4 4 C 8 4, 8 16, 4 16" />
+      <path d="M20 4 C 16 4, 16 16, 20 16" />
     </Svg>
   )
 }
 
-/** ♆ Neptune — trident */
+/** ♆ Neptune — trident (ψ shape) + cross below */
 export function NeptuneIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <path d="M12 21v-16" />
-      <path d="M5 7l7-4 7 4" />
-      <path d="M5 7v3" />
-      <path d="M19 7v3" />
-      <path d="M12 3v2" />
-      <path d="M8 16h8" />
+      <path d="M12 21V5" />
+      <path d="M5 5c0 6 7 8 7 8" />
+      <path d="M19 5c0 6-7 8-7 8" />
+      <path d="M8 17h8" />
     </Svg>
   )
 }
 
-/** ♇ Pluto — circle atop arc + cross below */
+/** ♇ Pluto — circle sitting in cup + cross below */
 export function PlutoIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <circle cx={12} cy={7} r={3.5} />
-      <path d="M6 11a6 4 0 0 1 12 0" />
-      <path d="M12 11v7.5" />
-      <path d="M9 15.5h6" />
+      <circle cx={12} cy={6} r={2.5} />
+      <path d="M7 5v2 a 5 5 0 0 0 10 0V5" />
+      <path d="M12 12v8" />
+      <path d="M9 16h6" />
     </Svg>
   )
 }
 
-/** ☊ North Node — horseshoe opening upward */
+/** ☊ North Node — Ω shape (horseshoe up + legs down) */
 export function NorthNodeIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <path d="M6 6a6 6 0 0 1 12 0" />
-      <circle cx={6} cy={6} r={2.5} />
-      <circle cx={18} cy={6} r={2.5} />
-      <path d="M6 8.5v10" />
-      <path d="M18 8.5v10" />
+      <path d="M4 18V10a8 8 0 0 1 16 0v8" />
+      <circle cx={4} cy={19} r={2} />
+      <circle cx={20} cy={19} r={2} />
     </Svg>
   )
 }
