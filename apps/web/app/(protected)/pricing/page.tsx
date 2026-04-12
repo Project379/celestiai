@@ -1,6 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
+import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { PricingContent } from './PricingContent'
+
+export const metadata: Metadata = {
+  title: 'Цени',
+  description: 'Избери план, който ти подхожда — без скрити такси',
+}
 
 /**
  * /pricing — Subscription plan comparison page.

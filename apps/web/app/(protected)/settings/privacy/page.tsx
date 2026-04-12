@@ -1,7 +1,13 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { PrivacySettingsContent } from './PrivacySettingsContent'
+
+export const metadata: Metadata = {
+  title: 'Поверителност',
+  description: 'Управлявай поверителността и изтриването на акаунта си',
+}
 
 /**
  * /settings/privacy — Privacy settings page.

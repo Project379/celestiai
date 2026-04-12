@@ -1,5 +1,3 @@
-'use client'
-
 /**
  * Custom celestial icon library — sharp, geometric line-art glyphs
  * for all zodiac signs, planets, and special points.

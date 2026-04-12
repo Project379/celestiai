@@ -1,7 +1,14 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { SuccessContent } from './SuccessContent'
+
+export const metadata: Metadata = {
+  title: 'Абонаментът е активен',
+  description: 'Добре дошъл в Celestia Premium',
+  robots: { index: false, follow: false },
+}
 
 /**
  * /subscription/success

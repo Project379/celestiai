@@ -90,7 +90,11 @@ export async function GET(req: Request) {
     }
 
     const overview = buildTransitOverview(calculation, new Date())
-    return Response.json(overview)
+    return Response.json(overview, {
+      headers: {
+        'Cache-Control': 'private, max-age=900, stale-while-revalidate=600',
+      },
+    })
   } catch (error) {
     console.error('[Transit Overview] Unhandled error:', error)
     return Response.json({ error: 'Failed to load transit overview.' }, { status: 500 })

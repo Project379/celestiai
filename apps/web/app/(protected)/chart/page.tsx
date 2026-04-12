@@ -1,10 +1,17 @@
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+
+export const metadata: Metadata = {
+  title: 'Натална карта',
+  description: 'Твоята натална карта с интерактивна визуализация и AI Оракул',
+}
 import type { ChartRow } from '@/lib/types/chart'
 import { UserMenu } from '../../../components/auth/UserMenu'
 import { SessionExpiryModal } from '../../../components/auth/SessionExpiryModal'
 import { ChartView } from '../../../components/chart/ChartView'
+import { PlusIcon } from '@/components/icons/PlusIcon'
 
 /**
  * Chart page - displays user's natal chart visualization with AI Oracle panel
@@ -17,42 +24,35 @@ import { ChartView } from '../../../components/chart/ChartView'
 export default async function ChartPage() {
   const { userId } = await auth()
 
-  // Fetch user's primary chart (most recent)
   let chart: Pick<ChartRow, 'id' | 'name'> | null = null
-  try {
-    const supabase = createServiceSupabaseClient()
-    const { data, error } = await supabase
-      .from('charts')
-      .select('id, name')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (!error && data) {
-      chart = data as Pick<ChartRow, 'id' | 'name'>
-    }
-  } catch (error) {
-    console.error('Error fetching chart:', error)
-  }
-
-  // Fetch user's subscription tier from users table
-  // Default to 'free' if user row doesn't exist yet (created on first Oracle generation)
   let subscriptionTier: 'free' | 'premium' = 'free'
+
   if (userId) {
     try {
       const supabase = createServiceSupabaseClient()
-      const { data } = await supabase
-        .from('users')
-        .select('subscription_tier')
-        .eq('clerk_id', userId)
-        .single()
+      const [chartResult, userResult] = await Promise.all([
+        supabase
+          .from('charts')
+          .select('id, name')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single(),
+        supabase
+          .from('users')
+          .select('subscription_tier')
+          .eq('clerk_id', userId)
+          .single(),
+      ])
 
-      if (data?.subscription_tier === 'premium') {
+      if (!chartResult.error && chartResult.data) {
+        chart = chartResult.data as Pick<ChartRow, 'id' | 'name'>
+      }
+      if (!userResult.error && userResult.data?.subscription_tier === 'premium') {
         subscriptionTier = 'premium'
       }
-    } catch {
-      // User row doesn't exist yet — defaults to 'free'
+    } catch (error) {
+      console.error('Error fetching chart page data:', error)
     }
   }
 
@@ -85,19 +85,7 @@ export default async function ChartPage() {
           /* CTA to add birth data */
           <div className="rounded-xl border border-dashed border-purple-500/50 bg-purple-500/5 p-8 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-purple-500/10">
-              <svg
-                className="h-7 w-7 text-purple-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
+              <PlusIcon className="h-7 w-7 text-purple-400" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-200">
               Добави рождени данни
@@ -109,19 +97,7 @@ export default async function ChartPage() {
               href="/birth-data"
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
+              <PlusIcon />
               Въведи данни за раждане
             </Link>
           </div>

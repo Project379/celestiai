@@ -1,67 +1,38 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
+import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { BirthDataWizard } from '@/components/birth-data/BirthDataWizard'
-import type { ChartRow } from '@/lib/types/chart'
 
-export default function BirthDataPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [hasData, setHasData] = useState(false)
+export const metadata: Metadata = {
+  title: 'Рождени данни — Celestia AI',
+  description: 'Въведи данните си за раждане за точни астрологични изчисления',
+}
 
-  useEffect(() => {
-    const checkExistingData = async () => {
-      try {
-        const response = await fetch('/api/birth-data')
-        if (response.ok) {
-          const data: Pick<ChartRow, 'id' | 'name' | 'birth_date'>[] = await response.json()
-          if (data && data.length > 0) {
-            // User already has birth data, redirect to dashboard
-            setHasData(true)
-            router.replace('/dashboard')
-            return
-          }
-        }
-      } catch (error) {
-        console.error('Error checking birth data:', error)
-      } finally {
-        setLoading(false)
-      }
+export default async function BirthDataPage() {
+  const { userId } = await auth()
+
+  let hasChart = false
+  if (userId) {
+    try {
+      const supabase = createServiceSupabaseClient()
+      const { data } = await supabase
+        .from('charts')
+        .select('id')
+        .eq('user_id', userId)
+        .limit(1)
+      hasChart = !!data && data.length > 0
+    } catch (error) {
+      console.error('Error checking birth data:', error)
     }
+  }
 
-    checkExistingData()
-  }, [router])
-
-  if (loading || hasData) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="flex items-center gap-3 text-slate-400">
-          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-          <span>Зареждане...</span>
-        </div>
-      </div>
-    )
+  if (hasChart) {
+    redirect('/dashboard')
   }
 
   return (
     <div className="mx-auto max-w-4xl py-8">
-      {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-slate-100">
           Въведи данните си за раждане
@@ -70,8 +41,6 @@ export default function BirthDataPage() {
           Тези данни са необходими за точните астрологични изчисления
         </p>
       </div>
-
-      {/* Wizard */}
       <BirthDataWizard />
     </div>
   )

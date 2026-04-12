@@ -9,10 +9,7 @@ export function createServiceSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  console.log('[Service Client] URL:', !!supabaseUrl, 'Key:', !!supabaseServiceKey)
-
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('[Service Client] Missing env vars!')
     throw new Error(
       'Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required'
     )
