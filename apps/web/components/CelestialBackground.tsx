@@ -15,15 +15,19 @@ import { CelestialCanvas, CONSTELLATIONS, type ConstellationData } from './Celes
  */
 export function CelestialBackground() {
   const pathname = usePathname()
-  const interactive = pathname === '/dashboard' || pathname === '/' || pathname === '/sign-in' || pathname === '/sign-up' || pathname === '/birth-data'
+  const interactive = pathname === '/dashboard'
 
   const mouseRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 })
+  const scrollRef = useRef<number>(0)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [selectedConstellation, setSelectedConstellation] = useState<ConstellationData | null>(null)
   // Use ref for high-frequency position updates from canvas (avoids 60fps re-renders)
   const positionsRef = useRef<Map<string, { x: number; y: number; stars: { sx: number; sy: number }[] }>>(new Map())
-  // State version only bumped on significant changes (resize) to trigger button repositioning
-  const [positionsVersion, setPositionsVersion] = useState(0)
+  // Refs to button DOM elements for direct rAF positioning (no React re-render lag)
+  const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  // Track whether buttons have been initially placed
+  const [buttonsReady, setButtonsReady] = useState(false)
+
   // Track mouse globally for parallax — always active for smooth star movement
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -33,13 +37,30 @@ export function CelestialBackground() {
     return () => window.removeEventListener('mousemove', handler)
   }, [])
 
-  // Bump positionsVersion on window resize so buttons reposition
+  // Track scroll for constellation parallax
+  useEffect(() => {
+    const handler = () => { scrollRef.current = window.scrollY }
+    window.addEventListener('scroll', handler, { passive: true })
+    return () => window.removeEventListener('scroll', handler)
+  }, [])
+
+  // rAF loop: sync button positions directly from canvas positions ref every frame
   useEffect(() => {
     if (!interactive) return
-    const handler = () => setPositionsVersion(v => v + 1)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [interactive])
+    let animId: number
+    const sync = () => {
+      const positions = positionsRef.current
+      if (positions.size > 0 && !buttonsReady) setButtonsReady(true)
+      buttonRefs.current.forEach((btn, id) => {
+        const pos = positions.get(id)
+        if (!pos) return
+        btn.style.transform = `translate(${pos.x - 20}px, ${pos.y - 20}px)`
+      })
+      animId = requestAnimationFrame(sync)
+    }
+    animId = requestAnimationFrame(sync)
+    return () => cancelAnimationFrame(animId)
+  }, [interactive, buttonsReady])
 
   // Close on Escape
   useEffect(() => {
@@ -53,15 +74,15 @@ export function CelestialBackground() {
 
   const handlePositionsUpdate = useCallback(
     (positions: Map<string, { x: number; y: number; stars: { sx: number; sy: number }[] }>) => {
-      const prev = positionsRef.current
       positionsRef.current = positions
-      // Only trigger React re-render on first update (empty → populated)
-      if (prev.size === 0 && positions.size > 0) {
-        setPositionsVersion(v => v + 1)
-      }
     },
     []
   )
+
+  const setButtonRef = useCallback((id: string, el: HTMLButtonElement | null) => {
+    if (el) buttonRefs.current.set(id, el)
+    else buttonRefs.current.delete(id)
+  }, [])
 
   const handleConstellationClick = useCallback((id: string) => {
     const c = CONSTELLATIONS.find(c => c.id === id)
@@ -93,55 +114,48 @@ export function CelestialBackground() {
           interactive
           starCount={350}
           externalMouseRef={mouseRef}
+          externalScrollRef={scrollRef}
           hoveredConstellationId={interactive ? hoveredId : null}
           selectedConstellationId={interactive ? (selectedConstellation?.id ?? null) : null}
           onPositionsUpdate={interactive ? handlePositionsUpdate : undefined}
         />
       </div>
 
-      {/* Layer 2: Constellation click targets — only on dashboard */}
+      {/* Layer 2: Constellation click targets — only on dashboard, above content */}
       {interactive && (
-        <div className="pointer-events-none fixed inset-0 z-[15]" key={positionsVersion}>
-          {CONSTELLATIONS.map(c => {
-            const pos = positionsRef.current.get(c.id)
-            if (!pos) return null
-            return (
-              <button
-                key={c.id}
-                className="pointer-events-auto absolute flex items-center justify-center transition-transform duration-200 hover:scale-125"
+        <div className="pointer-events-none fixed inset-0 z-[40]">
+          {CONSTELLATIONS.map(c => (
+            <button
+              key={c.id}
+              ref={(el) => setButtonRef(c.id, el)}
+              className="pointer-events-auto absolute left-0 top-0 flex items-center justify-center will-change-transform hover:scale-125"
+              style={{ width: 40, height: 40 }}
+              onMouseEnter={() => setHoveredId(c.id)}
+              onMouseLeave={() => setHoveredId(null)}
+              onClick={() => handleConstellationClick(c.id)}
+              aria-label={`${c.name} — натисни за информация`}
+            >
+              {/* Subtle pulsing ring target */}
+              <span
+                className="absolute h-6 w-6 rounded-full border transition-opacity duration-200"
                 style={{
-                  left: pos.x - 16,
-                  top: pos.y - 16,
-                  width: 32,
-                  height: 32,
+                  borderColor: hoveredId === c.id ? 'rgba(200,220,255,0.6)' : 'rgba(200,220,255,0.15)',
+                  opacity: hoveredId === c.id ? 0.8 : 0.3,
+                  animation: 'pulse 3s ease-in-out infinite',
+                  willChange: 'opacity',
                 }}
-                onMouseEnter={() => setHoveredId(c.id)}
-                onMouseLeave={() => setHoveredId(null)}
-                onClick={() => handleConstellationClick(c.id)}
-                aria-label={`${c.name} — натисни за информация`}
-              >
-                {/* Subtle pulsing ring target */}
-                <span
-                  className="absolute h-6 w-6 rounded-full border transition-opacity duration-200"
-                  style={{
-                    borderColor: hoveredId === c.id ? 'rgba(200,220,255,0.6)' : 'rgba(200,220,255,0.15)',
-                    opacity: hoveredId === c.id ? 0.8 : 0.3,
-                    animation: 'pulse 3s ease-in-out infinite',
-                    willChange: 'opacity',
-                  }}
-                />
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{
-                    backgroundColor: hoveredId === c.id ? 'rgba(200,220,255,0.9)' : 'rgba(200,220,255,0.3)',
-                    boxShadow: hoveredId === c.id
-                      ? '0 0 8px rgba(200,220,255,0.6), 0 0 16px rgba(200,220,255,0.3)'
-                      : 'none',
-                  }}
-                />
-              </button>
-            )
-          })}
+              />
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{
+                  backgroundColor: hoveredId === c.id ? 'rgba(200,220,255,0.9)' : 'rgba(200,220,255,0.3)',
+                  boxShadow: hoveredId === c.id
+                    ? '0 0 8px rgba(200,220,255,0.6), 0 0 16px rgba(200,220,255,0.3)'
+                    : 'none',
+                }}
+              />
+            </button>
+          ))}
         </div>
       )}
 

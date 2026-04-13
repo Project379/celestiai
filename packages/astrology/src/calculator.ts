@@ -21,7 +21,8 @@ import type {
   PointData,
 } from './types'
 import { calculateAspects } from './utils/aspects'
-import { getJulianDay } from './utils/julian-day'
+import { getJulianDay, getJulianDayUTC } from './utils/julian-day'
+import { localTimeToUTC } from './utils/timezone'
 import { getZodiacSign, longitudeToSignDegree } from './utils/zodiac'
 
 /**
@@ -35,15 +36,14 @@ import { getZodiacSign, longitudeToSignDegree } from './utils/zodiac'
 function calculatePlanetPosition(
   jd: number,
   planetId: number,
-  planetName: string,
-  useTopocentric: boolean = false
+  planetName: string
 ): Omit<PlanetPosition, 'house'> {
-  // Use Moshier ephemeris (built-in, no files needed) with speed calculation
-  let flags = sweph.constants.SEFLG_MOSEPH | sweph.constants.SEFLG_SPEED
-  // Topocentric correction for Moon — corrects for parallax (up to ~1° shift)
-  if (useTopocentric && planetId === 1) {
-    flags |= sweph.constants.SEFLG_TOPOCTR
-  }
+  // Use Moshier ephemeris (built-in, no files needed) with speed calculation.
+  // Geocentric positions are the standard for all Western astrology software
+  // (Co-Star, Astro.com, TimePassages, etc.). Topocentric correction was
+  // previously applied to the Moon but introduced a ~27' parallax shift that
+  // diverged from every reference chart — removed.
+  const flags = sweph.constants.SEFLG_MOSEPH | sweph.constants.SEFLG_SPEED
   const result = sweph.calc_ut(jd, planetId, flags)
 
   // result.data = [longitude, latitude, distance, lonSpeed, latSpeed, distSpeed]
@@ -132,10 +132,33 @@ export function calculateNatalChart(input: ChartInput): ChartData {
   const time = input.time ?? DEFAULT_UNKNOWN_TIME
 
   // Calculate Julian Day
-  const jd = getJulianDay(input.date, time)
-
-  // Set topocentric position for parallax-corrected Moon calculations
-  sweph.set_topo(input.lon, input.lat, 0)
+  // When birth time is known, convert local time → UTC using the birth location's timezone.
+  // This is critical because users enter local birth time, but Swiss Ephemeris needs UTC.
+  // Without this conversion, the Ascendant can be off by 1+ zodiac signs.
+  let jd: number
+  if (input.birthTimeKnown && input.time) {
+    const { utcHours, dayOffset } = localTimeToUTC(
+      input.date,
+      time,
+      input.lat,
+      input.lon
+    )
+    jd = getJulianDayUTC(input.date, utcHours, dayOffset)
+  } else {
+    // Unknown birth time: use noon *local* time at the birth location, then
+    // convert to UTC.  This is the correct Swiss Ephemeris convention — using
+    // noon at the birth location minimises the maximum error for slow-moving
+    // planets.  Noon UTC would introduce up to several hours of error for
+    // locations far from Greenwich, potentially placing the Moon in the wrong
+    // sign.
+    const { utcHours, dayOffset } = localTimeToUTC(
+      input.date,
+      DEFAULT_UNKNOWN_TIME,
+      input.lat,
+      input.lon
+    )
+    jd = getJulianDayUTC(input.date, utcHours, dayOffset)
+  }
 
   // Calculate house cusps using Placidus
   const housesResult = sweph.houses(
@@ -161,10 +184,10 @@ export function calculateNatalChart(input: ChartInput): ChartData {
   const ascendant = createPointData(housesResult.data.points[sweph.constants.SE_ASC])
   const mc = createPointData(housesResult.data.points[sweph.constants.SE_MC])
 
-  // Calculate all planet positions (topocentric correction for Moon)
+  // Calculate all planet positions (geocentric, matching industry standard)
   const planetsWithoutHouse = PLANETS_ORDER.map((planetName) => {
     const planetId = PLANET_IDS[planetName]
-    return calculatePlanetPosition(jd, planetId, planetName, true)
+    return calculatePlanetPosition(jd, planetId, planetName)
   })
 
   // Add house placements to planets

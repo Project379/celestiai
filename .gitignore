@@ -5,4 +5,4 @@ dist
 .env*.local
 *.tsbuildinfo
 packages/db/.env
-apps/web/.env.local
+.env.local

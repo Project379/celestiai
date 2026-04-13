@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 /**
  * POST /api/push/unsubscribe
@@ -12,6 +13,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    await ensureUserRecord(userId)
     const body = await req.json()
     const { endpoint } = body as { endpoint?: string }
 

@@ -14,6 +14,10 @@ export interface CachedHoroscopeState {
   yesterday?: CachedHoroscope
 }
 
+function getStorageKey(chartId: string, date: string) {
+  return `daily-horoscope:${chartId}:${date}`
+}
+
 export function useDailyHoroscope(chartId: string) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -37,7 +41,7 @@ export function useDailyHoroscope(chartId: string) {
   }, [getTodayString])
 
   const requestHoroscope = useCallback(
-    async (date: HoroscopeDate, options?: { forceGenerate?: boolean }) => {
+    async (date: HoroscopeDate) => {
       if (!chartId) return
 
       const isToday = date === 'today'
@@ -45,10 +49,6 @@ export function useDailyHoroscope(chartId: string) {
       const params = new URLSearchParams()
       params.set('date', dateValue)
       params.set('format', 'json')
-
-      if (!options?.forceGenerate) {
-        params.set('peek', '1')
-      }
 
       setFetchError(null)
       setError(null)
@@ -81,13 +81,18 @@ export function useDailyHoroscope(chartId: string) {
           return
         }
 
-        if (!options?.forceGenerate && !data.content && isToday) {
-          await requestHoroscope('today', { forceGenerate: true })
-          return
-        }
-
         if (typeof data.content === 'string') {
           const generatedAt = data.generatedAt ?? new Date().toISOString()
+          try {
+            localStorage.setItem(
+              getStorageKey(chartId, dateValue),
+              JSON.stringify({
+                content: data.content,
+                generatedAt,
+              } satisfies CachedHoroscope)
+            )
+          } catch {}
+
           setCachedContent((prev) => ({
             ...prev,
             [date]: {
@@ -108,8 +113,28 @@ export function useDailyHoroscope(chartId: string) {
   )
 
   const generateHoroscope = useCallback(async () => {
-    await requestHoroscope('today', { forceGenerate: true })
+    await requestHoroscope('today')
   }, [requestHoroscope])
+
+  useEffect(() => {
+    if (!chartId) return
+
+    const today = getTodayString()
+    const yesterday = getYesterdayString()
+
+    try {
+      const todayCached = localStorage.getItem(getStorageKey(chartId, today))
+      const yesterdayCached = localStorage.getItem(getStorageKey(chartId, yesterday))
+
+      setCachedContent((prev) => ({
+        ...prev,
+        today: todayCached ? (JSON.parse(todayCached) as CachedHoroscope) : prev.today,
+        yesterday: yesterdayCached
+          ? (JSON.parse(yesterdayCached) as CachedHoroscope)
+          : prev.yesterday,
+      }))
+    } catch {}
+  }, [chartId, getTodayString, getYesterdayString])
 
   useEffect(() => {
     void requestHoroscope('today')

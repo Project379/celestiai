@@ -1,10 +1,15 @@
-import { auth } from '@clerk/nextjs/server'
 import { generateText } from 'ai'
-import { google } from '@ai-sdk/google'
+import { createOpenAI } from '@ai-sdk/openai'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
 import type { ChartData } from '@celestia/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
+import {
+  requireAppUser,
+  requireOwnedChart,
+  toErrorResponse,
+} from '@/lib/auth/guards'
+import { assertRateLimit, getRequestIp } from '@/lib/rate-limit'
 
 /**
  * POST /api/oracle/teaser
@@ -17,15 +22,21 @@ import type { ReadingTopic } from '@/lib/oracle/prompts'
  */
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
+const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
+
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
+})
 
 export async function POST(req: Request) {
-  // Auth check
-  const { userId } = await auth()
-  if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
-  }
-
   try {
+    const { userId } = await requireAppUser()
+    assertRateLimit({
+      key: `oracle-teaser:${userId}:${getRequestIp(req)}`,
+      limit: 20,
+      windowMs: 60_000,
+    })
     const body = await req.json()
     const { chartId, topic } = body as {
       chartId?: string
@@ -46,20 +57,7 @@ export async function POST(req: Request) {
     const validatedTopic = topic as ReadingTopic
     const supabase = createServiceSupabaseClient()
 
-    // Verify chart ownership
-    const { data: chart, error: chartError } = await supabase
-      .from('charts')
-      .select('id, user_id')
-      .eq('id', chartId)
-      .single()
-
-    if (chartError || !chart) {
-      return Response.json({ error: 'Картата не е намерена' }, { status: 404 })
-    }
-
-    if (chart.user_id !== userId) {
-      return Response.json({ error: 'Неоторизиран достъп' }, { status: 403 })
-    }
+    await requireOwnedChart(userId, chartId, 'id')
 
     // Check if teaser already exists — return cached if so
     const { data: existingReading } = await supabase
@@ -111,7 +109,7 @@ export async function POST(req: Request) {
             : 'здраве и жизнена сила'
 
     const { text: teaserText } = await generateText({
-      model: google('gemini-2.5-flash'),
+      model: openrouter(LLAMA_MODEL),
       system: `Ти си Celestia — мистичен астрологически оракул. Пишеш интригуващи, поетични прогнози на български.`,
       prompt: `Напиши 2-3 изречения на български като мистично астрологическо предзнаменование за "${topicNameBg}" за тази натална карта. Бъди примамлив и загадъчен, но не разкривай конкретни детайли. Целта е да събудиш любопитство.
 
@@ -134,7 +132,7 @@ ${chartPromptText}`,
         teaser_content: teaserText,
         generated_at: now.toISOString(),
         expires_at: expiresAt.toISOString(),
-        model_version: 'gemini-2.5-flash',
+        model_version: LLAMA_MODEL,
       },
       {
         onConflict: 'chart_id,topic',
@@ -145,10 +143,6 @@ ${chartPromptText}`,
 
     return Response.json({ teaserContent: teaserText })
   } catch (error) {
-    console.error('[Oracle Teaser] Unhandled error:', error)
-    return Response.json(
-      { error: 'Грешка при генериране на предварителен преглед' },
-      { status: 500 }
-    )
+    return toErrorResponse(error, 'Грешка при генериране на предварителен преглед')
   }
 }

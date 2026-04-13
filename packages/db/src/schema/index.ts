@@ -37,3 +37,8 @@ export {
   type AuditLog,
   type NewAuditLog,
 } from './audit-logs'
+export {
+  subscriptionQuotas,
+  type SubscriptionQuota,
+  type NewSubscriptionQuota,
+} from './subscription-quotas'

@@ -1,11 +1,17 @@
+import { sql } from 'drizzle-orm'
 import {
+  date,
+  index,
+  pgPolicy,
   pgTable,
   text,
   timestamp,
-  uuid,
   uniqueIndex,
+  uuid,
 } from 'drizzle-orm/pg-core'
+import { authenticatedRole } from 'drizzle-orm/supabase'
 import { charts } from './charts'
+import { users } from './users'
 
 /**
  * Daily horoscopes table
@@ -13,10 +19,6 @@ import { charts } from './charts'
  * Stores cached AI-generated daily horoscope text per chart and calendar date.
  * One horoscope per chart per day (enforced by unique index on chart_id + date).
  * Cache key is Sofia local date (Europe/Sofia timezone) to avoid UTC mismatch.
- *
- * Note: No RLS policies — accessed via service role client only,
- * consistent with chart_calculations and ai_readings pattern. Avoids needing
- * user JWT for server-side onFinish writes during streaming.
  */
 export const dailyHoroscopes = pgTable(
   'daily_horoscopes',
@@ -25,22 +27,34 @@ export const dailyHoroscopes = pgTable(
     chartId: uuid('chart_id')
       .notNull()
       .references(() => charts.id, { onDelete: 'cascade' }),
-    userId: text('user_id').notNull(),
-    date: text('date').notNull(), // 'YYYY-MM-DD' in Sofia timezone
-    content: text('content').notNull(), // Full Bulgarian horoscope text
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.clerkId, { onDelete: 'cascade' }),
+    date: date('date').notNull(),
+    content: text('content').notNull(),
     generatedAt: timestamp('generated_at', { withTimezone: true })
       .defaultNow()
       .notNull(),
-    modelVersion: text('model_version').notNull(), // e.g. 'gemini-2.5-flash'
+    modelVersion: text('model_version').notNull(),
   },
   (table) => [
-    // One horoscope per chart per day
     uniqueIndex('daily_horoscopes_chart_date_idx').on(
       table.chartId,
       table.date
     ),
+    index('daily_horoscopes_chart_date_desc_idx').on(
+      table.chartId,
+      table.date.desc()
+    ),
+    index('daily_horoscopes_user_id_idx').on(table.userId),
+    pgPolicy('daily_horoscopes_owner_all', {
+      for: 'all',
+      to: authenticatedRole,
+      using: sql`${table.userId} = auth.jwt() ->> 'sub'`,
+      withCheck: sql`${table.userId} = auth.jwt() ->> 'sub'`,
+    }),
   ]
-)
+).enableRLS()
 
 export type DailyHoroscope = typeof dailyHoroscopes.$inferSelect
 export type NewDailyHoroscope = typeof dailyHoroscopes.$inferInsert

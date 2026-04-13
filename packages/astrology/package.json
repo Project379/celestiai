@@ -25,6 +25,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "geo-tz": "^8.1.6",
     "sweph": "^2.10.3-4"
   },
   "devDependencies": {

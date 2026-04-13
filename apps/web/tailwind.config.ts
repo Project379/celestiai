@@ -1,4 +1,6 @@
 import type { Config } from 'tailwindcss'
+
+// @ts-expect-error - nativewind/preset ships empty d.ts
 import nativewindPreset from 'nativewind/preset'
 
 const config: Config = {

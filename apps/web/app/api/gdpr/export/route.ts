@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 /**
  * GET /api/gdpr/export
@@ -14,21 +15,21 @@ export async function GET() {
   }
 
   const supabase = createServiceSupabaseClient()
+  const appUser = await ensureUserRecord(userId)
 
   // Fetch all user data in parallel
-  const [chartsRes, readingsRes, horoscopesRes, userRes] = await Promise.all([
+  const [chartsRes, readingsRes, horoscopesRes] = await Promise.all([
     supabase.from('charts').select('*').eq('user_id', userId),
     supabase.from('ai_readings').select('*').eq('user_id', userId),
     supabase.from('daily_horoscopes').select('*').eq('user_id', userId),
-    supabase.from('users').select('*').eq('clerk_id', userId).single(),
   ])
 
   const exportData = {
     exportedAt: new Date().toISOString(),
-    user: userRes.data
+    user: appUser
       ? {
-          subscriptionTier: userRes.data.subscription_tier,
-          createdAt: userRes.data.created_at,
+          subscriptionTier: appUser.subscription_tier,
+          createdAt: appUser.created_at,
         }
       : null,
     charts: chartsRes.data ?? [],

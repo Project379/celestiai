@@ -45,7 +45,7 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
           Час на раждане
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Колкото е по-точен часът, толкова по-прецизна е картата
+          Точният час подобрява прецизността на наталната карта
         </p>
       </div>
 

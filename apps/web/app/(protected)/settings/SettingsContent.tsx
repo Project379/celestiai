@@ -1,7 +1,8 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useClerk } from '@clerk/nextjs'
 import Link from 'next/link'
 
 interface SubscriptionData {
@@ -15,6 +16,7 @@ interface SubscriptionData {
 
 interface SettingsContentProps {
   tier: string
+  subscriptionStatus: string
   subscriptionData: SubscriptionData | null
   subscriptionExpiresAt: string | null
 }
@@ -37,15 +39,25 @@ function formatBgDateFromString(dateStr: string): string {
   }).format(new Date(dateStr))
 }
 
-export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt }: SettingsContentProps) {
+export function SettingsContent({ tier, subscriptionStatus, subscriptionData, subscriptionExpiresAt }: SettingsContentProps) {
   const router = useRouter()
+  const { closeUserProfile } = useClerk()
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const paymentDialogRef = useRef<HTMLDialogElement>(null)
   const [cancelReason, setCancelReason] = useState('')
   const [isPending, startTransition] = useTransition()
   const [portalLoading, setPortalLoading] = useState(false)
 
   // Determine which state to render
   const isFree = tier === 'free'
+  const hasFailedPayment =
+    subscriptionStatus === 'past_due' ||
+    subscriptionData?.status === 'past_due' ||
+    subscriptionData?.status === 'unpaid'
+  const showFailedPaymentDialog = isFree && hasFailedPayment
+  const showPastDueWarning = !isFree && hasFailedPayment
+  const isTrialing =
+    subscriptionStatus === 'trialing' || subscriptionData?.status === 'trialing'
   const isExpired =
     isFree &&
     subscriptionExpiresAt !== null &&
@@ -57,6 +69,12 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
     subscriptionData?.interval === 'year'
       ? 'Celestia Премиум (Годишен)'
       : 'Celestia Премиум (Месечен)'
+
+  useEffect(() => {
+    const dialog = paymentDialogRef.current
+    if (!showFailedPaymentDialog || !dialog || dialog.open) return
+    dialog.showModal()
+  }, [showFailedPaymentDialog])
 
   async function handleOpenPortal() {
     setPortalLoading(true)
@@ -82,6 +100,10 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
   function handleCloseCancelDialog() {
     dialogRef.current?.close()
     setCancelReason('')
+  }
+
+  function handleClosePaymentDialog() {
+    paymentDialogRef.current?.close()
   }
 
   async function handleConfirmCancel() {
@@ -130,6 +152,25 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
       <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
         <h2 className="mb-5 text-lg font-semibold text-white">Абонамент</h2>
 
+        {showPastDueWarning && (
+          <div className="mb-5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+            <p className="text-sm font-medium text-amber-200">
+              Payment failed. Your Premium access is still active during the retry period.
+            </p>
+            <p className="mt-1 text-sm text-amber-100/75">
+              Update your payment method in the billing portal to avoid losing access.
+            </p>
+            <button
+              type="button"
+              onClick={handleOpenPortal}
+              disabled={portalLoading}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm font-medium text-amber-100 transition-all hover:bg-amber-300/20 disabled:opacity-50"
+            >
+              {portalLoading ? 'Loading...' : 'Update payment method'}
+            </button>
+          </div>
+        )}
+
         {/* State A: Free user */}
         {isFree && !isExpired && (
           <div>
@@ -143,6 +184,7 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
             </p>
             <Link
               href="/pricing"
+              onClick={() => closeUserProfile()}
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             >
               Отключи Премиум
@@ -169,6 +211,7 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
             </p>
             <Link
               href="/pricing"
+              onClick={() => closeUserProfile()}
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             >
               Абонирай се отново
@@ -184,7 +227,22 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
               <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
                 Активен
               </span>
+              {isTrialing && (
+                <span className="rounded-full bg-amber-400/15 px-3 py-1 text-xs font-medium text-amber-200">
+                  Trial mode
+                </span>
+              )}
             </div>
+
+            {isTrialing && (
+              <div className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-4 py-3">
+                <p className="text-sm text-amber-100">
+                  You are using a 7-day trial. It will end on{' '}
+                  <span className="font-medium">{formatBgDate(subscriptionData.currentPeriodEnd)}</span>
+                  {' '}unless you add a payment method.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
@@ -260,6 +318,37 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
         )}
       </div>
 
+      <dialog
+        ref={paymentDialogRef}
+        className="w-full max-w-md rounded-2xl border border-red-500/30 bg-[#120f16] p-6 text-white backdrop:bg-black/70"
+      >
+        <h3 className="mb-2 text-lg font-semibold text-white">
+          Payment failed
+        </h3>
+        <p className="mb-5 text-sm text-white/65">
+          We could not complete your subscription payment. Update your payment
+          method in the billing portal, then Stripe will retry according to the
+          billing retry settings.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row-reverse">
+          <button
+            type="button"
+            onClick={handleOpenPortal}
+            disabled={portalLoading}
+            className="inline-flex items-center justify-center rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-red-500 disabled:opacity-50"
+          >
+            {portalLoading ? 'Loading...' : 'Update payment method'}
+          </button>
+          <button
+            type="button"
+            onClick={handleClosePaymentDialog}
+            className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/80 transition-all hover:bg-white/10"
+          >
+            Close
+          </button>
+        </div>
+      </dialog>
+
       {/* Privacy and data link */}
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
         <Link
@@ -291,23 +380,32 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
           </p>
         )}
 
-        {/* Optional reason dropdown */}
+        {/* Optional reason selection */}
         <div className="mb-6">
-          <label htmlFor="cancel-reason" className="mb-2 block text-sm text-white/60">
+          <p className="mb-3 text-sm text-white/60">
             Защо се отказваш? <span className="text-white/30">(по желание)</span>
-          </label>
-          <select
-            id="cancel-reason"
-            value={cancelReason}
-            onChange={(e) => setCancelReason(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
-          >
-            <option value="">Избери причина...</option>
-            <option value="too_expensive">Твърде скъпо</option>
-            <option value="not_using_enough">Не използвам достатъчно</option>
-            <option value="not_meeting_expectations">Не отговаря на очакванията</option>
-            <option value="other">Друга причина</option>
-          </select>
+          </p>
+          <div className="flex flex-col gap-2">
+            {[
+              { value: 'too_expensive', label: 'Твърде скъпо' },
+              { value: 'not_using_enough', label: 'Не използвам достатъчно' },
+              { value: 'not_meeting_expectations', label: 'Не отговаря на очакванията' },
+              { value: 'other', label: 'Друга причина' },
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setCancelReason(cancelReason === value ? '' : value)}
+                className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-all ${
+                  cancelReason === value
+                    ? 'border-purple-500/50 bg-purple-500/10 text-white'
+                    : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row-reverse">

@@ -1,9 +1,16 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
+import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import type { ChartRow } from '@/lib/types/chart'
+
+export const metadata: Metadata = {
+  title: 'Табло',
+  description: 'Твоето астрологично табло с дневен хороскоп и бързи връзки',
+}
 import { UserMenu } from '../../../components/auth/UserMenu'
 import { SessionExpiryModal } from '../../../components/auth/SessionExpiryModal'
 import { DashboardContent } from '../../../components/dashboard/DashboardContent'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 export default async function DashboardPage() {
   // Middleware already protects this route, but we get user info here
@@ -16,7 +23,7 @@ export default async function DashboardPage() {
   let subscriptionTier = 'free'
   try {
     const supabase = createServiceSupabaseClient()
-    const [chartsResult, userResult] = await Promise.all([
+    const [chartsResult, appUser] = await Promise.all([
       supabase
         .from('charts')
         .select('*')
@@ -24,19 +31,13 @@ export default async function DashboardPage() {
         .order('created_at', { ascending: false })
         .limit(1)
         .single(),
-      supabase
-        .from('users')
-        .select('subscription_tier')
-        .eq('clerk_id', userId)
-        .single(),
+      ensureUserRecord(userId!),
     ])
 
     if (!chartsResult.error && chartsResult.data) {
       birthChart = chartsResult.data as ChartRow
     }
-    if (!userResult.error && userResult.data) {
-      subscriptionTier = userResult.data.subscription_tier ?? 'free'
-    }
+    subscriptionTier = appUser.subscription_tier
   } catch (error) {
     // No birth data or error fetching - birthChart stays null, tier stays free
     console.error('Error fetching dashboard data:', error)

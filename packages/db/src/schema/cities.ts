@@ -1,5 +1,13 @@
 import { sql } from 'drizzle-orm'
-import { pgTable, text, real, uuid, index, pgPolicy } from 'drizzle-orm/pg-core'
+import {
+  pgTable,
+  text,
+  doublePrecision,
+  integer,
+  uuid,
+  index,
+  pgPolicy,
+} from 'drizzle-orm/pg-core'
 import { anonRole, authenticatedRole } from 'drizzle-orm/supabase'
 
 /**
@@ -16,9 +24,9 @@ export const cities = pgTable(
     oblast: text('oblast').notNull(), // Region/province
     ekatte: text('ekatte'), // National code (optional)
     type: text('type').notNull(), // 'city' | 'town' | 'village'
-    latitude: real('latitude').notNull(),
-    longitude: real('longitude').notNull(),
-    population: real('population'),
+    latitude: doublePrecision('latitude').notNull(),
+    longitude: doublePrecision('longitude').notNull(),
+    population: integer('population'),
   },
   (table) => [
     index('cities_name_ascii_idx').on(table.nameAscii),

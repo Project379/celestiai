@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, uuid, jsonb } from 'drizzle-orm/pg-core'
+import { users } from './users'
 
 /**
  * Audit logs table
@@ -10,7 +11,9 @@ import { pgTable, text, timestamp, uuid, jsonb } from 'drizzle-orm/pg-core'
  */
 export const auditLogs = pgTable('audit_logs', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: text('user_id'),  // nullable for system events (e.g., cron)
+  userId: text('user_id').references(() => users.clerkId, {
+    onDelete: 'set null',
+  }),
   eventType: text('event_type').notNull(),
   metadata: jsonb('metadata').default({}),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

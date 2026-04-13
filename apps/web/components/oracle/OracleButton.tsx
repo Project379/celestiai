@@ -126,23 +126,26 @@ export function OracleButton({
       <motion.button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group fixed bottom-6 right-6 z-[100] flex items-center gap-2.5 rounded-full border border-purple-500/40 bg-slate-900/90 px-5 py-3 backdrop-blur-xl transition-colors hover:border-purple-400/60"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        className="group fixed bottom-8 right-8 z-[100] flex items-center gap-3 rounded-full border border-purple-500/40 bg-slate-900/90 px-7 py-4 backdrop-blur-xl transition-colors hover:border-purple-400/60"
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.93 }}
+        initial={{ opacity: 0, y: 30, scale: 0.8 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 0.68, 0.35, 1] }}
         style={{ willChange: 'transform' }}
       >
         {/* GPU-composited pulsing glow — opacity animation instead of boxShadow */}
         <span
           className="pointer-events-none absolute inset-0 rounded-full"
           style={{
-            boxShadow: '0 0 30px rgba(139,92,246,0.25), 0 0 60px rgba(139,92,246,0.1)',
+            boxShadow: '0 0 40px rgba(139,92,246,0.3), 0 0 80px rgba(139,92,246,0.12)',
             animation: 'aura-glow 3s ease-in-out infinite',
             willChange: 'opacity',
           }}
         />
         {/* Crystal ball icon */}
-        <span className="relative text-xl">🔮</span>
-        <span className="relative text-sm font-medium text-purple-200 transition-colors group-hover:text-purple-100">
+        <span className="relative text-2xl">🔮</span>
+        <span className="relative text-base font-medium text-purple-200 transition-colors group-hover:text-purple-100">
           Оракул
         </span>
       </motion.button>

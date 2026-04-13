@@ -61,7 +61,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
           Преглед на данните
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Изглежда добре? Проверете данните преди да запазите.
+          Проверете рождените данни преди да изчислим наталната карта.
         </p>
       </div>
 
