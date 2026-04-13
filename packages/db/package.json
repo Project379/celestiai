@@ -15,11 +15,16 @@
     "./client": {
       "types": "./src/client.ts",
       "default": "./src/client.ts"
+    },
+    "./sql": {
+      "types": "./src/sql.ts",
+      "default": "./src/sql.ts"
     }
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed": "tsx src/seed/cities.ts"

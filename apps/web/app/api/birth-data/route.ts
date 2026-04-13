@@ -1,6 +1,11 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { createBirthDataSchema } from '@/lib/validators/birth-data'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
+import {
+  normalizeBirthDataChart,
+  toApproximateTimeRangeLiteral,
+} from '@/lib/birth-data/time-range'
 
 /**
  * GET /api/birth-data
@@ -17,6 +22,7 @@ export async function GET() {
   }
 
   try {
+    await ensureUserRecord(userId)
     const supabase = createServiceSupabaseClient()
 
     // Manually filter by user_id since we're using service role
@@ -34,7 +40,7 @@ export async function GET() {
       )
     }
 
-    return Response.json(data || [])
+    return Response.json((data || []).map(normalizeBirthDataChart))
   } catch (error) {
     console.error('Error fetching birth data:', error)
     return Response.json(
@@ -59,6 +65,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await ensureUserRecord(userId)
     const body = await request.json()
 
     console.log('[Birth Data] User:', userId)
@@ -87,19 +94,19 @@ export async function POST(request: Request) {
 
     console.log('[Birth Data] Inserting for user:', userId)
 
-    // Convert birth date string to ISO timestamp
-    const birthDateISO = new Date(validData.birthDate + 'T00:00:00Z').toISOString()
-
     // Insert chart with explicit user_id
     const { data, error } = await supabase
       .from('charts')
       .insert({
         user_id: userId, // Explicitly set user_id from Clerk
         name: validData.name,
-        birth_date: birthDateISO,
+        birth_date: validData.birthDate,
         birth_time_known: validData.birthTimeKnown,
         birth_time: validData.birthTime ?? null,
-        approximate_time_range: validData.approximateTimeRange ?? null,
+        approximate_time_range: toApproximateTimeRangeLiteral(
+          validData.birthDate,
+          validData.approximateTimeRange
+        ),
         city_id: validData.cityId ?? null,
         city_name: validData.cityName,
         latitude: validData.latitude,
@@ -117,7 +124,7 @@ export async function POST(request: Request) {
     }
 
     console.log('[Birth Data] Created:', data)
-    return Response.json(data, { status: 201 })
+    return Response.json(normalizeBirthDataChart(data), { status: 201 })
   } catch (error) {
     console.error('Error creating birth data:', error)
     return Response.json(

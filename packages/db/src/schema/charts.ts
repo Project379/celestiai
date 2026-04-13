@@ -3,13 +3,24 @@ import {
   pgTable,
   text,
   timestamp,
-  real,
+  date,
+  time,
+  doublePrecision,
   boolean,
   uuid,
+  customType,
+  index,
   pgPolicy,
 } from 'drizzle-orm/pg-core'
 import { authenticatedRole } from 'drizzle-orm/supabase'
 import { cities } from './cities'
+import { users } from './users'
+
+const tstzrange = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return 'tstzrange'
+  },
+})
 
 /**
  * Birth charts table with Row Level Security
@@ -21,16 +32,16 @@ export const charts = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     userId: text('user_id')
       .notNull()
-      .default(sql`(select auth.jwt()->>'sub')`),
+      .references(() => users.clerkId, { onDelete: 'cascade' }),
     name: text('name').notNull(), // Chart label like "Moiata karta"
-    birthDate: timestamp('birth_date', { withTimezone: true }).notNull(),
+    birthDate: date('birth_date').notNull(),
     birthTimeKnown: boolean('birth_time_known').notNull().default(true),
-    birthTime: text('birth_time'), // HH:MM format, null if unknown
-    approximateTimeRange: text('approximate_time_range'), // 'morning'|'afternoon'|'evening'|'night'
+    birthTime: time('birth_time'), // HH:MM format, null if unknown
+    approximateTimeRange: tstzrange('approximate_time_range'),
     cityId: uuid('city_id').references(() => cities.id),
     cityName: text('city_name').notNull(),
-    latitude: real('latitude').notNull(),
-    longitude: real('longitude').notNull(),
+    latitude: doublePrecision('latitude').notNull(),
+    longitude: doublePrecision('longitude').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -39,6 +50,7 @@ export const charts = pgTable(
       .notNull(),
   },
   (table) => [
+    index('charts_user_id_idx').on(table.userId),
     // Enable RLS - users can only select their own charts
     pgPolicy('charts_select_own', {
       for: 'select',
@@ -63,6 +75,12 @@ export const charts = pgTable(
       for: 'delete',
       to: authenticatedRole,
       using: sql`(select auth.jwt()->>'sub') = ${table.userId}`,
+    }),
+    pgPolicy('charts_owner_all', {
+      for: 'all',
+      to: authenticatedRole,
+      using: sql`${table.userId} = auth.jwt() ->> 'sub'`,
+      withCheck: sql`${table.userId} = auth.jwt() ->> 'sub'`,
     }),
   ]
 ).enableRLS()

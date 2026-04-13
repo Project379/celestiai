@@ -6,6 +6,7 @@ import type { SubscriptionOverview } from '@/lib/stripe/subscription-overview'
 
 const fallbackOverview: SubscriptionOverview = {
   tier: 'free',
+  subscriptionStatus: 'inactive',
   subscriptionData: null,
   subscriptionExpiresAt: null,
 }
@@ -81,6 +82,7 @@ export function AccountSubscriptionPage() {
     <div className="-mx-4 -my-6 sm:-mx-6">
       <SettingsContent
         tier={overview.tier}
+        subscriptionStatus={overview.subscriptionStatus}
         subscriptionData={overview.subscriptionData}
         subscriptionExpiresAt={overview.subscriptionExpiresAt}
       />

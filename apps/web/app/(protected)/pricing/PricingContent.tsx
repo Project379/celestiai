@@ -8,6 +8,8 @@ import { PricingToggle } from '@/components/upgrade/PricingToggle'
 
 interface PricingContentProps {
   currentTier: string
+  currentStatus: string
+  trialEligible: boolean
   priceMonthly: string
   priceAnnual: string
 }
@@ -31,7 +33,13 @@ const PREMIUM_FEATURES = [
  * Client component that renders the pricing cards with toggle and checkout logic.
  * Receives tier info and price IDs from the server component parent.
  */
-export function PricingContent({ currentTier, priceMonthly, priceAnnual }: PricingContentProps) {
+export function PricingContent({
+  currentTier,
+  currentStatus,
+  trialEligible,
+  priceMonthly,
+  priceAnnual,
+}: PricingContentProps) {
   const searchParams = useSearchParams()
   const [selectedPriceId, setSelectedPriceId] = useState(priceMonthly)
   const [isAnnual, setIsAnnual] = useState(false)
@@ -40,6 +48,7 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
 
   const wasCancelled = searchParams.get('cancelled') === 'true'
   const isPremium = currentTier === 'premium'
+  const isTrialing = currentStatus === 'trialing'
 
   function handlePriceChange(priceId: string, annual: boolean) {
     setSelectedPriceId(priceId)
@@ -65,6 +74,30 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
       }
     } catch {
       setErrorMessage('Грешка при свързването. Проверете интернет връзката.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function handleStartTrial() {
+    setIsLoading(true)
+    setErrorMessage(null)
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: selectedPriceId, startTrial: true }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        setErrorMessage(data.error ?? 'Could not start trial. Try again.')
+        return
+      }
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch {
+      setErrorMessage('Could not connect to Stripe. Check your internet connection.')
     } finally {
       setIsLoading(false)
     }
@@ -167,6 +200,16 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
                     Активен план
                   </span>
                 )}
+                {isTrialing && (
+                  <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-xs font-medium text-amber-200">
+                    Trial mode
+                  </span>
+                )}
+                {!isPremium && trialEligible && (
+                  <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-xs font-medium text-amber-200">
+                    7-day trial
+                  </span>
+                )}
               </div>
 
               {isAnnual ? (
@@ -210,6 +253,16 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
                 Управление на абонамент
               </Link>
             ) : (
+              <>
+                {trialEligible && (
+                  <button
+                    onClick={handleStartTrial}
+                    disabled={isLoading || !selectedPriceId}
+                    className="mb-3 w-full rounded-xl border border-amber-300/25 bg-amber-300/10 px-6 py-3 text-sm font-semibold text-amber-100 transition-all hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isLoading ? 'Loading...' : 'Start 7-day free trial'}
+                  </button>
+                )}
               <button
                 onClick={handleUpgrade}
                 disabled={isLoading || !selectedPriceId}
@@ -217,6 +270,7 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
               >
                 {isLoading ? 'Зареждане...' : 'Отключи Премиум'}
               </button>
+              </>
             )}
           </motion.div>
         </div>

@@ -5,12 +5,16 @@ import type { ChartRow } from '@/lib/types/chart'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 export default async function TransitsPage() {
   const { userId } = await auth()
 
   let chart: Pick<ChartRow, 'id' | 'name'> | null = null
   try {
+    if (userId) {
+      await ensureUserRecord(userId)
+    }
     const supabase = createServiceSupabaseClient()
     const { data, error } = await supabase
       .from('charts')

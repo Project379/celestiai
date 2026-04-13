@@ -19,7 +19,11 @@ export type AuditEventType =
   | 'payment.subscription_created'
   | 'payment.subscription_cancelled'
   | 'payment.subscription_reactivated'
+  | 'payment.invoice_payment_failed'
   | 'payment.webhook_received'
+  | 'system.payment.webhook_received'
+  | 'system.payment.webhook_ignored'
+  | 'system.security.stripe_ownership_mismatch'
 
 export async function logAuditEvent(
   userId: string | null,

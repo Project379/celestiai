@@ -18,6 +18,7 @@ export default async function SettingsPage() {
   return (
     <SettingsContent
       tier={overview.tier}
+      subscriptionStatus={overview.subscriptionStatus}
       subscriptionData={overview.subscriptionData}
       subscriptionExpiresAt={overview.subscriptionExpiresAt}
     />

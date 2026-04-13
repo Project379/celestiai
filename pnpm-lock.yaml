@@ -29,6 +29,9 @@ importers:
       '@celestia/astrology':
         specifier: workspace:*
         version: link:../../packages/astrology
+      '@celestia/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@celestia/ui':
         specifier: workspace:*
         version: link:../../packages/ui

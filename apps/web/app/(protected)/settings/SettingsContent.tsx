@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -15,6 +15,7 @@ interface SubscriptionData {
 
 interface SettingsContentProps {
   tier: string
+  subscriptionStatus: string
   subscriptionData: SubscriptionData | null
   subscriptionExpiresAt: string | null
 }
@@ -37,15 +38,24 @@ function formatBgDateFromString(dateStr: string): string {
   }).format(new Date(dateStr))
 }
 
-export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt }: SettingsContentProps) {
+export function SettingsContent({ tier, subscriptionStatus, subscriptionData, subscriptionExpiresAt }: SettingsContentProps) {
   const router = useRouter()
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const paymentDialogRef = useRef<HTMLDialogElement>(null)
   const [cancelReason, setCancelReason] = useState('')
   const [isPending, startTransition] = useTransition()
   const [portalLoading, setPortalLoading] = useState(false)
 
   // Determine which state to render
   const isFree = tier === 'free'
+  const hasFailedPayment =
+    subscriptionStatus === 'past_due' ||
+    subscriptionData?.status === 'past_due' ||
+    subscriptionData?.status === 'unpaid'
+  const showFailedPaymentDialog = isFree && hasFailedPayment
+  const showPastDueWarning = !isFree && hasFailedPayment
+  const isTrialing =
+    subscriptionStatus === 'trialing' || subscriptionData?.status === 'trialing'
   const isExpired =
     isFree &&
     subscriptionExpiresAt !== null &&
@@ -57,6 +67,12 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
     subscriptionData?.interval === 'year'
       ? 'Celestia Премиум (Годишен)'
       : 'Celestia Премиум (Месечен)'
+
+  useEffect(() => {
+    const dialog = paymentDialogRef.current
+    if (!showFailedPaymentDialog || !dialog || dialog.open) return
+    dialog.showModal()
+  }, [showFailedPaymentDialog])
 
   async function handleOpenPortal() {
     setPortalLoading(true)
@@ -82,6 +98,10 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
   function handleCloseCancelDialog() {
     dialogRef.current?.close()
     setCancelReason('')
+  }
+
+  function handleClosePaymentDialog() {
+    paymentDialogRef.current?.close()
   }
 
   async function handleConfirmCancel() {
@@ -129,6 +149,25 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
       {/* Subscription card */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
         <h2 className="mb-5 text-lg font-semibold text-white">Абонамент</h2>
+
+        {showPastDueWarning && (
+          <div className="mb-5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+            <p className="text-sm font-medium text-amber-200">
+              Payment failed. Your Premium access is still active during the retry period.
+            </p>
+            <p className="mt-1 text-sm text-amber-100/75">
+              Update your payment method in the billing portal to avoid losing access.
+            </p>
+            <button
+              type="button"
+              onClick={handleOpenPortal}
+              disabled={portalLoading}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm font-medium text-amber-100 transition-all hover:bg-amber-300/20 disabled:opacity-50"
+            >
+              {portalLoading ? 'Loading...' : 'Update payment method'}
+            </button>
+          </div>
+        )}
 
         {/* State A: Free user */}
         {isFree && !isExpired && (
@@ -184,7 +223,22 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
               <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
                 Активен
               </span>
+              {isTrialing && (
+                <span className="rounded-full bg-amber-400/15 px-3 py-1 text-xs font-medium text-amber-200">
+                  Trial mode
+                </span>
+              )}
             </div>
+
+            {isTrialing && (
+              <div className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-4 py-3">
+                <p className="text-sm text-amber-100">
+                  You are using a 7-day trial. It will end on{' '}
+                  <span className="font-medium">{formatBgDate(subscriptionData.currentPeriodEnd)}</span>
+                  {' '}unless you add a payment method.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
@@ -259,6 +313,37 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
           </div>
         )}
       </div>
+
+      <dialog
+        ref={paymentDialogRef}
+        className="w-full max-w-md rounded-2xl border border-red-500/30 bg-[#120f16] p-6 text-white backdrop:bg-black/70"
+      >
+        <h3 className="mb-2 text-lg font-semibold text-white">
+          Payment failed
+        </h3>
+        <p className="mb-5 text-sm text-white/65">
+          We could not complete your subscription payment. Update your payment
+          method in the billing portal, then Stripe will retry according to the
+          billing retry settings.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row-reverse">
+          <button
+            type="button"
+            onClick={handleOpenPortal}
+            disabled={portalLoading}
+            className="inline-flex items-center justify-center rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-red-500 disabled:opacity-50"
+          >
+            {portalLoading ? 'Loading...' : 'Update payment method'}
+          </button>
+          <button
+            type="button"
+            onClick={handleClosePaymentDialog}
+            className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/80 transition-all hover:bg-white/10"
+          >
+            Close
+          </button>
+        </div>
+      </dialog>
 
       {/* Privacy and data link */}
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">

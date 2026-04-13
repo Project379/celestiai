@@ -1,4 +1,3 @@
-import { auth } from '@clerk/nextjs/server'
 import { streamText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
@@ -8,6 +7,13 @@ import { stripSentinels } from '@/lib/oracle/planet-parser'
 import type { ChartData } from '@celestia/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
 import { logAuditEvent } from '@/lib/audit'
+import {
+  requireAppUser,
+  requireOwnedChart,
+  toErrorResponse,
+} from '@/lib/auth/guards'
+import { assertRateLimit, getRequestIp } from '@/lib/rate-limit'
+import { consumeQuota } from '@/lib/subscriptions/quota'
 
 /**
  * POST /api/oracle/generate
@@ -37,13 +43,13 @@ const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
 const PREMIUM_TOPICS: ReadingTopic[] = ['love', 'career', 'health']
 
 export async function POST(req: Request) {
-  // 1. Auth check
-  const { userId } = await auth()
-  if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
-  }
-
   try {
+    const { userId, user: appUser } = await requireAppUser()
+    assertRateLimit({
+      key: `oracle-generate:${userId}:${getRequestIp(req)}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
     // 2. Parse and validate body
     const body = await req.json()
     const { chartId, topic, regenerate } = body as {
@@ -67,54 +73,18 @@ export async function POST(req: Request) {
     const supabase = createServiceSupabaseClient()
 
     // 3. Subscription tier check — upsert user row if missing (default 'free')
-    const { data: userRow, error: userError } = await supabase
-      .from('users')
-      .upsert(
-        { clerk_id: userId, subscription_tier: 'free' },
-        { onConflict: 'clerk_id', ignoreDuplicates: true }
+    if (
+      PREMIUM_TOPICS.includes(validatedTopic) &&
+      appUser.subscription_tier !== 'premium'
+    ) {
+      return Response.json(
+        { error: 'Изисква се Premium абонамент', code: 'PREMIUM_REQUIRED' },
+        { status: 403 }
       )
-      .select('subscription_tier')
-      .single()
-
-    if (userError || !userRow) {
-      // Fallback: attempt plain select in case upsert returned nothing
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('subscription_tier')
-        .eq('clerk_id', userId)
-        .single()
-
-      const tier = existingUser?.subscription_tier ?? 'free'
-      if (PREMIUM_TOPICS.includes(validatedTopic) && tier !== 'premium') {
-        return Response.json(
-          { error: 'Изисква се Premium абонамент', code: 'PREMIUM_REQUIRED' },
-          { status: 403 }
-        )
-      }
-    } else {
-      const tier = userRow.subscription_tier
-      if (PREMIUM_TOPICS.includes(validatedTopic) && tier !== 'premium') {
-        return Response.json(
-          { error: 'Изисква се Premium абонамент', code: 'PREMIUM_REQUIRED' },
-          { status: 403 }
-        )
-      }
     }
 
     // 4. Chart ownership verification
-    const { data: chart, error: chartError } = await supabase
-      .from('charts')
-      .select('id, user_id')
-      .eq('id', chartId)
-      .single()
-
-    if (chartError || !chart) {
-      return Response.json({ error: 'Картата не е намерена' }, { status: 404 })
-    }
-
-    if (chart.user_id !== userId) {
-      return Response.json({ error: 'Неоторизиран достъп' }, { status: 403 })
-    }
+    await requireOwnedChart(userId, chartId, 'id')
 
     // 5. Cache check — return cached reading without calling Gemini
     const now = new Date().toISOString()
@@ -176,6 +146,20 @@ export async function POST(req: Request) {
     const systemPrompt = buildSystemPrompt(validatedTopic)
     const chartPromptText = chartToPromptText(chartData)
 
+    const quota = await consumeQuota(userId)
+    if (!quota.allowed) {
+      return Response.json(
+        {
+          error: 'QUOTA_EXCEEDED',
+          feature: 'ai_readings',
+          limit: quota.limit,
+          used: quota.used,
+          resetAt: quota.resetAt.toISOString(),
+        },
+        { status: 429 }
+      )
+    }
+
     // 9. Stream via Gemini gemini-2.5-flash
     const result = streamText({
       model: openrouter(LLAMA_MODEL),
@@ -222,10 +206,6 @@ export async function POST(req: Request) {
     // useCompletion with streamProtocol: 'text' reads this format
     return result.toTextStreamResponse()
   } catch (error) {
-    console.error('[Oracle Generate] Unhandled error:', error)
-    return Response.json(
-      { error: 'Грешка при генериране на четенето' },
-      { status: 500 }
-    )
+    return toErrorResponse(error, 'Грешка при генериране на четенето')
   }
 }

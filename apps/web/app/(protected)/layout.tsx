@@ -4,6 +4,7 @@ import { CelestialBackgroundLazy } from '@/components/CelestialBackgroundLazy'
 import { NavigationTransition } from '@/components/NavigationTransition'
 import { OracleButtonGlobal } from '@/components/oracle/OracleButtonGlobal'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 export default async function ProtectedLayout({
   children,
@@ -18,7 +19,7 @@ export default async function ProtectedLayout({
   if (userId) {
     try {
       const supabase = createServiceSupabaseClient()
-      const [chartResult, userResult] = await Promise.all([
+      const [chartResult, appUser] = await Promise.all([
         supabase
           .from('charts')
           .select('id')
@@ -26,16 +27,12 @@ export default async function ProtectedLayout({
           .order('created_at', { ascending: false })
           .limit(1)
           .single(),
-        supabase
-          .from('users')
-          .select('subscription_tier')
-          .eq('clerk_id', userId)
-          .single(),
+        ensureUserRecord(userId),
       ])
       if (!chartResult.error && chartResult.data) {
         chartId = chartResult.data.id
       }
-      if (!userResult.error && userResult.data?.subscription_tier === 'premium') {
+      if (appUser.subscription_tier === 'premium') {
         subscriptionTier = 'premium'
       }
     } catch {

@@ -2,6 +2,11 @@ import { auth } from '@clerk/nextjs/server'
 import { logAuditEvent } from '@/lib/audit'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { updateBirthDataSchema } from '@/lib/validators/birth-data'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
+import {
+  normalizeBirthDataChart,
+  toApproximateTimeRangeLiteral,
+} from '@/lib/birth-data/time-range'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -14,6 +19,7 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 
   try {
+    await ensureUserRecord(userId)
     const { id } = await params
     const supabase = createServiceSupabaseClient()
 
@@ -28,7 +34,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       return Response.json({ error: 'Данните не бяха намерени' }, { status: 404 })
     }
 
-    return Response.json(data)
+    return Response.json(normalizeBirthDataChart(data))
   } catch (error) {
     console.error('Error fetching birth data:', error)
     return Response.json(
@@ -45,6 +51,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 
   try {
+    await ensureUserRecord(userId)
     const { id } = await params
     const body = await request.json()
 
@@ -68,19 +75,37 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const supabase = createServiceSupabaseClient()
     const validData = validation.data
     const updateData: Record<string, unknown> = {}
+    let birthDateForRange = validData.birthDate
 
     if (validData.name !== undefined) updateData.name = validData.name
     if (validData.birthDate !== undefined) {
-      updateData.birth_date = new Date(
-        validData.birthDate + 'T00:00:00Z'
-      ).toISOString()
+      updateData.birth_date = validData.birthDate
     }
     if (validData.birthTimeKnown !== undefined) {
       updateData.birth_time_known = validData.birthTimeKnown
     }
     if (validData.birthTime !== undefined) updateData.birth_time = validData.birthTime
+    if (validData.approximateTimeRange !== undefined && !birthDateForRange) {
+      const { data: existingChart } = await supabase
+        .from('charts')
+        .select('birth_date')
+        .eq('id', id)
+        .eq('user_id', userId)
+        .single()
+
+      birthDateForRange =
+        typeof existingChart?.birth_date === 'string'
+          ? existingChart.birth_date.slice(0, 10)
+          : undefined
+    }
     if (validData.approximateTimeRange !== undefined) {
-      updateData.approximate_time_range = validData.approximateTimeRange
+      if (!birthDateForRange) {
+        return Response.json({ error: 'Данните не бяха намерени' }, { status: 404 })
+      }
+      updateData.approximate_time_range = toApproximateTimeRangeLiteral(
+        birthDateForRange,
+        validData.approximateTimeRange
+      )
     }
     if (validData.cityId !== undefined) updateData.city_id = validData.cityId
     if (validData.cityName !== undefined) updateData.city_name = validData.cityName
@@ -112,7 +137,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     logAuditEvent(userId, 'account.birth_data_edit', { chartId: id })
 
-    return Response.json(data)
+    return Response.json(normalizeBirthDataChart(data))
   } catch (error) {
     console.error('Error updating birth data:', error)
     return Response.json({ error: 'Грешка при запазване' }, { status: 500 })
@@ -126,6 +151,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   }
 
   try {
+    await ensureUserRecord(userId)
     const { id } = await params
     const supabase = createServiceSupabaseClient()
 

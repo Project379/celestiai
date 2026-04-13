@@ -1,8 +1,9 @@
 import type { Config } from 'tailwindcss'
+import { createRequire } from 'module'
 
 // nativewind/preset ships runtime JS but its published d.ts is empty in this version.
-// Use require here so Next/Tailwind can load the preset without TS module resolution failing.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// Use createRequire so the preset can be loaded from an ESM config file.
+const require = createRequire(import.meta.url)
 const nativewindPreset = require('nativewind/preset')
 
 const config: Config = {

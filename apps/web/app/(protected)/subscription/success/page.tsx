@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { SuccessContent } from './SuccessContent'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 /**
  * /subscription/success
@@ -19,14 +19,8 @@ export default async function SubscriptionSuccessPage() {
     redirect('/auth')
   }
 
-  const supabase = createServiceSupabaseClient()
-  const { data: user } = await supabase
-    .from('users')
-    .select('subscription_tier')
-    .eq('clerk_id', userId)
-    .single()
-
-  const initialTier = user?.subscription_tier ?? 'free'
+  const user = await ensureUserRecord(userId)
+  const initialTier = user.subscription_tier
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] flex items-center justify-center px-4">

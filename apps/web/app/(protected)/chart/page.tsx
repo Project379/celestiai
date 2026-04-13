@@ -5,6 +5,7 @@ import type { ChartRow } from '@/lib/types/chart'
 import { UserMenu } from '../../../components/auth/UserMenu'
 import { SessionExpiryModal } from '../../../components/auth/SessionExpiryModal'
 import { ChartView } from '../../../components/chart/ChartView'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 /**
  * Chart page - displays user's natal chart visualization with AI Oracle panel
@@ -36,21 +37,13 @@ export default async function ChartPage() {
     console.error('Error fetching chart:', error)
   }
 
-  // Fetch user's subscription tier from users table
+  // Fetch user's subscription tier from the guaranteed local app user row
   // Default to 'free' if user row doesn't exist yet (created on first Oracle generation)
   let subscriptionTier: 'free' | 'premium' = 'free'
   if (userId) {
     try {
-      const supabase = createServiceSupabaseClient()
-      const { data } = await supabase
-        .from('users')
-        .select('subscription_tier')
-        .eq('clerk_id', userId)
-        .single()
-
-      if (data?.subscription_tier === 'premium') {
-        subscriptionTier = 'premium'
-      }
+      const user = await ensureUserRecord(userId)
+      subscriptionTier = user.subscription_tier
     } catch {
       // User row doesn't exist yet — defaults to 'free'
     }

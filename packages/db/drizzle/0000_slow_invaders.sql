@@ -1,6 +1,6 @@
 CREATE TABLE "charts" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" text DEFAULT (select auth.jwt()->>'sub') NOT NULL,
+	"user_id" text NOT NULL,
 	"name" text NOT NULL,
 	"birth_date" timestamp with time zone NOT NULL,
 	"birth_time_known" boolean DEFAULT true NOT NULL,

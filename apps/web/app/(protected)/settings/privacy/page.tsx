@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { PrivacySettingsContent } from './PrivacySettingsContent'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 /**
  * /settings/privacy — Privacy settings page.
@@ -11,17 +11,12 @@ export default async function PrivacySettingsPage() {
   const { userId } = await auth()
   if (!userId) redirect('/auth')
 
-  const supabase = createServiceSupabaseClient()
-  const { data: user } = await supabase
-    .from('users')
-    .select('deleted_at, deletion_scheduled_at')
-    .eq('clerk_id', userId)
-    .single()
+  const user = await ensureUserRecord(userId)
 
   return (
     <PrivacySettingsContent
-      deletedAt={user?.deleted_at ?? null}
-      deletionScheduledAt={user?.deletion_scheduled_at ?? null}
+      deletedAt={user.deleted_at}
+      deletionScheduledAt={user.deletion_scheduled_at}
     />
   )
 }

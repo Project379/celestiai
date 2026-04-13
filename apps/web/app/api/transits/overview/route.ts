@@ -1,15 +1,27 @@
-import { auth } from '@clerk/nextjs/server'
 import { calculateNatalChart } from '@celestia/astrology'
+import {
+  requireAppUser,
+  requireOwnedChart,
+  requirePremium,
+  toErrorResponse,
+} from '@/lib/auth/guards'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 
-export async function GET(req: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+interface TransitChart {
+  id: string
+  birth_date: string
+  birth_time: string | null
+  birth_time_known: boolean
+  latitude: number
+  longitude: number
+}
 
+export async function GET(req: Request) {
   try {
+    const { userId, user } = await requireAppUser()
+    requirePremium(user)
+
     const url = new URL(req.url)
     const chartId = url.searchParams.get('chartId')
 
@@ -17,34 +29,12 @@ export async function GET(req: Request) {
       return Response.json({ error: 'Missing chartId' }, { status: 400 })
     }
 
+    const chart = await requireOwnedChart<TransitChart>(
+      userId,
+      chartId,
+      'id, birth_date, birth_time, birth_time_known, latitude, longitude'
+    )
     const supabase = createServiceSupabaseClient()
-
-    const { data: user } = await supabase
-      .from('users')
-      .select('subscription_tier')
-      .eq('clerk_id', userId)
-      .single()
-
-    if (user?.subscription_tier !== 'premium') {
-      return Response.json(
-        { error: 'Premium subscription required.', code: 'PREMIUM_REQUIRED' },
-        { status: 403 }
-      )
-    }
-
-    const { data: chart, error: chartError } = await supabase
-      .from('charts')
-      .select('id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude')
-      .eq('id', chartId)
-      .single()
-
-    if (chartError || !chart) {
-      return Response.json({ error: 'Chart not found' }, { status: 404 })
-    }
-
-    if (chart.user_id !== userId) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 })
-    }
 
     let { data: calculation } = await supabase
       .from('chart_calculations')
@@ -55,7 +45,7 @@ export async function GET(req: Request) {
     if (!calculation) {
       const chartData = calculateNatalChart({
         date: new Date(chart.birth_date),
-        time: chart.birth_time || null,
+        time: chart.birth_time?.slice(0, 5) || null,
         lat: chart.latitude,
         lon: chart.longitude,
         birthTimeKnown: chart.birth_time_known,
@@ -92,7 +82,6 @@ export async function GET(req: Request) {
     const overview = buildTransitOverview(calculation, new Date())
     return Response.json(overview)
   } catch (error) {
-    console.error('[Transit Overview] Unhandled error:', error)
-    return Response.json({ error: 'Failed to load transit overview.' }, { status: 500 })
+    return toErrorResponse(error, 'Failed to load transit overview.')
   }
 }
