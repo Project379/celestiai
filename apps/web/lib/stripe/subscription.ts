@@ -176,6 +176,7 @@ export async function handleCheckoutComplete(
     })
   }
 
+  // Retrieve the full subscription to get period end and subscription ID
   const subscription = await stripe.subscriptions.retrieve(
     session.subscription as string
   )
@@ -237,7 +238,7 @@ export async function handleCheckoutComplete(
 
   if (error) {
     throw new Error(
-      `[Webhook] handleCheckoutComplete: Supabase update failed for ${clerkUserId}: ${error.message}`
+      `[Webhook] handleCheckoutComplete: Supabase upsert failed for ${clerkUserId}: ${error.message}`
     )
   }
 

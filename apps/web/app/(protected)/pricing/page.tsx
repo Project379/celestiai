@@ -1,6 +1,13 @@
 import { auth } from '@clerk/nextjs/server'
+import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { PricingContent } from './PricingContent'
 import { ensureUserRecord } from '@/lib/users/ensure-user'
+
+export const metadata: Metadata = {
+  title: 'Цени',
+  description: 'Избери план, който ти подхожда — без скрити такси',
+}
 
 /**
  * /pricing — Subscription plan comparison page.
@@ -30,12 +37,14 @@ export default async function PricingPage() {
   const priceAnnual = process.env.STRIPE_PRICE_ANNUAL ?? ''
 
   return (
-    <PricingContent
-      currentTier={currentTier}
-      currentStatus={currentStatus}
-      trialEligible={trialEligible}
-      priceMonthly={priceMonthly}
-      priceAnnual={priceAnnual}
-    />
+    <Suspense fallback={<div className="px-4 py-16 text-center text-white/40">Зареждане...</div>}>
+      <PricingContent
+        currentTier={currentTier}
+        currentStatus={currentStatus}
+        trialEligible={trialEligible}
+        priceMonthly={priceMonthly}
+        priceAnnual={priceAnnual}
+      />
+    </Suspense>
   )
 }

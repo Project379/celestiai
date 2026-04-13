@@ -151,10 +151,10 @@ export function ChartView({
         />
       </motion.div>
 
-      <div className="lg:flex lg:items-start lg:gap-8">
+      <div className="lg:flex lg:items-start lg:gap-8 relative z-[30]">
         {/* Natal wheel — zoom from the stars */}
         <motion.div
-          className="relative flex-1"
+          className="relative flex-1 z-[30]"
           initial={{ scale: 0.01, opacity: 0, filter: 'blur(24px)' }}
           animate={{
             scale: [0.01, 0.04, 0.18, 0.6, 1.02, 1],
@@ -178,7 +178,6 @@ export function ChartView({
             chart={chart}
             onPlanetSelect={handlePlanetSelect}
             selectedPlanet={selectedPlanet}
-            size={500}
           />
         </motion.div>
 

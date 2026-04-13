@@ -1,6 +1,12 @@
 import { SignIn } from '@clerk/nextjs'
+import type { Metadata } from 'next'
 import { AuthHeader } from '@/components/auth/AuthHeader'
 import { AuthFormWrapper } from '@/components/auth/AuthFormWrapper'
+
+export const metadata: Metadata = {
+  title: 'Вход',
+  description: 'Влез в своя Celestia AI акаунт',
+}
 
 const clerkAppearance = {
   elements: {

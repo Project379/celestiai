@@ -1,7 +1,13 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
 import { PrivacySettingsContent } from './PrivacySettingsContent'
 import { ensureUserRecord } from '@/lib/users/ensure-user'
+
+export const metadata: Metadata = {
+  title: 'Поверителност',
+  description: 'Управлявай поверителността и изтриването на акаунта си',
+}
 
 /**
  * /settings/privacy — Privacy settings page.

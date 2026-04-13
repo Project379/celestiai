@@ -80,7 +80,11 @@ export async function GET(req: Request) {
     }
 
     const overview = buildTransitOverview(calculation, new Date())
-    return Response.json(overview)
+    return Response.json(overview, {
+      headers: {
+        'Cache-Control': 'private, max-age=900, stale-while-revalidate=600',
+      },
+    })
   } catch (error) {
     return toErrorResponse(error, 'Failed to load transit overview.')
   }

@@ -375,7 +375,7 @@ export function BigThreeCards({
       />
       <BigThreeCard
         iconName="rising"
-        title="Възходящ"
+        title="Асцендент"
         sign={ascendant.sign}
         degree={ascendant.degree}
         trait={SIGN_TRAITS[ascendant.sign as ZodiacSign]}

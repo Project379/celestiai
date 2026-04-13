@@ -1,6 +1,12 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
+import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import type { ChartRow } from '@/lib/types/chart'
+
+export const metadata: Metadata = {
+  title: 'Табло',
+  description: 'Твоето астрологично табло с дневен хороскоп и бързи връзки',
+}
 import { UserMenu } from '../../../components/auth/UserMenu'
 import { SessionExpiryModal } from '../../../components/auth/SessionExpiryModal'
 import { DashboardContent } from '../../../components/dashboard/DashboardContent'

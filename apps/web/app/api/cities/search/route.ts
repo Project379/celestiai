@@ -27,8 +27,6 @@ export async function GET(request: Request) {
   const limitParam = searchParams.get('limit')
   const limit = limitParam ? parseInt(limitParam, 10) : 20
 
-  console.log('[City Search] Query:', query, 'Limit:', limit)
-
   // Validate query
   if (!query || query.length < 1) {
     return Response.json(
@@ -62,8 +60,6 @@ export async function GET(request: Request) {
       .order('name', { ascending: true })
       .limit(limit)
 
-    console.log('[City Search] Results:', data?.length || 0, 'Error:', error?.message || 'none')
-
     if (error) {
       console.error('City search error:', error)
       return Response.json(
@@ -80,7 +76,11 @@ export async function GET(request: Request) {
       return a.name.localeCompare(b.name, 'bg')
     })
 
-    return Response.json(sortedData)
+    return Response.json(sortedData, {
+      headers: {
+        'Cache-Control': 'private, max-age=3600',
+      },
+    })
   } catch (error) {
     return toErrorResponse(error, 'Вътрешна грешка')
   }

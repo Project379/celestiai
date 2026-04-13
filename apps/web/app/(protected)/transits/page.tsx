@@ -1,11 +1,18 @@
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+
+export const metadata: Metadata = {
+  title: 'Транзити',
+  description: 'Активните транзити към твоята натална карта',
+}
 import type { ChartRow } from '@/lib/types/chart'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
 import { ensureUserRecord } from '@/lib/users/ensure-user'
+import { PlusIcon } from '@/components/icons/PlusIcon'
 
 export default async function TransitsPage() {
   const { userId } = await auth()
@@ -52,19 +59,7 @@ export default async function TransitsPage() {
         ) : (
           <div className="rounded-xl border border-dashed border-purple-500/50 bg-purple-500/5 p-8 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-purple-500/10">
-              <svg
-                className="h-7 w-7 text-purple-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
+              <PlusIcon className="h-7 w-7 text-purple-400" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-200">
               Добави рождени данни
@@ -76,19 +71,7 @@ export default async function TransitsPage() {
               href="/birth-data"
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
+              <PlusIcon />
               Въведи данни за раждане
             </Link>
           </div>

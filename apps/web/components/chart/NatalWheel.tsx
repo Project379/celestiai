@@ -6,6 +6,13 @@ import { arc } from 'd3-shape'
 import { useD3 } from '@/hooks/useD3'
 import type { ChartData, PlanetPosition, AspectData } from '@celestia/astrology/client'
 import { ZODIAC_SIGNS_BG, PLANETS_BG, ZODIAC_SIGNS_ORDER } from '@celestia/astrology/client'
+// Traditional natal wheel convention:
+//   - Ascendant anchored at the 9 o'clock (left) position
+//   - Zodiac signs proceed counterclockwise from the Ascendant
+// Converts an ecliptic longitude to a trigonometric angle (radians) compatible
+// with `Math.cos`/`Math.sin` and SVG y-down screen coordinates.
+const longitudeToScreenRad = (longitude: number, rotationDeg: number) =>
+  ((180 - (longitude - rotationDeg)) * Math.PI) / 180
 import type { ZodiacSign, Planet, AspectType } from '@celestia/astrology/client'
 import { GlyphDefs } from '@/components/icons/CelestialIcons'
 
@@ -16,7 +23,7 @@ interface NatalWheelProps {
   onPlanetSelect?: (planet: PlanetPosition) => void
   /** Selected planet (for highlighting) */
   selectedPlanet?: string | null
-  /** Chart size in pixels (default 500) */
+  /** Chart size in pixels (default 600) */
   size?: number
 }
 
@@ -87,7 +94,7 @@ const ELEMENT_FX: Record<string, { core: number[]; mid: number[]; outer: number[
  * - Inner: Planet positions (clickable)
  * - Center: Aspect lines connecting planets
  */
-export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}: NatalWheelProps) {
+export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}: NatalWheelProps) {
   const center = size / 2
   const outerRadius = size * 0.48
   const zodiacOuterRadius = size * 0.46
@@ -97,12 +104,49 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
   const aspectRadius = houseInnerRadius * 0.9
   const aspectAnchorRadius = houseInnerRadius * 0.96
 
-  // Memoize planet positions to avoid recalculating
+  // Hovered zodiac sign — drives the custom React tooltip. Position is in
+  // container-local coordinates so the overlay div can be absolutely placed.
+  const [hoveredSign, setHoveredSign] = useState<
+    { sign: ZodiacSign; x: number; y: number } | null
+  >(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Minimum angular separation between planet glyphs (degrees).
+  // When two or more planets are within this distance their display
+  // angles are fanned out so glyphs never overlap.
+  const MIN_SEPARATION_DEG = 8
+
+  const rotationDeg = chart.ascendant.longitude
+
+  // Memoize planet positions with de-clumping to prevent overlap
   const planetPositions = useMemo(() => {
-    return chart.planets.map((planet) => {
-      // Convert longitude to angle (Aries starts at 9 o'clock = 180 degrees)
-      // We rotate -90 to put Aries at the left (9 o'clock position)
-      const angle = ((planet.longitude - 90) * Math.PI) / 180
+    // 1. Compute raw angles
+    const raw = chart.planets.map((planet) => ({
+      ...planet,
+      rawAngle: planet.longitude,
+      displayAngle: planet.longitude,
+    }))
+
+    // 2. Sort by raw angle so we can detect clusters
+    raw.sort((a, b) => a.rawAngle - b.rawAngle)
+
+    // 3. De-clump: walk through sorted list and push apart when too close
+    for (let pass = 0; pass < 4; pass++) {
+      for (let i = 0; i < raw.length; i++) {
+        const next = (i + 1) % raw.length
+        let diff = raw[next].displayAngle - raw[i].displayAngle
+        if (next === 0) diff += 360 // wrap-around
+        if (diff < MIN_SEPARATION_DEG) {
+          const shift = (MIN_SEPARATION_DEG - diff) / 2
+          raw[i].displayAngle -= shift
+          raw[next].displayAngle += shift
+        }
+      }
+    }
+
+    // 4. Convert to pixel positions using the traditional rotated frame
+    return raw.map((planet) => {
+      const angle = longitudeToScreenRad(planet.displayAngle, rotationDeg)
       return {
         ...planet,
         x: center + Math.cos(angle) * planetRadius,
@@ -110,7 +154,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
         angle,
       }
     })
-  }, [chart.planets, center, planetRadius])
+  }, [chart.planets, center, planetRadius, rotationDeg])
 
   // Handle planet click
   const handlePlanetClick = useCallback(
@@ -135,19 +179,37 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
         .attr('stroke', 'rgba(148, 163, 184, 0.3)')
         .attr('stroke-width', 1)
 
-      // Draw zodiac segments
+      // Draw zodiac segments.
+      // Wheel rotates so longitude == rotationDeg lands at 9 o'clock and signs
+      // proceed counterclockwise (the traditional Western natal chart layout).
+      // The d3 arc angle convention is 0 at 12 o'clock with positive values
+      // proceeding clockwise, so we map each 30° sign band accordingly and
+      // feed the start/end in ascending order to keep the sweep positive.
       const zodiacArc = arc<{ index: number }>()
         .innerRadius(zodiacInnerRadius)
         .outerRadius(zodiacOuterRadius)
-        .startAngle((d) => ((d.index * 30 - 90) * Math.PI) / 180)
-        .endAngle((d) => (((d.index + 1) * 30 - 90) * Math.PI) / 180)
+        .startAngle((d) => ((270 - ((d.index + 1) * 30 - rotationDeg)) * Math.PI) / 180)
+        .endAngle((d) => ((270 - (d.index * 30 - rotationDeg)) * Math.PI) / 180)
 
       const zodiacData = ZODIAC_SIGNS_ORDER.map((sign, index) => ({
         sign,
         index,
       }))
 
-      // Draw zodiac segment backgrounds
+      // Position helper: translate a native pointer event into container-local
+      // coordinates so the absolutely-positioned React tooltip lines up with
+      // the cursor regardless of scroll or responsive scaling.
+      const pointerToLocal = (event: MouseEvent) => {
+        const host = containerRef.current
+        if (!host) return { x: 0, y: 0 }
+        const rect = host.getBoundingClientRect()
+        return { x: event.clientX - rect.left, y: event.clientY - rect.top }
+      }
+
+      // Draw zodiac segment backgrounds. Each segment hosts the hover
+      // handlers that drive the React tooltip — overlapping decorations
+      // (glyphs, ASC/MC lines) are set to `pointer-events: none` below so
+      // they can't steal these events from the segment underneath.
       g.selectAll('.zodiac-segment')
         .data(zodiacData)
         .enter()
@@ -158,12 +220,25 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
         .attr('fill', (d) => ELEMENT_COLORS[SIGN_ELEMENTS[d.sign]])
         .attr('stroke', 'rgba(148, 163, 184, 0.2)')
         .attr('stroke-width', 1)
+        .style('cursor', 'help')
+        .style('pointer-events', 'all')
+        .on('mouseenter', function (event: MouseEvent, d) {
+          const { x, y } = pointerToLocal(event)
+          setHoveredSign({ sign: d.sign, x, y })
+        })
+        .on('mousemove', function (event: MouseEvent, d) {
+          const { x, y } = pointerToLocal(event)
+          setHoveredSign({ sign: d.sign, x, y })
+        })
+        .on('mouseleave', () => setHoveredSign(null))
 
-      // Draw zodiac labels (custom SVG glyphs via <use>)
+      // Draw zodiac labels (custom SVG glyphs via <use>). They sit on top of
+      // the segment wedges, so we mark them pointer-events-none and let hover
+      // events fall through to the segment underneath.
       const labelRadius = (zodiacInnerRadius + zodiacOuterRadius) / 2
       const zodiacGlyphSize = size * 0.055
       zodiacData.forEach((d) => {
-        const angle = ((d.index * 30 + 15 - 90) * Math.PI) / 180
+        const angle = longitudeToScreenRad(d.index * 30 + 15, rotationDeg)
         const x = center + Math.cos(angle) * labelRadius
         const y = center + Math.sin(angle) * labelRadius
 
@@ -179,6 +254,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
           .attr('stroke-linecap', 'round')
           .attr('stroke-linejoin', 'round')
           .style('color', 'rgba(226, 232, 240, 0.8)')
+          .style('pointer-events', 'none')
       })
 
       // Draw inner zodiac ring border
@@ -189,10 +265,11 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
         .attr('fill', 'none')
         .attr('stroke', 'rgba(148, 163, 184, 0.2)')
         .attr('stroke-width', 1)
+        .style('pointer-events', 'none')
 
       // Draw house cusp lines
       chart.houses.forEach((house) => {
-        const angle = ((house.cuspLongitude - 90) * Math.PI) / 180
+        const angle = longitudeToScreenRad(house.cuspLongitude, rotationDeg)
         const x1 = center + Math.cos(angle) * houseInnerRadius
         const y1 = center + Math.sin(angle) * houseInnerRadius
         const x2 = center + Math.cos(angle) * zodiacInnerRadius
@@ -207,8 +284,9 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
           .attr('stroke-width', 1)
           .attr('stroke-dasharray', house.number === 1 || house.number === 10 ? 'none' : '3,3')
 
-        // House number label (positioned at inner edge)
-        const labelAngle = angle + (15 * Math.PI) / 180 // Offset by 15 degrees
+        // House number label — offset into the middle of the house the
+        // traditional (counterclockwise) direction.
+        const labelAngle = angle - (15 * Math.PI) / 180
         const houseNumberRadius = houseInnerRadius * 1.15
         const labelX = center + Math.cos(labelAngle) * houseNumberRadius
         const labelY = center + Math.sin(labelAngle) * houseNumberRadius
@@ -223,8 +301,8 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
           .text(house.number.toString())
       })
 
-      // Draw Ascendant line (thicker, highlighted)
-      const ascAngle = ((chart.ascendant.longitude - 90) * Math.PI) / 180
+      // Draw Ascendant line (thicker, highlighted) — will always sit on the left
+      const ascAngle = longitudeToScreenRad(chart.ascendant.longitude, rotationDeg)
       g.append('line')
         .attr('x1', center + Math.cos(ascAngle) * (houseInnerRadius * 0.5))
         .attr('y1', center + Math.sin(ascAngle) * (houseInnerRadius * 0.5))
@@ -232,9 +310,10 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
         .attr('y2', center + Math.sin(ascAngle) * zodiacOuterRadius)
         .attr('stroke', '#22d3ee')
         .attr('stroke-width', 2)
+        .style('pointer-events', 'none')
 
       // Draw MC line (thicker, highlighted)
-      const mcAngle = ((chart.mc.longitude - 90) * Math.PI) / 180
+      const mcAngle = longitudeToScreenRad(chart.mc.longitude, rotationDeg)
       g.append('line')
         .attr('x1', center + Math.cos(mcAngle) * (houseInnerRadius * 0.5))
         .attr('y1', center + Math.sin(mcAngle) * (houseInnerRadius * 0.5))
@@ -242,6 +321,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
         .attr('y2', center + Math.sin(mcAngle) * zodiacOuterRadius)
         .attr('stroke', '#f472b6')
         .attr('stroke-width', 2)
+        .style('pointer-events', 'none')
 
       // Draw aspect lines (in center)
       chart.aspects.forEach((aspect) => {
@@ -294,7 +374,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
           .attr('class', 'planet-group')
           .attr('role', 'button')
           .attr('tabindex', '0')
-          .attr('aria-label', `${PLANETS_BG[planet.planet as Planet]} - натисни за детайли`)
+          .attr('aria-label', `${PLANETS_BG[planet.planet as Planet]} — натисни за тълкуване`)
           .style('cursor', 'pointer')
           .style('outline', 'none')
           .on('click', () => handlePlanetClick(planet))
@@ -325,13 +405,13 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
           .attr('data-planet', planet.planet)
           .attr('cx', planet.x)
           .attr('cy', planet.y)
-          .attr('r', size * 0.03)
+          .attr('r', size * 0.035)
           .attr('fill', 'rgba(15, 23, 42, 0.9)')
           .attr('stroke', PLANET_COLORS[planet.planet])
           .attr('stroke-width', 2)
 
         // Planet glyph (custom SVG via <use>)
-        const planetGlyphSize = size * 0.038
+        const planetGlyphSize = size * 0.042
         const glyphColor = PLANET_COLORS[planet.planet]
         planetGroup
           .append('use')
@@ -364,7 +444,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
         }
       })
     },
-    [chart, center, size, planetPositions, handlePlanetClick, aspectAnchorRadius]
+    [chart, center, size, planetPositions, handlePlanetClick, aspectAnchorRadius, rotationDeg]
   )
 
   // Secondary effect to only toggle styles when selectedPlanet changes without tearing down the D3 graph
@@ -515,7 +595,12 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
   }, [selectedPlanet, selectedElement, size, spx, spy])
 
   return (
-    <div className="relative mx-auto" style={{ maxWidth: size, width: '100%' }}>
+    <div
+      ref={containerRef}
+      className="relative mx-auto"
+      style={{ maxWidth: size, width: '100%' }}
+      onMouseLeave={() => setHoveredSign(null)}
+    >
       {/* Hidden SVG for glyph definitions so d3 doesn't clear it */}
       <svg width="0" height="0" className="absolute">
         <GlyphDefs />
@@ -535,6 +620,18 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 500,}:
         className="mx-auto"
         style={{ maxWidth: '100%', height: 'auto' }}
       />
+      {hoveredSign && (
+        <div
+          role="tooltip"
+          className="pointer-events-none absolute z-30 whitespace-nowrap rounded-md border border-white/10 bg-slate-900/95 px-2 py-1 text-xs font-medium text-slate-100 shadow-lg backdrop-blur"
+          style={{
+            left: hoveredSign.x + 14,
+            top: hoveredSign.y + 14,
+          }}
+        >
+          {ZODIAC_SIGNS_BG[hoveredSign.sign]}
+        </div>
+      )}
     </div>
   )
 }
