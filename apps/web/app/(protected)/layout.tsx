@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { CelestialBackgroundLazy } from '@/components/CelestialBackgroundLazy'
 import { NavigationTransition } from '@/components/NavigationTransition'
 import { OracleButtonGlobal } from '@/components/oracle/OracleButtonGlobal'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { getCachedLatestChart, getCachedUserTier } from '@/lib/supabase/queries'
 
 export default async function ProtectedLayout({
   children,
@@ -13,31 +13,17 @@ export default async function ProtectedLayout({
   const { userId } = await auth()
 
   // Fetch chart + tier for the global Oracle button
+  // Uses React.cache() — deduped with any page-level fetches in the same render pass
   let chartId: string | null = null
   let subscriptionTier: 'free' | 'premium' = 'free'
   if (userId) {
     try {
-      const supabase = createServiceSupabaseClient()
-      const [chartResult, userResult] = await Promise.all([
-        supabase
-          .from('charts')
-          .select('id')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single(),
-        supabase
-          .from('users')
-          .select('subscription_tier')
-          .eq('clerk_id', userId)
-          .single(),
+      const [chart, tier] = await Promise.all([
+        getCachedLatestChart(userId),
+        getCachedUserTier(userId),
       ])
-      if (!chartResult.error && chartResult.data) {
-        chartId = chartResult.data.id
-      }
-      if (!userResult.error && userResult.data?.subscription_tier === 'premium') {
-        subscriptionTier = 'premium'
-      }
+      chartId = chart?.id ?? null
+      subscriptionTier = tier
     } catch {
       // Defaults stay null / 'free'
     }

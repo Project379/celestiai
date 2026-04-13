@@ -180,12 +180,14 @@ export function RisingIcon({ size, className }: IconProps) {
 
 /* ── ZODIAC ICONS ─────────────────────────────────────────────── */
 
-/** ♈ Aries — ram horns */
+/** ♈ Aries — V stem with small inward half-circles at each tip */
 export function AriesIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <path d="M6 20c0-10 0-14 3-17 2-1.5 3 .5 3 3v14" />
-      <path d="M18 20c0-10 0-14-3-17-2-1.5-3 .5-3 3" />
+      {/* Stem + left arm + small half-circle curling inward */}
+      <path d="M12 21V13L4 6C1 6 1 11 4 11" />
+      {/* Right arm + small half-circle curling outward */}
+      <path d="M12 13L20 6C23 6 23 11 20 11" />
     </Svg>
   )
 }
@@ -281,12 +283,12 @@ export function SagittariusIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♑ Capricorn — sea-goat */
+/** ♑ Capricorn — Handwritten n with top-left stroke and outer overlapping loop ending inwards */
 export function CapricornIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
-      <path d="M4 4v8c0 4 3 6 6 6s5-2 5-5V8" />
-      <path d="M15 13c0 4 2 7 4 7a2.5 2.5 0 0 0 0-5" />
+      <path d="M 5.5 8 Q 7 7 8.5 9 L 8.5 16" />
+      <path d="M 8.5 9 C 8.5 4 14.5 4 14.5 9 V 15 C 14.5 18.5 19.5 20.5 19.5 16 C 19.5 11.5 13.5 11.5 13.5 16 C 13.5 20.5 11.5 21.5 10.5 20.5" />
     </Svg>
   )
 }
@@ -306,8 +308,8 @@ export function PiscesIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
       <path d="M4 12h16" />
-      <path d="M8 4c-4 4-4 12 0 16" />
-      <path d="M16 4c4 4 4 12 0 16" />
+      <path d="M4 4c6 4 6 12 0 16" />
+      <path d="M20 4c-6 4-6 12 0 16" />
     </Svg>
   )
 }

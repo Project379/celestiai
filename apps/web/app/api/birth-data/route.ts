@@ -87,6 +87,11 @@ export async function POST(request: Request) {
 
     console.log('[Birth Data] Inserting for user:', userId)
 
+    // Ensure the user row exists before inserting a chart (FK constraint)
+    await supabase
+      .from('users')
+      .upsert({ clerk_id: userId }, { onConflict: 'clerk_id', ignoreDuplicates: true })
+
     // Convert birth date string to ISO timestamp
     const birthDateISO = new Date(validData.birthDate + 'T00:00:00Z').toISOString()
 

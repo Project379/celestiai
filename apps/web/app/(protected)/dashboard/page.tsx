@@ -1,6 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import type { Metadata } from 'next'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { getCachedLatestChart, getCachedUserTier } from '@/lib/supabase/queries'
 import type { ChartRow } from '@/lib/types/chart'
 
 export const metadata: Metadata = {
@@ -18,34 +18,20 @@ export default async function DashboardPage() {
   const firstName = user?.firstName || 'Потребител'
 
   // Fetch user's birth data and subscription tier
+  // Uses React.cache() — deduped with layout-level fetches in the same render pass
   let birthChart: ChartRow | null = null
-  let subscriptionTier = 'free'
-  try {
-    const supabase = createServiceSupabaseClient()
-    const [chartsResult, userResult] = await Promise.all([
-      supabase
-        .from('charts')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single(),
-      supabase
-        .from('users')
-        .select('subscription_tier')
-        .eq('clerk_id', userId)
-        .single(),
-    ])
-
-    if (!chartsResult.error && chartsResult.data) {
-      birthChart = chartsResult.data as ChartRow
+  let subscriptionTier: 'free' | 'premium' = 'free'
+  if (userId) {
+    try {
+      const [chart, tier] = await Promise.all([
+        getCachedLatestChart(userId),
+        getCachedUserTier(userId),
+      ])
+      birthChart = chart as ChartRow | null
+      subscriptionTier = tier
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
     }
-    if (!userResult.error && userResult.data) {
-      subscriptionTier = userResult.data.subscription_tier ?? 'free'
-    }
-  } catch (error) {
-    // No birth data or error fetching - birthChart stays null, tier stays free
-    console.error('Error fetching dashboard data:', error)
   }
 
   const priceMonthly = process.env.STRIPE_PRICE_MONTHLY ?? ''
@@ -63,7 +49,6 @@ export default async function DashboardPage() {
       {/* Dashboard content */}
       <DashboardContent
         firstName={firstName}
-        userId={userId}
         initialBirthChart={birthChart}
         subscriptionTier={subscriptionTier}
         priceMonthly={priceMonthly}

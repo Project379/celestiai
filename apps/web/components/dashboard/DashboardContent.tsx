@@ -12,7 +12,6 @@ import type { ChartRow } from '@/lib/types/chart'
 
 interface DashboardContentProps {
   firstName: string
-  userId: string | null
   initialBirthChart: ChartRow | null
   subscriptionTier: string
   priceMonthly: string
@@ -20,7 +19,6 @@ interface DashboardContentProps {
 
 export function DashboardContent({
   firstName,
-  userId,
   initialBirthChart,
   subscriptionTier,
   priceMonthly,
@@ -30,16 +28,17 @@ export function DashboardContent({
 
   const isPremium = subscriptionTier !== 'free'
 
-  const handleBirthDataUpdate = useCallback(() => {
+  const handleBirthDataUpdate = useCallback(async () => {
     router.refresh()
-    fetch('/api/birth-data')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.length > 0) {
-          setBirthChart(data[0])
-        }
-      })
-      .catch(() => {})
+    try {
+      const res = await fetch('/api/birth-data')
+      const data = await res.json()
+      if (data?.length > 0) {
+        setBirthChart(data[0])
+      }
+    } catch (err) {
+      console.error('[BirthDataUpdate] Failed to refresh chart:', err)
+    }
   }, [router])
 
   return (
@@ -241,12 +240,6 @@ export function DashboardContent({
             </svg>
           </span>
         </Link>
-      </div>
-
-      <div className="mt-8 rounded-xl border border-slate-700/50 bg-slate-800/20 p-4">
-        <p className="text-xs text-slate-500">
-          User ID: {userId}
-        </p>
       </div>
 
     </motion.div>
