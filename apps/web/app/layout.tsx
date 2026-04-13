@@ -19,8 +19,25 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Celestia AI - Твоят астрологичен приятел',
+  title: {
+    default: 'Celestia AI — Твоят астрологичен приятел',
+    template: '%s | Celestia AI',
+  },
   description: 'Персонализирани хороскопи и астрологични прогнози, създадени за теб',
+  applicationName: 'Celestia AI',
+  keywords: ['астрология', 'хороскоп', 'натална карта', 'транзити', 'Celestia'],
+  openGraph: {
+    type: 'website',
+    locale: 'bg_BG',
+    siteName: 'Celestia AI',
+    title: 'Celestia AI — Твоят астрологичен приятел',
+    description: 'Персонализирани хороскопи и астрологични прогнози, създадени за теб',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Celestia AI',
+    description: 'Персонализирани хороскопи и астрологични прогнози',
+  },
 }
 
 export default function RootLayout({

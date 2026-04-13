@@ -1,7 +1,13 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
 import { getSubscriptionOverview } from '@/lib/stripe/subscription-overview'
 import { SettingsContent } from './SettingsContent'
+
+export const metadata: Metadata = {
+  title: 'Настройки',
+  description: 'Управлявай абонамента и акаунта си',
+}
 
 /**
  * /settings - Subscription management page.

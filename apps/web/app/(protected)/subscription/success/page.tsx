@@ -1,7 +1,14 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { SuccessContent } from './SuccessContent'
+
+export const metadata: Metadata = {
+  title: 'Абонаментът е активен',
+  description: 'Добре дошъл в Celestia Premium',
+  robots: { index: false, follow: false },
+}
 
 /**
  * /subscription/success
@@ -24,12 +31,12 @@ export default async function SubscriptionSuccessPage() {
     .from('users')
     .select('subscription_tier')
     .eq('clerk_id', userId)
-    .single()
+    .maybeSingle()
 
   const initialTier = user?.subscription_tier ?? 'free'
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4">
       <SuccessContent initialTier={initialTier} />
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -18,6 +19,8 @@ type State = 'activating' | 'activated' | 'timeout'
  * - 30 seconds elapse without confirmation → shows timeout fallback
  */
 export function SuccessContent({ initialTier }: SuccessContentProps) {
+  const searchParams = useSearchParams()
+  const sessionId = searchParams.get('session_id')
   const [uiState, setUiState] = useState<State>(
     initialTier === 'premium' ? 'activated' : 'activating'
   )
@@ -37,7 +40,10 @@ export function SuccessContent({ initialTier }: SuccessContentProps) {
       }
 
       try {
-        const res = await fetch('/api/stripe/status')
+        const url = sessionId
+          ? `/api/stripe/status?session_id=${encodeURIComponent(sessionId)}`
+          : '/api/stripe/status'
+        const res = await fetch(url)
         if (!res.ok) return
 
         const data = (await res.json()) as { tier: string }
@@ -51,7 +57,7 @@ export function SuccessContent({ initialTier }: SuccessContentProps) {
     }, POLL_INTERVAL_MS)
 
     return () => clearInterval(intervalId)
-  }, [uiState])
+  }, [uiState, sessionId])
 
   return (
     <AnimatePresence mode="wait">

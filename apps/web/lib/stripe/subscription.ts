@@ -42,18 +42,21 @@ export async function handleCheckoutComplete(
   const supabase = createServiceSupabaseClient()
   const { error } = await supabase
     .from('users')
-    .update({
-      subscription_tier: 'premium',
-      stripe_customer_id: session.customer as string,
-      stripe_subscription_id: subscription.id,
-      subscription_expires_at: getSubscriptionExpiry(subscription),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('clerk_id', clerkUserId)
+    .upsert(
+      {
+        clerk_id: clerkUserId,
+        subscription_tier: 'premium',
+        stripe_customer_id: session.customer as string,
+        stripe_subscription_id: subscription.id,
+        subscription_expires_at: getSubscriptionExpiry(subscription),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'clerk_id' }
+    )
 
   if (error) {
     throw new Error(
-      `[Webhook] handleCheckoutComplete: Supabase update failed for ${clerkUserId}: ${error.message}`
+      `[Webhook] handleCheckoutComplete: Supabase upsert failed for ${clerkUserId}: ${error.message}`
     )
   }
 

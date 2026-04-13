@@ -71,7 +71,7 @@ export function BirthDataCard({ chart, onUpdate }: BirthDataCardProps) {
             </div>
             <div>
               <h3 className="font-semibold text-slate-200">{chart.name}</h3>
-              <p className="text-xs text-slate-500">Данни за раждане</p>
+              <p className="text-xs text-slate-500">Рождени данни</p>
             </div>
           </div>
           <button

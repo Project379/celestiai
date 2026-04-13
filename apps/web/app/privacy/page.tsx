@@ -1,5 +1,11 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { GlassCard, Text } from '@celestia/ui'
+
+export const metadata: Metadata = {
+  title: 'Политика за поверителност',
+  description: 'Как Celestia AI събира, използва и защитава личните ти данни',
+}
 
 /**
  * /privacy — Public GDPR-compliant privacy policy page in Bulgarian.
