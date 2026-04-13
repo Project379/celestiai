@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useClerk } from '@clerk/nextjs'
 import Link from 'next/link'
 
 interface SubscriptionData {
@@ -39,6 +40,7 @@ function formatBgDateFromString(dateStr: string): string {
 
 export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt }: SettingsContentProps) {
   const router = useRouter()
+  const { closeUserProfile } = useClerk()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [cancelReason, setCancelReason] = useState('')
   const [isPending, startTransition] = useTransition()
@@ -143,6 +145,7 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
             </p>
             <Link
               href="/pricing"
+              onClick={() => closeUserProfile()}
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             >
               Отключи Премиум
@@ -169,6 +172,7 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
             </p>
             <Link
               href="/pricing"
+              onClick={() => closeUserProfile()}
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             >
               Абонирай се отново
@@ -291,23 +295,32 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
           </p>
         )}
 
-        {/* Optional reason dropdown */}
+        {/* Optional reason selection */}
         <div className="mb-6">
-          <label htmlFor="cancel-reason" className="mb-2 block text-sm text-white/60">
+          <p className="mb-3 text-sm text-white/60">
             Защо се отказваш? <span className="text-white/30">(по желание)</span>
-          </label>
-          <select
-            id="cancel-reason"
-            value={cancelReason}
-            onChange={(e) => setCancelReason(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
-          >
-            <option value="">Избери причина...</option>
-            <option value="too_expensive">Твърде скъпо</option>
-            <option value="not_using_enough">Не използвам достатъчно</option>
-            <option value="not_meeting_expectations">Не отговаря на очакванията</option>
-            <option value="other">Друга причина</option>
-          </select>
+          </p>
+          <div className="flex flex-col gap-2">
+            {[
+              { value: 'too_expensive', label: 'Твърде скъпо' },
+              { value: 'not_using_enough', label: 'Не използвам достатъчно' },
+              { value: 'not_meeting_expectations', label: 'Не отговаря на очакванията' },
+              { value: 'other', label: 'Друга причина' },
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setCancelReason(cancelReason === value ? '' : value)}
+                className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-all ${
+                  cancelReason === value
+                    ? 'border-purple-500/50 bg-purple-500/10 text-white'
+                    : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row-reverse">

@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { PricingContent } from './PricingContent'
 
@@ -39,10 +40,12 @@ export default async function PricingPage() {
   const priceAnnual = process.env.STRIPE_PRICE_ANNUAL ?? ''
 
   return (
-    <PricingContent
-      currentTier={currentTier}
-      priceMonthly={priceMonthly}
-      priceAnnual={priceAnnual}
-    />
+    <Suspense fallback={<div className="px-4 py-16 text-center text-white/40">Зареждане...</div>}>
+      <PricingContent
+        currentTier={currentTier}
+        priceMonthly={priceMonthly}
+        priceAnnual={priceAnnual}
+      />
+    </Suspense>
   )
 }

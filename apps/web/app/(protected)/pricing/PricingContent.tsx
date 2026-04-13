@@ -183,7 +183,7 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
             </div>
 
             {/* Billing toggle */}
-            {!isPremium && (
+            {!isPremium && priceAnnual && (
               <div className="mb-6">
                 <PricingToggle
                   priceMonthly={priceMonthly}
