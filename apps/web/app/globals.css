@@ -288,3 +288,61 @@ h1, h2, h3, h4 {
 .nav-scroll::-webkit-scrollbar {
   display: none;
 }
+
+/* ─── Editorial scrollbars ─────────────────────────────────────────── */
+/* Firefox + modern spec — thin violet/amber accent on the deep base */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(167, 139, 250, 0.28) transparent;
+}
+
+/* WebKit — page, modals, any overflow surface */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(167, 139, 250, 0.28) 0%,
+    rgba(251, 191, 36, 0.22) 100%
+  );
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transition: background 0.2s ease;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(167, 139, 250, 0.48) 0%,
+    rgba(251, 191, 36, 0.42) 100%
+  );
+  background-clip: padding-box;
+  box-shadow:
+    inset 0 0 0 1px rgba(251, 191, 36, 0.22),
+    0 0 12px rgba(251, 191, 36, 0.22);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Horizontal scrollbars get the same gradient rotated */
+*::-webkit-scrollbar-thumb:horizontal {
+  background: linear-gradient(
+    90deg,
+    rgba(167, 139, 250, 0.28) 0%,
+    rgba(251, 191, 36, 0.22) 100%
+  );
+  background-clip: padding-box;
+}
+
+/* Explicit opt-out for surfaces that already hide scrollbars (e.g. .nav-scroll) */
+.nav-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  box-shadow: none;
+}
