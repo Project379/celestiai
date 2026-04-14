@@ -86,23 +86,38 @@ export function HoroscopeStream({ text, isStreaming }: HoroscopeStreamProps) {
   // Loading state: streaming started but no text yet
   if (isStreaming && !text) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-10">
-        {/* Pulsing cosmic star animation */}
-        <div className="relative flex items-center justify-center">
-          <div className="absolute h-12 w-12 animate-ping rounded-full bg-purple-500/20" />
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/10">
-            <svg
-              className="h-5 w-5 animate-pulse text-purple-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          </div>
+      <div className="flex flex-col items-center justify-center gap-5 py-12">
+        <div className="relative flex h-16 w-16 items-center justify-center">
+          <span
+            aria-hidden
+            className="absolute inset-0 animate-ping rounded-full bg-violet-500/15"
+            style={{ animationDuration: '2.4s' }}
+          />
+          <span
+            aria-hidden
+            className="absolute inset-0 rounded-full border border-amber-300/35"
+            style={{
+              maskImage:
+                'conic-gradient(from 0deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.0) 75%)',
+              WebkitMaskImage:
+                'conic-gradient(from 0deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.0) 75%)',
+              animation: 'spin 3.2s linear infinite',
+            }}
+          />
+          <span
+            aria-hidden
+            className="h-2 w-2 rotate-45 bg-amber-300/90 shadow-[0_0_14px_rgba(251,191,36,0.75)]"
+            style={{ animation: 'spin 5s linear infinite' }}
+          />
         </div>
-        <p className="text-sm text-purple-300/80">
-          Celestia консултира звездите...
-        </p>
+        <div className="flex flex-col items-center gap-2">
+          <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+            Celestia
+          </p>
+          <p className="font-display text-[14px] font-light italic leading-relaxed text-slate-400">
+            консултира звездите…
+          </p>
+        </div>
       </div>
     )
   }
@@ -112,21 +127,19 @@ export function HoroscopeStream({ text, isStreaming }: HoroscopeStreamProps) {
     return null
   }
 
-  // Split on double newlines to form paragraphs
   const paragraphs = text.split(/\n\n+/).filter(Boolean)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {paragraphs.map((paragraph, index) => {
         const isLastParagraph = index === paragraphs.length - 1
         const nodes = parseSentinels(paragraph.trim())
 
         return (
-          <p key={index} className="text-sm leading-7 text-white/80">
+          <p key={index} className="font-display text-[15px] leading-[1.85] text-slate-300/90">
             {nodes}
-            {/* Blinking cursor only at the very end of the last paragraph while streaming */}
             {isStreaming && isLastParagraph && (
-              <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-purple-400 align-middle" />
+              <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-amber-300/85 align-middle shadow-[0_0_6px_rgba(251,191,36,0.6)]" />
             )}
           </p>
         )

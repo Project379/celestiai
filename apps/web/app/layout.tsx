@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { bgBG } from '@clerk/localizations'
 import { dark } from '@clerk/themes'
-import { Manrope, Inter } from 'next/font/google'
+import { Manrope, Inter, Cinzel } from 'next/font/google'
 import './globals.css'
 
 const manrope = Manrope({
@@ -15,6 +15,13 @@ const manrope = Manrope({
 const inter = Inter({
   subsets: ['latin', 'latin-ext', 'cyrillic', 'cyrillic-ext'],
   variable: '--font-body',
+  display: 'swap',
+})
+
+const cinzel = Cinzel({
+  subsets: ['latin'],
+  variable: '--font-cinzel',
+  weight: ['400', '600', '700'],
   display: 'swap',
 })
 
@@ -61,7 +68,7 @@ export default function RootLayout({
         },
       }}
     >
-      <html lang="bg" className={`dark ${manrope.variable} ${inter.variable}`} suppressHydrationWarning>
+      <html lang="bg" className={`dark ${manrope.variable} ${inter.variable} ${cinzel.variable}`} suppressHydrationWarning>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </head>

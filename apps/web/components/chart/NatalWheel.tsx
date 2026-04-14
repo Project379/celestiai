@@ -623,12 +623,13 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
       {hoveredSign && (
         <div
           role="tooltip"
-          className="pointer-events-none absolute z-30 whitespace-nowrap rounded-md border border-white/10 bg-slate-900/95 px-2 py-1 text-xs font-medium text-slate-100 shadow-lg backdrop-blur"
+          className="pointer-events-none absolute z-30 flex items-center gap-2 whitespace-nowrap border-y border-amber-300/30 bg-[#08060f]/92 px-3 py-1.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-100 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-md"
           style={{
             left: hoveredSign.x + 14,
             top: hoveredSign.y + 14,
           }}
         >
+          <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.7)]" />
           {ZODIAC_SIGNS_BG[hoveredSign.sign]}
         </div>
       )}

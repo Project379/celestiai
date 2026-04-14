@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 /**
  * Converts a base64url-encoded VAPID public key to a Uint8Array
@@ -126,55 +127,83 @@ export function PushNotificationBanner() {
   // Hide on unsupported browsers
   if (!supported) return null
 
+  const isDenied = permission === 'denied'
+
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
-      <div className="flex items-center gap-3">
-        {/* Bell icon */}
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-violet-500/10">
-          <svg
-            className="h-4 w-4 text-violet-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+    <div className="relative overflow-hidden rounded-2xl border border-slate-200/[0.06] backdrop-blur-xl">
+      {/* Layered background — obsidian glass with violet undertone */}
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-gradient-to-r from-[#0e0c18]/80 via-[#08060f]/70 to-[#12102a]/80"
+      />
+      {/* Top hairline — ivory with gold focal */}
+      <div
+        aria-hidden
+        className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-slate-200/25 to-transparent"
+      />
+      <div
+        aria-hidden
+        className="absolute left-1/2 top-0 h-px w-16 -translate-x-1/2 bg-gradient-to-r from-transparent via-amber-300/60 to-transparent"
+      />
+      {/* Violet ambient behind sigil */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-20 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full bg-violet-500/[0.09] blur-3xl"
+      />
+
+      <div className="relative flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5">
+        <div className="flex min-w-0 items-center gap-4">
+          {/* Crescent moon sigil — violet halo, gold core */}
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center">
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-full bg-violet-500/20 blur-md"
             />
-          </svg>
+            <span className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/20 bg-gradient-to-br from-violet-500/[0.14] via-amber-400/[0.06] to-transparent">
+              <CelestialIcon
+                name="moon"
+                size={17}
+                className="text-amber-100 drop-shadow-[0_0_7px_rgba(251,191,36,0.5)]"
+              />
+            </span>
+          </div>
+
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-300/80">
+              <span
+                aria-hidden
+                className="h-1 w-1 rotate-45 bg-amber-300/70 shadow-[0_0_5px_rgba(251,191,36,0.55)]"
+              />
+              Aurora
+            </p>
+            {isDenied ? (
+              <p className="mt-1 font-display text-[13.5px] italic text-slate-500">
+                Браузърът мълчи — известията са блокирани.
+              </p>
+            ) : isSubscribed ? (
+              <p className="mt-1 font-display text-[13.5px] text-slate-100">
+                Звездите шепнат всяка{' '}
+                <span className="italic text-amber-200/85">зора</span>.
+              </p>
+            ) : (
+              <p className="mt-1 font-display text-[13.5px] text-slate-100">
+                Нека сутрешният знак{' '}
+                <span className="italic text-amber-200/85">те намери</span>.
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Status text */}
-        <div>
-          {permission === 'denied' ? (
-            <p className="text-sm text-slate-400">
-              Известията са блокирани в браузъра
-            </p>
-          ) : isSubscribed ? (
-            <p className="text-sm text-slate-200">
-              Сутрешните известия са включени
-            </p>
-          ) : (
-            <p className="text-sm text-slate-300">
-              Получавай сутрешен хороскоп
-            </p>
-          )}
-        </div>
+        {!isDenied && (
+          <button
+            onClick={isSubscribed ? handleUnsubscribe : handleSubscribe}
+            disabled={isLoading}
+            className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200/15 bg-white/[0.03] px-4 py-2 font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200 transition-all duration-300 hover:border-violet-300/40 hover:bg-violet-500/[0.1] hover:text-white hover:shadow-[0_0_20px_rgba(167,139,250,0.25)] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+          >
+            {isLoading ? '…' : isSubscribed ? 'Заглуши' : 'Събуди'}
+          </button>
+        )}
       </div>
-
-      {/* Action button — hidden when denied */}
-      {permission !== 'denied' && (
-        <button
-          onClick={isSubscribed ? handleUnsubscribe : handleSubscribe}
-          disabled={isLoading}
-          className="flex-shrink-0 rounded-lg bg-violet-600/80 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-violet-500/80 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isLoading ? '...' : isSubscribed ? 'Изключи' : 'Включи'}
-        </button>
-      )}
     </div>
   )
 }

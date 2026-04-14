@@ -1,247 +1,192 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { BirthDataCard } from '../birth-data/BirthDataCard'
 import { DailyHoroscope } from '@/components/horoscope/DailyHoroscope'
-import { PushNotificationBanner } from '@/components/horoscope/PushNotificationBanner'
-import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
+import { CelestialIcon } from '@/components/icons/CelestialIcons'
 import type { ChartRow } from '@/lib/types/chart'
 
 interface DashboardContentProps {
   firstName: string
   initialBirthChart: ChartRow | null
   subscriptionTier: string
-  priceMonthly: string
 }
 
+/**
+ * Fade-up with blur. Pass `custom` index to stagger — each step adds 70ms.
+ */
+const fadeUp = {
+  hidden: { opacity: 0, y: 18, filter: 'blur(8px)' },
+  visible: (i: number = 0) => ({
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: {
+      duration: 0.62,
+      delay: i * 0.07,
+      ease: [0.22, 0.68, 0.35, 1] as const,
+    },
+  }),
+}
+
+/* ─── Sun sign from birth date ─────────────────────────────────────── */
+function getSunSign(birthDate: string): string {
+  const d = new Date(birthDate)
+  const m = d.getMonth() + 1
+  const day = d.getDate()
+  if ((m === 3 && day >= 21) || (m === 4 && day <= 19)) return 'Овен'
+  if ((m === 4 && day >= 20) || (m === 5 && day <= 20)) return 'Телец'
+  if ((m === 5 && day >= 21) || (m === 6 && day <= 20)) return 'Близнаци'
+  if ((m === 6 && day >= 21) || (m === 7 && day <= 22)) return 'Рак'
+  if ((m === 7 && day >= 23) || (m === 8 && day <= 22)) return 'Лъв'
+  if ((m === 8 && day >= 23) || (m === 9 && day <= 22)) return 'Дева'
+  if ((m === 9 && day >= 23) || (m === 10 && day <= 22)) return 'Везни'
+  if ((m === 10 && day >= 23) || (m === 11 && day <= 21)) return 'Скорпион'
+  if ((m === 11 && day >= 22) || (m === 12 && day <= 21)) return 'Стрелец'
+  if ((m === 12 && day >= 22) || (m === 1 && day <= 19)) return 'Козирог'
+  if ((m === 1 && day >= 20) || (m === 2 && day <= 18)) return 'Водолей'
+  return 'Риби'
+}
+
+const SIGN_QUIPS: Record<string, string> = {
+  'Овен':      'Марс пак те тласка напред — независимо дали имаш план или не. Поне изглежда убедено.',
+  'Телец':     'Венера обещава удоволствие. Сатурн напомня за задълженията. Ти вероятно знаеш кое печели.',
+  'Близнаци':  'Два гласа в главата ти не са проблем. Проблемът е, когато и двата са прави едновременно.',
+  'Рак':       'Луната е в твоя ъгъл. Усещаш всичко — включително нещата, за които другите нямат думи.',
+  'Лъв':       'Слънцето не е само за показ — но трябва да признаем, малко драма никога не е навредила.',
+  'Дева':      'Меркурий анализира. Ти анализираш. Разликата е, че Меркурий спира в края на краищата.',
+  'Везни':     'Везните са в баланс. За колко дълго — зависи от теб и от онзи имейл, на който все още не отговаряш.',
+  'Скорпион':  'Плутон вижда всичко. Ти виждаш всичко. Фактически няма смисъл да крием нищо от никого.',
+  'Стрелец':   'Юпитер е щедър. Ти — с добри намерения, непоследователни резултати и неоправдан оптимизъм. Работи.',
+  'Козирог':   'Сатурн одобрява усилията ти. Малък, тих знак за одобрение — продължавай без суетене.',
+  'Водолей':   'Уран прави нещата интересни. Ти правиш нещата странни. Разбирате се по начин, трудно обясним.',
+  'Риби':      'Нептун замъглява. Ти мечтаеш. Понякога е трудно да се каже кое е кое — и не е задължително.',
+}
+
+const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'Europe/Sofia',
+})
+
+/* ─── Main dashboard ──────────────────────────────────────────────── */
 export function DashboardContent({
   firstName,
   initialBirthChart,
   subscriptionTier,
-  priceMonthly,
 }: DashboardContentProps) {
-  const router = useRouter()
-  const [birthChart, setBirthChart] = useState<ChartRow | null>(initialBirthChart)
-
+  const [birthChart] = useState<ChartRow | null>(initialBirthChart)
   const isPremium = subscriptionTier !== 'free'
 
-  const handleBirthDataUpdate = useCallback(async () => {
-    router.refresh()
-    try {
-      const res = await fetch('/api/birth-data')
-      const data = await res.json()
-      if (data?.length > 0) {
-        setBirthChart(data[0])
-      }
-    } catch (err) {
-      console.error('[BirthDataUpdate] Failed to refresh chart:', err)
-    }
-  }, [router])
+  const sunSign = birthChart ? getSunSign(birthChart.birth_date) : null
+  const todayFormatted = BG_DATE_FORMAT.format(new Date())
 
   return (
-    <motion.div
-      className="mx-auto max-w-4xl"
-      initial={{ opacity: 0, y: 16, filter: 'blur(6px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      transition={{ duration: 0.7, ease: [0.22, 0.68, 0.35, 1] }}
-    >
-      <div className="mb-8">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold text-slate-100">
-            Здравей, {firstName}!
-          </h1>
-          {isPremium && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-medium text-purple-300 ring-1 ring-purple-500/30">
-              <span aria-hidden>*</span> Premium
-            </span>
-          )}
-        </div>
-        <p className="mt-2 text-slate-400">
-          Ето какво разкриват планетите днес.
-        </p>
-      </div>
+    <div className="mx-auto max-w-2xl">
 
-      <div className="mb-8">
-        {birthChart ? (
-          <BirthDataCard chart={birthChart} onUpdate={handleBirthDataUpdate} />
-        ) : (
-          <div className="rounded-xl border border-dashed border-purple-500/50 bg-purple-500/5 p-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-purple-500/10">
-              <svg
-                className="h-7 w-7 text-purple-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-2 text-lg font-semibold text-slate-200">
-              Въведи рождените си данни
-            </h3>
-            <p className="mb-6 text-sm text-slate-400">
-              За да изчислим наталната ти карта, ни трябва датата, часът и мястото ти на раждане.
-            </p>
-            <Link
-              href="/birth-data"
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              Въведи данни за раждане
-            </Link>
+      {/* ── Hero ──────────────────────────────────────────── */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        custom={0}
+        className="relative mb-12 sm:mb-14"
+      >
+        {/* Ambient atmosphere */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-32 -top-32 -z-10 h-[460px] w-[460px] rounded-full bg-violet-500/[0.08] blur-[100px]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-0 top-16 -z-10 h-[220px] w-[220px] rounded-full bg-amber-500/[0.045] blur-[80px]"
+        />
+
+        {/* Date line */}
+        <p className="mb-6 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-500">
+          {todayFormatted}
+        </p>
+
+        {/* Greeting */}
+        <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-[2.125rem] leading-[1.1] tracking-tight sm:text-[2.75rem]">
+          <span className="font-light italic text-slate-400">Здравей,</span>
+          <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.18)]">
+            {firstName}.
+          </span>
+        </h1>
+
+        {/* Premium indicator */}
+        {isPremium && (
+          <div className="mt-6">
+            <span className="inline-flex items-center gap-3.5 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-slate-200/90">
+              <span className="h-px w-12 bg-gradient-to-r from-transparent via-slate-300/40 to-amber-300/70" />
+              <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+              Premium
+              <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+              <span className="h-px w-12 bg-gradient-to-l from-transparent via-slate-300/40 to-amber-300/70" />
+            </span>
           </div>
         )}
-      </div>
+      </motion.div>
 
-      {!isPremium && (
-        <div className="mb-8">
-          <UpgradePrompt context="dashboard" priceMonthly={priceMonthly} />
-        </div>
-      )}
-
-      {birthChart && (
-        <div className="mb-8">
-          <DailyHoroscope
-            chartId={birthChart.id}
-          />
-        </div>
-      )}
-
-      {birthChart && (
-        <div className="mb-8">
-          <PushNotificationBanner />
-        </div>
-      )}
-
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <Link
-          href={birthChart ? '/chart' : '/birth-data'}
-          className="group rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm transition-colors hover:border-violet-500/40 hover:bg-slate-800/40"
+      {/* ── Editorial teaser (when chart exists) ──────────── */}
+      {birthChart && sunSign && (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={1}
+          className="mb-12"
         >
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10">
-              <svg
-                className="h-5 w-5 text-violet-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h2 className="font-semibold text-slate-200">Натална карта</h2>
-              <p className="text-sm text-slate-400">
-                {birthChart
-                  ? 'Разгледай наталната си карта и планетните позиции.'
-                  : 'Въведи рождени данни, за да изчислим наталната ти карта.'}
-              </p>
-            </div>
-          </div>
-          <span className="inline-flex items-center gap-2 text-sm font-medium text-violet-300 transition-colors group-hover:text-violet-200">
-            {birthChart ? 'Виж картата' : 'Добави данни'}
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </span>
-        </Link>
+          <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-500/70">
+            {sunSign}
+          </p>
+          <p className="font-display text-[17px] font-light italic leading-[1.85] text-slate-400 sm:text-[18px]">
+            {SIGN_QUIPS[sunSign] ?? 'Звездите са в движение. Вселената е написала нещо за теб.'}
+          </p>
+        </motion.div>
+      )}
 
-        <Link
-          href={!birthChart ? '/birth-data' : isPremium ? '/transits' : '/pricing'}
-          className="group rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm transition-colors hover:border-indigo-500/40 hover:bg-slate-800/40"
+      {/* ── Empty state — no birth chart ──────────────────── */}
+      {!birthChart && (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={1}
+          className="mb-12"
         >
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10">
-              <svg
-                className="h-5 w-5 text-indigo-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h2 className="font-semibold text-slate-200">Транзити</h2>
-                {!isPremium && (
-                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-amber-300">
-                    Premium
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-slate-400">
-                {!birthChart
-                  ? 'Въведи рождени данни, за да отключиш транзитния анализ.'
-                  : isPremium
-                  ? 'Виж текущите транзити и лунни фази върху наталната ти карта.'
-                  : 'Транзитният анализ е Premium функция. Отключи пълния достъп.'}
-              </p>
-            </div>
-          </div>
-          <span className="inline-flex items-center gap-2 text-sm font-medium text-indigo-300 transition-colors group-hover:text-indigo-200">
-            {!birthChart
-              ? 'Добави данни'
-              : isPremium
-              ? 'Виж транзитите'
-              : 'Отключи Premium'}
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
+          <p className="mb-5 font-display text-[17px] font-light italic leading-[1.85] text-slate-500">
+            Картата ти още не е настроена. Въведи рождените си данни, за да видиш хороскопа, натална карта и транзити.
+          </p>
+          <Link
+            href="/birth-data"
+            className="group inline-flex items-center gap-2 font-display text-[12px] font-medium tracking-wide text-slate-400 transition-colors duration-200 hover:text-amber-300"
+          >
+            <CelestialIcon name="rising" size={13} className="transition-colors duration-200 group-hover:text-amber-300" />
+            Въведи рождени данни
+            <svg className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-          </span>
-        </Link>
-      </div>
+          </Link>
+        </motion.div>
+      )}
 
-    </motion.div>
+      {/* ── Daily horoscope ───────────────────────────────── */}
+      {birthChart && (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={2}
+          className="mb-12"
+        >
+          <DailyHoroscope chartId={birthChart.id} />
+        </motion.div>
+      )}
+
+    </div>
   )
 }

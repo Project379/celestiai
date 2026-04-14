@@ -28,7 +28,7 @@ export function TopicCards({
   onLockedTopicTap,
 }: TopicCardsProps) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {ALL_TOPICS.map((topic) => {
         const { label, icon } = TOPIC_META[topic]
         const isLocked =

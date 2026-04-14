@@ -2,17 +2,18 @@
 
 import { useFormContext, useWatch } from 'react-hook-form'
 import type { BirthData, ApproximateTimeRange } from '@/lib/validators/birth-data'
+import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 interface TimeStepProps {
   onNext: () => void
   onPrev: () => void
 }
 
-const TIME_RANGES: { value: ApproximateTimeRange; label: string }[] = [
-  { value: 'morning', label: 'Сутрин (06:00-12:00)' },
-  { value: 'afternoon', label: 'Следобед (12:00-18:00)' },
-  { value: 'evening', label: 'Вечер (18:00-24:00)' },
-  { value: 'night', label: 'Нощ (00:00-06:00)' },
+const TIME_RANGES: { value: ApproximateTimeRange; label: string; hours: string }[] = [
+  { value: 'morning',   label: 'Сутрин',   hours: '06 — 12' },
+  { value: 'afternoon', label: 'Следобед', hours: '12 — 18' },
+  { value: 'evening',   label: 'Вечер',    hours: '18 — 24' },
+  { value: 'night',     label: 'Нощ',      hours: '00 — 06' },
 ]
 
 export function TimeStep({ onNext, onPrev }: TimeStepProps) {
@@ -27,11 +28,8 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
 
   const handleTimeKnownChange = (known: boolean) => {
     setValue('birthTimeKnown', known)
-    if (known) {
-      setValue('approximateTimeRange', null)
-    } else {
-      setValue('birthTime', null)
-    }
+    if (known) setValue('approximateTimeRange', null)
+    else setValue('birthTime', null)
   }
 
   const handleRangeSelect = (range: ApproximateTimeRange) => {
@@ -39,45 +37,50 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <h2 className="text-xl font-semibold text-slate-100">
+        <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/75">
+          II · Час
+        </p>
+        <h2 className="font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[1.5rem]">
           Час на раждане
         </h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Точният час подобрява прецизността на наталната карта
+        <p className="mt-2 font-display text-[14.5px] font-light italic leading-relaxed text-slate-400">
+          Точният час определя асцендента и домовете.
         </p>
       </div>
 
+      {/* Known-or-not toggle — hairline row with amber diamond marker */}
       <button
         type="button"
         onClick={() => handleTimeKnownChange(!(birthTimeKnown === true))}
-        className={[
-          'flex w-full items-center justify-between rounded-2xl border px-4 py-4 text-left transition-all',
+        className={`group flex w-full items-center justify-between border-y px-1 py-4 text-left transition-colors ${
           birthTimeKnown
-            ? 'border-purple-500/50 bg-purple-500/12'
-            : 'border-slate-700/70 bg-slate-900/70 hover:border-slate-600/70',
-        ].join(' ')}
+            ? 'border-amber-300/25'
+            : 'border-white/[0.06] hover:border-white/[0.12]'
+        }`}
       >
         <div>
-          <p className="text-sm font-medium text-slate-200">
+          <p className="font-display text-[15px] font-medium text-slate-100">
             Знам точния час на раждане
           </p>
-          <p className="mt-1 text-xs text-slate-400">
-            Това подобрява асцендента и домовете
+          <p className="mt-1 font-display text-[12.5px] italic text-slate-500">
+            Подобрява асцендента и домовете
           </p>
         </div>
+        {/* Minimal rail toggle with amber diamond */}
         <span
-          className={[
-            'relative h-6 w-11 rounded-full transition-colors',
-            birthTimeKnown ? 'bg-purple-500' : 'bg-slate-700',
-          ].join(' ')}
+          className={`relative h-5 w-10 rounded-full border transition-colors ${
+            birthTimeKnown ? 'border-amber-300/50 bg-amber-300/[0.08]' : 'border-white/[0.08] bg-white/[0.02]'
+          }`}
+          aria-hidden
         >
           <span
-            className={[
-              'absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform',
-              birthTimeKnown ? 'translate-x-5' : 'translate-x-0.5',
-            ].join(' ')}
+            className={`absolute top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 transition-all duration-300 ${
+              birthTimeKnown
+                ? 'left-[calc(100%-14px)] bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.7)]'
+                : 'left-[6px] bg-slate-500'
+            }`}
           />
         </span>
       </button>
@@ -86,89 +89,91 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
         <div>
           <label
             htmlFor="birthTime"
-            className="block text-sm font-medium text-slate-300"
+            className="mb-2 block font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500"
           >
             Точен час
           </label>
-          <div className="mt-2 rounded-2xl border border-slate-700/70 bg-slate-900/70 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-            <div className="flex items-center gap-3 rounded-[calc(1rem-2px)] bg-gradient-to-r from-slate-800/95 to-slate-800/70 px-4 py-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/12 text-cyan-300">
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.8}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  Избери час
-                </p>
-                <input
-                  {...register('birthTime')}
-                  type="time"
-                  id="birthTime"
-                  className="block w-full border-0 bg-transparent px-0 py-0 text-base text-slate-100 focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert"
-                />
-              </div>
-            </div>
+          <div className="group flex items-center gap-4 border-b border-white/[0.08] px-1 py-2.5 transition-colors focus-within:border-amber-300/60">
+            <span className="text-violet-300/80 transition-colors group-focus-within:text-amber-300">
+              <CelestialIcon name="moon" size={18} />
+            </span>
+            <input
+              {...register('birthTime')}
+              type="time"
+              id="birthTime"
+              className="block w-full border-0 bg-transparent p-0 font-display text-[16px] tabular-nums text-slate-100 focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-60 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
+            />
           </div>
           {errors.birthTime && (
-            <p className="mt-1 text-sm text-red-400">
+            <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
               {errors.birthTime.message}
             </p>
           )}
         </div>
       ) : (
         <div>
-          <label className="block text-sm font-medium text-slate-300">
+          <p className="mb-3 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500">
             Приблизителен период
-          </label>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {TIME_RANGES.map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => handleRangeSelect(value)}
-                className={`rounded-xl border px-4 py-3 text-sm transition-all ${
-                  approximateTimeRange === value
-                    ? 'border-purple-500 bg-purple-500/20 text-purple-200 shadow-[0_0_18px_rgba(168,85,247,0.16)]'
-                    : 'border-slate-600 bg-slate-800/50 text-slate-300 hover:border-slate-500 hover:bg-slate-800/70'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          </p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {TIME_RANGES.map(({ value, label, hours }) => {
+              const isActive = approximateTimeRange === value
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => handleRangeSelect(value)}
+                  className={`group relative flex flex-col items-center gap-1 rounded-xl border px-4 py-4 transition-all ${
+                    isActive
+                      ? 'border-amber-300/45 bg-gradient-to-br from-violet-500/[0.08] via-transparent to-amber-400/[0.06] shadow-[0_0_22px_rgba(167,139,250,0.14)]'
+                      : 'border-white/[0.06] bg-white/[0.015] hover:border-violet-300/20 hover:bg-white/[0.03]'
+                  }`}
+                >
+                  {isActive && (
+                    <span aria-hidden className="absolute left-2.5 top-2.5 h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+                  )}
+                  <span className={`font-display text-[14px] font-semibold transition-colors ${isActive ? 'text-white' : 'text-slate-200 group-hover:text-slate-100'}`}>
+                    {label}
+                  </span>
+                  <span className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.24em] tabular-nums text-amber-300/70">
+                    {hours}
+                  </span>
+                </button>
+              )
+            })}
           </div>
           {errors.approximateTimeRange && (
-            <p className="mt-2 text-sm text-red-400">
+            <p className="mt-3 font-display text-[12px] italic text-rose-300/90">
               {errors.approximateTimeRange.message}
             </p>
           )}
         </div>
       )}
 
-      <div className="flex justify-between pt-4">
+      <div className="flex items-center justify-between pt-6">
         <button
           type="button"
           onClick={onPrev}
-          className="rounded-lg border border-slate-600 px-6 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-slate-500"
+          className="group inline-flex items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 transition-colors hover:text-amber-300"
         >
+          <svg className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
           Назад
         </button>
         <button
           type="button"
           onClick={onNext}
-          className="rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-600 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+          className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-amber-300/40 bg-gradient-to-r from-violet-500/10 via-transparent to-amber-400/10 px-6 py-2.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200 transition-all hover:border-amber-300/70 hover:text-amber-100 hover:shadow-[0_0_24px_rgba(251,191,36,0.18)] focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60"
         >
-          Напред
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-amber-200/15 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+          />
+          <span className="relative">Напред</span>
+          <svg className="relative h-3 w-3 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
     </div>

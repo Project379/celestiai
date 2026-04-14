@@ -10,7 +10,6 @@ const isPublicRoute = createRouteMatcher([
 
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
-  '/settings(.*)',
   '/chart(.*)',
   '/birth-data(.*)',
 ])

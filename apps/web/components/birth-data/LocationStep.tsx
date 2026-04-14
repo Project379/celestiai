@@ -45,56 +45,77 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <h2 className="text-xl font-semibold text-slate-100">
+        <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/75">
+          III · Място
+        </p>
+        <h2 className="font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[1.5rem]">
           Място на раждане
         </h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Мястото определя домовете и асцендента в наталната карта
+        <p className="mt-2 font-display text-[14.5px] font-light italic leading-relaxed text-slate-400">
+          Мястото определя домовете и асцендента.
         </p>
       </div>
 
-      {/* Manual coordinates toggle */}
-      <div className="flex items-center gap-3">
+      {/* Manual-coordinates toggle — minimal hairline row */}
+      <label
+        htmlFor="manualCoordinates"
+        className="flex cursor-pointer items-center justify-between gap-4 border-y border-white/[0.06] px-1 py-3 transition-colors hover:border-white/[0.12]"
+      >
+        <div>
+          <p className="font-display text-[14.5px] font-medium text-slate-200">
+            Ръчни координати
+          </p>
+          <p className="mt-0.5 font-display text-[12px] italic text-slate-500">
+            За раждане извън България
+          </p>
+        </div>
         <input
           type="checkbox"
           id="manualCoordinates"
           checked={manualCoordinates === true}
           onChange={(e) => handleManualToggle(e.target.checked)}
-          className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-900"
+          className="sr-only peer"
         />
-        <label htmlFor="manualCoordinates" className="text-sm text-slate-300">
-          Ръчни координати (за чуждестранно раждане)
-        </label>
-      </div>
+        <span
+          className="relative h-5 w-10 shrink-0 rounded-full border border-white/[0.08] bg-white/[0.02] transition-colors peer-checked:border-amber-300/50 peer-checked:bg-amber-300/[0.08]"
+          aria-hidden
+        >
+          <span
+            className={`absolute top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 transition-all duration-300 ${
+              manualCoordinates
+                ? 'left-[calc(100%-14px)] bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.7)]'
+                : 'left-[6px] bg-slate-500'
+            }`}
+          />
+        </span>
+      </label>
 
-      {/* City search */}
       {!manualCoordinates && (
         <div>
-          <label className="block text-sm font-medium text-slate-300">
+          <p className="mb-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500">
             Търсене на град
-          </label>
+          </p>
           <CitySearch
             onSelect={handleCitySelect}
             value={typeof cityName === 'string' ? cityName : ''}
             error={errors.cityName?.message}
           />
           {errors.cityName && !cityName && (
-            <p className="mt-1 text-sm text-red-400">
+            <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
               {errors.cityName.message}
             </p>
           )}
         </div>
       )}
 
-      {/* Manual coordinate inputs */}
       {manualCoordinates && (
-        <>
+        <div className="space-y-6">
           <div>
             <label
               htmlFor="manualCityName"
-              className="block text-sm font-medium text-slate-300"
+              className="mb-2 block font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500"
             >
               Име на мястото
             </label>
@@ -103,22 +124,22 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
               type="text"
               id="manualCityName"
               placeholder="Лондон, Великобритания"
-              className="mt-1 block w-full rounded-lg border border-slate-600 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              className="block w-full border-0 border-b border-white/[0.08] bg-transparent px-1 py-2.5 font-display text-[16px] text-slate-100 placeholder-slate-600 transition-colors focus:border-amber-300/60 focus:outline-none"
             />
             {errors.cityName && (
-              <p className="mt-1 text-sm text-red-400">
+              <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
                 {errors.cityName.message}
               </p>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-5">
             <div>
               <label
                 htmlFor="latitude"
-                className="block text-sm font-medium text-slate-300"
+                className="mb-2 block font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500"
               >
-                Ширина (lat)
+                Ширина
               </label>
               <input
                 {...register('latitude', { valueAsNumber: true })}
@@ -126,10 +147,10 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
                 id="latitude"
                 step="any"
                 placeholder="42.6977"
-                className="mt-1 block w-full rounded-lg border border-slate-600 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="block w-full border-0 border-b border-white/[0.08] bg-transparent px-1 py-2.5 font-display text-[16px] tabular-nums text-slate-100 placeholder-slate-600 transition-colors focus:border-amber-300/60 focus:outline-none"
               />
               {errors.latitude && (
-                <p className="mt-1 text-sm text-red-400">
+                <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
                   {errors.latitude.message}
                 </p>
               )}
@@ -137,9 +158,9 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
             <div>
               <label
                 htmlFor="longitude"
-                className="block text-sm font-medium text-slate-300"
+                className="mb-2 block font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500"
               >
-                Дължина (lon)
+                Дължина
               </label>
               <input
                 {...register('longitude', { valueAsNumber: true })}
@@ -147,33 +168,42 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
                 id="longitude"
                 step="any"
                 placeholder="23.3219"
-                className="mt-1 block w-full rounded-lg border border-slate-600 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="block w-full border-0 border-b border-white/[0.08] bg-transparent px-1 py-2.5 font-display text-[16px] tabular-nums text-slate-100 placeholder-slate-600 transition-colors focus:border-amber-300/60 focus:outline-none"
               />
               {errors.longitude && (
-                <p className="mt-1 text-sm text-red-400">
+                <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
                   {errors.longitude.message}
                 </p>
               )}
             </div>
           </div>
-        </>
+        </div>
       )}
 
-      {/* Navigation buttons */}
-      <div className="flex justify-between pt-4">
+      <div className="flex items-center justify-between pt-6">
         <button
           type="button"
           onClick={onPrev}
-          className="rounded-lg border border-slate-600 px-6 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-slate-500"
+          className="group inline-flex items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 transition-colors hover:text-amber-300"
         >
+          <svg className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
           Назад
         </button>
         <button
           type="button"
           onClick={onNext}
-          className="rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-600 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+          className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-amber-300/40 bg-gradient-to-r from-violet-500/10 via-transparent to-amber-400/10 px-6 py-2.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200 transition-all hover:border-amber-300/70 hover:text-amber-100 hover:shadow-[0_0_24px_rgba(251,191,36,0.18)] focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60"
         >
-          Напред
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-amber-200/15 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+          />
+          <span className="relative">Напред</span>
+          <svg className="relative h-3 w-3 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
     </div>

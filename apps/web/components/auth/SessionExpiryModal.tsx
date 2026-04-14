@@ -41,11 +41,11 @@ export function SessionExpiryModal() {
       aria-modal="true"
       aria-labelledby="session-expiry-title"
     >
-      <div className="mx-4 max-w-md rounded-xl border border-slate-700/50 bg-slate-900/95 p-6 shadow-2xl backdrop-blur-xl">
-        {/* Icon */}
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10">
+      <div className="mystic-panel mystic-corners mx-4 max-w-md p-6 shadow-[0_30px_90px_rgba(0,0,0,0.9)]">
+        {/* Icon — amber gold halo */}
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-slate-200/10 bg-amber-400/10 shadow-[0_0_20px_rgba(251,191,36,0.2)]">
           <svg
-            className="h-7 w-7 text-amber-400"
+            className="h-7 w-7 text-amber-300"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -77,7 +77,7 @@ export function SessionExpiryModal() {
           <SignInButton mode="modal">
             <button
               type="button"
-              className="w-full rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-4 py-3 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+              className="w-full rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-3 text-sm font-medium text-white shadow-[0_0_20px_rgba(167,139,250,0.25)] transition-all hover:from-violet-500 hover:to-indigo-500 hover:shadow-[0_0_28px_rgba(167,139,250,0.35)] focus:outline-none focus:ring-2 focus:ring-violet-400/40"
             >
               Вход
             </button>

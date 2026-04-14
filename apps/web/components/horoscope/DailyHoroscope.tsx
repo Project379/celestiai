@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { HoroscopeStream } from './HoroscopeStream'
+import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   day: 'numeric',
@@ -18,15 +19,9 @@ interface DailyHoroscopeProps {
 /**
  * DailyHoroscope
  *
- * Main daily horoscope card for the dashboard. Shows:
- * - Title "Дневен хороскоп" with today's date in Bulgarian locale
- * - Date navigation tabs: "Днес" (Today) | "Вчера" (Yesterday)
- * - Streaming or cached horoscope text via HoroscopeStream
- * - Loading skeleton while generating
- * - Error state with Bulgarian message
- * - Inline UpgradePrompt for free users after content
- *
- * Glassmorphism card styling matching existing dashboard cards.
+ * Editorial daily oracle card for the dashboard. Preserves all original
+ * states (loading, error, streaming, yesterday unavailable) while reworking
+ * the visual language into a centered mystical composition.
  */
 export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
   const {
@@ -38,145 +33,195 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
     setSelectedDate,
     yesterdayUnavailable,
     fetchError,
-    getTodayString,
   } = useDailyHoroscope(chartId)
 
   const todayFormatted = BG_DATE_FORMAT.format(new Date())
 
-  // Determine content to display
   const todayContent = cachedContent.today
   const yesterdayContent = cachedContent.yesterday
 
-  // Current display text:
-  // - If today is selected: show streaming completion or cached today content
-  // - If yesterday is selected: show cached yesterday content
   const displayText =
     selectedDate === 'today'
-      ? (completion || todayContent?.content || '')
-      : (yesterdayContent?.content || '')
+      ? completion || todayContent?.content || ''
+      : yesterdayContent?.content || ''
 
-  // Is the horoscope currently streaming?
   const isStreaming = isLoading && selectedDate === 'today'
-
-  // Combined error message
-  const errorMessage = fetchError || (error ? 'Грешка при генериране на хороскопа' : null)
+  const errorMessage = fetchError || (error ? 'Звездите мълчат — опитай отново след миг.' : null)
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-      {/* Header */}
-      <div className="mb-5 flex items-start justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Дневен хороскоп</h2>
-          <p className="mt-0.5 text-sm text-white/50 capitalize">{todayFormatted}</p>
-        </div>
-        {/* Star icon */}
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/10">
-          <svg
-            className="h-5 w-5 text-purple-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+    <div className="py-2">
+      {/* ── Centered sigil + title block ───────────────── */}
+      <div className="relative mb-7 flex flex-col items-center text-center">
+        {/* Sun sigil — violet outer bloom, gold core */}
+        <div className="relative mb-5 flex h-[58px] w-[58px] items-center justify-center">
+          <span
+            aria-hidden
+            className="absolute inset-0 rounded-full bg-violet-500/20 blur-xl"
+          />
+          <span
+            aria-hidden
+            className="absolute inset-0 rounded-full bg-amber-400/12 blur-md"
+          />
+          <motion.span
+            className="relative flex h-[58px] w-[58px] items-center justify-center rounded-full border border-slate-200/20 bg-gradient-to-br from-violet-500/[0.14] via-amber-400/[0.08] to-transparent"
+            animate={{ boxShadow: [
+              '0 0 22px 0 rgba(167, 139, 250, 0.18), inset 0 0 12px rgba(251, 191, 36, 0.08)',
+              '0 0 34px 4px rgba(251, 191, 36, 0.22), inset 0 0 16px rgba(167, 139, 250, 0.12)',
+              '0 0 22px 0 rgba(167, 139, 250, 0.18), inset 0 0 12px rgba(251, 191, 36, 0.08)',
+            ] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+            <CelestialIcon
+              name="sun"
+              size={26}
+              className="text-amber-100 drop-shadow-[0_0_10px_rgba(251,191,36,0.6)]"
             />
-          </svg>
+          </motion.span>
         </div>
+
+        <p className="flex items-center gap-2.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-200/85">
+          <span
+            aria-hidden
+            className="h-px w-5 bg-gradient-to-r from-transparent to-slate-300/40"
+          />
+          Oraculum Diei
+          <span
+            aria-hidden
+            className="h-px w-5 bg-gradient-to-l from-transparent to-slate-300/40"
+          />
+        </p>
+        <h2 className="mt-2 font-display text-[22px] font-semibold tracking-tight text-white sm:text-[24px]">
+          Дневен хороскоп
+        </h2>
+        <p className="mt-1.5 font-display text-[12.5px] italic text-slate-500">
+          {todayFormatted}
+        </p>
       </div>
 
-      {/* Date navigation tabs */}
-      <div className="mb-5 flex gap-1 rounded-lg bg-white/5 p-1">
-        <button
-          type="button"
+      {/* ── Decorative divider — ivory rule, gold focal ─── */}
+      <div className="mb-6 flex items-center gap-4">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-300/15 to-slate-300/25" />
+        <div className="flex shrink-0 items-center gap-2.5">
+          <span className="text-[8px] leading-none text-slate-400/55">✦</span>
+          <CelestialIcon name="northNode" size={12} className="text-amber-300/70 drop-shadow-[0_0_6px_rgba(251,191,36,0.35)]" />
+          <span className="text-[8px] leading-none text-slate-400/55">✦</span>
+        </div>
+        <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-300/15 to-slate-300/25" />
+      </div>
+
+      {/* ── Date tabs — typographic, underlined ────────── */}
+      <div className="mb-7 flex justify-center gap-10">
+        <TabButton
+          active={selectedDate === 'today'}
           onClick={() => setSelectedDate('today')}
-          className={[
-            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all',
-            selectedDate === 'today'
-              ? 'bg-purple-600/80 text-white shadow-sm'
-              : 'text-white/60 hover:text-white/80',
-          ].join(' ')}
-        >
-          Днес
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            if (!yesterdayUnavailable) {
-              setSelectedDate('yesterday')
-            }
-          }}
+          label="Днес"
+        />
+        <TabButton
+          active={selectedDate === 'yesterday' && !yesterdayUnavailable}
           disabled={yesterdayUnavailable}
-          title={yesterdayUnavailable ? 'Не е наличен' : undefined}
-          className={[
-            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all',
-            selectedDate === 'yesterday' && !yesterdayUnavailable
-              ? 'bg-purple-600/80 text-white shadow-sm'
-              : yesterdayUnavailable
-              ? 'cursor-not-allowed text-white/30'
-              : 'text-white/60 hover:text-white/80',
-          ].join(' ')}
-        >
-          {yesterdayUnavailable ? 'Не е наличен' : 'Вчера'}
-        </button>
+          onClick={() => !yesterdayUnavailable && setSelectedDate('yesterday')}
+          label={yesterdayUnavailable ? 'Неналично' : 'Вчера'}
+        />
       </div>
 
-      {/* Content area */}
-      <div className="min-h-[120px]">
-        {/* Error state */}
-        {errorMessage && !isStreaming && !displayText && (
-          <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3">
-            <p className="text-sm text-red-400">{errorMessage}</p>
+      {/* ── Content area ───────────────────────────────── */}
+      <div className="relative min-h-[140px]">
+        {/* Drop-cap quote ornament — shows only when text is present */}
+        {(displayText || isStreaming) && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-1 -top-4 select-none font-cinzel text-[56px] leading-none text-amber-400/15"
+          >
+            &ldquo;
           </div>
         )}
 
-        {/* Yesterday unavailable state */}
+        {/* Error state */}
+        {errorMessage && !isStreaming && !displayText && (
+          <div className="rounded-xl border border-rose-400/15 bg-rose-500/[0.04] px-5 py-4">
+            <p className="font-display text-sm italic text-rose-300/80">{errorMessage}</p>
+          </div>
+        )}
+
+        {/* Yesterday unavailable */}
         {selectedDate === 'yesterday' && yesterdayUnavailable && (
-          <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/80">
-              <svg
-                className="h-5 w-5 text-slate-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+          <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
+            <div className="relative flex h-11 w-11 items-center justify-center">
+              <span
+                aria-hidden
+                className="absolute inset-0 rounded-full bg-slate-500/5 blur-md"
+              />
+              <div className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-500/15 bg-slate-500/5">
+                <CelestialIcon name="moon" size={16} className="text-slate-500/70" />
+              </div>
             </div>
-            <p className="text-sm text-white/40">
-              Вчерашният хороскоп не е наличен
+            <p className="max-w-[22ch] font-display text-sm italic text-slate-500">
+              Вчерашното послание вече е отминало.
             </p>
           </div>
         )}
 
-        {/* Loading — subtle pulsing star while waiting for content */}
+        {/* Loading — pulsing sun while waiting */}
         {!isStreaming && !displayText && !errorMessage && selectedDate === 'today' && (
-          <div className="flex items-center justify-center py-10">
+          <div className="flex items-center justify-center py-12">
             <motion.div
-              className="text-purple-400/60"
-              animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.95, 1.05, 0.95] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              className="text-amber-300/60"
+              animate={{ opacity: [0.35, 0.9, 0.35], scale: [0.94, 1.06, 0.94] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
             >
-              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
+              <CelestialIcon name="sun" size={24} />
             </motion.div>
           </div>
         )}
 
-        {/* Horoscope text (streaming or cached) */}
-        {(displayText || isStreaming) && !(selectedDate === 'yesterday' && yesterdayUnavailable) && (
-          <HoroscopeStream text={displayText} isStreaming={isStreaming} />
-        )}
+        {/* Horoscope text */}
+        {(displayText || isStreaming) &&
+          !(selectedDate === 'yesterday' && yesterdayUnavailable) && (
+            <div className="relative z-10 pl-1">
+              <HoroscopeStream text={displayText} isStreaming={isStreaming} />
+            </div>
+          )}
       </div>
-
     </div>
+  )
+}
+
+/* ─── Typographic tab — thin gold underline instead of pill ─────── */
+function TabButton({
+  active,
+  disabled,
+  onClick,
+  label,
+}: {
+  active: boolean
+  disabled?: boolean
+  onClick: () => void
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={[
+        'group relative pb-2 font-display text-[11px] font-semibold uppercase tracking-[0.28em] transition-colors duration-300',
+        active
+          ? 'text-amber-200'
+          : disabled
+          ? 'cursor-not-allowed text-slate-700'
+          : 'text-slate-500 hover:text-slate-200',
+      ].join(' ')}
+    >
+      {label}
+      <span
+        aria-hidden
+        className={[
+          'absolute inset-x-0 bottom-0 h-px transition-all duration-300',
+          active
+            ? 'bg-gradient-to-r from-transparent via-amber-400/70 to-transparent shadow-[0_0_8px_rgba(251,191,36,0.4)]'
+            : 'bg-transparent',
+        ].join(' ')}
+      />
+    </button>
   )
 }

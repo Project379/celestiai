@@ -11,24 +11,26 @@ export const metadata: Metadata = {
 const clerkAppearance = {
   elements: {
     rootBox: 'w-full',
-    card: 'bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 shadow-2xl shadow-purple-500/10',
-    headerTitle: 'text-slate-100',
-    headerSubtitle: 'text-slate-400',
+    card: 'bg-transparent shadow-none border-0',
+    headerTitle: 'font-display text-slate-100 text-[1.5rem] font-semibold tracking-tight',
+    headerSubtitle: 'font-display text-slate-400 text-[14px] italic',
     socialButtonsBlockButton:
-      'bg-slate-800/50 border-slate-700 hover:bg-slate-700/50 text-slate-200',
-    socialButtonsBlockButtonText: 'text-slate-200',
-    dividerLine: 'bg-slate-700',
-    dividerText: 'text-slate-500',
-    formFieldLabel: 'text-slate-300',
+      'rounded-full border border-white/[0.08] bg-white/[0.02] text-slate-200 font-display text-[13px] hover:border-violet-300/30 hover:bg-white/[0.04]',
+    socialButtonsBlockButtonText: 'text-slate-200 font-display',
+    dividerLine: 'bg-white/[0.06]',
+    dividerText: 'font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500',
+    formFieldLabel:
+      'font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500',
     formFieldInput:
-      'bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-purple-500 focus:ring-purple-500/20',
+      'border-0 border-b border-white/[0.08] bg-transparent text-slate-100 placeholder:text-slate-600 font-display text-[15px] px-1 py-2.5 rounded-none focus:border-amber-300/60 focus:ring-0',
     formButtonPrimary:
-      'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/25',
-    footerActionLink: 'text-purple-400 hover:text-purple-300',
-    identityPreviewEditButton: 'text-purple-400 hover:text-purple-300',
-    formResendCodeLink: 'text-purple-400 hover:text-purple-300',
-    alert: 'bg-red-900/50 border-red-700 text-red-200',
-    alertText: 'text-red-200',
+      'group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-amber-300/50 bg-gradient-to-r from-violet-500/15 via-transparent to-amber-400/15 px-6 py-3 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-100 transition-all hover:border-amber-300/80 hover:text-white hover:shadow-[0_0_28px_rgba(251,191,36,0.22)] normal-case shadow-none',
+    footerActionLink:
+      'font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-slate-400 hover:text-amber-300 transition-colors',
+    identityPreviewEditButton: 'text-amber-300 hover:text-amber-200',
+    formResendCodeLink: 'text-amber-300 hover:text-amber-200',
+    alert: 'border-l border-rose-300/50 bg-rose-500/[0.04]',
+    alertText: 'font-display text-[13px] italic text-rose-300/90',
   },
 }
 

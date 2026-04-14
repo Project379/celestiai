@@ -2,16 +2,14 @@ import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import type { ChartRow } from '@/lib/types/chart'
+import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
+import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 export const metadata: Metadata = {
   title: 'Транзити',
   description: 'Активните транзити към твоята натална карта',
 }
-import type { ChartRow } from '@/lib/types/chart'
-import { UserMenu } from '@/components/auth/UserMenu'
-import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
-import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
-import { PlusIcon } from '@/components/icons/PlusIcon'
 
 export default async function TransitsPage() {
   const { userId } = await auth()
@@ -35,53 +33,57 @@ export default async function TransitsPage() {
   }
 
   return (
-    <>
-      <SessionExpiryModal />
-
-      <div className="fixed right-4 top-4 z-50 sm:right-8">
-        <UserMenu />
+    <div className="mx-auto max-w-5xl">
+      {/* Editorial hero */}
+      <div className="mb-10 sm:mb-12">
+        <p className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-500">
+          Текущо небе
+        </p>
+        <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-[2rem] leading-[1.15] tracking-tight text-slate-100 sm:text-[2.5rem]">
+          <span className="font-light italic text-slate-400">Какво ти</span>
+          <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent">
+            влияе сега
+          </span>
+        </h1>
+        <p className="mt-3 max-w-xl font-display text-[15px] font-light italic leading-relaxed text-slate-500">
+          Активните транзити към картата ти — как планетите говорят с теб точно днес.
+        </p>
       </div>
 
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-100">Транзити</h1>
-          <p className="mt-2 text-slate-400">
-            Какво те влияе точно сега — виж активните транзити към картата ти.
-          </p>
-        </div>
+      {chart ? (
+        <TransitOverviewCard chartId={chart.id} />
+      ) : (
+        <EmptyTransitsState />
+      )}
 
-        {chart ? (
-          <TransitOverviewCard chartId={chart.id} />
-        ) : (
-          <div className="rounded-xl border border-dashed border-purple-500/50 bg-purple-500/5 p-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-purple-500/10">
-              <PlusIcon className="h-7 w-7 text-purple-400" />
-            </div>
-            <h3 className="mb-2 text-lg font-semibold text-slate-200">
-              Добави рождени данни
-            </h3>
-            <p className="mb-6 text-sm text-slate-400">
-              За да видиш транзитите си, първо ми кажи кога и къде си роден/а.
-            </p>
-            <Link
-              href="/birth-data"
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-3 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-            >
-              <PlusIcon />
-              Въведи данни за раждане
-            </Link>
-          </div>
-        )}
-
-        <div className="mt-8 text-center">
-          <Link
-            href="/dashboard"
-            className="text-sm text-slate-400 transition-colors hover:text-slate-300"
-          >
-            &larr; Обратно към таблото
-          </Link>
-        </div>
+      <div className="mt-12 text-center">
+        <Link
+          href="/dashboard"
+          className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 transition-colors hover:text-amber-300"
+        >
+          &larr; Обратно към таблото
+        </Link>
       </div>
-    </>
+    </div>
+  )
+}
+
+function EmptyTransitsState() {
+  return (
+    <div className="mx-auto max-w-xl">
+      <p className="mb-5 font-display text-[17px] font-light italic leading-[1.85] text-slate-500">
+        За да видиш транзитите си, първо трябва да имаш натална карта. Въведи рождените си данни.
+      </p>
+      <Link
+        href="/birth-data"
+        className="group inline-flex items-center gap-2 font-display text-[12px] font-medium tracking-wide text-slate-400 transition-colors duration-200 hover:text-amber-300"
+      >
+        <CelestialIcon name="saturn" size={13} className="transition-colors duration-200 group-hover:text-amber-300" />
+        Въведи рождени данни
+        <svg className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </Link>
+    </div>
   )
 }

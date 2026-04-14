@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useOracleReading } from '@/hooks/useOracleReading'
 import { TopicCards } from './TopicCards'
@@ -15,9 +15,23 @@ interface OracleButtonProps {
   onPlanetHighlight: (planet: string) => void
 }
 
+/** Scrying-orb icon — matches the one used in ProtectedNav. */
+function OracleOrb({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="7.2" stroke="currentColor" strokeWidth="1.1" opacity="0.6" />
+      <circle cx="10" cy="10" r="3.6" stroke="currentColor" strokeWidth="0.9" opacity="0.9" />
+      <path d="M10 3.2 L11.2 10 L10 16.8 L8.8 10 Z" fill="currentColor" opacity="0.95" />
+      <circle cx="10" cy="10" r="0.9" fill="currentColor" />
+    </svg>
+  )
+}
+
 /**
- * Floating Oracle button that opens the reading modal.
- * Replaces the full OraclePanel sidebar — compact trigger, same rich modal.
+ * Floating Oracle button + full reading modal.
+ *
+ * Also listens for a global `oracle:open` custom event so other surfaces
+ * (e.g. the protected navbar) can trigger the panel without lifting state.
  */
 export function OracleButton({
   chartId,
@@ -39,6 +53,13 @@ export function OracleButton({
   const [lockedTopicShown, setLockedTopicShown] = useState<OracleTopic | null>(null)
   const [teaserContent, setTeaserContent] = useState<Record<string, string | null>>({})
   const [loadingTeaser, setLoadingTeaser] = useState<Record<string, boolean>>({})
+
+  // Global open bridge — ProtectedNav and any future entry point dispatches this.
+  useEffect(() => {
+    const handler = () => setIsOpen(true)
+    window.addEventListener('oracle:open', handler)
+    return () => window.removeEventListener('oracle:open', handler)
+  }, [])
 
   const handleTopicSelect = useCallback(
     (topic: OracleTopic) => {
@@ -95,7 +116,6 @@ export function OracleButton({
   const savedReading = activeTopic ? savedReadings[activeTopic] : null
   const showSavedReading = !isGenerating && activeTopic && savedReading && !completion
   const showStream = activeTopic && (isGenerating || Boolean(completion))
-  const isModalOpen = isOpen && (Boolean(activeTopic) || Boolean(lockedTopicShown) || true)
 
   const canRegenerate =
     activeTopic && savedReading
@@ -118,39 +138,48 @@ export function OracleButton({
     ? TOPIC_META[activeTopic as OracleTopic]?.label ?? activeTopic
     : lockedTopicShown
       ? TOPIC_META[lockedTopicShown]?.label
-      : 'Оракул'
+      : 'Избери тема'
 
   return (
     <>
-      {/* ─── Floating Oracle Button ─── */}
+      {/* ─── Floating Oracle trigger ───────────────────────── */}
       <motion.button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group fixed bottom-8 right-8 z-[100] flex items-center gap-3 rounded-full border border-purple-500/40 bg-slate-900/90 px-7 py-4 backdrop-blur-xl transition-colors hover:border-purple-400/60"
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.93 }}
-        initial={{ opacity: 0, y: 30, scale: 0.8 }}
+        className="group fixed bottom-7 right-7 z-[100] flex items-center gap-3 overflow-hidden rounded-full border border-violet-300/25 bg-[#08060f]/90 px-6 py-3.5 backdrop-blur-xl transition-colors hover:border-amber-300/50"
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
+        initial={{ opacity: 0, y: 24, scale: 0.92 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 0.68, 0.35, 1] }}
+        transition={{ duration: 0.55, ease: [0.22, 0.68, 0.35, 1] }}
         style={{ willChange: 'transform' }}
+        aria-label="Отвори Оракула"
       >
-        {/* GPU-composited pulsing glow — opacity animation instead of boxShadow */}
+        {/* Slow pulsing halo */}
         <span
+          aria-hidden
           className="pointer-events-none absolute inset-0 rounded-full"
           style={{
-            boxShadow: '0 0 40px rgba(139,92,246,0.3), 0 0 80px rgba(139,92,246,0.12)',
-            animation: 'aura-glow 3s ease-in-out infinite',
+            boxShadow: '0 0 36px rgba(167,139,250,0.28), 0 0 78px rgba(251,191,36,0.08)',
+            animation: 'aura-glow 3.4s ease-in-out infinite',
             willChange: 'opacity',
           }}
         />
-        {/* Crystal ball icon */}
-        <span className="relative text-2xl">🔮</span>
-        <span className="relative text-base font-medium text-purple-200 transition-colors group-hover:text-purple-100">
+        {/* Diagonal shimmer on hover */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-amber-200/10 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+        />
+
+        <span className="relative text-violet-200 transition-colors duration-300 group-hover:text-amber-200">
+          <OracleOrb size={18} />
+        </span>
+        <span className="relative font-cinzel text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-200/95 transition-colors duration-300 group-hover:text-white">
           Оракул
         </span>
       </motion.button>
 
-      {/* ─── Oracle Modal ─── */}
+      {/* ─── Modal ─────────────────────────────────────────── */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -158,42 +187,47 @@ export function OracleButton({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.22 }}
           >
             {/* Backdrop */}
             <motion.div
-              className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm"
+              className="absolute inset-0 bg-[#04030a]/80 backdrop-blur-md"
               onClick={handleClose}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             />
 
-            {/* Modal */}
+            {/* Panel */}
             <motion.div
-              className="relative flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-700/70 bg-slate-900/95 shadow-[0_20px_80px_rgba(0,0,0,0.45)]"
-              initial={{ opacity: 0, scale: 0.9, y: 40 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="mystic-panel relative flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden"
+              initial={{ opacity: 0, y: 30, scale: 0.95, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: 14, scale: 0.97, filter: 'blur(6px)' }}
+              transition={{ duration: 0.42, ease: [0.22, 0.68, 0.35, 1] }}
             >
+              {/* Ambient atmosphere inside the panel */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -left-24 -top-24 -z-0 h-[320px] w-[320px] rounded-full bg-violet-500/[0.10] blur-[100px]"
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-20 top-10 -z-0 h-[240px] w-[240px] rounded-full bg-amber-500/[0.06] blur-[90px]"
+              />
+
               {/* Header */}
-              <div className="flex items-start justify-between border-b border-slate-800 px-6 py-5">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-purple-300">
+              <div className="relative flex items-start justify-between border-b border-white/[0.06] px-7 pb-5 pt-6">
+                <div className="min-w-0">
+                  <p className="mb-2 flex items-center gap-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+                    <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
                     Астрологичен оракул
                   </p>
-                  {activeTopic || lockedTopicShown ? (
-                    <h4 className="mt-1 text-xl font-semibold text-slate-100">
-                      {modalTitle}
-                    </h4>
-                  ) : (
-                    <h4 className="mt-1 text-xl font-semibold text-slate-100">
-                      Избери тема
-                    </h4>
-                  )}
+                  <h4 className="font-display text-[1.5rem] font-semibold leading-[1.15] tracking-tight text-slate-100">
+                    {modalTitle}
+                  </h4>
                   {showSavedReading && savedReading && (
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500">
                       {new Date(savedReading.generatedAt).toLocaleDateString('bg-BG', {
                         day: 'numeric',
                         month: 'long',
@@ -206,18 +240,18 @@ export function OracleButton({
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                  className="group relative -mr-2 rounded-full p-2 text-slate-500 transition-colors hover:text-amber-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60"
                   aria-label="Затвори"
                 >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              {/* Topic cards - always visible at top */}
+              {/* Topic picker — always visible when nothing selected */}
               {!activeTopic && !lockedTopicShown && (
-                <div className="border-b border-slate-800 px-6 py-4">
+                <div className="relative border-b border-white/[0.05] px-7 py-5">
                   <TopicCards
                     subscriptionTier={subscriptionTier}
                     activeTopic={activeTopic}
@@ -229,13 +263,16 @@ export function OracleButton({
               )}
 
               {/* Content area */}
-              <div className="flex-1 overflow-y-auto px-6 py-5">
-                {/* Default state - no topic selected */}
+              <div className="relative flex-1 overflow-y-auto px-7 py-6">
                 {!activeTopic && !lockedTopicShown && (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="mb-4 text-4xl">✨</div>
-                    <p className="text-sm text-slate-400">
-                      Избери тема отгоре и звездите ще ти разкажат...
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <div className="mb-4 flex items-center gap-3" aria-hidden>
+                      <span className="h-px w-10 bg-gradient-to-r from-transparent to-amber-300/40" />
+                      <span className="h-1.5 w-1.5 rotate-45 bg-amber-300/80 shadow-[0_0_10px_rgba(251,191,36,0.7)]" />
+                      <span className="h-px w-10 bg-gradient-to-l from-transparent to-amber-300/40" />
+                    </div>
+                    <p className="max-w-sm font-display text-[15px] font-light italic leading-[1.75] text-slate-400">
+                      Избери тема отгоре и звездите ще ти разкажат.
                     </p>
                   </div>
                 )}
@@ -259,22 +296,20 @@ export function OracleButton({
                 )}
 
                 {showSavedReading && savedReading && (
-                  <div className="space-y-4 text-slate-200">
+                  <div className="space-y-5 text-[15px] leading-[1.85] text-slate-300/90">
                     {stripSentinels(savedReading.content)
                       .split(/\n\n+/)
                       .filter(Boolean)
                       .map((paragraph, index) => (
-                        <p key={index} className="text-sm leading-7">
-                          {paragraph.trim()}
-                        </p>
+                        <p key={index}>{paragraph.trim()}</p>
                       ))}
                   </div>
                 )}
               </div>
 
-              {/* Footer with back button + regenerate */}
+              {/* Footer — back + regenerate */}
               {(activeTopic || lockedTopicShown) && (
-                <div className="flex items-center justify-between border-t border-slate-800 px-6 py-4">
+                <div className="relative flex items-center justify-between border-t border-white/[0.06] px-7 py-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -282,9 +317,9 @@ export function OracleButton({
                       setActiveTopic(null)
                       setLockedTopicShown(null)
                     }}
-                    className="inline-flex items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-slate-200"
+                    className="group inline-flex items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 transition-colors hover:text-amber-300"
                   >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                     Всички теми
@@ -295,30 +330,16 @@ export function OracleButton({
                       type="button"
                       onClick={handleRegenerate}
                       disabled={!canRegenerate}
-                      title={
-                        canRegenerate
-                          ? 'Ново четене'
-                          : 'Можеш да обновиш веднъж на ден'
-                      }
+                      title={canRegenerate ? 'Ново четене' : 'Можеш да обновиш веднъж на ден'}
                       className={[
-                        'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-all',
+                        'inline-flex items-center gap-2 rounded-full border px-4 py-1.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] transition-all',
                         canRegenerate
-                          ? 'border border-slate-700/50 bg-slate-800/60 text-slate-300 hover:bg-slate-800'
-                          : 'cursor-not-allowed border border-slate-700/30 bg-slate-800/20 text-slate-600',
+                          ? 'border-amber-300/35 text-amber-200/90 hover:border-amber-300/60 hover:text-amber-100 hover:shadow-[0_0_24px_rgba(251,191,36,0.18)]'
+                          : 'cursor-not-allowed border-white/[0.06] text-slate-600',
                       ].join(' ')}
                     >
-                      <svg
-                        className={['h-3.5 w-3.5', canRegenerate ? '' : 'opacity-40'].join(' ')}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        />
+                      <svg className={['h-3 w-3', canRegenerate ? '' : 'opacity-40'].join(' ')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
                       Ново четене
                     </button>

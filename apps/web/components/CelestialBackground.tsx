@@ -224,28 +224,37 @@ export function CelestialBackground() {
 
               <div className="p-5">
                 {/* Header */}
-                <div className="flex items-start justify-between mb-3">
+                <div className="mb-4 flex items-start justify-between">
                   <div>
+                    <motion.p
+                      className="mb-1.5 flex items-center gap-2.5 font-cinzel text-[9px] font-semibold uppercase tracking-[0.34em] text-amber-300/80"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_6px_rgba(251,191,36,0.55)]" />
+                      Съзвездие
+                    </motion.p>
                     <motion.h3
-                      className="text-lg font-bold text-slate-100 tracking-wide"
+                      className="font-display text-[1.25rem] font-semibold tracking-tight text-slate-100"
                       initial={{ opacity: 0, x: -15 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1, duration: 0.3 }}
+                      transition={{ delay: 0.15, duration: 0.3 }}
                     >
                       {selectedConstellation.name}
                     </motion.h3>
                     <motion.p
-                      className="text-xs text-slate-500 font-medium tracking-widest uppercase"
+                      className="mt-1 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: 0.2 }}
+                      transition={{ delay: 0.22 }}
                     >
                       {selectedConstellation.latin}
                     </motion.p>
                   </div>
                   <button
                     onClick={() => setSelectedConstellation(null)}
-                    className="p-1.5 text-slate-500 hover:text-slate-300 transition-colors"
+                    className="p-1.5 text-slate-500 transition-colors hover:text-amber-300"
                     style={{ clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)' }}
                     aria-label="Затвори"
                   >
@@ -267,12 +276,12 @@ export function CelestialBackground() {
 
                 {/* Info rows */}
                 <motion.div
-                  className="space-y-2.5 text-sm"
+                  className="space-y-3"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25, duration: 0.35 }}
                 >
-                  <p className="text-slate-300 leading-relaxed">
+                  <p className="font-display text-[13.5px] italic leading-[1.75] text-slate-300/90">
                     {selectedConstellation.description}
                   </p>
 
@@ -348,12 +357,16 @@ function ConstellationMiniMap({ constellation }: { constellation: ConstellationD
   )
 }
 
-/* ─── Small info chip ─── */
+/* ─── Small info chip — editorial hairline ─── */
 function InfoChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-sm border border-white/5 bg-white/[0.03] px-2.5 py-1.5">
-      <span className="block text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">{label}</span>
-      <span className="block text-xs text-slate-300 leading-snug mt-0.5">{value}</span>
+    <div className="border-l border-white/[0.08] px-3 py-1.5 transition-colors hover:border-amber-300/50">
+      <span className="block font-cinzel text-[8.5px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+        {label}
+      </span>
+      <span className="mt-0.5 block font-display text-[12.5px] leading-snug text-slate-200">
+        {value}
+      </span>
     </div>
   )
 }

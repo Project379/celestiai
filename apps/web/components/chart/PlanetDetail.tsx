@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   PLANETS_BG,
@@ -26,110 +26,76 @@ interface PlanetDetailProps {
   aspects?: AspectData[]
 }
 
-// Glyphs now use <CelestialIcon> components from icons/CelestialIcons
-
-/* ─── Element-specific visual config ─── */
+/* ─── Element → subtle accent tint ────────────────────── */
 const SIGN_ELEMENTS: Record<ZodiacSign, 'fire' | 'earth' | 'air' | 'water'> = {
   aries: 'fire', taurus: 'earth', gemini: 'air', cancer: 'water',
   leo: 'fire', virgo: 'earth', libra: 'air', scorpio: 'water',
   sagittarius: 'fire', capricorn: 'earth', aquarius: 'air', pisces: 'water',
 }
 
-const ELEMENT_THEMES = {
-  fire: {
-    bgGradient: 'from-red-950/40 via-orange-950/30 to-transparent',
-    glowColor: 'rgba(239, 68, 68, 0.25)',
-    accentColor: 'rgba(251, 146, 60, 0.6)',
-    symbolColor: 'rgba(251, 146, 60, 0.8)',
-  },
-  earth: {
-    bgGradient: 'from-emerald-950/40 via-stone-950/30 to-transparent',
-    glowColor: 'rgba(16, 185, 129, 0.2)',
-    accentColor: 'rgba(180, 160, 100, 0.6)',
-    symbolColor: 'rgba(16, 185, 129, 0.7)',
-  },
-  air: {
-    bgGradient: 'from-cyan-950/40 via-indigo-950/30 to-transparent',
-    glowColor: 'rgba(34, 211, 238, 0.2)',
-    accentColor: 'rgba(125, 211, 252, 0.6)',
-    symbolColor: 'rgba(125, 211, 252, 0.7)',
-  },
-  water: {
-    bgGradient: 'from-blue-950/40 via-purple-950/30 to-transparent',
-    glowColor: 'rgba(59, 130, 246, 0.25)',
-    accentColor: 'rgba(147, 130, 246, 0.6)',
-    symbolColor: 'rgba(147, 130, 246, 0.8)',
-  },
+const ELEMENT_TINT: Record<'fire' | 'earth' | 'air' | 'water', { text: string; dot: string }> = {
+  fire:  { text: 'text-rose-300/85',    dot: 'bg-rose-300/90 shadow-[0_0_8px_rgba(253,164,175,0.6)]' },
+  earth: { text: 'text-emerald-300/85', dot: 'bg-emerald-300/90 shadow-[0_0_8px_rgba(110,231,183,0.6)]' },
+  air:   { text: 'text-cyan-300/85',    dot: 'bg-cyan-300/90 shadow-[0_0_8px_rgba(103,232,249,0.6)]' },
+  water: { text: 'text-violet-300/85',  dot: 'bg-violet-300/90 shadow-[0_0_8px_rgba(196,181,253,0.6)]' },
 }
 
-
-const PLANET_AURA_COLORS: Record<string, string> = {
-  sun: 'rgba(250, 204, 21, 0.35)',
-  moon: 'rgba(148, 163, 184, 0.3)',
-  mercury: 'rgba(167, 139, 250, 0.3)',
-  venus: 'rgba(244, 114, 182, 0.3)',
-  mars: 'rgba(239, 68, 68, 0.35)',
-  jupiter: 'rgba(251, 146, 60, 0.3)',
-  saturn: 'rgba(120, 113, 108, 0.25)',
-  uranus: 'rgba(34, 211, 238, 0.3)',
-  neptune: 'rgba(59, 130, 246, 0.3)',
-  pluto: 'rgba(107, 33, 168, 0.3)',
-  northNode: 'rgba(168, 85, 247, 0.25)',
-  rising: 'rgba(34, 211, 238, 0.3)',
+const ELEMENT_LABEL: Record<'fire' | 'earth' | 'air' | 'water', string> = {
+  fire: 'Огън', earth: 'Земя', air: 'Въздух', water: 'Вода',
 }
 
+/* ─── Editorial fade-up ──────────────────────────────── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 14, filter: 'blur(6px)' },
+  visible: (i: number = 0) => ({
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 0.5, delay: i * 0.05, ease: [0.22, 0.68, 0.35, 1] as const },
+  }),
+}
 
-
-/* ═══════════════════════════════════════════════════════════════
-   GIANT GLYPH REVEAL — Luminous fade-in with scale pulse
-   Icon materializes at center from blur, sharpens, then gentle
-   scale bounce before fading out.
-   ═══════════════════════════════════════════════════════════════ */
-
-function GiantGlyphReveal({ iconName, element }: { iconName: string; element: 'fire' | 'earth' | 'air' | 'water' }) {
-  const theme = ELEMENT_THEMES[element]
-
+/* ─── Section with hairline divider and Roman numeral ── */
+function Section({
+  numeral,
+  title,
+  tint,
+  dot,
+  index,
+  children,
+}: {
+  numeral: string
+  title: string
+  tint: string
+  dot: string
+  index: number
+  children: React.ReactNode
+}) {
   return (
-    <motion.div
-      className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
-      aria-hidden="true"
-      initial={{ opacity: 1 }}
-      animate={{ opacity: 0 }}
-      transition={{ duration: 0.8, delay: 1.4, ease: 'easeIn' }}
+    <motion.section
+      initial="hidden"
+      animate="visible"
+      variants={fadeUp}
+      custom={index}
+      className="border-t border-white/[0.05] pt-5"
     >
-      {/* Soft glow behind icon */}
-      <motion.div
-        className="absolute rounded-full"
-        style={{
-          width: 280,
-          height: 280,
-          background: `radial-gradient(circle, ${theme.glowColor}, transparent 70%)`,
-        }}
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{
-          scale: [0.5, 1.1, 1],
-          opacity: [0, 0.5, 0.25],
-        }}
-        transition={{ duration: 1.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      />
-      {/* Main icon — fades in from blur, settles gently */}
-      <motion.div
-        className="absolute select-none"
-        style={{ color: theme.symbolColor }}
-        initial={{ scale: 1.08, opacity: 0, filter: 'blur(20px)' }}
-        animate={{
-          scale: [1.08, 1.02, 1],
-          opacity: [0, 0.9, 0.75],
-          filter: ['blur(20px)', 'blur(2px)', 'blur(0px)'],
-        }}
-        transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-      >
-        <CelestialIcon name={iconName} size={180} />
-      </motion.div>
-    </motion.div>
+      <header className="mb-3 flex items-center gap-3">
+        <span className={`font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] ${tint}`}>
+          {numeral}
+        </span>
+        <span aria-hidden className={`h-1 w-1 rotate-45 ${dot}`} />
+        <span className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.34em] text-slate-400">
+          {title}
+        </span>
+      </header>
+      <div className="font-display text-[14px] leading-[1.85] text-slate-300/95">
+        {children}
+      </div>
+    </motion.section>
   )
 }
 
+/* ─── Main ───────────────────────────────────────────── */
 export function PlanetDetail({
   planet,
   onClose,
@@ -139,44 +105,33 @@ export function PlanetDetail({
   aspects = [],
 }: PlanetDetailProps) {
   const panelRef = useRef<HTMLDivElement>(null)
-  const [revealPhase, setRevealPhase] = useState(0) // 0=hidden, 1=vignette, 2=glyph, 3=panel, 4=content
 
   const element = useMemo(() => {
     if (!planet) return 'fire' as const
     return SIGN_ELEMENTS[planet.sign.toLowerCase() as ZodiacSign] || 'fire'
   }, [planet])
 
-  const theme = ELEMENT_THEMES[element]
+  const tint = ELEMENT_TINT[element]
 
-  // Orchestrate the multi-phase reveal sequence — slow, premium pacing
   useEffect(() => {
-    if (planet) {
-      setRevealPhase(1) // Subtle vignette
-      const t1 = setTimeout(() => setRevealPhase(2), 200)   // Glyph luminous reveal
-      const t2 = setTimeout(() => setRevealPhase(3), 800)   // Panel fade-in
-      const t3 = setTimeout(() => setRevealPhase(4), 1400)  // Content cascade
-      if (panelRef.current) panelRef.current.focus()
-      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
-    } else {
-      setRevealPhase(0)
-    }
+    if (!planet) return
+    panelRef.current?.focus()
   }, [planet])
 
   useEffect(() => {
+    if (!planet) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
-    if (planet) {
-      document.addEventListener('keydown', handleKeyDown)
-      return () => document.removeEventListener('keydown', handleKeyDown)
-    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
   }, [planet, onClose])
 
   const interpretation = useMemo(() => {
     if (!planet) return null
     const isPlanetPosition = 'planet' in planet
     const isRising = type === 'rising'
-    
+
     return isRising
       ? getRisingInterpretation(
           planet.sign,
@@ -202,15 +157,15 @@ export function PlanetDetail({
     : isPlanetPosition
       ? ((planet as PlanetPosition).planet as Planet)
       : 'sun'
-  const auraColor = PLANET_AURA_COLORS[colorKey] || PLANET_AURA_COLORS.sun
+
   const signKey = planet.sign.toLowerCase() as ZodiacSign
   const displayTitle = isRising
     ? interpretation.title
     : isPlanetPosition
       ? PLANETS_BG[(planet as PlanetPosition).planet as Planet]
       : interpretation.title
-  const titleIconName = colorKey // 'sun', 'moon', 'rising', etc.
-  const signIconName = signKey   // 'aries', 'taurus', etc.
+  const titleIconName = colorKey
+  const signIconName = signKey
   const signLabel = ZODIAC_SIGNS_BG[signKey] || planet.sign
 
   const hasOverview = Boolean(interpretation.overview.trim())
@@ -220,434 +175,213 @@ export function PlanetDetail({
   const hasGrowth = Boolean(interpretation.growth.trim())
 
   return (
-    <AnimatePresence mode="wait">
-      <div key={colorKey + planet.sign}>
-        {/* ═══ PHASE 1: Subtle vignette ═══ */}
+    <AnimatePresence>
+      <motion.div
+        key={colorKey + planet.sign}
+        className="fixed inset-0 z-[120] flex items-center justify-center p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.24 }}
+      >
+        {/* Backdrop */}
         <motion.div
-          className="pointer-events-none fixed inset-0 z-50"
-          style={{
-            background: `radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%)`,
-          }}
+          className="absolute inset-0 bg-[#04030a]/85 backdrop-blur-md"
+          onClick={onClose}
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 1, 0] }}
-          transition={{ duration: 1.6, ease: 'easeInOut' }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         />
 
-        {/* ═══ PHASE 2: Giant glyph reveal ═══ */}
-        {revealPhase >= 2 && (
-          <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center">
-            <GiantGlyphReveal iconName={titleIconName} element={element} />
-          </div>
-        )}
-
-        {/* ═══ PHASE 3: The panel — elegant fade-in ═══ */}
+        {/* Panel */}
         <motion.div
           ref={panelRef}
           tabIndex={-1}
-          initial={{ opacity: 0, y: 24 }}
-          animate={{
-            opacity: revealPhase >= 3 ? 1 : 0,
-            y: revealPhase >= 3 ? 0 : 24,
-          }}
-          exit={{ opacity: 0, y: 16 }}
-          transition={{
-            duration: 0.8,
-            ease: [0.25, 0.46, 0.45, 0.94],
-          }}
-          className="mt-6 relative overflow-hidden backdrop-blur-md p-5 focus:outline-none"
-          style={{
-            '--aura-color': auraColor,
-            background: 'linear-gradient(135deg, rgba(8, 12, 28, 0.92), rgba(15, 23, 42, 0.85))',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px))',
-          } as React.CSSProperties}
           role="dialog"
           aria-labelledby="planet-detail-title"
           aria-describedby="planet-detail-desc"
+          className="mystic-panel relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden focus:outline-none"
+          initial={{ opacity: 0, y: 24, scale: 0.96, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, y: 14, scale: 0.97, filter: 'blur(6px)' }}
+          transition={{ duration: 0.5, ease: [0.22, 0.68, 0.35, 1] }}
         >
-          {/* Corner accent cuts */}
-          <motion.div
-            className="pointer-events-none absolute top-0 right-0 w-[20px] h-[20px]"
-            style={{
-              background: `linear-gradient(225deg, ${theme.accentColor}, transparent)`,
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.6 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
+          {/* Ambient atmosphere */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-24 -top-24 -z-0 h-[360px] w-[360px] rounded-full bg-violet-500/[0.10] blur-[110px]"
           />
-          <motion.div
-            className="pointer-events-none absolute bottom-0 left-0 w-[20px] h-[20px]"
-            style={{
-              background: `linear-gradient(45deg, ${theme.accentColor}, transparent)`,
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.6 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-20 top-20 -z-0 h-[260px] w-[260px] rounded-full bg-amber-500/[0.06] blur-[95px]"
           />
 
-          {/* Element-colored background wash */}
-          <motion.div
-            className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${theme.bgGradient}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.35 }}
-            transition={{ duration: 1.6, ease: 'easeOut' }}
-          />
-
-          {/* Breathing aura glow — slow, subtle */}
-          <motion.div
-            className="pointer-events-none absolute inset-0"
-            animate={{
-              boxShadow: [
-                `inset 0 0 30px ${theme.glowColor.replace(/[\d.]+\)$/, '0.04)')}`,
-                `inset 0 0 50px ${theme.glowColor.replace(/[\d.]+\)$/, '0.09)')}`,
-                `inset 0 0 30px ${theme.glowColor.replace(/[\d.]+\)$/, '0.04)')}`,
-              ],
-            }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          />
-
-          {/* Edge accent lines — slow draw */}
-          <motion.div
-            className="pointer-events-none absolute left-0 top-0 bottom-0 w-[1px]"
-            style={{ background: `linear-gradient(to bottom, ${theme.accentColor.replace(/[\d.]+\)$/, '0.4)')}, transparent 70%)` }}
-            initial={{ scaleY: 0 }}
-            animate={{ scaleY: 1 }}
-            transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
-          />
-          <motion.div
-            className="pointer-events-none absolute top-0 left-0 right-0 h-[1px]"
-            style={{ background: `linear-gradient(to right, ${theme.accentColor.replace(/[\d.]+\)$/, '0.4)')}, transparent 60%)` }}
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
-          />
-
-          {/* ═══ PHASE 4: Content — staggered dramatic reveal ═══ */}
-          <div className="relative z-10">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="min-w-0">
-                {/* Title badge row — gentle fade from left */}
-                <motion.div
-                  className="mb-3 flex flex-wrap items-center gap-2"
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{
-                    x: revealPhase >= 4 ? 0 : -20,
-                    opacity: revealPhase >= 4 ? 1 : 0,
-                  }}
-                  transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-                >
-                  <motion.span
-                    className="inline-flex items-center gap-2 px-3 py-1 text-sm font-bold tracking-wide"
-                    style={{
-                      background: `linear-gradient(135deg, ${theme.glowColor}, ${theme.glowColor.replace(/[\d.]+\)$/, '0.05)')})`,
-                      border: `1px solid ${theme.accentColor.replace(/[\d.]+\)$/, '0.4)')}`,
-                      color: 'rgba(255,255,255,0.95)',
-                      clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
-                    }}
-                  >
-                    {/* Planet glyph — luminous fade-in */}
-                    <motion.span
-                      className="text-lg leading-none"
-                      initial={{ scale: 1.3, opacity: 0, filter: 'blur(4px)' }}
-                      animate={{
-                        scale: revealPhase >= 4 ? [1.3, 1.05, 1] : 1.3,
-                        opacity: revealPhase >= 4 ? [0, 1, 1] : 0,
-                        filter: revealPhase >= 4 ? ['blur(4px)', 'blur(0px)', 'blur(0px)'] : 'blur(4px)',
-                      }}
-                      transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                      style={{ textShadow: `0 0 12px ${theme.glowColor}` }}
-                    >
-                      <CelestialIcon name={titleIconName} size={18} />
-                    </motion.span>
-                    <span>{displayTitle}</span>
-                  </motion.span>
-                  <motion.span
-                    className="inline-flex items-center gap-2 border border-white/10 bg-slate-900/60 px-3 py-1 text-sm text-slate-300"
-                    style={{
-                      clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
-                    }}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{
-                      opacity: revealPhase >= 4 ? 1 : 0,
-                      x: revealPhase >= 4 ? 0 : -12,
-                    }}
-                    transition={{ delay: 0.15, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  >
-                    <motion.span
-                      className="text-base leading-none"
-                      initial={{ opacity: 0 }}
-                      animate={revealPhase >= 4 ? { opacity: 1 } : { opacity: 0 }}
-                      transition={{ duration: 0.5, delay: 0.3 }}
-                    >
-                      <CelestialIcon name={signIconName} size={18} />
-                    </motion.span>
-                    <span>{signLabel}</span>
-                  </motion.span>
-                  {house !== undefined && (
-                    <motion.span
-                      className="inline-flex items-center border border-white/10 bg-slate-900/60 px-3 py-1 text-sm text-slate-400"
-                      style={{
-                        clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
-                      }}
-                      initial={{ opacity: 0 }}
-                      animate={{
-                        opacity: revealPhase >= 4 ? 1 : 0,
-                      }}
-                      transition={{ delay: 0.3, duration: 0.6 }}
-                    >
-                      Дом {house}
-                    </motion.span>
-                  )}
-                </motion.div>
-
-                <motion.h3
-                  id="planet-detail-title"
-                  className="text-lg font-bold text-slate-100"
-                  style={{ textShadow: `0 0 20px ${theme.glowColor}` }}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{
-                    opacity: revealPhase >= 4 ? 1 : 0,
-                    y: revealPhase >= 4 ? 0 : 8,
-                  }}
-                  transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-                >
-                  {interpretation.title}
-                </motion.h3>
-                <motion.p
-                  className="mt-1 text-sm text-slate-400"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: revealPhase >= 4 ? 1 : 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                >
-                  {interpretation.position}
-                </motion.p>
-              </div>
-
-              {/* Close button */}
-              <motion.button
-                onClick={onClose}
-                className="-mr-2 -mt-1 p-2 text-slate-400 transition-colors hover:bg-slate-700/50 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                style={{
-                  clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)',
-                }}
-                aria-label="Затвори"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: revealPhase >= 4 ? 1 : 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
+          {/* Header */}
+          <div className="relative flex items-start justify-between gap-6 border-b border-white/[0.06] px-8 pb-6 pt-8">
+            <div className="min-w-0">
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.05 }}
+                className="mb-3 flex items-center gap-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </motion.button>
+                <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.7)]" />
+                {isRising ? 'Асцендент' : 'Планета'}
+              </motion.p>
+
+              <motion.h3
+                id="planet-detail-title"
+                className="font-display flex flex-wrap items-baseline gap-x-3 text-[1.625rem] font-semibold leading-[1.15] tracking-tight sm:text-[1.875rem]"
+                initial={{ opacity: 0, y: 10, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 0.68, 0.35, 1] }}
+              >
+                <span className="inline-flex items-center gap-2.5 text-slate-200/95">
+                  <CelestialIcon name={titleIconName} size={22} className="text-amber-200/85" />
+                  <span className="font-light italic text-slate-400">{displayTitle}</span>
+                </span>
+                <span className="inline-flex items-center gap-2.5">
+                  <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_22px_rgba(251,191,36,0.18)]">
+                    в {signLabel}
+                  </span>
+                  <CelestialIcon name={signIconName} size={22} className="text-slate-300/85" />
+                </span>
+              </motion.h3>
+
+              <motion.p
+                className="mt-3 font-display text-[13px] font-light italic text-slate-400"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.18 }}
+              >
+                {interpretation.position}
+              </motion.p>
+
+              {/* Meta row: element · house */}
+              <motion.div
+                className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.24 }}
+              >
+                <span className={`inline-flex items-center gap-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.3em] ${tint.text}`}>
+                  <span aria-hidden className={`h-1 w-1 rotate-45 ${tint.dot}`} />
+                  {ELEMENT_LABEL[element]}
+                </span>
+                {house !== undefined && (
+                  <span className="inline-flex items-center gap-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                    <span aria-hidden className="h-1 w-1 rotate-45 bg-slate-500/70" />
+                    Дом {house}
+                  </span>
+                )}
+              </motion.div>
             </div>
 
-            {/* Brief interpretation */}
-            {interpretation.brief && (
-              <motion.div
-                className="mb-4 relative"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{
-                  opacity: revealPhase >= 4 ? 1 : 0,
-                  y: revealPhase >= 4 ? 0 : 8,
-                }}
-                transition={{ duration: 0.8, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-              >
-                <p
-                  className="text-base font-medium leading-relaxed"
-                  style={{
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    textShadow: `0 0 20px ${theme.glowColor}`,
-                  }}
-                >
-                  {interpretation.brief.charAt(0).toUpperCase() + interpretation.brief.slice(1)}
-                </p>
-                {/* Underline sweep */}
-                <motion.div
-                  className="mt-2 h-[1px]"
-                  style={{
-                    background: `linear-gradient(90deg, ${theme.accentColor.replace(/[\d.]+\)$/, '0.4)')}, transparent)`,
-                    transformOrigin: 'left',
-                  }}
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: revealPhase >= 4 ? 1 : 0 }}
-                  transition={{ duration: 1.2, delay: 0.6, ease: 'easeOut' }}
-                />
-              </motion.div>
+            {/* Close */}
+            <motion.button
+              onClick={onClose}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+              className="shrink-0 rounded-full p-2 text-slate-500 transition-colors hover:text-amber-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60"
+              aria-label="Затвори"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </motion.button>
+          </div>
+
+          {/* Brief interpretation — italic editorial lede */}
+          {interpretation.brief && (
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              custom={1}
+              className="relative px-8 pt-6"
+            >
+              <p className="max-w-xl border-l border-amber-300/40 pl-6 font-display text-[16px] font-light italic leading-[1.85] text-slate-300/95">
+                {interpretation.brief.charAt(0).toUpperCase() + interpretation.brief.slice(1)}
+              </p>
+            </motion.div>
+          )}
+
+          {/* Body — scrollable editorial flow */}
+          <div
+            id="planet-detail-desc"
+            className="relative flex-1 space-y-7 overflow-y-auto px-8 py-7"
+          >
+            {hasOverview && (
+              <Section numeral="I" title="Общ поглед" tint={tint.text} dot={tint.dot} index={2}>
+                <p>{interpretation.overview}</p>
+              </Section>
             )}
 
-            {/* Content sections — staggered cascade with left accent bars */}
-            <motion.div
-              id="planet-detail-desc"
-              className="space-y-4 text-sm leading-relaxed text-slate-300"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: revealPhase >= 4 ? 1 : 0, y: revealPhase >= 4 ? 0 : 10 }}
-              transition={{ duration: 0.9, delay: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-            >
-              {hasOverview && (
-                <motion.section
-                  className="relative pl-3 border-l-2"
-                  style={{ borderColor: theme.accentColor.replace(/[\d.]+\)$/, '0.3)') }}
-                  initial={{ opacity: 0, y: 20, x: -15 }}
-                  animate={{
-                    opacity: revealPhase >= 4 ? 1 : 0,
-                    y: revealPhase >= 4 ? 0 : 20,
-                    x: revealPhase >= 4 ? 0 : -15,
-                  }}
-                  transition={{ delay: 0.5, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <h4
-                    className="mb-1 text-xs font-bold uppercase tracking-[0.25em]"
-                    style={{ color: theme.accentColor, textShadow: `0 0 8px ${theme.glowColor}` }}
-                  >
-                    Общ поглед
-                  </h4>
-                  <p>{interpretation.overview}</p>
-                </motion.section>
-              )}
+            {hasStrengths && (
+              <Section numeral="II" title="Силни страни" tint={tint.text} dot={tint.dot} index={3}>
+                <ul className="space-y-2">
+                  {interpretation.strengths.map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <span aria-hidden className={`mt-[10px] h-1 w-1 shrink-0 rotate-45 ${tint.dot}`} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
 
-              {hasStrengths && (
-                <motion.section
-                  className="relative pl-3 border-l-2"
-                  style={{ borderColor: theme.accentColor.replace(/[\d.]+\)$/, '0.3)') }}
-                  initial={{ opacity: 0, y: 20, x: -15 }}
-                  animate={{
-                    opacity: revealPhase >= 4 ? 1 : 0,
-                    y: revealPhase >= 4 ? 0 : 20,
-                    x: revealPhase >= 4 ? 0 : -15,
-                  }}
-                  transition={{ delay: 0.6, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <h4
-                    className="mb-2 text-xs font-bold uppercase tracking-[0.25em]"
-                    style={{ color: theme.accentColor, textShadow: `0 0 8px ${theme.glowColor}` }}
-                  >
-                    Силни страни
-                  </h4>
-                  <ul className="space-y-1">
-                    {interpretation.strengths.map((item, i) => (
-                      <motion.li
-                        key={item}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{
-                          opacity: revealPhase >= 4 ? 1 : 0,
-                          x: revealPhase >= 4 ? 0 : -20,
-                        }}
-                        transition={{ delay: 0.65 + i * 0.07, duration: 0.3 }}
-                      >
-                        <span style={{ color: theme.accentColor }}>&#x25C8;</span> {item}
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.section>
-              )}
+            {hasChallenges && (
+              <Section numeral="III" title="Предизвикателства" tint={tint.text} dot={tint.dot} index={4}>
+                <ul className="space-y-2">
+                  {interpretation.challenges.map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <span aria-hidden className={`mt-[10px] h-1 w-1 shrink-0 rotate-45 ${tint.dot}`} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
 
-              {hasChallenges && (
-                <motion.section
-                  className="relative pl-3 border-l-2"
-                  style={{ borderColor: theme.accentColor.replace(/[\d.]+\)$/, '0.3)') }}
-                  initial={{ opacity: 0, y: 20, x: -15 }}
-                  animate={{
-                    opacity: revealPhase >= 4 ? 1 : 0,
-                    y: revealPhase >= 4 ? 0 : 20,
-                    x: revealPhase >= 4 ? 0 : -15,
-                  }}
-                  transition={{ delay: 0.7, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <h4
-                    className="mb-2 text-xs font-bold uppercase tracking-[0.25em]"
-                    style={{ color: theme.accentColor, textShadow: `0 0 8px ${theme.glowColor}` }}
-                  >
-                    Предизвикателства
-                  </h4>
-                  <ul className="space-y-1">
-                    {interpretation.challenges.map((item, i) => (
-                      <motion.li
-                        key={item}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{
-                          opacity: revealPhase >= 4 ? 1 : 0,
-                          x: revealPhase >= 4 ? 0 : -20,
-                        }}
-                        transition={{ delay: 0.75 + i * 0.07, duration: 0.3 }}
-                      >
-                        <span style={{ color: theme.accentColor }}>&#x25C8;</span> {item}
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.section>
-              )}
+            {hasAspectInsights && (
+              <Section numeral="IV" title="Аспекти" tint={tint.text} dot={tint.dot} index={5}>
+                <ul className="space-y-2.5">
+                  {interpretation.aspectInsights.map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <span aria-hidden className={`mt-[10px] h-1 w-1 shrink-0 rotate-45 ${tint.dot}`} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
 
-              {hasAspectInsights && (
-                <motion.section
-                  className="relative pl-3 border-l-2"
-                  style={{ borderColor: theme.accentColor.replace(/[\d.]+\)$/, '0.3)') }}
-                  initial={{ opacity: 0, y: 20, x: -15 }}
-                  animate={{
-                    opacity: revealPhase >= 4 ? 1 : 0,
-                    y: revealPhase >= 4 ? 0 : 20,
-                    x: revealPhase >= 4 ? 0 : -15,
-                  }}
-                  transition={{ delay: 0.8, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <h4
-                    className="mb-2 text-xs font-bold uppercase tracking-[0.25em]"
-                    style={{ color: theme.accentColor, textShadow: `0 0 8px ${theme.glowColor}` }}
-                  >
-                    Аспекти
-                  </h4>
-                  <ul className="space-y-2">
-                    {interpretation.aspectInsights.map((item, i) => (
-                      <motion.li
-                        key={item}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{
-                          opacity: revealPhase >= 4 ? 1 : 0,
-                          x: revealPhase >= 4 ? 0 : -20,
-                        }}
-                        transition={{ delay: 0.85 + i * 0.07, duration: 0.3 }}
-                      >
-                        <span style={{ color: theme.accentColor }}>&#x25C8;</span> {item}
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.section>
-              )}
-
-              {hasGrowth && (
-                <motion.section
-                  className="relative pl-3 border-l-2"
-                  style={{ borderColor: theme.accentColor.replace(/[\d.]+\)$/, '0.3)') }}
-                  initial={{ opacity: 0, y: 20, x: -15 }}
-                  animate={{
-                    opacity: revealPhase >= 4 ? 1 : 0,
-                    y: revealPhase >= 4 ? 0 : 20,
-                    x: revealPhase >= 4 ? 0 : -15,
-                  }}
-                  transition={{ delay: 0.9, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <h4
-                    className="mb-1 text-xs font-bold uppercase tracking-[0.25em]"
-                    style={{ color: theme.accentColor, textShadow: `0 0 8px ${theme.glowColor}` }}
-                  >
-                    Насока за развитие
-                  </h4>
-                  <p>{interpretation.growth}</p>
-                </motion.section>
-              )}
-            </motion.div>
+            {hasGrowth && (
+              <Section numeral="V" title="Насока за развитие" tint={tint.text} dot={tint.dot} index={6}>
+                <p>{interpretation.growth}</p>
+              </Section>
+            )}
 
             {isRising && !birthTimeKnown && (
-              <div className="mt-4 border border-amber-500/30 bg-amber-500/10 p-3"
-                style={{ clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))' }}
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={fadeUp}
+                custom={7}
+                className="border-l border-amber-300/50 bg-gradient-to-r from-amber-300/[0.05] via-transparent to-violet-400/[0.04] px-5 py-3"
               >
-                <p className="text-xs text-amber-300">
-                  Часът на раждане е приблизителен, затова и тълкуването на асцендента е ориентировъчно.
+                <p className="mb-1 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-amber-300/80">
+                  Забележка
                 </p>
-              </div>
+                <p className="font-display text-[12.5px] font-light italic leading-relaxed text-amber-100/85">
+                  Часът на раждане е приблизителен, затова тълкуването на асцендента е ориентировъчно.
+                </p>
+              </motion.div>
             )}
           </div>
         </motion.div>
-      </div>
+      </motion.div>
     </AnimatePresence>
   )
 }

@@ -7,8 +7,6 @@ export const metadata: Metadata = {
   title: 'Табло',
   description: 'Твоето астрологично табло с дневен хороскоп и бързи връзки',
 }
-import { UserMenu } from '../../../components/auth/UserMenu'
-import { SessionExpiryModal } from '../../../components/auth/SessionExpiryModal'
 import { DashboardContent } from '../../../components/dashboard/DashboardContent'
 
 export default async function DashboardPage() {
@@ -34,25 +32,11 @@ export default async function DashboardPage() {
     }
   }
 
-  const priceMonthly = process.env.STRIPE_PRICE_MONTHLY ?? ''
-
   return (
-    <>
-      {/* Session expiry modal (client component) */}
-      <SessionExpiryModal />
-
-      {/* User menu in header slot */}
-      <div className="fixed right-4 top-4 z-50 sm:right-8">
-        <UserMenu />
-      </div>
-
-      {/* Dashboard content */}
-      <DashboardContent
-        firstName={firstName}
-        initialBirthChart={birthChart}
-        subscriptionTier={subscriptionTier}
-        priceMonthly={priceMonthly}
-      />
-    </>
+    <DashboardContent
+      firstName={firstName}
+      initialBirthChart={birthChart}
+      subscriptionTier={subscriptionTier}
+    />
   )
 }

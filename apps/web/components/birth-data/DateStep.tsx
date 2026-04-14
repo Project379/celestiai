@@ -2,6 +2,7 @@
 
 import { useFormContext } from 'react-hook-form'
 import type { BirthData } from '@/lib/validators/birth-data'
+import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 interface DateStepProps {
   onNext: () => void
@@ -14,20 +15,24 @@ export function DateStep({ onNext }: DateStepProps) {
   } = useFormContext<BirthData>()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <h2 className="text-xl font-semibold text-slate-100">
+        <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/75">
+          I · Кога
+        </p>
+        <h2 className="font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[1.5rem]">
           Дата на раждане
         </h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Въведи дата и име за наталната си карта
+        <p className="mt-2 font-display text-[14.5px] font-light italic leading-relaxed text-slate-400">
+          Въведи името на картата и точната дата.
         </p>
       </div>
 
+      {/* Name field — hairline editorial */}
       <div>
         <label
           htmlFor="name"
-          className="block text-sm font-medium text-slate-300"
+          className="mb-2 block font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500"
         >
           Име на картата
         </label>
@@ -36,67 +41,56 @@ export function DateStep({ onNext }: DateStepProps) {
           type="text"
           id="name"
           placeholder="Моята карта"
-          className="mt-2 block w-full rounded-xl border border-slate-600 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          className="block w-full border-0 border-b border-white/[0.08] bg-transparent px-1 py-2.5 font-display text-[16px] text-slate-100 placeholder-slate-600 transition-colors focus:border-amber-300/60 focus:outline-none"
         />
         {errors.name && (
-          <p className="mt-1 text-sm text-red-400">
+          <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
             {errors.name.message}
           </p>
         )}
       </div>
 
+      {/* Date field */}
       <div>
         <label
           htmlFor="birthDate"
-          className="block text-sm font-medium text-slate-300"
+          className="mb-2 block font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500"
         >
           Дата на раждане
         </label>
-        <div className="mt-2 rounded-2xl border border-slate-700/70 bg-slate-900/70 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-          <div className="flex items-center gap-3 rounded-[calc(1rem-2px)] bg-gradient-to-r from-slate-800/95 to-slate-800/70 px-4 py-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/12 text-violet-300">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.8}
-                  d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Избери ден
-              </p>
-              <input
-                {...register('birthDate')}
-                type="date"
-                id="birthDate"
-                max={new Date().toISOString().split('T')[0]}
-                className="block w-full border-0 bg-transparent px-0 py-0 text-base text-slate-100 focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert"
-              />
-            </div>
-          </div>
+        <div className="group flex items-center gap-4 border-b border-white/[0.08] px-1 py-2.5 transition-colors focus-within:border-amber-300/60">
+          <span className="text-violet-300/80 transition-colors group-focus-within:text-amber-300">
+            <CelestialIcon name="sun" size={18} />
+          </span>
+          <input
+            {...register('birthDate')}
+            type="date"
+            id="birthDate"
+            max={new Date().toISOString().split('T')[0]}
+            className="block w-full border-0 bg-transparent p-0 font-display text-[16px] text-slate-100 focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-60 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
+          />
         </div>
         {errors.birthDate && (
-          <p className="mt-1 text-sm text-red-400">
+          <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
             {errors.birthDate.message}
           </p>
         )}
       </div>
 
-      <div className="flex justify-end pt-4">
+      <div className="flex justify-end pt-6">
         <button
           type="button"
           onClick={onNext}
-          className="rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-600 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+          className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-amber-300/40 bg-gradient-to-r from-violet-500/10 via-transparent to-amber-400/10 px-6 py-2.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200 transition-all hover:border-amber-300/70 hover:text-amber-100 hover:shadow-[0_0_24px_rgba(251,191,36,0.18)] focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60"
         >
-          Напред
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-amber-200/15 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+          />
+          <span className="relative">Напред</span>
+          <svg className="relative h-3 w-3 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
     </div>
