@@ -223,28 +223,28 @@ export function ChartView({
           }}
           transition={{ duration: 1.3, ease: [0.22, 0.68, 0.35, 1], times: [0, 0.45, 0.85, 1] }}
         >
-          {/* Arrival glow flash — amber+violet, faster and brighter */}
+          {/* Arrival glow flash — restrained amber+violet */}
           <motion.div
             className="pointer-events-none absolute inset-0 z-20 rounded-full"
             style={{
               background:
-                'radial-gradient(circle, rgba(251,191,36,0.55) 0%, rgba(167,139,250,0.35) 35%, rgba(99,102,241,0.12) 60%, transparent 78%)',
-              filter: 'blur(8px)',
+                'radial-gradient(circle, rgba(251,191,36,0.28) 0%, rgba(167,139,250,0.18) 38%, rgba(99,102,241,0.06) 62%, transparent 80%)',
+              filter: 'blur(10px)',
             }}
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={{ opacity: [0, 0.95, 0], scale: [0.7, 1.12, 1.25] }}
+            initial={{ opacity: 0, scale: 0.75 }}
+            animate={{ opacity: [0, 0.55, 0], scale: [0.75, 1.08, 1.18] }}
             transition={{ duration: 1.1, delay: 0.15, times: [0, 0.5, 1], ease: 'easeOut' }}
           />
-          {/* Persistent soft glow — stays after arrival */}
+          {/* Persistent soft glow — subtle halo after arrival */}
           <motion.div
             className="pointer-events-none absolute inset-0 z-[15] rounded-full"
             style={{
               background:
-                'radial-gradient(circle, rgba(167,139,250,0.14) 0%, rgba(251,191,36,0.06) 45%, transparent 72%)',
-              filter: 'blur(32px)',
+                'radial-gradient(circle, rgba(167,139,250,0.07) 0%, rgba(251,191,36,0.03) 45%, transparent 72%)',
+              filter: 'blur(36px)',
             }}
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0, 0.85] }}
+            animate={{ opacity: [0, 0, 0.4] }}
             transition={{ duration: 1.6, times: [0, 0.5, 1], ease: 'easeOut' }}
           />
           <NatalWheelLegend />
