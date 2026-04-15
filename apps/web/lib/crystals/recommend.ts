@@ -95,31 +95,31 @@ function getSunSign(planets: PlanetPosition[]): string | null {
 }
 
 /**
- * Find the nearest calendar instant for a major lunar event. The phase
- * module already tracks `nextMajor.daysAway`; we derive the current major
- * event (if within ±3 days) from the phase id itself.
+ * Determine whether we're currently inside a lunar event window. Windows
+ * open ±3 days around the exact new moon and exact full moon, computed
+ * purely from `phaseDay` so every phase id that falls inside the window
+ * still triggers the recommendation — not just the narrow `new`/`full`
+ * buckets that last ~1 day each.
  */
 function currentLunarEvent(
-  phase: LunarPhase
+  phase: LunarPhase,
+  now: Date
 ): { id: 'new' | 'full'; validFrom: Date; validUntil: Date } | null {
-  // Recommendation-eligible events — new moon and full moon only for v1
-  // (2 per cycle guarantees the 2/month cadence).
-  const eligible = new Set(['new', 'full'])
-  if (!eligible.has(phase.id)) return null
-
-  // ±3 day window around the exact event. Using phaseDay we can derive
-  // the window without another Swiss-ephemeris call.
   const SYNODIC_MONTH = 29.530588853
-  const daysSinceNew = phase.phaseDay
-  const daysToNew = SYNODIC_MONTH - phase.phaseDay
-  const daysFromFull = Math.abs(phase.phaseDay - SYNODIC_MONTH / 2)
-
-  const now = new Date()
   const MS_PER_DAY = 86_400_000
 
-  if (phase.id === 'new') {
-    const offsetDays = Math.min(daysSinceNew, daysToNew)
-    const exact = new Date(now.getTime() - offsetDays * MS_PER_DAY)
+  // Distance in days to the nearest new moon (before or after)
+  const distToNew = Math.min(phase.phaseDay, SYNODIC_MONTH - phase.phaseDay)
+  // Distance in days to the full moon (before or after)
+  const distToFull = Math.abs(phase.phaseDay - SYNODIC_MONTH / 2)
+
+  if (distToNew <= 3) {
+    // Signed offset from now to the exact new moon (positive = in the past)
+    const offset =
+      phase.phaseDay <= SYNODIC_MONTH / 2
+        ? phase.phaseDay
+        : phase.phaseDay - SYNODIC_MONTH
+    const exact = new Date(now.getTime() - offset * MS_PER_DAY)
     return {
       id: 'new',
       validFrom: new Date(exact.getTime() - 3 * MS_PER_DAY),
@@ -127,13 +127,17 @@ function currentLunarEvent(
     }
   }
 
-  // full
-  const exact = new Date(now.getTime() - daysFromFull * MS_PER_DAY)
-  return {
-    id: 'full',
-    validFrom: new Date(exact.getTime() - 3 * MS_PER_DAY),
-    validUntil: new Date(exact.getTime() + 3 * MS_PER_DAY),
+  if (distToFull <= 3) {
+    const offset = phase.phaseDay - SYNODIC_MONTH / 2
+    const exact = new Date(now.getTime() - offset * MS_PER_DAY)
+    return {
+      id: 'full',
+      validFrom: new Date(exact.getTime() - 3 * MS_PER_DAY),
+      validUntil: new Date(exact.getTime() + 3 * MS_PER_DAY),
+    }
   }
+
+  return null
 }
 
 function formatMonthKey(date: Date): string {
@@ -169,7 +173,7 @@ export function recommendCrystals({
   }
 
   // ——— 2. Lunar phase trigger (new moon / full moon, ±3 days) ———
-  const event = currentLunarEvent(lunarPhase)
+  const event = currentLunarEvent(lunarPhase, now)
   if (event) {
     const phaseIdFilter = event.id // 'new' | 'full'
     const phaseCrystal = pickBestMatch(

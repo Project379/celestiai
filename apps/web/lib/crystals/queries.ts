@@ -192,26 +192,43 @@ export async function collectRecommendation(
 
   if (updateError || !updatedRec) return null
 
-  // Upsert into user_crystals (unique on user+crystal — no duplicates)
-  const { data: userCrystal, error: ucError } = await supabase
+  // Insert into user_crystals; if the user already has this crystal (from a
+  // previous trigger), silently return the existing row. Avoids relying on
+  // upsert onConflict semantics against the unique index.
+  const { data: inserted, error: insertError } = await supabase
     .from('user_crystals')
-    .upsert(
-      {
-        user_id: userId,
-        crystal_id: rec.crystal_id,
-        source: rec.trigger_type,
-        reason_text: rec.reason_text_en,
-        discovered_at: now,
-      },
-      { onConflict: 'user_id,crystal_id' }
-    )
+    .insert({
+      user_id: userId,
+      crystal_id: rec.crystal_id,
+      source: rec.trigger_type,
+      reason_text: rec.reason_text_en,
+      discovered_at: now,
+    })
     .select('*')
     .single()
 
-  if (ucError || !userCrystal) return null
-
-  return {
-    userCrystal: userCrystal as UserCrystalRow,
-    recommendation: updatedRec as CrystalRecommendationRow,
+  if (inserted) {
+    return {
+      userCrystal: inserted as UserCrystalRow,
+      recommendation: updatedRec as CrystalRecommendationRow,
+    }
   }
+
+  // 23505 = unique_violation — user already owns this crystal
+  if (insertError?.code === '23505') {
+    const { data: existing } = await supabase
+      .from('user_crystals')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('crystal_id', rec.crystal_id)
+      .single()
+    if (existing) {
+      return {
+        userCrystal: existing as UserCrystalRow,
+        recommendation: updatedRec as CrystalRecommendationRow,
+      }
+    }
+  }
+
+  return null
 }
