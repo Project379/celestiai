@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 /**
  * /subscription/success
  *
- * Server component wrapper — fetches initial subscription tier,
+ * Server component wrapper - fetches initial subscription tier,
  * then delegates to SuccessContent for the polling UI.
  *
  * This page is reached after Stripe redirects from checkout.

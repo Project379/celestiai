@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// Precomputed dot positions — alternates violet/amber for editorial palette
+// Precomputed dot positions - alternates violet/amber for editorial palette
 const RING_DOTS = Array.from({ length: 12 }, (_, i) => {
   const angle = (i * 30 * Math.PI) / 180
   const cx = +(60 + 48 * Math.cos(angle)).toFixed(2)
@@ -116,7 +116,7 @@ export function LandingSplash({ children }: { children: React.ReactNode }) {
               <span className="h-px w-10 bg-gradient-to-l from-transparent to-amber-300/40" />
             </motion.div>
 
-            {/* Logo text — gradient matches dashboard hero */}
+            {/* Logo text - gradient matches dashboard hero */}
             <motion.h1
               className="mt-4 font-display text-[2rem] font-semibold tracking-tight sm:text-[2.5rem]"
               initial={{ opacity: 0, y: 12, filter: 'blur(8px)' }}

@@ -6,11 +6,11 @@ import { PricingContent } from './PricingContent'
 
 export const metadata: Metadata = {
   title: 'Цени',
-  description: 'Избери план, който ти подхожда — без скрити такси',
+  description: 'Избери план, който ти подхожда - без скрити такси',
 }
 
 /**
- * /pricing — Subscription plan comparison page.
+ * /pricing - Subscription plan comparison page.
  *
  * Server component: fetches current user tier and passes price IDs to client.
  * Free users see an upgrade button that redirects to Stripe Checkout.

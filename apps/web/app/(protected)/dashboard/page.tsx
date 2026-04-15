@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   const firstName = user?.firstName || 'Потребител'
 
   // Fetch user's birth data and subscription tier
-  // Uses React.cache() — deduped with layout-level fetches in the same render pass
+  // Uses React.cache() - deduped with layout-level fetches in the same render pass
   let birthChart: ChartRow | null = null
   let subscriptionTier: 'free' | 'premium' = 'free'
   if (userId) {

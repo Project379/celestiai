@@ -221,7 +221,7 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
               </span>
             </div>
             <p className="mt-3 font-display text-[13px] italic text-slate-400">
-              {isAnnual ? 'Спестяваш ~€24 за година' : 'Или €59,99/год — спестяваш ~28%'}
+              {isAnnual ? 'Спестяваш ~€24 за година' : 'Или €59,99/год - спестяваш ~28%'}
             </p>
           </header>
 

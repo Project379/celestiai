@@ -18,7 +18,7 @@ import { logAuditEvent } from '@/lib/audit'
  * 2. Parse & validate body (chartId, topic, regenerate)
  * 3. Subscription tier gate (premium topics require premium tier)
  * 4. Chart ownership verification
- * 5. Cache check — return cached reading without calling Gemini
+ * 5. Cache check - return cached reading without calling Gemini
  * 6. Regeneration rate limit (once per day per chart-topic pair)
  * 7. Load chart calculation data
  * 8. Build prompts from chart data
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     const validatedTopic = topic as ReadingTopic
     const supabase = createServiceSupabaseClient()
 
-    // 3. Subscription tier check — upsert user row if missing (default 'free')
+    // 3. Subscription tier check - upsert user row if missing (default 'free')
     const { data: userRow, error: userError } = await supabase
       .from('users')
       .upsert(
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Неоторизиран достъп' }, { status: 403 })
     }
 
-    // 5. Cache check — return cached reading without calling Gemini
+    // 5. Cache check - return cached reading without calling Gemini
     const now = new Date().toISOString()
     const { data: existingReading } = await supabase
       .from('ai_readings')
@@ -134,7 +134,7 @@ export async function POST(req: Request) {
       })
     }
 
-    // 6. Regeneration rate limit — once per day per chart-topic pair
+    // 6. Regeneration rate limit - once per day per chart-topic pair
     if (regenerate && existingReading?.last_regenerated_at) {
       const lastRegen = new Date(existingReading.last_regenerated_at)
       const hoursElapsed =
@@ -210,7 +210,7 @@ export async function POST(req: Request) {
             }
           )
         } catch (err) {
-          // Log but don't fail — stream already returned to client
+          // Log but don't fail - stream already returned to client
           console.error('[Oracle Generate] Failed to save reading:', err)
         }
       },
@@ -218,7 +218,7 @@ export async function POST(req: Request) {
 
     logAuditEvent(userId, 'data.ai_reading', { chartId, topic: validatedTopic })
 
-    // Return streaming response — toTextStreamResponse() is the v6 API
+    // Return streaming response - toTextStreamResponse() is the v6 API
     // useCompletion with streamProtocol: 'text' reads this format
     return result.toTextStreamResponse()
   } catch (error) {

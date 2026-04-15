@@ -58,7 +58,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
         </p>
       </div>
 
-      {/* Manual-coordinates toggle — minimal hairline row */}
+      {/* Manual-coordinates toggle - minimal hairline row */}
       <label
         htmlFor="manualCoordinates"
         className="flex cursor-pointer items-center justify-between gap-4 border-y border-white/[0.06] px-1 py-3 transition-colors hover:border-white/[0.12]"

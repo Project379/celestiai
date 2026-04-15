@@ -66,7 +66,7 @@ export function PricingSection() {
           </p>
         </div>
 
-        {/* Editorial plan cards — hairlines over ambient glow, not glass cards */}
+        {/* Editorial plan cards - hairlines over ambient glow, not glass cards */}
         <div className="grid gap-6 md:grid-cols-2 md:gap-8">
           {plans.map((plan) => (
             <article
@@ -106,7 +106,7 @@ export function PricingSection() {
                 </p>
               </div>
 
-              {/* Feature list — hairline rows with amber diamond bullets */}
+              {/* Feature list - hairline rows with amber diamond bullets */}
               <ul className="mb-8 flex-grow space-y-3 border-y border-white/[0.05] py-5">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-3">

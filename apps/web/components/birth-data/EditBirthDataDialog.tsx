@@ -184,7 +184,7 @@ export function EditBirthDataDialog({
             <p className="mt-2 font-display text-[14px] font-light italic leading-relaxed text-slate-400">
               {showConfirm
                 ? 'Наталната карта ще бъде преизчислена.'
-                : 'Промени каквото е нужно — резултатите се обновяват веднага.'}
+                : 'Промени каквото е нужно - резултатите се обновяват веднага.'}
             </p>
           </div>
 

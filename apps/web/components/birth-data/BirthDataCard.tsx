@@ -34,7 +34,7 @@ export function BirthDataCard({ chart, onUpdate }: BirthDataCardProps) {
     if (!chart.birth_time_known && chart.approximate_time_range) {
       return TIME_RANGE_LABELS[chart.approximate_time_range] || chart.approximate_time_range
     }
-    return '—'
+    return '-'
   }
 
   return (
@@ -43,7 +43,7 @@ export function BirthDataCard({ chart, onUpdate }: BirthDataCardProps) {
         {/* ── Header ────────────────────────────────────── */}
         <div className="relative mb-6 flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            {/* Rising-sign sigil — violet outer halo, ivory ring, gold core */}
+            {/* Rising-sign sigil - violet outer halo, ivory ring, gold core */}
             <div className="relative flex h-12 w-12 shrink-0 items-center justify-center">
               <span
                 aria-hidden
@@ -76,7 +76,7 @@ export function BirthDataCard({ chart, onUpdate }: BirthDataCardProps) {
             </div>
           </div>
 
-          {/* Ghost edit button — ivory base, violet hover */}
+          {/* Ghost edit button - ivory base, violet hover */}
           <button
             type="button"
             onClick={() => setIsEditOpen(true)}
@@ -100,7 +100,7 @@ export function BirthDataCard({ chart, onUpdate }: BirthDataCardProps) {
           </button>
         </div>
 
-        {/* ── Decorative celestial divider — ivory rule, gold focal ─── */}
+        {/* ── Decorative celestial divider - ivory rule, gold focal ─── */}
         <div className="relative mb-6 flex items-center gap-4">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-300/15 to-slate-300/25" />
           <div className="flex shrink-0 items-center gap-2.5">
@@ -111,7 +111,7 @@ export function BirthDataCard({ chart, onUpdate }: BirthDataCardProps) {
           <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-300/15 to-slate-300/25" />
         </div>
 
-        {/* ── Detail rows — editorial spec sheet ─────────── */}
+        {/* ── Detail rows - editorial spec sheet ─────────── */}
         <dl className="relative space-y-0">
           <DetailRow label="Ден" value={formattedDate} />
           <DetailRow label="Час" value={getTimeDisplay()} />

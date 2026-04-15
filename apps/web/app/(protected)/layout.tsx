@@ -15,7 +15,7 @@ export default async function ProtectedLayout({
   const { userId } = await auth()
 
   // Fetch chart + tier for the global Oracle button
-  // Uses React.cache() — deduped with any page-level fetches in the same render pass
+  // Uses React.cache() - deduped with any page-level fetches in the same render pass
   let chartId: string | null = null
   let subscriptionTier: 'free' | 'premium' = 'free'
   if (userId) {
@@ -33,7 +33,7 @@ export default async function ProtectedLayout({
 
   return (
     <div className="relative min-h-screen">
-      {/* TODO: background redesign — CelestialBackground still uses the legacy
+      {/* TODO: background redesign - CelestialBackground still uses the legacy
          starfield + constellation overlay. Align it with the editorial system
          (ambient violet/amber, Cinzel accents, slower parallax) before ship. */}
       <CelestialBackgroundLazy />
@@ -61,12 +61,12 @@ export default async function ProtectedLayout({
               </span>
             </Link>
 
-            {/* Nav — centered horizontally and vertically, desktop only */}
+            {/* Nav - centered horizontally and vertically, desktop only */}
             <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex md:items-center">
               <ProtectedNav hasChart={!!chartId} />
             </div>
 
-            {/* Right — premium badge + user avatar */}
+            {/* Right - premium badge + user avatar */}
             <div className="flex shrink-0 items-center gap-4">
               {subscriptionTier === 'premium' && (
                 <span className="hidden h-8 items-center gap-2 font-cinzel text-[9px] font-semibold uppercase leading-none tracking-[0.3em] text-amber-300/85 sm:inline-flex">
@@ -81,7 +81,7 @@ export default async function ProtectedLayout({
             </div>
           </div>
 
-          {/* Mobile nav — slim scrollable row below brand */}
+          {/* Mobile nav - slim scrollable row below brand */}
           <div className="border-t border-slate-200/[0.04] md:hidden">
             <div className="container mx-auto px-4 py-1.5">
               <ProtectedNav hasChart={!!chartId} />

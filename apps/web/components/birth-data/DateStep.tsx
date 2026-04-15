@@ -28,7 +28,7 @@ export function DateStep({ onNext }: DateStepProps) {
         </p>
       </div>
 
-      {/* Name field — hairline editorial */}
+      {/* Name field - hairline editorial */}
       <div>
         <label
           htmlFor="name"

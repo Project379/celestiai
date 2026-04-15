@@ -9,7 +9,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  * Used by the /subscription/success page to poll until premium is active.
  *
  * If session_id is provided, checks Stripe directly for payment status
- * and activates premium immediately — no need to wait for the webhook.
+ * and activates premium immediately - no need to wait for the webhook.
  *
  * Auth: Required (Clerk)
  * Returns: { tier: string }
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         session.payment_status === 'paid' &&
         session.metadata?.clerkUserId === userId
       ) {
-        // Activate premium immediately — don't wait for webhook
+        // Activate premium immediately - don't wait for webhook
         const supabase = createServiceSupabaseClient()
         const subscription = await stripe.subscriptions.retrieve(
           session.subscription as string

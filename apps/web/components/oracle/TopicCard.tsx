@@ -80,7 +80,7 @@ export function TopicCard({
         {icon}
       </div>
 
-      {/* Label — Cinzel uppercase for editorial rhythm */}
+      {/* Label - Cinzel uppercase for editorial rhythm */}
       <span
         className={[
           'font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em] transition-colors duration-300',
@@ -111,7 +111,7 @@ export function TopicCard({
         </div>
       )}
 
-      {/* Saved-reading indicator — tiny amber diamond */}
+      {/* Saved-reading indicator - tiny amber diamond */}
       {hasSavedReading && !isLocked && (
         <span
           aria-hidden

@@ -11,19 +11,19 @@ const features: {
 }[] = [
   {
     title: 'Натална карта',
-    description: 'Виж картата си на раждане с точни планетарни позиции — интерактивна и красива.',
+    description: 'Виж картата си на раждане с точни планетарни позиции - интерактивна и красива.',
     iconName: 'rising',
     premium: false,
   },
   {
     title: 'AI Оракул',
-    description: 'Получи лични тълкувания за любов, кариера и здраве — написани специално за теб от AI.',
+    description: 'Получи лични тълкувания за любов, кариера и здраве - написани специално за теб от AI.',
     iconName: 'moon',
     premium: true,
   },
   {
     title: 'Дневен хороскоп',
-    description: 'Всеки ден ти подготвяме прогноза, базирана точно на твоята карта. С Премиум — пълен достъп.',
+    description: 'Всеки ден ти подготвяме прогноза, базирана точно на твоята карта. С Премиум - пълен достъп.',
     iconName: 'sun',
     premium: true,
   },
@@ -70,7 +70,7 @@ export function FeaturesSection() {
           </p>
         </div>
 
-        {/* Editorial dictionary grid — hairlines, no boxes */}
+        {/* Editorial dictionary grid - hairlines, no boxes */}
         <dl className="grid gap-x-12 border-t border-white/[0.06] sm:grid-cols-2">
           {features.map((feature) => (
             <div

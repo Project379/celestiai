@@ -80,7 +80,7 @@ export function chartToPromptText(chartData: ChartData): string {
 
   // Birth time note
   if (!chartData.birthTimeKnown) {
-    lines.push('(Часът на раждане е неизвестен — Асцендент и домове са приблизителни)')
+    lines.push('(Часът на раждане е неизвестен - Асцендент и домове са приблизителни)')
   }
 
   // Aspects section

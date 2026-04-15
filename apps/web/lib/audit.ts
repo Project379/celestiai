@@ -34,7 +34,7 @@ export async function logAuditEvent(
       metadata: metadata ?? {},
     })
   } catch (err) {
-    // Never throw from audit logging — log to console and move on
+    // Never throw from audit logging - log to console and move on
     console.error('[Audit] Failed to log event:', eventType, err)
   }
 }

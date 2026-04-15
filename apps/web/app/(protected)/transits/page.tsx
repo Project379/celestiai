@@ -46,7 +46,7 @@ export default async function TransitsPage() {
           </span>
         </h1>
         <p className="mt-3 max-w-xl font-display text-[15px] font-light italic leading-relaxed text-slate-500">
-          Активните транзити към картата ти — как планетите говорят с теб точно днес.
+          Активните транзити към картата ти - как планетите говорят с теб точно днес.
         </p>
       </div>
 

@@ -131,12 +131,12 @@ export function PushNotificationBanner() {
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-slate-200/[0.06] backdrop-blur-xl">
-      {/* Layered background — obsidian glass with violet undertone */}
+      {/* Layered background - obsidian glass with violet undertone */}
       <div
         aria-hidden
         className="absolute inset-0 bg-gradient-to-r from-[#0e0c18]/80 via-[#08060f]/70 to-[#12102a]/80"
       />
-      {/* Top hairline — ivory with gold focal */}
+      {/* Top hairline - ivory with gold focal */}
       <div
         aria-hidden
         className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-slate-200/25 to-transparent"
@@ -153,7 +153,7 @@ export function PushNotificationBanner() {
 
       <div className="relative flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5">
         <div className="flex min-w-0 items-center gap-4">
-          {/* Crescent moon sigil — violet halo, gold core */}
+          {/* Crescent moon sigil - violet halo, gold core */}
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center">
             <span
               aria-hidden
@@ -178,7 +178,7 @@ export function PushNotificationBanner() {
             </p>
             {isDenied ? (
               <p className="mt-1 font-display text-[13.5px] italic text-slate-500">
-                Браузърът мълчи — известията са блокирани.
+                Браузърът мълчи - известията са блокирани.
               </p>
             ) : isSubscribed ? (
               <p className="mt-1 font-display text-[13.5px] text-slate-100">

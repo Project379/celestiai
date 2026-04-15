@@ -11,7 +11,7 @@ interface PricingToggleProps {
 
 /**
  * Monthly/Annual billing toggle for the pricing page.
- * Editorial hairline style — no glossy pill, just track + sliding amber diamond.
+ * Editorial hairline style - no glossy pill, just track + sliding amber diamond.
  */
 export function PricingToggle({ priceMonthly, priceAnnual, onPriceChange }: PricingToggleProps) {
   const [isAnnual, setIsAnnual] = useState(false)

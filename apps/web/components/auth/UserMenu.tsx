@@ -60,7 +60,7 @@ export function UserMenu() {
                 'font-display text-[12px] italic text-slate-500',
               userPreviewAvatarBox: 'ring-1 ring-amber-300/30',
 
-              // Action rows — editorial hairline hover
+              // Action rows - editorial hairline hover
               userButtonPopoverActions: 'gap-0',
               userButtonPopoverActionButton:
                 'border-b border-white/[0.04] last:border-b-0 rounded-none px-4 py-3 text-slate-400 hover:bg-gradient-to-r hover:from-violet-500/[0.06] hover:via-transparent hover:to-amber-400/[0.04] hover:text-amber-200 transition-colors',

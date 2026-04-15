@@ -117,7 +117,7 @@ export function ChartView({
 
   return (
     <div>
-      {/* Editorial tab switch — Cinzel underline slider */}
+      {/* Editorial tab switch - Cinzel underline slider */}
       <div className="mb-10 flex items-center gap-8">
         {[
           { id: 'chart' as const,     label: 'Карта'  },
@@ -133,7 +133,7 @@ export function ChartView({
             >
               <span
                 className={`font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.38em] transition-colors duration-200 ${
-                  isActive ? 'text-amber-200' : 'text-slate-500 hover:text-slate-200'
+                  isActive ? 'text-amber-200' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 {tab.label}
@@ -180,7 +180,7 @@ export function ChartView({
         </div>
       )}
 
-      {/* Big Three cards - mobile (above wheel) — zoom from stars */}
+      {/* Big Three cards - mobile (above wheel) - zoom from stars */}
       <motion.div
         className="mb-6 lg:hidden"
         initial={{ scale: 0.1, opacity: 0, filter: 'blur(14px)' }}
@@ -212,7 +212,7 @@ export function ChartView({
           className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-500/[0.05] blur-[100px]"
         />
 
-        {/* Natal wheel — zoom from the stars */}
+        {/* Natal wheel - zoom from the stars */}
         <motion.div
           className="relative flex-1 z-[30]"
           initial={{ scale: 0.08, opacity: 0, filter: 'blur(18px)' }}
@@ -223,7 +223,7 @@ export function ChartView({
           }}
           transition={{ duration: 1.3, ease: [0.22, 0.68, 0.35, 1], times: [0, 0.45, 0.85, 1] }}
         >
-          {/* Arrival glow flash — restrained amber+violet */}
+          {/* Arrival glow flash - restrained amber+violet */}
           <motion.div
             className="pointer-events-none absolute inset-0 z-20 rounded-full"
             style={{
@@ -235,7 +235,7 @@ export function ChartView({
             animate={{ opacity: [0, 0.55, 0], scale: [0.75, 1.08, 1.18] }}
             transition={{ duration: 1.1, delay: 0.15, times: [0, 0.5, 1], ease: 'easeOut' }}
           />
-          {/* Persistent soft glow — subtle halo after arrival */}
+          {/* Persistent soft glow - subtle halo after arrival */}
           <motion.div
             className="pointer-events-none absolute inset-0 z-[15] rounded-full"
             style={{
@@ -255,7 +255,7 @@ export function ChartView({
           />
         </motion.div>
 
-        {/* Right column - desktop: BigThree cards — zoom from stars with stagger */}
+        {/* Right column - desktop: BigThree cards - zoom from stars with stagger */}
         <motion.div
           className="hidden w-80 lg:flex lg:flex-col lg:gap-4"
           initial={{ scale: 0.1, opacity: 0, filter: 'blur(14px)' }}

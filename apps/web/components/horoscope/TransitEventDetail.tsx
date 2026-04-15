@@ -81,7 +81,7 @@ export function TransitEventDetail({ chartId, eventId }: TransitEventDetailProps
         </p>
       </div>
 
-      {/* Detail — editorial pull-quote */}
+      {/* Detail - editorial pull-quote */}
       <figure className="max-w-2xl border-l border-amber-300/40 pl-6">
         <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.36em] text-amber-300/80">
           Тълкувание

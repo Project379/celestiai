@@ -14,7 +14,7 @@ import { logAuditEvent } from '@/lib/audit'
  *
  * Processes Stripe webhook events for subscription lifecycle management.
  *
- * CRITICAL: Uses request.text() (raw body) — NEVER request.json().
+ * CRITICAL: Uses request.text() (raw body) - NEVER request.json().
  * Stripe signature verification requires the exact raw bytes sent.
  *
  * Idempotency: checks processed_webhook_events before processing.
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
   const supabase = createServiceSupabaseClient()
 
-  // Idempotency check — return 200 immediately for already-processed events
+  // Idempotency check - return 200 immediately for already-processed events
   const { data: existing } = await supabase
     .from('processed_webhook_events')
     .select('id')
@@ -60,12 +60,12 @@ export async function POST(request: Request) {
   // Audit log all webhook events (fire-and-forget, null userId for webhooks)
   logAuditEvent(null, 'payment.webhook_received', { eventType: event.type, eventId: event.id })
 
-  // Process event — return 500 on error so Stripe retries
+  // Process event - return 500 on error so Stripe retries
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        // Only process subscription checkouts — not one-time payments
+        // Only process subscription checkouts - not one-time payments
         if (session.mode === 'subscription') {
           await handleCheckoutComplete(session)
           const clerkUserId = session.metadata?.clerkUserId ?? null
@@ -95,9 +95,9 @@ export async function POST(request: Request) {
       }
 
       case 'invoice.payment_failed': {
-        // Log only — Stripe retries automatically; no action needed from us
+        // Log only - Stripe retries automatically; no action needed from us
         console.warn(
-          `[Webhook] Invoice payment failed: ${event.id} — Stripe will retry`
+          `[Webhook] Invoice payment failed: ${event.id} - Stripe will retry`
         )
         break
       }

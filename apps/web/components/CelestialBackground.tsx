@@ -10,7 +10,7 @@ import { CelestialCanvas, CONSTELLATIONS, type ConstellationData } from './Celes
  *
  * Constellation interactivity (click targets, hover, info panels) is only
  * enabled on the dashboard. Other pages get the animated sky without the
- * interactive overlay — this avoids competing animation loops on heavy
+ * interactive overlay - this avoids competing animation loops on heavy
  * pages like the natal chart.
  */
 export function CelestialBackground() {
@@ -28,7 +28,7 @@ export function CelestialBackground() {
   // Track whether buttons have been initially placed
   const [buttonsReady, setButtonsReady] = useState(false)
 
-  // Track mouse globally for parallax — always active for smooth star movement
+  // Track mouse globally for parallax - always active for smooth star movement
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY }
@@ -121,7 +121,7 @@ export function CelestialBackground() {
         />
       </div>
 
-      {/* Layer 2: Constellation click targets — only on dashboard, above content */}
+      {/* Layer 2: Constellation click targets - only on dashboard, above content */}
       {interactive && (
         <div className="pointer-events-none fixed inset-0 z-[40]">
           {CONSTELLATIONS.map(c => (
@@ -133,7 +133,7 @@ export function CelestialBackground() {
               onMouseEnter={() => setHoveredId(c.id)}
               onMouseLeave={() => setHoveredId(null)}
               onClick={() => handleConstellationClick(c.id)}
-              aria-label={`${c.name} — натисни за информация`}
+              aria-label={`${c.name} - натисни за информация`}
             >
               {/* Subtle pulsing ring target */}
               <span
@@ -159,7 +159,7 @@ export function CelestialBackground() {
         </div>
       )}
 
-      {/* Layer 3: Info panel overlay (above everything) — only on dashboard */}
+      {/* Layer 3: Info panel overlay (above everything) - only on dashboard */}
       <AnimatePresence>
         {selectedConstellation && (
           <>
@@ -357,7 +357,7 @@ function ConstellationMiniMap({ constellation }: { constellation: ConstellationD
   )
 }
 
-/* ─── Small info chip — editorial hairline ─── */
+/* ─── Small info chip - editorial hairline ─── */
 function InfoChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="border-l border-white/[0.08] px-3 py-1.5 transition-colors hover:border-amber-300/50">

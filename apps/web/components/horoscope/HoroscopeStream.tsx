@@ -114,7 +114,7 @@ export function HoroscopeStream({ text, isStreaming }: HoroscopeStreamProps) {
           <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
             Celestia
           </p>
-          <p className="font-display text-[14px] font-light italic leading-relaxed text-slate-400">
+          <p className="font-display text-[14px] font-light italic leading-relaxed text-slate-300">
             консултира звездите…
           </p>
         </div>
@@ -122,7 +122,7 @@ export function HoroscopeStream({ text, isStreaming }: HoroscopeStreamProps) {
     )
   }
 
-  // Empty state — no text and not streaming
+  // Empty state - no text and not streaming
   if (!text) {
     return null
   }

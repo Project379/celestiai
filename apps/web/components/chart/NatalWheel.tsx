@@ -83,7 +83,7 @@ const ELEMENT_FX: Record<string, { core: number[]; mid: number[]; outer: number[
 }
 
 // Glyph rendering now uses <use href="#glyph-{name}"> referencing <GlyphDefs />
-// defined in CelestialIcons.tsx — sharp custom SVG line art per symbol.
+// defined in CelestialIcons.tsx - sharp custom SVG line art per symbol.
 
 /**
  * Interactive natal chart wheel visualization using D3.js
@@ -104,7 +104,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
   const aspectRadius = houseInnerRadius * 0.9
   const aspectAnchorRadius = houseInnerRadius * 0.96
 
-  // Hovered zodiac sign — drives the custom React tooltip. Position is in
+  // Hovered zodiac sign - drives the custom React tooltip. Position is in
   // container-local coordinates so the overlay div can be absolutely placed.
   const [hoveredSign, setHoveredSign] = useState<
     { sign: ZodiacSign; x: number; y: number } | null
@@ -207,7 +207,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
       }
 
       // Draw zodiac segment backgrounds. Each segment hosts the hover
-      // handlers that drive the React tooltip — overlapping decorations
+      // handlers that drive the React tooltip - overlapping decorations
       // (glyphs, ASC/MC lines) are set to `pointer-events: none` below so
       // they can't steal these events from the segment underneath.
       g.selectAll('.zodiac-segment')
@@ -284,7 +284,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
           .attr('stroke-width', 1)
           .attr('stroke-dasharray', house.number === 1 || house.number === 10 ? 'none' : '3,3')
 
-        // House number label — offset into the middle of the house the
+        // House number label - offset into the middle of the house the
         // traditional (counterclockwise) direction.
         const labelAngle = angle - (15 * Math.PI) / 180
         const houseNumberRadius = houseInnerRadius * 1.15
@@ -301,7 +301,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
           .text(house.number.toString())
       })
 
-      // Draw Ascendant line (thicker, highlighted) — will always sit on the left
+      // Draw Ascendant line (thicker, highlighted) - will always sit on the left
       const ascAngle = longitudeToScreenRad(chart.ascendant.longitude, rotationDeg)
       g.append('line')
         .attr('x1', center + Math.cos(ascAngle) * (houseInnerRadius * 0.5))
@@ -374,7 +374,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
           .attr('class', 'planet-group')
           .attr('role', 'button')
           .attr('tabindex', '0')
-          .attr('aria-label', `${PLANETS_BG[planet.planet as Planet]} — натисни за тълкуване`)
+          .attr('aria-label', `${PLANETS_BG[planet.planet as Planet]} - натисни за тълкуване`)
           .style('cursor', 'pointer')
           .style('outline', 'none')
           .on('click', () => handlePlanetClick(planet))
@@ -495,7 +495,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
   const spx = selectedPlanetPos?.x ?? center
   const spy = selectedPlanetPos?.y ?? center
 
-  // Stand FX canvas — speed lines, aura orbs, menacing glyphs on planet selection
+  // Stand FX canvas - speed lines, aura orbs, menacing glyphs on planet selection
   useEffect(() => {
     const canvas = fxCanvasRef.current
     if (!canvas) return
@@ -559,7 +559,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
       const t = (performance.now() - startTime) / 1000
       ctx.clearRect(0, 0, size, size)
 
-      // ─── Aura orbs — subtle breathing ring ───
+      // ─── Aura orbs - subtle breathing ring ───
       for (const orb of auraOrbs) {
         orb.angle += orb.speed
         const breathe = Math.sin(t * orb.breathSpd + orb.breathPhase) * wheelR * 0.015
@@ -582,7 +582,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
         ctx.fill()
       }
 
-      // Throttle to 30fps — subtle animation doesn't need 60
+      // Throttle to 30fps - subtle animation doesn't need 60
       setTimeout(() => { fxAnimRef.current = requestAnimationFrame(draw) }, 33)
     }
 

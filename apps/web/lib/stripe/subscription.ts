@@ -7,7 +7,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  *
  * In stripe@20.x, current_period_end moved from the Subscription object
  * to the SubscriptionItem level (sub.items.data[0].current_period_end).
- * Stripe timestamps are Unix seconds — multiply by 1000 for JS Date.
+ * Stripe timestamps are Unix seconds - multiply by 1000 for JS Date.
  */
 function getSubscriptionExpiry(sub: Stripe.Subscription): string {
   const item = sub.items.data[0]
@@ -22,7 +22,7 @@ function getSubscriptionExpiry(sub: Stripe.Subscription): string {
  * Handle checkout.session.completed event.
  *
  * Grants premium access after a successful subscription checkout.
- * clerkUserId is read from session.metadata — set by the checkout API.
+ * clerkUserId is read from session.metadata - set by the checkout API.
  */
 export async function handleCheckoutComplete(
   session: Stripe.Checkout.Session
@@ -147,7 +147,7 @@ export async function handleSubscriptionDeleted(
  * Handle invoice.paid event.
  *
  * Refreshes premium status and expiry date on subscription renewal.
- * Non-throwing on missing metadata — invoice events can be noisy (e.g. one-time charges).
+ * Non-throwing on missing metadata - invoice events can be noisy (e.g. one-time charges).
  *
  * In stripe@20.x, the subscription is accessed via
  * invoice.parent.subscription_details.subscription (not invoice.subscription).
@@ -160,7 +160,7 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> 
       : undefined
 
   if (!subscriptionId) {
-    // Not a subscription invoice (e.g. one-time charge) — skip
+    // Not a subscription invoice (e.g. one-time charge) - skip
     return
   }
 
@@ -168,9 +168,9 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> 
 
   const clerkUserId = subscription.metadata?.clerkUserId
   if (!clerkUserId) {
-    // Invoice events can come from non-Celestia subscriptions — log and skip
+    // Invoice events can come from non-Celestia subscriptions - log and skip
     console.warn(
-      `[Webhook] handleInvoicePaid: missing clerkUserId in subscription metadata (sub: ${subscription.id}) — skipping`
+      `[Webhook] handleInvoicePaid: missing clerkUserId in subscription metadata (sub: ${subscription.id}) - skipping`
     )
     return
   }

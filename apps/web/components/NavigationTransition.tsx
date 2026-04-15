@@ -37,7 +37,7 @@ export function NavigationTransition({ children }: { children: React.ReactNode }
             exit={{ opacity: 0 }}
             transition={{ duration: 0.24, ease: 'easeOut' }}
           >
-            {/* Ambient halos — matches protected loading.tsx */}
+            {/* Ambient halos - matches protected loading.tsx */}
             <div
               aria-hidden
               className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"

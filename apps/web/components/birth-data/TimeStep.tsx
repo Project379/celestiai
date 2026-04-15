@@ -10,10 +10,10 @@ interface TimeStepProps {
 }
 
 const TIME_RANGES: { value: ApproximateTimeRange; label: string; hours: string }[] = [
-  { value: 'morning',   label: 'Сутрин',   hours: '06 — 12' },
-  { value: 'afternoon', label: 'Следобед', hours: '12 — 18' },
-  { value: 'evening',   label: 'Вечер',    hours: '18 — 24' },
-  { value: 'night',     label: 'Нощ',      hours: '00 — 06' },
+  { value: 'morning',   label: 'Сутрин',   hours: '06 - 12' },
+  { value: 'afternoon', label: 'Следобед', hours: '12 - 18' },
+  { value: 'evening',   label: 'Вечер',    hours: '18 - 24' },
+  { value: 'night',     label: 'Нощ',      hours: '00 - 06' },
 ]
 
 export function TimeStep({ onNext, onPrev }: TimeStepProps) {
@@ -50,7 +50,7 @@ export function TimeStep({ onNext, onPrev }: TimeStepProps) {
         </p>
       </div>
 
-      {/* Known-or-not toggle — hairline row with amber diamond marker */}
+      {/* Known-or-not toggle - hairline row with amber diamond marker */}
       <button
         type="button"
         onClick={() => handleTimeKnownChange(!(birthTimeKnown === true))}

@@ -4,7 +4,7 @@ import { AstrologyGuideContent } from '@/components/astrology-guide/AstrologyGui
 export const metadata: Metadata = {
   title: 'Какво е астрологията?',
   description:
-    'Открий историята, принципите и науката зад астрологията — от древния Вавилон до швейцарската епхемерис, използвана от Celestia.',
+    'Открий историята, принципите и науката зад астрологията - от древния Вавилон до швейцарската епхемерис, използвана от Celestia.',
 }
 
 export default function AstrologyGuidePage() {

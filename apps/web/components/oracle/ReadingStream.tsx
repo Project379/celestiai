@@ -71,7 +71,7 @@ export function ReadingStream({
 
   const displayText = stripSentinels(completion)
 
-  // Loading state: pre-first-token — editorial orbiting diamond
+  // Loading state: pre-first-token - editorial orbiting diamond
   if (isLoading && !completion) {
     return (
       <div className="flex flex-col items-center justify-center gap-5 py-12">

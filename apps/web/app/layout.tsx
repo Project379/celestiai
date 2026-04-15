@@ -27,7 +27,7 @@ const cinzel = Cinzel({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Celestia AI — Твоят астрологичен приятел',
+    default: 'Celestia AI - Твоят астрологичен приятел',
     template: '%s | Celestia AI',
   },
   description: 'Персонализирани хороскопи и астрологични прогнози, създадени за теб',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'bg_BG',
     siteName: 'Celestia AI',
-    title: 'Celestia AI — Твоят астрологичен приятел',
+    title: 'Celestia AI - Твоят астрологичен приятел',
     description: 'Персонализирани хороскопи и астрологични прогнози, създадени за теб',
   },
   twitter: {

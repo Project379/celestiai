@@ -10,7 +10,7 @@ export function AuthHeader() {
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       transition={{ duration: 0.8, ease: [0.22, 0.68, 0.35, 1] }}
     >
-      {/* Brand lockup — ivory Cinzel + gold ornament */}
+      {/* Brand lockup - ivory Cinzel + gold ornament */}
       <div className="mb-1 flex items-center justify-center gap-3">
         <span
           aria-hidden

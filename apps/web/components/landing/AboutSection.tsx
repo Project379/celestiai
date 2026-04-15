@@ -29,7 +29,7 @@ export function AboutSection() {
         {/* Editorial prose */}
         <div className="mx-auto max-w-2xl space-y-5 text-center font-display text-[16px] leading-[1.85] text-slate-300/90">
           <p>
-            Celestia AI е твоят личен астрологичен придружител — създаден специално за българи. Комбинираме вековната мъдрост на астрологията с най-новите технологии, за да ти дадем нещо наистина полезно.
+            Celestia AI е твоят личен астрологичен придружител - създаден специално за българи. Комбинираме вековната мъдрост на астрологията с най-новите технологии, за да ти дадем нещо наистина полезно.
           </p>
           <p>
             Вярваме, че астрологията трябва да е <span className="text-slate-100">достъпна, точна и лична</span>. Затова използваме Swiss Ephemeris за прецизни изчисления и AI модели, които пишат тълкувания специално за теб.
@@ -39,7 +39,7 @@ export function AboutSection() {
           </p>
         </div>
 
-        {/* Editorial stats — hairline row */}
+        {/* Editorial stats - hairline row */}
         <div className="mt-14 border-y border-white/[0.06]">
           <dl className="grid grid-cols-3 divide-x divide-white/[0.05]">
             {[

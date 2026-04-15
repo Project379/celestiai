@@ -8,7 +8,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  * Used for billing history, payment method management.
  *
  * Auth: Required (Clerk)
- * Returns: { url: string } — redirect user to this URL
+ * Returns: { url: string } - redirect user to this URL
  */
 export async function POST() {
   const { userId } = await auth()

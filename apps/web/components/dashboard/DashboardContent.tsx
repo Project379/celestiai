@@ -4,7 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { DailyHoroscope } from '@/components/horoscope/DailyHoroscope'
+import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
+import { getLunarPhase } from '@/lib/moon-phase'
 import type { ChartRow } from '@/lib/types/chart'
 
 interface DashboardContentProps {
@@ -14,7 +16,7 @@ interface DashboardContentProps {
 }
 
 /**
- * Fade-up with blur. Pass `custom` index to stagger — each step adds 70ms.
+ * Fade-up with blur. Pass `custom` index to stagger - each step adds 70ms.
  */
 const fadeUp = {
   hidden: { opacity: 0, y: 18, filter: 'blur(8px)' },
@@ -50,18 +52,18 @@ function getSunSign(birthDate: string): string {
 }
 
 const SIGN_QUIPS: Record<string, string> = {
-  'Овен':      'Марс пак те тласка напред — независимо дали имаш план или не. Поне изглежда убедено.',
+  'Овен':      'Марс пак те тласка напред - независимо дали имаш план или не. Поне изглежда убедено.',
   'Телец':     'Венера обещава удоволствие. Сатурн напомня за задълженията. Ти вероятно знаеш кое печели.',
   'Близнаци':  'Два гласа в главата ти не са проблем. Проблемът е, когато и двата са прави едновременно.',
-  'Рак':       'Луната е в твоя ъгъл. Усещаш всичко — включително нещата, за които другите нямат думи.',
-  'Лъв':       'Слънцето не е само за показ — но трябва да признаем, малко драма никога не е навредила.',
+  'Рак':       'Луната е в твоя ъгъл. Усещаш всичко - включително нещата, за които другите нямат думи.',
+  'Лъв':       'Слънцето не е само за показ - но трябва да признаем, малко драма никога не е навредила.',
   'Дева':      'Меркурий анализира. Ти анализираш. Разликата е, че Меркурий спира в края на краищата.',
-  'Везни':     'Везните са в баланс. За колко дълго — зависи от теб и от онзи имейл, на който все още не отговаряш.',
+  'Везни':     'Везните са в баланс. За колко дълго - зависи от теб и от онзи имейл, на който все още не отговаряш.',
   'Скорпион':  'Плутон вижда всичко. Ти виждаш всичко. Фактически няма смисъл да крием нищо от никого.',
-  'Стрелец':   'Юпитер е щедър. Ти — с добри намерения, непоследователни резултати и неоправдан оптимизъм. Работи.',
-  'Козирог':   'Сатурн одобрява усилията ти. Малък, тих знак за одобрение — продължавай без суетене.',
+  'Стрелец':   'Юпитер е щедър. Ти - с добри намерения, непоследователни резултати и неоправдан оптимизъм. Работи.',
+  'Козирог':   'Сатурн одобрява усилията ти. Малък, тих знак за одобрение - продължавай без суетене.',
   'Водолей':   'Уран прави нещата интересни. Ти правиш нещата странни. Разбирате се по начин, трудно обясним.',
-  'Риби':      'Нептун замъглява. Ти мечтаеш. Понякога е трудно да се каже кое е кое — и не е задължително.',
+  'Риби':      'Нептун замъглява. Ти мечтаеш. Понякога е трудно да се каже кое е кое - и не е задължително.',
 }
 
 const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
@@ -82,6 +84,7 @@ export function DashboardContent({
 
   const sunSign = birthChart ? getSunSign(birthChart.birth_date) : null
   const todayFormatted = BG_DATE_FORMAT.format(new Date())
+  const lunarPhase = getLunarPhase()
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -104,18 +107,31 @@ export function DashboardContent({
           className="pointer-events-none absolute right-0 top-16 -z-10 h-[220px] w-[220px] rounded-full bg-amber-500/[0.045] blur-[80px]"
         />
 
-        {/* Date line */}
-        <p className="mb-6 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-500">
-          {todayFormatted}
+        {/* Date line with moon phase */}
+        <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-400">
+          <span>{todayFormatted}</span>
+          <span aria-hidden className="h-[3px] w-[3px] rotate-45 bg-slate-500/80" />
+          <span className="inline-flex items-center gap-2 text-slate-300">
+            <span aria-hidden className="text-[11px] leading-none text-amber-300/70">☾</span>
+            {lunarPhase.name}
+          </span>
         </p>
 
         {/* Greeting */}
         <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-[2.125rem] leading-[1.1] tracking-tight sm:text-[2.75rem]">
-          <span className="font-light italic text-slate-400">Здравей,</span>
-          <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.18)]">
+          <span className="font-light italic text-slate-300">Здравей,</span>
+          <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/95 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.22)]">
             {firstName}.
           </span>
         </h1>
+
+        {/* Moon phase welcome line */}
+        <p className="mt-5 max-w-xl font-display text-[15.5px] font-light italic leading-[1.8] text-slate-200/95 sm:text-[16.5px]">
+          Луната е в{' '}
+          <span className="text-slate-100">{lunarPhase.name.toLowerCase()}</span>
+          {' '}({lunarPhase.illumination}% осветление).{' '}
+          <span className="text-slate-300">{lunarPhase.intention}.</span>
+        </p>
 
         {/* Premium indicator */}
         {isPremium && (
@@ -140,16 +156,16 @@ export function DashboardContent({
           custom={1}
           className="mb-12"
         >
-          <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-500/70">
+          <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-400/85">
             {sunSign}
           </p>
-          <p className="font-display text-[17px] font-light italic leading-[1.85] text-slate-400 sm:text-[18px]">
+          <p className="font-display text-[17px] font-light italic leading-[1.85] text-slate-200/90 sm:text-[18px]">
             {SIGN_QUIPS[sunSign] ?? 'Звездите са в движение. Вселената е написала нещо за теб.'}
           </p>
         </motion.div>
       )}
 
-      {/* ── Empty state — no birth chart ──────────────────── */}
+      {/* ── Empty state - no birth chart ──────────────────── */}
       {!birthChart && (
         <motion.div
           initial="hidden"
@@ -158,12 +174,12 @@ export function DashboardContent({
           custom={1}
           className="mb-12"
         >
-          <p className="mb-5 font-display text-[17px] font-light italic leading-[1.85] text-slate-500">
+          <p className="mb-5 font-display text-[17px] font-light italic leading-[1.85] text-slate-200/90">
             Картата ти още не е настроена. Въведи рождените си данни, за да видиш хороскопа, натална карта и транзити.
           </p>
           <Link
             href="/birth-data"
-            className="group inline-flex items-center gap-2 font-display text-[12px] font-medium tracking-wide text-slate-400 transition-colors duration-200 hover:text-amber-300"
+            className="group inline-flex items-center gap-2 font-display text-[12px] font-medium tracking-wide text-slate-300 transition-colors duration-200 hover:text-amber-300"
           >
             <CelestialIcon name="rising" size={13} className="transition-colors duration-200 group-hover:text-amber-300" />
             Въведи рождени данни
@@ -186,6 +202,17 @@ export function DashboardContent({
           <DailyHoroscope chartId={birthChart.id} />
         </motion.div>
       )}
+
+      {/* ── Lunar phase - free-tier manifesting ───────────── */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        custom={birthChart ? 3 : 2}
+        className="mb-12"
+      >
+        <LunarPhaseCard />
+      </motion.div>
 
     </div>
   )

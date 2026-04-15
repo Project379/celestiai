@@ -42,7 +42,7 @@ export function SessionExpiryModal() {
       aria-labelledby="session-expiry-title"
     >
       <div className="mystic-panel mystic-corners mx-4 max-w-md p-6 shadow-[0_30px_90px_rgba(0,0,0,0.9)]">
-        {/* Icon — amber gold halo */}
+        {/* Icon - amber gold halo */}
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-slate-200/10 bg-amber-400/10 shadow-[0_0_20px_rgba(251,191,36,0.2)]">
           <svg
             className="h-7 w-7 text-amber-300"

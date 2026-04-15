@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 
-/** Three orbiting bodies — violet / indigo / amber — editorial color palette. */
+/** Three orbiting bodies - violet / indigo / amber - editorial color palette. */
 const ORBIT_PLANETS = [
   { delay: 0,   size: 5, color: '#c4b5fd', orbit: 48, duration: 3.2 },
   { delay: 0.6, size: 4, color: '#818cf8', orbit: 66, duration: 4.8 },
@@ -13,7 +13,7 @@ export function LoadingAnimation() {
   return (
     <div className="relative flex flex-col items-center">
       <div className="relative" style={{ width: 200, height: 200 }}>
-        {/* Orbit rings — quiet hairlines */}
+        {/* Orbit rings - quiet hairlines */}
         {ORBIT_PLANETS.map((planet, i) => (
           <div
             key={`ring-${i}`}
@@ -61,7 +61,7 @@ export function LoadingAnimation() {
           </motion.div>
         ))}
 
-        {/* Center — rotating amber diamond instead of solid blob */}
+        {/* Center - rotating amber diamond instead of solid blob */}
         <motion.div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
           initial={{ opacity: 0, scale: 0.6, filter: 'blur(6px)' }}

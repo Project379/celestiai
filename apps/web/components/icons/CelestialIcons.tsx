@@ -1,5 +1,5 @@
 /**
- * Custom celestial icon library — sharp, geometric line-art glyphs
+ * Custom celestial icon library - sharp, geometric line-art glyphs
  * for all zodiac signs, planets, and special points.
  *
  * Design language: 1.5px stroke, round caps, geometric forms,
@@ -46,7 +46,7 @@ function Svg({ size = 24, className, children }: IconProps & { children: ReactNo
 
 /* ── PLANET ICONS ─────────────────────────────────────────────── */
 
-/** ☉ Sun — circle with center dot */
+/** ☉ Sun - circle with center dot */
 export function SunIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -56,7 +56,7 @@ export function SunIcon({ size, className }: IconProps) {
   )
 }
 
-/** ☽ Moon — crescent */
+/** ☽ Moon - crescent */
 export function MoonIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -65,7 +65,7 @@ export function MoonIcon({ size, className }: IconProps) {
   )
 }
 
-/** ☿ Mercury — circle + cross below + crescent horns above */
+/** ☿ Mercury - circle + cross below + crescent horns above */
 export function MercuryIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -77,7 +77,7 @@ export function MercuryIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♀ Venus — circle + cross below */
+/** ♀ Venus - circle + cross below */
 export function VenusIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -88,7 +88,7 @@ export function VenusIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♂ Mars — circle + arrow upper-right */
+/** ♂ Mars - circle + arrow upper-right */
 export function MarsIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -99,7 +99,7 @@ export function MarsIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♃ Jupiter — "2" shape with vertical bar */
+/** ♃ Jupiter - "2" shape with vertical bar */
 export function JupiterIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -109,7 +109,7 @@ export function JupiterIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♄ Saturn — cross on top + sickle curve */
+/** ♄ Saturn - cross on top + sickle curve */
 export function SaturnIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -120,7 +120,7 @@ export function SaturnIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♅ Uranus — H-shape with circle at bottom */
+/** ♅ Uranus - H-shape with circle at bottom */
 export function UranusIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -133,7 +133,7 @@ export function UranusIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♆ Neptune — trident (ψ shape) + cross below */
+/** ♆ Neptune - trident (ψ shape) + cross below */
 export function NeptuneIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -145,7 +145,7 @@ export function NeptuneIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♇ Pluto — circle sitting in cup + cross below */
+/** ♇ Pluto - circle sitting in cup + cross below */
 export function PlutoIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -157,7 +157,7 @@ export function PlutoIcon({ size, className }: IconProps) {
   )
 }
 
-/** ☊ North Node — Ω shape (horseshoe up + legs down) */
+/** ☊ North Node - Ω shape (horseshoe up + legs down) */
 export function NorthNodeIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -168,7 +168,7 @@ export function NorthNodeIcon({ size, className }: IconProps) {
   )
 }
 
-/** ASC / Rising — standard "A" glyph */
+/** ASC / Rising - standard "A" glyph */
 export function RisingIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -180,7 +180,7 @@ export function RisingIcon({ size, className }: IconProps) {
 
 /* ── ZODIAC ICONS ─────────────────────────────────────────────── */
 
-/** ♈ Aries — V stem with small inward half-circles at each tip */
+/** ♈ Aries - V stem with small inward half-circles at each tip */
 export function AriesIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -192,7 +192,7 @@ export function AriesIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♉ Taurus — circle with bull horns */
+/** ♉ Taurus - circle with bull horns */
 export function TaurusIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -202,7 +202,7 @@ export function TaurusIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♊ Gemini — two pillars */
+/** ♊ Gemini - two pillars */
 export function GeminiIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -214,7 +214,7 @@ export function GeminiIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♋ Cancer — 69-shape / crab claws */
+/** ♋ Cancer - 69-shape / crab claws */
 export function CancerIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -226,7 +226,7 @@ export function CancerIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♌ Leo — lion tail + loop */
+/** ♌ Leo - lion tail + loop */
 export function LeoIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -236,7 +236,7 @@ export function LeoIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♍ Virgo — three vertical strokes + crossed tail */
+/** ♍ Virgo - three vertical strokes + crossed tail */
 export function VirgoIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -249,7 +249,7 @@ export function VirgoIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♎ Libra — scales / horizon with setting sun */
+/** ♎ Libra - scales / horizon with setting sun */
 export function LibraIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -260,7 +260,7 @@ export function LibraIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♏ Scorpio — three strokes + arrow tail */
+/** ♏ Scorpio - three strokes + arrow tail */
 export function ScorpioIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -272,7 +272,7 @@ export function ScorpioIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♐ Sagittarius — arrow diagonal */
+/** ♐ Sagittarius - arrow diagonal */
 export function SagittariusIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -283,7 +283,7 @@ export function SagittariusIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♑ Capricorn — Handwritten n with top-left stroke and outer overlapping loop ending inwards */
+/** ♑ Capricorn - Handwritten n with top-left stroke and outer overlapping loop ending inwards */
 export function CapricornIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -293,7 +293,7 @@ export function CapricornIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♒ Aquarius — two wavy lines */
+/** ♒ Aquarius - two wavy lines */
 export function AquariusIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -303,7 +303,7 @@ export function AquariusIcon({ size, className }: IconProps) {
   )
 }
 
-/** ♓ Pisces — two arcs with horizontal bar */
+/** ♓ Pisces - two arcs with horizontal bar */
 export function PiscesIcon({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>
@@ -352,7 +352,7 @@ const ICON_MAP: Record<CelestialIconName, (props: IconProps) => React.JSX.Elemen
   pisces: PiscesIcon,
 }
 
-/** Universal icon component — pass any planet/zodiac/special name */
+/** Universal icon component - pass any planet/zodiac/special name */
 export function CelestialIcon({ name, size = 24, className }: { name: string; size?: number; className?: string }) {
   const Component = ICON_MAP[name as CelestialIconName]
   if (!Component) return <span className={className}>{name}</span>

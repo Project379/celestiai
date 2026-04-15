@@ -95,7 +95,7 @@ export function LockedTopicTeaser({
 
         {/* Tagline */}
         <p className="max-w-xs text-center font-display text-[14px] font-light italic leading-[1.75] text-slate-400">
-          Звездите шепнат нещо само за теб — отключи го.
+          Звездите шепнат нещо само за теб - отключи го.
         </p>
 
         {/* Upgrade button */}

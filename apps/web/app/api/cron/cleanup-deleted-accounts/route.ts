@@ -96,7 +96,7 @@ export async function GET(req: Request) {
       console.log(`[Cron Cleanup] Deleted user ${clerkId}`)
     } catch (err) {
       console.error(`[Cron Cleanup] Failed to delete user ${clerkId}:`, err)
-      // Continue with remaining users — one failure shouldn't stop the batch
+      // Continue with remaining users - one failure shouldn't stop the batch
     }
   }
 

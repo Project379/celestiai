@@ -9,7 +9,7 @@ import { logAuditEvent } from '@/lib/audit'
  * Access continues until current_period_end.
  *
  * Auth: Required (Clerk)
- * Body: { reason?: string } — optional cancellation reason for product feedback
+ * Body: { reason?: string } - optional cancellation reason for product feedback
  * Returns: { success: true }
  */
 export async function POST(req: Request) {
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const body = await req.json()
     reason = body?.reason
   } catch {
-    // Body is optional — proceed without reason
+    // Body is optional - proceed without reason
   }
 
   try {

@@ -141,7 +141,7 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
         </div>
       )}
 
-      {/* Search input — hairline editorial */}
+      {/* Search input - hairline editorial */}
       {(!value || query) && (
         <div className="relative">
           <input
@@ -173,7 +173,7 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
         </div>
       )}
 
-      {/* Dropdown — mystic panel */}
+      {/* Dropdown - mystic panel */}
       {isOpen && (
         <div className="mystic-panel absolute z-50 mt-2 max-h-72 w-full overflow-hidden">
           <div className="max-h-72 overflow-y-auto">

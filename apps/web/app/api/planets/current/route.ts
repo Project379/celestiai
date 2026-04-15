@@ -5,7 +5,7 @@ import { calculateNatalChart } from '@celestia/astrology'
  *
  * Returns current real-time planet positions using Swiss Ephemeris.
  * Used by the celestial background animation.
- * No auth required — this is public astronomical data.
+ * No auth required - this is public astronomical data.
  *
  * Response is cached for 10 minutes (planets move slowly enough).
  */

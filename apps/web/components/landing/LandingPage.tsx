@@ -46,7 +46,7 @@ export function LandingPage() {
               </h1>
 
               <p className="mx-auto mt-8 max-w-xl font-display text-[17px] font-light italic leading-[1.85] text-slate-400 sm:text-[18px]">
-                Твоят личен астрологичен придружител — точна натална карта, дневни транзити и AI прозрения, написани на български.
+                Твоят личен астрологичен придружител - точна натална карта, дневни транзити и AI прозрения, написани на български.
               </p>
 
               <div className="mt-10 flex flex-col items-center gap-5 sm:flex-row sm:justify-center">

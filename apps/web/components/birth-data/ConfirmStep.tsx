@@ -50,10 +50,10 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
   const hasErrors = Object.keys(errors).length > 0
 
   const rows: { label: string; value: string }[] = [
-    { label: 'Име на картата',  value: (name as string) || '—' },
-    { label: 'Дата на раждане', value: formatDate(birthDate as string) || '—' },
+    { label: 'Име на картата',  value: (name as string) || '-' },
+    { label: 'Дата на раждане', value: formatDate(birthDate as string) || '-' },
     { label: 'Час на раждане',  value: getTimeDisplay() },
-    { label: 'Място',            value: (cityName as string) || '—' },
+    { label: 'Място',            value: (cityName as string) || '-' },
   ]
 
   if (manualCoordinates || latitude || longitude) {
@@ -79,7 +79,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
         </p>
       </div>
 
-      {/* Editorial summary list — hairlines, no card */}
+      {/* Editorial summary list - hairlines, no card */}
       <dl className="divide-y divide-white/[0.05] border-y border-white/[0.05]">
         {rows.map((row) => (
           <div key={row.label} className="flex items-baseline justify-between gap-4 py-4">

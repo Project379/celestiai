@@ -128,16 +128,16 @@ function BigThreeCard({
       )}
 
       <div className="relative z-10">
-        {/* Title row — Cinzel eyebrow */}
+        {/* Title row - Cinzel eyebrow */}
         <div className="mb-3 flex items-center justify-between">
           <span
             className={`inline-flex items-center gap-2.5 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] transition-colors duration-300 ${
-              isSelected ? tint.label : 'text-slate-500 group-hover:text-slate-300'
+              isSelected ? tint.label : 'text-slate-400 group-hover:text-slate-300'
             }`}
           >
             <motion.span
               className={`leading-none transition-colors duration-300 ${
-                isSelected ? tint.icon : 'text-slate-400 group-hover:text-slate-200'
+                isSelected ? tint.icon : 'text-slate-300 group-hover:text-slate-200'
               }`}
               animate={isSelected ? { scale: [1, 1.25, 1], rotate: [0, 8, 0] } : { scale: 1, rotate: 0 }}
               transition={{ duration: 0.5 }}
@@ -168,7 +168,7 @@ function BigThreeCard({
 
         {/* Trait */}
         <p className={`font-display text-[13px] italic transition-colors duration-300 ${
-          isSelected ? 'text-slate-300' : 'text-slate-500 group-hover:text-slate-400'
+          isSelected ? 'text-slate-300' : 'text-slate-400 group-hover:text-slate-300'
         }`}>
           {trait}
         </p>
@@ -195,12 +195,12 @@ export function BigThreeCards({
           <span aria-hidden className="h-px flex-1 bg-gradient-to-r from-amber-300/40 via-slate-300/15 to-transparent" />
         </p>
         <h2 className="font-display text-[1.125rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[1.25rem]">
-          <span className="font-light italic text-slate-400">Слънце · Луна · </span>
+          <span className="font-light italic text-slate-300">Слънце · Луна · </span>
           <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text text-transparent">
             Асцендент
           </span>
         </h2>
-        <p className="mt-1.5 font-display text-[12.5px] font-light italic text-slate-500">
+        <p className="mt-1.5 font-display text-[12.5px] font-light italic text-slate-400">
           Трите основни оси на твоята карта.
         </p>
       </header>

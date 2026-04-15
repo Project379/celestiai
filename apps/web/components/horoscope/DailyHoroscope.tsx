@@ -46,13 +46,13 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
       : yesterdayContent?.content || ''
 
   const isStreaming = isLoading && selectedDate === 'today'
-  const errorMessage = fetchError || (error ? 'Звездите мълчат — опитай отново след миг.' : null)
+  const errorMessage = fetchError || (error ? 'Звездите мълчат - опитай отново след миг.' : null)
 
   return (
     <div className="py-2">
       {/* ── Centered sigil + title block ───────────────── */}
       <div className="relative mb-7 flex flex-col items-center text-center">
-        {/* Sun sigil — violet outer bloom, gold core */}
+        {/* Sun sigil - violet outer bloom, gold core */}
         <div className="relative mb-5 flex h-[58px] w-[58px] items-center justify-center">
           <span
             aria-hidden
@@ -93,23 +93,23 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
         <h2 className="mt-2 font-display text-[22px] font-semibold tracking-tight text-white sm:text-[24px]">
           Дневен хороскоп
         </h2>
-        <p className="mt-1.5 font-display text-[12.5px] italic text-slate-500">
+        <p className="mt-1.5 font-display text-[12.5px] italic text-slate-400">
           {todayFormatted}
         </p>
       </div>
 
-      {/* ── Decorative divider — ivory rule, gold focal ─── */}
+      {/* ── Decorative divider - ivory rule, gold focal ─── */}
       <div className="mb-6 flex items-center gap-4">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-300/15 to-slate-300/25" />
         <div className="flex shrink-0 items-center gap-2.5">
-          <span className="text-[8px] leading-none text-slate-400/55">✦</span>
+          <span className="text-[8px] leading-none text-slate-300/55">✦</span>
           <CelestialIcon name="northNode" size={12} className="text-amber-300/70 drop-shadow-[0_0_6px_rgba(251,191,36,0.35)]" />
-          <span className="text-[8px] leading-none text-slate-400/55">✦</span>
+          <span className="text-[8px] leading-none text-slate-300/55">✦</span>
         </div>
         <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-300/15 to-slate-300/25" />
       </div>
 
-      {/* ── Date tabs — typographic, underlined ────────── */}
+      {/* ── Date tabs - typographic, underlined ────────── */}
       <div className="mb-7 flex justify-center gap-10">
         <TabButton
           active={selectedDate === 'today'}
@@ -126,7 +126,7 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
 
       {/* ── Content area ───────────────────────────────── */}
       <div className="relative min-h-[140px]">
-        {/* Drop-cap quote ornament — shows only when text is present */}
+        {/* Drop-cap quote ornament - shows only when text is present */}
         {(displayText || isStreaming) && (
           <div
             aria-hidden
@@ -152,16 +152,16 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
                 className="absolute inset-0 rounded-full bg-slate-500/5 blur-md"
               />
               <div className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-500/15 bg-slate-500/5">
-                <CelestialIcon name="moon" size={16} className="text-slate-500/70" />
+                <CelestialIcon name="moon" size={16} className="text-slate-400/70" />
               </div>
             </div>
-            <p className="max-w-[22ch] font-display text-sm italic text-slate-500">
+            <p className="max-w-[22ch] font-display text-sm italic text-slate-400">
               Вчерашното послание вече е отминало.
             </p>
           </div>
         )}
 
-        {/* Loading — pulsing sun while waiting */}
+        {/* Loading - pulsing sun while waiting */}
         {!isStreaming && !displayText && !errorMessage && selectedDate === 'today' && (
           <div className="flex items-center justify-center py-12">
             <motion.div
@@ -186,7 +186,7 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
   )
 }
 
-/* ─── Typographic tab — thin gold underline instead of pill ─────── */
+/* ─── Typographic tab - thin gold underline instead of pill ─────── */
 function TabButton({
   active,
   disabled,
@@ -209,7 +209,7 @@ function TabButton({
           ? 'text-amber-200'
           : disabled
           ? 'cursor-not-allowed text-slate-700'
-          : 'text-slate-500 hover:text-slate-200',
+          : 'text-slate-400 hover:text-slate-200',
       ].join(' ')}
     >
       {label}

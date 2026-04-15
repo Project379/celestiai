@@ -6,7 +6,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  * Returns all non-expired AI readings for a given chart.
  *
  * Requires authentication. Returns empty array if no readings exist
- * (not 404) — callers use this to decide whether to prompt generation.
+ * (not 404) - callers use this to decide whether to prompt generation.
  */
 export async function GET(req: Request) {
   // Auth check

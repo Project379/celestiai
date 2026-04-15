@@ -75,7 +75,7 @@ export function ProtectedNav({ hasChart = false }: ProtectedNavProps) {
         )
       })}
 
-      {/* Oracle — opens the global Oracle panel via custom event */}
+      {/* Oracle - opens the global Oracle panel via custom event */}
       {hasChart && (
         <button
           type="button"

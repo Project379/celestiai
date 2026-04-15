@@ -688,7 +688,7 @@ export function transitOverviewToPromptText(overview: TransitOverview): string {
       lines.push(
         `${formatPlanet(item.transitPlanet)} ${formatAspect(item.aspect)} ${formatPlanet(
           item.natalPlanet
-        )} — пик около ${item.exactAt} в дом ${item.house} (след ~${item.hoursUntil} ч.)`
+        )} - пик около ${item.exactAt} в дом ${item.house} (след ~${item.hoursUntil} ч.)`
       )
     }
   }
@@ -733,7 +733,7 @@ export function transitOverviewToPromptText(overview: TransitOverview): string {
   )
 
   if (!overview.birthTimeKnown) {
-    lines.push('(Часът на раждане е неизвестен — домовете и лунните домове са приблизителни.)')
+    lines.push('(Часът на раждане е неизвестен - домовете и лунните домове са приблизителни.)')
   }
 
   return lines.join('\n')

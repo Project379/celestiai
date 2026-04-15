@@ -103,7 +103,7 @@ const ASPECTS = [
     keyword: 'усилване / натоварване',
     keywordColor: 'bg-white/10 text-slate-300',
     description:
-      'Силно влияние. Ново начало, засаждане семената на бъдещето. При напрежение — провокация стимулираща към ново начало.',
+      'Силно влияние. Ново начало, засаждане семената на бъдещето. При напрежение - провокация стимулираща към ново начало.',
   },
   {
     name: 'Тригон',
@@ -236,13 +236,13 @@ export function AstrologyReference() {
 
       {/* Header */}
       <div className="mb-5">
-        <p className="mb-1.5 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-500">
+        <p className="mb-1.5 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-400">
           Celestia · Речник
         </p>
         <h2 className="font-display text-lg font-semibold tracking-tight text-slate-100">
-          Астрологичен <span className="font-light italic text-slate-400">справочник</span>
+          Астрологичен <span className="font-light italic text-slate-300">справочник</span>
         </h2>
-        <p className="mt-1 text-xs leading-relaxed text-slate-500/75">
+        <p className="mt-1 text-xs leading-relaxed text-slate-400/75">
           Планети, аспекти, транзитни влияния и условните знаци на картата.
         </p>
       </div>
@@ -257,7 +257,7 @@ export function AstrologyReference() {
             className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
               activeTab === tab.id
                 ? 'border border-violet-400/[0.18] bg-violet-500/[0.12] text-white shadow-sm'
-                : 'text-slate-500 hover:text-slate-300'
+                : 'text-slate-400 hover:text-slate-300'
             }`}
           >
             {tab.label}
@@ -268,8 +268,8 @@ export function AstrologyReference() {
       {/* Planets tab */}
       {activeTab === 'planets' && (
         <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
-          <p className="mb-3 text-sm leading-relaxed text-slate-400/80">
-            Всяка планета олицетворява конкретен жизнен принцип или архетип — сила, емоция, комуникация и т.н. Знакът, в който стои планетата, показва <span className="text-slate-200/90">как</span> изразяваме тази енергия, а домът — <span className="text-slate-200/90">в коя сфера</span> от живота тя действа. Заедно тези три фактора изграждат пълния астрологичен портрет на характера.
+          <p className="mb-3 text-sm leading-relaxed text-slate-300/80">
+            Всяка планета олицетворява конкретен жизнен принцип или архетип - сила, емоция, комуникация и т.н. Знакът, в който стои планетата, показва <span className="text-slate-200/90">как</span> изразяваме тази енергия, а домът - <span className="text-slate-200/90">в коя сфера</span> от живота тя действа. Заедно тези три фактора изграждат пълния астрологичен портрет на характера.
           </p>
           {PLANETS.map((planet) => (
             <div
@@ -284,7 +284,7 @@ export function AstrologyReference() {
                   {planet.keyword}
                 </span>
               </div>
-              <p className="text-sm leading-relaxed text-slate-400/80">{planet.description}</p>
+              <p className="text-sm leading-relaxed text-slate-300/80">{planet.description}</p>
             </div>
           ))}
         </div>
@@ -293,8 +293,8 @@ export function AstrologyReference() {
       {/* Aspects tab */}
       {activeTab === 'aspects' && (
         <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
-          <p className="mb-3 text-sm leading-relaxed text-slate-400/80">
-            Аспектите са ъгловите разстояния между планетите, измерени по зодиакалния кръг. Те разкриват дали две планети работят в хармония и взаимна подкрепа, или в напрежение и предизвикателство — и по двата начина стимулират нашия растеж. Разбирането на аспектите е ключът към дълбокото тълкуване на всяка карта.
+          <p className="mb-3 text-sm leading-relaxed text-slate-300/80">
+            Аспектите са ъгловите разстояния между планетите, измерени по зодиакалния кръг. Те разкриват дали две планети работят в хармония и взаимна подкрепа, или в напрежение и предизвикателство - и по двата начина стимулират нашия растеж. Разбирането на аспектите е ключът към дълбокото тълкуване на всяка карта.
           </p>
           {ASPECTS.map((aspect) => (
             <div
@@ -306,14 +306,14 @@ export function AstrologyReference() {
                   className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${aspect.dotColor}`}
                 />
                 <span className="font-medium text-slate-100">{aspect.name}</span>
-                <span className="text-xs text-slate-500/75">{aspect.degrees}</span>
+                <span className="text-xs text-slate-400/75">{aspect.degrees}</span>
                 <span
                   className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-medium ${aspect.keywordColor}`}
                 >
                   {aspect.keyword}
                 </span>
               </div>
-              <p className="text-sm leading-relaxed text-slate-400/80">{aspect.description}</p>
+              <p className="text-sm leading-relaxed text-slate-300/80">{aspect.description}</p>
             </div>
           ))}
         </div>
@@ -322,7 +322,7 @@ export function AstrologyReference() {
       {/* Legend tab */}
       {activeTab === 'legend' && (
         <div className="max-h-[520px] space-y-3 overflow-y-auto pr-1 text-sm text-slate-300">
-          <p className="mb-1 text-sm leading-relaxed text-slate-400/80">
+          <p className="mb-1 text-sm leading-relaxed text-slate-300/80">
             Наталната карта е кръгова диаграма, показваща точното положение на небесните тела в момента на раждането ви. Чете се отвън навътре: зодиакален пояс, астрологически домове, след това планетите, свързани с цветни линии-аспекти. Запознайте се с всеки елемент по-долу, за да четете картата уверено.
           </p>
 
@@ -333,14 +333,14 @@ export function AstrologyReference() {
               </span>
               <p className="font-medium text-slate-100">Зодиак</p>
             </div>
-            <p className="text-slate-400/80">
+            <p className="text-slate-300/80">
               Външният пояс е разделен на 12 зодиакални знака. Всеки знак има уникален характер и енергия. Позицията на планетите в знаците оформя как изразяваме тази енергия в живота.
             </p>
           </div>
 
           <div>
             <p className="mb-1 font-medium text-slate-100">Домове</p>
-            <p className="text-slate-400/80">
+            <p className="text-slate-300/80">
               12-те дома представляват 12 области от живота: идентичност, финанси, комуникация, дом, творчество, здраве, взаимоотношения, трансформация, мъдрост, кариера, общество, подсъзнание. Домът, в който се намира планета, показва <span className="italic text-slate-200/90">където</span> действа нейната енергия.
             </p>
           </div>
@@ -352,43 +352,43 @@ export function AstrologyReference() {
               </span>
               <p className="font-medium text-slate-100">Планети</p>
             </div>
-            <p className="text-slate-400/80">
+            <p className="text-slate-300/80">
               Всяка планета въплъщава жизнен принцип: Слънце (сила), Луна (емоция), Меркурий (изразяване), Венера (привличане), Марс (действие), Юпитер (разширение), Сатурн (усилие). Техните позиции разкриват характера ви.
             </p>
           </div>
 
           <div>
             <p className="mb-1.5 font-medium text-slate-100">Аспекти</p>
-            <p className="mb-2 text-slate-400/80">
-              Линиите в центъра показват ъглови връзки между планетите — как различни части от характера ви работят в синхрон или напрежение.
+            <p className="mb-2 text-slate-300/80">
+              Линиите в центъра показват ъглови връзки между планетите - как различни части от характера ви работят в синхрон или напрежение.
             </p>
             <div className="space-y-1.5">
               <div className="flex items-start gap-2">
                 <span className="mt-1 h-2 w-5 shrink-0 rounded-full bg-green-400" />
-                <p className="text-xs text-slate-400/80"><span className="text-slate-200/90">Тригон (120°)</span> — благоприятна връзка, изобилие и подкрепа. Таланти, които текат лесно.</p>
+                <p className="text-xs text-slate-300/80"><span className="text-slate-200/90">Тригон (120°)</span> - благоприятна връзка, изобилие и подкрепа. Таланти, които текат лесно.</p>
               </div>
               <div className="flex items-start gap-2">
                 <span className="mt-1 h-2 w-5 shrink-0 rounded-full bg-blue-400" />
-                <p className="text-xs text-slate-400/80"><span className="text-slate-200/90">Секстил (60°)</span> — мека хармония и подкрепа. Смекчава напреженията, открива възможности.</p>
+                <p className="text-xs text-slate-300/80"><span className="text-slate-200/90">Секстил (60°)</span> - мека хармония и подкрепа. Смекчава напреженията, открива възможности.</p>
               </div>
               <div className="flex items-start gap-2">
                 <span className="mt-1 h-2 w-5 shrink-0 rounded-full bg-red-400" />
-                <p className="text-xs text-slate-400/80"><span className="text-slate-200/90">Квадрат (90°)</span> — напрежение и предизвикателства. Подтиква към действие и растеж.</p>
+                <p className="text-xs text-slate-300/80"><span className="text-slate-200/90">Квадрат (90°)</span> - напрежение и предизвикателства. Подтиква към действие и растеж.</p>
               </div>
               <div className="flex items-start gap-2">
                 <span className="mt-1 h-2 w-5 shrink-0 rounded-full bg-orange-400" />
-                <p className="text-xs text-slate-400/80"><span className="text-slate-200/90">Опозиция (180°)</span> — конфронтация и противопоставяне. Баланс постига се чрез напрежение.</p>
+                <p className="text-xs text-slate-300/80"><span className="text-slate-200/90">Опозиция (180°)</span> - конфронтация и противопоставяне. Баланс постига се чрез напрежение.</p>
               </div>
               <div className="flex items-start gap-2">
                 <span className="mt-1 h-2 w-5 shrink-0 rounded-full bg-white/70" />
-                <p className="text-xs text-slate-400/80"><span className="text-slate-200/90">Съвпад (0°)</span> — засилено взаимно влияние. Може да бъде мощна подкрепа или допълнителна тежест.</p>
+                <p className="text-xs text-slate-300/80"><span className="text-slate-200/90">Съвпад (0°)</span> - засилено взаимно влияние. Може да бъде мощна подкрепа или допълнителна тежест.</p>
               </div>
             </div>
           </div>
 
           <div>
             <p className="font-medium text-slate-100">Аспектни точки</p>
-            <p className="text-slate-400/80">
+            <p className="text-slate-300/80">
               Малките цветни точки показват откъде точно започва аспектът за всяка планета. Цветът им съвпада със съответната планета.
             </p>
           </div>
@@ -400,7 +400,7 @@ export function AstrologyReference() {
               </span>
               <p className="font-medium text-slate-100">Ретрограден (R)</p>
             </div>
-            <p className="text-slate-400/80">
+            <p className="text-slate-300/80">
               Малкото червено „R" до планета означава, че тя е ретроградна – от Земята изглежда сякаш се движи назад. Тази енергия обикновено се проявява по-вътрешно или изисква преосмисляне.
             </p>
           </div>
@@ -411,8 +411,8 @@ export function AstrologyReference() {
                 <span className="h-3 w-8 rounded-full bg-cyan-400" />
                 <span className="font-medium text-slate-100">Синя линия</span>
               </div>
-              <p className="text-xs text-slate-400/80">
-                Асцендент — вашата <span className="text-slate-200/90">персона</span>. Знакът на хоризонта в момента на раждането. Олицетворява вашето Аз, нови начала и начина, по който другите ви виждат на пръв поглед.
+              <p className="text-xs text-slate-300/80">
+                Асцендент - вашата <span className="text-slate-200/90">персона</span>. Знакът на хоризонта в момента на раждането. Олицетворява вашето Аз, нови начала и начина, по който другите ви виждат на пръв поглед.
               </p>
             </div>
             <div>
@@ -420,8 +420,8 @@ export function AstrologyReference() {
                 <span className="h-3 w-8 rounded-full bg-pink-400" />
                 <span className="font-medium text-slate-100">Розова линия</span>
               </div>
-              <p className="text-xs text-slate-400/80">
-                MC — вашата <span className="text-slate-200/90">цел</span>. Най-високата точка в картата. Показва кариера, призвание, амбиции и важните стъпки към реализация в живота.
+              <p className="text-xs text-slate-300/80">
+                MC - вашата <span className="text-slate-200/90">цел</span>. Най-високата точка в картата. Показва кариера, призвание, амбиции и важните стъпки към реализация в живота.
               </p>
             </div>
           </div>
@@ -431,7 +431,7 @@ export function AstrologyReference() {
       {/* Transits tab */}
       {activeTab === 'transits' && (
         <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
-          <p className="mb-3 text-sm leading-relaxed text-slate-400/80">
+          <p className="mb-3 text-sm leading-relaxed text-slate-300/80">
             Транзитите са текущото движение на планетите и взаимодействието им с фиксираните точки в наталната карта. Бързите планети (Луна, Слънце, Меркурий, Венера, Марс) носят ежедневни и седмични нюанси, докато бавните (Юпитер, Сатурн, Уран, Нептун, Плутон) белязват дългосрочни, понякога животоопределящи периоди. Продължителността и честотата по-долу показват колко дълго и рядко се случва всяко влияние.
           </p>
           {TRANSITS.map((transit) => (
@@ -446,15 +446,16 @@ export function AstrologyReference() {
                 >
                   {transit.influence}
                 </span>
-                <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[11px] text-slate-400/80">
+                <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[11px] text-slate-300/80">
                   {transit.frequency}
                 </span>
               </div>
-              <p className="text-sm leading-relaxed text-slate-400/80">{transit.description}</p>
+              <p className="text-sm leading-relaxed text-slate-300/80">{transit.description}</p>
             </div>
           ))}
         </div>
       )}
+
     </div>
   )
 }

@@ -77,7 +77,7 @@ export default function PrivacyPage() {
                 'AI-генерирани четения и тълкувания',
                 'История на дневни хороскопи',
                 'Абонаменти за push известия (endpoint, ключове)',
-                'Информация за плащане (управлявана изцяло от Stripe — ние не съхраняваме номера на карти)',
+                'Информация за плащане (управлявана изцяло от Stripe - ние не съхраняваме номера на карти)',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3">
                   <span aria-hidden className="mt-[9px] h-1 w-1 shrink-0 rotate-45 bg-amber-300/80 shadow-[0_0_6px_rgba(251,191,36,0.55)]" />

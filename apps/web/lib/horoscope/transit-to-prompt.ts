@@ -63,7 +63,7 @@ export function transitAndNatalToPromptText(
   }
 
   if (natalCalculation.birth_time_known === false) {
-    lines.push('(Часът на раждане е неизвестен — домовете са приблизителни)')
+    lines.push('(Часът на раждане е неизвестен - домовете са приблизителни)')
   }
 
   lines.push('')

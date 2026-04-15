@@ -56,7 +56,7 @@ function formatLunarEvent(item: LunarEventDetail): string {
     .join(', ')}`
 }
 
-/* ─── Pacing — editorial Cinzel mark, no pill ─── */
+/* ─── Pacing - editorial Cinzel mark, no pill ─── */
 function PacingMark({
   emphasis,
 }: {
@@ -78,7 +78,7 @@ function PacingMark({
       ? 'text-sky-300/85'
       : emphasis === 'mixed'
       ? 'text-violet-300/85'
-      : 'text-slate-400/85'
+      : 'text-slate-300/85'
 
   return (
     <span className={`inline-flex items-center gap-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] ${tint}`}>
@@ -88,7 +88,7 @@ function PacingMark({
   )
 }
 
-/* ─── Event state — inline Cinzel text, no pill chip ─── */
+/* ─── Event state - inline Cinzel text, no pill chip ─── */
 function EventStateMark({
   label,
   tone,
@@ -103,7 +103,7 @@ function EventStateMark({
       ? 'text-amber-300/85'
       : tone === 'emerald'
       ? 'text-emerald-300/85'
-      : 'text-slate-400/85'
+      : 'text-slate-300/85'
 
   return (
     <span className={`inline-flex items-center gap-1.5 font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] ${tint}`}>
@@ -132,7 +132,7 @@ function getLunarState(item: LunarEventDetail): { label: string; tone: 'indigo' 
   return { label: 'Предстои', tone: 'indigo' }
 }
 
-/* ─── Editorial event row — hairline, no card ─── */
+/* ─── Editorial event row - hairline, no card ─── */
 function EventRow({
   title,
   summary,
@@ -163,10 +163,10 @@ function EventRow({
         </p>
         {badge}
       </div>
-      <p className="mt-1.5 max-w-2xl font-display text-[13.5px] font-light italic leading-[1.75] text-slate-400/90">
+      <p className="mt-1.5 max-w-2xl font-display text-[13.5px] font-light italic leading-[1.75] text-slate-300/90">
         {summary}
       </p>
-      <p className="mt-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+      <p className="mt-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-400">
         {meta}
       </p>
     </button>
@@ -181,14 +181,14 @@ function SectionMark({ numeral, title }: { numeral: string; title: string }) {
         {numeral}
       </span>
       <span aria-hidden className="h-px w-8 bg-gradient-to-r from-amber-300/60 to-transparent" />
-      <span className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.34em] text-slate-400">
+      <span className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.34em] text-slate-300">
         {title}
       </span>
     </header>
   )
 }
 
-/* ─── Event detail modal — editorial mystic panel ─── */
+/* ─── Event detail modal - editorial mystic panel ─── */
 function EventModal({
   event,
   onClose,
@@ -239,14 +239,14 @@ function EventModal({
                 <h2 className="font-display text-[1.625rem] font-semibold leading-[1.15] tracking-tight text-slate-100 sm:text-[1.875rem]">
                   {event.title}
                 </h2>
-                <p className="mt-3 max-w-xl font-display text-[15px] font-light italic leading-[1.8] text-slate-400">
+                <p className="mt-3 max-w-xl font-display text-[15px] font-light italic leading-[1.8] text-slate-300">
                   {event.summary}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="shrink-0 rounded-full p-2 text-slate-500 transition-colors hover:text-amber-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60"
+                className="shrink-0 rounded-full p-2 text-slate-400 transition-colors hover:text-amber-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60"
                 aria-label="Затвори"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,7 +255,7 @@ function EventModal({
               </button>
             </div>
 
-            {/* Detail — editorial pull-quote */}
+            {/* Detail - editorial pull-quote */}
             <figure className="border-l border-amber-300/40 pl-6">
               <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.36em] text-amber-300/80">
                 Тълкувание
@@ -290,13 +290,13 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
     <>
       {/* Top row: instruction line + pacing mark */}
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.05] pb-5">
-        <p className="font-display text-[14px] font-light italic text-slate-400">
+        <p className="font-display text-[14px] font-light italic text-slate-300">
           Натисни събитие, за да видиш значението му.
         </p>
         {overview && <PacingMark emphasis={overview.pacing.emphasis} />}
       </div>
 
-      {/* Editorial tab switch — Cinzel pill pair, no rounded box */}
+      {/* Editorial tab switch - Cinzel pill pair, no rounded box */}
       <div className="mb-10 flex items-center gap-8">
         {[
           { id: 'transits' as const,  label: 'Транзити' },
@@ -312,7 +312,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
             >
               <span
                 className={`font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.38em] transition-colors duration-200 ${
-                  isActive ? 'text-amber-200' : 'text-slate-500 hover:text-slate-200'
+                  isActive ? 'text-amber-200' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 {tab.label}
@@ -333,7 +333,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
       {/* Reference view */}
       {activeView === 'reference' && <AstrologyReference />}
 
-      {/* Transit content — loading */}
+      {/* Transit content - loading */}
       {activeView === 'transits' && isLoading && (
         <div className="flex flex-col items-center justify-center gap-5 py-16">
           <div className="relative flex h-16 w-16 items-center justify-center">
@@ -359,20 +359,20 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
               style={{ animation: 'spin 5s linear infinite' }}
             />
           </div>
-          <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-500">
+          <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-400">
             Четем небето…
           </p>
         </div>
       )}
 
-      {/* Transit content — error */}
+      {/* Transit content - error */}
       {activeView === 'transits' && error && !isLoading && (
         <div className="border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
           <p className="font-display text-[13px] italic text-rose-300/90">{error}</p>
         </div>
       )}
 
-      {/* Transit content — data */}
+      {/* Transit content - data */}
       {activeView === 'transits' && overview && !isLoading && !error && (
         <motion.div
           className="space-y-14"
@@ -400,7 +400,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   )
                 })
               ) : (
-                <p className="py-5 font-display text-[14px] font-light italic text-slate-500">
+                <p className="py-5 font-display text-[14px] font-light italic text-slate-400">
                   Няма силни аспекти към наталната карта точно сега.
                 </p>
               )}
@@ -425,7 +425,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   )
                 })
               ) : (
-                <p className="py-5 font-display text-[14px] font-light italic text-slate-500">
+                <p className="py-5 font-display text-[14px] font-light italic text-slate-400">
                   Няма близки точни аспекти през следващите 7 дни.
                 </p>
               )}
@@ -452,7 +452,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   )
                 })
               ) : (
-                <p className="py-5 font-display text-[14px] font-light italic text-slate-500">
+                <p className="py-5 font-display text-[14px] font-light italic text-slate-400">
                   Няма открити близки новолуния или пълнолуния.
                 </p>
               )}

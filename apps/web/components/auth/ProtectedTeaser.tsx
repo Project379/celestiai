@@ -48,7 +48,7 @@ export function ProtectedTeaser({
       {/* Overlay with sign-in CTA */}
       <div className="absolute inset-0 flex items-center justify-center bg-[#08060f]/70 backdrop-blur-[2px]">
         <div className="mystic-panel mystic-corners mx-4 max-w-sm p-6 text-center shadow-[0_30px_80px_rgba(0,0,0,0.8)]">
-          {/* Lock icon — violet halo */}
+          {/* Lock icon - violet halo */}
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-slate-200/10 bg-violet-500/10 shadow-[0_0_20px_rgba(167,139,250,0.2)]">
             <svg
               className="h-6 w-6 text-violet-300"

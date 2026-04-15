@@ -138,11 +138,11 @@ export function BirthDataWizard() {
             </span>
           </h1>
           <p className="mt-5 max-w-md font-display text-[16px] font-light italic leading-[1.8] text-slate-400">
-            Три параметъра определят всичко — датата, часът и мястото на раждането ти.
+            Три параметъра определят всичко - датата, часът и мястото на раждането ти.
           </p>
         </motion.header>
 
-        {/* Step indicator — Roman numerals connected by hairlines */}
+        {/* Step indicator - Roman numerals connected by hairlines */}
         <motion.div
           initial="hidden"
           animate="visible"
@@ -197,7 +197,7 @@ export function BirthDataWizard() {
           </div>
         </motion.div>
 
-        {/* Step content — no card frame, editorial flow */}
+        {/* Step content - no card frame, editorial flow */}
         <motion.form
           key={step}
           initial="hidden"

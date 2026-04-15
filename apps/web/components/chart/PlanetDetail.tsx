@@ -292,7 +292,7 @@ export function PlanetDetail({
             </motion.button>
           </div>
 
-          {/* Brief interpretation — italic editorial lede */}
+          {/* Brief interpretation - italic editorial lede */}
           {interpretation.brief && (
             <motion.div
               initial="hidden"
@@ -307,7 +307,7 @@ export function PlanetDetail({
             </motion.div>
           )}
 
-          {/* Body — scrollable editorial flow */}
+          {/* Body - scrollable editorial flow */}
           <div
             id="planet-detail-desc"
             className="relative flex-1 space-y-7 overflow-y-auto px-8 py-7"

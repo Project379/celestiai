@@ -74,8 +74,8 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Зодиак
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-400/90">
-                      12 знака по външния пояс — показват в кой знак попада всяка планета.
+                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
+                      12 знака по външния пояс - показват в кой знак попада всяка планета.
                     </dd>
                   </div>
                 </div>
@@ -89,8 +89,8 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Домове
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-400/90">
-                      12 житейски сфери — домът казва <span className="text-slate-300">къде</span> действа планетата.
+                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
+                      12 житейски сфери - домът казва <span className="text-slate-300">къде</span> действа планетата.
                     </dd>
                   </div>
                 </div>
@@ -106,7 +106,7 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Планети
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-400/90">
+                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
                       Всяка носи жизнен принцип. Натисни за тълкуване.
                     </dd>
                   </div>
@@ -122,8 +122,8 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Аспекти
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-400/90">
-                      Линиите в центъра — зелено е хармония, розово е напрежение.
+                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
+                      Линиите в центъра - зелено е хармония, розово е напрежение.
                     </dd>
                   </div>
                 </div>
@@ -138,7 +138,7 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Ъгли
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-400/90">
+                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
                       Асцендент <span className="text-slate-300">(персона)</span> и Медиум Цели <span className="text-slate-300">(цел)</span>.
                     </dd>
                   </div>
@@ -153,8 +153,8 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Ретрограден
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-400/90">
-                      Планетата изглежда движеща се назад — по-вътрешна енергия.
+                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
+                      Планетата изглежда движеща се назад - по-вътрешна енергия.
                     </dd>
                   </div>
                 </div>

@@ -4,7 +4,7 @@ import { logAuditEvent } from '@/lib/audit'
 
 /**
  * GET /api/gdpr/export
- * Instant GDPR data export — returns a downloadable JSON file containing
+ * Instant GDPR data export - returns a downloadable JSON file containing
  * all user data: profile, charts, AI readings, and daily horoscopes.
  */
 export async function GET() {

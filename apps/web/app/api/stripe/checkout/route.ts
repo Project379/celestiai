@@ -8,7 +8,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  *
  * Auth: Required (Clerk)
  * Body: { priceId: string }
- * Returns: { url: string } — redirect user to this URL
+ * Returns: { url: string } - redirect user to this URL
  */
 export async function POST(req: Request) {
   const { userId } = await auth()
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Невалидна заявка' }, { status: 400 })
   }
 
-  // Validate priceId against allowlist — prevent arbitrary price IDs
+  // Validate priceId against allowlist - prevent arbitrary price IDs
   const allowedPriceIds = new Set([
     process.env.STRIPE_PRICE_MONTHLY!,
     process.env.STRIPE_PRICE_ANNUAL!,
