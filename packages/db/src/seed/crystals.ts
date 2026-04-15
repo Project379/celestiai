@@ -1,62 +1,79 @@
 import 'dotenv/config'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import { sql } from 'drizzle-orm'
-import { crystals } from '../schema'
+import { resolve } from 'node:path'
+import { config as loadEnv } from 'dotenv'
+import { createClient } from '@supabase/supabase-js'
 import { crystalsSeed } from './data/crystals'
 
+// Also load the web app's .env.local so we can reuse the Supabase keys
+// that already exist there — avoids needing a separate DB-password
+// configuration in packages/db/.env.
+loadEnv({
+  path: resolve(process.cwd(), '../../apps/web/.env.local'),
+})
+
 /**
- * Seed crystal catalog into the database
- *
- * Idempotent: uses onConflictDoUpdate against the slug unique constraint so
- * re-running after a content edit refreshes the row without creating a
- * duplicate. Bulgarian fields stay null until the bulgarian-skill pass.
+ * Seed crystal catalog into the database using the Supabase service-role
+ * client. Bypasses the direct postgres connection so no DATABASE_URL /
+ * DB password is required — only the service role key that the web app
+ * already uses.
  *
  * Run with: pnpm --filter @celestia/db seed:crystals
  */
 export async function seedCrystals() {
-  const connectionString = process.env.DATABASE_URL
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!connectionString) {
-    throw new Error('DATABASE_URL environment variable is required')
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(
+      'Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY — check apps/web/.env.local'
+    )
   }
 
-  const client = postgres(connectionString)
-  const db = drizzle(client)
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
 
   console.log(`Seeding ${crystalsSeed.length} crystals...`)
 
+  let upserted = 0
   for (const crystal of crystalsSeed) {
-    await db
-      .insert(crystals)
-      .values(crystal)
-      .onConflictDoUpdate({
-        target: crystals.slug,
-        set: {
-          nameEn: crystal.nameEn,
-          taglineEn: crystal.taglineEn,
-          descriptionEn: crystal.descriptionEn,
-          planet: crystal.planet,
-          zodiacSigns: crystal.zodiacSigns,
-          moonPhases: crystal.moonPhases,
-          element: crystal.element,
-          chakra: crystal.chakra,
-          hardness: crystal.hardness,
-          colorPrimary: crystal.colorPrimary,
-          colorSecondary: crystal.colorSecondary,
-          colorAccent: crystal.colorAccent,
-          svgVariant: crystal.svgVariant,
-          rarity: crystal.rarity,
-          keywords: crystal.keywords,
-          properties: crystal.properties,
-          updatedAt: sql`now()`,
-        },
-      })
+    const row = {
+      slug: crystal.slug,
+      name_en: crystal.nameEn,
+      name_bg: crystal.nameBg,
+      tagline_en: crystal.taglineEn,
+      tagline_bg: crystal.taglineBg,
+      description_en: crystal.descriptionEn,
+      description_bg: crystal.descriptionBg,
+      planet: crystal.planet,
+      zodiac_signs: crystal.zodiacSigns,
+      moon_phases: crystal.moonPhases,
+      element: crystal.element,
+      chakra: crystal.chakra,
+      hardness: crystal.hardness,
+      color_primary: crystal.colorPrimary,
+      color_secondary: crystal.colorSecondary,
+      color_accent: crystal.colorAccent,
+      svg_variant: crystal.svgVariant,
+      rarity: crystal.rarity,
+      keywords: crystal.keywords,
+      properties: crystal.properties ?? null,
+      updated_at: new Date().toISOString(),
+    }
+
+    const { error } = await supabase
+      .from('crystals')
+      .upsert(row, { onConflict: 'slug' })
+
+    if (error) {
+      console.error(`Failed to seed ${crystal.slug}:`, error.message)
+      throw error
+    }
+    upserted += 1
+    process.stdout.write(`\r  ${upserted}/${crystalsSeed.length}`)
   }
 
-  console.log(`Seeding complete! ${crystalsSeed.length} crystals available.`)
-
-  await client.end()
+  console.log(`\nSeeding complete! ${upserted} crystals available.`)
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
