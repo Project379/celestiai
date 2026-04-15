@@ -214,8 +214,8 @@ const PLANET_DEFS = [
 // Positions are normalized (fraction of viewport) so they adapt to resize.
 const PLANET_LAYOUT: Record<string, { fx: number; fy: number }> = {
   sun:     { fx: 0.50, fy: 0.06 }, // top-center, straddling the navbar so it's visible both above and below
-  mercury: { fx: 0.24, fy: 0.08 }, // top-left, spread further from the Sun
-  venus:   { fx: 0.76, fy: 0.08 }, // top-right, spread further from the Sun
+  mercury: { fx: 0.24, fy: 0.10 }, // top-left, spread from the Sun, slightly lower
+  venus:   { fx: 0.76, fy: 0.10 }, // top-right, spread from the Sun, slightly lower
   mars:    { fx: 0.19, fy: 0.34 }, // mid-left upper, outside dashboard content
   jupiter: { fx: 0.81, fy: 0.38 }, // mid-right upper, outside dashboard content
   uranus:  { fx: 0.20, fy: 0.72 }, // mid-left lower, outside dashboard content
