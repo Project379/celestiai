@@ -28,7 +28,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Moonstone is the classic full-moon ally — a shimmering adularescent stone that tunes you to your inner rhythms. Traditionally held to soothe emotional turbulence, it opens the door to dreams, intuition, and feminine power. Keep it close when the moon is full, when you journal, or when old feelings need somewhere gentle to land.",
     descriptionBg:
-      'Класически спътник на пълнолунието — блещукащ адулар, който те настройва по собствените ти вътрешни ритми. От старо време се смята, че успокоява емоционалните бури и отваря вратата към сънищата, интуицията и женската сила. Дръж го близо, когато луната е пълна, когато водиш дневник или когато стари чувства търсят меко място да се приземят.',
+      'Класически спътник на пълнолунието — блещукащ адулар, който те настройва по собствените ти вътрешни ритми. Открай време се смята, че укротява емоционалните бури и отваря вратата към сънищата, интуицията и женската сила. Дръж го близо при пълна луна, когато водиш дневник или когато стари чувства търсят меко кътче да се отпуснат.',
     planet: 'moon',
     zodiacSigns: ['cancer', 'pisces'],
     moonPhases: ['full', 'waxing_gibbous'],
@@ -56,7 +56,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Named for the Greek moon goddess Selene, this translucent gypsum wand acts like a shower for your aura — clearing stagnant energy from a room, an object, or yourself. It never needs cleansing and in fact cleanses other crystals placed beside it. The purest full-moon tool.",
     descriptionBg:
-      'Кръстен на гръцката богиня на луната Селена, този полупрозрачен гипсов жезъл работи като душ за аурата — изчиства застояла енергия от стая, предмет или самия теб. Никога не се нуждае от прочистване и дори сам прочиства други кристали, оставени до него. Най-чистият инструмент за пълнолуние.',
+      'Наречен на гръцката богиня на луната Селена, този полупрозрачен гипсов жезъл работи като душ за аурата — изчиства застояла енергия от стая, предмет или от самия теб. Никога не се нуждае от прочистване и дори сам прочиства кристалите, оставени до него. Най-чистият инструмент за пълнолуние.',
     planet: 'moon',
     zodiacSigns: ['cancer', 'taurus'],
     moonPhases: ['full'],
@@ -113,7 +113,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "A warm golden quartz long nicknamed 'the merchant's stone' for its reputation of attracting abundance. Citrine holds the optimism of the first quarter moon — that push forward toward a goal you've seeded. It doesn't hold negative energy, making it a low-maintenance daily companion.",
     descriptionBg:
-      'Топъл златист кварц, от дълго наричан „камъкът на търговеца" заради репутацията му да привлича изобилие. Цитринът носи оптимизма на първата четвърт от луната — тласъкът напред към цел, чиято идея вече си посял. Не задържа негативна енергия, което го прави удобен за ежедневна употреба.',
+      'Топъл златист кварц, отдавна наричан „камъкът на търговеца" заради репутацията си да привлича изобилие. Цитринът носи оптимизма на Първата четвърт — тласъкът напред към цел, чиято идея вече си посял/а. Не задържа негативна енергия, затова е удобен за ежедневна употреба.',
     planet: 'sun',
     zodiacSigns: ['leo', 'gemini'],
     moonPhases: ['first_quarter', 'waxing_gibbous'],
@@ -141,7 +141,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Ruby is the sun's gemstone and Leo's fierce birthright. Vedic tradition places it at the top of the navaratna — the nine sacred stones. It quickens the pulse of passion, courage, and leadership, and was historically worn by kings to drive battle-nerves away. Full-moon amplifier.",
     descriptionBg:
-      'Рубинът е слънчевият камък и огненото право на Лъва. Ведическата традиция го поставя в челото на навратна — деветте свещени камъка. Ускорява пулса на страстта, смелостта и водаческата увереност; исторически го носели крале преди битка, за да прогонят страха. Усилвател на пълнолунието.',
+      'Рубинът е слънчевият камък и огненото право на Лъва. Ведическата традиция го поставя в челото на навратна — деветте свещени камъка. Ускорява пулса на страстта, смелостта и лидерската осанка; крале го носели преди битка, за да прогонят страха от сърцето си. Усилвател на пълнолунието.',
     planet: 'sun',
     zodiacSigns: ['leo', 'cancer'],
     moonPhases: ['full'],
@@ -169,7 +169,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Golden chatoyant bands run through this stone like light across a lion's iris. Tiger's Eye sharpens focus and steadies nerve before a hard decision — which is exactly why it belongs to the first quarter moon. Traditionally worn by Roman soldiers going into battle.",
     descriptionBg:
-      'През камъка текат златни лентички светлина — като през ириса на лъв, хванат от слънцето. Тигровото око изостря фокуса и стяга нервите преди трудно решение, затова принадлежи на първата четвърт от луната. Традиционно носено от римските войници на път за битка.',
+      'През камъка текат златни лентички светлина — като през лъвски ирис, уловен на слънце. Тигровото око изостря фокуса и стяга нервите преди трудно решение, затова принадлежи на Първата четвърт. Римските войници са го носели на път за битка.',
     planet: 'sun',
     zodiacSigns: ['leo', 'capricorn'],
     moonPhases: ['first_quarter', 'waxing_crescent'],
@@ -198,7 +198,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Venus's stone and Taurus's birthright, emerald was worn by Cleopatra and mined in Egypt 2,000 years before Christ. It sits on the heart chakra like cool moss — opening you to love without naïveté, to truth without cruelty. Mercury rules it in the Vedic system; both interpretations coexist in practice.",
     descriptionBg:
-      'Камъкът на Венера и рожденото право на Телеца — изумрудът е носен от Клеопатра и добиван в Египет две хилядолетия преди Христос. Сяда на сърдечната чакра като хладен мъх — отваря за любов без наивност и за истина без жестокост. Ведическата традиция го свързва с Меркурий; двете тълкувания съжителстват в практиката.',
+      'Камъкът на Венера и рожденото право на Телеца. Клеопатра го е носела, а Египет го добивал още две хилядолетия преди Христа. Сяда на сърдечната чакра като хладен мъх — отваря за любов без наивност и за истина без жестокост. Ведическата традиция го свързва с Меркурий; двете тълкувания съжителстват в практиката.',
     planet: 'mercury',
     zodiacSigns: ['taurus', 'gemini', 'libra'],
     moonPhases: ['waxing_gibbous'],
@@ -254,7 +254,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Peridot is one of only two gemstones formed in the earth's mantle rather than its crust — it arrives at the surface inside volcanic basalt. Its bright chartreuse green is the birthstone of Leo and a daytime companion to citrine, amplifying joy and releasing what weighs the heart.",
     descriptionBg:
-      'Перидотът е един от само двата скъпоценни камъка, които се раждат в мантията на Земята, а не в кората ѝ — изнася се на повърхността вътре в базалтовите вулкани. Яркото му шартрезово зелено е рожденият камък на Лъва и дневен спътник на цитрина — усилва радостта и освобождава сърцето от тежест.',
+      'Перидотът е един от едва два скъпоценни камъка, които се раждат в мантията на Земята, а не в кората ѝ — изнасят го на повърхността базалтовите вулкани. С яркото си шартрезово зелено е рожденият камък на Лъва и дневен спътник на цитрина — усилва радостта и освобождава сърцето от тежест.',
     planet: 'mercury',
     zodiacSigns: ['leo', 'virgo'],
     moonPhases: ['waxing_crescent', 'first_quarter'],
@@ -283,7 +283,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "The universal heart stone, soft pink quartz teaches a hard lesson: compassion for yourself comes first. Taurus and Libra share it, Venus rules it. Placed under the pillow it is said to open dream-conversations with the people you most need to forgive — yourself included.",
     descriptionBg:
-      'Универсалният камък на сърцето. Мек розов кварц, който преподава труден урок — състраданието към себе си идва първо. Телецът и Везните го споделят, Венера го управлява. Сложен под възглавницата, се казва, че отваря насън разговорите с хората, на които най-много трябва да простиш, включително със самия теб.',
+      'Универсалният камък на сърцето. Мек розов кварц, който учи на труден урок — състраданието към себе си идва първо. Телецът и Везните го споделят, Венера го управлява. Казва се, че сложен под възглавницата отваря насън разговорите с хората, на които най-много трябва да простиш — включително на самия себе си.',
     planet: 'venus',
     zodiacSigns: ['taurus', 'libra'],
     moonPhases: ['waning_gibbous'],
@@ -311,7 +311,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Libra's birthstone plays light like oil on water — every angle reveals a different world. The Romans called it 'Cupid's stone'. Opal invites serendipity and is said to amplify whatever emotion you bring to it, so approach it in the mood you want to keep.",
     descriptionBg:
-      'Рожден камък на Везните — опалът играе със светлината като масло върху вода; всеки ъгъл разкрива различен свят. Римляните го наричали „камъкът на Купидон". Кани късмета и се смята, че усилва емоцията, с която го приближаваш, затова посягай към него в настроението, което искаш да задържиш.',
+      'Рожденият камък на Везните играе със светлината като масло върху вода — всеки ъгъл разкрива различен свят. Римляните го наричали „камъкът на Купидон". Кани късмет и се смята, че усилва емоцията, с която идваш към него, затова посягай към него в настроението, което искаш да задържиш.',
     planet: 'venus',
     zodiacSigns: ['libra', 'pisces'],
     moonPhases: ['full', 'waning_gibbous'],
@@ -339,7 +339,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Dusty-pink with black manganese veins, rhodonite is the stone of second chances and hard-won compassion. Its dark veins are a reminder that forgiveness isn't erasure — it's weaving pain into the shape of something you can still carry. Waning gibbous moon work.",
     descriptionBg:
-      'Прашно-розов с черни манганови жилки — родонитът е камъкът на вторите шансове и на трудно спечеленото състрадание. Тъмните жилки са напомняне, че прошката не е изтриване, а втъкаване на болката в нещо, което все още можеш да носиш. Работа за намаляваща луна.',
+      'Прашно-розов с черни манганови жилки — родонитът е камъкът на вторите шансове и на трудно спечеленото състрадание. Тъмните жилки напомнят, че прошката не е изтриване — тя е втъкаване на болката в нещо, което все още можеш да носиш. Работа за намаляваща луна.',
     planet: 'venus',
     zodiacSigns: ['taurus', 'scorpio'],
     moonPhases: ['waning_gibbous'],
@@ -367,7 +367,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Mossy green with a subtle shimmer, green aventurine is known as the luckiest crystal — pocket it before a pitch, an interview, a first date, or a long shot. Rules the heart chakra and softens decisions made from fear into ones made from possibility. Waxing moon seedling.",
     descriptionBg:
-      'Мъхово зелен с фин блясък — зеленият авантюрин е известен като най-късметлийския кристал. Сложи го в джоба преди питч, интервю, първа среща или далечен изстрел. Управлява сърдечната чакра и смекчава решения, взети от страх, в такива, взети от възможност. Посявка за изгряваща луна.',
+      'Мъхово зелен с фин блясък — зеленият авантюрин е известен като най-късметлийския кристал. Сложи го в джоба преди презентация, интервю, първа среща или рискован опит. Управлява сърдечната чакра и превръща решения, взети от страх, в такива, взети от възможност. Посявка за изгряваща луна.',
     planet: 'venus',
     zodiacSigns: ['taurus', 'virgo'],
     moonPhases: ['waxing_crescent', 'new'],
@@ -396,7 +396,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "A fiery orange chalcedony, carnelian was worn by ancient Egyptians and Romans alike to restore vigor and sexual vitality. Mars rules it. Reach for it on the waxing crescent when an intention needs its first breath of momentum. Creative block's quiet antidote.",
     descriptionBg:
-      'Огнено оранжев халцедон, носен от древните египтяни и римляните, за да възстановява жизненост и сексуална сила. Марс го управлява. Посягай към него по време на изгряващия полумесец, когато едно намерение иска първия си дъх на устрем — тихият противоотрова на творческия блокаж.',
+      'Огнено оранжев халцедон. Древните египтяни и римляните го носели, за да възстановява жизненост и сексуална сила. Марс го управлява. Посягай към него по време на изгряващия полумесец, когато едно намерение търси първия си дъх на устрем — тихата противоотрова на творческия блокаж.',
     planet: 'mars',
     zodiacSigns: ['aries', 'leo'],
     moonPhases: ['waxing_crescent', 'first_quarter'],
@@ -481,7 +481,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Ultramarine flecked with pyrite gold, lapis was ground into the paint Michelangelo used on the Sistine Chapel. Jupiter's stone, Sagittarius's friend — it calls in big vision, rightful authority, and teachers you haven't met yet. Waxing gibbous, when an idea needs to become public.",
     descriptionBg:
-      'Ултрамарин, поръсен със златни искри от пирит — лазуритът е стриван на прах за боята, която Микеланджело използвал на тавана на Сикстинската капела. Камъкът на Юпитер, приятелят на Стрелеца — призовава голямото видение, законната власт и учителите, които още не си срещнал. Растяща луна, когато една идея иска да стане публична.',
+      'Ултрамарин, поръсен със златни искри от пирит. Микеланджело го е стривал на прах за боята, с която е рисувал тавана на Сикстинската капела. Камъкът на Юпитер, приятелят на Стрелеца — призовава голямото видение, законната власт и учителите, които още не си срещнал/а. Растяща луна, когато една идея иска да стане публична.',
     planet: 'jupiter',
     zodiacSigns: ['sagittarius', 'capricorn'],
     moonPhases: ['waxing_gibbous'],
@@ -622,7 +622,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "A mirror-bright iron oxide, hematite is surprisingly heavy for its size — and that weight is exactly the point. Hold it when you're too up in your head, when anxiety is making everything feel weightless. Waning crescent: rest, surrender, return to the body.",
     descriptionBg:
-      'Огледално ярък железен оксид — хематитът е изненадващо тежък за размера си, и точно тази тежест е смисълът му. Дръж го, когато си прекалено в главата си, когато тревогата кара всичко да се усеща безтегловно. Намаляващ полумесец: почивка, предаване, връщане към тялото.',
+      'Огледално ярък железен оксид — хематитът е изненадващо тежък за размера си, и точно тази тежест е смисълът му. Хвани го, когато си се загубил/а в мислите си, когато тревогата кара всичко да се усеща безтегловно. Намаляващ полумесец: почивка, предаване, връщане към тялото.',
     planet: 'saturn',
     zodiacSigns: ['aquarius', 'capricorn'],
     moonPhases: ['waning_crescent'],
@@ -650,7 +650,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Virgo's birthstone and Saturn's most serious student. Blue sapphire has been worn by judges and kings for wisdom, fair judgment, and the refusal to be flattered out of a correct answer. Powerful — traditional texts warn it should be 'tried' before being worn daily.",
     descriptionBg:
-      'Рожден камък на Девата и най-сериозният ученик на Сатурн. Синият сапфир се носи от съдии и крале заради мъдростта, справедливата преценка и отказа да бъдат ласкани извън верния отговор. Мощен — традиционните текстове предупреждават, че трябва да се „пробва" преди ежедневно носене.',
+      'Рожденият камък на Девата и най-сериозният ученик на Сатурн. Съдии и крале носят синия сапфир заради мъдростта, справедливата преценка и отказа си да се поддадат на ласкателство. Мощен — традиционните текстове предупреждават, че трябва да се „пробва" преди ежедневно носене.',
     planet: 'saturn',
     zodiacSigns: ['virgo', 'libra'],
     moonPhases: ['last_quarter'],
@@ -679,7 +679,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Greeks carved drinking cups from amethyst in the belief it prevented drunkenness. Today it's the Aquarius birthstone and the crown chakra's default — soft violet, infinitely calming, a favorite for bedrooms and meditation corners. Neptune rules it; dreams obey it.",
     descriptionBg:
-      'Гърците дълбаели от аметист чаши за пиене, вярвайки, че предотвратява опиването. Днес е рожденият камък на Водолея и настройка по подразбиране за чакрата на короната — меко виолетов, безкрайно успокояващ, любимец за спалните и кътчетата за медитация. Нептун го управлява; сънищата му се подчиняват.',
+      'Гърците дълбаели чаши за пиене от аметист, защото вярвали, че предотвратява опиването. Днес е рожденият камък на Водолея и стандартният избор за чакрата на короната — меко виолетов, безкрайно успокояващ, любимец за спалните и кътчетата за медитация. Нептун го управлява; сънищата му се подчиняват.',
     planet: 'neptune',
     zodiacSigns: ['aquarius', 'pisces'],
     moonPhases: ['full', 'waning_gibbous'],
@@ -735,7 +735,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Dull grey until the light catches it — then peacock flashes of blue, green, and gold. Labradorite is Uranus's stone of awakening: it doesn't give you new powers so much as reveal the ones you already had and were ignoring. New moon gateway.",
     descriptionBg:
-      'Скучен и сив, докато светлината не го хване — тогава пауновите проблясъци на синьо, зелено и злато оживяват. Лабрадоритът е камъкът на Уран за пробуждането: не ти дава нови сили, а по-скоро разкрива тези, които вече си имал, но си пренебрегвал. Порта към новолунието.',
+      'Скучен и сив, докато светлината не го хване — тогава пауновите проблясъци на синьо, зелено и злато оживяват. Лабрадоритът е камъкът на Уран за пробуждането: не ти дава нови сили, а по-скоро разкрива онези, които вече си имал/а, но си пренебрегвал/а. Порта към новолунието.',
     planet: 'uranus',
     zodiacSigns: ['aquarius', 'leo', 'scorpio'],
     moonPhases: ['new', 'waning_crescent'],
@@ -763,7 +763,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Volcanic glass cooled too fast to crystallize, obsidian was used by the Aztecs for ritual knives and scrying mirrors. It shows you what you've been avoiding. Pluto's stone and a waning-crescent specialty — the dark before the new moon.",
     descriptionBg:
-      'Вулканично стъкло, охладено твърде бързо, за да кристализира — обсидианът е използван от ацтеките за ритуални ножове и огледала за гадаене. Показва ти онова, което си отбягвал. Камъкът на Плутон и специалитет на намаляващия полумесец — тъмнината преди новолунието.',
+      'Вулканично стъкло, охладено твърде бързо, за да кристализира. Ацтеките са правели от обсидиана ритуални ножове и огледала за гадаене. Показва ти онова, което си отбягвал/а. Камъкът на Плутон и специалитет на намаляващия полумесец — тъмнината преди новолунието.',
     planet: 'pluto',
     zodiacSigns: ['scorpio', 'sagittarius'],
     moonPhases: ['waning_crescent', 'last_quarter'],
@@ -791,7 +791,7 @@ export const crystalsSeed: CrystalSeed[] = [
     descriptionEn:
       "Banded copper carbonate in emerald and moss greens, malachite is Scorpio's whispering ally — it accelerates whatever change you've already committed to, for better or for worse. Ancient Egyptians ground it into eye paint. Powerful; recommend small doses.",
     descriptionBg:
-      'Ленти от меден карбонат в смарагдови и мъхови зелени — малахитът е шепнещият съюзник на Скорпиона. Ускорява промяната, с която вече си се ангажирал — за добро или за зло. Древните египтяни го стривали на прах за очна боя. Мощен; препоръчват се малки дози.',
+      'Ленти от меден карбонат в смарагдови и мъхови зелени — малахитът е шепнещият съюзник на Скорпиона. Ускорява промяната, с която вече си се ангажирал/а — за добро или за зло. Древните египтяни го стривали на прах за очна боя. Мощен; препоръчват се малки дози.',
     planet: 'pluto',
     zodiacSigns: ['scorpio', 'capricorn'],
     moonPhases: ['waxing_gibbous', 'waning_gibbous'],

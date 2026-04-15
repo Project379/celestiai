@@ -191,7 +191,7 @@ export function CrystalCollectionContent({
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <p className="font-cinzel text-[11px] uppercase tracking-[0.32em] text-slate-500">
-          Призоваване на камъни...
+          Призовават се камъни...
         </p>
       </div>
     )

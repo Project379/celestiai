@@ -255,7 +255,7 @@ export function CrystalDetailPanel({
                     onClick={onCollect}
                     className="mt-6 w-full rounded-full border border-amber-300/40 bg-gradient-to-b from-amber-400/20 to-amber-500/5 px-6 py-3 font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-200 transition-colors duration-300 hover:border-amber-200 hover:bg-amber-400/15 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {collecting ? 'Призоваване...' : 'Добави в колекцията'}
+                    {collecting ? 'Призовава се...' : 'Добави в колекцията'}
                   </button>
                 )}
               </div>
