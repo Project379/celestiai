@@ -214,8 +214,8 @@ const PLANET_DEFS = [
 // Positions are normalized (fraction of viewport) so they adapt to resize.
 const PLANET_LAYOUT: Record<string, { fx: number; fy: number }> = {
   sun:     { fx: 0.50, fy: 0.07 }, // top-center - the "eye" above hero
-  mercury: { fx: 0.36, fy: 0.08 }, // top, near-center left (matched to Venus)
-  venus:   { fx: 0.64, fy: 0.08 }, // top, near-center right
+  mercury: { fx: 0.28, fy: 0.08 }, // top-left, spread out from the Sun
+  venus:   { fx: 0.72, fy: 0.08 }, // top-right, spread out from the Sun
   mars:    { fx: 0.19, fy: 0.34 }, // mid-left upper, outside dashboard content
   jupiter: { fx: 0.81, fy: 0.38 }, // mid-right upper, outside dashboard content
   uranus:  { fx: 0.20, fy: 0.72 }, // mid-left lower, outside dashboard content
@@ -607,9 +607,10 @@ export function CelestialCanvas({
         // edges) instead of a black void. Brightest stars at the edges,
         // sparse faint pinpricks over the content.
         const edgeFactor = centerFade(sx, sy)
-        // Probabilistically skip ~65% of stars when deep in the center
-        // zone so the middle is visibly less dense than the outsides.
-        if (edgeFactor < 0.12 && star.twinklePhase > 2.2) continue
+        // Probabilistically skip ~45% of stars when deep in the center zone
+        // so the middle has a visible starfield but still reads as sparser
+        // than the edges. Uses twinklePhase as a cheap per-star RNG.
+        if (edgeFactor < 0.12 && star.twinklePhase > 3.4) continue
 
         const starFade = Math.max(0.22, edgeFactor)
 
