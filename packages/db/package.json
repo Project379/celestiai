@@ -22,7 +22,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "seed": "tsx src/seed/cities.ts"
+    "seed": "tsx src/seed/cities.ts",
+    "seed:crystals": "tsx src/seed/crystals.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
