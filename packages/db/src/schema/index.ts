@@ -37,3 +37,22 @@ export {
   type AuditLog,
   type NewAuditLog,
 } from './audit-logs'
+export { crystals, type Crystal, type NewCrystal } from './crystals'
+export {
+  userCrystals,
+  type UserCrystal,
+  type NewUserCrystal,
+} from './user-crystals'
+export {
+  crystalRecommendations,
+  type CrystalRecommendation,
+  type NewCrystalRecommendation,
+} from './crystal-recommendations'
+export {
+  crystalVendors,
+  type CrystalVendor,
+  type NewCrystalVendor,
+  crystalListings,
+  type CrystalListing,
+  type NewCrystalListing,
+} from './crystal-vendors'
