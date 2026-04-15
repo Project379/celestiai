@@ -70,7 +70,7 @@ export function CrystalOfTheDayCard() {
     )
   }
 
-  const { crystal, lunarPhase } = data
+  const { crystal } = data
   const description =
     crystal.description_bg ??
     crystal.description_en.split('. ').slice(0, 2).join('. ') + '.'
@@ -84,7 +84,7 @@ export function CrystalOfTheDayCard() {
       />
 
       <p className="mb-5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-slate-300/90">
-        Камък на деня · {lunarPhase.name}
+        Камък на деня
       </p>
 
       <div className="flex items-start gap-6 sm:gap-8">
