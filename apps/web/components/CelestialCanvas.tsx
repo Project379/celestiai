@@ -184,26 +184,51 @@ export interface PlanetVisual {
   screenY: number
 }
 
-// Planets in solar system order (Mercury → Saturn) with proportional sizes
+// Planets with proportional sizes.
+// Editorial palette: violet + amber + ivory, matching the mystical app aesthetic.
+// Sun is included (no Moon — astrology-app convention).
 const PLANET_DEFS = [
-  { id: 'mercury', name: 'Меркурий', latin: 'Mercury', period: 87.97, L0: 252.25, color: '#b8a9c9', glowColor: 'rgba(184,169,201,0.5)', size: 4.5, order: 0 },
-  { id: 'venus', name: 'Венера', latin: 'Venus', period: 224.7, L0: 181.98, color: '#fcd34d', glowColor: 'rgba(252,211,77,0.6)', size: 7, order: 1 },
-  { id: 'mars', name: 'Марс', latin: 'Mars', period: 687.0, L0: 355.45, color: '#f87171', glowColor: 'rgba(248,113,113,0.55)', size: 5.5, order: 2 },
-  { id: 'jupiter', name: 'Юпитер', latin: 'Jupiter', period: 4332.6, L0: 34.40, color: '#fdba74', glowColor: 'rgba(253,186,116,0.6)', size: 11, order: 3 },
-  { id: 'saturn', name: 'Сатурн', latin: 'Saturn', period: 10759.2, L0: 49.94, color: '#e8c872', glowColor: 'rgba(232,200,114,0.55)', size: 9.5, order: 4 },
+  { id: 'sun',     name: 'Слънце',  latin: 'Sun',     period: 0,       L0: 0,      color: '#fcd34d', glowColor: 'rgba(252,211,77,0.75)',  size: 13,  order: 0 },
+  { id: 'mercury', name: 'Меркурий', latin: 'Mercury', period: 87.97,   L0: 252.25, color: '#c4b5fd', glowColor: 'rgba(196,181,253,0.55)', size: 4.5, order: 1 },
+  { id: 'venus',   name: 'Венера',  latin: 'Venus',   period: 224.7,   L0: 181.98, color: '#fcd34d', glowColor: 'rgba(252,211,77,0.6)',   size: 7,   order: 2 },
+  { id: 'mars',    name: 'Марс',    latin: 'Mars',    period: 687.0,   L0: 355.45, color: '#fb923c', glowColor: 'rgba(251,146,60,0.55)',  size: 5.5, order: 3 },
+  { id: 'jupiter', name: 'Юпитер',  latin: 'Jupiter', period: 4332.6,  L0: 34.40,  color: '#fed7aa', glowColor: 'rgba(254,215,170,0.6)',  size: 11,  order: 4 },
+  { id: 'saturn',  name: 'Сатурн',  latin: 'Saturn',  period: 10759.2, L0: 49.94,  color: '#fbbf24', glowColor: 'rgba(251,191,36,0.55)',  size: 9.5, order: 5 },
+  { id: 'uranus',  name: 'Уран',    latin: 'Uranus',  period: 30687,   L0: 314.05, color: '#a5b4fc', glowColor: 'rgba(165,180,252,0.55)', size: 7,   order: 6 },
+  { id: 'neptune', name: 'Нептун',  latin: 'Neptune', period: 60190,   L0: 304.35, color: '#a78bfa', glowColor: 'rgba(167,139,250,0.55)', size: 6.5, order: 7 },
+  { id: 'pluto',   name: 'Плутон',  latin: 'Pluto',   period: 90560,   L0: 238.92, color: '#cbd5e1', glowColor: 'rgba(203,213,225,0.45)', size: 3.5, order: 8 },
 ]
 
-// Lay planets in a horizontal line (solar system order), evenly spaced in the middle
-function computePlanetPositions(w: number, h: number): PlanetVisual[] {
-  const count = PLANET_DEFS.length
-  const sorted = [...PLANET_DEFS].sort((a, b) => a.order - b.order)
-  const margin = w * 0.15
-  const usable = w - margin * 2
-  const lineY = h * 0.50 // vertically centered
+// Scatter planets across safe zones that stay clear of page content on all routes.
+// The app's pages use centered max-width containers (max-w-2xl on dashboard up to
+// max-w-7xl on chart), which leaves predictable negative space:
+//
+//   - Top strip    (y 6-14%):   below nav, above every page's hero title
+//   - Mid-left     (x 16-24%):  free on dashboard/transits/guide/pricing
+//   - Mid-right    (x 76-84%):  mirror of mid-left
+//   - Bottom strip (y 93-97%):  below every page's main content
+//
+// A centerFade safety net (applied at draw time) auto-dims any planet that
+// accidentally lands over content on the widest page (chart, max-w-7xl).
+//
+// Positions are normalized (fraction of viewport) so they adapt to resize.
+const PLANET_LAYOUT: Record<string, { fx: number; fy: number }> = {
+  sun:     { fx: 0.50, fy: 0.07 }, // top-center — the "eye" above hero
+  mercury: { fx: 0.36, fy: 0.10 }, // top, near-center left
+  venus:   { fx: 0.64, fy: 0.09 }, // top, near-center right
+  mars:    { fx: 0.26, fy: 0.38 }, // mid-left upper, pulled inward
+  jupiter: { fx: 0.74, fy: 0.42 }, // mid-right upper, pulled inward
+  uranus:  { fx: 0.28, fy: 0.68 }, // mid-left lower, pulled inward
+  neptune: { fx: 0.72, fy: 0.66 }, // mid-right lower, pulled inward
+  saturn:  { fx: 0.40, fy: 0.94 }, // bottom, near-center left
+  pluto:   { fx: 0.60, fy: 0.96 }, // bottom, near-center right
+}
 
-  return sorted.map((p, i) => {
-    const screenX = margin + (count > 1 ? (i / (count - 1)) * usable : usable / 2)
-    const screenY = lineY
+function computePlanetPositions(w: number, h: number): PlanetVisual[] {
+  return PLANET_DEFS.map(p => {
+    const layout = PLANET_LAYOUT[p.id] ?? { fx: 0.5, fy: 0.95 }
+    const screenX = w * layout.fx
+    const screenY = h * layout.fy
     const longitude = 0
     const dimGlow = p.glowColor.replace(/[\d.]+\)$/, '0.15)')
     return { ...p, longitude, screenX, screenY, dimGlow }
@@ -360,13 +385,15 @@ export function CelestialCanvas({
     /* ─── Planet positions ─── */
     const planets = computePlanetPositions(w, h)
 
-    /* ─── Milky way renderer (cached) ─── */
+    /* ─── Milky way + corner nebulae renderer (cached) ─── */
     function renderMilkyWay(tw: number, th: number): HTMLCanvasElement {
       const off = document.createElement('canvas')
       off.width = Math.floor(tw / 4); off.height = Math.floor(th / 4)
       const octx = off.getContext('2d')
       if (!octx) return off
       const sw = off.width, sh = off.height
+
+      // 1) Milky way noise band — rendered via ImageData
       const imageData = octx.createImageData(sw, sh)
       const data = imageData.data
       for (let py = 0; py < sh; py++) {
@@ -379,13 +406,53 @@ export function CelestialCanvas({
           const cloudiness = fbmNoise(nx * 8 + 0.5, ny * 8 + 0.5, 4)
           const intensity = bandIntensity * bandIntensity * cloudiness * 0.3
           const idx = (py * sw + px) * 4
-          data[idx] = Math.floor(160 * intensity)
-          data[idx + 1] = Math.floor(155 * intensity)
-          data[idx + 2] = Math.floor(175 * intensity)
+          data[idx] = Math.floor(175 * intensity)
+          data[idx + 1] = Math.floor(160 * intensity)
+          data[idx + 2] = Math.floor(170 * intensity)
           data[idx + 3] = Math.floor(255 * intensity)
         }
       }
       octx.putImageData(imageData, 0, 0)
+
+      // 2) Corner nebulae — editorial violet + amber tint radial gradients
+      // Painted over the milky way, blended additively for soft atmosphere.
+      // Diagonal pairing: violet in TL+BR, amber in TR+BL — matches dashboard aura direction.
+      octx.globalCompositeOperation = 'lighter'
+      const cornerR = Math.max(sw, sh) * 0.55
+
+      // Top-left violet
+      let g = octx.createRadialGradient(0, 0, 0, 0, 0, cornerR)
+      g.addColorStop(0, 'rgba(167, 139, 250, 0.18)') // violet-400
+      g.addColorStop(0.45, 'rgba(139, 92, 246, 0.06)')
+      g.addColorStop(1, 'rgba(0,0,0,0)')
+      octx.fillStyle = g
+      octx.fillRect(0, 0, sw, sh)
+
+      // Top-right amber
+      g = octx.createRadialGradient(sw, 0, 0, sw, 0, cornerR)
+      g.addColorStop(0, 'rgba(251, 191, 36, 0.14)') // amber-400
+      g.addColorStop(0.45, 'rgba(217, 119, 6, 0.05)')
+      g.addColorStop(1, 'rgba(0,0,0,0)')
+      octx.fillStyle = g
+      octx.fillRect(0, 0, sw, sh)
+
+      // Bottom-left amber (dimmer — planet row lives at bottom so keep low)
+      g = octx.createRadialGradient(0, sh, 0, 0, sh, cornerR * 0.9)
+      g.addColorStop(0, 'rgba(251, 191, 36, 0.10)')
+      g.addColorStop(0.5, 'rgba(217, 119, 6, 0.035)')
+      g.addColorStop(1, 'rgba(0,0,0,0)')
+      octx.fillStyle = g
+      octx.fillRect(0, 0, sw, sh)
+
+      // Bottom-right violet
+      g = octx.createRadialGradient(sw, sh, 0, sw, sh, cornerR * 0.9)
+      g.addColorStop(0, 'rgba(167, 139, 250, 0.12)')
+      g.addColorStop(0.5, 'rgba(139, 92, 246, 0.04)')
+      g.addColorStop(1, 'rgba(0,0,0,0)')
+      octx.fillStyle = g
+      octx.fillRect(0, 0, sw, sh)
+
+      octx.globalCompositeOperation = 'source-over'
       return off
     }
 
@@ -485,7 +552,7 @@ export function CelestialCanvas({
         offscreenRef.current = renderMilkyWay(w, h)
         milkyWayRenderedRef.current = true
       }
-      ctx.globalAlpha = 0.35
+      ctx.globalAlpha = 0.55
       ctx.drawImage(offscreenRef.current!, 0, 0, w, h)
       ctx.globalAlpha = 1
 
@@ -612,7 +679,7 @@ export function CelestialCanvas({
           ctx.globalAlpha = motionBlur * 0.6
           for (const s of screenStars) {
             const sz = (3.5 - s.mag * 0.4) * scale * 0.8
-            ctx.fillStyle = 'rgba(180,200,240,0.3)'
+            ctx.fillStyle = 'rgba(230,210,180,0.3)'
             ctx.beginPath(); ctx.arc(s.sx, s.sy + blurOffsetY * 2, Math.max(1, sz * 1.5), 0, PI2); ctx.fill()
           }
           ctx.globalAlpha = 1
@@ -621,8 +688,8 @@ export function CelestialCanvas({
         // Draw connection lines — solid thin lines for a cleaner look
         const lineAlpha = isHovered || isSelected ? 0.5 : 0.1
         const lineColor = isHovered || isSelected
-          ? 'rgba(200, 220, 255,' + lineAlpha + ')'
-          : 'rgba(160, 180, 210,' + lineAlpha + ')'
+          ? 'rgba(240, 224, 190,' + lineAlpha + ')'
+          : 'rgba(200, 190, 170,' + lineAlpha + ')'
 
         ctx.strokeStyle = lineColor
         ctx.lineWidth = isHovered || isSelected ? 1 : 0.5
@@ -640,14 +707,14 @@ export function CelestialCanvas({
           const sz = (3.5 - s.mag * 0.4) * scale * (isHovered || isSelected ? 1.3 : 1)
           const alpha = brightness * (isHovered || isSelected ? 1 : 0.75)
 
-          // Single glow pass (reduced from 2)
+          // Single glow pass (reduced from 2) — warm amber-ivory
           if (sz > 1.5) {
-            ctx.fillStyle = `rgba(200,215,255,${alpha * 0.15})`
+            ctx.fillStyle = `rgba(240,220,190,${alpha * 0.15})`
             ctx.beginPath(); ctx.arc(s.sx, s.sy, sz * 3, 0, PI2); ctx.fill()
           }
 
-          // Star core
-          ctx.fillStyle = `rgba(220,230,255,${alpha})`
+          // Star core — warm ivory
+          ctx.fillStyle = `rgba(240,232,216,${alpha})`
           ctx.beginPath(); ctx.arc(s.sx, s.sy, Math.max(1, sz), 0, PI2); ctx.fill()
         }
 
@@ -671,11 +738,11 @@ export function CelestialCanvas({
           ctx.beginPath()
           ctx.roundRect(pillX, pillY, pillW, pillH, 4)
           ctx.fill()
-          ctx.strokeStyle = 'rgba(200, 220, 255, 0.3)'
+          ctx.strokeStyle = 'rgba(240, 224, 190, 0.35)'
           ctx.lineWidth = 0.5
           ctx.stroke()
-          // Label text
-          ctx.fillStyle = 'rgba(200, 220, 255, 0.9)'
+          // Label text — warm ivory
+          ctx.fillStyle = 'rgba(240, 232, 216, 0.92)'
           ctx.fillText(c.name, cx, labelY)
           ctx.restore()
         }
@@ -686,24 +753,33 @@ export function CelestialCanvas({
         stateRef.current.onPositionsUpdate(positionsMap)
       }
 
-      /* ═══ PLANETS — horizontal line, scrolls with page ═══ */
-      const planetScrollOffset = smoothScrollY * 0.25 // slightly slower parallax than constellations
+      /* ═══ PLANETS — scattered top + bottom, pinned to viewport ═══ */
+      // Fully fixed so they always stay in their safe strips even on long scroll
+      const planetScrollOffset = 0
       ctx.save()
       ctx.textAlign = 'center'
       for (const p of planets) {
         const px = p.screenX + pxOffsetX * 0.3
         const py = p.screenY - planetScrollOffset + pxOffsetY * 0.3
+
+        // Safety net: dim planet if its position lands inside the content zone.
+        // Floor of 0.45 so planets stay readable even on wide pages like the
+        // natal chart, where they'd otherwise drop toward the centerFade floor.
+        const planetFade = Math.max(0.45, centerFade(px, py))
+
         const pulse = Math.sin(time * 0.8 + p.order * 1.3) * 0.08 + 0.92
         const sz = p.size * pulse
         const glowR = sz * 5
 
+        ctx.globalAlpha = planetFade
+
         // Motion blur ghost for planets
         if (motionBlur > 0.01) {
           const ghostY = py + blurOffsetY * 1.5
-          ctx.globalAlpha = motionBlur * 0.5
+          ctx.globalAlpha = planetFade * motionBlur * 0.5
           ctx.fillStyle = p.glowColor
           ctx.beginPath(); ctx.arc(px, ghostY, sz * 1.8, 0, PI2); ctx.fill()
-          ctx.globalAlpha = 1
+          ctx.globalAlpha = planetFade
         }
 
         // Outer glow
@@ -722,30 +798,46 @@ export function CelestialCanvas({
         ctx.fillStyle = 'rgba(255,255,255,0.5)'
         ctx.beginPath(); ctx.arc(px - sz * 0.25, py - sz * 0.25, sz * 0.35, 0, PI2); ctx.fill()
 
-        // Saturn rings
+        // Saturn rings — warm amber matching editorial palette
         if (p.id === 'saturn') {
-          ctx.strokeStyle = 'rgba(232,200,114,0.45)'
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.48)'
           ctx.lineWidth = 1.5
           ctx.beginPath()
           ctx.ellipse(px, py, sz * 2.2, sz * 0.5, -0.2, 0, PI2)
           ctx.stroke()
-          ctx.strokeStyle = 'rgba(232,200,114,0.25)'
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.22)'
           ctx.lineWidth = 1
           ctx.beginPath()
           ctx.ellipse(px, py, sz * 2.8, sz * 0.65, -0.2, 0, PI2)
           ctx.stroke()
         }
 
-        // Label
+        // Sun diffraction rays — subtle 4-point star glint, rotates slowly
+        if (p.id === 'sun') {
+          const rayLen = sz * 4.5
+          const rot = time * 0.15
+          ctx.strokeStyle = 'rgba(252, 211, 77, 0.35)'
+          ctx.lineWidth = 0.8
+          ctx.beginPath()
+          for (let r = 0; r < 4; r++) {
+            const a = rot + (r * Math.PI) / 2
+            ctx.moveTo(px - Math.cos(a) * rayLen, py - Math.sin(a) * rayLen)
+            ctx.lineTo(px + Math.cos(a) * rayLen, py + Math.sin(a) * rayLen)
+          }
+          ctx.stroke()
+        }
+
+        // Label — warm ivory to match editorial palette
         ctx.font = `500 ${Math.max(10, p.size * 1.4)}px -apple-system, BlinkMacSystemFont, sans-serif`
-        ctx.fillStyle = 'rgba(200, 215, 235, 0.6)'
+        ctx.fillStyle = 'rgba(240, 224, 196, 0.62)'
         ctx.fillText(p.name, px, py + sz + 16)
       }
+      ctx.globalAlpha = 1
       ctx.restore()
 
       /* ─── Shooting stars ─── */
       shootingTimer += 0.006
-      if (shootingTimer > 5 + Math.random() * 15) {
+      if (shootingTimer > 2.5 + Math.random() * 8) {
         shootingTimer = 0
         const startX = Math.random() * w
         const startY = Math.random() * h * 0.5
@@ -769,15 +861,15 @@ export function CelestialCanvas({
           const prev = s.trail[t - 1], curr = s.trail[t]
           const trailAlpha = headAlpha * (1 - t / s.trail.length) * 0.6
           if (trailAlpha <= 0) continue
-          ctx.strokeStyle = `rgba(200, 215, 235, ${trailAlpha})`
+          ctx.strokeStyle = `rgba(240, 224, 190, ${trailAlpha})`
           ctx.lineWidth = s.size * (1 - t / s.trail.length)
           ctx.lineCap = 'round'
           ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(curr.x, curr.y); ctx.stroke()
         }
         if (headAlpha > 0) {
-          ctx.fillStyle = `rgba(255,255,255,${headAlpha * 0.6})`
+          ctx.fillStyle = `rgba(255,250,235,${headAlpha * 0.6})`
           ctx.beginPath(); ctx.arc(s.x, s.y, s.size * 1.5, 0, Math.PI * 2); ctx.fill()
-          ctx.fillStyle = `rgba(200,210,235,${headAlpha * 0.25})`
+          ctx.fillStyle = `rgba(240,220,180,${headAlpha * 0.25})`
           ctx.beginPath(); ctx.arc(s.x, s.y, s.size * 3, 0, Math.PI * 2); ctx.fill()
         }
         if (s.life >= s.maxLife) shootingStars.splice(i, 1)

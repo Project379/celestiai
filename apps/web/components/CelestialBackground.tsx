@@ -112,7 +112,7 @@ export function CelestialBackground() {
         <CelestialCanvas
           className="absolute inset-0"
           interactive
-          starCount={350}
+          starCount={550}
           externalMouseRef={mouseRef}
           externalScrollRef={scrollRef}
           hoveredConstellationId={interactive ? hoveredId : null}
