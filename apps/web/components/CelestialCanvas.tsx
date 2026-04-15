@@ -216,10 +216,10 @@ const PLANET_LAYOUT: Record<string, { fx: number; fy: number }> = {
   sun:     { fx: 0.50, fy: 0.07 }, // top-center - the "eye" above hero
   mercury: { fx: 0.36, fy: 0.08 }, // top, near-center left (matched to Venus)
   venus:   { fx: 0.64, fy: 0.08 }, // top, near-center right
-  mars:    { fx: 0.26, fy: 0.38 }, // mid-left upper, pulled inward
-  jupiter: { fx: 0.74, fy: 0.42 }, // mid-right upper, pulled inward
-  uranus:  { fx: 0.28, fy: 0.68 }, // mid-left lower, pulled inward
-  neptune: { fx: 0.72, fy: 0.66 }, // mid-right lower, pulled inward
+  mars:    { fx: 0.19, fy: 0.34 }, // mid-left upper, outside dashboard content
+  jupiter: { fx: 0.81, fy: 0.38 }, // mid-right upper, outside dashboard content
+  uranus:  { fx: 0.20, fy: 0.72 }, // mid-left lower, outside dashboard content
+  neptune: { fx: 0.80, fy: 0.70 }, // mid-right lower, outside dashboard content
   saturn:  { fx: 0.17, fy: 0.96 }, // bottom-left outer edge, clear of content column
   pluto:   { fx: 0.83, fy: 0.97 }, // bottom-right outer edge, clear of content column
 }
@@ -573,17 +573,19 @@ export function CelestialCanvas({
       const pxOffsetY = mouseActive ? (my - h / 2) * 0.02 : 0
 
       /* ─── Center fade: dim stars/effects in the content zone ─── */
-      // Content occupies roughly the center 50% of viewport width and 60% of height
-      // Returns 0..1 where 0 = center (fully dimmed), 1 = edges (full brightness)
+      // Widened to protect the dashboard's max-w-2xl column on medium
+      // viewports and the guide's max-w-3xl column. Covers the center
+      // ~78% of width and ~70% of height. Returns 0..1 where 0 = center
+      // (fully dimmed), 1 = edges (full brightness).
       function centerFade(sx: number, sy: number): number {
-        // Horizontal: fade within center 60% of width
+        // Horizontal: fade within center 78% of width
         const hCenter = w / 2
-        const hHalf = w * 0.30
+        const hHalf = w * 0.39
         const hDist = Math.abs(sx - hCenter)
         const hFade = Math.min(1, Math.max(0, (hDist - hHalf * 0.5) / (hHalf * 0.5)))
-        // Vertical: fade within center 60% of height (offset down a bit for header)
+        // Vertical: fade within center 70% of height (offset down a bit for header)
         const vCenter = h * 0.52
-        const vHalf = h * 0.32
+        const vHalf = h * 0.35
         const vDist = Math.abs(sy - vCenter)
         const vFade = Math.min(1, Math.max(0, (vDist - vHalf * 0.5) / (vHalf * 0.5)))
         // Both axes must be in center for full dimming
@@ -659,6 +661,11 @@ export function CelestialCanvas({
         const isHovered = stateRef.current.hoveredConstellationId === c.id
         const isSelected = stateRef.current.selectedConstellationId === c.id
 
+        // Dim constellations that have drifted into the content zone during
+        // scroll. Keep interactive ones (hovered / selected) at full brightness.
+        const constellationFade =
+          isHovered || isSelected ? 1 : Math.max(0.25, centerFade(cx, cy))
+
         // Compute screen positions of stars - reuse pre-allocated arrays
         const screenStars = c._screenStars
         const posStars = c._posStars
@@ -686,7 +693,7 @@ export function CelestialCanvas({
         }
 
         // Draw connection lines - solid thin lines for a cleaner look
-        const lineAlpha = isHovered || isSelected ? 0.5 : 0.1
+        const lineAlpha = (isHovered || isSelected ? 0.5 : 0.1) * constellationFade
         const lineColor = isHovered || isSelected
           ? 'rgba(240, 224, 190,' + lineAlpha + ')'
           : 'rgba(200, 190, 170,' + lineAlpha + ')'
@@ -705,7 +712,7 @@ export function CelestialCanvas({
         for (const s of screenStars) {
           const brightness = Math.max(0.5, 1 - s.mag / 6)
           const sz = (3.5 - s.mag * 0.4) * scale * (isHovered || isSelected ? 1.3 : 1)
-          const alpha = brightness * (isHovered || isSelected ? 1 : 0.75)
+          const alpha = brightness * (isHovered || isSelected ? 1 : 0.75) * constellationFade
 
           // Single glow pass (reduced from 2) - warm amber-ivory
           if (sz > 1.5) {
@@ -755,9 +762,11 @@ export function CelestialCanvas({
 
       /* ═══ PLANETS - scattered top + bottom, pinned to viewport ═══ */
       // Fully fixed so they always stay in their safe strips even on long scroll
-      // Planets scroll with the page at the same parallax rate as constellations,
-      // so they drift together and stay coherent as the user scrolls.
-      const planetScrollOffset = smoothScrollY * 0.35
+      // Planets drift with the page but at a slightly slower rate than
+      // constellations (0.22 vs 0.35), so they stay in their safe top/bottom
+      // strips longer and don't sweep across the dashboard content during
+      // long scrolls. Still visually connected to the rest of the sky.
+      const planetScrollOffset = smoothScrollY * 0.22
       ctx.save()
       ctx.textAlign = 'center'
       for (const p of planets) {
@@ -765,9 +774,9 @@ export function CelestialCanvas({
         const py = p.screenY - planetScrollOffset + pxOffsetY * 0.3
 
         // Safety net: dim planet if its position lands inside the content zone.
-        // Floor of 0.45 so planets stay readable even on wide pages like the
-        // natal chart, where they'd otherwise drop toward the centerFade floor.
-        const planetFade = Math.max(0.45, centerFade(px, py))
+        // Low floor (0.2) so planets become truly subtle when they drift into
+        // the dashboard hero, daily horoscope, or lunar phase card during scroll.
+        const planetFade = Math.max(0.2, centerFade(px, py))
 
         const pulse = Math.sin(time * 0.8 + p.order * 1.3) * 0.08 + 0.92
         const sz = p.size * pulse
