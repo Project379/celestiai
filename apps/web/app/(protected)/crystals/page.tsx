@@ -52,6 +52,13 @@ export default async function CrystalsPage() {
         <p className="mt-3 max-w-xl font-display text-[15px] font-light italic leading-relaxed text-slate-500">
           Кристали, подбрани за твоята натална карта и текущата лунна фаза. Новите се появяват около новолуние и пълнолуние — около 2 - 3 камъка на месец.
         </p>
+        <Link
+          href="/astrology-guide/crystals"
+          className="group mt-5 inline-flex items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-400 transition-colors duration-200 hover:text-amber-300"
+        >
+          <span className="h-px w-6 bg-gradient-to-r from-transparent to-slate-400 transition-all duration-300 group-hover:to-amber-300" />
+          Как работи колекцията
+        </Link>
       </div>
 
       {!isPremium && <PremiumGate />}
