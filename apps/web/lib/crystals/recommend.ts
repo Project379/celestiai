@@ -1,20 +1,18 @@
 /**
  * Crystal recommendation rules engine
  *
- * Pure function. Takes a moment in time, a natal chart, and the catalog,
- * and returns the set of recommendations that should exist right now.
+ * Pure function. Takes a moment in time, a natal chart, active transit
+ * aspects and the catalog, and returns the set of recommendations that
+ * should exist right now.
  *
- * Cadence is deliberately sparse — roughly 2-3 recommendations per lunar
- * month. Deduplication against existing recommendations happens at the DB
- * layer via the unique index on (user_id, reason_code, valid_from).
+ * Cadence stays deliberately sparse — roughly 2-3 recommendations per
+ * lunar month plus the odd transit window. Dedup by `reasonCode` happens
+ * in the DB layer (insertRecommendationIfNew).
  *
- * v1 triggers:
- *   - birthstone: once per chart, valid forever, based on the natal Sun sign
- *   - new_moon: active during the new moon window (±3 days)
- *   - full_moon: active during the full moon window (±3 days)
- *
- * Future triggers (framework in place, not generated yet):
- *   - transit: major outer-planet transits to natal personal planets
+ * Triggers:
+ *   - birthstone: once per chart, valid forever, from the natal Sun sign
+ *   - lunar_phase: active during the new moon / full moon window (±3 days)
+ *   - transit: outer-planet hard aspects to natal personal planets
  */
 
 import type { LunarPhase } from '@/lib/moon-phase'
@@ -26,6 +24,7 @@ export interface CrystalCatalogEntry {
   id: string
   slug: string
   nameEn: string
+  nameBg: string | null
   planet: string | null
   zodiacSigns: string[]
   moonPhases: string[]
@@ -37,21 +36,27 @@ export interface CrystalRecommendationDraft {
   triggerType: CrystalTriggerType
   reasonCode: string
   reasonTextEn: string
+  reasonTextBg: string
   validFrom: Date
   validUntil: Date
+}
+
+interface TransitAspectLite {
+  transitPlanet: string
+  natalPlanet: string
+  aspect: string
+  orb: number
+  applying: boolean
 }
 
 interface RecommendInput {
   now: Date
   lunarPhase: LunarPhase
   natalPlanets: PlanetPosition[]
+  transitAspects: TransitAspectLite[]
   catalog: CrystalCatalogEntry[]
 }
 
-/**
- * Pick a crystal from the catalog matching a predicate. Prefers common
- * stones over rare ones so the rarity tail stays special.
- */
 function pickBestMatch(
   catalog: CrystalCatalogEntry[],
   predicate: (c: CrystalCatalogEntry) => boolean,
@@ -74,8 +79,6 @@ function pickBestMatch(
     return a.slug.localeCompare(b.slug)
   })
 
-  // Deterministic pick across the top candidates so two users on the same
-  // day with the same trigger don't always get the exact same stone.
   const topWindow = matches.slice(0, Math.min(3, matches.length))
   const hash = simpleHash(deterministicKey)
   return topWindow[hash % topWindow.length]
@@ -94,13 +97,6 @@ function getSunSign(planets: PlanetPosition[]): string | null {
   return sun?.sign ?? null
 }
 
-/**
- * Determine whether we're currently inside a lunar event window. Windows
- * open ±3 days around the exact new moon and exact full moon, computed
- * purely from `phaseDay` so every phase id that falls inside the window
- * still triggers the recommendation — not just the narrow `new`/`full`
- * buckets that last ~1 day each.
- */
 function currentLunarEvent(
   phase: LunarPhase,
   now: Date
@@ -108,13 +104,10 @@ function currentLunarEvent(
   const SYNODIC_MONTH = 29.530588853
   const MS_PER_DAY = 86_400_000
 
-  // Distance in days to the nearest new moon (before or after)
   const distToNew = Math.min(phase.phaseDay, SYNODIC_MONTH - phase.phaseDay)
-  // Distance in days to the full moon (before or after)
   const distToFull = Math.abs(phase.phaseDay - SYNODIC_MONTH / 2)
 
   if (distToNew <= 3) {
-    // Signed offset from now to the exact new moon (positive = in the past)
     const offset =
       phase.phaseDay <= SYNODIC_MONTH / 2
         ? phase.phaseDay
@@ -144,10 +137,60 @@ function formatMonthKey(date: Date): string {
   return `${date.getUTCFullYear()}${String(date.getUTCMonth() + 1).padStart(2, '0')}`
 }
 
+const ZODIAC_BG: Record<string, string> = {
+  aries: 'Овен',
+  taurus: 'Телец',
+  gemini: 'Близнаци',
+  cancer: 'Рак',
+  leo: 'Лъв',
+  virgo: 'Дева',
+  libra: 'Везни',
+  scorpio: 'Скорпион',
+  sagittarius: 'Стрелец',
+  capricorn: 'Козирог',
+  aquarius: 'Водолей',
+  pisces: 'Риби',
+}
+
+const TRANSIT_PLANET_BG: Record<string, string> = {
+  jupiter: 'Юпитер',
+  saturn: 'Сатурн',
+  uranus: 'Уран',
+  neptune: 'Нептун',
+  pluto: 'Плутон',
+}
+
+const NATAL_PLANET_BG: Record<string, string> = {
+  sun: 'Слънцето ти',
+  moon: 'Луната ти',
+  mercury: 'Меркурий в картата ти',
+  venus: 'Венера в картата ти',
+  mars: 'Марс в картата ти',
+}
+
+const OUTER_PLANETS = new Set([
+  'jupiter',
+  'saturn',
+  'uranus',
+  'neptune',
+  'pluto',
+])
+
+const PERSONAL_PLANETS = new Set([
+  'sun',
+  'moon',
+  'mercury',
+  'venus',
+  'mars',
+])
+
+const HARD_ASPECTS = new Set(['conjunction', 'square', 'opposition'])
+
 export function recommendCrystals({
   now,
   lunarPhase,
   natalPlanets,
+  transitAspects,
   catalog,
 }: RecommendInput): CrystalRecommendationDraft[] {
   const drafts: CrystalRecommendationDraft[] = []
@@ -161,21 +204,23 @@ export function recommendCrystals({
       `birthstone:${sunSign}`
     )
     if (birthstone) {
+      const signBg = ZODIAC_BG[sunSign] ?? sunSign
       drafts.push({
         crystalSlug: birthstone.slug,
         triggerType: 'birthstone',
         reasonCode: `birthstone_${sunSign}`,
-        reasonTextEn: `Your Sun sits in ${capitalize(sunSign)}, and ${birthstone.nameEn} is its traditional guardian stone — a birthright crystal that supports you regardless of phase or transit.`,
-        validFrom: now,
+        reasonTextEn: `Your Sun sits in ${capitalize(sunSign)} and ${birthstone.nameBg ?? birthstone.nameEn} is its traditional guardian stone — a birthright crystal that stays with you regardless of phase or transit.`,
+        reasonTextBg: `Слънцето ти е в ${signBg}, а ${birthstone.nameBg ?? birthstone.nameEn} е неговият пазител от най-старите текстове. Това е рожденият ти камък — остава с теб независимо от фазата и от това какво прави небето.`,
+        validFrom: new Date('2000-01-01T00:00:00Z'),
         validUntil: new Date('2099-12-31T00:00:00Z'),
       })
     }
   }
 
-  // ——— 2. Lunar phase trigger (new moon / full moon, ±3 days) ———
+  // ——— 2. Lunar phase trigger ———
   const event = currentLunarEvent(lunarPhase, now)
   if (event) {
-    const phaseIdFilter = event.id // 'new' | 'full'
+    const phaseIdFilter = event.id
     const phaseCrystal = pickBestMatch(
       catalog,
       (c) => c.moonPhases.includes(phaseIdFilter),
@@ -183,22 +228,60 @@ export function recommendCrystals({
     )
     if (phaseCrystal) {
       const monthKey = formatMonthKey(event.validFrom)
-      const label = event.id === 'new' ? 'new moon' : 'full moon'
+      const labelEn = event.id === 'new' ? 'new moon' : 'full moon'
+      const labelBg = event.id === 'new' ? 'новолунието' : 'пълнолунието'
       drafts.push({
         crystalSlug: phaseCrystal.slug,
         triggerType: 'lunar_phase',
         reasonCode: `${event.id}_moon_${monthKey}`,
-        reasonTextEn: `The ${label} has opened a window. ${phaseCrystal.nameEn} amplifies this phase — collect it while the window is open.`,
+        reasonTextEn: `The ${labelEn} has opened a window. ${phaseCrystal.nameBg ?? phaseCrystal.nameEn} amplifies this phase.`,
+        reasonTextBg: `${capitalize(labelBg)} отвори своя прозорец. ${phaseCrystal.nameBg ?? phaseCrystal.nameEn} усилва тази фаза и ти помага да я изживееш докрай.`,
         validFrom: event.validFrom,
         validUntil: event.validUntil,
       })
     }
   }
 
-  // ——— 3. Transit triggers — v1 stub, returns nothing ———
-  // Framework for future expansion: iterate over active outer-planet
-  // transits with hard aspects to natal personal planets, map the
-  // transiting planet to its crystal, cap at 1 per month.
+  // ——— 3. Transit trigger ———
+  // Outer-planet hard aspect to a personal natal planet = a meaningful
+  // shift. Pick the tightest such aspect, map the transit planet to its
+  // crystal. One per month to stay sparse.
+  const monthKey = formatMonthKey(now)
+  const hardTransits = transitAspects
+    .filter(
+      (t) =>
+        OUTER_PLANETS.has(t.transitPlanet) &&
+        PERSONAL_PLANETS.has(t.natalPlanet) &&
+        HARD_ASPECTS.has(t.aspect)
+    )
+    .sort((a, b) => a.orb - b.orb)
+
+  const tightestTransit = hardTransits[0]
+  if (tightestTransit) {
+    const transitCrystal = pickBestMatch(
+      catalog,
+      (c) => c.planet === tightestTransit.transitPlanet,
+      `transit:${tightestTransit.transitPlanet}:${monthKey}`
+    )
+    if (transitCrystal) {
+      const planetBg =
+        TRANSIT_PLANET_BG[tightestTransit.transitPlanet] ??
+        tightestTransit.transitPlanet
+      const natalBg =
+        NATAL_PLANET_BG[tightestTransit.natalPlanet] ??
+        tightestTransit.natalPlanet
+      const validUntil = new Date(now.getTime() + 14 * 86_400_000)
+      drafts.push({
+        crystalSlug: transitCrystal.slug,
+        triggerType: 'transit',
+        reasonCode: `transit_${tightestTransit.transitPlanet}_${tightestTransit.natalPlanet}_${monthKey}`,
+        reasonTextEn: `${capitalize(tightestTransit.transitPlanet)} is pressing on your natal ${capitalize(tightestTransit.natalPlanet)} right now. ${transitCrystal.nameBg ?? transitCrystal.nameEn} holds that pressure in something you can carry in your hand.`,
+        reasonTextBg: `${planetBg} в момента натиска ${natalBg} — усещаш го, дори когато не можеш да го назовеш. ${transitCrystal.nameBg ?? transitCrystal.nameEn} събира тази сила в нещо, което можеш да носиш.`,
+        validFrom: now,
+        validUntil,
+      })
+    }
+  }
 
   return drafts
 }

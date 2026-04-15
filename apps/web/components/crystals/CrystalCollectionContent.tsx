@@ -9,6 +9,7 @@ import {
   type CrystalDetailData,
 } from './CrystalDetailPanel'
 import type { GemVariant } from './CrystalGem'
+import { DailyStreakPanel } from './DailyStreakPanel'
 
 interface CrystalRow {
   id: string
@@ -60,7 +61,7 @@ interface CrystalState {
   lunarPhase: { id: string; name: string; latin: string; illumination: number }
 }
 
-type Tab = 'recommended' | 'discovered' | 'all'
+type Tab = 'windows' | 'discovered' | 'daily' | 'all'
 
 interface CrystalCollectionContentProps {
   chartId: string
@@ -73,7 +74,7 @@ export function CrystalCollectionContent({
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null)
-  const [tab, setTab] = useState<Tab>('recommended')
+  const [tab, setTab] = useState<Tab>('windows')
   const [collecting, setCollecting] = useState(false)
 
   const load = useCallback(async () => {
@@ -114,13 +115,18 @@ export function CrystalCollectionContent({
 
   const visible = useMemo(() => {
     if (!state) return []
-    if (tab === 'recommended') {
-      return state.catalog.filter((c) => recommendedIds.has(c.id))
+    if (tab === 'windows') {
+      return state.catalog.filter(
+        (c) => recommendedIds.has(c.id) && !discoveredIds.has(c.id)
+      )
     }
     if (tab === 'discovered') {
       return state.catalog.filter((c) => discoveredIds.has(c.id))
     }
-    return state.catalog
+    if (tab === 'all') {
+      return state.catalog
+    }
+    return []
   }, [state, tab, recommendedIds, discoveredIds])
 
   const selected = useMemo(() => {
@@ -207,99 +213,91 @@ export function CrystalCollectionContent({
 
   if (!state) return null
 
-  const tabs: { id: Tab; label: string; count: number }[] = [
-    {
-      id: 'recommended',
-      label: 'Препоръки',
-      count: state.recommendations.length,
-    },
+  const pendingRecsCount = state.recommendations.filter(
+    (r) => !discoveredIds.has(r.crystal_id)
+  ).length
+
+  const tabs: { id: Tab; label: string; count?: number }[] = [
+    { id: 'windows', label: 'Прозорци', count: pendingRecsCount },
     { id: 'discovered', label: 'Твои камъни', count: state.collection.length },
+    { id: 'daily', label: 'Дневна серия' },
     { id: 'all', label: 'Каталог', count: state.catalog.length },
   ]
 
   return (
     <div className="relative">
-      {/* Ambient atmosphere */}
+      {/* Ambient atmosphere — matches dashboard / chart page */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-20 top-10 -z-10 h-[320px] w-[320px] rounded-full bg-violet-500/[0.08] blur-[100px]"
+        className="pointer-events-none absolute -left-24 top-6 -z-10 h-[360px] w-[360px] rounded-full bg-violet-500/[0.08] blur-[110px]"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-10 top-40 -z-10 h-[260px] w-[260px] rounded-full bg-amber-500/[0.05] blur-[80px]"
+        className="pointer-events-none absolute -right-10 top-44 -z-10 h-[280px] w-[280px] rounded-full bg-amber-500/[0.05] blur-[90px]"
       />
 
-      <div className="mb-8 flex flex-wrap items-center gap-3">
-        {tabs.map((t) => {
-          const active = tab === t.id
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`
-                rounded-full border px-4 py-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em]
-                transition-colors duration-300
-                ${
-                  active
-                    ? 'border-amber-300/50 bg-amber-400/[0.08] text-amber-200'
-                    : 'border-white/10 bg-white/[0.02] text-slate-400 hover:border-white/25 hover:text-slate-200'
-                }
-              `}
-            >
-              {t.label}
-              <span className="ml-2 text-slate-500">{t.count}</span>
-            </button>
-          )
-        })}
+      {/* Typographic tab row — matches DailyHoroscope / ChartView */}
+      <div className="mb-10 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 border-b border-white/[0.06] pb-1 sm:justify-start">
+        {tabs.map((t) => (
+          <CrystalTab
+            key={t.id}
+            active={tab === t.id}
+            onClick={() => setTab(t.id)}
+            label={t.label}
+            count={t.count}
+          />
+        ))}
       </div>
 
-      {tab === 'recommended' && state.recommendations.length === 0 && (
+      {tab === 'windows' && pendingRecsCount === 0 && (
         <div className="mb-10 rounded-2xl border border-white/10 bg-white/[0.02] px-6 py-10 text-center">
           <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">
-            Празно небе
+            Тихо небе
           </p>
           <p className="mt-3 font-display text-[15px] font-light italic leading-relaxed text-slate-400">
-            Нямаш активни препоръки точно сега. Новите се появяват около новолуние и пълнолуние — върни се тогава.
+            В момента нямаш отворени прозорци. Нов камък те очаква около новолуние, пълнолуние или когато бавна планета докосне картата ти.
           </p>
         </div>
       )}
 
-      <AnimatePresence mode="popLayout">
-        <motion.div
-          key={tab}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.25 }}
-          className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4"
-        >
-          {visible.map((c) => {
-            const recommended = recommendedIds.has(c.id)
-            const discovered = discoveredIds.has(c.id)
-            return (
-              <CrystalCard
-                key={c.slug}
-                slug={c.slug}
-                name={c.name_bg ?? c.name_en}
-                tagline={c.tagline_bg ?? c.tagline_en}
-                variant={c.svg_variant as GemVariant}
-                primary={c.color_primary}
-                secondary={c.color_secondary}
-                accent={c.color_accent}
-                rarity={c.rarity}
-                discovered={tab === 'all' ? discovered : true}
-                highlight={recommended}
-                onClick={() => setSelectedSlug(c.slug)}
-              />
-            )
-          })}
-        </motion.div>
-      </AnimatePresence>
+      {tab === 'daily' ? (
+        <DailyStreakPanel />
+      ) : (
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25 }}
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4"
+          >
+            {visible.map((c) => {
+              const recommended = recommendedIds.has(c.id)
+              const discovered = discoveredIds.has(c.id)
+              return (
+                <CrystalCard
+                  key={c.slug}
+                  slug={c.slug}
+                  name={c.name_bg ?? c.name_en}
+                  tagline={c.tagline_bg ?? c.tagline_en}
+                  variant={c.svg_variant as GemVariant}
+                  primary={c.color_primary}
+                  secondary={c.color_secondary}
+                  accent={c.color_accent}
+                  rarity={c.rarity}
+                  discovered={tab === 'all' ? discovered : true}
+                  highlight={recommended && !discovered}
+                  onClick={() => setSelectedSlug(c.slug)}
+                />
+              )
+            })}
+          </motion.div>
+        </AnimatePresence>
+      )}
 
       <CrystalDetailPanel
         crystal={selectedDetail}
-        discovered={selectedIsDiscovered}
         reason={selectedRec?.reason_text_bg ?? selectedRec?.reason_text_en ?? null}
         canCollect={Boolean(selectedRec && !selectedIsDiscovered)}
         collecting={collecting}
@@ -316,5 +314,52 @@ export function CrystalCollectionContent({
         </Link>
       </div>
     </div>
+  )
+}
+
+/* ─── Typographic tab — thin gold underline, matches DailyHoroscope ─── */
+function CrystalTab({
+  active,
+  onClick,
+  label,
+  count,
+}: {
+  active: boolean
+  onClick: () => void
+  label: string
+  count?: number
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'group relative pb-2 font-display text-[11px] font-semibold uppercase tracking-[0.28em] transition-colors duration-300',
+        active ? 'text-amber-200' : 'text-slate-400 hover:text-slate-200',
+      ].join(' ')}
+    >
+      <span className="inline-flex items-baseline gap-2">
+        <span>{label}</span>
+        {typeof count === 'number' && (
+          <span
+            className={[
+              'font-cinzel text-[9px] font-normal transition-colors duration-300',
+              active ? 'text-amber-300/70' : 'text-slate-600',
+            ].join(' ')}
+          >
+            {count}
+          </span>
+        )}
+      </span>
+      <span
+        aria-hidden
+        className={[
+          'absolute inset-x-0 bottom-0 h-px transition-all duration-300',
+          active
+            ? 'bg-gradient-to-r from-transparent via-amber-400/70 to-transparent shadow-[0_0_8px_rgba(251,191,36,0.4)]'
+            : 'bg-transparent',
+        ].join(' ')}
+      />
+    </button>
   )
 }

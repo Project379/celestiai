@@ -73,6 +73,7 @@ export function toCatalogEntry(row: CrystalRow): CrystalCatalogEntry {
     id: row.id,
     slug: row.slug,
     nameEn: row.name_en,
+    nameBg: row.name_bg,
     planet: row.planet,
     zodiacSigns: row.zodiac_signs,
     moonPhases: row.moon_phases,
@@ -99,6 +100,8 @@ export async function fetchActiveRecommendations(
   userId: string,
   now: Date
 ): Promise<CrystalRecommendationRow[]> {
+  // Only uncollected recs within the current validity window — those are
+  // the prompts we surface in the "Препоръки" tab as claim-able prizes.
   const { data, error } = await supabase
     .from('crystal_recommendations')
     .select('*')
@@ -119,20 +122,46 @@ export interface NewRecommendationInput {
   triggerType: string
   reasonCode: string
   reasonTextEn: string
+  reasonTextBg?: string | null
   validFrom: Date
   validUntil: Date
 }
 
 /**
  * Insert a recommendation if one does not already exist for the
- * (user_id, reason_code, valid_from) tuple. Relies on the unique index
- * in the schema rather than pre-checking, so concurrent generates stay safe.
+ * (user_id, reason_code) pair. The recommendation sits in a pending
+ * state until the user explicitly collects it — that's the gamified loop
+ * that brings people back.
  */
 export async function insertRecommendationIfNew(
   supabase: SupabaseClient,
   rec: NewRecommendationInput
 ): Promise<CrystalRecommendationRow | null> {
-  const { data, error } = await supabase
+  const { data: existing } = await supabase
+    .from('crystal_recommendations')
+    .select('*')
+    .eq('user_id', rec.userId)
+    .eq('reason_code', rec.reasonCode)
+    .maybeSingle()
+
+  if (existing) {
+    // Backfill Bulgarian reason text on legacy rows that were inserted
+    // before the BG reason text was generated server-side. Without this,
+    // existing users keep seeing the English fallback forever.
+    const existingRow = existing as CrystalRecommendationRow
+    if (!existingRow.reason_text_bg && rec.reasonTextBg) {
+      const { data: updated } = await supabase
+        .from('crystal_recommendations')
+        .update({ reason_text_bg: rec.reasonTextBg })
+        .eq('id', existingRow.id)
+        .select('*')
+        .single()
+      return (updated as CrystalRecommendationRow) ?? existingRow
+    }
+    return existingRow
+  }
+
+  const { data: inserted, error } = await supabase
     .from('crystal_recommendations')
     .insert({
       user_id: rec.userId,
@@ -141,6 +170,7 @@ export async function insertRecommendationIfNew(
       trigger_type: rec.triggerType,
       reason_code: rec.reasonCode,
       reason_text_en: rec.reasonTextEn,
+      reason_text_bg: rec.reasonTextBg ?? null,
       valid_from: rec.validFrom.toISOString(),
       valid_until: rec.validUntil.toISOString(),
     })
@@ -148,12 +178,45 @@ export async function insertRecommendationIfNew(
     .single()
 
   if (error) {
-    // Unique-constraint violation means the rec already exists for this
-    // trigger window — that's a benign no-op for the caller.
     if (error.code === '23505') return null
     throw error
   }
-  return data as CrystalRecommendationRow
+  return inserted as CrystalRecommendationRow
+}
+
+/**
+ * One-shot cleanup of historical duplicate recs. Keeps the oldest row per
+ * (user_id, reason_code) tuple so an existing collected state is preserved.
+ * Safe to run on every GET — it's bounded by the recs for a single user.
+ */
+export async function cleanupDuplicateRecommendations(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<void> {
+  const { data } = await supabase
+    .from('crystal_recommendations')
+    .select('id, reason_code, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+
+  if (!data || data.length === 0) return
+
+  const seen = new Set<string>()
+  const duplicateIds: string[] = []
+  for (const row of data) {
+    if (seen.has(row.reason_code)) {
+      duplicateIds.push(row.id as string)
+    } else {
+      seen.add(row.reason_code as string)
+    }
+  }
+
+  if (duplicateIds.length > 0) {
+    await supabase
+      .from('crystal_recommendations')
+      .delete()
+      .in('id', duplicateIds)
+  }
 }
 
 /**

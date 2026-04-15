@@ -41,14 +41,18 @@ export function CrystalsGuideContent({ catalog }: CrystalsGuideContentProps) {
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 pb-24 pt-12 sm:px-6">
-      {/* Ambient atmosphere */}
+      {/* Ambient atmosphere — matches the crystals tab */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-24 top-10 -z-10 h-[360px] w-[360px] rounded-full bg-violet-500/[0.08] blur-[110px]"
+        className="pointer-events-none absolute -left-24 top-10 -z-10 h-[380px] w-[380px] rounded-full bg-violet-500/[0.09] blur-[120px]"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-10 top-60 -z-10 h-[280px] w-[280px] rounded-full bg-amber-500/[0.06] blur-[90px]"
+        className="pointer-events-none absolute -right-10 top-60 -z-10 h-[300px] w-[300px] rounded-full bg-amber-500/[0.06] blur-[100px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-[60%] -z-10 h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-indigo-500/[0.05] blur-[110px]"
       />
 
       {/* ── Hero ─────────────────────────────────────────── */}
@@ -68,8 +72,8 @@ export function CrystalsGuideContent({ catalog }: CrystalsGuideContentProps) {
             твоето небе
           </span>
         </h1>
-        <p className="mt-5 max-w-2xl font-display text-[17px] font-light italic leading-[1.8] text-slate-400">
-          Тридесет кристала, подредени по планета и лунна фаза. Celestia ги избира за теб според наталната ти карта и текущото небе — не всеки ден, а тогава, когато наистина имат значение.
+        <p className="mt-5 max-w-2xl font-display text-[17px] font-light italic leading-[1.85] text-slate-400">
+          Тридесет камъка, подредени по планета и лунна фаза. Celestia отваря прозорец за някой от тях само когато небето е готово — около новолуние, пълнолуние или когато бавна планета мине близо до картата ти. Пропуснеш ли прозореца, възможността се затваря заедно с него.
         </p>
       </motion.div>
 
@@ -84,40 +88,53 @@ export function CrystalsGuideContent({ catalog }: CrystalsGuideContentProps) {
         <p className="mb-4 font-cinzel text-[10px] font-semibold uppercase tracking-[0.36em] text-slate-400">
           Как работи колекцията
         </p>
-        <h2 className="mb-7 font-display text-[1.75rem] font-semibold leading-tight text-slate-100 sm:text-[2rem]">
-          Два-три камъка на месец — не повече
+        <h2 className="mb-4 font-display text-[1.75rem] font-semibold leading-tight text-slate-100 sm:text-[2rem]">
+          Малко камъни, но точните
         </h2>
+        <p className="mb-8 max-w-2xl font-display text-[15.5px] font-light leading-[1.85] text-slate-400">
+          Колекцията ти има два ритъма. Бавният — два или три редки камъка на месец, които се появяват само когато небето отвори прозорец; тогава трябва да се върнеш и да ги прибереш, преди прозорецът да се затвори. И бързият — по един камък на ден, който отключваш с всяко отваряне на таблото.
+        </p>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mystic-panel grid gap-px overflow-hidden bg-white/[0.03] sm:grid-cols-2 lg:grid-cols-3">
           <GuideStep
             numeral="I"
             title="Рожден камък"
-            body="При първата си среща с колекцията получаваш своя рожден камък — избран по слънчевия знак в картата ти. Остава с теб завинаги, без значение какво прави небето."
+            body="Първият прозорец, който се отваря за теб, е за рождения ти камък — избран по слънчевия знак от картата ти. Връщаш се в „Прозорци“, събираш го и той остава с теб завинаги, каквото и да прави небето над главата ти."
           />
           <GuideStep
             numeral="II"
             title="Новолуние"
-            body="Около всяко новолуние (±3 дни) се отваря прозорец за нов камък, свързан с фазата. Препоръката изчезва, ако не я прибереш навреме — затова я наричаме прозорец, а не списък."
+            body="Около всяко новолуние — за около три дни — се отваря прозорец за нов камък на фазата. Ако не се върнеш навреме, прозорецът се затваря заедно с възможността. Затова е прозорец, а не полица."
           />
           <GuideStep
             numeral="III"
             title="Пълнолуние"
-            body="Пълнолунието носи втория камък на месеца. Той усилва кулминацията — емоционалния пик, решението, което отлагаш от седмици."
+            body="Пълнолунието носи втория камък за месеца. Той усилва кулминацията — емоционалния връх, решението, което отлагаш от седмици. Събереш ли го навреме, е твой."
           />
           <GuideStep
             numeral="IV"
-            title="Транзити (скоро)"
-            body="Когато тежка планета ти прави напрегнат аспект, Celestia предлага камък за момента. Рамката е готова — активира се в следваща версия."
+            title="Транзити"
+            body="Когато някоя от бавните планети натисне лична планета в картата ти, Celestia отваря прозорец за камък, който да събере този натиск. Прозорецът трае около две седмици — колкото да го усетиш и да решиш дали искаш камъка."
           />
           <GuideStep
             numeral="V"
-            title="Редкост"
-            body="Всеки камък носи тежест — общ, рядък, ценен или легендарен. По-често виждаш общите, а легендарните идват рядко и не случайно."
+            title="Ежедневна серия"
+            body="Успоредно с редките камъни върви всекидневен ритъм. Всеки път, когато отвориш таблото, отключваш днешния камък на лунната фаза и удължаваш серията си с още един ден. Пропуснеш ли ден, серията се нулира."
           />
           <GuideStep
             numeral="VI"
+            title="Рядкост"
+            body="Всеки камък носи своята тежест — обикновен, рядък, ценен или легендарен. Обикновените срещаш често; легендарните идват рядко и никога случайно."
+          />
+          <GuideStep
+            numeral="VII"
             title="Физически камък"
-            body="Ако поискаш истинския камък, Celestia ще те свърже с български магазин — партньорство, което подготвяме. Засега всичко е дигитално и безплатно за премиум потребителите."
+            body="Ако поискаш истинския минерал, Celestia ще те свърже с български магазин — партньорство, което подготвяме. Засега всичко е дигитално и е част от премиум абонамента."
+          />
+          <GuideStep
+            numeral="VIII"
+            title="Безплатно и премиум"
+            body="С безплатния абонамент виждаш дневния камък на таблото и можеш да четеш ръководството — достатъчно, за да усетиш ритъма. Колекцията, препоръките от наталната ти карта, транзитите и ежедневната серия са част от премиума."
           />
         </div>
       </motion.section>
@@ -134,17 +151,17 @@ export function CrystalsGuideContent({ catalog }: CrystalsGuideContentProps) {
           Философия
         </p>
         <h2 className="mb-6 font-display text-[1.6rem] font-semibold leading-tight text-slate-100 sm:text-[1.85rem]">
-          Защо камъни и звезди вървят заедно
+          Защо камъните вървят със звездите
         </h2>
-        <div className="space-y-5 font-display text-[16px] font-light leading-[1.9] text-slate-300/95">
+        <div className="mystic-panel space-y-5 px-6 py-8 font-display text-[16px] font-light leading-[1.9] text-slate-300/95 sm:px-10">
           <p>
-            Съответствието между планети и минерали се появява в писмени източници още от IV век. Древните египтяни стривали малахит за очна боя, римляните носели тигрово око в битка, ведическите текстове подреждат деветте камъка на навратна — по един за всяка небесна сила.
+            Писмени източници описват връзката между планетите и минералите още от IV век. Египтяните стривали малахит за очна боя, римляните носели тигрово око в битка, а ведическите текстове подреждат деветте камъка на навратна — по един за всяка небесна сила.
           </p>
           <p>
-            Логиката е проста. Всяка планета има свой темперамент — Марс гори, Сатурн събира, Луна се лее. Всеки минерал също има темперамент, даден му от цвета, твърдостта и начина, по който пречупва светлината. Когато двете съвпаднат, камъкът работи като малък физически котел за идеята, която носи планетата.
+            Логиката е проста. Всяка планета има свой характер — Марс гори, Сатурн събира, Луната се лее. Всеки минерал също си има характер, даден му от цвета, твърдостта и начина, по който пречупва светлината. Когато двете си паснат, камъкът започва да работи като малък физически съсъд за идеята, която планетата носи.
           </p>
           <p>
-            Celestia не твърди, че камъните правят чудеса. По-скоро са фокусираща леща — начин да превърнеш едно астрологично състояние в нещо, което можеш да държиш между пръстите си. Ритуалът е за теб, не за тях.
+            Celestia не обещава чудеса. Камъните са по-скоро фокусираща леща — начин да превърнеш една абстрактна астрологична конфигурация в нещо, което можеш да стиснеш между пръстите си. Ритуалът е за теб, не за тях.
           </p>
         </div>
       </motion.section>
@@ -184,9 +201,9 @@ export function CrystalsGuideContent({ catalog }: CrystalsGuideContentProps) {
                   return (
                     <div
                       key={slug}
-                      className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-5 transition-colors duration-300 hover:border-white/20 hover:bg-white/[0.04]"
+                      className="group flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-5 backdrop-blur-sm transition-all duration-300 hover:border-amber-300/25 hover:bg-white/[0.04]"
                     >
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 transition-transform duration-500 group-hover:scale-105">
                         <CrystalGem
                           variant={entry.svg_variant as GemVariant}
                           primary={entry.color_primary}
@@ -216,32 +233,47 @@ export function CrystalsGuideContent({ catalog }: CrystalsGuideContentProps) {
         </div>
       </motion.section>
 
-      {/* ── CTA ──────────────────────────────────────────── */}
+      {/* ── Editorial finale ─────────────────────────────── */}
       <motion.div
         initial="hidden"
         animate="visible"
         variants={fadeUp}
         custom={4}
-        className="mt-20 rounded-3xl border border-amber-300/20 bg-amber-400/[0.03] px-6 py-10 text-center sm:px-10"
+        className="mt-20 text-center"
       >
-        <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-300/90">
-          Твоята колекция те чака
+        <div
+          className="mb-8 flex items-center justify-center gap-4"
+          aria-hidden
+        >
+          <span className="h-px w-20 bg-gradient-to-r from-transparent to-amber-300/40" />
+          <span className="h-1.5 w-1.5 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+          <span className="h-px w-20 bg-gradient-to-l from-transparent to-amber-300/40" />
+        </div>
+
+        <h2 className="mx-auto max-w-lg font-display text-[1.45rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[1.7rem]">
+          <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/95 bg-clip-text text-transparent">
+            Върни се към камъните си
+          </span>
+        </h2>
+
+        <p className="mx-auto mt-4 max-w-xl font-display text-[15px] font-light italic leading-[1.85] text-slate-400">
+          Тридесет минерала чакат в каталога. До теб ще стигнат само онези, които небето посочи в точния момент. Прозорецът се отваря, ти се връщаш, събираш камъка — така расте колекцията.
         </p>
-        <p className="mx-auto mt-4 max-w-xl font-display text-[17px] font-light italic leading-[1.85] text-slate-300">
-          Тридесет камъка седят в каталога. Два-три ще стигнат до колекцията ти този месец — ако наминеш, когато небето каже „сега".
-        </p>
-        <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+
+        <div className="mt-8 flex flex-col items-center gap-5 sm:flex-row sm:justify-center sm:gap-10">
           <Link
             href="/crystals"
-            className="rounded-full border border-amber-300/40 bg-gradient-to-b from-amber-400/20 to-amber-500/5 px-7 py-3 font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-200 transition-colors hover:border-amber-200 hover:bg-amber-400/15"
+            className="group inline-flex items-center gap-2.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-amber-200 transition-colors hover:text-amber-100"
           >
-            Към колекцията
+            <span className="h-px w-5 bg-gradient-to-r from-transparent to-amber-300/70 transition-all duration-300 group-hover:w-7" />
+            Към моите камъни
+            <span className="h-px w-5 bg-gradient-to-l from-transparent to-amber-300/70 transition-all duration-300 group-hover:w-7" />
           </Link>
           <Link
-            href="/astrology-guide"
-            className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500 transition-colors hover:text-amber-300"
+            href="/dashboard"
+            className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-slate-500 transition-colors hover:text-amber-300"
           >
-            &larr; Към ръководството
+            &larr; Обратно към таблото
           </Link>
         </div>
       </motion.div>
@@ -259,7 +291,7 @@ function GuideStep({
   body: string
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-6">
+    <div className="relative flex flex-col bg-[#0a0715]/60 px-6 py-7 transition-colors duration-300 hover:bg-white/[0.02]">
       <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-300/80">
         {numeral}
       </p>

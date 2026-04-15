@@ -36,10 +36,10 @@ export function CrystalCard({
   onClick,
 }: CrystalCardProps) {
   const rarityLabel: Record<string, string> = {
-    common: 'Общ',
+    common: 'Обикновен',
     uncommon: 'Рядък',
     rare: 'Ценен',
-    legendary: 'Легенда',
+    legendary: 'Легендарен',
   }
 
   return (
@@ -97,12 +97,6 @@ export function CrystalCard({
       <span className="mt-3 font-cinzel text-[9px] font-semibold uppercase tracking-[0.3em] text-slate-500">
         {rarityLabel[rarity] ?? rarity}
       </span>
-
-      {highlight && (
-        <span className="mt-2 rounded-full border border-amber-300/30 bg-amber-400/5 px-3 py-1 font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-amber-200">
-          Препоръка
-        </span>
-      )}
     </motion.button>
   )
 }

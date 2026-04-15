@@ -581,34 +581,6 @@ export function AstrologyGuideContent() {
         </ol>
       </Section>
 
-      {/* ── Crystals sub-guide callout ───────────────────── */}
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-40px' }}
-        variants={fadeUp}
-        custom={7}
-        className="mt-20 rounded-3xl border border-amber-300/20 bg-amber-400/[0.03] px-6 py-10 text-center sm:px-10"
-      >
-        <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-300/90">
-          Ръководство · Кристали
-        </p>
-        <h3 className="mt-3 font-display text-[1.45rem] font-semibold leading-tight text-slate-100 sm:text-[1.7rem]">
-          <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text text-transparent">
-            Камъните на твоето небе
-          </span>
-        </h3>
-        <p className="mx-auto mt-4 max-w-xl font-display text-[15.5px] font-light italic leading-[1.85] text-slate-400">
-          Тридесет кристала, подредени по планета и фаза. Прочети как Celestia ги избира за теб и кога да очакваш следващия.
-        </p>
-        <Link
-          href="/astrology-guide/crystals"
-          className="mt-6 inline-block rounded-full border border-amber-300/40 bg-gradient-to-b from-amber-400/20 to-amber-500/5 px-7 py-3 font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-200 transition-colors hover:border-amber-200 hover:bg-amber-400/15"
-        >
-          Открий каталога
-        </Link>
-      </motion.div>
-
       {/* ── Back link ────────────────────────────────────── */}
       <motion.div
         initial="hidden"

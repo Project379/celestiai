@@ -44,6 +44,11 @@ export {
   type NewUserCrystal,
 } from './user-crystals'
 export {
+  userDailyCrystals,
+  type UserDailyCrystal,
+  type NewUserDailyCrystal,
+} from './user-daily-crystals'
+export {
   crystalRecommendations,
   type CrystalRecommendation,
   type NewCrystalRecommendation,

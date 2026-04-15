@@ -128,7 +128,7 @@ export function LunarPhaseCard() {
               </>
             )}
             <span className="mx-2 text-slate-500">·</span>
-            <span>до {shower.zhr}/ч</span>
+            <span>до {shower.zhr} метеора на час</span>
           </p>
         </div>
       )}

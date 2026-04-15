@@ -26,6 +26,13 @@ interface TodayResponse {
     latin: string
     illumination: number
   }
+  streak: {
+    current: number
+    longest: number
+    totalDays: number
+  } | null
+  isPremium: boolean
+  collectedToday: boolean
 }
 
 /**
@@ -41,7 +48,7 @@ export function CrystalOfTheDayCard() {
     let cancelled = false
     void (async () => {
       try {
-        const res = await fetch('/api/crystals/today')
+        const res = await fetch('/api/crystals/today', { cache: 'no-store' })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const body = (await res.json()) as TodayResponse
         if (!cancelled) setData(body)
@@ -64,13 +71,13 @@ export function CrystalOfTheDayCard() {
           Камък на деня
         </p>
         <p className="mt-3 font-display text-[14px] font-light italic text-slate-500">
-          {error ? 'Не можем да призовем камъка точно сега.' : 'Призоваване...'}
+          {error ? 'В момента не можем да призовем камъка.' : 'Призоваване...'}
         </p>
       </section>
     )
   }
 
-  const { crystal } = data
+  const { crystal, streak } = data
   const description =
     crystal.description_bg ??
     crystal.description_en.split('. ').slice(0, 2).join('. ') + '.'
@@ -83,9 +90,17 @@ export function CrystalOfTheDayCard() {
         style={{ background: crystal.color_primary }}
       />
 
-      <p className="mb-5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-slate-300/90">
-        Камък на деня
-      </p>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-slate-300/90">
+          Камък на деня
+        </p>
+        {streak && streak.current > 0 && (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/30 bg-amber-400/[0.06] px-3 py-1 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.28em] text-amber-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+            {streak.current === 1 ? '1 ден' : `${streak.current} поредни дни`}
+          </span>
+        )}
+      </div>
 
       <div className="flex items-start gap-6 sm:gap-8">
         <motion.div
@@ -116,13 +131,21 @@ export function CrystalOfTheDayCard() {
             {description}
           </p>
 
-          <Link
-            href="/crystals"
-            className="group mt-5 inline-flex items-center gap-2 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-slate-200 transition-colors duration-200 hover:text-amber-300"
-          >
-            <span className="h-px w-6 bg-gradient-to-r from-transparent to-slate-300/80 transition-all duration-300 group-hover:to-amber-300/90" />
-            Разгледай колекцията
-          </Link>
+          <div className="mt-5 flex flex-wrap items-center gap-4">
+            {data.isPremium && data.collectedToday && (
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-400/[0.06] px-4 py-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-200">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+                Събран днес
+              </span>
+            )}
+            <Link
+              href="/crystals"
+              className="group inline-flex items-center gap-2 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-slate-200 transition-colors duration-200 hover:text-amber-300"
+            >
+              <span className="h-px w-6 bg-gradient-to-r from-transparent to-slate-300/80 transition-all duration-300 group-hover:to-amber-300/90" />
+              Разгледай колекцията
+            </Link>
+          </div>
         </div>
       </div>
     </section>

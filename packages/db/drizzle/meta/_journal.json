@@ -64,6 +64,13 @@
       "when": 1776257823413,
       "tag": "0008_perfect_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776285335738,
+      "tag": "0009_late_starjammers",
+      "breakpoints": true
     }
   ]
 }

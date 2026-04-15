@@ -1,5 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
-import { calculateNatalChart } from '@celestia/astrology'
+import {
+  calculateNatalChart,
+  calculateDailyTransits,
+  calculateTransitAspects,
+} from '@celestia/astrology'
 import type { PlanetPosition } from '@celestia/astrology'
 import { getLunarPhase } from '@/lib/moon-phase'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
@@ -8,6 +12,7 @@ import {
   fetchUserCollection,
   fetchActiveRecommendations,
   insertRecommendationIfNew,
+  cleanupDuplicateRecommendations,
   toCatalogEntry,
 } from '@/lib/crystals/queries'
 import { recommendCrystals } from '@/lib/crystals/recommend'
@@ -93,14 +98,43 @@ export async function GET(req: Request) {
     const now = new Date()
     const lunarPhase = getLunarPhase(now)
 
+    // Clean up legacy duplicates first — the old unique index allowed
+    // validFrom drift, so users can end up with 20+ copies of the same rec.
+    await cleanupDuplicateRecommendations(supabase, userId)
+
+    let transitAspects: ReturnType<typeof calculateTransitAspects> = []
+    if (natalPlanets.length > 0) {
+      try {
+        const dailyTransits = calculateDailyTransits(now)
+        transitAspects = calculateTransitAspects(dailyTransits, natalPlanets)
+      } catch (err) {
+        console.warn('[crystals] transit calculation failed', err)
+      }
+    }
+
     const drafts = recommendCrystals({
       now,
       lunarPhase,
       natalPlanets,
+      transitAspects,
       catalog,
     })
 
+    // Enforce "one transit rec per calendar month": skip transit drafts if the
+    // user already has any transit rec whose reason_code ends with this month.
+    const monthKey = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+    const { data: existingTransits } = await supabase
+      .from('crystal_recommendations')
+      .select('reason_code')
+      .eq('user_id', userId)
+      .eq('trigger_type', 'transit')
+      .like('reason_code', `%_${monthKey}`)
+
+    const hasTransitThisMonth = (existingTransits?.length ?? 0) > 0
+
     for (const draft of drafts) {
+      if (draft.triggerType === 'transit' && hasTransitThisMonth) continue
+
       const crystalRow = catalogRows.find((c) => c.slug === draft.crystalSlug)
       if (!crystalRow) continue
 
@@ -111,6 +145,7 @@ export async function GET(req: Request) {
         triggerType: draft.triggerType,
         reasonCode: draft.reasonCode,
         reasonTextEn: draft.reasonTextEn,
+        reasonTextBg: draft.reasonTextBg,
         validFrom: draft.validFrom,
         validUntil: draft.validUntil,
       })
