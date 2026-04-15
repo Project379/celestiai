@@ -76,11 +76,11 @@ export async function seedCrystals() {
   console.log(`\nSeeding complete! ${upserted} crystals available.`)
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  seedCrystals()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      console.error('Crystal seeding failed:', error)
-      process.exit(1)
-    })
-}
+// Always run when invoked via tsx. Dropping the import.meta.url guard
+// that breaks on Windows (backslash vs forward-slash path mismatch).
+seedCrystals()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error('Crystal seeding failed:', error)
+    process.exit(1)
+  })
