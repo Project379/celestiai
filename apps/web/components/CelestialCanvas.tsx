@@ -602,14 +602,21 @@ export function CelestialCanvas({
         const sx = ((star.x + px) % w + w) % w
         const sy = ((star.y + py) % h + h) % h
 
-        // Dim stars in the center content area
+        // Stars dim in the center but never fully disappear. Gives the
+        // middle of the page a subtle starfield (fewer, fainter than the
+        // edges) instead of a black void. Brightest stars at the edges,
+        // sparse faint pinpricks over the content.
         const edgeFactor = centerFade(sx, sy)
-        if (edgeFactor < 0.05) continue // skip fully hidden stars
+        // Probabilistically skip ~65% of stars when deep in the center
+        // zone so the middle is visibly less dense than the outsides.
+        if (edgeFactor < 0.12 && star.twinklePhase > 2.2) continue
+
+        const starFade = Math.max(0.22, edgeFactor)
 
         // Simplified twinkle: single sin is visually indistinguishable from dual-sin
         const twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase) * 0.3 + 0.7
-        let opacity = star.baseOpacity * twinkle * edgeFactor
-        let sz = star.size * (0.4 + edgeFactor * 0.6)
+        let opacity = star.baseOpacity * twinkle * starFade
+        let sz = star.size * (0.5 + starFade * 0.5)
         const cb = star.colorBase // pre-cached "r,g,b"
 
         // Mouse proximity glow - squared distance avoids expensive sqrt
