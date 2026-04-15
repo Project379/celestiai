@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { CelestialBackgroundLazy } from '@/components/CelestialBackgroundLazy'
 import { NavigationTransition } from '@/components/NavigationTransition'
-import { OracleButtonGlobal } from '@/components/oracle/OracleButtonGlobal'
 import { ProtectedNav } from '@/components/layout/ProtectedNav'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
@@ -97,9 +96,6 @@ export default async function ProtectedLayout({
           </NavigationTransition>
         </main>
       </div>
-
-      {/* Global floating Oracle button — fixed bottom-right on all protected pages */}
-      <OracleButtonGlobal chartId={chartId} subscriptionTier={subscriptionTier} />
 
       {/* Global session expiry modal */}
       <SessionExpiryModal />
