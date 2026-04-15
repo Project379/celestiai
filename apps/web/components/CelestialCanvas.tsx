@@ -188,7 +188,7 @@ export interface PlanetVisual {
 // Editorial palette: violet + amber + ivory, matching the mystical app aesthetic.
 // Sun is included (no Moon - astrology-app convention).
 const PLANET_DEFS = [
-  { id: 'sun',     name: 'Слънце',  latin: 'Sun',     period: 0,       L0: 0,      color: '#fcd34d', glowColor: 'rgba(252,211,77,0.78)',  size: 9,   order: 0 },
+  { id: 'sun',     name: 'Слънце',  latin: 'Sun',     period: 0,       L0: 0,      color: '#fcd34d', glowColor: 'rgba(252,211,77,0.32)',  size: 6,   order: 0 },
   { id: 'mercury', name: 'Меркурий', latin: 'Mercury', period: 87.97,   L0: 252.25, color: '#c4b5fd', glowColor: 'rgba(196,181,253,0.55)', size: 4.5, order: 1 },
   { id: 'venus',   name: 'Венера',  latin: 'Venus',   period: 224.7,   L0: 181.98, color: '#fcd34d', glowColor: 'rgba(252,211,77,0.6)',   size: 7,   order: 2 },
   { id: 'mars',    name: 'Марс',    latin: 'Mars',    period: 687.0,   L0: 355.45, color: '#fb923c', glowColor: 'rgba(251,146,60,0.55)',  size: 5.5, order: 3 },
@@ -213,7 +213,7 @@ const PLANET_DEFS = [
 //
 // Positions are normalized (fraction of viewport) so they adapt to resize.
 const PLANET_LAYOUT: Record<string, { fx: number; fy: number }> = {
-  sun:     { fx: 0.50, fy: 0.04 }, // top-center, tucked above the navbar so glow stays out of hero
+  sun:     { fx: 0.50, fy: 0.16 }, // top-center, pulled clear of the navbar; dimmed via custom alpha
   mercury: { fx: 0.28, fy: 0.08 }, // top-left, spread out from the Sun
   venus:   { fx: 0.72, fy: 0.08 }, // top-right, spread out from the Sun
   mars:    { fx: 0.19, fy: 0.34 }, // mid-left upper, outside dashboard content
@@ -784,7 +784,10 @@ export function CelestialCanvas({
         // Safety net: dim planet if its position lands inside the content zone.
         // Low floor (0.2) so planets become truly subtle when they drift into
         // the dashboard hero, daily horoscope, or lunar phase card during scroll.
-        const planetFade = Math.max(0.2, centerFade(px, py))
+        // Sun gets a hard 0.4 multiplier so it's a subtle atmospheric halo
+        // behind the hero instead of a competing disc.
+        const sunDim = p.id === 'sun' ? 0.4 : 1
+        const planetFade = Math.max(0.2, centerFade(px, py)) * sunDim
 
         const pulse = Math.sin(time * 0.8 + p.order * 1.3) * 0.08 + 0.92
         const sz = p.size * pulse
@@ -831,12 +834,12 @@ export function CelestialCanvas({
           ctx.stroke()
         }
 
-        // Sun diffraction rays - subtle 4-point star glint, rotates slowly
+        // Sun diffraction rays - short subtle glint, rotates slowly
         if (p.id === 'sun') {
-          const rayLen = sz * 4.5
+          const rayLen = sz * 3
           const rot = time * 0.15
-          ctx.strokeStyle = 'rgba(252, 211, 77, 0.35)'
-          ctx.lineWidth = 0.8
+          ctx.strokeStyle = 'rgba(252, 211, 77, 0.22)'
+          ctx.lineWidth = 0.7
           ctx.beginPath()
           for (let r = 0; r < 4; r++) {
             const a = rot + (r * Math.PI) / 2
@@ -846,10 +849,13 @@ export function CelestialCanvas({
           ctx.stroke()
         }
 
-        // Label - warm ivory to match editorial palette
-        ctx.font = `500 ${Math.max(10, p.size * 1.4)}px -apple-system, BlinkMacSystemFont, sans-serif`
-        ctx.fillStyle = 'rgba(240, 224, 196, 0.62)'
-        ctx.fillText(p.name, px, py + sz + 16)
+        // Label - warm ivory to match editorial palette. Sun is intentionally
+        // unlabeled so it reads as atmospheric glow, not a labeled planet.
+        if (p.id !== 'sun') {
+          ctx.font = `500 ${Math.max(10, p.size * 1.4)}px -apple-system, BlinkMacSystemFont, sans-serif`
+          ctx.fillStyle = 'rgba(240, 224, 196, 0.62)'
+          ctx.fillText(p.name, px, py + sz + 16)
+        }
       }
       ctx.globalAlpha = 1
       ctx.restore()
