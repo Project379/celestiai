@@ -344,7 +344,10 @@ interface MoonDiscProps {
 
 function MoonDisc({ phaseFraction, size }: MoonDiscProps) {
   const r = size / 2
-  const rx = Math.abs(Math.cos(2 * Math.PI * phaseFraction)) * r
+  // Round rx to 2 decimal places so SSR and client hydration (which run
+  // getLunarPhase() at slightly different moments) produce the same SVG
+  // string. Sub-pixel precision, visually identical, no hydration warning.
+  const rx = Math.round(Math.abs(Math.cos(2 * Math.PI * phaseFraction)) * r * 100) / 100
   const isWaxing = phaseFraction < 0.5
   const isCrescent = phaseFraction < 0.25 || phaseFraction >= 0.75
 

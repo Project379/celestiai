@@ -188,7 +188,7 @@ export interface PlanetVisual {
 // Editorial palette: violet + amber + ivory, matching the mystical app aesthetic.
 // Sun is included (no Moon - astrology-app convention).
 const PLANET_DEFS = [
-  { id: 'sun',     name: 'Слънце',  latin: 'Sun',     period: 0,       L0: 0,      color: '#fcd34d', glowColor: 'rgba(252,211,77,0.75)',  size: 13,  order: 0 },
+  { id: 'sun',     name: 'Слънце',  latin: 'Sun',     period: 0,       L0: 0,      color: '#fcd34d', glowColor: 'rgba(252,211,77,0.7)',   size: 6,   order: 0 },
   { id: 'mercury', name: 'Меркурий', latin: 'Mercury', period: 87.97,   L0: 252.25, color: '#c4b5fd', glowColor: 'rgba(196,181,253,0.55)', size: 4.5, order: 1 },
   { id: 'venus',   name: 'Венера',  latin: 'Venus',   period: 224.7,   L0: 181.98, color: '#fcd34d', glowColor: 'rgba(252,211,77,0.6)',   size: 7,   order: 2 },
   { id: 'mars',    name: 'Марс',    latin: 'Mars',    period: 687.0,   L0: 355.45, color: '#fb923c', glowColor: 'rgba(251,146,60,0.55)',  size: 5.5, order: 3 },
@@ -213,7 +213,7 @@ const PLANET_DEFS = [
 //
 // Positions are normalized (fraction of viewport) so they adapt to resize.
 const PLANET_LAYOUT: Record<string, { fx: number; fy: number }> = {
-  sun:     { fx: 0.50, fy: 0.07 }, // top-center - the "eye" above hero
+  sun:     { fx: 0.50, fy: 0.04 }, // top-center, tucked above the navbar so glow stays out of hero
   mercury: { fx: 0.28, fy: 0.08 }, // top-left, spread out from the Sun
   venus:   { fx: 0.72, fy: 0.08 }, // top-right, spread out from the Sun
   mars:    { fx: 0.19, fy: 0.34 }, // mid-left upper, outside dashboard content
