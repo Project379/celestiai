@@ -224,11 +224,16 @@ const PLANET_LAYOUT: Record<string, { fx: number; fy: number }> = {
   pluto:   { fx: 0.83, fy: 0.97 }, // bottom-right outer edge, clear of content column
 }
 
+// Navbar height in pixels (h-14 = 56px). Sun is anchored here so its
+// center always sits exactly at the bottom edge of the protected layout's
+// navbar regardless of viewport height.
+const NAVBAR_PX = 56
+
 function computePlanetPositions(w: number, h: number): PlanetVisual[] {
   return PLANET_DEFS.map(p => {
     const layout = PLANET_LAYOUT[p.id] ?? { fx: 0.5, fy: 0.95 }
     const screenX = w * layout.fx
-    const screenY = h * layout.fy
+    const screenY = p.id === 'sun' ? NAVBAR_PX : h * layout.fy
     const longitude = 0
     const dimGlow = p.glowColor.replace(/[\d.]+\)$/, '0.15)')
     return { ...p, longitude, screenX, screenY, dimGlow }
