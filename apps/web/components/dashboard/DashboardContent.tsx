@@ -126,17 +126,27 @@ export function DashboardContent({
           className="pointer-events-none absolute right-0 top-16 -z-10 h-[220px] w-[220px] rounded-full bg-amber-500/[0.045] blur-[80px]"
         />
 
-        {/* Date line with moon phase. tracking-normal on the phase name
-            overrides the wide cinzel letter-spacing so the ☾ glyph sits
-            tight against the name. */}
-        <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
-          <span>{todayFormatted}</span>
-          <span aria-hidden className="h-[3px] w-[3px] rotate-45 bg-slate-400/80" />
-          <span className="inline-flex items-center gap-1.5 tracking-[0.24em] text-slate-200">
-            <span aria-hidden className="text-[12px] leading-none text-amber-300/90">☾</span>
-            {lunarPhase.name}
-          </span>
-        </p>
+        {/* Date line: date + moon phase on the left, Premium badge on the
+            right. Premium sits here (not between the welcome lines below)
+            so the greeting flow stays uninterrupted. */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
+            <span>{todayFormatted}</span>
+            <span aria-hidden className="h-[3px] w-[3px] rotate-45 bg-slate-400/80" />
+            <span className="inline-flex items-center gap-1.5 tracking-[0.24em] text-slate-200">
+              <span aria-hidden className="text-[12px] leading-none text-amber-300/90">☾</span>
+              {lunarPhase.name}
+            </span>
+          </p>
+
+          {isPremium && (
+            <span className="inline-flex items-center gap-2.5 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-amber-200/90">
+              <span aria-hidden className="h-px w-8 bg-gradient-to-r from-transparent via-amber-300/40 to-amber-300/70" />
+              <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.65)]" />
+              Premium
+            </span>
+          )}
+        </div>
 
         {/* Greeting: time-aware ("Добро утро, Алекс.") */}
         <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-[2.125rem] leading-[1.1] tracking-tight sm:text-[2.75rem]">
@@ -147,56 +157,65 @@ export function DashboardContent({
             {firstName}.
           </span>
         </h1>
-
-        {/* Dynamic welcoming summary: lunar phase + sign element +
-            optional meteor shower. Updates as the sky moves. */}
-        <p className="mt-5 max-w-xl font-display text-[15.5px] font-light italic leading-[1.8] text-slate-200 sm:text-[16.5px]">
-          {welcome.summary}
-        </p>
-
-        {/* Premium indicator */}
-        {isPremium && (
-          <div className="mt-6">
-            <span className="inline-flex items-center gap-3.5 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-slate-200/90">
-              <span className="h-px w-12 bg-gradient-to-r from-transparent via-slate-300/40 to-amber-300/70" />
-              <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-              Premium
-              <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-              <span className="h-px w-12 bg-gradient-to-l from-transparent via-slate-300/40 to-amber-300/70" />
-            </span>
-          </div>
-        )}
       </motion.div>
 
-      {/* ── Editorial teaser (when chart exists) ──────────── */}
+      {/* ── Welcome bundle: lunar/meteor message + sign quip in one
+           motion block, each led by its own eyebrow so the reader sees
+           which is which. No Premium badge between them. ──────── */}
       {birthChart && sunSign && (
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           custom={1}
-          className="mb-12"
+          className="mb-12 max-w-xl space-y-8"
         >
-          <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-400/85">
-            {sunSign}
-          </p>
-          <p className="font-display text-[17px] font-light italic leading-[1.85] text-slate-200/90 sm:text-[18px]">
-            {SIGN_QUIPS[sunSign] ?? 'Звездите са в движение. Вселената е написала нещо за теб.'}
-          </p>
+          {/* Lunar + meteor message, dynamic */}
+          <div>
+            <p className="mb-2 flex items-center gap-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
+              <span>Небесен ритъм</span>
+              <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-amber-300/40 via-slate-300/10 to-transparent" />
+            </p>
+            <p className="font-display text-[15.5px] font-light italic leading-[1.8] text-slate-200 sm:text-[16.5px]">
+              {welcome.summary}
+            </p>
+          </div>
+
+          {/* Sun sign quip: more playful, character-led */}
+          <div>
+            <p className="mb-2 flex items-center gap-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-300">
+              <span>{sunSign}</span>
+              <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-slate-300/35 via-slate-300/10 to-transparent" />
+            </p>
+            <p className="font-display text-[17px] font-light italic leading-[1.85] text-slate-200/95 sm:text-[18px]">
+              {SIGN_QUIPS[sunSign] ?? 'Звездите са в движение. Вселената е написала нещо за теб.'}
+            </p>
+          </div>
         </motion.div>
       )}
 
-      {/* ── Empty state - no birth chart ──────────────────── */}
+      {/* ── Empty state: no birth chart. Still show the Небесен ритъм
+           line + the birth-data CTA, bundled in one motion block. ──── */}
       {!birthChart && (
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           custom={1}
-          className="mb-12"
+          className="mb-12 max-w-xl space-y-6"
         >
-          <p className="mb-5 font-display text-[17px] font-light italic leading-[1.85] text-slate-200/90">
-            Картата ти още не е настроена. Въведи рождените си данни, за да видиш хороскопа, натална карта и транзити.
+          <div>
+            <p className="mb-2 flex items-center gap-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
+              <span>Небесен ритъм</span>
+              <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-amber-300/40 via-slate-300/10 to-transparent" />
+            </p>
+            <p className="font-display text-[15.5px] font-light italic leading-[1.8] text-slate-200 sm:text-[16.5px]">
+              {welcome.summary}
+            </p>
+          </div>
+
+          <p className="font-display text-[17px] font-light italic leading-[1.85] text-slate-200/90">
+            Картата ти още не е настроена. Въведи рождените си данни, за да видиш хороскопа, наталната карта и транзитите.
           </p>
           <Link
             href="/birth-data"

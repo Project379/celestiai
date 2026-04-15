@@ -220,8 +220,8 @@ const PLANET_LAYOUT: Record<string, { fx: number; fy: number }> = {
   jupiter: { fx: 0.74, fy: 0.42 }, // mid-right upper, pulled inward
   uranus:  { fx: 0.28, fy: 0.68 }, // mid-left lower, pulled inward
   neptune: { fx: 0.72, fy: 0.66 }, // mid-right lower, pulled inward
-  saturn:  { fx: 0.40, fy: 0.94 }, // bottom, near-center left
-  pluto:   { fx: 0.60, fy: 0.96 }, // bottom, near-center right
+  saturn:  { fx: 0.17, fy: 0.96 }, // bottom-left outer edge, clear of content column
+  pluto:   { fx: 0.83, fy: 0.97 }, // bottom-right outer edge, clear of content column
 }
 
 function computePlanetPositions(w: number, h: number): PlanetVisual[] {
