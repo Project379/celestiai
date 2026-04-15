@@ -5,6 +5,7 @@ import { NavigationTransition } from '@/components/NavigationTransition'
 import { ProtectedNav } from '@/components/layout/ProtectedNav'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
+import { OraclePanelGlobal } from '@/components/oracle/OraclePanelGlobal'
 import { getCachedLatestChart, getCachedUserTier } from '@/lib/supabase/queries'
 
 export default async function ProtectedLayout({
@@ -96,6 +97,9 @@ export default async function ProtectedLayout({
           </NavigationTransition>
         </main>
       </div>
+
+      {/* Global Oracle modal — triggered by ProtectedNav via oracle:open event */}
+      <OraclePanelGlobal chartId={chartId} subscriptionTier={subscriptionTier} />
 
       {/* Global session expiry modal */}
       <SessionExpiryModal />

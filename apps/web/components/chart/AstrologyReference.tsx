@@ -227,64 +227,69 @@ export function AstrologyReference() {
   const [activeTab, setActiveTab] = useState<InnerTab>('legend')
 
   return (
-    <div className="relative rounded-xl border border-white/[0.04] bg-black/[0.15] p-5">
-      {/* Top gold hairline */}
+    <div className="mystic-panel relative px-6 py-7 sm:px-8">
+      {/* Ambient atmosphere — matches chart/dashboard glows */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/40 to-transparent"
+        className="pointer-events-none absolute -left-16 top-0 -z-10 h-[260px] w-[260px] rounded-full bg-violet-500/[0.08] blur-[100px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-8 top-24 -z-10 h-[200px] w-[200px] rounded-full bg-amber-500/[0.05] blur-[80px]"
       />
 
-      {/* Header */}
-      <div className="mb-5">
-        <p className="mb-1.5 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-400">
+      {/* Header — editorial eyebrow + gradient title */}
+      <div className="mb-7">
+        <p className="flex items-center gap-2.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-400">
+          <span
+            aria-hidden
+            className="h-px w-5 bg-gradient-to-r from-transparent to-slate-300/40"
+          />
           Celestia · Речник
         </p>
-        <h2 className="font-display text-lg font-semibold tracking-tight text-slate-100">
-          Астрологичен <span className="font-light italic text-slate-300">справочник</span>
+        <h2 className="mt-3 font-display text-[1.35rem] font-semibold leading-tight tracking-tight sm:text-[1.55rem]">
+          <span className="font-light italic text-slate-400">Астрологичен </span>
+          <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/95 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_14px_rgba(251,191,36,0.18)]">
+            справочник
+          </span>
         </h2>
-        <p className="mt-1 text-xs leading-relaxed text-slate-400/75">
+        <p className="mt-2 max-w-xl font-display text-[13px] font-light italic leading-[1.75] text-slate-500">
           Планети, аспекти, транзитни влияния и условните знаци на картата.
         </p>
       </div>
 
-      {/* Inner tab switcher */}
-      <div className="mb-5 flex gap-1 rounded-lg border border-white/[0.05] bg-black/20 p-1 backdrop-blur-sm">
+      {/* Typographic tab row — matches DailyHoroscope / ChartView */}
+      <div className="mb-7 flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-white/[0.06] pb-1">
         {TABS.map((tab) => (
-          <button
+          <ReferenceTab
             key={tab.id}
-            type="button"
+            active={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-              activeTab === tab.id
-                ? 'border border-violet-400/[0.18] bg-violet-500/[0.12] text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            {tab.label}
-          </button>
+            label={tab.label}
+          />
         ))}
       </div>
 
       {/* Planets tab */}
       {activeTab === 'planets' && (
-        <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
-          <p className="mb-3 text-sm leading-relaxed text-slate-300/80">
-            Всяка планета олицетворява конкретен жизнен принцип или архетип - сила, емоция, комуникация и т.н. Знакът, в който стои планетата, показва <span className="text-slate-200/90">как</span> изразяваме тази енергия, а домът - <span className="text-slate-200/90">в коя сфера</span> от живота тя действа. Заедно тези три фактора изграждат пълния астрологичен портрет на характера.
+        <div className="max-h-[520px] space-y-2.5 overflow-y-auto pr-1">
+          <p className="mb-4 font-display text-[13.5px] font-light leading-[1.8] text-slate-400">
+            Всяка планета олицетворява конкретен жизнен принцип или архетип — сила, емоция, комуникация и т.н. Знакът, в който стои планетата, показва <span className="text-slate-200/90">как</span> изразяваме тази енергия, а домът — <span className="text-slate-200/90">в коя сфера</span> от живота тя действа. Заедно тези три фактора изграждат пълния астрологичен портрет на характера.
           </p>
           {PLANETS.map((planet) => (
             <div
               key={planet.name}
-              className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-4 py-3"
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-amber-300/20 hover:bg-white/[0.04]"
             >
               <div className="mb-1.5 flex items-center gap-2">
-                <span className="font-medium text-slate-100">{planet.name}</span>
+                <span className="font-display text-[14px] font-medium text-slate-100">{planet.name}</span>
                 <span
-                  className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-medium ${planet.color}`}
+                  className={`ml-auto rounded-full px-2 py-0.5 font-cinzel text-[9px] font-semibold uppercase tracking-[0.22em] ${planet.color}`}
                 >
                   {planet.keyword}
                 </span>
               </div>
-              <p className="text-sm leading-relaxed text-slate-300/80">{planet.description}</p>
+              <p className="font-display text-[13px] font-light leading-[1.75] text-slate-400">{planet.description}</p>
             </div>
           ))}
         </div>
@@ -292,28 +297,28 @@ export function AstrologyReference() {
 
       {/* Aspects tab */}
       {activeTab === 'aspects' && (
-        <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
-          <p className="mb-3 text-sm leading-relaxed text-slate-300/80">
-            Аспектите са ъгловите разстояния между планетите, измерени по зодиакалния кръг. Те разкриват дали две планети работят в хармония и взаимна подкрепа, или в напрежение и предизвикателство - и по двата начина стимулират нашия растеж. Разбирането на аспектите е ключът към дълбокото тълкуване на всяка карта.
+        <div className="max-h-[520px] space-y-2.5 overflow-y-auto pr-1">
+          <p className="mb-4 font-display text-[13.5px] font-light leading-[1.8] text-slate-400">
+            Аспектите са ъгловите разстояния между планетите, измерени по зодиакалния кръг. Те разкриват дали две планети работят в хармония и взаимна подкрепа, или в напрежение и предизвикателство — и по двата начина стимулират нашия растеж. Разбирането на аспектите е ключът към дълбокото тълкуване на всяка карта.
           </p>
           {ASPECTS.map((aspect) => (
             <div
               key={aspect.name}
-              className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-4 py-3"
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-amber-300/20 hover:bg-white/[0.04]"
             >
               <div className="mb-1.5 flex items-center gap-2">
                 <span
                   className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${aspect.dotColor}`}
                 />
-                <span className="font-medium text-slate-100">{aspect.name}</span>
-                <span className="text-xs text-slate-400/75">{aspect.degrees}</span>
+                <span className="font-display text-[14px] font-medium text-slate-100">{aspect.name}</span>
+                <span className="font-cinzel text-[9px] uppercase tracking-[0.22em] text-slate-500">{aspect.degrees}</span>
                 <span
-                  className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-medium ${aspect.keywordColor}`}
+                  className={`ml-auto rounded-full px-2 py-0.5 font-cinzel text-[9px] font-semibold uppercase tracking-[0.22em] ${aspect.keywordColor}`}
                 >
                   {aspect.keyword}
                 </span>
               </div>
-              <p className="text-sm leading-relaxed text-slate-300/80">{aspect.description}</p>
+              <p className="font-display text-[13px] font-light leading-[1.75] text-slate-400">{aspect.description}</p>
             </div>
           ))}
         </div>
@@ -430,32 +435,65 @@ export function AstrologyReference() {
 
       {/* Transits tab */}
       {activeTab === 'transits' && (
-        <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
-          <p className="mb-3 text-sm leading-relaxed text-slate-300/80">
+        <div className="max-h-[520px] space-y-2.5 overflow-y-auto pr-1">
+          <p className="mb-4 font-display text-[13.5px] font-light leading-[1.8] text-slate-400">
             Транзитите са текущото движение на планетите и взаимодействието им с фиксираните точки в наталната карта. Бързите планети (Луна, Слънце, Меркурий, Венера, Марс) носят ежедневни и седмични нюанси, докато бавните (Юпитер, Сатурн, Уран, Нептун, Плутон) белязват дългосрочни, понякога животоопределящи периоди. Продължителността и честотата по-долу показват колко дълго и рядко се случва всяко влияние.
           </p>
           {TRANSITS.map((transit) => (
             <div
               key={transit.name}
-              className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-4 py-3"
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-amber-300/20 hover:bg-white/[0.04]"
             >
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                <span className="font-medium text-slate-100">{transit.name}</span>
+                <span className="font-display text-[14px] font-medium text-slate-100">{transit.name}</span>
                 <span
-                  className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-medium ${transit.color}`}
+                  className={`ml-auto rounded-full px-2 py-0.5 font-cinzel text-[9px] font-semibold uppercase tracking-[0.22em] ${transit.color}`}
                 >
                   {transit.influence}
                 </span>
-                <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[11px] text-slate-300/80">
+                <span className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 font-cinzel text-[9px] uppercase tracking-[0.22em] text-slate-400">
                   {transit.frequency}
                 </span>
               </div>
-              <p className="text-sm leading-relaxed text-slate-300/80">{transit.description}</p>
+              <p className="font-display text-[13px] font-light leading-[1.75] text-slate-400">{transit.description}</p>
             </div>
           ))}
         </div>
       )}
 
     </div>
+  )
+}
+
+/* ─── Typographic tab — matches DailyHoroscope / CrystalCollectionContent ─── */
+function ReferenceTab({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean
+  onClick: () => void
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'group relative pb-2 font-display text-[11px] font-semibold uppercase tracking-[0.28em] transition-colors duration-300',
+        active ? 'text-amber-200' : 'text-slate-400 hover:text-slate-200',
+      ].join(' ')}
+    >
+      {label}
+      <span
+        aria-hidden
+        className={[
+          'absolute inset-x-0 bottom-0 h-px transition-all duration-300',
+          active
+            ? 'bg-gradient-to-r from-transparent via-amber-400/70 to-transparent shadow-[0_0_8px_rgba(251,191,36,0.4)]'
+            : 'bg-transparent',
+        ].join(' ')}
+      />
+    </button>
   )
 }
