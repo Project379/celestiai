@@ -214,8 +214,8 @@ const PLANET_DEFS = [
 // Positions are normalized (fraction of viewport) so they adapt to resize.
 const PLANET_LAYOUT: Record<string, { fx: number; fy: number }> = {
   sun:     { fx: 0.50, fy: 0.07 }, // top-center - the "eye" above hero
-  mercury: { fx: 0.36, fy: 0.10 }, // top, near-center left
-  venus:   { fx: 0.64, fy: 0.09 }, // top, near-center right
+  mercury: { fx: 0.36, fy: 0.08 }, // top, near-center left (matched to Venus)
+  venus:   { fx: 0.64, fy: 0.08 }, // top, near-center right
   mars:    { fx: 0.26, fy: 0.38 }, // mid-left upper, pulled inward
   jupiter: { fx: 0.74, fy: 0.42 }, // mid-right upper, pulled inward
   uranus:  { fx: 0.28, fy: 0.68 }, // mid-left lower, pulled inward
@@ -755,7 +755,9 @@ export function CelestialCanvas({
 
       /* ═══ PLANETS - scattered top + bottom, pinned to viewport ═══ */
       // Fully fixed so they always stay in their safe strips even on long scroll
-      const planetScrollOffset = 0
+      // Planets scroll with the page at the same parallax rate as constellations,
+      // so they drift together and stay coherent as the user scrolls.
+      const planetScrollOffset = smoothScrollY * 0.35
       ctx.save()
       ctx.textAlign = 'center'
       for (const p of planets) {

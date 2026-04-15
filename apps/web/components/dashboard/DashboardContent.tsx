@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { DailyHoroscope } from '@/components/horoscope/DailyHoroscope'
 import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 import { getLunarPhase } from '@/lib/moon-phase'
+import { getActiveMeteorShower } from '@/lib/meteor-showers'
+import { composeWelcome } from '@/lib/welcome-compose'
 import type { ChartRow } from '@/lib/types/chart'
 
 interface DashboardContentProps {
@@ -83,8 +85,25 @@ export function DashboardContent({
   const isPremium = subscriptionTier !== 'free'
 
   const sunSign = birthChart ? getSunSign(birthChart.birth_date) : null
-  const todayFormatted = BG_DATE_FORMAT.format(new Date())
-  const lunarPhase = getLunarPhase()
+
+  // Live clock state: re-reads date + lunar phase + meteor shower every 60s
+  // so the welcoming summary reflects the current sky without a reload.
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const todayFormatted = BG_DATE_FORMAT.format(now)
+  const lunarPhase = getLunarPhase(now)
+  const meteorShower = getActiveMeteorShower(now)
+  const welcome = composeWelcome({
+    firstName,
+    sunSign,
+    lunarPhase,
+    meteorShower,
+    hour: now.getHours(),
+  })
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -107,30 +126,32 @@ export function DashboardContent({
           className="pointer-events-none absolute right-0 top-16 -z-10 h-[220px] w-[220px] rounded-full bg-amber-500/[0.045] blur-[80px]"
         />
 
-        {/* Date line with moon phase */}
-        <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-400">
+        {/* Date line with moon phase. tracking-normal on the phase name
+            overrides the wide cinzel letter-spacing so the ☾ glyph sits
+            tight against the name. */}
+        <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
           <span>{todayFormatted}</span>
-          <span aria-hidden className="h-[3px] w-[3px] rotate-45 bg-slate-500/80" />
-          <span className="inline-flex items-center gap-2 text-slate-300">
-            <span aria-hidden className="text-[11px] leading-none text-amber-300/70">☾</span>
+          <span aria-hidden className="h-[3px] w-[3px] rotate-45 bg-slate-400/80" />
+          <span className="inline-flex items-center gap-1.5 tracking-[0.24em] text-slate-200">
+            <span aria-hidden className="text-[12px] leading-none text-amber-300/90">☾</span>
             {lunarPhase.name}
           </span>
         </p>
 
-        {/* Greeting */}
+        {/* Greeting: time-aware ("Добро утро, Алекс.") */}
         <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-[2.125rem] leading-[1.1] tracking-tight sm:text-[2.75rem]">
-          <span className="font-light italic text-slate-300">Здравей,</span>
+          <span className="font-light italic text-slate-300">
+            {welcome.greeting.split(',')[0]},
+          </span>
           <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/95 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.22)]">
             {firstName}.
           </span>
         </h1>
 
-        {/* Moon phase welcome line */}
-        <p className="mt-5 max-w-xl font-display text-[15.5px] font-light italic leading-[1.8] text-slate-200/95 sm:text-[16.5px]">
-          Луната е в{' '}
-          <span className="text-slate-100">{lunarPhase.name.toLowerCase()}</span>
-          {' '}({lunarPhase.illumination}% осветление).{' '}
-          <span className="text-slate-300">{lunarPhase.intention}.</span>
+        {/* Dynamic welcoming summary: lunar phase + sign element +
+            optional meteor shower. Updates as the sky moves. */}
+        <p className="mt-5 max-w-xl font-display text-[15.5px] font-light italic leading-[1.8] text-slate-200 sm:text-[16.5px]">
+          {welcome.summary}
         </p>
 
         {/* Premium indicator */}
