@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { DailyHoroscope } from '@/components/horoscope/DailyHoroscope'
 import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
+import { CrystalOfTheDayCard } from '@/components/crystals/CrystalOfTheDayCard'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 import { getLunarPhase } from '@/lib/moon-phase'
 import { getActiveMeteorShower } from '@/lib/meteor-showers'
@@ -252,6 +253,17 @@ export function DashboardContent({
         className="mb-12"
       >
         <LunarPhaseCard />
+      </motion.div>
+
+      {/* ── Crystal of the day - lunar-phase stone ────────── */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        custom={birthChart ? 4 : 3}
+        className="mb-12"
+      >
+        <CrystalOfTheDayCard />
       </motion.div>
 
     </div>
