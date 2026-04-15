@@ -188,7 +188,7 @@ export interface PlanetVisual {
 // Editorial palette: violet + amber + ivory, matching the mystical app aesthetic.
 // Sun is included (no Moon - astrology-app convention).
 const PLANET_DEFS = [
-  { id: 'sun',     name: 'Слънце',  latin: 'Sun',     period: 0,       L0: 0,      color: '#fcd34d', glowColor: 'rgba(252,211,77,0.7)',   size: 6,   order: 0 },
+  { id: 'sun',     name: 'Слънце',  latin: 'Sun',     period: 0,       L0: 0,      color: '#fcd34d', glowColor: 'rgba(252,211,77,0.78)',  size: 9,   order: 0 },
   { id: 'mercury', name: 'Меркурий', latin: 'Mercury', period: 87.97,   L0: 252.25, color: '#c4b5fd', glowColor: 'rgba(196,181,253,0.55)', size: 4.5, order: 1 },
   { id: 'venus',   name: 'Венера',  latin: 'Venus',   period: 224.7,   L0: 181.98, color: '#fcd34d', glowColor: 'rgba(252,211,77,0.6)',   size: 7,   order: 2 },
   { id: 'mars',    name: 'Марс',    latin: 'Mars',    period: 687.0,   L0: 355.45, color: '#fb923c', glowColor: 'rgba(251,146,60,0.55)',  size: 5.5, order: 3 },

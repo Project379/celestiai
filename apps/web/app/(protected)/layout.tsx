@@ -40,7 +40,7 @@ export default async function ProtectedLayout({
 
       {/* Content layer */}
       <div className="relative z-10">
-        <header className="sticky top-0 z-50 border-b border-slate-200/[0.05] bg-[#08060f]/85 backdrop-blur-xl">
+        <header className="sticky top-0 z-50 border-b border-slate-200/[0.05] bg-[#08060f]/60 backdrop-blur-xl">
           {/* Top ivory accent hairline */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200/20 to-transparent" />
           <div className="absolute left-1/2 top-0 h-px w-32 -translate-x-1/2 bg-gradient-to-r from-transparent via-amber-300/40 to-transparent" />
