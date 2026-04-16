@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import Stripe from 'stripe'
 import { stripe } from '@/lib/stripe/client'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
@@ -57,8 +58,8 @@ export async function POST(request: Request) {
     return new Response('OK', { status: 200 })
   }
 
-  // Audit log all webhook events (fire-and-forget, null userId for webhooks)
-  logAuditEvent(null, 'payment.webhook_received', { eventType: event.type, eventId: event.id })
+  // Audit log all webhook events — non-blocking, runs after response
+  after(() => logAuditEvent(null, 'payment.webhook_received', { eventType: event.type, eventId: event.id }))
 
   // Process event - return 500 on error so Stripe retries
   try {
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
         if (session.mode === 'subscription') {
           await handleCheckoutComplete(session)
           const clerkUserId = session.metadata?.clerkUserId ?? null
-          logAuditEvent(clerkUserId, 'payment.subscription_created', { stripeSubscriptionId: session.subscription })
+          after(() => logAuditEvent(clerkUserId, 'payment.subscription_created', { stripeSubscriptionId: session.subscription }))
         }
         break
       }
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
         const sub = event.data.object as Stripe.Subscription
         await handleSubscriptionDeleted(sub)
         const clerkUserId = sub.metadata?.clerkUserId ?? null
-        logAuditEvent(clerkUserId, 'payment.subscription_cancelled', { stripeSubscriptionId: sub.id })
+        after(() => logAuditEvent(clerkUserId, 'payment.subscription_cancelled', { stripeSubscriptionId: sub.id }))
         break
       }
 

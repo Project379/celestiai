@@ -1,8 +1,10 @@
+import { Suspense } from 'react'
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { CrystalCollectionContent } from '@/components/crystals/CrystalCollectionContent'
+import { LoadingAnimation } from '@/components/LoadingAnimation'
 
 export const metadata: Metadata = {
   title: 'Кристали',
@@ -75,7 +77,11 @@ export default async function CrystalsPage() {
 
       {!isPremium && <PremiumGate />}
       {isPremium && !chartId && <MissingChartState />}
-      {isPremium && chartId && <CrystalCollectionContent chartId={chartId} />}
+      {isPremium && chartId && (
+        <Suspense fallback={<div className="flex justify-center py-20"><LoadingAnimation /></div>}>
+          <CrystalCollectionContent chartId={chartId} />
+        </Suspense>
+      )}
     </div>
   )
 }

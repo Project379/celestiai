@@ -3,12 +3,21 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useChart } from '@/hooks/useChart'
-import { NatalWheel } from './NatalWheel'
+import dynamic from 'next/dynamic'
 import { NatalWheelLegend } from './NatalWheelLegend'
 import { BigThreeCards } from './BigThreeCards'
 import { PlanetDetail } from './PlanetDetail'
-import { AstrologyReference } from './AstrologyReference'
 import type { PlanetPosition, PointData } from '@celestia/astrology/client'
+
+const NatalWheel = dynamic(
+  () => import('./NatalWheel').then((m) => ({ default: m.NatalWheel })),
+  { ssr: false }
+)
+
+const AstrologyReference = dynamic(
+  () => import('./AstrologyReference').then((m) => ({ default: m.AstrologyReference })),
+  { ssr: false }
+)
 import { UNKNOWN_TIME_DISCLAIMER_BG } from '@celestia/astrology/client'
 
 interface ChartViewProps {

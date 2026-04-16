@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -5,6 +6,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import type { ChartRow } from '@/lib/types/chart'
 import { ChartView } from '@/components/chart/ChartView'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
+import { LoadingAnimation } from '@/components/LoadingAnimation'
 
 export const metadata: Metadata = {
   title: 'Натална карта',
@@ -65,7 +67,9 @@ export default async function ChartPage() {
       </div>
 
       {chart ? (
-        <ChartView chartId={chart.id} subscriptionTier={subscriptionTier} />
+        <Suspense fallback={<div className="flex justify-center py-20"><LoadingAnimation /></div>}>
+          <ChartView chartId={chart.id} subscriptionTier={subscriptionTier} />
+        </Suspense>
       ) : (
         <EmptyChartState />
       )}

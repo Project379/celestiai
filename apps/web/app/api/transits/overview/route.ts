@@ -19,26 +19,29 @@ export async function GET(req: Request) {
 
     const supabase = createServiceSupabaseClient()
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('subscription_tier')
-      .eq('clerk_id', userId)
-      .single()
+    // Parallelize independent queries — user tier + chart fetch
+    const [userResult, chartResult] = await Promise.all([
+      supabase
+        .from('users')
+        .select('subscription_tier')
+        .eq('clerk_id', userId)
+        .single(),
+      supabase
+        .from('charts')
+        .select('id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude')
+        .eq('id', chartId)
+        .single(),
+    ])
 
-    if (user?.subscription_tier !== 'premium') {
+    if (userResult.data?.subscription_tier !== 'premium') {
       return Response.json(
         { error: 'Premium subscription required.', code: 'PREMIUM_REQUIRED' },
         { status: 403 }
       )
     }
 
-    const { data: chart, error: chartError } = await supabase
-      .from('charts')
-      .select('id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude')
-      .eq('id', chartId)
-      .single()
-
-    if (chartError || !chart) {
+    const chart = chartResult.data
+    if (chartResult.error || !chart) {
       return Response.json({ error: 'Chart not found' }, { status: 404 })
     }
 

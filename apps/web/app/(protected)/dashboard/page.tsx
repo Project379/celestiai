@@ -1,13 +1,15 @@
+import { Suspense } from 'react'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import type { Metadata } from 'next'
 import { getCachedLatestChart, getCachedUserTier } from '@/lib/supabase/queries'
 import type { ChartRow } from '@/lib/types/chart'
+import { DashboardContent } from '../../../components/dashboard/DashboardContent'
+import { LoadingAnimation } from '@/components/LoadingAnimation'
 
 export const metadata: Metadata = {
   title: 'Табло',
   description: 'Твоето астрологично табло с дневен хороскоп и бързи връзки',
 }
-import { DashboardContent } from '../../../components/dashboard/DashboardContent'
 
 export default async function DashboardPage() {
   // Middleware already protects this route, but we get user info here
@@ -33,10 +35,12 @@ export default async function DashboardPage() {
   }
 
   return (
-    <DashboardContent
-      firstName={firstName}
-      initialBirthChart={birthChart}
-      subscriptionTier={subscriptionTier}
-    />
+    <Suspense fallback={<div className="flex justify-center py-20"><LoadingAnimation /></div>}>
+      <DashboardContent
+        firstName={firstName}
+        initialBirthChart={birthChart}
+        subscriptionTier={subscriptionTier}
+      />
+    </Suspense>
   )
 }

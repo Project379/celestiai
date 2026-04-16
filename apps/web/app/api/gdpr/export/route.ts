@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
@@ -36,7 +37,7 @@ export async function GET() {
     dailyHoroscopes: horoscopesRes.data ?? [],
   }
 
-  logAuditEvent(userId, 'account.data_export')
+  after(() => logAuditEvent(userId, 'account.data_export'))
 
   const json = JSON.stringify(exportData, null, 2)
   return new Response(json, {
