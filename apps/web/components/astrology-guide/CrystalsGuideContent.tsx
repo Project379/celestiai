@@ -67,12 +67,12 @@ export function CrystalsGuideContent({ catalog }: CrystalsGuideContentProps) {
           Ръководство · Кристали
         </p>
         <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-[2rem] leading-[1.12] tracking-tight text-slate-100 sm:text-[2.8rem]">
-          <span className="font-light italic text-slate-400">Камъните на</span>
+          <span className="font-light text-slate-400">Камъните на</span>
           <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent">
             твоето небе
           </span>
         </h1>
-        <p className="mt-5 max-w-2xl font-display text-[17px] font-light italic leading-[1.85] text-slate-400">
+        <p className="mt-5 max-w-2xl font-display text-[17px] font-light leading-[1.85] text-slate-400">
           Тридесет камъка, подредени по планета и лунна фаза. Celestia отваря прозорец за някой от тях само когато небето е готово — около новолуние, пълнолуние или когато бавна планета мине близо до картата ти. Пропуснеш ли прозореца, възможността се затваря заедно с него.
         </p>
       </motion.div>
@@ -188,7 +188,7 @@ export function CrystalsGuideContent({ catalog }: CrystalsGuideContentProps) {
                 <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-300/90">
                   {family.title}
                 </p>
-                <p className="mt-1 font-display text-[14px] font-light italic text-slate-400">
+                <p className="mt-1 font-display text-[14px] font-light text-slate-400">
                   {family.subtitle}
                 </p>
               </div>
@@ -256,7 +256,7 @@ export function CrystalsGuideContent({ catalog }: CrystalsGuideContentProps) {
           </span>
         </h2>
 
-        <p className="mx-auto mt-4 max-w-xl font-display text-[15px] font-light italic leading-[1.85] text-slate-400">
+        <p className="mx-auto mt-4 max-w-xl font-display text-[15px] font-light leading-[1.85] text-slate-400">
           Тридесет минерала чакат в каталога. До теб ще стигнат само онези, които небето посочи в точния момент. Прозорецът се отваря, ти се връщаш, събираш камъка — така расте колекцията.
         </p>
 

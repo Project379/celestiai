@@ -34,7 +34,7 @@ export function TransitEventDetail({ chartId, eventId }: TransitEventDetailProps
   if (error) {
     return (
       <div className="border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
-        <p className="font-display text-[13px] italic text-rose-300/90">{error}</p>
+        <p className="font-display text-[13px] text-rose-300/90">{error}</p>
       </div>
     )
   }
@@ -49,7 +49,7 @@ export function TransitEventDetail({ chartId, eventId }: TransitEventDetailProps
         <h2 className="font-display text-[1.5rem] font-semibold leading-tight tracking-tight text-slate-100">
           Събитието не е намерено
         </h2>
-        <p className="font-display text-[14.5px] font-light italic leading-relaxed text-slate-400">
+        <p className="font-display text-[14.5px] font-light leading-relaxed text-slate-400">
           Възможно е транзитният преглед вече да е обновен и това събитие да е отпаднало.
         </p>
         <Link
@@ -76,7 +76,7 @@ export function TransitEventDetail({ chartId, eventId }: TransitEventDetailProps
         <h2 className="font-display text-[1.75rem] font-semibold leading-[1.15] tracking-tight text-slate-100 sm:text-[2rem]">
           {event.title}
         </h2>
-        <p className="mt-4 max-w-2xl font-display text-[16px] font-light italic leading-[1.85] text-slate-400">
+        <p className="mt-4 max-w-2xl font-display text-[16px] font-light leading-[1.85] text-slate-400">
           {event.summary}
         </p>
       </div>
@@ -93,7 +93,7 @@ export function TransitEventDetail({ chartId, eventId }: TransitEventDetailProps
 
       {/* Footnote */}
       <div className="max-w-2xl border-t border-white/[0.05] pt-6">
-        <p className="font-display text-[13px] font-light italic leading-relaxed text-slate-500">
+        <p className="font-display text-[13px] font-light leading-relaxed text-slate-500">
           Това е интерпретация на конкретното транзитно събитие. Прегледът на страницата с транзити показва само краткото резюме, а пълното значение се отваря тук.
         </p>
       </div>

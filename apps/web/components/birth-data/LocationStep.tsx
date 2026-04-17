@@ -53,7 +53,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
         <h2 className="font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[1.5rem]">
           Място на раждане
         </h2>
-        <p className="mt-2 font-display text-[14.5px] font-light italic leading-relaxed text-slate-400">
+        <p className="mt-2 font-display text-[14.5px] font-light leading-relaxed text-slate-400">
           Мястото определя домовете и асцендента.
         </p>
       </div>
@@ -67,7 +67,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
           <p className="font-display text-[14.5px] font-medium text-slate-200">
             Ръчни координати
           </p>
-          <p className="mt-0.5 font-display text-[12px] italic text-slate-500">
+          <p className="mt-0.5 font-display text-[12px] text-slate-500">
             За раждане извън България
           </p>
         </div>
@@ -103,7 +103,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
             error={errors.cityName?.message}
           />
           {errors.cityName && !cityName && (
-            <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
+            <p className="mt-2 font-display text-[12px] text-rose-300/90">
               {errors.cityName.message}
             </p>
           )}
@@ -127,7 +127,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
               className="block w-full border-0 border-b border-white/[0.08] bg-transparent px-1 py-2.5 font-display text-[16px] text-slate-100 placeholder-slate-600 transition-colors focus:border-amber-300/60 focus:outline-none"
             />
             {errors.cityName && (
-              <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
+              <p className="mt-2 font-display text-[12px] text-rose-300/90">
                 {errors.cityName.message}
               </p>
             )}
@@ -150,7 +150,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
                 className="block w-full border-0 border-b border-white/[0.08] bg-transparent px-1 py-2.5 font-display text-[16px] tabular-nums text-slate-100 placeholder-slate-600 transition-colors focus:border-amber-300/60 focus:outline-none"
               />
               {errors.latitude && (
-                <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
+                <p className="mt-2 font-display text-[12px] text-rose-300/90">
                   {errors.latitude.message}
                 </p>
               )}
@@ -171,7 +171,7 @@ export function LocationStep({ onNext, onPrev }: LocationStepProps) {
                 className="block w-full border-0 border-b border-white/[0.08] bg-transparent px-1 py-2.5 font-display text-[16px] tabular-nums text-slate-100 placeholder-slate-600 transition-colors focus:border-amber-300/60 focus:outline-none"
               />
               {errors.longitude && (
-                <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
+                <p className="mt-2 font-display text-[12px] text-rose-300/90">
                   {errors.longitude.message}
                 </p>
               )}

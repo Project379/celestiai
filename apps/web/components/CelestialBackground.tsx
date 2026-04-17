@@ -281,7 +281,7 @@ export function CelestialBackground() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25, duration: 0.35 }}
                 >
-                  <p className="font-display text-[13.5px] italic leading-[1.75] text-slate-300/90">
+                  <p className="font-display text-[13.5px] leading-[1.75] text-slate-300/90">
                     {selectedConstellation.description}
                   </p>
 

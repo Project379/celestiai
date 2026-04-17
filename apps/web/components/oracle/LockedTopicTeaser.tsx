@@ -71,7 +71,7 @@ export function LockedTopicTeaser({
           </div>
         ) : (
           <p
-            className="pointer-events-none select-none font-display text-[15px] font-light italic leading-[1.85] text-slate-400/70 blur-[4px]"
+            className="pointer-events-none select-none font-display text-[15px] font-light leading-[1.85] text-slate-400/70 blur-[4px]"
             aria-hidden="true"
           >
             {teaserContent ?? FALLBACK_TEASERS[topic]}
@@ -94,7 +94,7 @@ export function LockedTopicTeaser({
         </p>
 
         {/* Tagline */}
-        <p className="max-w-xs text-center font-display text-[14px] font-light italic leading-[1.75] text-slate-400">
+        <p className="max-w-xs text-center font-display text-[14px] font-light leading-[1.75] text-slate-400">
           Звездите шепнат нещо само за теб - отключи го.
         </p>
 

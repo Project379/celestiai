@@ -181,7 +181,7 @@ export function EditBirthDataDialog({
             <h2 className="font-display text-[1.5rem] font-semibold leading-[1.15] tracking-tight text-slate-100">
               {showConfirm ? 'Потвърди промените' : 'Редактиране на данни'}
             </h2>
-            <p className="mt-2 font-display text-[14px] font-light italic leading-relaxed text-slate-400">
+            <p className="mt-2 font-display text-[14px] font-light leading-relaxed text-slate-400">
               {showConfirm
                 ? 'Наталната карта ще бъде преизчислена.'
                 : 'Промени каквото е нужно - резултатите се обновяват веднага.'}
@@ -190,13 +190,13 @@ export function EditBirthDataDialog({
 
           {error && (
             <div className="mb-5 border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
-              <p className="font-display text-[13px] italic text-rose-300/90">{error}</p>
+              <p className="font-display text-[13px] text-rose-300/90">{error}</p>
             </div>
           )}
 
           {showConfirm ? (
             <div className="mb-7 border-l border-amber-300/40 bg-gradient-to-r from-amber-300/[0.04] via-transparent to-violet-400/[0.04] px-5 py-4">
-              <p className="font-display text-[14px] italic leading-relaxed text-slate-300/90">
+              <p className="font-display text-[14px] leading-relaxed text-slate-300/90">
                 Рождените данни ще бъдат актуализирани. Наталната карта, домовете и аспектите ще бъдат преизчислени.
               </p>
             </div>
@@ -217,7 +217,7 @@ export function EditBirthDataDialog({
                   className="block w-full border-0 border-b border-white/[0.08] bg-transparent px-1 py-2.5 font-display text-[16px] text-slate-100 placeholder-slate-600 transition-colors focus:border-amber-300/60 focus:outline-none"
                 />
                 {errors.name && (
-                  <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
+                  <p className="mt-2 font-display text-[12px] text-rose-300/90">
                     {errors.name.message}
                   </p>
                 )}
@@ -243,7 +243,7 @@ export function EditBirthDataDialog({
                   />
                 </div>
                 {errors.birthDate && (
-                  <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
+                  <p className="mt-2 font-display text-[12px] text-rose-300/90">
                     {errors.birthDate.message}
                   </p>
                 )}
@@ -306,7 +306,7 @@ export function EditBirthDataDialog({
                     />
                   </div>
                   {errors.birthTime && (
-                    <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
+                    <p className="mt-2 font-display text-[12px] text-rose-300/90">
                       {errors.birthTime.message}
                     </p>
                   )}
@@ -332,7 +332,7 @@ export function EditBirthDataDialog({
                     ))}
                   </select>
                   {errors.approximateTimeRange && (
-                    <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
+                    <p className="mt-2 font-display text-[12px] text-rose-300/90">
                       {errors.approximateTimeRange.message}
                     </p>
                   )}

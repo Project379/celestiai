@@ -238,7 +238,7 @@ export function PlanetDetail({
               >
                 <span className="inline-flex items-center gap-2.5 text-slate-200/95">
                   <CelestialIcon name={titleIconName} size={22} className="text-amber-200/85" />
-                  <span className="font-light italic text-slate-400">{displayTitle}</span>
+                  <span className="font-light text-slate-400">{displayTitle}</span>
                 </span>
                 <span className="inline-flex items-center gap-2.5">
                   <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_22px_rgba(251,191,36,0.18)]">
@@ -249,7 +249,7 @@ export function PlanetDetail({
               </motion.h3>
 
               <motion.p
-                className="mt-3 font-display text-[13px] font-light italic text-slate-400"
+                className="mt-3 font-display text-[13px] font-light text-slate-400"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.18 }}
@@ -292,7 +292,7 @@ export function PlanetDetail({
             </motion.button>
           </div>
 
-          {/* Brief interpretation - italic editorial lede */}
+          {/* Brief interpretation - editorial lede */}
           {interpretation.brief && (
             <motion.div
               initial="hidden"
@@ -301,7 +301,7 @@ export function PlanetDetail({
               custom={1}
               className="relative px-8 pt-6"
             >
-              <p className="max-w-xl border-l border-amber-300/40 pl-6 font-display text-[16px] font-light italic leading-[1.85] text-slate-300/95">
+              <p className="max-w-xl border-l border-amber-300/40 pl-6 font-display text-[16px] font-light leading-[1.85] text-slate-300/95">
                 {interpretation.brief.charAt(0).toUpperCase() + interpretation.brief.slice(1)}
               </p>
             </motion.div>
@@ -374,7 +374,7 @@ export function PlanetDetail({
                 <p className="mb-1 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-amber-300/80">
                   Забележка
                 </p>
-                <p className="font-display text-[12.5px] font-light italic leading-relaxed text-amber-100/85">
+                <p className="font-display text-[12.5px] font-light leading-relaxed text-amber-100/85">
                   Часът на раждане е приблизителен, затова тълкуването на асцендента е ориентировъчно.
                 </p>
               </motion.div>

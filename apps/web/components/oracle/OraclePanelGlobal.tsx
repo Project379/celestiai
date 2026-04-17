@@ -254,7 +254,7 @@ function OraclePanel({
                     <span className="h-1.5 w-1.5 rotate-45 bg-amber-300/80 shadow-[0_0_10px_rgba(251,191,36,0.7)]" />
                     <span className="h-px w-10 bg-gradient-to-l from-transparent to-amber-300/40" />
                   </div>
-                  <p className="max-w-sm font-display text-[15px] font-light italic leading-[1.75] text-slate-400">
+                  <p className="max-w-sm font-display text-[15px] font-light leading-[1.75] text-slate-400">
                     Избери тема отгоре и звездите ще ти разкажат.
                   </p>
                 </div>

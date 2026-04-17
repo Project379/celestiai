@@ -57,7 +57,7 @@ export function UserMenu() {
               userPreviewMainIdentifier:
                 'font-display text-[15px] font-semibold text-slate-100',
               userPreviewSecondaryIdentifier:
-                'font-display text-[12px] italic text-slate-500',
+                'font-display text-[12px] text-slate-500',
               userPreviewAvatarBox: 'ring-1 ring-amber-300/30',
 
               // Action rows - editorial hairline hover
@@ -81,7 +81,7 @@ export function UserMenu() {
               headerTitle:
                 'font-display text-[1.375rem] font-semibold tracking-tight text-slate-100',
               headerSubtitle:
-                'font-display text-[13px] italic text-slate-400',
+                'font-display text-[13px] text-slate-400',
 
               // Navbar inside the profile modal (sidebar tabs)
               navbar:
@@ -120,7 +120,7 @@ export function UserMenu() {
               dividerText:
                 'font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500',
               alert: 'border-l border-rose-300/50 bg-rose-500/[0.04] rounded-none',
-              alertText: 'font-display text-[13px] italic text-rose-300/90',
+              alertText: 'font-display text-[13px] text-rose-300/90',
             },
             variables: {
               colorPrimary: '#fbbf24',

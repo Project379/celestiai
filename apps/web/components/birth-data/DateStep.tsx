@@ -23,7 +23,7 @@ export function DateStep({ onNext }: DateStepProps) {
         <h2 className="font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[1.5rem]">
           Дата на раждане
         </h2>
-        <p className="mt-2 font-display text-[14.5px] font-light italic leading-relaxed text-slate-400">
+        <p className="mt-2 font-display text-[14.5px] font-light leading-relaxed text-slate-400">
           Въведи името на картата и точната дата.
         </p>
       </div>
@@ -44,7 +44,7 @@ export function DateStep({ onNext }: DateStepProps) {
           className="block w-full border-0 border-b border-white/[0.08] bg-transparent px-1 py-2.5 font-display text-[16px] text-slate-100 placeholder-slate-600 transition-colors focus:border-amber-300/60 focus:outline-none"
         />
         {errors.name && (
-          <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
+          <p className="mt-2 font-display text-[12px] text-rose-300/90">
             {errors.name.message}
           </p>
         )}
@@ -71,7 +71,7 @@ export function DateStep({ onNext }: DateStepProps) {
           />
         </div>
         {errors.birthDate && (
-          <p className="mt-2 font-display text-[12px] italic text-rose-300/90">
+          <p className="mt-2 font-display text-[12px] text-rose-300/90">
             {errors.birthDate.message}
           </p>
         )}

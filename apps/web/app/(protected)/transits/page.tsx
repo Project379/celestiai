@@ -40,12 +40,12 @@ export default async function TransitsPage() {
           Текущо небе
         </p>
         <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-[2rem] leading-[1.15] tracking-tight text-slate-100 sm:text-[2.5rem]">
-          <span className="font-light italic text-slate-400">Какво ти</span>
+          <span className="font-light text-slate-400">Какво ти</span>
           <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent">
             влияе сега
           </span>
         </h1>
-        <p className="mt-3 max-w-xl font-display text-[15px] font-light italic leading-relaxed text-slate-500">
+        <p className="mt-3 max-w-xl font-display text-[15px] font-light leading-relaxed text-slate-500">
           Активните транзити към картата ти - как планетите говорят с теб точно днес.
         </p>
       </div>
@@ -71,7 +71,7 @@ export default async function TransitsPage() {
 function EmptyTransitsState() {
   return (
     <div className="mx-auto max-w-xl">
-      <p className="mb-5 font-display text-[17px] font-light italic leading-[1.85] text-slate-500">
+      <p className="mb-5 font-display text-[17px] font-light leading-[1.85] text-slate-500">
         За да видиш транзитите си, първо трябва да имаш натална карта. Въведи рождените си данни.
       </p>
       <Link

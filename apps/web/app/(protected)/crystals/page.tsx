@@ -50,12 +50,12 @@ export default async function CrystalsPage() {
           Кристали · Лунна колекция
         </p>
         <h1 className="mt-3 font-display text-[1.55rem] font-semibold leading-tight tracking-tight sm:text-[1.9rem]">
-          <span className="font-light italic text-slate-400">Камъни за </span>
+          <span className="font-light text-slate-400">Камъни за </span>
           <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/95 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_18px_rgba(251,191,36,0.2)]">
             твоето небе
           </span>
         </h1>
-        <p className="mt-3 max-w-xl font-display text-[14px] font-light italic leading-[1.75] text-slate-500">
+        <p className="mt-3 max-w-xl font-display text-[14px] font-light leading-[1.75] text-slate-500">
           Камъни, избрани от наталната ти карта и от текущата лунна фаза. Около новолуние, пълнолуние или силен транзит се отварят прозорци — върни се тогава и събери камъка, преди прозорецът да се затвори.
         </p>
 
@@ -92,7 +92,7 @@ function PremiumGate() {
       <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-300/90">
         Премиум функция
       </p>
-      <p className="mt-4 font-display text-[17px] font-light italic leading-[1.8] text-slate-300">
+      <p className="mt-4 font-display text-[17px] font-light leading-[1.8] text-slate-300">
         Личната ти колекция, препоръките по натална карта и лунните събития са част от Премиум достъпа. Без пробен период, без уловки — плащаш, когато камъкът вече те е намерил.
       </p>
       <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -116,7 +116,7 @@ function PremiumGate() {
 function MissingChartState() {
   return (
     <div className="mx-auto max-w-xl">
-      <p className="mb-5 font-display text-[17px] font-light italic leading-[1.85] text-slate-500">
+      <p className="mb-5 font-display text-[17px] font-light leading-[1.85] text-slate-500">
         За да видиш личните си препоръки, първо трябва да имаш натална карта. Въведи рождените си данни.
       </p>
       <Link

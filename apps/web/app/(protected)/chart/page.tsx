@@ -49,19 +49,33 @@ export default async function ChartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
-      {/* Editorial hero */}
-      <div className="mb-10 sm:mb-12">
-        <p className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-500">
-          Натална карта
+    <div className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6">
+      {/* Editorial hero — matches /manifest + /recommendations pattern */}
+      <div className="relative mb-12 sm:mb-14">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-32 -top-32 -z-10 h-[460px] w-[460px] rounded-full bg-violet-500/[0.08] blur-[100px]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-0 top-16 -z-10 h-[220px] w-[220px] rounded-full bg-amber-500/[0.045] blur-[80px]"
+        />
+
+        <p className="mb-5 flex items-center gap-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
+          <span aria-hidden className="h-px w-5 bg-gradient-to-r from-transparent to-slate-300/50" />
+          Натална карта · Твоята небесна подпис
         </p>
-        <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-[2rem] leading-[1.15] tracking-tight text-slate-100 sm:text-[2.5rem]">
-          <span className="font-light italic text-slate-400">Твоята</span>
-          <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent">
-            небесна карта
+
+        <h1 className="font-display flex flex-wrap items-baseline gap-x-3 pb-2 text-[2.125rem] leading-[1.2] tracking-tight sm:text-[2.75rem]">
+          <span className="font-light text-slate-300">
+            Твоята
+          </span>
+          <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/95 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.22)]">
+            небесна карта.
           </span>
         </h1>
-        <p className="mt-3 max-w-xl font-display text-[15px] font-light italic leading-relaxed text-slate-500">
+
+        <p className="mt-5 max-w-xl font-display text-[15.5px] font-light leading-[1.85] text-slate-300 sm:text-[16.5px]">
           Натисни на планета или знак, за да видиш какво означава за теб.
         </p>
       </div>
@@ -89,7 +103,7 @@ export default async function ChartPage() {
 function EmptyChartState() {
   return (
     <div className="mx-auto max-w-xl">
-      <p className="mb-5 font-display text-[17px] font-light italic leading-[1.85] text-slate-500">
+      <p className="mb-5 font-display text-[17px] font-light leading-[1.85] text-slate-300">
         Картата ти още не е настроена. Въведи рождените си данни, за да видиш наталната си карта.
       </p>
       <Link

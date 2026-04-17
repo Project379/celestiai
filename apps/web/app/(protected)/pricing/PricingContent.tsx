@@ -104,12 +104,12 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
           Цени
         </p>
         <h1 className="font-display text-[2.125rem] leading-[1.12] tracking-tight sm:text-[2.75rem]">
-          <span className="font-light italic text-slate-400">Избери </span>
+          <span className="font-light text-slate-400">Избери </span>
           <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.18)]">
             своя план.
           </span>
         </h1>
-        <p className="mx-auto mt-5 max-w-xl font-display text-[16px] font-light italic leading-relaxed text-slate-400">
+        <p className="mx-auto mt-5 max-w-xl font-display text-[16px] font-light leading-relaxed text-slate-400">
           Отключи пълния потенциал на звездната си карта.
         </p>
       </motion.header>
@@ -122,7 +122,7 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
           custom={1}
           className="mx-auto mb-8 max-w-xl border-l border-amber-300/40 bg-gradient-to-r from-amber-300/[0.04] via-transparent to-violet-400/[0.04] px-5 py-3"
         >
-          <p className="font-display text-[13px] italic leading-relaxed text-slate-300/90">
+          <p className="font-display text-[13px] leading-relaxed text-slate-300/90">
             Плащането не беше завършено. Опитай отново, когато си готов/а.
           </p>
         </motion.div>
@@ -136,7 +136,7 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
           custom={1}
           className="mx-auto mb-8 max-w-xl border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3"
         >
-          <p className="font-display text-[13px] italic text-rose-300/90">{errorMessage}</p>
+          <p className="font-display text-[13px] text-rose-300/90">{errorMessage}</p>
         </motion.div>
       )}
 
@@ -161,7 +161,7 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
                 </span>
               </span>
             </div>
-            <p className="mt-3 font-display text-[13px] italic text-slate-400">
+            <p className="mt-3 font-display text-[13px] text-slate-400">
               Завинаги безплатно
             </p>
           </header>
@@ -220,7 +220,7 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
                 /{isAnnual ? 'год' : 'мес'}
               </span>
             </div>
-            <p className="mt-3 font-display text-[13px] italic text-slate-400">
+            <p className="mt-3 font-display text-[13px] text-slate-400">
               {isAnnual ? 'Спестяваш ~€24 за година' : 'Или €59,99/год - спестяваш ~28%'}
             </p>
           </header>

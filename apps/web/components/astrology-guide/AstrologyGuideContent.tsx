@@ -202,12 +202,12 @@ export function AstrologyGuideContent() {
           Ръководство
         </p>
         <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-[2.125rem] leading-[1.1] tracking-tight sm:text-[2.75rem]">
-          <span className="font-light italic text-slate-300">Какво е</span>
+          <span className="font-light text-slate-300">Какво е</span>
           <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.18)]">
             астрологията?
           </span>
         </h1>
-        <p className="mt-6 max-w-xl font-display text-[17px] font-light italic leading-[1.85] text-slate-300 sm:text-[18px]">
+        <p className="mt-6 max-w-xl font-display text-[17px] font-light leading-[1.85] text-slate-300 sm:text-[18px]">
           Пътеводител от древните вавилонски звездочетци до прецизните алгоритми,
           с които Celestia изчислява твоята натална карта.
         </p>
@@ -237,8 +237,8 @@ export function AstrologyGuideContent() {
           <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.36em] text-amber-300/80">
             Celestia
           </p>
-          <blockquote className="font-display text-[17px] font-light italic leading-[1.8] text-slate-200/95">
-            Използваме <span className="not-italic font-medium text-slate-100">Swiss Ephemeris</span> - най-прецизните астрономически изчисления в света, разработени от Astrodienst и базирани на НАСА данни.
+          <blockquote className="font-display text-[17px] font-light leading-[1.8] text-slate-200/95">
+            Използваме <span className="font-medium text-slate-100">Swiss Ephemeris</span> - най-прецизните астрономически изчисления в света, разработени от Astrodienst и базирани на НАСА данни.
           </blockquote>
         </figure>
       </Section>
@@ -268,7 +268,7 @@ export function AstrologyGuideContent() {
                   {item.label}
                 </span>
               </p>
-              <p className="mt-2 text-sm italic leading-relaxed text-slate-300/85">
+              <p className="mt-2 text-sm leading-relaxed text-slate-300/85">
                 {item.desc}
               </p>
             </div>
@@ -285,7 +285,7 @@ export function AstrologyGuideContent() {
       {/* ── III · Planets ────────────────────────────────── */}
       <Section index={3}>
         <SectionMark numeral="III" eyebrow="Архетипи" title="Планетните принципи" />
-        <p className="mb-10 max-w-2xl text-[16px] italic leading-[1.85] text-slate-300">
+        <p className="mb-10 max-w-2xl text-[16px] leading-[1.85] text-slate-300">
           Всяка планета е архетип - носи конкретна енергия и управлява определени сфери от живота.
         </p>
 
@@ -322,7 +322,7 @@ export function AstrologyGuideContent() {
                           {planet.keyword}
                         </span>
                       </div>
-                      <dd className="text-[13.5px] italic leading-relaxed text-slate-300/85">
+                      <dd className="text-[13.5px] leading-relaxed text-slate-300/85">
                         {planet.desc}
                       </dd>
                     </div>
@@ -339,7 +339,7 @@ export function AstrologyGuideContent() {
       {/* ── IV · Aspects ─────────────────────────────────── */}
       <Section index={4}>
         <SectionMark numeral="IV" eyebrow="Геометрия" title="Аспектите" />
-        <p className="mb-10 max-w-2xl text-[16px] italic leading-[1.85] text-slate-300">
+        <p className="mb-10 max-w-2xl text-[16px] leading-[1.85] text-slate-300">
           Аспектите са ъглите между планетите - те описват как различните принципи в теб разговарят помежду си.
         </p>
 
@@ -364,7 +364,7 @@ export function AstrologyGuideContent() {
                   {aspect.keyword}
                 </p>
               </div>
-              <p className="col-span-2 mt-2 text-[14px] italic leading-relaxed text-slate-300/85 sm:col-span-1 sm:mt-0 sm:text-[14.5px]">
+              <p className="col-span-2 mt-2 text-[14px] leading-relaxed text-slate-300/85 sm:col-span-1 sm:mt-0 sm:text-[14.5px]">
                 {aspect.desc}
               </p>
             </li>
@@ -392,7 +392,7 @@ export function AstrologyGuideContent() {
             <p className="font-display text-[17px] font-semibold text-slate-100">
               Луна, Слънце, Меркурий, Венера, Марс
             </p>
-            <p className="mt-3 text-[14.5px] italic leading-[1.8] text-slate-300/90">
+            <p className="mt-3 text-[14.5px] leading-[1.8] text-slate-300/90">
               Носят ежедневни и седмични влияния - настроения, комуникация, малки предизвикателства.
             </p>
             <p className="mt-4 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-400">
@@ -410,7 +410,7 @@ export function AstrologyGuideContent() {
             <p className="font-display text-[17px] font-semibold text-slate-100">
               Юпитер, Сатурн, Уран, Нептун, Плутон
             </p>
-            <p className="mt-3 text-[14.5px] italic leading-[1.8] text-slate-300/90">
+            <p className="mt-3 text-[14.5px] leading-[1.8] text-slate-300/90">
               Белязват дългосрочни промени - смяна на кариера, дълбоки трансформации, жизнени уроци.
             </p>
             <p className="mt-4 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-400">
@@ -444,7 +444,7 @@ export function AstrologyGuideContent() {
             <p className="font-display text-[17px] font-semibold text-slate-100">
               Изграждане, действие, усъвършенстване
             </p>
-            <p className="mt-3 text-[14.5px] italic leading-[1.8] text-slate-200/90">
+            <p className="mt-3 text-[14.5px] leading-[1.8] text-slate-200/90">
               От новолунието до пълнолунието. Сееш намерение, правиш първите стъпки, срещаш препятствия и настройваш курса, докато проектът не достигне връхната си точка.
             </p>
             <p className="mt-4 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-300">
@@ -462,7 +462,7 @@ export function AstrologyGuideContent() {
             <p className="font-display text-[17px] font-semibold text-slate-100">
               Благодарност, пускане, почивка
             </p>
-            <p className="mt-3 text-[14.5px] italic leading-[1.8] text-slate-200/90">
+            <p className="mt-3 text-[14.5px] leading-[1.8] text-slate-200/90">
               От пълнолунието до следващото новолуние. Празнуваш постигнатото, освобождаваш онова, което не работи, приключваш и си почиваш, преди цикълът да започне отново.
             </p>
             <p className="mt-4 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-300">
@@ -572,7 +572,7 @@ export function AstrologyGuideContent() {
                 <p className="font-display text-[17px] font-semibold text-slate-100">
                   {item.title}
                 </p>
-                <p className="mt-1 text-[14.5px] italic leading-[1.8] text-slate-300/90">
+                <p className="mt-1 text-[14.5px] leading-[1.8] text-slate-300/90">
                   {item.desc}
                 </p>
               </div>

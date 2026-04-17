@@ -27,36 +27,40 @@ interface NatalWheelProps {
   size?: number
 }
 
-// Planet colors for visualization
+// Editorial Celestia palette — amber / violet / slate / cyan / rose,
+// soft and desaturated, matching the dashboard and hero accents.
 const PLANET_COLORS: Record<string, string> = {
-  sun: '#fbbf24', // gold
-  moon: '#94a3b8', // silver
-  mercury: '#a78bfa', // purple
-  venus: '#f472b6', // pink
-  mars: '#ef4444', // red
-  jupiter: '#fb923c', // orange
-  saturn: '#78716c', // stone
-  uranus: '#22d3ee', // cyan
-  neptune: '#3b82f6', // blue
-  pluto: '#6b21a8', // dark purple
-  northNode: '#a855f7', // violet
+  sun: '#fcd34d',        // amber-300 (matches hero amber)
+  moon: '#e2e8f0',       // slate-200 (matches BigThree moon)
+  mercury: '#c4b5fd',    // violet-300
+  venus: '#fbcfe8',      // pink-200 (soft)
+  mars: '#fda4af',       // rose-300 (softer than red)
+  jupiter: '#fde68a',    // amber-200 (warm)
+  saturn: '#94a3b8',     // slate-400
+  uranus: '#67e8f9',     // cyan-300 (matches BigThree rising)
+  neptune: '#a78bfa',    // violet-400
+  pluto: '#8b5cf6',      // violet-500 (deeper violet)
+  northNode: '#c4b5fd',  // violet-300
 }
 
-// Aspect line colors
+// Aspect lines — traditional semantics preserved (harmony vs tension)
+// but mapped to the editorial palette so they stop fighting the ambient
+// amber/violet atmosphere around the wheel.
 const ASPECT_COLORS: Record<AspectType, string> = {
-  conjunction: '#fbbf24', // gold
-  sextile: '#22c55e', // green
-  square: '#ef4444', // red
-  trine: '#3b82f6', // blue
-  opposition: '#f97316', // orange
+  conjunction: '#fcd34d', // amber — unity
+  sextile:     '#6ee7b7', // emerald-300 — harmony, softened
+  square:      '#fda4af', // rose-300 — tension, softened
+  trine:       '#7dd3fc', // sky-300 — flowing, softened
+  opposition:  '#f0abfc', // fuchsia-300 — polarity
 }
 
-// Zodiac sign element colors (subtle background)
+// Element backgrounds — barely there; they set element tone without
+// fighting the amber/violet glows from the page surround.
 const ELEMENT_COLORS = {
-  fire: 'rgba(239, 68, 68, 0.15)', // red
-  earth: 'rgba(34, 197, 94, 0.15)', // green
-  air: 'rgba(59, 130, 246, 0.15)', // blue
-  water: 'rgba(168, 85, 247, 0.15)', // purple
+  fire:  'rgba(253, 164, 175, 0.06)',  // rose tint
+  earth: 'rgba(253, 230, 138, 0.05)',  // amber tint
+  air:   'rgba(125, 211, 252, 0.06)',  // sky tint
+  water: 'rgba(196, 181, 253, 0.06)',  // violet tint
 }
 
 const SIGN_ELEMENTS: Record<ZodiacSign, keyof typeof ELEMENT_COLORS> = {
@@ -74,12 +78,14 @@ const SIGN_ELEMENTS: Record<ZodiacSign, keyof typeof ELEMENT_COLORS> = {
   pisces: 'water',
 }
 
-// Element color palettes for canvas FX (hoisted to module level per rerender-no-inline-components)
+// Element color palettes for the orbiting-orb canvas FX when a planet is
+// selected. Editorial — softened rose / amber / sky / violet so the aura
+// blends with the amber/violet ambient glow around the wheel.
 const ELEMENT_FX: Record<string, { core: number[]; mid: number[]; outer: number[]; symbols: string[] }> = {
-  fire:  { core: [255, 200, 60],  mid: [239, 68, 68],   outer: [180, 20, 10],   symbols: ['\u2736', '\u2600', '\u2605'] },
-  earth: { core: [180, 200, 120], mid: [16, 185, 129],  outer: [60, 80, 40],    symbols: ['\u2726', '\u25C6', '\u2742'] },
-  air:   { core: [200, 240, 255], mid: [34, 211, 238],  outer: [60, 80, 180],   symbols: ['\u2727', '\u2604', '\u2738'] },
-  water: { core: [180, 160, 255], mid: [59, 130, 246],  outer: [40, 20, 120],   symbols: ['\u2744', '\u273C', '\u2756'] },
+  fire:  { core: [253, 230, 138], mid: [253, 164, 175], outer: [190, 60, 80],   symbols: ['\u2736', '\u2600', '\u2605'] },
+  earth: { core: [255, 239, 195], mid: [253, 230, 138], outer: [140, 110, 50],  symbols: ['\u2726', '\u25C6', '\u2742'] },
+  air:   { core: [241, 245, 249], mid: [125, 211, 252], outer: [60, 100, 160],  symbols: ['\u2727', '\u2604', '\u2738'] },
+  water: { core: [237, 233, 254], mid: [196, 181, 253], outer: [80, 50, 170],   symbols: ['\u2744', '\u273C', '\u2756'] },
 }
 
 // Glyph rendering now uses <use href="#glyph-{name}"> referencing <GlyphDefs />
@@ -176,7 +182,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
         .attr('cy', center)
         .attr('r', outerRadius)
         .attr('fill', 'none')
-        .attr('stroke', 'rgba(148, 163, 184, 0.3)')
+        .attr('stroke', 'rgba(226, 232, 240, 0.22)')
         .attr('stroke-width', 1)
 
       // Draw zodiac segments.
@@ -218,7 +224,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
         .attr('d', (d) => zodiacArc({ index: d.index }))
         .attr('transform', `translate(${center}, ${center})`)
         .attr('fill', (d) => ELEMENT_COLORS[SIGN_ELEMENTS[d.sign]])
-        .attr('stroke', 'rgba(148, 163, 184, 0.2)')
+        .attr('stroke', 'rgba(226, 232, 240, 0.12)')
         .attr('stroke-width', 1)
         .style('cursor', 'help')
         .style('pointer-events', 'all')
@@ -249,11 +255,11 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
           .attr('width', zodiacGlyphSize)
           .attr('height', zodiacGlyphSize)
           .attr('fill', 'none')
-          .attr('stroke', 'rgba(226, 232, 240, 0.8)')
+          .attr('stroke', 'rgba(226, 232, 240, 0.72)')
           .attr('stroke-width', 1.5)
           .attr('stroke-linecap', 'round')
           .attr('stroke-linejoin', 'round')
-          .style('color', 'rgba(226, 232, 240, 0.8)')
+          .style('color', 'rgba(226, 232, 240, 0.72)')
           .style('pointer-events', 'none')
       })
 
@@ -263,7 +269,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
         .attr('cy', center)
         .attr('r', zodiacInnerRadius)
         .attr('fill', 'none')
-        .attr('stroke', 'rgba(148, 163, 184, 0.2)')
+        .attr('stroke', 'rgba(226, 232, 240, 0.15)')
         .attr('stroke-width', 1)
         .style('pointer-events', 'none')
 
@@ -280,7 +286,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
           .attr('y1', y1)
           .attr('x2', x2)
           .attr('y2', y2)
-          .attr('stroke', 'rgba(148, 163, 184, 0.3)')
+          .attr('stroke', 'rgba(226, 232, 240, 0.22)')
           .attr('stroke-width', 1)
           .attr('stroke-dasharray', house.number === 1 || house.number === 10 ? 'none' : '3,3')
 
@@ -296,8 +302,11 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
           .attr('y', labelY)
           .attr('text-anchor', 'middle')
           .attr('dominant-baseline', 'middle')
-          .attr('fill', 'rgba(148, 163, 184, 0.5)')
-          .attr('font-size', size * 0.02)
+          .attr('fill', 'rgba(203, 213, 225, 0.55)')
+          .attr('font-family', 'Cinzel, serif')
+          .attr('font-size', size * 0.022)
+          .attr('font-weight', 600)
+          .attr('letter-spacing', '0.08em')
           .text(house.number.toString())
       })
 
@@ -312,14 +321,14 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
         .attr('stroke-width', 2)
         .style('pointer-events', 'none')
 
-      // Draw MC line (thicker, highlighted)
+      // Draw MC line (thicker, highlighted) — amber to match Celestia accent
       const mcAngle = longitudeToScreenRad(chart.mc.longitude, rotationDeg)
       g.append('line')
         .attr('x1', center + Math.cos(mcAngle) * (houseInnerRadius * 0.5))
         .attr('y1', center + Math.sin(mcAngle) * (houseInnerRadius * 0.5))
         .attr('x2', center + Math.cos(mcAngle) * zodiacOuterRadius)
         .attr('y2', center + Math.sin(mcAngle) * zodiacOuterRadius)
-        .attr('stroke', '#f472b6')
+        .attr('stroke', '#fcd34d')
         .attr('stroke-width', 2)
         .style('pointer-events', 'none')
 
@@ -353,7 +362,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
         .attr('cy', center)
         .attr('r', aspectAnchorRadius)
         .attr('fill', 'none')
-        .attr('stroke', 'rgba(148, 163, 184, 0.08)')
+        .attr('stroke', 'rgba(226, 232, 240, 0.06)')
         .attr('stroke-width', 1)
 
       // Draw inner circle border
@@ -362,7 +371,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
         .attr('cy', center)
         .attr('r', houseInnerRadius)
         .attr('fill', 'none')
-        .attr('stroke', 'rgba(148, 163, 184, 0.2)')
+        .attr('stroke', 'rgba(226, 232, 240, 0.15)')
         .attr('stroke-width', 1)
 
       // Draw planets
@@ -394,11 +403,11 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
           .attr('cy', anchorY)
           .attr('r', size * 0.0085)
           .attr('fill', PLANET_COLORS[planet.planet])
-          .attr('stroke', 'rgba(15, 23, 42, 0.9)')
+          .attr('stroke', 'rgba(8, 6, 15, 0.92)')
           .attr('stroke-width', 1)
-          .attr('opacity', 0.75)
+          .attr('opacity', 0.78)
 
-        // Planet circle background
+        // Planet circle background — matches Celestia bg (#08060f)
         planetGroup
           .append('circle')
           .attr('class', 'planet-bg')
@@ -406,9 +415,9 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
           .attr('cx', planet.x)
           .attr('cy', planet.y)
           .attr('r', size * 0.035)
-          .attr('fill', 'rgba(15, 23, 42, 0.9)')
+          .attr('fill', 'rgba(8, 6, 15, 0.92)')
           .attr('stroke', PLANET_COLORS[planet.planet])
-          .attr('stroke-width', 2)
+          .attr('stroke-width', 1.5)
 
         // Planet glyph (custom SVG via <use>)
         const planetGlyphSize = size * 0.042
@@ -430,16 +439,18 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
           .attr('stroke-linejoin', 'round')
           .style('color', glyphColor)
 
-        // Retrograde indicator
+        // Retrograde indicator — soft rose, Cinzel-styled
         if (planet.speed < 0) {
           planetGroup
             .append('text')
             .attr('x', planet.x + size * 0.035)
             .attr('y', planet.y - size * 0.02)
             .attr('text-anchor', 'middle')
-            .attr('fill', 'rgba(239, 68, 68, 0.8)')
-            .attr('font-size', size * 0.015)
-            .attr('font-weight', 'bold')
+            .attr('fill', 'rgba(253, 164, 175, 0.9)')
+            .attr('font-family', 'Cinzel, serif')
+            .attr('font-size', size * 0.018)
+            .attr('font-weight', 600)
+            .attr('letter-spacing', '0.08em')
             .text('R')
         }
       })
@@ -453,8 +464,8 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
     const svg = select(svgRef.current)
 
     // Reset all planets to unselected map styles
-    svg.selectAll('.planet-anchor').attr('opacity', 0.75)
-    svg.selectAll('.planet-bg').attr('fill', 'rgba(15, 23, 42, 0.9)').attr('stroke-width', 2)
+    svg.selectAll('.planet-anchor').attr('opacity', 0.78)
+    svg.selectAll('.planet-bg').attr('fill', 'rgba(8, 6, 15, 0.92)').attr('stroke-width', 1.5)
     svg.selectAll('.planet-glyph').each(function() {
       const el = select(this)
       const color = el.attr('data-base-color')
@@ -466,10 +477,10 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
       svg.select(`.planet-anchor[data-planet="${selectedPlanet}"]`).attr('opacity', 1)
       svg.select(`.planet-bg[data-planet="${selectedPlanet}"]`)
         .attr('fill', PLANET_COLORS[selectedPlanet])
-        .attr('stroke-width', 3)
+        .attr('stroke-width', 2.5)
       svg.select(`.planet-glyph[data-planet="${selectedPlanet}"]`)
-        .attr('stroke', '#0f172a')
-        .style('color', '#0f172a')
+        .attr('stroke', '#08060f')
+        .style('color', '#08060f')
     }
   }, [selectedPlanet])
 

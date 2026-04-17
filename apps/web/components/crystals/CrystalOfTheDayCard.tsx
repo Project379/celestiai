@@ -70,7 +70,7 @@ export function CrystalOfTheDayCard() {
         <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">
           Камък на деня
         </p>
-        <p className="mt-3 font-display text-[14px] font-light italic text-slate-500">
+        <p className="mt-3 font-display text-[14px] font-light text-slate-500">
           {error ? 'В момента не можем да призовем камъка.' : 'Призоваване...'}
         </p>
       </section>

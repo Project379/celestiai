@@ -35,7 +35,7 @@ function ChartError({ message }: { message: string }) {
       <h3 className="mb-2 font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-slate-100">
         Неуспешно зареждане
       </h3>
-      <p className="font-display text-[14px] italic leading-relaxed text-rose-300/90">
+      <p className="font-display text-[14px] leading-relaxed text-rose-300/90">
         {message}
       </p>
     </div>
@@ -183,7 +183,7 @@ export function ChartView({
           <p className="mb-1 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-amber-300/80">
             Забележка
           </p>
-          <p className="font-display text-[13px] font-light italic leading-relaxed text-amber-100/85">
+          <p className="font-display text-[13px] font-light leading-relaxed text-amber-100/85">
             {UNKNOWN_TIME_DISCLAIMER_BG}
           </p>
         </div>

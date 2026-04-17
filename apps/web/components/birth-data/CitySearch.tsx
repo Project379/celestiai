@@ -178,19 +178,19 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
         <div className="mystic-panel absolute z-50 mt-2 max-h-72 w-full overflow-hidden">
           <div className="max-h-72 overflow-y-auto">
             {results.length === 0 && !isLoading && !fetchError && query.length >= 1 && (
-              <div className="px-5 py-4 font-display text-[13px] italic text-slate-500">
+              <div className="px-5 py-4 font-display text-[13px] text-slate-500">
                 Няма намерени резултати
               </div>
             )}
 
             {fetchError && (
-              <div className="px-5 py-4 font-display text-[13px] italic text-rose-300/90">
+              <div className="px-5 py-4 font-display text-[13px] text-rose-300/90">
                 {fetchError}
               </div>
             )}
 
             {query.length < 1 && results.length === 0 && (
-              <div className="px-5 py-4 font-display text-[13px] italic text-slate-500">
+              <div className="px-5 py-4 font-display text-[13px] text-slate-500">
                 Въведи поне 1 символ
               </div>
             )}
@@ -214,7 +214,7 @@ export function CitySearch({ onSelect, value, error }: CitySearchProps) {
                   )}
                   <div className="pl-2">
                     <span className="font-display text-[14.5px] font-medium text-slate-100">{city.name}</span>
-                    <span className="ml-2 font-display text-[12px] italic text-slate-500">({city.oblast})</span>
+                    <span className="ml-2 font-display text-[12px] text-slate-500">({city.oblast})</span>
                   </div>
                   <span className="font-cinzel text-[8.5px] font-semibold uppercase tracking-[0.26em] text-amber-300/70">
                     {TYPE_LABELS[city.type]}

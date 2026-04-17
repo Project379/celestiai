@@ -254,7 +254,7 @@ export function CrystalCollectionContent({
           <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">
             Тихо небе
           </p>
-          <p className="mt-3 font-display text-[15px] font-light italic leading-relaxed text-slate-400">
+          <p className="mt-3 font-display text-[15px] font-light leading-relaxed text-slate-400">
             В момента нямаш отворени прозорци. Нов камък те очаква около новолуние, пълнолуние или когато бавна планета докосне картата ти.
           </p>
         </div>

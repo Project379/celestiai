@@ -19,7 +19,7 @@ export function AboutSection() {
             За нас
           </p>
           <h2 className="font-display text-[2rem] font-semibold leading-[1.15] tracking-tight text-slate-100 sm:text-[2.5rem]">
-            <span className="font-light italic text-slate-400">Астрология, </span>
+            <span className="font-light text-slate-400">Астрология, </span>
             <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text text-transparent drop-shadow-[0_0_24px_rgba(251,191,36,0.15)]">
               написана за теб.
             </span>
@@ -34,7 +34,7 @@ export function AboutSection() {
           <p>
             Вярваме, че астрологията трябва да е <span className="text-slate-100">достъпна, точна и лична</span>. Затова използваме Swiss Ephemeris за прецизни изчисления и AI модели, които пишат тълкувания специално за теб.
           </p>
-          <p className="italic text-slate-400">
+          <p className="text-slate-400">
             Звездите имат какво да ти кажат за живота, връзките и потенциала ти. С Celestia тези прозрения са само на един клик разстояние.
           </p>
         </div>

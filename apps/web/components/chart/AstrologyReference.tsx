@@ -227,7 +227,7 @@ export function AstrologyReference() {
   const [activeTab, setActiveTab] = useState<InnerTab>('legend')
 
   return (
-    <div className="mystic-panel relative px-6 py-7 sm:px-8">
+    <div className="relative">
       {/* Ambient atmosphere — matches chart/dashboard glows */}
       <div
         aria-hidden
@@ -248,12 +248,12 @@ export function AstrologyReference() {
           Celestia · Речник
         </p>
         <h2 className="mt-3 font-display text-[1.35rem] font-semibold leading-tight tracking-tight sm:text-[1.55rem]">
-          <span className="font-light italic text-slate-400">Астрологичен </span>
+          <span className="font-light text-slate-400">Астрологичен </span>
           <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/95 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_14px_rgba(251,191,36,0.18)]">
             справочник
           </span>
         </h2>
-        <p className="mt-2 max-w-xl font-display text-[13px] font-light italic leading-[1.75] text-slate-500">
+        <p className="mt-2 max-w-xl font-display text-[13px] font-light leading-[1.75] text-slate-500">
           Планети, аспекти, транзитни влияния и условните знаци на картата.
         </p>
       </div>
@@ -279,7 +279,7 @@ export function AstrologyReference() {
           {PLANETS.map((planet) => (
             <div
               key={planet.name}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-amber-300/20 hover:bg-white/[0.04]"
+              className="border-t border-white/[0.06] px-1 py-4 transition-colors first:border-t-0 first:pt-2 hover:border-amber-300/25"
             >
               <div className="mb-1.5 flex items-center gap-2">
                 <span className="font-display text-[14px] font-medium text-slate-100">{planet.name}</span>
@@ -304,7 +304,7 @@ export function AstrologyReference() {
           {ASPECTS.map((aspect) => (
             <div
               key={aspect.name}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-amber-300/20 hover:bg-white/[0.04]"
+              className="border-t border-white/[0.06] px-1 py-4 transition-colors first:border-t-0 first:pt-2 hover:border-amber-300/25"
             >
               <div className="mb-1.5 flex items-center gap-2">
                 <span
@@ -346,7 +346,7 @@ export function AstrologyReference() {
           <div>
             <p className="mb-1 font-medium text-slate-100">Домове</p>
             <p className="text-slate-300/80">
-              12-те дома представляват 12 области от живота: идентичност, финанси, комуникация, дом, творчество, здраве, взаимоотношения, трансформация, мъдрост, кариера, общество, подсъзнание. Домът, в който се намира планета, показва <span className="italic text-slate-200/90">където</span> действа нейната енергия.
+              12-те дома представляват 12 области от живота: идентичност, финанси, комуникация, дом, творчество, здраве, взаимоотношения, трансформация, мъдрост, кариера, общество, подсъзнание. Домът, в който се намира планета, показва <span className="text-slate-200/90">където</span> действа нейната енергия.
             </p>
           </div>
 
@@ -410,7 +410,7 @@ export function AstrologyReference() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 rounded-xl border border-white/[0.04] bg-black/[0.2] p-3">
+          <div className="grid grid-cols-2 gap-6 border-t border-white/[0.06] pt-4">
             <div>
               <div className="mb-1 flex items-center gap-2">
                 <span className="h-3 w-8 rounded-full bg-cyan-400" />
@@ -442,7 +442,7 @@ export function AstrologyReference() {
           {TRANSITS.map((transit) => (
             <div
               key={transit.name}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-amber-300/20 hover:bg-white/[0.04]"
+              className="border-t border-white/[0.06] px-1 py-4 transition-colors first:border-t-0 first:pt-2 hover:border-amber-300/25"
             >
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
                 <span className="font-display text-[14px] font-medium text-slate-100">{transit.name}</span>

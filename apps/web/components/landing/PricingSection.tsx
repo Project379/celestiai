@@ -56,12 +56,12 @@ export function PricingSection() {
             Цени
           </p>
           <h2 className="font-display text-[2rem] font-semibold leading-[1.15] tracking-tight text-slate-100 sm:text-[2.5rem]">
-            <span className="font-light italic text-slate-400">Избери плана, </span>
+            <span className="font-light text-slate-400">Избери плана, </span>
             <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text text-transparent drop-shadow-[0_0_24px_rgba(251,191,36,0.15)]">
               който ти подхожда.
             </span>
           </h2>
-          <p className="mx-auto mt-5 max-w-xl font-display text-[15.5px] font-light italic leading-relaxed text-slate-400">
+          <p className="mx-auto mt-5 max-w-xl font-display text-[15.5px] font-light leading-relaxed text-slate-400">
             Без скрити такси. Без изненади.
           </p>
         </div>
@@ -101,7 +101,7 @@ export function PricingSection() {
                     €/{plan.period}
                   </span>
                 </div>
-                <p className="mt-3 font-display text-[13px] italic text-slate-400">
+                <p className="mt-3 font-display text-[13px] text-slate-400">
                   {plan.description}
                 </p>
               </div>

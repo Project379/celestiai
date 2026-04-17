@@ -13,7 +13,7 @@ const clerkAppearance = {
     rootBox: 'w-full',
     card: 'bg-transparent shadow-none border-0',
     headerTitle: 'font-display text-slate-100 text-[1.5rem] font-semibold tracking-tight',
-    headerSubtitle: 'font-display text-slate-400 text-[14px] italic',
+    headerSubtitle: 'font-display text-slate-400 text-[14px]',
     socialButtonsBlockButton:
       'rounded-full border border-white/[0.08] bg-white/[0.02] text-slate-200 font-display text-[13px] hover:border-violet-300/30 hover:bg-white/[0.04]',
     socialButtonsBlockButtonText: 'text-slate-200 font-display',
@@ -30,7 +30,7 @@ const clerkAppearance = {
     identityPreviewEditButton: 'text-amber-300 hover:text-amber-200',
     formResendCodeLink: 'text-amber-300 hover:text-amber-200',
     alert: 'border-l border-rose-300/50 bg-rose-500/[0.04]',
-    alertText: 'font-display text-[13px] italic text-rose-300/90',
+    alertText: 'font-display text-[13px] text-rose-300/90',
   },
 }
 

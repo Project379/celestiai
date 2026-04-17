@@ -177,18 +177,18 @@ export function PushNotificationBanner() {
               Aurora
             </p>
             {isDenied ? (
-              <p className="mt-1 font-display text-[13.5px] italic text-slate-500">
+              <p className="mt-1 font-display text-[13.5px] text-slate-500">
                 Браузърът мълчи - известията са блокирани.
               </p>
             ) : isSubscribed ? (
               <p className="mt-1 font-display text-[13.5px] text-slate-100">
                 Звездите шепнат всяка{' '}
-                <span className="italic text-amber-200/85">зора</span>.
+                <span className="text-amber-200/85">зора</span>.
               </p>
             ) : (
               <p className="mt-1 font-display text-[13.5px] text-slate-100">
                 Нека сутрешният знак{' '}
-                <span className="italic text-amber-200/85">те намери</span>.
+                <span className="text-amber-200/85">те намери</span>.
               </p>
             )}
           </div>

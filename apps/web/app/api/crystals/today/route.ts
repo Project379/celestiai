@@ -55,17 +55,33 @@ function computeStreak(dates: string[], today: string): StreakData {
   return { current, longest, totalDays: set.size }
 }
 
+/**
+ * Deterministic daily index — rotates through the matches so users don't
+ * get the same crystal multiple days in a row within a phase. Same date
+ * (UTC) yields the same index for every user; different dates advance the
+ * rotation by one.
+ */
+function daysSinceEpochUTC(iso: string): number {
+  return Math.floor(new Date(`${iso}T00:00:00Z`).getTime() / 86400000)
+}
+
 export async function GET() {
   try {
     const supabase = createServiceSupabaseClient()
     const catalog = await fetchCatalog(supabase)
 
     const lunarPhase = getLunarPhase()
-    const matches = catalog.filter((c) =>
-      (c.moon_phases as string[]).includes(lunarPhase.id)
-    )
+    const today = todayIsoDate()
+    // Deterministic sort by slug so the rotation is stable across restarts
+    // regardless of what order the DB returns.
+    const matches = catalog
+      .filter((c) => (c.moon_phases as string[]).includes(lunarPhase.id))
+      .sort((a, b) => a.slug.localeCompare(b.slug))
 
-    const pick = matches[0] ?? catalog.find((c) => c.slug === 'clear-quartz')
+    const pick =
+      matches.length > 0
+        ? matches[daysSinceEpochUTC(today) % matches.length]
+        : catalog.find((c) => c.slug === 'clear-quartz')
     if (!pick) {
       return Response.json({ error: 'No crystal available' }, { status: 500 })
     }
@@ -86,8 +102,6 @@ export async function GET() {
     }
 
     if (userId && isPremium) {
-      const today = todayIsoDate()
-
       // Auto-collect on login/page-load. The daily stream is friction-free
       // by design — users get rewarded just for showing up. The rare-stone
       // collect loop (Прозорци tab) is where the manual collect lives.

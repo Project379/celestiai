@@ -14,6 +14,8 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Карта',       href: '/chart'           },
   { label: 'Транзити',    href: '/transits'        },
   { label: 'Кристали',    href: '/crystals'        },
+  { label: 'Дневник',     href: '/manifest'        },
+  { label: 'Препоръки',   href: '/recommendations' },
   { label: 'Ръководство', href: '/astrology-guide' },
 ]
 

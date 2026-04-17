@@ -38,12 +38,12 @@ export default async function BirthDataPage() {
           Начало
         </p>
         <h1 className="font-display text-[2rem] leading-[1.15] tracking-tight sm:text-[2.5rem]">
-          <span className="font-light italic text-slate-400">Въведи </span>
+          <span className="font-light text-slate-400">Въведи </span>
           <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent">
             рождените си данни
           </span>
         </h1>
-        <p className="mx-auto mt-3 max-w-md font-display text-[15px] font-light italic leading-relaxed text-slate-500">
+        <p className="mx-auto mt-3 max-w-md font-display text-[15px] font-light leading-relaxed text-slate-500">
           Точната дата, час и място определят всяко небесно влияние в картата ти.
         </p>
       </div>

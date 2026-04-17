@@ -177,7 +177,7 @@ export function CrystalDetailPanel({
                     {crystal.nameBg ?? crystal.nameEn}
                   </span>
                 </h2>
-                <p className="mt-2 text-center font-display text-[14.5px] font-light italic text-slate-400">
+                <p className="mt-2 text-center font-display text-[14.5px] font-light text-slate-400">
                   {crystal.taglineBg ?? crystal.taglineEn}
                 </p>
 
@@ -262,7 +262,7 @@ export function CrystalDetailPanel({
                   <p className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.3em] text-slate-500">
                     Физически камък
                   </p>
-                  <p className="mt-2 font-display text-[13px] font-light italic text-slate-500">
+                  <p className="mt-2 font-display text-[13px] font-light text-slate-500">
                     Скоро — партньорство с български магазин за кристали.
                   </p>
                 </div>

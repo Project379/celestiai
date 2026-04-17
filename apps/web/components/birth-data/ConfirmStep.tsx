@@ -74,7 +74,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
         <h2 className="font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[1.5rem]">
           Подготвяме картата
         </h2>
-        <p className="mt-2 font-display text-[14.5px] font-light italic leading-relaxed text-slate-400">
+        <p className="mt-2 font-display text-[14.5px] font-light leading-relaxed text-slate-400">
           Провери данните преди да изчислим позициите на планетите.
         </p>
       </div>
@@ -95,7 +95,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
 
       {hasErrors && (
         <div className="border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
-          <p className="font-display text-[13px] italic text-rose-300/90">
+          <p className="font-display text-[13px] text-rose-300/90">
             Моля, попълни всички задължителни полета преди да запазиш.
           </p>
         </div>
@@ -103,7 +103,7 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
 
       {submitError && (
         <div className="border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
-          <p className="font-display text-[13px] italic text-rose-300/90">{submitError}</p>
+          <p className="font-display text-[13px] text-rose-300/90">{submitError}</p>
         </div>
       )}
 

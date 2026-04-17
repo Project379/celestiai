@@ -151,7 +151,7 @@ export function DailyStreakPanel() {
                 {crystal.name_bg ?? crystal.name_en}
               </span>
             </h2>
-            <p className="mt-1 font-display text-[12px] font-light italic text-slate-400">
+            <p className="mt-1 font-display text-[12px] font-light text-slate-400">
               {crystal.tagline_bg ?? crystal.tagline_en}
             </p>
 
@@ -178,7 +178,7 @@ export function DailyStreakPanel() {
                   {streak.current}
                 </span>
               </span>
-              <span className="font-display text-[13px] font-light italic text-slate-400">
+              <span className="font-display text-[13px] font-light text-slate-400">
                 {streak.current === 1 ? 'ден' : 'поредни дни'}
               </span>
             </div>
@@ -190,7 +190,7 @@ export function DailyStreakPanel() {
           </div>
         </div>
 
-        <p className="mt-3 max-w-lg font-display text-[12.5px] font-light italic leading-[1.75] text-slate-500">
+        <p className="mt-3 max-w-lg font-display text-[12.5px] font-light leading-[1.75] text-slate-500">
           Днешният камък се събира сам, щом отвориш таблото. Върни се утре, за да удължиш серията — пропуснеш ли ден, тя се нулира.
         </p>
 

@@ -130,12 +130,12 @@ function ActivatingState() {
         Активация
       </p>
       <h1 className="mb-4 font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[2rem]">
-        <span className="font-light italic text-slate-400">Отключваме </span>
+        <span className="font-light text-slate-400">Отключваме </span>
         <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(251,191,36,0.18)]">
           Премиум.
         </span>
       </h1>
-      <p className="font-display text-[14px] font-light italic text-slate-400">
+      <p className="font-display text-[14px] font-light text-slate-400">
         Това обикновено отнема няколко секунди.
       </p>
 
@@ -235,13 +235,13 @@ function ActivatedState() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.55, duration: 0.55 }}
       >
-        <span className="font-light italic text-slate-400">Добре дошъл в </span>
+        <span className="font-light text-slate-400">Добре дошъл в </span>
         <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.22)]">
           Celestia.
         </span>
       </motion.h1>
       <motion.p
-        className="font-display text-[15px] font-light italic leading-relaxed text-slate-400"
+        className="font-display text-[15px] font-light leading-relaxed text-slate-400"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.7, duration: 0.45 }}
@@ -324,7 +324,7 @@ function TimeoutState() {
       <h1 className="mb-4 font-display text-[1.625rem] font-semibold leading-tight tracking-tight text-slate-100">
         Активирането продължава…
       </h1>
-      <p className="mb-8 font-display text-[14px] font-light italic leading-relaxed text-slate-400">
+      <p className="mb-8 font-display text-[14px] font-light leading-relaxed text-slate-400">
         Ако отнема повече време, опресни страницата или се свържи с нас.
       </p>
 

@@ -90,7 +90,7 @@ export function CrystalCard({
       <p className="mt-2 font-display text-[15px] font-medium tracking-tight text-slate-100">
         {discovered ? name : '???'}
       </p>
-      <p className="mt-0.5 min-h-[32px] font-display text-[11.5px] font-light italic leading-snug text-slate-400">
+      <p className="mt-0.5 min-h-[32px] font-display text-[11.5px] font-light leading-snug text-slate-400">
         {discovered ? tagline : 'Непознат камък'}
       </p>
 

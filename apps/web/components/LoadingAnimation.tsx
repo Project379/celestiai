@@ -98,7 +98,7 @@ export function LoadingAnimation() {
         <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-400">
           Celestia
         </p>
-        <p className="font-display text-[13px] font-light italic text-slate-500">
+        <p className="font-display text-[13px] font-light text-slate-500">
           подреждa звездите…
         </p>
       </motion.div>

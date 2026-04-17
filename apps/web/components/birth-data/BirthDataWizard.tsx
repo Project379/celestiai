@@ -132,12 +132,12 @@ export function BirthDataWizard() {
             Начало
           </p>
           <h1 className="font-display text-[2rem] leading-[1.12] tracking-tight sm:text-[2.375rem]">
-            <span className="font-light italic text-slate-400">Създай своята </span>
+            <span className="font-light text-slate-400">Създай своята </span>
             <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.18)]">
               карта.
             </span>
           </h1>
-          <p className="mt-5 max-w-md font-display text-[16px] font-light italic leading-[1.8] text-slate-400">
+          <p className="mt-5 max-w-md font-display text-[16px] font-light leading-[1.8] text-slate-400">
             Три параметъра определят всичко - датата, часът и мястото на раждането ти.
           </p>
         </motion.header>

@@ -163,7 +163,7 @@ function EventRow({
         </p>
         {badge}
       </div>
-      <p className="mt-1.5 max-w-2xl font-display text-[13.5px] font-light italic leading-[1.75] text-slate-300/90">
+      <p className="mt-1.5 max-w-2xl font-display text-[13.5px] font-light leading-[1.75] text-slate-300/90">
         {summary}
       </p>
       <p className="mt-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-400">
@@ -239,7 +239,7 @@ function EventModal({
                 <h2 className="font-display text-[1.625rem] font-semibold leading-[1.15] tracking-tight text-slate-100 sm:text-[1.875rem]">
                   {event.title}
                 </h2>
-                <p className="mt-3 max-w-xl font-display text-[15px] font-light italic leading-[1.8] text-slate-300">
+                <p className="mt-3 max-w-xl font-display text-[15px] font-light leading-[1.8] text-slate-300">
                   {event.summary}
                 </p>
               </div>
@@ -290,7 +290,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
     <>
       {/* Top row: instruction line + pacing mark */}
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.05] pb-5">
-        <p className="font-display text-[14px] font-light italic text-slate-300">
+        <p className="font-display text-[14px] font-light text-slate-300">
           Натисни събитие, за да видиш значението му.
         </p>
         {overview && <PacingMark emphasis={overview.pacing.emphasis} />}
@@ -368,7 +368,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
       {/* Transit content - error */}
       {activeView === 'transits' && error && !isLoading && (
         <div className="border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
-          <p className="font-display text-[13px] italic text-rose-300/90">{error}</p>
+          <p className="font-display text-[13px] text-rose-300/90">{error}</p>
         </div>
       )}
 
@@ -400,7 +400,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   )
                 })
               ) : (
-                <p className="py-5 font-display text-[14px] font-light italic text-slate-400">
+                <p className="py-5 font-display text-[14px] font-light text-slate-400">
                   Няма силни аспекти към наталната карта точно сега.
                 </p>
               )}
@@ -425,7 +425,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   )
                 })
               ) : (
-                <p className="py-5 font-display text-[14px] font-light italic text-slate-400">
+                <p className="py-5 font-display text-[14px] font-light text-slate-400">
                   Няма близки точни аспекти през следващите 7 дни.
                 </p>
               )}
@@ -452,7 +452,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   )
                 })
               ) : (
-                <p className="py-5 font-display text-[14px] font-light italic text-slate-400">
+                <p className="py-5 font-display text-[14px] font-light text-slate-400">
                   Няма открити близки новолуния или пълнолуния.
                 </p>
               )}

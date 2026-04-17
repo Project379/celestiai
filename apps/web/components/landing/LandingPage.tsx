@@ -39,13 +39,13 @@ export function LandingPage() {
               </p>
 
               <h1 className="font-display text-[2.5rem] leading-[1.1] tracking-tight sm:text-[3.25rem] md:text-[4rem]">
-                <span className="block font-light italic text-slate-400">Звездите имат</span>
+                <span className="block font-light text-slate-400">Звездите имат</span>
                 <span className="block bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_36px_rgba(251,191,36,0.20)]">
                   какво да ти кажат.
                 </span>
               </h1>
 
-              <p className="mx-auto mt-8 max-w-xl font-display text-[17px] font-light italic leading-[1.85] text-slate-400 sm:text-[18px]">
+              <p className="mx-auto mt-8 max-w-xl font-display text-[17px] font-light leading-[1.85] text-slate-400 sm:text-[18px]">
                 Твоят личен астрологичен придружител - точна натална карта, дневни транзити и AI прозрения, написани на български.
               </p>
 
@@ -86,7 +86,7 @@ export function LandingPage() {
                 <span className="h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
                 <span className="h-px w-10 bg-gradient-to-l from-transparent to-amber-300/40" />
               </div>
-              <p className="mx-auto max-w-xl font-display text-[20px] font-light italic leading-[1.7] text-slate-300/90 sm:text-[22px]">
+              <p className="mx-auto max-w-xl font-display text-[20px] font-light leading-[1.7] text-slate-300/90 sm:text-[22px]">
                 Любопитно ти е какво казват звездите за теб?
               </p>
               <div className="mt-8">

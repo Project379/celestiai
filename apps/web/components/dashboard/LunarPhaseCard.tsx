@@ -83,7 +83,7 @@ export function LunarPhaseCard() {
           <p className="mt-1.5 font-cinzel text-[10px] font-medium uppercase tracking-[0.32em] text-slate-300/90">
             {phase.latin} · {phase.illumination}% осветление
           </p>
-          <p className="mt-4 font-display text-[16px] font-light italic leading-[1.8] text-slate-200/95 sm:text-[17px]">
+          <p className="mt-4 font-display text-[16px] font-light leading-[1.8] text-slate-200/95 sm:text-[17px]">
             {phase.intention}.
           </p>
 
@@ -155,7 +155,6 @@ export function LunarPhaseCard() {
                 <ManifestField
                   label="Афирмация"
                   body={`„${phase.affirmation}"`}
-                  italic
                 />
                 <ManifestField label="Кристал" body={phase.crystal} />
                 <ManifestField label="Ритуал" body={phase.ritual} />
@@ -164,7 +163,6 @@ export function LunarPhaseCard() {
               <ManifestField
                 label="Въпрос за дневника"
                 body={phase.journalPrompt}
-                italic
               />
 
               {/* Next major event countdown */}
@@ -175,9 +173,9 @@ export function LunarPhaseCard() {
                   </span>
                   <span className="h-px flex-1 bg-gradient-to-r from-slate-400/35 via-slate-400/10 to-transparent" />
                 </div>
-                <p className="font-display text-[15px] italic text-slate-200/95">
+                <p className="font-display text-[15px] text-slate-200/95">
                   <span aria-hidden className="mr-2 text-amber-300/70">☾</span>
-                  <span className="font-normal not-italic text-slate-100">{next.name}</span>
+                  <span className="font-normal text-slate-100">{next.name}</span>
                   <span className="mx-2 text-slate-500">·</span>
                   <span>след {countdown}</span>
                 </p>
@@ -192,8 +190,8 @@ export function LunarPhaseCard() {
                     </span>
                     <span className="h-px flex-1 bg-gradient-to-r from-slate-400/35 via-slate-400/10 to-transparent" />
                   </div>
-                  <p className="font-display text-[15px] italic text-slate-200/95">
-                    <span className="font-normal not-italic text-slate-100">
+                  <p className="font-display text-[15px] text-slate-200/95">
+                    <span className="font-normal text-slate-100">
                       {upcoming.shower.name}
                     </span>
                     <span className="mx-2 text-slate-500">·</span>
@@ -230,7 +228,7 @@ export function LunarPhaseCard() {
           aria-label="За лунните фази"
           className="group inline-flex items-center gap-2 font-cinzel text-[9.5px] font-medium uppercase tracking-[0.3em] text-slate-300 transition-colors duration-200 hover:text-amber-300"
         >
-          <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full border border-slate-300/40 font-display text-[11px] italic text-slate-200 transition-colors duration-200 group-hover:border-amber-300/60 group-hover:text-amber-300">
+          <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full border border-slate-300/40 font-display text-[11px] text-slate-200 transition-colors duration-200 group-hover:border-amber-300/60 group-hover:text-amber-300">
             i
           </span>
           За лунните фази
@@ -298,17 +296,13 @@ export function LunarPhaseCard() {
 
 /* ─────────────────────────────────────────────────────────────────── */
 
-function ManifestField({ label, body, italic = false }: { label: string; body: string; italic?: boolean }) {
+function ManifestField({ label, body }: { label: string; body: string }) {
   return (
     <div>
       <p className="mb-1.5 font-cinzel text-[9px] font-semibold uppercase tracking-[0.34em] text-amber-300/85">
         {label}
       </p>
-      <p
-        className={`font-display text-[14.5px] leading-[1.85] text-slate-200/95 ${
-          italic ? 'font-light italic' : ''
-        }`}
-      >
+      <p className="font-display text-[14.5px] font-light leading-[1.85] text-slate-200/95">
         {body}
       </p>
     </div>

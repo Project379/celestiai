@@ -93,7 +93,7 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
         <h2 className="mt-2 font-display text-[22px] font-semibold tracking-tight text-white sm:text-[24px]">
           Дневен хороскоп
         </h2>
-        <p className="mt-1.5 font-display text-[12.5px] italic text-slate-400">
+        <p className="mt-1.5 font-display text-[12.5px] text-slate-400">
           {todayFormatted}
         </p>
       </div>
@@ -139,7 +139,7 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
         {/* Error state */}
         {errorMessage && !isStreaming && !displayText && (
           <div className="rounded-xl border border-rose-400/15 bg-rose-500/[0.04] px-5 py-4">
-            <p className="font-display text-sm italic text-rose-300/80">{errorMessage}</p>
+            <p className="font-display text-sm text-rose-300/80">{errorMessage}</p>
           </div>
         )}
 
@@ -155,7 +155,7 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
                 <CelestialIcon name="moon" size={16} className="text-slate-400/70" />
               </div>
             </div>
-            <p className="max-w-[22ch] font-display text-sm italic text-slate-400">
+            <p className="max-w-[22ch] font-display text-sm text-slate-400">
               Вчерашното послание вече е отминало.
             </p>
           </div>

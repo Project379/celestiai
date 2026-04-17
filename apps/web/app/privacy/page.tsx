@@ -52,12 +52,12 @@ export default function PrivacyPage() {
             GDPR
           </p>
           <h1 className="font-display text-[2.125rem] leading-[1.1] tracking-tight sm:text-[2.75rem]">
-            <span className="font-light italic text-slate-400">Политика за </span>
+            <span className="font-light text-slate-400">Политика за </span>
             <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.18)]">
               поверителност.
             </span>
           </h1>
-          <p className="mt-5 max-w-xl font-display text-[16px] font-light italic leading-[1.85] text-slate-400">
+          <p className="mt-5 max-w-xl font-display text-[16px] font-light leading-[1.85] text-slate-400">
             Данните ти са твои. Ние просто се грижим за тях с нужното внимание.
           </p>
           <div className="mt-6 flex items-center gap-3" aria-hidden>
@@ -125,7 +125,7 @@ export default function PrivacyPage() {
                   <dt className="font-display text-[15px] font-semibold text-slate-100">
                     {item.title}
                   </dt>
-                  <dd className="mt-1 font-display text-[14px] italic leading-[1.75] text-slate-400/90">
+                  <dd className="mt-1 font-display text-[14px] leading-[1.75] text-slate-400/90">
                     {item.desc}
                   </dd>
                 </div>

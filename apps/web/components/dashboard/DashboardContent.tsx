@@ -150,8 +150,8 @@ export function DashboardContent({
         </div>
 
         {/* Greeting: time-aware ("Добро утро, Алекс.") */}
-        <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-[2.125rem] leading-[1.1] tracking-tight sm:text-[2.75rem]">
-          <span className="font-light italic text-slate-300">
+        <h1 className="font-display flex flex-wrap items-baseline gap-x-3 pb-2 text-[2.125rem] leading-[1.2] tracking-tight sm:text-[2.75rem]">
+          <span className="font-light text-slate-300">
             {welcome.greeting.split(',')[0]},
           </span>
           <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/95 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.22)]">
@@ -177,7 +177,7 @@ export function DashboardContent({
               <span>Небесен ритъм</span>
               <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-amber-300/40 via-slate-300/10 to-transparent" />
             </p>
-            <p className="font-display text-[15.5px] font-light italic leading-[1.8] text-slate-200 sm:text-[16.5px]">
+            <p className="font-display text-[15.5px] font-light leading-[1.8] text-slate-200 sm:text-[16.5px]">
               {welcome.summary}
             </p>
           </div>
@@ -188,7 +188,7 @@ export function DashboardContent({
               <span>{sunSign}</span>
               <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-slate-300/35 via-slate-300/10 to-transparent" />
             </p>
-            <p className="font-display text-[17px] font-light italic leading-[1.85] text-slate-200/95 sm:text-[18px]">
+            <p className="font-display text-[17px] font-light leading-[1.85] text-slate-200/95 sm:text-[18px]">
               {SIGN_QUIPS[sunSign] ?? 'Звездите са в движение. Вселената е написала нещо за теб.'}
             </p>
           </div>
@@ -210,12 +210,12 @@ export function DashboardContent({
               <span>Небесен ритъм</span>
               <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-amber-300/40 via-slate-300/10 to-transparent" />
             </p>
-            <p className="font-display text-[15.5px] font-light italic leading-[1.8] text-slate-200 sm:text-[16.5px]">
+            <p className="font-display text-[15.5px] font-light leading-[1.8] text-slate-200 sm:text-[16.5px]">
               {welcome.summary}
             </p>
           </div>
 
-          <p className="font-display text-[17px] font-light italic leading-[1.85] text-slate-200/90">
+          <p className="font-display text-[17px] font-light leading-[1.85] text-slate-200/90">
             Картата ти още не е настроена. Въведи рождените си данни, за да видиш хороскопа, наталната карта и транзитите.
           </p>
           <Link

@@ -30,7 +30,7 @@ export function NatalWheelLegend() {
         onClick={() => setOpen((v) => !v)}
         className="group relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/[0.08] bg-[#08060f]/85 backdrop-blur transition-all duration-200 hover:border-amber-300/50 hover:shadow-[0_0_18px_rgba(251,191,36,0.22)] focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60"
       >
-        <span className="font-cinzel text-[11px] font-semibold italic text-slate-300 transition-colors group-hover:text-amber-200">
+        <span className="font-cinzel text-[11px] font-semibold text-slate-300 transition-colors group-hover:text-amber-200">
           i
         </span>
       </button>
@@ -74,7 +74,7 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Зодиак
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
                       12 знака по външния пояс - показват в кой знак попада всяка планета.
                     </dd>
                   </div>
@@ -89,7 +89,7 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Домове
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
                       12 житейски сфери - домът казва <span className="text-slate-300">къде</span> действа планетата.
                     </dd>
                   </div>
@@ -106,7 +106,7 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Планети
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
                       Всяка носи жизнен принцип. Натисни за тълкуване.
                     </dd>
                   </div>
@@ -122,7 +122,7 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Аспекти
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
                       Линиите в центъра - зелено е хармония, розово е напрежение.
                     </dd>
                   </div>
@@ -138,7 +138,7 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Ъгли
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
                       Асцендент <span className="text-slate-300">(персона)</span> и Медиум Цели <span className="text-slate-300">(цел)</span>.
                     </dd>
                   </div>
@@ -153,7 +153,7 @@ export function NatalWheelLegend() {
                     <dt className="font-display text-[13px] font-semibold text-slate-100">
                       Ретрограден
                     </dt>
-                    <dd className="mt-0.5 font-display text-[12px] italic leading-snug text-slate-300/90">
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
                       Планетата изглежда движеща се назад - по-вътрешна енергия.
                     </dd>
                   </div>
