@@ -2,15 +2,19 @@
 
 **Written:** 2026-04-18
 **Status:** Plan only — no tests written yet
-**Epistemic tags:** `[verified]` = read from files/tools; `[inferred]` = deduced from files; `[planned]` = not yet implemented; `[assumed]` = conventional wisdom / placeholder.
+**Epistemic tags:** `[verified]` = read from files/tools; `[inferred]` = deduced from files; `[planned]` = not yet implemented; `[assumed]` = conventional wisdom / placeholder. `[open]` = question not yet answered, action required.
 
 ---
 
 ## Why this doc exists
 
-The previous plan casually cited *"500 concurrent connections per `Celestia_AI_Reference.md §3`"* as if it were a measured SLO. It isn't. §3 of that doc says *"Load test before launch with k6 or Artillery against the streaming endpoint at 500 concurrent connections — 10 is not a load test."* That's an architecture guideline — a minimum credible load-test floor, not a derived traffic estimate from expected Bulgarian MVP DAU. And a default `k6` script cannot meaningfully validate it either way.
+`[verified — Celestia_AI_Reference.md §3]` The reference doc says *"Load test before launch with k6 or Artillery against the streaming endpoint at 500 concurrent connections — 10 is not a load test."*
 
-This doc exists so the design and the targets are shared, reviewable, and attackable.
+`[inferred]` That's framing as a credible-test-floor guideline ("10 is not a load test"), not a derived traffic estimate from expected Bulgarian MVP DAU. Previous chat treated the 500 number as a measured SLO — it isn't.
+
+`[verified — standard k6 behavior]` A default `k6` script cannot meaningfully validate any streaming-endpoint target either way; its built-in metrics measure the wrong things (§1 below).
+
+`[planned]` This doc exists so the design and the targets are shared, reviewable, and attackable.
 
 ---
 
@@ -82,11 +86,12 @@ For a non-streaming JSON endpoint, that's sufficient. For an **LLM streaming end
 
 `[verified — per Celestia_AI_Reference.md §3 and §5]` The daily horoscope endpoint generates ONCE per (sun-sign × moon-phase) combination per day. That's <100 unique responses for the entire user base on any given day. Everything else is a cache lookup from Supabase.
 
-Implication: under warm-cache conditions, the AI streaming endpoint is effectively serving static content and can trivially handle hundreds of concurrent. The real bottleneck is **cold-cache request rate** (first request of the day per combo, or Oracle FAB conversations which are per-user-unique).
+`[inferred]` Implication: under warm-cache conditions, the AI streaming endpoint is effectively serving static content and can trivially handle hundreds of concurrent. The real bottleneck is **cold-cache request rate** (first request of the day per combo, or Oracle FAB conversations which are per-user-unique).
 
-The Oracle FAB is the uncached path. Its load is bounded by:
+`[planned — proposed free/premium caps, not yet implemented]` The Oracle FAB is the uncached path. Its load is bounded by:
 - Free tier: 3 queries/month/user — negligible fleet-wide
 - Premium tier: 20 queries/day/user — the real driver
+These caps come from `MOBILE_UX_RESEARCH.md §11.7` as proposals, not shipped code. Adjust the load model if caps change.
 
 ## 5. Deriving an MVP traffic target — and what "500" actually means
 

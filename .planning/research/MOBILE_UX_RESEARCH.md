@@ -488,15 +488,33 @@ Your current aesthetic (Cinzel uppercase + hairline dividers + deep violet/amber
 - **Not web-throwaway — but "Solito code share" is narrower than it sounds.** [verified from codebase audit 2026-04-18] Solito provides universal `Link`, `useRouter`, and `useParams` primitives that wrap `next/link` on web and `expo-router` on native. That's its surface area. Everything else is per-component work.
 
 - **What does NOT port automatically** — concrete list, with current usage counts across `apps/web/components/` + `apps/web/app/` [verified via grep 2026-04-18]:
-  | Non-portable surface | Files affected | Migration path |
-  |---|---|---|
+
+  | Non-portable surface | Files | Migration path |
+  |---|---:|---|
   | HTML elements (`<div>`, `<span>`, `<button>`, `<a>`, `<img>`, `<input>`, `<form>`) | 83 | Rewrite as `View`/`Text`/`Pressable`/`Image`/`TextInput` |
   | `next/link`, `next/image`, `next/navigation`, `next/headers`, `next/server` | 32 | `solito/link`, `expo-image`, `expo-router` hooks |
   | `framer-motion` | 36 | `react-native-reanimated` — different API (worklets, shared values); Moti is a thin portable wrapper but not 1:1 |
   | `window.*` / `document.*` / `localStorage` / `navigator.*` | 16 | `AsyncStorage`, `expo-device`, platform checks |
-  | D3 / Canvas (`NatalWheel`, `CelestialCanvas`) | 8 | `react-native-skia` — completely different rendering primitives; this is real rewrite work, not port |
-  | NativeWind v4 gaps vs Tailwind | all styled files | No `grid` utilities, partial pseudo-selectors (`:hover` is non-sensical on touch anyway), no complex `linear-gradient` via class — use `expo-linear-gradient` component or Skia |
-  | Form file uploads (`<input type="file">`) | unverified — check before Кръг photo-avatar flow | Expo: `expo-image-picker` + `expo-document-picker`; different event model |
+  | CSS `grid` classes (`grid`, `grid-cols-*`) | 27 | [verified via NativeWind docs] NativeWind accepts the classes but `grid` is **web-only**; on native you get flexbox fallback. Either use platform variants (`web:grid web:grid-cols-2 native:flex native:flex-col`) or restructure to flex column stacks (most astrology content is vertical anyway). |
+  | Form file uploads (`<input type="file">`, `FormData`, `.files`) | **0** | [verified — grep returned empty 2026-04-18] No uploads exist today. When the first avatar/photo flow lands, use `expo-image-picker` + `expo-document-picker` on native. |
+
+- **Canvas/D3 rewrites — own budget lines, not a single table row** [verified line counts 2026-04-18]:
+
+  Previous "0.5-5 days per component" was wrong for these. They are not component ports — they are rendering-architecture rewrites. Skia in RN is a declarative scene-graph, not an immediate-mode 2D canvas.
+
+  | File | Lines | Interactivity | Realistic native budget |
+  |---|---:|---|---|
+  | `chart/NatalWheel.tsx` | 649 | Mouse hover, click-to-select, animated transitions, D3 geometry | **3-6 weeks** — own budget line. This is the product's visual identity. |
+  | `CelestialCanvas.tsx` | 934 | requestAnimationFrame, mousemove, visibility-pause | 2-4 weeks for a Skia rewrite, OR 1 week to replace with a simpler native ambient (recommended) |
+  | `CelestialBackground.tsx` | 372 | Animated ambient | 1 week — replace with simpler native version |
+  | `StarCanvas.tsx` | 101 | Animated stars | 3-5 days |
+  | `auth/AuthBackground.tsx` | ~similar | Ambient for auth screens | 3-5 days |
+  | `chart/NatalWheelLegend.tsx` | static SVG-ish | None | 1-2 days |
+  | `icons/CelestialIcons.tsx` | SVG icon paths | None | 1 day — port paths to `react-native-svg` |
+
+  Aggregate: **6-13 weeks of rendering work** if every canvas surface is faithfully ported. Realistic: keep NatalWheel fidelity (3-6wk own line), replace ambient canvases with simpler native equivalents (~2 weeks total). Icons via `react-native-svg` (1 day).
+
+- **Pseudo-selectors** (`:hover`, `:focus-within`, `::before`, `::after`): [verified 2026-04-18] zero class-based usage of `before:` / `after:` pseudo-element modifiers. `:hover` touches are non-sensical on touch devices anyway — migration means deleting hover affordances or mapping to `active:` or press states on native.
 
 - **What DOES port** (write once, used on both): [planned for `packages/ui`]
   - `react-hook-form` (6 files today) — works on both surfaces with shared validation
