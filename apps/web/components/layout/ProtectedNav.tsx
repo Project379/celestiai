@@ -9,14 +9,15 @@ type NavItem = {
   href: string
 }
 
+// 5-tab IA per .planning/research/MOBILE_UX_RESEARCH.md §2.
+// Routes still point at legacy paths — route consolidation (/rhythm, /you/*)
+// is a later Phase A task. /circle is a new placeholder for the premium spine.
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Начало',      href: '/dashboard'       },
-  { label: 'Карта',       href: '/chart'           },
-  { label: 'Транзити',    href: '/transits'        },
-  { label: 'Кристали',    href: '/crystals'        },
-  { label: 'Дневник',     href: '/manifest'        },
-  { label: 'Препоръки',   href: '/recommendations' },
-  { label: 'Ръководство', href: '/astrology-guide' },
+  { label: 'Днес',  href: '/dashboard' },
+  { label: 'Карта', href: '/chart'     },
+  { label: 'Кръг',  href: '/circle'    },
+  { label: 'Ритъм', href: '/transits'  },
+  { label: 'Ти',    href: '/you'       },
 ]
 
 interface ProtectedNavProps {
