@@ -41,7 +41,7 @@ export function CrystalTile() {
 
   return (
     <DashboardTile
-      href="/crystals"
+      href="/you/crystals"
       eyebrow="Кристал"
       title={name}
       hint={tagline}

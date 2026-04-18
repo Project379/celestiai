@@ -7,6 +7,11 @@ import dynamic from 'next/dynamic'
 import { NatalWheelLegend } from './NatalWheelLegend'
 import { BigThreeCards } from './BigThreeCards'
 import { PlanetDetail } from './PlanetDetail'
+import { ChartSectionChips } from './ChartSectionChips'
+import { PlanetsList } from './PlanetsList'
+import { AspectsList } from './AspectsList'
+import { HousesList } from './HousesList'
+import type { ChartSection } from './chart-sections'
 import type { PlanetPosition, PointData } from '@celestia/astrology/client'
 
 const NatalWheel = dynamic(
@@ -56,6 +61,7 @@ export function ChartView({
 }: ChartViewProps) {
   const { chart, isLoading, error } = useChart(chartId)
   const [activeView, setActiveView] = useState<'chart' | 'reference'>('chart')
+  const [activeSection, setActiveSection] = useState<ChartSection>('essence')
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null)
   const [selectedBigThree, setSelectedBigThree] = useState<'sun' | 'moon' | 'rising' | null>(null)
   const [selectedPlanetData, setSelectedPlanetData] = useState<PlanetPosition | PointData | null>(null)
@@ -189,27 +195,6 @@ export function ChartView({
         </div>
       )}
 
-      {/* Big Three cards - mobile (above wheel) - zoom from stars */}
-      <motion.div
-        className="mb-6 lg:hidden"
-        initial={{ scale: 0.1, opacity: 0, filter: 'blur(14px)' }}
-        animate={{
-          scale: [0.1, 0.5, 1.02, 1],
-          opacity: [0, 0.55, 1, 1],
-          filter: ['blur(14px)', 'blur(6px)', 'blur(1px)', 'blur(0px)'],
-        }}
-        transition={{ duration: 1.1, delay: 0.25, ease: [0.22, 0.68, 0.35, 1], times: [0, 0.45, 0.85, 1] }}
-      >
-        <BigThreeCards
-          sun={sun}
-          moon={moon}
-          ascendant={chart.ascendant}
-          birthTimeKnown={chart.birthTimeKnown}
-          onSelect={handleBigThreeSelect}
-          selected={selectedBigThree}
-        />
-      </motion.div>
-
       <div className="lg:flex lg:items-start lg:gap-8 relative z-[30]">
         {/* Ambient atmosphere surrounding the wheel */}
         <div
@@ -264,9 +249,12 @@ export function ChartView({
           />
         </motion.div>
 
-        {/* Right column - desktop: BigThree cards - zoom from stars with stagger */}
+        {/* Right column (desktop) / below-wheel (mobile) — scroll-chip
+             section switcher per MOBILE_UX_RESEARCH §2.2. Chips choose
+             between Същност / Детайли / Аспекти / Къщи, the swappable
+             content lives below. */}
         <motion.div
-          className="hidden w-80 lg:flex lg:flex-col lg:gap-4"
+          className="mt-8 w-full lg:mt-0 lg:w-80"
           initial={{ scale: 0.1, opacity: 0, filter: 'blur(14px)' }}
           animate={{
             scale: [0.1, 0.5, 1.02, 1],
@@ -275,14 +263,44 @@ export function ChartView({
           }}
           transition={{ duration: 1.1, delay: 0.22, ease: [0.22, 0.68, 0.35, 1], times: [0, 0.45, 0.85, 1] }}
         >
-          <BigThreeCards
-            sun={sun}
-            moon={moon}
-            ascendant={chart.ascendant}
-            birthTimeKnown={chart.birthTimeKnown}
-            onSelect={handleBigThreeSelect}
-            selected={selectedBigThree}
-          />
+          <ChartSectionChips active={activeSection} onChange={setActiveSection} />
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 12, filter: 'blur(6px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -8, filter: 'blur(4px)' }}
+              transition={{ duration: 0.35, ease: [0.22, 0.68, 0.35, 1] }}
+            >
+              {activeSection === 'essence' && (
+                <BigThreeCards
+                  sun={sun}
+                  moon={moon}
+                  ascendant={chart.ascendant}
+                  birthTimeKnown={chart.birthTimeKnown}
+                  onSelect={handleBigThreeSelect}
+                  selected={selectedBigThree}
+                />
+              )}
+              {activeSection === 'details' && (
+                <PlanetsList
+                  planets={chart.planets}
+                  onSelect={handlePlanetSelect}
+                  selectedPlanet={selectedPlanet}
+                />
+              )}
+              {activeSection === 'aspects' && (
+                <AspectsList aspects={chart.aspects} />
+              )}
+              {activeSection === 'houses' && (
+                <HousesList
+                  houses={chart.houses}
+                  birthTimeKnown={chart.birthTimeKnown}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
         </motion.div>
       </div>
 

@@ -53,7 +53,7 @@ export function TransitEventDetail({ chartId, eventId }: TransitEventDetailProps
           Възможно е транзитният преглед вече да е обновен и това събитие да е отпаднало.
         </p>
         <Link
-          href="/transits"
+          href="/rhythm"
           className="group inline-flex items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 transition-colors hover:text-amber-300"
         >
           <svg className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,7 +101,7 @@ export function TransitEventDetail({ chartId, eventId }: TransitEventDetailProps
       {/* Back link */}
       <div>
         <Link
-          href="/transits"
+          href="/rhythm"
           className="group inline-flex items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 transition-colors hover:text-amber-300"
         >
           <svg className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

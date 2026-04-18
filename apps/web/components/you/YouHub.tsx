@@ -4,10 +4,10 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 
 const SECTIONS = [
-  { label: 'Кристали',    hint: 'месечни прозорци + дневна серия', href: '/crystals'        },
-  { label: 'Дневник',     hint: 'лунен дневник — по три реда',     href: '/manifest'        },
-  { label: 'Препоръки',   hint: 'месечни книги и филми',            href: '/recommendations' },
-  { label: 'Ръководство', hint: 'планети, знаци, къщи, аспекти',    href: '/astrology-guide' },
+  { label: 'Кристали',    hint: 'месечни прозорци + дневна серия', href: '/you/crystals'        },
+  { label: 'Дневник',     hint: 'лунен дневник — по три реда',     href: '/rhythm/journal'      },
+  { label: 'Препоръки',   hint: 'месечни книги и филми',            href: '/you/recommendations' },
+  { label: 'Ръководство', hint: 'планети, знаци, къщи, аспекти',    href: '/you/guide'           },
 ] as const
 
 const fadeUp = {
@@ -67,8 +67,7 @@ export function YouHub() {
       </motion.ul>
 
       <p className="mt-12 font-display text-[12.5px] font-light leading-[1.7] text-slate-600">
-        Премиум, настройки и акаунт — в менюто горе вдясно. Route consolidation
-        (/you/crystals и т.н.) идва по-късно в Фаза A.
+        Премиум, настройки и акаунт — в менюто горе вдясно.
       </p>
     </div>
   )

@@ -12,7 +12,7 @@ import { DashboardTile } from './DashboardTile'
 export function TransitTile() {
   return (
     <DashboardTile
-      href="/transits"
+      href="/rhythm"
       eyebrow="Транзит"
       title="Небесно време"
       hint="Виж днешните аспекти"

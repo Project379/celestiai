@@ -10,32 +10,21 @@ type NavItem = {
 }
 
 // 5-tab IA per .planning/research/MOBILE_UX_RESEARCH.md §2.
-// Routes still point at legacy paths — route consolidation (/rhythm, /you/*)
-// is a later Phase A task. /circle is a new placeholder for the premium spine.
 const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Днес',  href: '/dashboard' },
   { label: 'Карта', href: '/chart'     },
   { label: 'Кръг',  href: '/circle'    },
-  { label: 'Ритъм', href: '/transits'  },
+  { label: 'Ритъм', href: '/rhythm'    },
   { label: 'Ти',    href: '/you'       },
 ]
 
-interface ProtectedNavProps {
-  hasChart?: boolean
-}
-
-export function ProtectedNav({ hasChart = false }: ProtectedNavProps) {
+// Оракул lives in the FAB (components/oracle/OracleFab.tsx) — not the nav.
+export function ProtectedNav() {
   const pathname = usePathname()
 
   const activeHref = NAV_ITEMS.find((item) =>
     pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
   )?.href
-
-  const openOracle = () => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('oracle:open'))
-    }
-  }
 
   return (
     <nav
@@ -78,24 +67,6 @@ export function ProtectedNav({ hasChart = false }: ProtectedNavProps) {
           </Link>
         )
       })}
-
-      {/* Oracle - opens the global Oracle panel via custom event */}
-      {hasChart && (
-        <button
-          type="button"
-          onClick={openOracle}
-          className="group relative flex h-full shrink-0 items-center"
-          aria-label="Отвори Оракула"
-        >
-          <span className="font-cinzel text-[10px] font-semibold uppercase leading-none tracking-[0.34em] text-violet-300/90 transition-colors duration-200 group-hover:text-amber-200">
-            Оракул
-          </span>
-          <span
-            aria-hidden
-            className="absolute inset-x-0 -bottom-0.5 h-px scale-x-0 bg-gradient-to-r from-transparent via-amber-300/80 to-transparent shadow-[0_0_10px_rgba(251,191,36,0.45)] transition-transform duration-300 group-hover:scale-x-100"
-          />
-        </button>
-      )}
     </nav>
   )
 }

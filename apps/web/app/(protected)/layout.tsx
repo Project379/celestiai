@@ -6,6 +6,7 @@ import { ProtectedNav } from '@/components/layout/ProtectedNav'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
 import { OraclePanelGlobal } from '@/components/oracle/OraclePanelGlobal'
+import { OracleFab } from '@/components/oracle/OracleFab'
 import { getCachedLatestChart, getCachedUserTier } from '@/lib/supabase/queries'
 
 export default async function ProtectedLayout({
@@ -64,7 +65,7 @@ export default async function ProtectedLayout({
 
             {/* Nav - centered horizontally and vertically, desktop only */}
             <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex md:items-center">
-              <ProtectedNav hasChart={!!chartId} />
+              <ProtectedNav />
             </div>
 
             {/* Right - premium badge + user avatar */}
@@ -85,7 +86,7 @@ export default async function ProtectedLayout({
           {/* Mobile nav - slim scrollable row below brand */}
           <div className="border-t border-slate-200/[0.04] md:hidden">
             <div className="container mx-auto px-4 py-1.5">
-              <ProtectedNav hasChart={!!chartId} />
+              <ProtectedNav />
             </div>
           </div>
         </header>
@@ -98,7 +99,11 @@ export default async function ProtectedLayout({
         </main>
       </div>
 
-      {/* Global Oracle modal — triggered by ProtectedNav via oracle:open event */}
+      {/* Oracle FAB — always-visible bottom-right entry (MOBILE_UX_RESEARCH §2.6).
+         Dispatches oracle:open which OraclePanelGlobal listens for. */}
+      <OracleFab hasChart={!!chartId} />
+
+      {/* Global Oracle modal — listens for oracle:open event */}
       <OraclePanelGlobal chartId={chartId} subscriptionTier={subscriptionTier} />
 
       {/* Global session expiry modal */}

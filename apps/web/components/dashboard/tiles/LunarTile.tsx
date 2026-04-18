@@ -20,7 +20,7 @@ export function LunarTile() {
 
   return (
     <DashboardTile
-      href="/transits"
+      href="/rhythm"
       eyebrow="Лунна фаза"
       title={phase.name}
       hint={`${illumination}% осветеност`}

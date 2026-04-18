@@ -60,7 +60,7 @@ export default async function CrystalsPage() {
         </p>
 
         <Link
-          href="/crystals/guide"
+          href="/you/crystals/guide"
           className="group mt-5 inline-flex items-center gap-3 rounded-full border border-amber-300/30 bg-amber-400/[0.04] py-2 pl-2 pr-5 transition-all duration-300 hover:border-amber-200/60 hover:bg-amber-400/[0.08]"
         >
           <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-amber-300/40 bg-amber-400/[0.08] font-display text-[13px] font-light text-amber-200 transition-transform duration-300 group-hover:scale-105">

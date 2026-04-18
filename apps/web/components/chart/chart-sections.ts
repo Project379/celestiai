@@ -1,0 +1,71 @@
+/**
+ * Карта section identifiers (§2.2 scroll chips).
+ * Shared so chip row and content router agree on the active key.
+ */
+export type ChartSection = 'essence' | 'details' | 'aspects' | 'houses'
+
+export const SIGN_BG: Record<string, string> = {
+  aries:       'Овен',
+  taurus:      'Телец',
+  gemini:      'Близнаци',
+  cancer:      'Рак',
+  leo:         'Лъв',
+  virgo:       'Дева',
+  libra:       'Везни',
+  scorpio:     'Скорпион',
+  sagittarius: 'Стрелец',
+  capricorn:   'Козирог',
+  aquarius:    'Водолей',
+  pisces:      'Риби',
+}
+
+export const PLANET_BG: Record<string, string> = {
+  sun:     'Слънце',
+  moon:    'Луна',
+  mercury: 'Меркурий',
+  venus:   'Венера',
+  mars:    'Марс',
+  jupiter: 'Юпитер',
+  saturn:  'Сатурн',
+  uranus:  'Уран',
+  neptune: 'Нептун',
+  pluto:   'Плутон',
+}
+
+export const ASPECT_BG: Record<string, string> = {
+  conjunction: 'съвпад',
+  sextile:     'секстил',
+  square:      'квадрат',
+  trine:       'тригон',
+  opposition:  'опозиция',
+}
+
+export const ASPECT_GLYPH: Record<string, string> = {
+  conjunction: '☌',
+  sextile:     '⚹',
+  square:      '□',
+  trine:       '△',
+  opposition:  '☍',
+}
+
+export const PLANET_GLYPH: Record<string, string> = {
+  sun:     '☉',
+  moon:    '☽',
+  mercury: '☿',
+  venus:   '♀',
+  mars:    '♂',
+  jupiter: '♃',
+  saturn:  '♄',
+  uranus:  '♅',
+  neptune: '♆',
+  pluto:   '♇',
+}
+
+/** Format degree + minutes within a sign — e.g. "12°34' Лъв". */
+export function formatDegreeInSign(degreeInSign: number, signKey: string): string {
+  const degrees = Math.floor(degreeInSign)
+  const minutes = Math.floor((degreeInSign - degrees) * 60)
+  const signBg = SIGN_BG[signKey] ?? signKey
+  const mm = minutes.toString().padStart(2, '0')
+  return `${degrees}°${mm}' ${signBg}`
+}
