@@ -238,9 +238,13 @@ export function DashboardContent({
       </motion.section>
 
       {/* ── Layer C · Bento launchpad ────────────────────────
-         2×2 grid of scannable tiles pointing to the destinations.
-         The 4th tile is Кръг — the premium wedge on the home screen
-         (MOBILE_UX_RESEARCH §4 Rule 1).
+         2×2 grid of scannable tiles. Each tile leads to its deep
+         destination: Crystal → /you/crystals (full card + collection),
+         Lunar → /rhythm (full lunar card + meteor + transits + diary),
+         Transit → /rhythm (same, transit-focused scroll),
+         Кръг → /circle (people-graph + premium wedge per §4 Rule 1).
+         The tiles are intentionally compact — deep content lives at
+         the destination, not on the home scan.
       */}
       <motion.section
         initial="hidden"
@@ -258,9 +262,7 @@ export function DashboardContent({
         </div>
       </motion.section>
 
-      {/* ── Layer D · Streak footer ──────────────────────────
-         Deliberately understated. Real streak data wires in Phase B.
-      */}
+      {/* ── Layer D · Streak footer ── */}
       {birthChart && (
         <motion.p
           initial="hidden"

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { CrystalCollectionContent } from '@/components/crystals/CrystalCollectionContent'
+import { CrystalOfTheDayCard } from '@/components/crystals/CrystalOfTheDayCard'
 import { LoadingAnimation } from '@/components/LoadingAnimation'
 
 export const metadata: Metadata = {
@@ -74,6 +75,12 @@ export default async function CrystalsPage() {
           </span>
         </Link>
       </div>
+
+      {/* Today's crystal — free, lunar-phase driven. Shown to everyone as
+         the daily entry point; premium gate is below, for the collection. */}
+      <section aria-label="Кристал за днес" className="mb-12">
+        <CrystalOfTheDayCard />
+      </section>
 
       {!isPremium && <PremiumGate />}
       {isPremium && !chartId && <MissingChartState />}
