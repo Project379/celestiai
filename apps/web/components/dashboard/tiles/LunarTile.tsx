@@ -41,7 +41,8 @@ export function LunarTile() {
     return () => clearInterval(interval)
   }, [])
 
-  const illumination = Math.round(phase.illumination * 100)
+  // phase.illumination is already 0-100 and pre-rounded per lib/moon-phase.ts
+  const illumination = phase.illumination
   const countdown = formatCountdown(phase.nextMajor.daysAway)
   const showerPeakDays = shower ? daysUntilPeak(shower) : null
 

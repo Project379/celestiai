@@ -46,7 +46,7 @@ export default function CircleScreen() {
         </View>
 
         <Text className="text-[13px] font-light leading-[1.7] text-slate-500">
-          Или добави някой, когото искаш да разбереш по-добре.
+          Или добави някого, когото искаш да разбереш по-добре.
         </Text>
       </ScrollView>
     </SafeAreaView>

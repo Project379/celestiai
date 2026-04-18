@@ -5,6 +5,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import type { ChartRow } from '@/lib/types/chart'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
 import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
+import { ManifestDiaryContent } from '@/components/manifest/ManifestDiaryContent'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 export const metadata: Metadata = {
@@ -52,8 +53,16 @@ export default async function TransitsPage() {
       </div>
 
       {/* Lunar phase — live moon, meteor showers, manifesting guidance */}
-      <section aria-label="Лунна фаза" className="mb-12">
+      <section aria-label="Лунна фаза" className="mb-16">
         <LunarPhaseCard />
+      </section>
+
+      {/* Lunar diary — tied to the current phase; three-line-a-day
+         entries (intentions on the waxing half, gratitude on the
+         waning half). Sits directly under LunarPhaseCard so the diary
+         prompt matches the phase the user just read about. */}
+      <section aria-label="Лунен дневник" className="mb-16">
+        <ManifestDiaryContent />
       </section>
 
       {/* Transits — what's affecting the chart today */}
@@ -64,27 +73,6 @@ export default async function TransitsPage() {
       ) : (
         <EmptyTransitsState />
       )}
-
-      {/* Diary — tied to the lunar cycle; three-line-a-day entries */}
-      <section aria-label="Дневник" className="mb-12">
-        <Link
-          href="/rhythm/journal"
-          className="group block border-l border-amber-300/30 pl-5 transition-colors duration-200 hover:border-amber-200/70"
-        >
-          <p className="mb-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-amber-300/80 group-hover:text-amber-200">
-            Лунен дневник
-          </p>
-          <p className="font-display text-[15.5px] font-light leading-[1.8] text-slate-300 group-hover:text-slate-100 sm:text-[16.5px]">
-            Три реда на ден, подредени по лунната фаза — намерения, когато луната расте, благодарност, когато намалява.
-          </p>
-          <span className="mt-3 inline-flex items-center gap-2 font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-500 group-hover:text-amber-300">
-            Отвори дневника
-            <svg className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </span>
-        </Link>
-      </section>
 
       <div className="mt-12 text-center">
         <Link

@@ -34,7 +34,7 @@ export default function DnesScreen() {
           {[
             { label: 'Кристал', hint: 'Розов кварц' },
             { label: 'Лунна фаза', hint: 'Ден 7/29' },
-            { label: 'Транзит', hint: 'Venus △ Saturn' },
+            { label: 'Транзит', hint: 'Венера △ Сатурн' },
             { label: 'Кръг', hint: 'Добави човек' },
           ].map((tile) => (
             <View
@@ -51,7 +51,7 @@ export default function DnesScreen() {
 
         {/* Streak footer — Layer D */}
         <Text className="text-center font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-500">
-          · streak 12 ·
+          · серия 12 ·
         </Text>
       </ScrollView>
     </SafeAreaView>

@@ -35,7 +35,7 @@ export const PLANET_BG: Record<string, string> = {
 export const ASPECT_BG: Record<string, string> = {
   conjunction: 'съвпад',
   sextile:     'секстил',
-  square:      'квадрат',
+  square:      'квадратура',
   trine:       'тригон',
   opposition:  'опозиция',
 }

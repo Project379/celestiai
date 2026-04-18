@@ -39,7 +39,7 @@ const KINDS: readonly Kind[] = [
   {
     key: 'crush',
     label: 'Crush',
-    subtitle: 'тиха радара',
+    subtitle: 'тих радар',
     accent: 'text-rose-200',
     border: 'border-rose-400/30 hover:border-rose-300/60',
     glow: 'shadow-[0_0_40px_-10px_rgba(244,114,182,0.30)]',
@@ -108,7 +108,7 @@ export function CircleEmptyState() {
         custom={2}
         className="font-display text-[14px] font-light leading-[1.7] text-slate-500"
       >
-        Или добави някой, когото искаш да разбереш по-добре.
+        Или добави някого, когото искаш да разбереш по-добре.
       </motion.p>
     </div>
   )

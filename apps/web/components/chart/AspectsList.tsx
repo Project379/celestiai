@@ -31,7 +31,7 @@ export function AspectsList({ aspects }: AspectsListProps) {
   if (aspects.length === 0) {
     return (
       <p className="font-display text-[14px] font-light text-slate-500">
-        Без аспекти в зададения орб.
+        Няма аспекти в рамките на зададения орбис.
       </p>
     )
   }
@@ -78,7 +78,7 @@ export function AspectsList({ aspects }: AspectsListProps) {
               </span>
               <span className="text-slate-600">·</span>
               <span className="font-cinzel text-[9px] uppercase tracking-[0.24em]">
-                {aspect.applying ? 'прилагащ' : 'отделящ'}
+                {aspect.applying ? 'апликиращ' : 'сепариращ'}
               </span>
             </div>
           </li>

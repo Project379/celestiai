@@ -11,7 +11,7 @@ interface HousesListProps {
 const HOUSE_THEMES: Record<number, string> = {
   1:  'самоличност, външен вид',
   2:  'ценности, ресурси',
-  3:  'общуване, близки пространства',
+  3:  'общуване, близко обкръжение',
   4:  'дом, корени',
   5:  'творчество, удоволствие',
   6:  'ежедневие, здраве',
@@ -46,7 +46,7 @@ export function HousesList({ houses, birthTimeKnown }: HousesListProps) {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <p className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-slate-400">
-          12 къщи · курсове
+          12 къщи · куспиди
         </p>
         <span className="font-cinzel text-[9px] uppercase tracking-[0.26em] text-slate-600">
           Placidus
