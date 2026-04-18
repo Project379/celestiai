@@ -39,7 +39,7 @@ export default function RhythmScreen() {
         </Text>
         <Text className="text-[12px] leading-[1.7] text-slate-500">
           Manifest (dream) diary surfaces here under Месец per research §2.4.
-          Oracle FAB writes to diary via "Запиши в дневника" shortcut.
+          Oracle FAB writes to diary via a Запиши в дневника shortcut.
         </Text>
       </ScrollView>
     </SafeAreaView>

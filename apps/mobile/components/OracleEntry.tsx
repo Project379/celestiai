@@ -1,4 +1,4 @@
-import { Platform, Pressable, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 
 /**
  * Oracle persistent entry. Platform-specific expression per MOBILE_UX_RESEARCH §2.6:

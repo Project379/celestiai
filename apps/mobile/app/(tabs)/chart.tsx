@@ -45,7 +45,7 @@ export default function ChartScreen() {
         </View>
 
         <Text className="text-[14px] font-light leading-[1.8] text-slate-300">
-          Placeholder for Big Three editorial rows. "Correct science" surface per research §8 —
+          Placeholder for Big Three editorial rows. Correct-science surface per research §8 —
           exposes real degrees, orbs, house system, retrograde, aspect patterns.
         </Text>
       </ScrollView>

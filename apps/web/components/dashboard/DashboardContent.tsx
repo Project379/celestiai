@@ -4,9 +4,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { DailyHoroscope } from '@/components/horoscope/DailyHoroscope'
-import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
-import { CrystalOfTheDayCard } from '@/components/crystals/CrystalOfTheDayCard'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
+import {
+  CircleTile,
+  CrystalTile,
+  LunarTile,
+  TransitTile,
+} from '@/components/dashboard/tiles'
 import { getLunarPhase } from '@/lib/moon-phase'
 import { getActiveMeteorShower } from '@/lib/meteor-showers'
 import { composeWelcome } from '@/lib/welcome-compose'
@@ -19,8 +23,19 @@ interface DashboardContentProps {
 }
 
 /**
- * Fade-up with blur. Pass `custom` index to stagger - each step adds 70ms.
+ * Днес hybrid dashboard — three-layer layout per
+ * .planning/research/MOBILE_UX_RESEARCH.md §2.1:
+ *
+ *   A  Ambient header — date + lunar phase + premium badge. Scan in 2s.
+ *   B  Editorial hero — greeting + Небесен ритъм + sign quip + daily stream.
+ *      One bundled block, no card chrome, hairline separators.
+ *   C  Bento launchpad — 2×2 tiles (Crystal / Moon / Transit / Кръг).
+ *   D  Streak footer — subtle, shown only when a streak exists.
+ *
+ * Deliberate inversion vs the old linear stream: the hero now dominates
+ * above the fold, everything else is an entry point to its destination.
  */
+
 const fadeUp = {
   hidden: { opacity: 0, y: 18, filter: 'blur(8px)' },
   visible: (i: number = 0) => ({
@@ -35,7 +50,6 @@ const fadeUp = {
   }),
 }
 
-/* ─── Sun sign from birth date ─────────────────────────────────────── */
 function getSunSign(birthDate: string): string {
   const d = new Date(birthDate)
   const m = d.getMonth() + 1
@@ -76,7 +90,6 @@ const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   timeZone: 'Europe/Sofia',
 })
 
-/* ─── Main dashboard ──────────────────────────────────────────────── */
 export function DashboardContent({
   firstName,
   initialBirthChart,
@@ -87,8 +100,6 @@ export function DashboardContent({
 
   const sunSign = birthChart ? getSunSign(birthChart.birth_date) : null
 
-  // Live clock state: re-reads date + lunar phase + meteor shower every 60s
-  // so the welcoming summary reflects the current sky without a reload.
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60_000)
@@ -108,16 +119,16 @@ export function DashboardContent({
 
   return (
     <div className="mx-auto max-w-2xl">
-
-      {/* ── Hero ──────────────────────────────────────────── */}
+      {/* ── Layer A · Ambient header ─────────────────────────
+         Scan in 2s: what day is it, what's the moon doing, am I Premium.
+      */}
       <motion.div
         initial="hidden"
         animate="visible"
         variants={fadeUp}
         custom={0}
-        className="relative mb-12 sm:mb-14"
+        className="relative mb-10"
       >
-        {/* Ambient atmosphere */}
         <div
           aria-hidden
           className="pointer-events-none absolute -left-32 -top-32 -z-10 h-[460px] w-[460px] rounded-full bg-violet-500/[0.08] blur-[100px]"
@@ -127,10 +138,7 @@ export function DashboardContent({
           className="pointer-events-none absolute right-0 top-16 -z-10 h-[220px] w-[220px] rounded-full bg-amber-500/[0.045] blur-[80px]"
         />
 
-        {/* Date line: date + moon phase on the left, Premium badge on the
-            right. Premium sits here (not between the welcome lines below)
-            so the greeting flow stays uninterrupted. */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
             <span>{todayFormatted}</span>
             <span aria-hidden className="h-[3px] w-[3px] rotate-45 bg-slate-400/80" />
@@ -148,9 +156,22 @@ export function DashboardContent({
             </span>
           )}
         </div>
+      </motion.div>
 
+      {/* ── Layer B · Editorial hero ─────────────────────────
+         One bundled block: greeting + Небесен ритъм + sign quip + daily
+         horoscope stream. No card chrome, hairlines between sub-sections.
+      */}
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        custom={1}
+        aria-label="Днешното четене"
+        className="mb-12"
+      >
         {/* Greeting: time-aware ("Добро утро, Алекс.") */}
-        <h1 className="font-display flex flex-wrap items-baseline gap-x-3 pb-2 text-[2.125rem] leading-[1.2] tracking-tight sm:text-[2.75rem]">
+        <h1 className="font-display mb-8 flex flex-wrap items-baseline gap-x-3 pb-2 text-[2.125rem] leading-[1.2] tracking-tight sm:text-[2.75rem]">
           <span className="font-light text-slate-300">
             {welcome.greeting.split(',')[0]},
           </span>
@@ -158,114 +179,99 @@ export function DashboardContent({
             {firstName}.
           </span>
         </h1>
-      </motion.div>
 
-      {/* ── Welcome bundle: lunar/meteor message + sign quip in one
-           motion block, each led by its own eyebrow so the reader sees
-           which is which. No Premium badge between them. ──────── */}
-      {birthChart && sunSign && (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          custom={1}
-          className="mb-12 max-w-xl space-y-8"
-        >
-          {/* Lunar + meteor message, dynamic */}
-          <div>
-            <p className="mb-2 flex items-center gap-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
-              <span>Небесен ритъм</span>
-              <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-amber-300/40 via-slate-300/10 to-transparent" />
-            </p>
-            <p className="font-display text-[15.5px] font-light leading-[1.8] text-slate-200 sm:text-[16.5px]">
-              {welcome.summary}
-            </p>
-          </div>
+        {birthChart && sunSign ? (
+          <>
+            {/* Небесен ритъм — dynamic lunar/meteor line */}
+            <div className="mb-8">
+              <p className="mb-2 flex items-center gap-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
+                <span>Небесен ритъм</span>
+                <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-amber-300/40 via-slate-300/10 to-transparent" />
+              </p>
+              <p className="font-display text-[15.5px] font-light leading-[1.8] text-slate-200 sm:text-[16.5px]">
+                {welcome.summary}
+              </p>
+            </div>
 
-          {/* Sun sign quip: more playful, character-led */}
-          <div>
-            <p className="mb-2 flex items-center gap-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-300">
-              <span>{sunSign}</span>
-              <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-slate-300/35 via-slate-300/10 to-transparent" />
-            </p>
-            <p className="font-display text-[17px] font-light leading-[1.85] text-slate-200/95 sm:text-[18px]">
-              {SIGN_QUIPS[sunSign] ?? 'Звездите са в движение. Вселената е написала нещо за теб.'}
-            </p>
-          </div>
-        </motion.div>
-      )}
+            {/* Sign quip */}
+            <div className="mb-10">
+              <p className="mb-2 flex items-center gap-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-300">
+                <span>{sunSign}</span>
+                <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-slate-300/35 via-slate-300/10 to-transparent" />
+              </p>
+              <p className="font-display text-[17px] font-light leading-[1.85] text-slate-200/95 sm:text-[18px]">
+                {SIGN_QUIPS[sunSign] ?? 'Звездите са в движение. Вселената е написала нещо за теб.'}
+              </p>
+            </div>
 
-      {/* ── Empty state: no birth chart. Still show the Небесен ритъм
-           line + the birth-data CTA, bundled in one motion block. ──── */}
-      {!birthChart && (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          custom={1}
-          className="mb-12 max-w-xl space-y-6"
-        >
-          <div>
-            <p className="mb-2 flex items-center gap-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
-              <span>Небесен ритъм</span>
-              <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-amber-300/40 via-slate-300/10 to-transparent" />
-            </p>
-            <p className="font-display text-[15.5px] font-light leading-[1.8] text-slate-200 sm:text-[16.5px]">
-              {welcome.summary}
-            </p>
-          </div>
+            {/* Daily horoscope stream — the reading you came here to read */}
+            <DailyHoroscope chartId={birthChart.id} />
+          </>
+        ) : (
+          /* No chart yet — keep Небесен ритъм + a single CTA. */
+          <>
+            <div className="mb-8">
+              <p className="mb-2 flex items-center gap-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
+                <span>Небесен ритъм</span>
+                <span aria-hidden className="h-px flex-1 max-w-[4rem] bg-gradient-to-r from-amber-300/40 via-slate-300/10 to-transparent" />
+              </p>
+              <p className="font-display text-[15.5px] font-light leading-[1.8] text-slate-200 sm:text-[16.5px]">
+                {welcome.summary}
+              </p>
+            </div>
 
-          <p className="font-display text-[17px] font-light leading-[1.85] text-slate-200/90">
-            Картата ти още не е настроена. Въведи рождените си данни, за да видиш хороскопа, наталната карта и транзитите.
-          </p>
-          <Link
-            href="/birth-data"
-            className="group inline-flex items-center gap-2 font-display text-[12px] font-medium tracking-wide text-slate-300 transition-colors duration-200 hover:text-amber-300"
-          >
-            <CelestialIcon name="rising" size={13} className="transition-colors duration-200 group-hover:text-amber-300" />
-            Въведи рождени данни
-            <svg className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        </motion.div>
-      )}
+            <p className="mb-4 font-display text-[17px] font-light leading-[1.85] text-slate-200/90">
+              Картата ти още не е настроена. Въведи рождените си данни, за да видиш хороскопа, наталната карта и транзитите.
+            </p>
+            <Link
+              href="/birth-data"
+              className="group inline-flex items-center gap-2 font-display text-[12px] font-medium tracking-wide text-slate-300 transition-colors duration-200 hover:text-amber-300"
+            >
+              <CelestialIcon name="rising" size={13} className="transition-colors duration-200 group-hover:text-amber-300" />
+              Въведи рождени данни
+              <svg className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </>
+        )}
+      </motion.section>
 
-      {/* ── Daily horoscope ───────────────────────────────── */}
+      {/* ── Layer C · Bento launchpad ────────────────────────
+         2×2 grid of scannable tiles pointing to the destinations.
+         The 4th tile is Кръг — the premium wedge on the home screen
+         (MOBILE_UX_RESEARCH §4 Rule 1).
+      */}
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        custom={2}
+        aria-label="Бързи връзки"
+        className="mb-10"
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <CrystalTile />
+          <LunarTile />
+          <TransitTile />
+          <CircleTile />
+        </div>
+      </motion.section>
+
+      {/* ── Layer D · Streak footer ──────────────────────────
+         Deliberately understated. Real streak data wires in Phase B.
+      */}
       {birthChart && (
-        <motion.div
+        <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          custom={2}
-          className="mb-12"
+          custom={3}
+          className="text-center font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-600"
         >
-          <DailyHoroscope chartId={birthChart.id} />
-        </motion.div>
+          · небесен ритъм ·
+        </motion.p>
       )}
-
-      {/* ── Lunar phase - free-tier manifesting ───────────── */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeUp}
-        custom={birthChart ? 3 : 2}
-        className="mb-12"
-      >
-        <LunarPhaseCard />
-      </motion.div>
-
-      {/* ── Crystal of the day - lunar-phase stone ────────── */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeUp}
-        custom={birthChart ? 4 : 3}
-        className="mb-12"
-      >
-        <CrystalOfTheDayCard />
-      </motion.div>
-
     </div>
   )
 }

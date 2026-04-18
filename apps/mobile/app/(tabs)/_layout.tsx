@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router'
-import { Platform, Pressable, Text, View } from 'react-native'
+import { Platform, Text, View } from 'react-native'
 import { BlurView } from 'expo-blur'
 
 import { OracleEntry } from '@/components/OracleEntry'
