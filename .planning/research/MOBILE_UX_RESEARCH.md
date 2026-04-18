@@ -502,17 +502,28 @@ Your current aesthetic (Cinzel uppercase + hairline dividers + deep violet/amber
 
   Previous "0.5-5 days per component" was wrong for these. They are not component ports — they are rendering-architecture rewrites. Skia in RN is a declarative scene-graph, not an immediate-mode 2D canvas.
 
-  | File | Lines | Interactivity | Realistic native budget |
-  |---|---:|---|---|
-  | `chart/NatalWheel.tsx` | 649 | Mouse hover, click-to-select, animated transitions, D3 geometry | **3-6 weeks** — own budget line. This is the product's visual identity. |
-  | `CelestialCanvas.tsx` | 934 | requestAnimationFrame, mousemove, visibility-pause | 2-4 weeks for a Skia rewrite, OR 1 week to replace with a simpler native ambient (recommended) |
-  | `CelestialBackground.tsx` | 372 | Animated ambient | 1 week — replace with simpler native version |
-  | `StarCanvas.tsx` | 101 | Animated stars | 3-5 days |
-  | `auth/AuthBackground.tsx` | ~similar | Ambient for auth screens | 3-5 days |
-  | `chart/NatalWheelLegend.tsx` | static SVG-ish | None | 1-2 days |
-  | `icons/CelestialIcons.tsx` | SVG icon paths | None | 1 day — port paths to `react-native-svg` |
+  **Skia ramp-up tax — visible, not hidden [verified: zero `react-native-skia` usage in this codebase 2026-04-18]:**
 
-  Aggregate: **6-13 weeks of rendering work** if every canvas surface is faithfully ported. Realistic: keep NatalWheel fidelity (3-6wk own line), replace ambient canvases with simpler native equivalents (~2 weeks total). Icons via `react-native-svg` (1 day).
+  The estimates below assume the author is already fluent in `react-native-skia` — its declarative scene-graph API, paint/path/effect primitives, touch handling via `react-native-gesture-handler`, and animation via `useClockValue`/`useSharedValue`/`useDerivedValue` integrated with Reanimated. [inferred — standard Skia/RN pattern per react-native-skia docs]
+
+  If the first person to ship Skia here has not shipped it before (which is the current assumption until stated otherwise), budget a **one-time ramp-up of 2-3 weeks** on top of the first component's estimate. [assumed — typical ramp for proficient React devs new to a declarative-scene-graph API, based on prior-art reports; not measured against our team]
+
+  **Sequencing recommendation:** do not make NatalWheel the first Skia surface. It is the product's visual identity and cannot absorb learning-curve regressions. Instead, sequence a smaller ambient canvas first (`StarCanvas.tsx` — 101 lines, no interactivity) to absorb the ramp in a low-stakes surface; then tackle NatalWheel with patterns learned. This moves ~2-3 weeks of ramp into a component whose failure mode is "the stars look slightly off" rather than "the natal wheel is broken."
+
+  | File | Lines | Interactivity | Realistic budget (assumes ramp absorbed elsewhere) | Tag |
+  |---|---:|---|---|---|
+  | `chart/NatalWheel.tsx` | 649 | Mouse hover, click-to-select, animated transitions, D3 geometry | **3-6 weeks** — own budget line. Product's visual identity. | [inferred] — based on complexity + interactivity; no team prior art |
+  | `CelestialCanvas.tsx` | 934 | requestAnimationFrame, mousemove, visibility-pause | 2-4 weeks faithful port, OR 1 week replacement with simpler ambient (recommended) | [inferred] |
+  | `CelestialBackground.tsx` | 372 | Animated ambient | 1 week — simpler native version | [inferred] |
+  | `StarCanvas.tsx` | 101 | Animated stars | 3-5 days — **proposed first Skia surface for ramp absorption** | [inferred] |
+  | `auth/AuthBackground.tsx` | similar scope | Ambient | 3-5 days | [inferred] |
+  | `chart/NatalWheelLegend.tsx` | static SVG-ish | None | 1-2 days | [inferred] |
+  | `icons/CelestialIcons.tsx` | SVG icon paths | None | 1 day — port paths to `react-native-svg` | [inferred] |
+
+  **Aggregate budget** [inferred]:
+  - Ramp-up (one-time, first Skia surface): **+2-3 weeks**
+  - Faithful port of all canvas surfaces: **6-13 weeks** of rendering work, plus ramp
+  - Realistic plan: ramp absorbed in StarCanvas (3-5 days stretched to ~3 weeks first time), then NatalWheel fidelity (3-6 wk), ambient canvases replaced with simpler native versions (~2 wk total), icons via `react-native-svg` (1 day). **Total realistic: 8-12 weeks** including ramp.
 
 - **Pseudo-selectors** (`:hover`, `:focus-within`, `::before`, `::after`): [verified 2026-04-18] zero class-based usage of `before:` / `after:` pseudo-element modifiers. `:hover` touches are non-sensical on touch devices anyway — migration means deleting hover affordances or mapping to `active:` or press states on native.
 
