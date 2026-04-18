@@ -130,10 +130,82 @@ Three anti-patterns that get tempting when someone's mid-migration:
 
 ## 6. Enforcement
 
-`[planned]`:
+`[planned]` **Two layers: package.json exclusion + ESLint `no-restricted-imports` covering all framework-coupling patterns, not just React.**
 
-- `packages/core/package.json` must not list `react`, `react-dom`, `next`, or any `@types/react*` in `dependencies` or `peerDependencies`. Only `devDependencies` for type-stripping during build, if at all.
-- A CI check (or Turbo task) that grep-rejects `from 'react'` in `packages/core/**/*.ts`. Simple to add.
-- This doc linked from `packages/core/README.md` once the package is scaffolded in Phase M1.
+### 6.1 package.json layer
 
-`[open]` Open question: should the same rule apply to `@clerk/nextjs/server`? `[verified]` Clerk's server-side `auth()` is a Next.js-specific import that pulls in `next/headers`. It has the same problem as `react/cache`: it only works inside Next.js server runtime. The clean pattern is: `packages/core/` functions take `userId: string | null` as an argument, and Clerk auth extraction happens at the web call site (Server Component or route handler). Mobile extracts `userId` from its Clerk Expo SDK separately. Core never imports Clerk. Call this out explicitly in the Phase-M1 conventions and in `packages/core/README.md`.
+`packages/core/package.json` must not list any of the following in `dependencies` or `peerDependencies`:
+- `react`, `react-dom`, `@types/react*`
+- `next`, `@types/next*`
+- `expo`, `expo-*`, `react-native`, `react-native-*`, `@react-native/*`
+- `nativewind`, `react-native-css-interop`
+- `@clerk/nextjs`, `@clerk/nextjs-server`, `@clerk/clerk-expo`, `@clerk/clerk-react`
+
+`[inferred]` This is the cheap-but-coarse layer. Prevents whole classes of framework-coupled code from installing. Does not prevent transitive deps or type-only imports of things that are already in the root `node_modules` via pnpm hoisting. The ESLint layer below closes the gap.
+
+### 6.2 ESLint layer — framework-coupling denylist
+
+`[planned]` Add to `apps/mobile/eslint.config.js` / `apps/web/eslint.config.mjs` model a new override in the workspace-root (or `packages/core/eslint.config.mjs` when the package is scaffolded) with `no-restricted-imports` `patterns`:
+
+```js
+// packages/core/eslint.config.mjs
+export default [
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          // --- React (render-tree / hook / Suspense coupling) ---
+          { group: ['react', 'react-dom', 'react/*', 'react-dom/*'],
+            message: 'packages/core/ is framework-agnostic. See CACHE_WRAP_CONVENTION.md — React.cache wraps at the web call site.' },
+
+          // --- Next.js (server-runtime / navigation / image / link) ---
+          { group: ['next/*', 'next'],
+            message: 'Next.js imports live in apps/web/. Core takes plain inputs (userId, request body) and returns plain data.' },
+
+          // --- Clerk (framework-specific auth adapters) ---
+          { group: ['@clerk/nextjs', '@clerk/nextjs/**', '@clerk/nextjs-server', '@clerk/clerk-expo', '@clerk/clerk-react', '@clerk/clerk-react/**'],
+            message: 'Core takes userId: string | null as an argument. Clerk auth extraction happens at the web/mobile call site.' },
+
+          // --- Expo / React Native (mobile-runtime) ---
+          { group: ['expo', 'expo-*', 'expo-*/**', '@expo/**'],
+            message: 'Expo imports live in apps/mobile/. Core is framework-agnostic.' },
+          { group: ['react-native', 'react-native-*', 'react-native-*/**', '@react-native/**'],
+            message: 'React Native imports live in apps/mobile/. Core is framework-agnostic.' },
+
+          // --- Styling (platform-coupled) ---
+          { group: ['nativewind', 'nativewind/*', 'react-native-css-interop', 'react-native-css-interop/*'],
+            message: 'Styling is UI concern. Core returns data, not styled components.' },
+        ],
+      }],
+    },
+  },
+]
+```
+
+**Adding a new denied family is a one-line append** to the `patterns` array — matches the structure the user asked for.
+
+### 6.3 When a denied pattern shows up in a legitimate use case
+
+`[planned]` If a future engineer genuinely needs to import something from a denied group (edge case: schema validation library that happens to share a namespace), the correct move is:
+1. Write down why the rule doesn't apply in this case
+2. Add an inline `// eslint-disable-next-line no-restricted-imports` with a comment linking back to that reasoning
+3. Open an issue to reconsider the denylist, don't amend it quietly
+
+If enough legitimate exceptions accumulate, the rule itself is wrong and should be refined. Until then, per-use overrides force the reasoning to be surfaced in the diff.
+
+### 6.4 CI integration
+
+`[planned]` The existing `pnpm lint` task (via turbo) runs ESLint across all workspaces. Once `packages/core/eslint.config.mjs` exists with the denylist, `pnpm lint` fails on any forbidden import in the package. No new CI step needed — it falls out of the existing lint pipeline.
+
+### 6.5 Documentation
+
+`[planned]` Link this doc from `packages/core/README.md` once the package is scaffolded in Phase M1. The Phase M1 PR description should mention the denylist explicitly so reviewers know what they're approving.
+
+---
+
+## 7. Clerk asymmetry — resolved
+
+Previously flagged as `[open]`. `[verified]` Clerk's server-side `auth()` is a Next.js-specific import that pulls in `next/headers`. It has the same structural problem as `react/cache`: works only inside Next.js server runtime. The §6.2 denylist covers `@clerk/nextjs`, `@clerk/nextjs/**`, `@clerk/nextjs-server`, `@clerk/clerk-expo`, and `@clerk/clerk-react` — so core cannot import from any Clerk surface.
+
+`[planned]` The contract: `packages/core/` functions take `userId: string | null` as an explicit argument. Clerk auth extraction happens at the web call site (`const { userId } = await auth()` in a Server Component or route handler) or at the mobile call site (`useAuth()` in a React Native component, passed to the HTTP client). Core never imports Clerk.

@@ -178,6 +178,62 @@ Format:
 
 `[planned]` None of this work touches `apps/` or `packages/` source code except step 3 (add mock-upstream toggle) and step 5 (pin region). Both are additive and revertible. Keep them on their own branch off `mobile-parallel-test` or a new branch if the load-test work is going to precede Option-B execution.
 
+### 7.4 When this baseline actually needs to run [planned]
+
+Previously framed as "before any Option-B migration code moves." On review `[inferred]`, that framing over-scopes the baseline's purpose. This load-test plan specifically measures the **AI streaming endpoint** via TTFT, ITL, stream_aborted, stream_stalled, cache_hit, stream_tokens. Option-B migration Phases M1-M3 touch zero streaming endpoints — M1 is `crystals/today`, M2 is six non-streaming reads, M3 is five non-streaming writes (`DATA_FETCHING_INVENTORY.md §7.2`). Streaming migration is Phase M4.
+
+**Revised recommendation: defer Scenarios B and C to pre-M4 gate, not pre-M1 gate.**
+
+- **Saves ~1-2 weeks now.** The unblock chain (§7.2) doesn't need to complete before M1 code starts.
+- **Trade-off accepted:** no regression detection on streaming endpoints during the M1-M3 window. Since M1-M3 don't touch streaming code, regression probability on that surface is low-by-design. Not zero (e.g., if the M1 ramp-up work accidentally changes how Supabase clients are constructed, connection-pool behavior could cascade), but low enough that the cost of measuring pre-M1 exceeds the expected loss.
+- **Phase M4 predecessor chain already demands B and C pass before M4 starts** (`DATA_FETCHING_INVENTORY.md §7.2` M4 predecessors). So the baseline happens naturally at the M3→M4 gate.
+- **What this deferral does NOT satisfy:** M1-M3 regression detection on non-streaming endpoints. That's a different need, addressed in §8 below.
+
+### 7.5 Triggers that would force B/C to run earlier [planned]
+
+If any of these happens during M1-M3, run Scenarios B and C immediately regardless of the §7.4 deferral:
+- The Supabase client initialization pattern in `packages/core/` changes from the `createServiceSupabaseClient()` pattern in `apps/web/lib/supabase/service.ts` — e.g., moves to pooled `postgres-js` or to a long-lived connection. Connection lifecycle changes cascade into streaming behavior.
+- The Vercel region or runtime config changes for `/api/horoscope/generate` or `/api/oracle/generate` during M1-M3 work. No reason this should happen, but if it does, the baseline must be re-established.
+- Any change to the `Cache-Control` header pattern on cached endpoints (currently `private, max-age=900, stale-while-revalidate=600` in `transits/overview`).
+
+---
+
+## 8. M1-M3 regression detection — separate, lighter plan [planned]
+
+The streaming baseline doesn't help detect the regressions M1-M3 is actually at risk of introducing. Those are:
+
+- **Per-endpoint response-time regressions on non-streaming reads** — extraction into `packages/core/` adds a function-call boundary. Negligible if implemented straight; painful if somebody accidentally introduces a new Supabase client construction per request instead of reusing one.
+- **Connection-pool blowup** — if `packages/core/` functions construct a new Supabase client on every call (possible default if `createServiceSupabaseClient()` is exposed naively from core), Vercel serverless cold starts multiply DB connections. Concrete failure: Supabase connection limit reached, subsequent requests fail.
+- **React.cache hit-rate regression** — if the web call-site cache wrapper is set up wrong (or forgotten on an endpoint that used to be cached inline), identical fetches within a single render pass duplicate. Detectable as higher query count on Supabase logs for the same pageview.
+
+### 8.1 Proposed lightweight signal [planned]
+
+Per-endpoint smoke tests that run in CI, assert response code + response-time < threshold:
+
+```
+loadtest/smoke/endpoints.test.ts  (or Playwright API test)
+  - GET /api/crystals/today            < 800ms
+  - GET /api/transits/overview?chartId=X  < 1200ms (premium-gated, auth required)
+  - GET /api/user                      < 400ms
+  - GET /api/stripe/status             < 600ms
+  - GET /api/planets/current           < 400ms
+```
+
+`[inferred]` This is ~an afternoon of work with either (a) a Playwright test project configured for API-only runs, (b) a simple `curl + test --lt 800` shell script, or (c) a Vercel cron endpoint that self-tests and reports to an observability channel. Exact mechanism doesn't matter much; the point is "something that fails CI if a refactored endpoint gets materially slower."
+
+### 8.2 What this does NOT replace [planned]
+
+- Connection-pool monitoring: the smoke test hits each endpoint once, doesn't exercise concurrency. If a connection leak shows up under load, smoke tests won't catch it. Mitigation: manual concurrency check via a quick k6 run at M3 completion against the non-streaming refactored endpoints (5 minutes of work, uses the same k6 infra as Scenario A once that exists).
+- React.cache hit-rate: smoke tests run one request at a time. Mitigation: spot-check Supabase query logs after the first post-M1 deployment; if queries-per-pageview went up on dashboards that used to dedupe via `getCachedLatestChart` / `getCachedUserTier`, that's the signal to investigate.
+- Cold-start regression: smoke tests run against warm functions. Cold-start TTFB changes are visible only in aggregated observability data (Vercel Speed Insights). If we see a p99 TTFB jump after M1/M2/M3 deploys, investigate.
+
+### 8.3 Summary of the two-baseline split
+
+| Baseline | What it measures | When it runs | Predecessors |
+|---|---|---|---|
+| **Smoke tests** (§8.1) | Non-streaming endpoint response time, HTTP correctness | CI, every commit | None. Build once, runs forever. |
+| **Scenarios B + C** (§3) | Streaming TTFT/ITL, cache-hit behavior, cost envelope | Once, before Phase M4 starts | Full §7.2 unblock chain |
+
 ## 8. Open questions before implementation
 
 1. `[open]` BgGPT managed API pricing and rate limits — confirm before running any scenario against real upstream. Running Scenario C without this answered risks unexpected invoice.

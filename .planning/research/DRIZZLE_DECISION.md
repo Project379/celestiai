@@ -129,8 +129,98 @@ Cost: rebuilding migration history, retooling scripts, losing the schemas as can
 
 ---
 
-## 6. Migration unblock summary
+## 6. Migration unblock — strict ordering
 
-- Prerequisite to Phase M1: run actions 1-3 above. Should be 1 day of work, all mechanical.
-- No blocker for the rest of Option-B beyond that.
-- Flag: **someone with Supabase Dashboard access must provide `SUPABASE_PROJECT_ID`** for the CLI to work. `[open]` — who has this? If no one, the CLI invocation has to run in an environment that does.
+`[planned]` Ordering matters. Without CI enforcement of type regeneration, deleting `ChartRow` creates a window where the first schema change creates TS errors, and the fastest "fix" under a deadline is re-creating a hand-maintained bridge — the exact failure mode this decision is supposed to eliminate. Execute in order:
+
+### Step 1 — Add Supabase CLI to the toolchain
+
+Either of two shapes, decision point not work:
+- **Option A:** install as dev dep at workspace root: `pnpm add -Dw supabase`. Fixes the version across team machines, survives CI.
+- **Option B:** document `pnpm dlx supabase` as the canonical invocation, no dep added. Cheaper but depends on registry availability during CI.
+
+`[planned]` Recommend A — pinned version, offline-capable builds.
+
+### Step 2 — Add `db:types` script
+
+`packages/db/package.json`:
+```json
+"scripts": {
+  "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/database.generated.ts",
+  "db:sync":  "pnpm db:push && pnpm db:types"
+}
+```
+
+Script writes to `packages/db/src/database.generated.ts` (inside the package — belongs with the rest of the DB source). `[planned]` Re-export from `packages/db/src/index.ts` so consumers import via `@celestia/db`.
+
+### Step 3 — Run `pnpm db:types` once, commit the output
+
+First run establishes the generated file at a known-good state against the current migration 0009. Committed verbatim.
+
+### Step 4 — Add CI drift check [GATE before Step 5]
+
+This is the critical step. Goal: CI fails if someone changes the Drizzle schema, runs `db:push`, and forgets to `db:types`.
+
+Mechanism — Turbo task in `turbo.json`:
+```json
+"db:types:check": {
+  "outputs": [],
+  "dependsOn": []
+}
+```
+
+With a matching script in `packages/db/package.json`:
+```json
+"db:types:check": "pnpm db:types && git diff --exit-code src/database.generated.ts"
+```
+
+The script regenerates types and fails if the generated file differs from what's committed. CI runs `pnpm db:types:check` as part of the standard build/verify step. A PR that changes `packages/db/src/schema/**` without also committing regenerated `database.generated.ts` fails CI.
+
+`[planned]` Alternatively, a pre-commit hook via husky / lefthook that runs the same check. Equivalent enforcement at a different point in the loop.
+
+**Do not advance to Step 5 until this check exists and has failed and passed at least once in CI.** If this step is skipped, the window where someone rebuilds the bridge is open.
+
+### Step 5 — Update `createServiceSupabaseClient()` and siblings to use the `Database` generic
+
+```ts
+import type { Database } from '@celestia/db'
+// ...
+return createClient<Database>(url, key, { ... })
+```
+
+Four files to update in `apps/web/lib/supabase/`: `service.ts`, `server.ts`, `public.ts`, `client.ts`. Plus `packages/db/src/client.ts`. Five mechanical edits. No query call sites change — the types flow through.
+
+### Step 6 — Migrate `ChartRow` imports to `Tables<'charts'>`
+
+```ts
+import type { Tables } from '@celestia/db'
+type ChartRow = Tables<'charts'>  // local alias, optional, can be inlined
+```
+
+`[inferred]` Grep-and-replace. Preserve the local alias name (`ChartRow`) if existing call sites reference it heavily; pure type alias has zero runtime cost. Or inline `Tables<'charts'>` at every site if the alias indirection is unnecessary.
+
+### Step 7 — Delete `apps/web/lib/types/chart.ts`
+
+Only after Step 6 confirms zero remaining imports of the old `ChartRow`. Run `pnpm typecheck` across the workspace; if it passes, delete the file. If it doesn't, some consumer was missed in Step 6.
+
+---
+
+## 7. What if CI drift check catches real drift during M1-M3?
+
+`[planned]` Expected behavior, not a problem:
+- Engineer changes `packages/db/src/schema/charts.ts` to add a column
+- Runs `pnpm db:generate` (produces new migration file)
+- Runs `pnpm db:push` (applies migration to DB)
+- Forgets `pnpm db:types`
+- Commits, opens PR
+- CI runs `pnpm db:types:check`, regenerates types, sees diff, fails
+- Engineer runs `pnpm db:sync` locally (shorthand for both), commits regenerated types
+- CI passes
+
+If someone wants to bypass (hypothetically), they have to actively delete the CI check or skip it with `--no-verify`. Much harder than "silently re-add a hand-maintained bridge."
+
+---
+
+## 8. Removed open question on SUPABASE_PROJECT_ID
+
+`[owner: user]` Who has the project ID is a user question, not an open research question. Removed from the "flag" list below. Assume it will be supplied when Step 1 executes.
