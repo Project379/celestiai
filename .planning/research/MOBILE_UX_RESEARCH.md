@@ -485,9 +485,29 @@ Your current aesthetic (Cinzel uppercase + hairline dividers + deep violet/amber
 - **Mobile-led** [planned] = native is the primary surface we design, test, and ship to
 - **Web-as-parallel-channel** [planned] = stays alive as (a) a faster iteration sandbox (no App Store cycle), (b) Bulgarian SEO acquisition funnel ("хороскоп", "натална карта"), (c) desktop/shareable surface for free-tier content
 - **Not web-first:** push, home-screen widgets, and OS-level notification scheduling are native-only. Every week spent on web-only features is a week those wedges don't exist. [verified: web push works but lacks widgets and OS scheduling; Duolingo 23.5hr pattern requires background scheduling unavailable on web]
-- **Not web-throwaway — but "Solito code share" is narrower than it sounds.** [verified] Solito shares *navigation primitives* (Link, useRouter) and *screen components* written with universal primitives (NativeWind + RN components). It does **not** magically share: framer-motion animations, `next/navigation` hooks like `usePathname`, HTML elements, `window.*` APIs, or any current DOM-specific component in `apps/web/components/`. [inferred from apps/web codebase, which currently uses all of these]
-- **What actually shares cross-platform:** [planned] API routes (consumed over HTTP by both clients — nothing to do with Solito), Zod request/response schemas in a shared package, business logic in `packages/astrology`, and any new component written against universal primitives in `packages/ui`.
-- **Cross-surface contract enforcement** should be done with shared Zod schemas (or tRPC/oRPC if we want RPC-level typing). [planned — no such package exists yet]
+- **Not web-throwaway — but "Solito code share" is narrower than it sounds.** [verified from codebase audit 2026-04-18] Solito provides universal `Link`, `useRouter`, and `useParams` primitives that wrap `next/link` on web and `expo-router` on native. That's its surface area. Everything else is per-component work.
+
+- **What does NOT port automatically** — concrete list, with current usage counts across `apps/web/components/` + `apps/web/app/` [verified via grep 2026-04-18]:
+  | Non-portable surface | Files affected | Migration path |
+  |---|---|---|
+  | HTML elements (`<div>`, `<span>`, `<button>`, `<a>`, `<img>`, `<input>`, `<form>`) | 83 | Rewrite as `View`/`Text`/`Pressable`/`Image`/`TextInput` |
+  | `next/link`, `next/image`, `next/navigation`, `next/headers`, `next/server` | 32 | `solito/link`, `expo-image`, `expo-router` hooks |
+  | `framer-motion` | 36 | `react-native-reanimated` — different API (worklets, shared values); Moti is a thin portable wrapper but not 1:1 |
+  | `window.*` / `document.*` / `localStorage` / `navigator.*` | 16 | `AsyncStorage`, `expo-device`, platform checks |
+  | D3 / Canvas (`NatalWheel`, `CelestialCanvas`) | 8 | `react-native-skia` — completely different rendering primitives; this is real rewrite work, not port |
+  | NativeWind v4 gaps vs Tailwind | all styled files | No `grid` utilities, partial pseudo-selectors (`:hover` is non-sensical on touch anyway), no complex `linear-gradient` via class — use `expo-linear-gradient` component or Skia |
+  | Form file uploads (`<input type="file">`) | unverified — check before Кръг photo-avatar flow | Expo: `expo-image-picker` + `expo-document-picker`; different event model |
+
+- **What DOES port** (write once, used on both): [planned for `packages/ui`]
+  - `react-hook-form` (6 files today) — works on both surfaces with shared validation
+  - Zod schemas (no `packages/zod-schemas/` exists yet — [planned])
+  - Pure business logic (`packages/astrology` — [verified platform-agnostic])
+  - Components authored with `View`/`Text` + NativeWind from day one
+  - `solito/link` if used instead of `next/link` — [planned]
+
+- **What actually shares cross-platform** — corrected framing [planned]: API routes are consumed over HTTP by any client, independent of Solito. Both clients hit `apps/web/app/api/*` endpoints. Cross-surface *contract* sharing needs explicit scaffolding: a `packages/api-types/` with Zod schemas, or tRPC/oRPC for RPC-level typing. Neither exists today.
+
+- **Honest Phase B expectation:** "Web gets it free once native exists" is **false for any screen that touches the audited non-portable surfaces**. Realistic plan: new premium screens (Кръг add-person flow, synastry detail, subscription paywall UI) are built universal-first in `packages/ui`; existing web-only components stay web-only until explicitly ported. Budget per-component: 0.5 day to universalize a small card; 2-5 days to rewrite a wheel/canvas component.
 
 ### Phase A — Scaffold in parallel (2-3 weeks)
 
