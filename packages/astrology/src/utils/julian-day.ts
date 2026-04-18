@@ -24,6 +24,9 @@ import * as sweph from 'sweph'
  */
 export function getJulianDay(date: Date, time: string): number {
   const [hours, minutes] = time.split(':').map(Number)
+  if (hours === undefined || minutes === undefined || Number.isNaN(hours) || Number.isNaN(minutes)) {
+    throw new Error(`getJulianDay: time must be "HH:MM", got "${time}"`)
+  }
   const decimalHours = hours + minutes / 60
 
   // Use UTC methods to avoid timezone issues
