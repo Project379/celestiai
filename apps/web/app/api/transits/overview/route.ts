@@ -1,105 +1,49 @@
 import { auth } from '@clerk/nextjs/server'
-import { calculateNatalChart } from '@celestia/astrology'
-import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { getTransitsOverview } from '@celestia/core/horoscope/transits'
 
+/**
+ * GET /api/transits/overview?chartId=...
+ *
+ * Thin wrapper over @celestia/core getTransitsOverview(). Core function
+ * returns a discriminated-union result; this wrapper maps it to HTTP
+ * status codes.
+ */
 export async function GET(req: Request) {
   const { userId } = await auth()
   if (!userId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  try {
-    const url = new URL(req.url)
-    const chartId = url.searchParams.get('chartId')
+  const url = new URL(req.url)
+  const chartId = url.searchParams.get('chartId')
+  if (!chartId) {
+    return Response.json({ error: 'Missing chartId' }, { status: 400 })
+  }
 
-    if (!chartId) {
-      return Response.json({ error: 'Missing chartId' }, { status: 400 })
-    }
-
-    const supabase = createServiceSupabaseClient()
-
-    // Parallelize independent queries — user tier + chart fetch
-    const [userResult, chartResult] = await Promise.all([
-      supabase
-        .from('users')
-        .select('subscription_tier')
-        .eq('clerk_id', userId)
-        .single(),
-      supabase
-        .from('charts')
-        .select('id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude')
-        .eq('id', chartId)
-        .single(),
-    ])
-
-    if (userResult.data?.subscription_tier !== 'premium') {
-      return Response.json(
-        { error: 'Premium subscription required.', code: 'PREMIUM_REQUIRED' },
-        { status: 403 }
-      )
-    }
-
-    const chart = chartResult.data
-    if (chartResult.error || !chart) {
-      return Response.json({ error: 'Chart not found' }, { status: 404 })
-    }
-
-    if (chart.user_id !== userId) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    let { data: calculation } = await supabase
-      .from('chart_calculations')
-      .select('planet_positions, house_cusps, aspects, ascendant, mc, birth_time_known')
-      .eq('chart_id', chartId)
-      .single()
-
-    if (!calculation) {
-      const chartData = calculateNatalChart({
-        date: new Date(chart.birth_date),
-        time: chart.birth_time || null,
-        lat: chart.latitude,
-        lon: chart.longitude,
-        birthTimeKnown: chart.birth_time_known,
-      })
-
-      const { data: insertedCalculation, error: insertError } = await supabase
-        .from('chart_calculations')
-        .upsert(
-          {
-            chart_id: chartId,
-            planet_positions: chartData.planets,
-            house_cusps: chartData.houses,
-            aspects: chartData.aspects,
-            ascendant: chartData.ascendant,
-            mc: chartData.mc,
-            birth_time_known: chartData.birthTimeKnown,
-          },
-          { onConflict: 'chart_id' }
-        )
-        .select('planet_positions, house_cusps, aspects, ascendant, mc, birth_time_known')
-        .single()
-
-      if (insertError || !insertedCalculation) {
-        console.error('[Transit Overview] Failed to bootstrap chart calculation:', insertError)
-        return Response.json(
-          { error: 'Failed to prepare natal chart for transit overview.' },
-          { status: 500 }
-        )
-      }
-
-      calculation = insertedCalculation
-    }
-
-    const overview = buildTransitOverview(calculation, new Date())
-    return Response.json(overview, {
+  const result = await getTransitsOverview(userId, chartId)
+  if (result.ok) {
+    return Response.json(result.data, {
       headers: {
         'Cache-Control': 'private, max-age=900, stale-while-revalidate=600',
       },
     })
-  } catch (error) {
-    console.error('[Transit Overview] Unhandled error:', error)
-    return Response.json({ error: 'Failed to load transit overview.' }, { status: 500 })
+  }
+
+  switch (result.error) {
+    case 'PREMIUM_REQUIRED':
+      return Response.json(
+        { error: 'Premium subscription required.', code: 'PREMIUM_REQUIRED' },
+        { status: 403 },
+      )
+    case 'CHART_NOT_FOUND':
+      return Response.json({ error: 'Chart not found' }, { status: 404 })
+    case 'FORBIDDEN':
+      return Response.json({ error: 'Forbidden' }, { status: 403 })
+    case 'INTERNAL':
+    default:
+      return Response.json(
+        { error: 'Failed to load transit overview.' },
+        { status: 500 },
+      )
   }
 }

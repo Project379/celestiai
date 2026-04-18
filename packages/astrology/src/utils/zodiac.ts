@@ -24,10 +24,18 @@ export function getZodiacSign(longitude: number): ZodiacSign {
   // Normalize longitude to 0-360 range
   const normalizedLongitude = ((longitude % 360) + 360) % 360
 
-  // Each sign spans 30 degrees
+  // Each sign spans 30 degrees; signIndex is mathematically bounded to 0..11
+  // because the normalized longitude is bounded to [0, 360). The invariant
+  // check below documents and enforces this at runtime — if it ever fires,
+  // the math above drifted, not the caller.
   const signIndex = Math.floor(normalizedLongitude / 30)
-
-  return ZODIAC_SIGNS_ORDER[signIndex]
+  const sign = ZODIAC_SIGNS_ORDER[signIndex]
+  if (sign === undefined) {
+    throw new Error(
+      `Invariant violated: signIndex ${signIndex} out of range for ZODIAC_SIGNS_ORDER (longitude ${longitude})`,
+    )
+  }
+  return sign
 }
 
 /**

@@ -276,6 +276,8 @@ Restating per conversation so the sequence below is unambiguous:
 - Per-endpoint budget: 2-4 hours (extraction is mechanical once patterns are set) `[inferred]`
 - **Budget: 4-6 days total** `[inferred]`
 
+**Correction applied 2026-04-18 during M2 execution:** `/api/crystals/route` was miscategorized as a pure read. It writes inside the GET handler (`insertRecommendationIfNew`, `cleanupDuplicateRecommendations`). Moved to Phase M3 where its sibling writer endpoints live (`/api/crystals/collect`, `/api/crystals/daily/collect`) — they share the same helper functions in `apps/web/lib/crystals/queries.ts` (`recommend.ts`, `fetchUserCollection`, `fetchActiveRecommendations`, etc.) which should migrate to `packages/core/` together rather than in two separate phases. `/api/user` also skipped from M2 extraction: its handler has no business logic to extract (auth check + pass-through of userId/sessionId/timestamp). The M2 plan was modeled at a coarser granularity than the endpoint semantics justified; the inventory's "read vs write" split was a useful first pass but not load-bearing.
+
 **Phase M3 — Migrate "write + orchestration" endpoints:**
 - `/api/chart/calculate`, `/api/birth-data`, `/api/birth-data/[id]`, `/api/crystals/{collect,daily/collect}`
 - Higher care needed for the cache-or-compute orchestration in chart calc + transits

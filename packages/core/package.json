@@ -8,14 +8,21 @@
     ".": "./src/index.ts",
     "./moon-phase": "./src/lib/moon-phase.ts",
     "./crystals/today": "./src/crystals/today.ts",
-    "./crystals/schemas": "./src/crystals/schemas.ts"
+    "./crystals/schemas": "./src/crystals/schemas.ts",
+    "./planets/current": "./src/planets/current.ts",
+    "./stripe/status": "./src/stripe/status.ts",
+    "./horoscope/transit-analysis": "./src/horoscope/transit-analysis.ts",
+    "./horoscope/transits": "./src/horoscope/transits.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint src"
   },
   "dependencies": {
+    "@celestia/astrology": "workspace:*",
     "@supabase/supabase-js": "^2.49.1",
+    "stripe": "^20.3.1",
+    "sweph": "^2.10.3-4",
     "zod": "^4.3.6"
   },
   "devDependencies": {

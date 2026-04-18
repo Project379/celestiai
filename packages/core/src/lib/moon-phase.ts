@@ -10,6 +10,8 @@
  * "new moon".
  */
 
+import { first, last } from './invariant'
+
 const SYNODIC_MONTH = 29.530588853
 // Reference new moon: 2000-01-06 18:14:00 UTC (well-known astronomical epoch)
 const REFERENCE_NEW_MOON_MS = Date.UTC(2000, 0, 6, 18, 14, 0)
@@ -203,13 +205,15 @@ export function getLunarPhase(date: Date = new Date()): LunarPhase {
   const isWaxing = phaseDay < SYNODIC_MONTH / 2
 
   // BOUNDARIES and MAJOR_EVENTS are compile-time constants with multiple
-  // entries, so these fallbacks are defensive non-nulls — the find() call
-  // always resolves in practice.
-  const boundaryMatch = BOUNDARIES.find((b) => phaseDay < b.maxDay) ?? BOUNDARIES[0]!
+  // entries; find() always resolves in practice but TS can't prove it under
+  // noUncheckedIndexedAccess. first()/last() provide loud throws if the
+  // invariant is ever violated — prefer them over `!` which silently
+  // becomes undefined at runtime. See ./invariant.ts for the why.
+  const boundaryMatch = BOUNDARIES.find((b) => phaseDay < b.maxDay) ?? first(BOUNDARIES)
   const phaseId = boundaryMatch.id
   const meta = PHASE_META[phaseId]
 
-  const next = MAJOR_EVENTS.find((e) => e.day > phaseDay + 0.05) ?? MAJOR_EVENTS[MAJOR_EVENTS.length - 1]!
+  const next = MAJOR_EVENTS.find((e) => e.day > phaseDay + 0.05) ?? last(MAJOR_EVENTS)
   const daysAway = next.day - phaseDay
   const nextMeta = PHASE_META[next.id]
 

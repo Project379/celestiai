@@ -1,7 +1,26 @@
 import { getLunarPhase } from '../lib/moon-phase'
 import { createCoreSupabaseClient } from '../lib/supabase'
 import { fetchCatalog, type CatalogRow } from './queries'
-import type { CrystalOfTheDayResponse, Streak } from './schemas'
+import type {
+  CrystalOfTheDayResponse,
+  DailyCrystalEntry,
+  Streak,
+} from './schemas'
+
+export interface GetCrystalOfTheDayOptions {
+  /**
+   * When true, the response includes `days` — the last 60 days of daily
+   * crystal entries with FK-joined crystal metadata. Switches the internal
+   * SELECT from a bare `date` projection to the nested-select used by the
+   * former /api/crystals/daily-streak endpoint (see the Phase-M2 unify
+   * decision in the commit message that introduced this flag).
+   *
+   * Default: false. Non-history callers (dashboard, /api/crystals/today)
+   * pay for the cheaper query; the `/api/crystals/daily-streak` wrapper
+   * opts in.
+   */
+  includeHistory?: boolean
+}
 
 /**
  * Core function: today's lunar-phase-driven crystal for the given user.
@@ -29,7 +48,9 @@ import type { CrystalOfTheDayResponse, Streak } from './schemas'
  */
 export async function getCrystalOfTheDay(
   userId: string | null,
+  options: GetCrystalOfTheDayOptions = {},
 ): Promise<CrystalOfTheDayResponse> {
+  const includeHistory = options.includeHistory === true
   const supabase = createCoreSupabaseClient()
   const catalog = await fetchCatalog(supabase)
 
@@ -51,6 +72,7 @@ export async function getCrystalOfTheDay(
   let isPremium = false
   let streak: Streak | null = null
   let collectedToday = false
+  let days: DailyCrystalEntry[] | undefined
 
   if (userId) {
     const { data: user } = await supabase
@@ -79,14 +101,58 @@ export async function getCrystalOfTheDay(
     collectedToday = true
 
     const sixtyDaysAgo = daysBefore(today, 60)
-    const { data: rows } = await supabase
-      .from('user_daily_crystals')
-      .select('date')
-      .eq('user_id', userId)
-      .gte('date', sixtyDaysAgo)
 
-    const dates = (rows ?? []).map((r) => r.date as string)
-    streak = computeStreak(dates, today)
+    if (includeHistory) {
+      // History-mode fetch: nested select pulls FK-joined crystal
+      // metadata per day. Used by /api/crystals/daily-streak.
+      const { data: rows } = await supabase
+        .from('user_daily_crystals')
+        .select(
+          'date, crystal_id, crystals(slug, name_en, name_bg, color_primary, color_secondary, color_accent, svg_variant)',
+        )
+        .eq('user_id', userId)
+        .gte('date', sixtyDaysAgo)
+        .order('date', { ascending: false })
+
+      days = (rows ?? []).map((row: Record<string, unknown>) => {
+        const c = (row.crystals ?? null) as
+          | {
+              slug: string
+              name_en: string
+              name_bg: string | null
+              color_primary: string
+              color_secondary: string
+              color_accent: string | null
+              svg_variant: string
+            }
+          | null
+        return {
+          date: row.date as string,
+          crystal_id: row.crystal_id as string,
+          slug: c?.slug ?? null,
+          name_en: c?.name_en ?? null,
+          name_bg: c?.name_bg ?? null,
+          color_primary: c?.color_primary ?? null,
+          color_secondary: c?.color_secondary ?? null,
+          color_accent: c?.color_accent ?? null,
+          svg_variant: c?.svg_variant ?? null,
+        }
+      })
+      streak = computeStreak(
+        days.map((d) => d.date),
+        today,
+      )
+    } else {
+      // Lean fetch for non-history callers (dashboard, /api/crystals/today).
+      const { data: rows } = await supabase
+        .from('user_daily_crystals')
+        .select('date')
+        .eq('user_id', userId)
+        .gte('date', sixtyDaysAgo)
+
+      const dates = (rows ?? []).map((r) => r.date as string)
+      streak = computeStreak(dates, today)
+    }
   }
 
   return {
@@ -114,6 +180,8 @@ export async function getCrystalOfTheDay(
     streak,
     isPremium,
     collectedToday,
+    today,
+    ...(days !== undefined ? { days } : {}),
   }
 }
 

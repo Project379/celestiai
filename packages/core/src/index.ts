@@ -14,15 +14,37 @@ export { fetchCatalog } from './crystals/queries'
 export type { CatalogRow } from './crystals/queries'
 
 export { getCrystalOfTheDay } from './crystals/today'
+export type { GetCrystalOfTheDayOptions } from './crystals/today'
+
+export { getCurrentPlanets } from './planets/current'
+export type { CurrentPlanet, CurrentPlanetsResponse } from './planets/current'
+
+export { getStripeStatus } from './stripe/status'
+export type { StripeStatusResponse } from './stripe/status'
+
+export { getTransitsOverview } from './horoscope/transits'
+export type { TransitsOverviewResult } from './horoscope/transits'
+export {
+  buildTransitOverview,
+  transitOverviewToPromptText,
+} from './horoscope/transit-analysis'
+export type {
+  TransitOverview,
+  ActiveTransitDetail,
+  UpcomingTransitDetail,
+  LunarEventDetail,
+} from './horoscope/transit-analysis'
 export {
   CrystalRowSchema,
   LunarPhaseSummarySchema,
   StreakSchema,
+  DailyCrystalEntrySchema,
   CrystalOfTheDayResponseSchema,
 } from './crystals/schemas'
 export type {
   CrystalRow,
   LunarPhaseSummary,
   Streak,
+  DailyCrystalEntry,
   CrystalOfTheDayResponse,
 } from './crystals/schemas'
