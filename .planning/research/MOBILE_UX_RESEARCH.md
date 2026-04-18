@@ -478,12 +478,16 @@ Your current aesthetic (Cinzel uppercase + hairline dividers + deep violet/amber
 
 ## 10. Phased rollout — mobile-led, web-as-parallel-channel
 
-**Decided 2026-04-18:** Mobile is end-goal and 80%+ of current web traffic is mobile. Web is NOT a throwaway bridge — Solito is designed for 90% code share, so web comes along for free once native exists. Reframe:
+> **Epistemic tags in this document:** [verified] from files read; [inferred] from files; [planned] not yet implemented; [assumed] conventional wisdom / placeholder.
 
-- **Mobile-led** = native is the primary surface we design, test, and ship to
-- **Web-as-parallel-channel** = stays alive as (a) a faster iteration sandbox (no App Store cycle), (b) Bulgarian SEO acquisition funnel ("хороскоп", "натална карта"), (c) desktop/shareable surface for free-tier content
-- **Not web-first:** every week spent on web-only features is a week the three retention wedges (push, widgets, streak notifications — all native-only) don't exist
-- **Not web-throwaway:** existing ~80% built web app + Solito code share means the web cost is near-zero once native is scaffolded
+**Decided 2026-04-18:** Mobile is end-goal and 80%+ of current web traffic is mobile [assumed — awaiting analytics]. Reframe:
+
+- **Mobile-led** [planned] = native is the primary surface we design, test, and ship to
+- **Web-as-parallel-channel** [planned] = stays alive as (a) a faster iteration sandbox (no App Store cycle), (b) Bulgarian SEO acquisition funnel ("хороскоп", "натална карта"), (c) desktop/shareable surface for free-tier content
+- **Not web-first:** push, home-screen widgets, and OS-level notification scheduling are native-only. Every week spent on web-only features is a week those wedges don't exist. [verified: web push works but lacks widgets and OS scheduling; Duolingo 23.5hr pattern requires background scheduling unavailable on web]
+- **Not web-throwaway — but "Solito code share" is narrower than it sounds.** [verified] Solito shares *navigation primitives* (Link, useRouter) and *screen components* written with universal primitives (NativeWind + RN components). It does **not** magically share: framer-motion animations, `next/navigation` hooks like `usePathname`, HTML elements, `window.*` APIs, or any current DOM-specific component in `apps/web/components/`. [inferred from apps/web codebase, which currently uses all of these]
+- **What actually shares cross-platform:** [planned] API routes (consumed over HTTP by both clients — nothing to do with Solito), Zod request/response schemas in a shared package, business logic in `packages/astrology`, and any new component written against universal primitives in `packages/ui`.
+- **Cross-surface contract enforcement** should be done with shared Zod schemas (or tRPC/oRPC if we want RPC-level typing). [planned — no such package exists yet]
 
 ### Phase A — Scaffold in parallel (2-3 weeks)
 
@@ -497,24 +501,24 @@ Work two tracks simultaneously. Small team can parallelize because these touch d
 5. Implement Карта scroll-chips restructure
 
 **Native track (start Expo scaffold):**
-1. Initialize `apps/mobile` Expo SDK 53+, NativeWind v4, Solito routing (stack decisions already locked in `SUMMARY.md`)
-2. Clerk expo SDK integration + Supabase native client with `accessToken()` pattern (per stack ADR)
-3. Shared components layer — move Днес / Карта / Ти components into `packages/ui` so both web and native import them
-4. First native build = shell only: 5 tabs + iOS nav-bar Oracle glyph (Android FAB) + empty screens, navigable. TestFlight internal build.
-5. RevenueCat setup (before paywall code — it takes App Store product config that has lead time)
-6. Push notification permission flow scaffold (no notifications yet, just the plumbing)
+1. Initialize `apps/mobile` with Expo SDK 53, NativeWind v4, expo-router (Solito's routing primitives wrap expo-router on native + next/router on web) [verified — chosen stack in `SUMMARY.md`; scaffold shipped in commit `db8a3e4`]
+2. Clerk expo SDK integration + Supabase native client with `accessToken()` pattern [planned — per stack ADR; not yet wired]
+3. **Shared components in `packages/ui`** — any new component intended for both surfaces must be written against universal primitives (RN `View`/`Text` + NativeWind). Existing `apps/web/components/` uses `next/link`, framer-motion, and HTML elements — those will NOT automatically port. Expect per-component decisions: universalize it in `packages/ui`, or write platform-specific versions. [planned]
+4. First native build = shell only: 5 tabs + iOS nav-bar Oracle glyph (Android FAB) + empty screens, navigable. TestFlight internal build. [planned — Expo Go works today; TestFlight requires EAS build config]
+5. RevenueCat setup (before paywall code — it takes App Store product config that has lead time) [planned]
+6. Push notification permission flow scaffold (no notifications yet, just the plumbing) [planned]
 
 **Phase A exit criteria:** TestFlight build navigates all 5 tabs, renders the user's chart, opens Oracle. Web has the new IA live for existing users. No premium features yet — this is infrastructure.
 
 ### Phase B — Кръг on native-primary (4-6 weeks)
 
-This is where the mobile-led bet pays off. `Кръг` is built on native FIRST because it needs push + IAP + the full relationship UX. Web gets it via Solito code share in parallel — essentially free.
+This is where the mobile-led bet pays off. `Кръг` is built on native FIRST because it needs push + IAP + the full relationship UX. Web gets it in parallel — but the "free from Solito" framing is misleading: only code written against universal primitives ports for free. Plan for per-screen decisions: share the data/API layer via `packages/astrology` and Zod schemas [planned], share screen components only if they're authored universal in `packages/ui` [planned].
 
 1. Add-person flow (ghost-user mode only; mutual consent deferred to Phase C)
 2. Synastry calculation API route (`packages/astrology` extends for two-chart aspect grids)
 3. Free tier: Sun/Moon/Rising compatibility + one-line score
 4. First paid feature: "Днешен ден в твоя кръг" (daily transit feed filtered by Кръг members)
-5. **RevenueCat paywall flow on native.** Stripe web paywall in parallel via existing Solito pattern.
+5. **RevenueCat paywall flow on native** [planned]. Stripe web paywall in parallel — both clients hit shared `/api/webhooks/*` endpoints on the Next.js server; payment UIs are platform-specific. Not a "Solito thing."
 6. Push notification: daily horoscope at user's pattern-time (23.5hr rule)
 7. Soft launch — 50-100 Bulgarian users via TestFlight + Google Play internal track. Collect real push/widget/paywall data before GA.
 
@@ -585,7 +589,7 @@ All share images generated server-side via a `/api/og/*` route (Next.js handles 
 Technical: ghost profile stored with `owner_user_id` (you) + email/phone for future matching. On new signup, backend checks ghost profile matches and prompts both users for linked-chart consent.
 
 ### 11.6 Native vs web push — parallel, native-primary
-**Decided:** Mobile-led rollout per §10. Web runs in parallel (Solito code share), but the three retention wedges (push, widgets, streak notifications) are native-only. Phase B ships Кръг native-first.
+**Decided:** Mobile-led rollout per §10. Web runs in parallel via universal components in `packages/ui` + shared API routes [planned], but the three retention wedges (background push scheduling, home-screen widgets, Duolingo-style pattern-time notifications) are native-only [verified — web Push API doesn't support background scheduling or widgets]. Phase B ships Кръг native-first.
 
 ### 11.7 Oracle context cost — BgGPT primary, frontier fallback, cache + hardcap
 **Decided:** AI stack already locked in `Celestia_AI_Reference.md §5` — BgGPT API (INSAIT, Bulgarian-native, EU-resident) as primary, Claude Sonnet or GPT-4o as fallback behind Vercel AI SDK. Wired from day one so switching is an env variable.
