@@ -139,6 +139,45 @@ Format:
 |---|---|---|---|---|---|---|---|
 ```
 
+### 7.1 Baseline status — 2026-04-18 [blocker]
+
+`[blocker]` Scenarios B and C **cannot run today**. The request to run them against pre-refactor architecture (to establish a baseline for post-refactor regression detection) is blocked on prerequisites. Status audit:
+
+| Prerequisite | State [verified 2026-04-18] | Blocks |
+|---|---|---|
+| k6 installed or listed in any `package.json` | Not present. Grep of all package.json files returned zero matches. | All scenarios |
+| k6 script with custom TTFT / ITL / cache_hit / stream_aborted metrics | Does not exist. Zero files matching `*.k6.js` or `loadtest*` in the repo. | All scenarios |
+| Scenario A — mocked upstream harness | Does not exist. Nothing is instrumented today. Without A validating the harness, B/C numbers are unattributable. | B, C, D, E |
+| BgGPT managed API access (project ID, endpoint, rate limits) | `[open]` per `Celestia_AI_Reference.md §5` — pricing and DPA unverified. | B, C, D, E against real upstream |
+| Staging deployment pinned to `fra1` | `vercel.json` exists but has no `regions` field. Default is `iad1` (US). | B, C (real-latency measurement) |
+| Supabase `eu-central-1` project confirmed | `[open]` — not verified in this audit | B, C (real-latency measurement) |
+
+`[inferred]` Running "k6 with default metrics against the deployed endpoint" is technically possible right now and would produce numbers, but those numbers would measure `http_req_duration` collapsing TTFT and generation into one useless value (§1). The result would be "looks fine / looks broken" theater, not a pre-refactor baseline we can compare against.
+
+### 7.2 Unblock chain — specific tasks in order
+
+`[planned]` To produce a legitimate pre-refactor baseline for B and C:
+
+1. **Add k6 to the dev toolchain.** Either `pnpm add -D -w k6` at the workspace root, or document that k6 is run as a standalone binary and not a Node dependency. Decision point, not work.
+2. **Write Scenario A script** — `loadtest/scenarios/A-mocked-harness.js`. Script defines custom metrics (`ttft`, `itl`, `stream_duration`, `stream_aborted`, `stream_stalled`, `cache_hit`, `stream_tokens`), connects to a local Next dev server with a deterministic mock upstream swapped in via env var (e.g. `AI_PROVIDER=mock`), runs 10 concurrent for 2 minutes, asserts that the custom metrics read sensibly.
+3. **Add mock-upstream toggle to `apps/web`** — tiny change behind `AI_PROVIDER=mock`: return a stream that emits deterministic tokens at 10 tokens/s for 15s. Doesn't touch production code path. One day of work including tests.
+4. **Run Scenario A locally.** `pnpm dev` + `k6 run loadtest/scenarios/A-mocked-harness.js`. Iterate until metrics land where §2 targets them. This proves the harness works.
+5. **Pin Vercel regions.** Edit `apps/web/vercel.json` to add `"regions": ["fra1"]` per `Celestia_AI_Reference.md §3`. Deploy to staging. Small change, no code impact.
+6. **Confirm Supabase project region is `eu-central-1` or `eu-west-1`.** Cannot be changed after creation. If it's wrong, that's a much bigger conversation (data migration). Verify in Supabase Dashboard.
+7. **Write Scenario B script** — `loadtest/scenarios/B-warm-cache.js`. Ramp 0→100 concurrent over 5min, hold 10min, hit cached daily-horoscope endpoints.
+8. **Write Scenario C script** — `loadtest/scenarios/C-cold-cache.js`. 50 concurrent for 5min, `X-Cache-Bypass` header set.
+9. **Run B and C against staging** with `AI_PROVIDER=bggpt` (real) and record results in §7 above.
+
+### 7.3 Time estimate [inferred]
+
+- Steps 1-4: 2-3 days for one engineer familiar with k6 and Next streaming. +1 week ramp-up tax if nobody has used k6 before (same pattern as Skia and Option-B in prior docs — ramp-up visible, not hidden).
+- Steps 5-6: 1-2 hours, mostly "confirm and redeploy."
+- Steps 7-8: 2 days (derivative of A once the metrics layer is stable).
+- Step 9: half a day execution + analysis.
+- **Total to unblock baseline: ~1 week engineering, ~2 weeks if ramp applies.**
+
+`[planned]` None of this work touches `apps/` or `packages/` source code except step 3 (add mock-upstream toggle) and step 5 (pin region). Both are additive and revertible. Keep them on their own branch off `mobile-parallel-test` or a new branch if the load-test work is going to precede Option-B execution.
+
 ## 8. Open questions before implementation
 
 1. `[open]` BgGPT managed API pricing and rate limits — confirm before running any scenario against real upstream. Running Scenario C without this answered risks unexpected invoice.

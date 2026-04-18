@@ -284,8 +284,20 @@ Restating per conversation so the sequence below is unambiguous:
 **Phase M4 — Migrate streaming endpoints:**
 - `/api/horoscope/generate`, `/api/oracle/{generate,teaser,readings}`
 - `[open]` Whether these move to shared-package functions that return AsyncIterables or stay partially route-handler-coupled depends on Vercel AI SDK architecture. Research needed before touching.
-- Deferred until streaming placement decision (§5.2) is resolved
-- **Budget: 3-5 days once streaming decision is made** `[inferred]`
+- **Budget: 3-5 days once all predecessors complete** `[inferred]`
+
+**Phase M4 explicit predecessor chain — must complete in order:**
+
+| # | Predecessor | Owner | Doc |
+|---:|---|---|---|
+| 1 | Scenario A mocked-harness built and passing. | Whoever owns load-test infra. | `LOAD_TEST_PLAN.md §7.2` steps 1-4 |
+| 2 | Scenario B (warm-cache) passes against current pre-refactor architecture at 100 concurrent. | Same. | `LOAD_TEST_PLAN.md §3 Scenario B` |
+| 3 | Scenario C (cold-cache) passes against current pre-refactor architecture at 50 concurrent. Cost-per-request envelope recorded. | Same. | `LOAD_TEST_PLAN.md §3 Scenario C` |
+| 4 | Streaming placement decision recorded in `LOAD_TEST_PLAN.md §7` or a dedicated doc: Edge vs Serverless vs dedicated streaming service. Based on observed TTFT, ITL, and cost from steps 2-3. | Architecture owner + person who ran tests. | `DATA_FETCHING_INVENTORY.md §5.2` |
+| 5 | Vercel AI SDK `streamText` research: can the `StreamTextResult` be returned as an AsyncIterable from a plain async function in `packages/core/`, or does it require direct Response construction inside a route handler? If the answer is "route-handler-coupled," M4 becomes "shared prompt-building + provider-selection logic in `packages/core/`, streaming response construction stays in `route.ts`" — a smaller, less pure split. | Person doing M4. | `[open]` — research task, no existing doc |
+| 6 | If step 4 says "move off Vercel to dedicated service," that's a MAJOR scope expansion that deserves its own milestone, not Phase M4. Treat as a hard branch point. | Architecture owner. | `[planned]` — if reached, open a new milestone doc |
+
+`[planned]` **Do not start M4 without all six predecessors resolved.** M4 is specifically flagged this way because it's the most likely phase to become a forgotten todo — streaming is intimidating, the cost of wrong decisions is high, and every prior phase is mechanical enough that someone can easily "just skip to M4 last." The explicit chain forces the decision to be made against real data rather than convenience.
 
 **Phase M5 — Mobile integration:**
 - Mobile imports Zod schemas from `packages/core/`
