@@ -1,149 +1,26 @@
 import { auth } from '@clerk/nextjs/server'
-import { getLunarPhase } from '@/lib/moon-phase'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { fetchCatalog } from '@/lib/crystals/queries'
+import { getCrystalOfTheDay } from '@celestia/core/crystals/today'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/crystals/today
  *
- * Returns today's crystal (tied to the lunar phase), plus — for premium
- * users — the current streak and whether today's stone has already been
- * collected. Collecting itself is a manual POST to /api/crystals/daily/collect,
- * so this endpoint is read-only and safe to hit on every page load.
+ * Thin HTTP wrapper over the shared `getCrystalOfTheDay` function in
+ * `@celestia/core`. Route handlers import the unwrapped core function
+ * directly — React.cache at the web-lib call site has no effect outside
+ * a render pass, so importing the cached wrapper here would be wrong.
+ *
+ * Response shape is described by `CrystalOfTheDayResponseSchema` in
+ * `@celestia/core/crystals/schemas`. Mobile clients validate against it.
  */
-
-interface StreakData {
-  current: number
-  longest: number
-  totalDays: number
-}
-
-function todayIsoDate(): string {
-  const now = new Date()
-  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
-}
-
-function daysBefore(iso: string, n: number): string {
-  const d = new Date(`${iso}T00:00:00Z`)
-  d.setUTCDate(d.getUTCDate() - n)
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
-}
-
-function computeStreak(dates: string[], today: string): StreakData {
-  const set = new Set(dates)
-  let current = 0
-  let cursor = today
-  while (set.has(cursor)) {
-    current++
-    cursor = daysBefore(cursor, 1)
-  }
-  const sorted = [...set].sort()
-  let longest = 0
-  let run = 0
-  let prev: string | null = null
-  for (const d of sorted) {
-    if (prev && daysBefore(d, 1) === prev) {
-      run++
-    } else {
-      run = 1
-    }
-    if (run > longest) longest = run
-    prev = d
-  }
-  return { current, longest, totalDays: set.size }
-}
-
-/**
- * Deterministic daily index — rotates through the matches so users don't
- * get the same crystal multiple days in a row within a phase. Same date
- * (UTC) yields the same index for every user; different dates advance the
- * rotation by one.
- */
-function daysSinceEpochUTC(iso: string): number {
-  return Math.floor(new Date(`${iso}T00:00:00Z`).getTime() / 86400000)
-}
-
 export async function GET() {
   try {
-    const supabase = createServiceSupabaseClient()
-    const catalog = await fetchCatalog(supabase)
-
-    const lunarPhase = getLunarPhase()
-    const today = todayIsoDate()
-    // Deterministic sort by slug so the rotation is stable across restarts
-    // regardless of what order the DB returns.
-    const matches = catalog
-      .filter((c) => (c.moon_phases as string[]).includes(lunarPhase.id))
-      .sort((a, b) => a.slug.localeCompare(b.slug))
-
-    const pick =
-      matches.length > 0
-        ? matches[daysSinceEpochUTC(today) % matches.length]
-        : catalog.find((c) => c.slug === 'clear-quartz')
-    if (!pick) {
-      return Response.json({ error: 'No crystal available' }, { status: 500 })
-    }
-
     const { userId } = await auth()
-
-    let streak: StreakData | null = null
-    let isPremium = false
-    let collectedToday = false
-
-    if (userId) {
-      const { data: user } = await supabase
-        .from('users')
-        .select('subscription_tier')
-        .eq('clerk_id', userId)
-        .single()
-      isPremium = user?.subscription_tier === 'premium'
-    }
-
-    if (userId && isPremium) {
-      // Auto-collect on login/page-load. The daily stream is friction-free
-      // by design — users get rewarded just for showing up. The rare-stone
-      // collect loop (Прозорци tab) is where the manual collect lives.
-      // Unique (user_id, date) index makes this a no-op if already collected.
-      const { error: insertError } = await supabase
-        .from('user_daily_crystals')
-        .insert({
-          user_id: userId,
-          crystal_id: pick.id,
-          date: today,
-        })
-
-      if (insertError && insertError.code !== '23505') {
-        console.warn('[crystals/today] auto-collect failed', insertError)
-      }
-      collectedToday = true
-
-      const sixtyDaysAgo = daysBefore(today, 60)
-      const { data: rows } = await supabase
-        .from('user_daily_crystals')
-        .select('date')
-        .eq('user_id', userId)
-        .gte('date', sixtyDaysAgo)
-
-      const dates = (rows ?? []).map((r) => r.date as string)
-      streak = computeStreak(dates, today)
-    }
-
-    return Response.json({
-      crystal: pick,
-      lunarPhase: {
-        id: lunarPhase.id,
-        name: lunarPhase.name,
-        latin: lunarPhase.latin,
-        illumination: lunarPhase.illumination,
-      },
-      streak,
-      isPremium,
-      collectedToday,
-    })
+    const data = await getCrystalOfTheDay(userId)
+    return Response.json(data)
   } catch (error) {
-    console.error('[crystals/today] error', error)
+    console.error('[api/crystals/today] error', error)
     return Response.json({ error: 'Internal error' }, { status: 500 })
   }
 }

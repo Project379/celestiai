@@ -3,9 +3,11 @@ import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { getCrystalOfTheDay } from '@/lib/crystals/today'
 import { CrystalCollectionContent } from '@/components/crystals/CrystalCollectionContent'
 import { CrystalOfTheDayCard } from '@/components/crystals/CrystalOfTheDayCard'
 import { LoadingAnimation } from '@/components/LoadingAnimation'
+import type { CrystalOfTheDayResponse } from '@celestia/core'
 
 export const metadata: Metadata = {
   title: 'Кристали',
@@ -17,25 +19,34 @@ export default async function CrystalsPage() {
 
   let chartId: string | null = null
   let isPremium = false
+  let crystalOfTheDay: CrystalOfTheDayResponse | null = null
 
   try {
     const supabase = createServiceSupabaseClient()
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('subscription_tier')
-      .eq('clerk_id', userId)
-      .single()
-    isPremium = user?.subscription_tier === 'premium'
+    // Fetch chart + tier in parallel with the shared crystal-of-the-day
+    // function. React.cache dedupes the crystal call if another Server
+    // Component in the render pass (unlikely today, but possible) also
+    // asked for it.
+    const [userResult, chartResult, crystal] = await Promise.all([
+      supabase
+        .from('users')
+        .select('subscription_tier')
+        .eq('clerk_id', userId)
+        .single(),
+      supabase
+        .from('charts')
+        .select('id')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single(),
+      getCrystalOfTheDay(userId),
+    ])
 
-    const { data: chart } = await supabase
-      .from('charts')
-      .select('id')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-    chartId = chart?.id ?? null
+    isPremium = userResult.data?.subscription_tier === 'premium'
+    chartId = chartResult.data?.id ?? null
+    crystalOfTheDay = crystal
   } catch (error) {
     console.error('Error preparing crystals page:', error)
   }
@@ -77,9 +88,11 @@ export default async function CrystalsPage() {
       </div>
 
       {/* Today's crystal — free, lunar-phase driven. Shown to everyone as
-         the daily entry point; premium gate is below, for the collection. */}
+         the daily entry point; premium gate is below, for the collection.
+         Data is prefetched by this Server Component and passed as a prop
+         so the client card renders synchronously with no HTTP round-trip. */}
       <section aria-label="Кристал за днес" className="mb-12">
-        <CrystalOfTheDayCard />
+        <CrystalOfTheDayCard initialData={crystalOfTheDay} />
       </section>
 
       {!isPremium && <PremiumGate />}

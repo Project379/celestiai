@@ -1,67 +1,30 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { CrystalGem, type GemVariant } from './CrystalGem'
+import type { CrystalOfTheDayResponse } from '@celestia/core'
 
-interface TodayResponse {
-  crystal: {
-    slug: string
-    name_en: string
-    name_bg: string | null
-    tagline_en: string
-    tagline_bg: string | null
-    description_en: string
-    description_bg: string | null
-    color_primary: string
-    color_secondary: string
-    color_accent: string | null
-    svg_variant: string
-    rarity: string
-  }
-  lunarPhase: {
-    id: string
-    name: string
-    latin: string
-    illumination: number
-  }
-  streak: {
-    current: number
-    longest: number
-    totalDays: number
-  } | null
-  isPremium: boolean
-  collectedToday: boolean
+interface CrystalOfTheDayCardProps {
+  /**
+   * Prefetched crystal-of-the-day from a Server Component parent
+   * (MOBILE_UX_RESEARCH Phase M1 pattern). Required — this card is
+   * always rendered from a Server Component that pre-fetches the
+   * data. If null, we show a friendly fallback.
+   */
+  initialData: CrystalOfTheDayResponse | null
 }
 
 /**
  * Free-tier dashboard card: today's crystal, tied to the current lunar
- * phase. Fetches /api/crystals/today which is un-authed. Links into
- * /crystals (premium gate on that page for deeper features).
+ * phase. Links into /you/crystals for the collection.
+ *
+ * Phase M1 note: previously did a client-side fetch of /api/crystals/today.
+ * Now receives prefetched data from the Server Component parent, so there's
+ * no loading state to manage and the card renders synchronously.
  */
-export function CrystalOfTheDayCard() {
-  const [data, setData] = useState<TodayResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        const res = await fetch('/api/crystals/today', { cache: 'no-store' })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const body = (await res.json()) as TodayResponse
-        if (!cancelled) setData(body)
-      } catch (e) {
-        if (!cancelled) setError((e as Error).message)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  if (error || !data) {
+export function CrystalOfTheDayCard({ initialData }: CrystalOfTheDayCardProps) {
+  if (!initialData) {
     return (
       <section
         aria-label="Камък на деня"
@@ -71,13 +34,13 @@ export function CrystalOfTheDayCard() {
           Камък на деня
         </p>
         <p className="mt-3 font-display text-[14px] font-light text-slate-500">
-          {error ? 'В момента не можем да призовем камъка.' : 'Призоваване...'}
+          В момента не можем да призовем камъка.
         </p>
       </section>
     )
   }
 
-  const { crystal, streak } = data
+  const { crystal, streak, isPremium, collectedToday } = initialData
   const description =
     crystal.description_bg ??
     crystal.description_en.split('. ').slice(0, 2).join('. ') + '.'
@@ -132,14 +95,14 @@ export function CrystalOfTheDayCard() {
           </p>
 
           <div className="mt-5 flex flex-wrap items-center gap-4">
-            {data.isPremium && data.collectedToday && (
+            {isPremium && collectedToday && (
               <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-400/[0.06] px-4 py-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-200">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
                 Събран днес
               </span>
             )}
             <Link
-              href="/crystals"
+              href="/you/crystals"
               className="group inline-flex items-center gap-2 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-slate-200 transition-colors duration-200 hover:text-amber-300"
             >
               <span className="h-px w-6 bg-gradient-to-r from-transparent to-slate-300/80 transition-all duration-300 group-hover:to-amber-300/90" />

@@ -16,10 +16,13 @@ import { getActiveMeteorShower } from '@/lib/meteor-showers'
 import { composeWelcome } from '@/lib/welcome-compose'
 import type { ChartRow } from '@/lib/types/chart'
 
+import type { CrystalOfTheDayResponse } from '@celestia/core'
+
 interface DashboardContentProps {
   firstName: string
   initialBirthChart: ChartRow | null
   subscriptionTier: string
+  initialCrystalOfTheDay: CrystalOfTheDayResponse | null
 }
 
 /**
@@ -94,6 +97,7 @@ export function DashboardContent({
   firstName,
   initialBirthChart,
   subscriptionTier,
+  initialCrystalOfTheDay,
 }: DashboardContentProps) {
   const [birthChart] = useState<ChartRow | null>(initialBirthChart)
   const isPremium = subscriptionTier !== 'free'
@@ -255,7 +259,7 @@ export function DashboardContent({
         className="mb-10"
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <CrystalTile />
+          <CrystalTile initialData={initialCrystalOfTheDay} />
           <LunarTile />
           <TransitTile />
           <CircleTile />

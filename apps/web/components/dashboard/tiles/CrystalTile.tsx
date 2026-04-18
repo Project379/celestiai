@@ -1,47 +1,28 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import type { CrystalOfTheDayResponse } from '@celestia/core'
 
-interface TodayCrystalResponse {
-  crystal: {
-    slug: string
-    name_en: string
-    name_bg: string | null
-    tagline_en: string
-    tagline_bg: string | null
-    color_primary: string
-    color_secondary: string
-    color_accent: string | null
-  }
-  lunarPhase: { name: string }
+interface CrystalTileProps {
+  /**
+   * Optional prefetched crystal-of-the-day from a Server Component
+   * parent (MOBILE_UX_RESEARCH Phase M1 pattern). When provided, the
+   * tile renders synchronously. When omitted (e.g., standalone use in
+   * a client-only context), the tile shows a quiet placeholder.
+   */
+  initialData?: CrystalOfTheDayResponse | null
 }
 
 /**
- * Днес bento tile — today's lunar-phase-driven crystal. Shows the
- * name, Bulgarian tagline, and a small gem color indicator. The
- * full crystal description, streak tracking, and premium gate live
- * on /you/crystals via CrystalOfTheDayCard at the destination.
+ * Днес bento tile — today's lunar-phase-driven crystal.
+ *
+ * Phase M1 note: previously did a client-side fetch of /api/crystals/today.
+ * Now receives prefetched data as a prop from the Server Component parent,
+ * which called getCrystalOfTheDay (via React.cache wrapper) at render time.
+ * No HTTP round-trip on web for this tile anymore.
  */
-export function CrystalTile() {
-  const [data, setData] = useState<TodayCrystalResponse | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        const res = await fetch('/api/crystals/today')
-        if (!res.ok) return
-        const json = (await res.json()) as TodayCrystalResponse
-        if (!cancelled) setData(json)
-      } catch {
-        /* silent — tile stays on placeholder */
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
+export function CrystalTile({ initialData }: CrystalTileProps) {
+  const data = initialData ?? null
 
   const name = data?.crystal?.name_bg || data?.crystal?.name_en || '—'
   const tagline = data?.crystal?.tagline_bg || data?.crystal?.tagline_en || 'днешният камък'
@@ -59,7 +40,6 @@ export function CrystalTile() {
           Кристал за днес
         </p>
 
-        {/* Compact gem color indicator */}
         {data && (
           <span
             aria-hidden

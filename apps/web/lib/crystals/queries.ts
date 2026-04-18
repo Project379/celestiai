@@ -2,34 +2,23 @@
  * Crystal database helpers (service-role Supabase client).
  *
  * API routes call these to avoid duplicating the fetch/upsert boilerplate.
+ *
+ * Phase M1 note: `CrystalRow` and `fetchCatalog` moved to
+ * `@celestia/core/crystals/queries` and are re-exported here to keep
+ * existing importers in apps/web working unchanged. Other helpers below
+ * (collectRecommendation, insertRecommendationIfNew, fetchUserCollection,
+ * fetchActiveRecommendations, cleanupDuplicateRecommendations) stay here
+ * until Phase M2/M3 migrates their respective route handlers.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CrystalCatalogEntry } from './recommend'
+import type { CatalogRow } from '@celestia/core'
+export { fetchCatalog } from '@celestia/core'
 
-export interface CrystalRow {
-  id: string
-  slug: string
-  name_en: string
-  name_bg: string | null
-  tagline_en: string
-  tagline_bg: string | null
-  description_en: string
-  description_bg: string | null
-  planet: string | null
-  zodiac_signs: string[]
-  moon_phases: string[]
-  element: string | null
-  chakra: string | null
-  hardness: number | null
-  color_primary: string
-  color_secondary: string
-  color_accent: string | null
-  svg_variant: string
-  rarity: string
-  keywords: string[]
-  properties: Record<string, unknown> | null
-}
+// Backward-compat alias. Old apps/web code imports CrystalRow; core calls it
+// CatalogRow. Same DB-row shape. Keep until consumers migrate to the core name.
+export type CrystalRow = CatalogRow
 
 export interface UserCrystalRow {
   id: string
@@ -53,19 +42,6 @@ export interface CrystalRecommendationRow {
   valid_until: string
   collected_at: string | null
   created_at: string
-}
-
-export async function fetchCatalog(
-  supabase: SupabaseClient
-): Promise<CrystalRow[]> {
-  const { data, error } = await supabase
-    .from('crystals')
-    .select('*')
-    .order('rarity', { ascending: true })
-    .order('slug', { ascending: true })
-
-  if (error) throw error
-  return (data ?? []) as CrystalRow[]
 }
 
 export function toCatalogEntry(row: CrystalRow): CrystalCatalogEntry {
