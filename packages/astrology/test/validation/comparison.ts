@@ -10,6 +10,7 @@ import type { ChartData, ChartInput, AspectData } from '../../src/types'
 import { getJulianDayUTC } from '../../src/utils/julian-day'
 import { localTimeToUTC } from '../../src/utils/timezone'
 
+import { meanNodeLongitudeDeg } from './adapters/node-meeus'
 import { computePlacidusCusps } from './adapters/placidus-inline'
 import { longitudeDeltaArcsec } from './delta'
 import {
@@ -50,12 +51,31 @@ function buildChartInput(testCase: TestCase): ChartInput {
 
 function comparePlanets(
   chart: ChartData,
+  testCase: TestCase,
   references: ReferenceData,
 ): PlanetComparison[] {
   const out: PlanetComparison[] = []
   const celestiaByBody = new Map<Body, number>()
   for (const p of chart.planets) {
     celestiaByBody.set(p.planet as Body, p.longitude)
+  }
+
+  // §9.2 Tier 2 — inline Meeus polynomial for Mean Node.
+  const celestiaNode = celestiaByBody.get('northNode')
+  if (celestiaNode !== undefined) {
+    const jd = computeCaseJd(testCase)
+    const meeusNode = meanNodeLongitudeDeg(jd)
+    const delta = longitudeDeltaArcsec(celestiaNode, meeusNode)
+    const threshold = PRIMARY_THRESHOLDS_ARCSEC.northNode
+    out.push({
+      body: 'northNode',
+      celestiaLongitude: celestiaNode,
+      referenceLongitude: meeusNode,
+      referenceSource: 'inlineMeeusNode',
+      deltaArcsec: delta,
+      threshold,
+      status: classifyBodyStatus('northNode', delta),
+    })
   }
 
   const sources = Object.keys(references.planets ?? {}) as ReferenceSource[]
@@ -259,7 +279,7 @@ export function runCaseComparison(
 ): CaseComparisonResult {
   const chart = calculateNatalChart(buildChartInput(testCase))
 
-  const planetComparisons = comparePlanets(chart, references)
+  const planetComparisons = comparePlanets(chart, testCase, references)
   const houseComparisons = compareHouses(chart, testCase, references)
   const aspectComparisons = compareAspects(chart, references)
 

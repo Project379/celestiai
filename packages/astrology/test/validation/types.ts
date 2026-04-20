@@ -13,6 +13,7 @@ export type Body = Planet
 export type ReferenceSource =
   | 'jpl' // JPL Horizons — primary for planetary longitudes (§9.2 Tier 1)
   | 'astronomyEngine' // Secondary sanity check — planets only (scope-limited)
+  | 'inlineMeeusNode' // Mean Node vs Meeus Ch. 47 polynomial (§9.2 Tier 2)
   | 'inlinePlacidus' // Inline Meeus-based Placidus reference (§9.3 Tier 3)
   | 'astrocom' // Optional post-§9.6 spot-check; demoted from primary per drift entry 6
   | 'nativeSwisseph' // Moshier-vs-SE-files floor check (QE II only)
