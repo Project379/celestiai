@@ -9,3 +9,7 @@ dist
 # Supabase CLI local cache
 supabase/.temp/
 supabase/.branches/
+
+# Swiss Ephemeris data files — never commit; see docs/licensing.md and
+# packages/astrology/test/validation/reference-data/README.md
+*.se1
