@@ -336,6 +336,11 @@ export function EditBirthDataDialog({
                       {errors.approximateTimeRange.message}
                     </p>
                   )}
+                  <p className="mt-3 font-display text-[12.5px] leading-relaxed text-slate-500">
+                    Картата се изчислява по обяд на местно време; избраният
+                    период е за контекст, а възходящият знак е приблизителен,
+                    затова тълкуването му е ориентировъчно.
+                  </p>
                 </div>
               )}
 

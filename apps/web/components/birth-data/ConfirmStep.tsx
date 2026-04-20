@@ -93,6 +93,16 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
         ))}
       </dl>
 
+      {birthTimeKnown === false && approximateTimeRange && (
+        <p className="font-display text-[12px] leading-relaxed text-slate-500">
+          Когато часът не е точен, картата се изчислява по обяд на местно
+          време — така грешката при неизвестен час е най-малка. Избраният
+          период се запазва за контекст при тълкуването, но не влияе върху
+          позициите на планетите. Възходящият знак е приблизителен, затова
+          тълкуването му е ориентировъчно.
+        </p>
+      )}
+
       {hasErrors && (
         <div className="border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
           <p className="font-display text-[13px] text-rose-300/90">
