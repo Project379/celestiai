@@ -1,7 +1,8 @@
 # Drizzle vs Supabase Client — Decision Analysis
 
 **Written:** 2026-04-18
-**Status:** Decision proposed; not executed. Prerequisite to Option-B migration (`DATA_FETCHING_INVENTORY.md §5.4`).
+**Status:** **REVERSED 2026-04-20** — see §9 at end of this file. Drizzle is being removed from the stack; Supabase CLI adopted for migrations going forward.
+**Original status line (preserved for trail):** Decision proposed; not executed. Prerequisite to Option-B migration (`DATA_FETCHING_INVENTORY.md §5.4`).
 **Epistemic tags:** `[verified]` / `[inferred]` / `[planned]` / `[assumed]` / `[open]`. Sub-claims get their own tag when they make a different claim than parent.
 
 ---
@@ -224,3 +225,58 @@ If someone wants to bypass (hypothetically), they have to actively delete the CI
 ## 8. Removed open question on SUPABASE_PROJECT_ID
 
 `[owner: user]` Who has the project ID is a user question, not an open research question. Removed from the "flag" list below. Assume it will be supplied when Step 1 executes.
+
+---
+
+## 9. 2026-04-20 update — decision reversed
+
+`[verified]` A schema-drift audit on 2026-04-20 revealed the Drizzle migrations misrepresent production Postgres schema in **13 columns across 5 tables** (full output: `SCHEMA_DRIFT_AUDIT.md`). Summary:
+
+| table | drift count |
+|---|---|
+| `charts` | 5 (birth_date, birth_time, approximate_time_range, latitude, longitude) |
+| `bulgarian_cities` | 3 (latitude, longitude, population) |
+| `users` | 3 (subscription_tier + 2 extra DB columns not declared) |
+| `daily_horoscopes` | 1 (date) |
+| `daily_transits` | 1 (date) |
+
+The most severe was `charts.approximate_time_range` — Drizzle declared `text`, production is `tstzrange`. Every birth-data form submission with `birthTimeKnown: false` has been failing at the Postgres layer since whenever that column was altered, with the raw error bubbling into the Bulgarian UI copy. Zero non-null rows in production — no user has ever successfully persisted through this path.
+
+### Why this invalidates the 2026-04-18 rationale
+
+The original decision rested on §4.2:
+
+> **Rejected: delete Drizzle entirely and move migrations to Supabase CLI.**
+> Cost: rebuilding migration history, retooling scripts, losing the schemas as canonical source. Benefits: one fewer tool in the stack.
+> `[inferred]` The cost is real and the benefit is marginal. Drizzle migrations work today. The schemas serve as documentation. Keep the tool that's paying rent.
+
+Two claims in that paragraph are wrong given the drift audit:
+
+1. **"Drizzle migrations work today"** — no. Whatever applied the tstzrange type to `charts.approximate_time_range` bypassed the Drizzle migration system, and the 10 committed migrations collectively do not produce the production schema state. The migrations document a schema that doesn't exist.
+2. **"The schemas serve as documentation"** — they document a fiction in 13 places. Worse than no documentation, because they mislead. The chart type file `apps/web/lib/types/chart.ts` with its hand-maintained `ChartRow` exists precisely because someone had to work around this mismatch.
+
+The "sunk investment of 10 migrations" argument collapses when the migrations don't represent reality. There is no sunk asset to preserve.
+
+### New decision
+
+**Remove Drizzle entirely.** Nothing queries through it at runtime (`[verified]` 0 consumers of `@celestia/db` across `apps/` and `packages/`, per 2026-04-20 grep). The schemas are stranded fiction. The migrations are unreliable.
+
+**Adopt Supabase CLI for migrations going forward.** Pairs naturally with `supabase gen types typescript` for the type-generation path that §6 Step 2 of this doc already planned. One tool for two jobs (migrations + types), whereas Drizzle currently does only the first.
+
+The `Database`-typed Supabase client + `Tables<'charts'>`-derived types from §6 Step 5/6 still apply. Only the migration-tooling half of this doc is replaced; the type-generation half survives.
+
+### What about `packages/db/src/client.ts`?
+
+`[verified]` `createSupabaseClient(accessToken)` has zero runtime consumers across the workspace. Planning docs (`CACHE_WRAP_CONVENTION.md`, `DATA_FETCHING_INVENTORY.md §4.1`, `07-RESEARCH.md`) reference it as a `[planned]` future path; that future path belongs to the original decision which is now reversed. No reason to preserve the factory. The entire `packages/db/` package goes.
+
+### What stays
+
+- `apps/web/lib/types/chart.ts` hand-maintained `ChartRow` — updated/retyped against Supabase-generated types in a follow-up, NOT blocked on this reversal.
+- `supabase/migrations/` — new canonical migration directory.
+- `packages/db/src/seed/data/*.json` reference data — moved to `supabase/seed/` (or deleted if unused; data is already in prod).
+
+### Trail
+
+- Audit: `.planning/research/SCHEMA_DRIFT_AUDIT.md`
+- Tooling: `apps/web/scripts/diagnostics/audit-schema-drift.mjs` (kept as CI drift check for the post-Drizzle world)
+- Migration tooling doc: `packages/db/MIGRATION_TOOLING.md` (will be written into the new canonical location before `packages/db/` is deleted; may move to repo root or `supabase/README.md` in a follow-up)
