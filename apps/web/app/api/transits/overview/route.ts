@@ -30,11 +30,6 @@ export async function GET(req: Request) {
   }
 
   switch (result.error) {
-    case 'PREMIUM_REQUIRED':
-      return Response.json(
-        { error: 'Premium subscription required.', code: 'PREMIUM_REQUIRED' },
-        { status: 403 },
-      )
     case 'CHART_NOT_FOUND':
       return Response.json({ error: 'Chart not found' }, { status: 404 })
     case 'FORBIDDEN':

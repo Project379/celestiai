@@ -5,7 +5,7 @@ import { buildTransitOverview, type TransitOverview } from './transit-analysis'
 
 export type TransitsOverviewResult =
   | { ok: true; data: TransitOverview }
-  | { ok: false; error: 'PREMIUM_REQUIRED' | 'CHART_NOT_FOUND' | 'FORBIDDEN' | 'INTERNAL' }
+  | { ok: false; error: 'CHART_NOT_FOUND' | 'FORBIDDEN' | 'INTERNAL' }
 
 interface CalculationRow {
   planet_positions: PlanetPosition[]
@@ -19,9 +19,10 @@ interface CalculationRow {
 /**
  * Core function: build the transit-overview payload for a user's chart.
  *
- * Behavior identical to apps/web/app/api/transits/overview/route.ts as it
- * existed at commit d581012:
- *   - Premium gate on subscription_tier; non-premium returns PREMIUM_REQUIRED
+ * Transits are FREE per the premium matrix (2026-04-20 audit). No
+ * subscription_tier check — any authed user with ownership of the
+ * chart can fetch a transit overview.
+ *
  *   - Chart ownership verified by chartId → charts.user_id === userId
  *   - Calculation is read from chart_calculations cache if present, or
  *     computed via @celestia/astrology and written back on miss
@@ -38,25 +39,13 @@ export async function getTransitsOverview(
   try {
     const supabase = createCoreSupabaseClient()
 
-    const [userResult, chartResult] = await Promise.all([
-      supabase
-        .from('users')
-        .select('subscription_tier')
-        .eq('clerk_id', userId)
-        .single(),
-      supabase
-        .from('charts')
-        .select('id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude')
-        .eq('id', chartId)
-        .single(),
-    ])
+    const { data: chart, error: chartError } = await supabase
+      .from('charts')
+      .select('id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude')
+      .eq('id', chartId)
+      .single()
 
-    if (userResult.data?.subscription_tier !== 'premium') {
-      return { ok: false, error: 'PREMIUM_REQUIRED' }
-    }
-
-    const chart = chartResult.data
-    if (chartResult.error || !chart) {
+    if (chartError || !chart) {
       return { ok: false, error: 'CHART_NOT_FOUND' }
     }
 
