@@ -307,6 +307,12 @@ Restating per conversation so the sequence below is unambiguous:
 - Cleanup: delete `apps/mobile` inline type definitions that duplicate schema types
 - **Budget: 2-3 days** `[inferred]`
 
+**Phase M5 explicit predecessor — decide before starting:**
+
+| # | Predecessor | Owner | Doc |
+|---:|---|---|---|
+| 1 | **Bulgarian error-message placement decision** — today the Zod schemas in `apps/web/lib/validators/*` carry Bulgarian error copy (form-UX coupled). Mobile will hit the same endpoints and get the same Bulgarian JSON error bodies — but the surface that renders them (Expo form validation) needs to either (a) reuse the same Zod schemas from `packages/core/` with the BG messages already baked in, (b) keep schemas in web with English-default messages and have each surface translate, or (c) colocate BG+EN messages in shared schemas and let the surface pick. Carried as `[assumed]` through M2/M3 (schemas stay in web). M5 is where the assumption either holds (option a is cheap — move schemas to core as-is, mobile imports BG strings directly) or breaks (mobile wants English or user-locale messages, forcing a split). Must be decided explicitly before the mobile HTTP client is built so contracts don't churn. | Person starting M5. | `[planned]` — open a 1-page decision note under `.planning/research/` when M5 begins. |
+
 **Phase M6 (optional, post-Option-B) — Kill unused Drizzle OR adopt it:**
 - See §5.4
 - If adopting: migrate all `packages/core/` data access from raw Supabase calls to Drizzle

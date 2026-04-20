@@ -1,0 +1,80 @@
+M3 UAT harness — 2026-04-20T07:30:43.134Z
+Base URL: http://localhost:3000
+  ensureClerkUser: listing users...
+  ensureClerkUser: list returned 1
+  ensureClerkUser: reusing user user_3CbyCbEF4mvNgdKfSXyMlstgxix
+Clerk user: user_3CbyCbEF4mvNgdKfSXyMlstgxix (undefined)
+  mintSessionToken: creating session...
+  mintSessionToken: session sess_3Cc1rX7c5248MdgTwfso5Q7PPQo, fetching token...
+  mintSessionToken: jwt len=760
+Session JWT minted (len=760)
+
+== Warming up route compilation ==
+  warm /api/planets/current
+  warm /api/birth-data
+  warm /api/chart/calculate
+  warm /api/crystals
+  warm /api/crystals/today
+  warm /api/crystals/collect
+  warm /api/crystals/daily/collect
+  warm /api/crystals/daily-streak
+  warm /api/stripe/status
+  warm /api/transits/overview
+
+== Unauthenticated 401 gate shape ==
+[PASS] POST /api/chart/calculate → 401 — status=401 body={"error":"Неоторизиран достъп"}
+[PASS] GET /api/birth-data → 401 — status=401 body={"error":"Неоторизиран достъп"}
+[PASS] POST /api/birth-data → 401 — status=401 body={"error":"Неоторизиран достъп"}
+[PASS] GET /api/birth-data/00000000-0000-0000-0000-000000000000 → 401 — status=401 body={"error":"Неоторизиран достъп"}
+[PASS] PATCH /api/birth-data/00000000-0000-0000-0000-000000000000 → 401 — status=401 body={"error":"Неоторизиран достъп"}
+[PASS] DELETE /api/birth-data/00000000-0000-0000-0000-000000000000 → 401 — status=401 body={"error":"Неоторизиран достъп"}
+[PASS] GET /api/crystals → 401 — status=401 body={"error":"Unauthorized"}
+[PASS] POST /api/crystals/collect → 401 — status=401 body={"error":"Unauthorized"}
+[PASS] POST /api/crystals/daily/collect → 401 — status=401 body={"error":"Unauthorized"}
+[PASS] GET /api/crystals/daily-streak → 401 — status=401 body={"error":"Unauthorized"}
+[PASS] GET /api/stripe/status → 401 — status=401 body={"error":"Неоторизиран достъп"}
+[PASS] GET /api/transits/overview?chartId=00000000-0000-0000-0000-000000000000 → 401 — status=401 body={"error":"Unauthorized"}
+
+== Public endpoints ==
+[PASS] GET /api/planets/current → 200 + planets[] + calculatedAt — status=200 planets.length=11
+
+== Authenticated happy paths (free tier) ==
+[PASS] POST /api/birth-data → 201 + chart row — status=201 id=b10bdea0-0985-42f7-8f1e-3ef5b8999340
+[PASS] POST /api/birth-data (bad input) → 400 + details{} — status=400
+[PASS] GET /api/birth-data → 200 + array containing chartId — status=200 len=1
+[PASS] GET /api/birth-data/b10bdea0-0985-42f7-8f1e-3ef5b8999340 → 200 — status=200
+[PASS] GET /api/birth-data/<nonexistent> → 404 — status=404
+[PASS] POST /api/chart/calculate → 200 + planets[]+ascendant+mc (fresh) — status=200 planets=11
+[PASS] POST /api/chart/calculate (2nd call) → 200 + deterministic ascendant + single cache row — asc_match=true planets=11/11 rows=1
+[PASS] POST /api/chart/calculate (missing chart) → 404 — status=404
+[PASS] PATCH /api/birth-data/<id> → 200 + name updated — status=200
+[PASS] PATCH invalidated chart_calculations cache — cache row after patch: gone
+[PASS] GET /api/stripe/status → 200 { tier: "free" } — status=200 tier=free
+[PASS] GET /api/crystals/today (free) → 200 + crystal + isPremium:false — status=200 isPremium=false
+[PASS] GET /api/crystals (free) → 403 PREMIUM_REQUIRED — status=403 code=PREMIUM_REQUIRED
+[PASS] GET /api/transits/overview (free) → 403 PREMIUM_REQUIRED — status=403 code=PREMIUM_REQUIRED
+[PASS] POST /api/crystals/daily/collect (free) → 403 — status=403
+[PASS] POST /api/crystals/collect (free) → 403 — status=403
+
+== Premium-gated paths (tier flipped via service role) ==
+[PASS] GET /api/stripe/status → 200 { tier: "premium" } — tier=premium
+[PASS] GET /api/transits/overview (premium) → 200 + activeTransits — status=200
+[PASS] GET /api/crystals (premium) → 200 + catalog + recommendations — status=200 catalog.length=30 recs=2
+[PASS] POST /api/crystals/daily/collect 1st call → 200 — status=200 alreadyCollected=false
+[PASS] POST /api/crystals/daily/collect 2nd call → 200 alreadyCollected=true — alreadyCollected=true
+[PASS] daily collect picks match crystal id across two calls — 1st=35636f1d-7d4d-4fdc-b572-c7989f4c33f4 2nd=35636f1d-7d4d-4fdc-b572-c7989f4c33f4
+[PASS] crystals/today and daily/collect pick same stone (picker unification) — today=35636f1d-7d4d-4fdc-b572-c7989f4c33f4 collect=35636f1d-7d4d-4fdc-b572-c7989f4c33f4
+[PASS] GET /api/crystals/daily-streak (premium) → 200 + streak + days[] — status=200 days.length=1
+[PASS] POST /api/crystals/collect (valid rec) → 200 + userCrystal — status=200
+[PASS] POST /api/crystals/collect 2nd call → 404 (already collected) — status=404
+[PASS] POST /api/crystals/collect (nonexistent rec) → 404 — status=404
+[PASS] GET /api/transits/overview (another user chart) → 403 or 404 — status=403
+
+== Crystal picker divergence analysis ==
+[PASS] picker divergence analysis completed — multi-match phases: 8 of 8; pre-M3 vs post-M3 pick would diverge TODAY for 8 of them
+
+== Cleanup ==
+[PASS] cleanup — test chart, daily crystals, user_crystals, recs deleted; tier → free
+
+== Summary ==
+pass: 43 / fail: 0 / total: 43

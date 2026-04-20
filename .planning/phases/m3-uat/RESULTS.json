@@ -1,0 +1,290 @@
+{
+  "timestamp": "2026-04-20T07:30:53.239Z",
+  "baseUrl": "http://localhost:3000",
+  "clerkUserId": "user_3CbyCbEF4mvNgdKfSXyMlstgxix",
+  "pass": 43,
+  "fail": 0,
+  "results": [
+    {
+      "name": "POST /api/chart/calculate → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Неоторизиран достъп\"}"
+    },
+    {
+      "name": "GET /api/birth-data → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Неоторизиран достъп\"}"
+    },
+    {
+      "name": "POST /api/birth-data → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Неоторизиран достъп\"}"
+    },
+    {
+      "name": "GET /api/birth-data/00000000-0000-0000-0000-000000000000 → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Неоторизиран достъп\"}"
+    },
+    {
+      "name": "PATCH /api/birth-data/00000000-0000-0000-0000-000000000000 → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Неоторизиран достъп\"}"
+    },
+    {
+      "name": "DELETE /api/birth-data/00000000-0000-0000-0000-000000000000 → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Неоторизиран достъп\"}"
+    },
+    {
+      "name": "GET /api/crystals → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Unauthorized\"}"
+    },
+    {
+      "name": "POST /api/crystals/collect → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Unauthorized\"}"
+    },
+    {
+      "name": "POST /api/crystals/daily/collect → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Unauthorized\"}"
+    },
+    {
+      "name": "GET /api/crystals/daily-streak → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Unauthorized\"}"
+    },
+    {
+      "name": "GET /api/stripe/status → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Неоторизиран достъп\"}"
+    },
+    {
+      "name": "GET /api/transits/overview?chartId=00000000-0000-0000-0000-000000000000 → 401",
+      "status": "pass",
+      "detail": "status=401 body={\"error\":\"Unauthorized\"}"
+    },
+    {
+      "name": "GET /api/planets/current → 200 + planets[] + calculatedAt",
+      "status": "pass",
+      "detail": "status=200 planets.length=11"
+    },
+    {
+      "name": "POST /api/birth-data → 201 + chart row",
+      "status": "pass",
+      "detail": "status=201 id=b10bdea0-0985-42f7-8f1e-3ef5b8999340"
+    },
+    {
+      "name": "POST /api/birth-data (bad input) → 400 + details{}",
+      "status": "pass",
+      "detail": "status=400"
+    },
+    {
+      "name": "GET /api/birth-data → 200 + array containing chartId",
+      "status": "pass",
+      "detail": "status=200 len=1"
+    },
+    {
+      "name": "GET /api/birth-data/b10bdea0-0985-42f7-8f1e-3ef5b8999340 → 200",
+      "status": "pass",
+      "detail": "status=200"
+    },
+    {
+      "name": "GET /api/birth-data/<nonexistent> → 404",
+      "status": "pass",
+      "detail": "status=404"
+    },
+    {
+      "name": "POST /api/chart/calculate → 200 + planets[]+ascendant+mc (fresh)",
+      "status": "pass",
+      "detail": "status=200 planets=11"
+    },
+    {
+      "name": "POST /api/chart/calculate (2nd call) → 200 + deterministic ascendant + single cache row",
+      "status": "pass",
+      "detail": "asc_match=true planets=11/11 rows=1"
+    },
+    {
+      "name": "POST /api/chart/calculate (missing chart) → 404",
+      "status": "pass",
+      "detail": "status=404"
+    },
+    {
+      "name": "PATCH /api/birth-data/<id> → 200 + name updated",
+      "status": "pass",
+      "detail": "status=200"
+    },
+    {
+      "name": "PATCH invalidated chart_calculations cache",
+      "status": "pass",
+      "detail": "cache row after patch: gone"
+    },
+    {
+      "name": "GET /api/stripe/status → 200 { tier: \"free\" }",
+      "status": "pass",
+      "detail": "status=200 tier=free"
+    },
+    {
+      "name": "GET /api/crystals/today (free) → 200 + crystal + isPremium:false",
+      "status": "pass",
+      "detail": "status=200 isPremium=false"
+    },
+    {
+      "name": "GET /api/crystals (free) → 403 PREMIUM_REQUIRED",
+      "status": "pass",
+      "detail": "status=403 code=PREMIUM_REQUIRED"
+    },
+    {
+      "name": "GET /api/transits/overview (free) → 403 PREMIUM_REQUIRED",
+      "status": "pass",
+      "detail": "status=403 code=PREMIUM_REQUIRED"
+    },
+    {
+      "name": "POST /api/crystals/daily/collect (free) → 403",
+      "status": "pass",
+      "detail": "status=403"
+    },
+    {
+      "name": "POST /api/crystals/collect (free) → 403",
+      "status": "pass",
+      "detail": "status=403"
+    },
+    {
+      "name": "GET /api/stripe/status → 200 { tier: \"premium\" }",
+      "status": "pass",
+      "detail": "tier=premium"
+    },
+    {
+      "name": "GET /api/transits/overview (premium) → 200 + activeTransits",
+      "status": "pass",
+      "detail": "status=200"
+    },
+    {
+      "name": "GET /api/crystals (premium) → 200 + catalog + recommendations",
+      "status": "pass",
+      "detail": "status=200 catalog.length=30 recs=2"
+    },
+    {
+      "name": "POST /api/crystals/daily/collect 1st call → 200",
+      "status": "pass",
+      "detail": "status=200 alreadyCollected=false"
+    },
+    {
+      "name": "POST /api/crystals/daily/collect 2nd call → 200 alreadyCollected=true",
+      "status": "pass",
+      "detail": "alreadyCollected=true"
+    },
+    {
+      "name": "daily collect picks match crystal id across two calls",
+      "status": "pass",
+      "detail": "1st=35636f1d-7d4d-4fdc-b572-c7989f4c33f4 2nd=35636f1d-7d4d-4fdc-b572-c7989f4c33f4"
+    },
+    {
+      "name": "crystals/today and daily/collect pick same stone (picker unification)",
+      "status": "pass",
+      "detail": "today=35636f1d-7d4d-4fdc-b572-c7989f4c33f4 collect=35636f1d-7d4d-4fdc-b572-c7989f4c33f4"
+    },
+    {
+      "name": "GET /api/crystals/daily-streak (premium) → 200 + streak + days[]",
+      "status": "pass",
+      "detail": "status=200 days.length=1"
+    },
+    {
+      "name": "POST /api/crystals/collect (valid rec) → 200 + userCrystal",
+      "status": "pass",
+      "detail": "status=200"
+    },
+    {
+      "name": "POST /api/crystals/collect 2nd call → 404 (already collected)",
+      "status": "pass",
+      "detail": "status=404"
+    },
+    {
+      "name": "POST /api/crystals/collect (nonexistent rec) → 404",
+      "status": "pass",
+      "detail": "status=404"
+    },
+    {
+      "name": "GET /api/transits/overview (another user chart) → 403 or 404",
+      "status": "pass",
+      "detail": "status=403"
+    },
+    {
+      "name": "picker divergence analysis completed",
+      "status": "pass",
+      "detail": "multi-match phases: 8 of 8; pre-M3 vs post-M3 pick would diverge TODAY for 8 of them"
+    },
+    {
+      "name": "cleanup",
+      "status": "pass",
+      "detail": "test chart, daily crystals, user_crystals, recs deleted; tier → free"
+    }
+  ],
+  "multiMatch": [
+    {
+      "phase": "new",
+      "matches": 6,
+      "preM3_pick_today": "aquamarine",
+      "postM3_pick_today": "clear-quartz",
+      "diverges_today": true,
+      "postM3_idx_today": 1
+    },
+    {
+      "phase": "waxing_crescent",
+      "matches": 7,
+      "preM3_pick_today": "aquamarine",
+      "postM3_pick_today": "tanzanite",
+      "diverges_today": true,
+      "postM3_idx_today": 4
+    },
+    {
+      "phase": "first_quarter",
+      "matches": 7,
+      "preM3_pick_today": "carnelian",
+      "postM3_pick_today": "peridot",
+      "diverges_today": true,
+      "postM3_idx_today": 4
+    },
+    {
+      "phase": "waxing_gibbous",
+      "matches": 7,
+      "preM3_pick_today": "citrine",
+      "postM3_pick_today": "malachite",
+      "diverges_today": true,
+      "postM3_idx_today": 4
+    },
+    {
+      "phase": "full",
+      "matches": 7,
+      "preM3_pick_today": "amethyst",
+      "postM3_pick_today": "pearl",
+      "diverges_today": true,
+      "postM3_idx_today": 4
+    },
+    {
+      "phase": "waning_gibbous",
+      "matches": 7,
+      "preM3_pick_today": "amethyst",
+      "postM3_pick_today": "pearl",
+      "diverges_today": true,
+      "postM3_idx_today": 4
+    },
+    {
+      "phase": "last_quarter",
+      "matches": 6,
+      "preM3_pick_today": "black-tourmaline",
+      "postM3_pick_today": "clear-quartz",
+      "diverges_today": true,
+      "postM3_idx_today": 1
+    },
+    {
+      "phase": "waning_crescent",
+      "matches": 4,
+      "preM3_pick_today": "black-tourmaline",
+      "postM3_pick_today": "obsidian",
+      "diverges_today": true,
+      "postM3_idx_today": 3
+    }
+  ]
+}
