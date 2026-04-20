@@ -21,6 +21,7 @@ const isProtectedRoute = createRouteMatcher([
   '/rhythm/journal(.*)',
   '/circle(.*)',
   '/subscription(.*)',
+  '/subscription/success(.*)',
 ])
 
 export default clerkMiddleware(
