@@ -215,7 +215,7 @@ export async function POST(req: Request) {
     const systemPrompt = buildSystemPrompt(validatedTopic)
     const chartPromptText = chartToPromptText(chartData)
 
-    // 9. Stream via Gemini gemini-2.5-flash
+    // 10. Stream via OpenRouter / meta-llama/llama-3.3-70b-instruct
     const result = streamText({
       model: openrouter(LLAMA_MODEL),
       system: systemPrompt,
