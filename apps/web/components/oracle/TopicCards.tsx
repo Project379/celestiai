@@ -4,35 +4,31 @@ import { TopicCard, TOPIC_META, type OracleTopic } from './TopicCard'
 import type { SavedReading } from '@/hooks/useOracleReading'
 
 interface TopicCardsProps {
-  subscriptionTier: 'free' | 'premium'
   activeTopic: string | null
   savedReadings: Record<string, SavedReading>
   onTopicSelect: (topic: OracleTopic) => void
-  onLockedTopicTap: (topic: OracleTopic) => void
 }
 
-const PREMIUM_TOPICS: OracleTopic[] = ['love', 'career', 'health']
 const ALL_TOPICS: OracleTopic[] = ['general', 'love', 'career', 'health']
 
 /**
  * Grid of four Oracle topic cards: Личност, Любов, Кариера, Здраве.
  *
- * Free tier: love/career/health show locked state.
- * Locked tap fires onLockedTopicTap instead of onTopicSelect.
+ * All topics are available to any authed user. Free tier is gated by
+ * a daily message cap (ORACLE_FREE_MESSAGES_PER_DAY, Europe/Sofia
+ * calendar day), enforced server-side at /api/oracle/generate rather
+ * than per-topic lock icons on the card grid. Cap-reached surfacing
+ * happens in the generate flow, not here.
  */
 export function TopicCards({
-  subscriptionTier,
   activeTopic,
   savedReadings,
   onTopicSelect,
-  onLockedTopicTap,
 }: TopicCardsProps) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {ALL_TOPICS.map((topic) => {
         const { label, icon } = TOPIC_META[topic]
-        const isLocked =
-          subscriptionTier === 'free' && PREMIUM_TOPICS.includes(topic)
         const isActive = activeTopic === topic
         const hasSavedReading = Boolean(savedReadings[topic])
 
@@ -42,16 +38,10 @@ export function TopicCards({
             topic={topic}
             label={label}
             icon={icon}
-            isLocked={isLocked}
+            isLocked={false}
             isActive={isActive}
             hasSavedReading={hasSavedReading}
-            onClick={() => {
-              if (isLocked) {
-                onLockedTopicTap(topic)
-              } else {
-                onTopicSelect(topic)
-              }
-            }}
+            onClick={() => onTopicSelect(topic)}
           />
         )
       })}

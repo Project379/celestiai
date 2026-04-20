@@ -11,7 +11,6 @@ import { stripSentinels } from '@/lib/oracle/planet-parser'
 
 interface OraclePanelGlobalProps {
   chartId: string | null
-  subscriptionTier: 'free' | 'premium'
 }
 
 /**
@@ -21,22 +20,17 @@ interface OraclePanelGlobalProps {
  *
  * No floating trigger. The navbar is the only entry point. If the user
  * has no chart yet, the panel doesn't mount and the event is a no-op.
+ *
+ * Post cap-gate refactor (2026-04-20): subscriptionTier is no longer a
+ * prop — all topics are available to all authed users, and the daily
+ * cap is enforced server-side at /api/oracle/generate.
  */
-export function OraclePanelGlobal({
-  chartId,
-  subscriptionTier,
-}: OraclePanelGlobalProps) {
+export function OraclePanelGlobal({ chartId }: OraclePanelGlobalProps) {
   if (!chartId) return null
-  return <OraclePanel chartId={chartId} subscriptionTier={subscriptionTier} />
+  return <OraclePanel chartId={chartId} />
 }
 
-function OraclePanel({
-  chartId,
-  subscriptionTier,
-}: {
-  chartId: string
-  subscriptionTier: 'free' | 'premium'
-}) {
+function OraclePanel({ chartId }: { chartId: string }) {
   const {
     completion,
     isLoading,
@@ -73,14 +67,6 @@ function OraclePanel({
       }
     },
     [savedReadings, setActiveTopic, generateReading]
-  )
-
-  const handleLockedTopicTap = useCallback(
-    (topic: OracleTopic) => {
-      setLockedTopicShown(topic)
-      setActiveTopic(null)
-    },
-    [setActiveTopic]
   )
 
   const handleRegenerate = useCallback(() => {
@@ -236,11 +222,9 @@ function OraclePanel({
             {!activeTopic && !lockedTopicShown && (
               <div className="relative border-b border-white/[0.05] px-7 py-5">
                 <TopicCards
-                  subscriptionTier={subscriptionTier}
                   activeTopic={activeTopic}
                   savedReadings={savedReadings}
                   onTopicSelect={handleTopicSelect}
-                  onLockedTopicTap={handleLockedTopicTap}
                 />
               </div>
             )}

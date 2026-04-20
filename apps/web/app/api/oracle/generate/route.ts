@@ -13,20 +13,32 @@ import { logAuditEvent } from '@/lib/audit'
  * POST /api/oracle/generate
  * Streams an AI-generated natal chart reading via Gemini.
  *
- * Flow:
+ * Flow (post 2026-04-20 premium-matrix cap-gate refactor):
  * 1. Auth check
  * 2. Parse & validate body (chartId, topic, regenerate)
- * 3. Subscription tier gate (premium topics require premium tier)
+ * 3. Upsert user row + read subscription tier
  * 4. Chart ownership verification
  * 5. Cache check - return cached reading without calling Gemini
+ *    (cache hits do NOT count against the daily cap)
  * 6. Regeneration rate limit (once per day per chart-topic pair)
- * 7. Load chart calculation data
- * 8. Build prompts from chart data
- * 9. Stream via Gemini gemini-2.5-flash
- * 10. onFinish: upsert completed reading into ai_readings
+ * 7. Daily cap for free tier — Europe/Sofia calendar day, default 3
+ *    readings/day, configurable via ORACLE_FREE_MESSAGES_PER_DAY env
+ * 8. Load chart calculation data
+ * 9. Build prompts from chart data
+ * 10. Stream via OpenRouter / Llama
+ * 11. onFinish: upsert completed reading into ai_readings
  */
 export const maxDuration = 60
 const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
+
+/**
+ * Daily cap for free-tier oracle readings. Premium tier removes the
+ * cap entirely. Env override lets the cap change without a code
+ * deploy once a production value is chosen.
+ */
+const ORACLE_FREE_MESSAGES_PER_DAY = Number(
+  process.env.ORACLE_FREE_MESSAGES_PER_DAY ?? '3',
+)
 
 const openrouter = createOpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
@@ -34,7 +46,30 @@ const openrouter = createOpenAI({
 })
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
-const PREMIUM_TOPICS: ReadingTopic[] = ['love', 'career', 'health']
+
+/**
+ * UTC ISO timestamp for the start of today's Europe/Sofia calendar
+ * day. Used as the lower bound for counting readings against the
+ * free-tier daily cap. Simpler to communicate to users than a
+ * rolling 24-hour window.
+ */
+function sofiaDayStartUtcIso(now: Date = new Date()): string {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Sofia',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
+  const parts = Object.fromEntries(
+    fmt.formatToParts(now).map((p) => [p.type, p.value]),
+  )
+  const h = parseInt(parts.hour, 10) % 24
+  const m = parseInt(parts.minute, 10)
+  const s = parseInt(parts.second, 10)
+  const msSinceSofiaMidnight = ((h * 60 + m) * 60 + s) * 1000
+  return new Date(now.getTime() - msSinceSofiaMidnight).toISOString()
+}
 
 export async function POST(req: Request) {
   // 1. Auth check
@@ -66,40 +101,20 @@ export async function POST(req: Request) {
     const validatedTopic = topic as ReadingTopic
     const supabase = createServiceSupabaseClient()
 
-    // 3. Subscription tier check - upsert user row if missing (default 'free')
-    const { data: userRow, error: userError } = await supabase
+    // 3. Upsert user row (default 'free'), read tier. Used for the
+    //    cap check in step 7; no topic-level gate anymore.
+    await supabase
       .from('users')
       .upsert(
         { clerk_id: userId, subscription_tier: 'free' },
-        { onConflict: 'clerk_id', ignoreDuplicates: true }
+        { onConflict: 'clerk_id', ignoreDuplicates: true },
       )
+    const { data: userRow } = await supabase
+      .from('users')
       .select('subscription_tier')
+      .eq('clerk_id', userId)
       .single()
-
-    if (userError || !userRow) {
-      // Fallback: attempt plain select in case upsert returned nothing
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('subscription_tier')
-        .eq('clerk_id', userId)
-        .single()
-
-      const tier = existingUser?.subscription_tier ?? 'free'
-      if (PREMIUM_TOPICS.includes(validatedTopic) && tier !== 'premium') {
-        return Response.json(
-          { error: 'Изисква се Premium абонамент', code: 'PREMIUM_REQUIRED' },
-          { status: 403 }
-        )
-      }
-    } else {
-      const tier = userRow.subscription_tier
-      if (PREMIUM_TOPICS.includes(validatedTopic) && tier !== 'premium') {
-        return Response.json(
-          { error: 'Изисква се Premium абонамент', code: 'PREMIUM_REQUIRED' },
-          { status: 403 }
-        )
-      }
-    }
+    const tier = userRow?.subscription_tier === 'premium' ? 'premium' : 'free'
 
     // 4. Chart ownership verification
     const { data: chart, error: chartError } = await supabase
@@ -147,7 +162,31 @@ export async function POST(req: Request) {
       }
     }
 
-    // 7. Load chart calculation data
+    // 7. Daily cap for free tier. Europe/Sofia calendar day. Cache
+    //    hits (step 5) skipped this branch already, so the count
+    //    reflects actual generations the user triggered today.
+    if (tier !== 'premium') {
+      const sofiaDayStart = sofiaDayStartUtcIso()
+      const { count } = await supabase
+        .from('ai_readings')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('generated_at', sofiaDayStart)
+
+      if ((count ?? 0) >= ORACLE_FREE_MESSAGES_PER_DAY) {
+        return Response.json(
+          {
+            error: `Достигна дневния лимит от ${ORACLE_FREE_MESSAGES_PER_DAY} четения. Премиум абонаментът премахва ограничението.`,
+            code: 'CAP_REACHED',
+            cap: ORACLE_FREE_MESSAGES_PER_DAY,
+            tier,
+          },
+          { status: 429 },
+        )
+      }
+    }
+
+    // 8. Load chart calculation data
     const { data: calculation, error: calcError } = await supabase
       .from('chart_calculations')
       .select(
