@@ -6,6 +6,13 @@ import {
 import { createBirthDataSchema } from '@/lib/validators/birth-data'
 
 /**
+ * Error IDs emitted by this handler (see PRE_LAUNCH_PREREQS.md item 2
+ * for the monitoring-swap path when Sentry/equivalent ships):
+ *   ERR-BD-001 — POST insert failed (DB write rejected post-validation)
+ *   ERR-BD-004 — GET list failed (listBirthCharts threw)
+ */
+
+/**
  * GET /api/birth-data — list the caller's birth charts.
  */
 export async function GET() {
@@ -18,9 +25,12 @@ export async function GET() {
     const charts = await listBirthCharts(userId)
     return Response.json(charts)
   } catch (error) {
-    console.error('Error fetching birth data:', error)
+    console.error('[ERR-BD-004] GET /api/birth-data list failed:', error)
     return Response.json(
-      { error: 'Грешка при зареждане на данните' },
+      {
+        error: 'Не успяхме да заредим списъка с рождени данни. Опитай отново. Код: ERR-BD-004.',
+        code: 'ERR-BD-004',
+      },
       { status: 500 },
     )
   }
@@ -54,15 +64,29 @@ export async function POST(request: Request) {
 
     const result = await createBirthChart(userId, validation.data)
     if (!result.ok) {
+      console.error(
+        '[ERR-BD-001] POST /api/birth-data insert failed:',
+        result.error,
+        result.message,
+      )
       return Response.json(
-        { error: 'Грешка при запазване: ' + result.message },
+        {
+          error: 'Не успяхме да запазим рождените данни. Опитай отново. Код: ERR-BD-001.',
+          code: 'ERR-BD-001',
+        },
         { status: 500 },
       )
     }
 
     return Response.json(result.data, { status: 201 })
   } catch (error) {
-    console.error('Error creating birth data:', error)
-    return Response.json({ error: 'Грешка при запазване' }, { status: 500 })
+    console.error('[ERR-BD-001] POST /api/birth-data unhandled error:', error)
+    return Response.json(
+      {
+        error: 'Не успяхме да запазим рождените данни. Опитай отново. Код: ERR-BD-001.',
+        code: 'ERR-BD-001',
+      },
+      { status: 500 },
+    )
   }
 }

@@ -7,6 +7,16 @@ import {
 import { logAuditEvent } from '@/lib/audit'
 import { updateBirthDataSchema } from '@/lib/validators/birth-data'
 
+/**
+ * Error IDs emitted by this handler (see PRE_LAUNCH_PREREQS.md item 2
+ * for the monitoring-swap path when Sentry/equivalent ships):
+ *   ERR-BD-002 — PATCH update threw / failed unexpectedly (404 stays as
+ *                plain "Данните не бяха намерени", distinct category)
+ *   ERR-BD-003 — DELETE failed (core returned DELETE_FAILED or threw)
+ *   ERR-BD-005 — GET single-chart fetch threw unexpectedly (404 stays
+ *                as plain "Данните не бяха намерени", distinct)
+ */
+
 interface RouteParams {
   params: Promise<{ id: string }>
 }
@@ -28,9 +38,12 @@ export async function GET(_request: Request, { params }: RouteParams) {
     }
     return Response.json(result.data)
   } catch (error) {
-    console.error('Error fetching birth data:', error)
+    console.error('[ERR-BD-005] GET /api/birth-data/[id] failed:', error)
     return Response.json(
-      { error: 'Грешка при зареждане на данните' },
+      {
+        error: 'Не успяхме да заредим рождените данни. Опитай отново. Код: ERR-BD-005.',
+        code: 'ERR-BD-005',
+      },
       { status: 500 },
     )
   }
@@ -73,8 +86,14 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return Response.json(result.data)
   } catch (error) {
-    console.error('Error updating birth data:', error)
-    return Response.json({ error: 'Грешка при запазване' }, { status: 500 })
+    console.error('[ERR-BD-002] PATCH /api/birth-data/[id] failed:', error)
+    return Response.json(
+      {
+        error: 'Не успяхме да обновим рождените данни. Опитай отново. Код: ERR-BD-002.',
+        code: 'ERR-BD-002',
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -88,11 +107,28 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     const { id } = await params
     const result = await deleteBirthChart(userId, id)
     if (!result.ok) {
-      return Response.json({ error: 'Грешка при изтриване' }, { status: 500 })
+      console.error(
+        '[ERR-BD-003] DELETE /api/birth-data/[id] delete failed:',
+        result.error,
+        result.message,
+      )
+      return Response.json(
+        {
+          error: 'Не успяхме да изтрием рождените данни. Опитай отново. Код: ERR-BD-003.',
+          code: 'ERR-BD-003',
+        },
+        { status: 500 },
+      )
     }
     return new Response(null, { status: 204 })
   } catch (error) {
-    console.error('Error deleting birth data:', error)
-    return Response.json({ error: 'Грешка при изтриване' }, { status: 500 })
+    console.error('[ERR-BD-003] DELETE /api/birth-data/[id] unhandled error:', error)
+    return Response.json(
+      {
+        error: 'Не успяхме да изтрием рождените данни. Опитай отново. Код: ERR-BD-003.',
+        code: 'ERR-BD-003',
+      },
+      { status: 500 },
+    )
   }
 }
