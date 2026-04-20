@@ -1,51 +1,84 @@
-# §9.1 — Harness validation semantics and Node-validation scope
+# §9.1 — Harness validation semantics and reference-source architecture
 
 **Opened:** 2026-04-20
-**Status:** companion doc to `09-01-PRECISION-FLOOR.md` and `09-01-TEST-CASES.md`. Low-traffic — read when you need to understand what §9.2 is actually measuring, not what's passing.
+**Status:** companion doc to `09-01-PRECISION-FLOOR.md` and `09-01-TEST-CASES.md`. Low-traffic — read when you need to understand what §9.2 / §9.3 / §9.4 are actually measuring.
 
 ## Scope of this doc
 
-Documents the semantic distinction between different kinds of "pass" a test case can produce and the explicit scope of Mean Node validation. Complements:
+Documents the semantic distinction between different kinds of "pass" a test case can produce and the explicit scope of each reference source. Complements:
 
 - `09-01-PRECISION-FLOOR.md` — locked threshold values, precision-floor evidence, doc-drift tracker
 - `09-01-TEST-CASES.md` — test-case list and scope boundaries
 - `packages/astrology/test/validation/README.md` — harness code layout
 - `packages/astrology/test/validation/reference-data/README.md` — reference-data protocol
 
-This doc does **not** duplicate thresholds, case data, or code-layout information; it adds the epistemic layer that should accompany any §9.2 result reporting.
-
 ---
 
-## §9.2 validation semantics — tiered by reference source
+## §9.2 / §9.3 / §9.4 validation semantics — tiered by reference source
 
-**Planet/Moon validation:** correctness against physical reality, anchored on **JPL Horizons**. A Jupiter or Moon threshold-pass means `sweph`'s Moshier-mode output matches the physical position of the body as JPL Horizons reports it, to arc-second tolerance for planets and ~3″ for Moon.
+Four distinct validation tiers, each measuring something different. A "pass" in one tier does not imply the same epistemic strength as a pass in another.
 
-**Mean Node validation:** implementation self-consistency within the same polynomial model, anchored on an independent **Meeus Ch. 47 polynomial** implementation of ELP2000-85's secular mean-node formula. A Node threshold-pass means `sweph`'s polynomial code is transcribed/implemented correctly — it matches the same formula when the formula is implemented independently.
+### Tier 1 — Planet/Moon longitudes vs JPL Horizons (§9.2)
 
-**The two share a sub-round and a tiered threshold structure but measure different things.** A "pass" for Node is weaker than a "pass" for Jupiter in an epistemic sense. Any future reader reporting §9.2 results — whether for internal review or external communication — should preserve this distinction.
+**Scope:** Sun + Mercury through Pluto + Moon (10 bodies).
+**Reference:** JPL Horizons Observer Ecliptic Longitude — a physical-reality reference anchored on decades of observations (planetary radar, spacecraft tracking, lunar laser ranging).
+**What a pass means:** `sweph`'s Moshier-mode output matches the physical position of the body as JPL Horizons reports it, to the locked threshold (1″ for planets, 3″ for Moon).
+**What a pass does not mean:** it does not cross-validate the *architectural integration* (chart inputs → tz handling → JD → sweph flags). A planet-position pass implies the library-call integration is correct for the computed JD, but it does not re-verify Celestia's JD derivation for pre-standardized-tz cases (see `09-01-TEST-CASES.md § Scope boundary — historical-tz cases`).
 
----
+### Tier 2 — Mean Node vs Meeus Ch. 47 polynomial (§9.2)
 
-## Node validation — explicit scope
+**Scope:** Mean Node only.
+**Reference:** independent inline implementation of the Meeus Ch. 47 polynomial for ELP2000-85's secular mean-node formula. Not an external tool; ~5 lines of TypeScript in the harness.
+**What a pass means:** `sweph`'s polynomial code is transcribed/implemented correctly — it matches the same formula when the formula is implemented independently.
+**What a pass does not mean:** it does not validate the polynomial's agreement with physical reality — the underlying ELP2000-85 model's ~20″ fit to lunar laser ranging observations is trusted, not tested. This is a **code-path integrity check against the same mathematical formula `sweph` uses**.
 
-**Scope of Node validation:** this check compares `sweph`'s Mean Node output against an independent implementation of Meeus Ch. 47's polynomial for ELP2000-85's secular mean node. Passing means `sweph`'s polynomial code is transcribed/implemented correctly. Passing does **NOT** validate the polynomial's agreement with physical reality — the underlying ELP2000-85 model's ~20″ fit to lunar laser ranging observations is trusted, not tested. Unlike the planet/Moon checks (which anchor on JPL Horizons, a physical-reality reference), this is a **code-path integrity check against the same mathematical formula `sweph` uses**.
+### Tier 3 — House cusps vs inline Placidus implementation (§9.3)
 
-**Why this is the right scope for §9:**
+**Scope:** 12 house cusps + Ascendant + MC.
+**Reference:** independent inline implementation of Placidus formulas (from Meeus Ch. 13 / equivalent). Not an external tool; the reference is computed at comparison time from each case's inputs (JD, lat, lon).
+**What a pass means:** `sweph.houses()`'s Placidus output matches the Placidus formulas when implemented independently.
+**What a pass does not mean:** Placidus is a *mathematical construction*, not an observational quantity. There is no "physical reality" house-cusp position to compare against. All "correctness" claims for houses are **code-path-integrity claims, not physical-reality claims**.
 
-The stated worry for the ephemeris workstream is "the astrology math is wrong" in a way users can't recognize as wrong. The realistic failure mode for Mean Node is not "the ELP2000-85 polynomial is physically wrong" (that's settled science with decades of observational support); it is "our implementation of the polynomial silently disagrees with the reference polynomial due to a miscopied coefficient, wrong time epoch, off-by-one in centuries-from-J2000, or similar transcription bug." The Meeus-polynomial check catches exactly that failure class.
+**Why no astro.com comparison:** astro.com uses Swiss Ephemeris internally. An astro.com comparison is sweph-vs-sweph with a different UI, not sweph-vs-independent. Demoted to optional post-§9.6 spot-check. See `09-01-PRECISION-FLOOR.md § Doc drift corrections` entry 6.
 
-Extending Node validation to "physical reality" would require an independent lunar theory unrelated to ELP2000-85 — and no such theory at comparable precision is publicly implemented. This is accepted as a scope bound, not a gap.
+### Tier 4 — Aspect classification via synthetic unit tests (§9.4)
 
-**Implementation placement:** the Meeus polynomial implementation lands as part of the harness scaffold in §9.2, inline in `packages/astrology/test/validation/` (file TBD at implementation time). Not a network fetch, not a separate reference tool, not per-case reference data. Per-case reference-data `.ts` files omit the `northNode` entry from their `planets.jpl` array for this reason — see `packages/astrology/test/validation/reference-data/README.md § Mean Node — inline-reference asymmetry`.
+**Scope:** `calculateAspects`'s aspect-identification logic — orb calculation, aspect type (conjunction/sextile/square/trine/opposition), applying/separating classification.
+**Reference:** synthetic known-input-known-output tests. No per-case external reference data.
+**What a pass means:** the aspect-classification code is correct for the synthetic test matrix (boundary conditions: exact 0°/60°/90°/120°/180°, inside-orb, outside-orb, speed-sign flips for applying/separating).
+**What a pass does not mean:** it does not test aspect correctness for any specific real case's output. That is **implied by construction**: if §9.2 planetary longitudes pass, aspects computed from those longitudes are correct (aspects are arithmetic functions of planetary longitudes and speeds). The synthetic tests exist to rule out bugs in the classification logic itself.
+
+### Secondary — Astronomy Engine sanity check (§9.2)
+
+**Scope:** 9 non-Moon non-Node bodies (Astronomy Engine's ±1′ spec is coarser than Moon's 3″ and Node's 20″ primary thresholds, so it cannot meaningfully validate them).
+**Reference:** local `astronomy-engine` npm computation (VSOP87-based).
+**What a pass means:** `sweph`'s and Astronomy Engine's independent implementations of major-planet ephemerides agree to 1′.
+**Epistemic weight:** lighter than Tier 1 (JPL is anchored on observations; Astronomy Engine is anchored on VSOP87 theory fit to JPL ephemeris). If Tier 1 passes and Tier secondary fails, Tier 1's physical-reality verdict wins.
 
 ---
 
 ## Reporting convention
 
-When reporting §9.2 results (in a planning doc, commit message, PR description, or status update), preserve the semantic tier:
+When reporting §9.2 / §9.3 / §9.4 results (in a planning doc, commit message, PR description, or status update), preserve the tier:
 
-- **"Planet X passes / fails vs JPL Horizons"** — physical-reality check.
-- **"Moon passes / fails vs JPL Horizons"** — physical-reality check.
-- **"Mean Node passes / fails vs Meeus Ch. 47 polynomial"** — code-path integrity check against the same ELP2000-85 formula `sweph` uses.
+- **"Planet X passes / fails vs JPL Horizons"** — Tier 1 physical-reality check.
+- **"Moon passes / fails vs JPL Horizons"** — Tier 1 physical-reality check.
+- **"Mean Node passes / fails vs Meeus Ch. 47 polynomial"** — Tier 2 code-path check.
+- **"Cusp N (or ASC, MC) passes / fails vs inline Placidus implementation"** — Tier 3 code-path check.
+- **"Aspect classification passes / fails synthetic unit tests"** — Tier 4 code-path check.
 
-Avoid shortcuts like "all 11 bodies pass" that flatten the tier — they lose the epistemic distinction a reviewer needs to interpret the result correctly.
+Avoid shortcuts that flatten the tier ("all checks pass", "validation complete", "§9 correct") — they lose the epistemic distinction a reviewer needs to interpret the result correctly. A reviewer who reads "all checks pass" and treats that as "this library matches physical reality to arc-second tolerance" is over-claiming based on Tier 3 + Tier 4 code-path-integrity checks that do not support that interpretation.
+
+---
+
+## Implementation placement summary
+
+| Tier | Reference implementation | Per-case reference-data file |
+|---|---|---|
+| 1 — Planets/Moon vs JPL | External: JPL Horizons API (adapter: `adapters/jpl-horizons.ts`). Snapshots committed per-case under `reference-data/<case>.ts` as `planets.jpl`. | Yes — `planets.jpl` array. |
+| 2 — Mean Node vs Meeus | Inline harness code (file TBD at §9.2 implementation time, ~5 lines). | No — computed at comparison time. |
+| 3 — Houses vs inline Placidus | Inline harness code (file `adapters/placidus-meeus.ts` or equivalent, ~20 lines). | No — computed at comparison time from case's lat/lon/JD. |
+| 4 — Aspect classification | Inline harness unit tests (file `aspects-synthetic.test.ts`, separate from per-case harness). | No — no per-case reference. |
+| Secondary — AE sanity | External: `astronomy-engine` npm package (adapter: `adapters/astronomy-engine.ts`). Snapshots committed per-case under `reference-data/<case>.ts` as `planets.astronomyEngine`. | Yes — `planets.astronomyEngine` array. |
+
+Per-case reference-data files contain only what's externally-sourced (JPL, AE, optionally astro.com if spot-checked later). Meeus polynomial and inline Placidus computations happen at runtime in the harness; they are code, not data.

@@ -34,6 +34,21 @@ All fixture entries below are tagged `[reference-dependent — Astro-Databank]`.
 
 **Composition note (`[user-decision]`, 2026-04-20):** the 5-case list is 4 European royals + 1 Mexican revolutionary. Monochromatic in flavor. Accepted for §9 because AA-rigor constraints beat diversity in the candidate-search pool reachable via WebSearch alone. If the test set expands post-§9.6, prefer non-royal and non-European candidates to balance the list. Log-only; not a §9 action item.
 
+### Rationale update (2026-04-20, doc-drift entry 6)
+
+The original `.planning/phases/09-ephemeris-validation/00-PLAN.md` justified famous-figure inclusion as *"Famous figures with published charts"* — the value proposition was access to astro.com's pre-computed house cusps and aspect tables as independent reference data. That justification is **now obsolete**: astro.com uses Swiss Ephemeris internally, so its output is sweph-vs-sweph, not sweph-vs-independent. See `09-01-PRECISION-FLOOR.md § Doc drift corrections` entry 6.
+
+Under the restructured §9.3 / §9.4 architecture (`09-01-HARNESS.md § Tier 3 / Tier 4`), houses validate against an inline independent Placidus implementation, and aspects validate via arithmetic-from-longitudes plus synthetic unit tests. Neither uses astro.com. Famous cases no longer fill a reference-data role the synthetic cases couldn't.
+
+**Current role of the 5 famous cases:** equivalent to synthetic cases — running the pipeline against real birth data to see if anything surfaces that synthetic cases miss. The incremental value is:
+
+- **Latitude / era / hemisphere coverage:** genuine real-world parameter combinations the synthetic set approximates but doesn't fully span.
+- **Historical-tz edge cases:** Einstein (1879) and Kahlo (1907) exercise the `localTimeToUTC` pre-standardized-tz code path as real-data self-consistency checks (see `§ Scope boundary — historical-tz cases (Einstein 1879, Kahlo 1907)`).
+- **DST-transition edge case:** Leonor (2005-10-31 01:46 CEST) falls on the CEST→CET transition day — exercises tz-handling at a transition boundary.
+- **High-latitude (pre-Arctic):** Ingrid Alexandra (59.9°N) approaches but doesn't reach the synthetic polar case (70°N); useful as an intermediate data point.
+
+Keep all 5 cases. Rationale for the individual selections stands even though the top-level "famous figures provide external reference data" justification doesn't.
+
 ## Synthetic edge cases (7)
 
 Locked from §9.0 plan — no changes.
