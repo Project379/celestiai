@@ -37,10 +37,12 @@ export interface GetCrystalOfTheDayOptions {
  *     current lunar phase (stable sort by slug, days-since-epoch mod).
  *   - Unauthenticated users (userId === null) get the rotation + phase
  *     summary with streak = null, isPremium = false, collectedToday = false.
- *   - Free-tier users (userId !== null, premium = false) get the same plus
- *     isPremium = false.
- *   - Premium users get auto-collected into user_daily_crystals (idempotent
- *     via the (user_id, date) unique index) and a 60-day rolling streak.
+ *   - Authenticated users (free and premium alike) get auto-collected
+ *     into user_daily_crystals (idempotent via the (user_id, date)
+ *     unique index) and a 60-day rolling streak. Daily streak is the
+ *     free-tier hook per the 2026-04-20 premium matrix.
+ *   - `isPremium` in the response still reflects the DB tier so the UI
+ *     can layer premium-only affordances on top of the shared streak.
  *
  * Returns the wire contract described by CrystalOfTheDayResponseSchema.
  * Errors propagate to the caller — this function does not catch its own
@@ -83,7 +85,7 @@ export async function getCrystalOfTheDay(
     isPremium = user?.subscription_tier === 'premium'
   }
 
-  if (userId && isPremium) {
+  if (userId) {
     // Auto-collect on read. The unique index on (user_id, date) makes this
     // a no-op if already collected. Error code 23505 (unique_violation) is
     // swallowed — that IS the success case for a second read on the same day.
