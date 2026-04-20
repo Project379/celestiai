@@ -1,0 +1,21 @@
+# Supabase CLI project config — minimal, covers the migrations workflow only.
+# We do NOT use Supabase's local dev stack (docker-compose, studio,
+# inbucket). The Celestia dev workflow hits the hosted Supabase project
+# directly. Full local-stack options that `supabase init` would add
+# (auth, storage, realtime, inbucket, edge-functions, etc.) are omitted
+# because they're unused and would clutter this file with config we'd
+# have to maintain for no benefit.
+
+# See MIGRATION_TOOLING.md at repo root or packages/... for the
+# canonical workflow documentation.
+
+project_id = "celestia-ai"
+
+[db]
+# Migration schemas we track. `public` is where all our tables live.
+# `auth` / `storage` / `realtime` are managed by Supabase itself.
+schemas = ["public"]
+
+[db.migrations]
+# Enable tracking of database schema migrations.
+enabled = true
