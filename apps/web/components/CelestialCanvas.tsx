@@ -291,12 +291,19 @@ export interface CelestialCanvasProps {
   /** Callback: writes constellation screen positions each frame for overlay positioning */
   onPositionsUpdate?: (positions: Map<string, { x: number; y: number; stars: { sx: number; sy: number }[] }>) => void
   /**
-   * Minimum opacity for planets that land inside the center content zone.
-   * Default 0.2 preserves decorative ambience on pages with sparse content.
-   * Pass 0 on information-dense routes (e.g. /chart right panel) where the
-   * 0.2 floor still reads over a dark glass panel with small text.
+   * Skip drawing the decorative planets entirely. Stars, constellations,
+   * nebulae, and shooting stars still render.
+   *
+   * Why the boolean: the previous `planetCenterFadeFloor` prop attempted
+   * to push planets to 0 opacity on dense routes but relied on the
+   * centerFade safety net, which only dims planets drifting into the
+   * center content band (fx 0.305-0.695). Planets at fx 0.75-1.0 — where
+   * the chart page's right column sits — are PAST that band, so
+   * centerFade returns ~0.5-0.7 and Math.max with any floor still leaves
+   * them at ~0.5-0.7. A route-aware fader doesn't help; a binary skip
+   * does.
    */
-  planetCenterFadeFloor?: number
+  skipPlanets?: boolean
 }
 
 export function CelestialCanvas({
@@ -308,7 +315,7 @@ export function CelestialCanvas({
   externalMouseRef,
   externalScrollRef,
   onPositionsUpdate,
-  planetCenterFadeFloor = 0.2,
+  skipPlanets = false,
 }: CelestialCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const internalMouseRef = useRef({ x: -1000, y: -1000 })
@@ -790,18 +797,19 @@ export function CelestialCanvas({
       const planetScrollOffset = smoothScrollY * 0.22
       ctx.save()
       ctx.textAlign = 'center'
-      for (const p of planets) {
+      // Skip decorative planets on /chart — natal chart's right column
+      // lg:w-80 sits at fx 0.75-1.0, past the centerFade protection zone.
+      // See Bug 3c follow-up 2026-04-20.
+      for (const p of skipPlanets ? [] : planets) {
         const px = p.screenX + pxOffsetX * 0.3
         const py = p.screenY - planetScrollOffset + pxOffsetY * 0.3
 
-        // Safety net: dim planet if its position lands inside the content zone.
-        // Floor is route-configurable via `planetCenterFadeFloor` — 0.2 by
-        // default (dashboard, landing, rhythm — decorative ambience over
-        // sparse content), 0 on the chart route where dense aspect rows on
-        // a dark glass panel can't tolerate even 20% planet opacity.
-        // Sun renders at full brightness for maximum glow.
+        // Safety net: dim planet if its position lands inside the center
+        // content zone (sparse-layout pages like dashboard/guide). The
+        // 0.2 floor keeps planets faintly visible when they land on
+        // content there; chart page opts out entirely via skipPlanets.
         const sunDim = p.id === 'sun' ? 1 : 1
-        const planetFade = Math.max(planetCenterFadeFloor, centerFade(px, py)) * sunDim
+        const planetFade = Math.max(0.2, centerFade(px, py)) * sunDim
 
         const pulse = Math.sin(time * 0.8 + p.order * 1.3) * 0.08 + 0.92
         const sz = p.size * pulse

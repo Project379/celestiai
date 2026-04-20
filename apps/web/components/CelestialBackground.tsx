@@ -16,12 +16,12 @@ import { CelestialCanvas, CONSTELLATIONS, type ConstellationData } from './Celes
 export function CelestialBackground() {
   const pathname = usePathname()
   const interactive = pathname === '/dashboard'
-  // Dense-content route: /chart right panel has a 320px aspect-row list
-  // over a dark glass panel. The canvas's 0.2 centerFade floor still
-  // reads as visible planet labels bleeding through the rows. Clamp to
-  // 0 here so planets fully disappear behind the panel; other routes
-  // keep the decorative ambience.
-  const planetCenterFadeFloor = pathname === '/chart' ? 0 : 0.2
+  // Dense-content route: /chart right column (lg:w-80) sits at fx
+  // 0.75-1.0 — past the centerFade protection zone, so the dimming
+  // mechanism never fires on the planets that collide with it
+  // (Jupiter/Neptune/Pluto at fx 0.80-0.83). Skip decorative planets
+  // entirely on /chart; other routes keep the ambient scatter.
+  const skipPlanets = pathname === '/chart'
 
   const mouseRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 })
   const scrollRef = useRef<number>(0)
@@ -124,7 +124,7 @@ export function CelestialBackground() {
           hoveredConstellationId={interactive ? hoveredId : null}
           selectedConstellationId={interactive ? (selectedConstellation?.id ?? null) : null}
           onPositionsUpdate={interactive ? handlePositionsUpdate : undefined}
-          planetCenterFadeFloor={planetCenterFadeFloor}
+          skipPlanets={skipPlanets}
         />
       </div>
 
