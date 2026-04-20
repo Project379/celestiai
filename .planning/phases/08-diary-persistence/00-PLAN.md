@@ -1,16 +1,28 @@
 # §8 Diary Persistence Workstream — Plan
 
 **Opened:** 2026-04-20 (§8.0)
-**Status:** planning-only; no code written yet.
+**Status:** **PAUSED after §8.0** — resumes at §8.1 only after §9 (ephemeris validation) ships and user confirms re-open. See **Pause rationale** below and `.planning/phases/09-ephemeris-validation/00-PLAN.md`.
 **Audit source:** `.planning/research/DIARY_AUDIT.md`
 **Decisions source:** `.planning/research/DIARY_PRODUCT_DECISIONS.md`
-**Rough estimate:** 10-14 elapsed rounds across nine sub-rounds.
+**Rough estimate:** 10-14 elapsed rounds across nine sub-rounds (baseline preserved; paused post-§8.0 pending §9 completion).
 
 **Epistemic tags used throughout this doc:**
 - `[user-decision]` — authority is the user's direct call.
 - `[verified]` — traceable in source or in the audit doc.
 - `[inferred]` — reasoning from planning context.
 - `[skill-dependent]` — relies on the Bulgarian astrology skill's output quality.
+
+---
+
+## Pause rationale (2026-04-20)
+
+The three most load-bearing pre-launch items are: (1) the astrology math is correct, (2) user data is safe, (3) payments work. Celestia has (3). (2) is partially there — diary persistence is the current gap, which this §8 workstream closes. (1) is **assumed-correct** because `swisseph-wasm` is trusted by reputation, but has never been empirically verified against reference data in this codebase.
+
+Ephemeris validation is the only one of the three with **no graceful degradation path**. If payments break, a user retries. If a diary entry fails to save, we surface an error with `ERR-DI-NNN`. If the astrology math is wrong, every natal chart, every transit, every oracle reading, and every AI-generated interpretation is wrong — and users won't know to retry, because wrong-but-confident output looks like correct-but-confident output. Discovering "the math was wrong all along" via user reports post-launch is categorically worse than discovering it now via deliberate audit.
+
+The pivot sequences §9 (ephemeris validation) ahead of §8.1+. When §9 closes, §8 resumes exactly where it left off — the decisions doc (`DIARY_PRODUCT_DECISIONS.md`) stays durable, the sub-round structure below stays intact, no work is wasted.
+
+**§8 resumes at §8.1 (immediate fixes) once §9 (ephemeris validation) ships and user confirms re-open.** Nothing in this plan doc is deleted; status tag at the top is the only live indicator.
 
 ---
 
