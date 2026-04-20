@@ -62,7 +62,7 @@ const planetGroups: { label: string; caption: string; planets: Planet[] }[] = [
 
 const aspects = [
   {
-    name: 'Съвпад',
+    name: 'Съединение',
     degrees: '0°',
     keyword: 'Засилване',
     tint: 'text-violet-300',

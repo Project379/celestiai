@@ -122,7 +122,7 @@ export const PLANET_IDS: Record<Planet, number> = {
  * Aspects in Bulgarian
  */
 export const ASPECTS_BG: Record<AspectType, string> = {
-  conjunction: 'Съвпад',
+  conjunction: 'Съединение',
   sextile: 'Секстил',
   square: 'Квадрат',
   trine: 'Тригон',

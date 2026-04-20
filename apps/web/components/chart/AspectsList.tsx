@@ -74,7 +74,7 @@ export function AspectsList({ aspects }: AspectsListProps) {
               </span>
               <span className="text-slate-600">·</span>
               <span className="font-cinzel text-[9px] uppercase tracking-[0.24em]">
-                {aspect.applying ? 'апликиращ' : 'сепариращ'}
+                {aspect.applying ? 'прилагащ' : 'раздалечаващ'}
               </span>
             </div>
           </li>

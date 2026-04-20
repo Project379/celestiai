@@ -23,9 +23,9 @@ export const SIGN_BG: Record<string, string> = {
 // ("Нептун тригон Плутон") rather than the title-cased ASPECTS_BG used
 // in headers. Kept local because it's a styling adapter, not drift.
 export const ASPECT_BG: Record<string, string> = {
-  conjunction: 'съвпад',
+  conjunction: 'съединение',
   sextile:     'секстил',
-  square:      'квадратура',
+  square:      'квадрат',
   trine:       'тригон',
   opposition:  'опозиция',
 }

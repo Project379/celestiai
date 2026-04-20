@@ -97,7 +97,7 @@ const PLANETS = [
 
 const ASPECTS = [
   {
-    name: 'Съвпад',
+    name: 'Съединение',
     degrees: '0°',
     dotColor: 'bg-white/80',
     keyword: 'усилване / натоварване',
@@ -386,7 +386,7 @@ export function AstrologyReference() {
               </div>
               <div className="flex items-start gap-2">
                 <span className="mt-1 h-2 w-5 shrink-0 rounded-full bg-white/70" />
-                <p className="text-xs text-slate-300/80"><span className="text-slate-200/90">Съвпад (0°)</span> - засилено взаимно влияние. Може да бъде мощна подкрепа или допълнителна тежест.</p>
+                <p className="text-xs text-slate-300/80"><span className="text-slate-200/90">Съединение (0°)</span> - засилено взаимно влияние. Може да бъде мощна подкрепа или допълнителна тежест.</p>
               </div>
             </div>
           </div>

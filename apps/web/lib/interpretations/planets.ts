@@ -106,7 +106,7 @@ const HOUSE_MEANING: Record<number, string> = {
 }
 
 const ASPECT_LABEL: Record<AspectData['aspect'], string> = {
-    conjunction: 'Съвпад',
+    conjunction: 'Съединение',
     sextile: 'Секстил',
     square: 'Квадрат',
     trine: 'Тригон',
