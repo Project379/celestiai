@@ -15,6 +15,16 @@ import * as sweph from 'sweph'
  * @param time - Time in HH:MM format (treated as UTC)
  * @returns Julian Day number
  *
+ * @remarks
+ * The malformed-time throw below is defense-in-depth for internal
+ * callers that construct inputs without going through a validator. On
+ * the /api/birth-data HTTP surface, `apps/web/lib/validators/birth-data.ts`
+ * enforces `/^([01]\d|2[0-3]):([0-5]\d)$/` before any value reaches
+ * this function — a strict superset of what the guard rejects — so
+ * the throw is unreachable from external input. Keep the guard
+ * regardless: in-repo callers (transit calculations, internal probes,
+ * future endpoints) may not share that discipline.
+ *
  * @example
  * ```typescript
  * // June 15, 1990 at 14:30 UTC
