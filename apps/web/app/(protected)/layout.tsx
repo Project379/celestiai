@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { CelestialBackgroundLazy } from '@/components/CelestialBackgroundLazy'
 import { NavigationTransition } from '@/components/NavigationTransition'
@@ -16,21 +17,28 @@ export default async function ProtectedLayout({
 }) {
   const { userId } = await auth()
 
+  // Backup defense. Primary enforcement is Clerk middleware at
+  // apps/web/middleware.ts; this redirect catches the case where the
+  // middleware matcher drifts and a new route under (protected)/ lands
+  // without a corresponding matcher entry. Render nothing authenticated
+  // before confirming a signed-in user.
+  if (!userId) {
+    redirect('/sign-in')
+  }
+
   // Fetch chart + tier for the global Oracle button
   // Uses React.cache() - deduped with any page-level fetches in the same render pass
   let chartId: string | null = null
   let subscriptionTier: 'free' | 'premium' = 'free'
-  if (userId) {
-    try {
-      const [chart, tier] = await Promise.all([
-        getCachedLatestChart(userId),
-        getCachedUserTier(userId),
-      ])
-      chartId = chart?.id ?? null
-      subscriptionTier = tier
-    } catch {
-      // Defaults stay null / 'free'
-    }
+  try {
+    const [chart, tier] = await Promise.all([
+      getCachedLatestChart(userId),
+      getCachedUserTier(userId),
+    ])
+    chartId = chart?.id ?? null
+    subscriptionTier = tier
+  } catch {
+    // Defaults stay null / 'free' on DB hiccups — chrome still renders
   }
 
   return (
