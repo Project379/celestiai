@@ -9,10 +9,17 @@
     "./moon-phase": "./src/lib/moon-phase.ts",
     "./crystals/today": "./src/crystals/today.ts",
     "./crystals/schemas": "./src/crystals/schemas.ts",
+    "./crystals/queries": "./src/crystals/queries.ts",
+    "./crystals/recommend": "./src/crystals/recommend.ts",
+    "./crystals/collect": "./src/crystals/collect.ts",
+    "./crystals/daily-collect": "./src/crystals/daily-collect.ts",
+    "./crystals/overview": "./src/crystals/overview.ts",
     "./planets/current": "./src/planets/current.ts",
-    "./stripe/status": "./src/stripe/status.ts",
+    "./subscription/tier": "./src/subscription/tier.ts",
     "./horoscope/transit-analysis": "./src/horoscope/transit-analysis.ts",
-    "./horoscope/transits": "./src/horoscope/transits.ts"
+    "./horoscope/transits": "./src/horoscope/transits.ts",
+    "./charts/calculate": "./src/charts/calculate.ts",
+    "./charts/birth-data": "./src/charts/birth-data.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -21,7 +28,6 @@
   "dependencies": {
     "@celestia/astrology": "workspace:*",
     "@supabase/supabase-js": "^2.49.1",
-    "stripe": "^20.3.1",
     "sweph": "^2.10.3-4",
     "zod": "^4.3.6"
   },

@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { collectRecommendation } from '@/lib/crystals/queries'
+import { collectCrystalRecommendation } from '@celestia/core/crystals/collect'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,7 +8,7 @@ export const dynamic = 'force-dynamic'
  *
  * Body: { recommendationId: string }
  *
- * Claims an active recommendation and moves it into the user's collection.
+ * Thin wrapper over @celestia/core collectCrystalRecommendation().
  * Premium-only. Idempotent — collecting the same rec twice is a no-op.
  */
 export async function POST(req: Request) {
@@ -18,51 +17,38 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  try {
-    const supabase = createServiceSupabaseClient()
+  const body = (await req.json().catch(() => null)) as
+    | { recommendationId?: string }
+    | null
+  if (!body?.recommendationId) {
+    return Response.json({ error: 'Missing recommendationId' }, { status: 400 })
+  }
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('subscription_tier')
-      .eq('clerk_id', userId)
-      .single()
+  const result = await collectCrystalRecommendation(
+    userId,
+    body.recommendationId,
+  )
 
-    if (user?.subscription_tier !== 'premium') {
+  if (result.ok) {
+    return Response.json({
+      userCrystal: result.data.userCrystal,
+      recommendation: result.data.recommendation,
+    })
+  }
+
+  switch (result.error) {
+    case 'PREMIUM_REQUIRED':
       return Response.json(
         { error: 'Premium subscription required.', code: 'PREMIUM_REQUIRED' },
-        { status: 403 }
+        { status: 403 },
       )
-    }
-
-    const body = (await req.json().catch(() => null)) as
-      | { recommendationId?: string }
-      | null
-    if (!body?.recommendationId) {
-      return Response.json(
-        { error: 'Missing recommendationId' },
-        { status: 400 }
-      )
-    }
-
-    const result = await collectRecommendation(
-      supabase,
-      userId,
-      body.recommendationId
-    )
-
-    if (!result) {
+    case 'NOT_FOUND':
       return Response.json(
         { error: 'Recommendation not found or already collected' },
-        { status: 404 }
+        { status: 404 },
       )
-    }
-
-    return Response.json({
-      userCrystal: result.userCrystal,
-      recommendation: result.recommendation,
-    })
-  } catch (error) {
-    console.error('[crystals/collect] error', error)
-    return Response.json({ error: 'Internal error' }, { status: 500 })
+    case 'INTERNAL':
+    default:
+      return Response.json({ error: 'Internal error' }, { status: 500 })
   }
 }

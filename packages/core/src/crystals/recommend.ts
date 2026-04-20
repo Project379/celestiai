@@ -15,7 +15,7 @@
  *   - transit: outer-planet hard aspects to natal personal planets
  */
 
-import type { LunarPhase } from '@/lib/moon-phase'
+import type { LunarPhase } from '../lib/moon-phase'
 import type { PlanetPosition } from '@celestia/astrology'
 
 export type CrystalTriggerType = 'birthstone' | 'lunar_phase' | 'transit'
@@ -60,7 +60,7 @@ interface RecommendInput {
 function pickBestMatch(
   catalog: CrystalCatalogEntry[],
   predicate: (c: CrystalCatalogEntry) => boolean,
-  deterministicKey: string
+  deterministicKey: string,
 ): CrystalCatalogEntry | null {
   const matches = catalog.filter(predicate)
   if (matches.length === 0) return null
@@ -99,7 +99,7 @@ function getSunSign(planets: PlanetPosition[]): string | null {
 
 function currentLunarEvent(
   phase: LunarPhase,
-  now: Date
+  now: Date,
 ): { id: 'new' | 'full'; validFrom: Date; validUntil: Date } | null {
   const SYNODIC_MONTH = 29.530588853
   const MS_PER_DAY = 86_400_000
@@ -201,7 +201,7 @@ export function recommendCrystals({
     const birthstone = pickBestMatch(
       catalog,
       (c) => c.zodiacSigns.includes(sunSign),
-      `birthstone:${sunSign}`
+      `birthstone:${sunSign}`,
     )
     if (birthstone) {
       const signBg = ZODIAC_BG[sunSign] ?? sunSign
@@ -224,7 +224,7 @@ export function recommendCrystals({
     const phaseCrystal = pickBestMatch(
       catalog,
       (c) => c.moonPhases.includes(phaseIdFilter),
-      `lunar:${phaseIdFilter}:${formatMonthKey(event.validFrom)}${sunSign ?? ''}`
+      `lunar:${phaseIdFilter}:${formatMonthKey(event.validFrom)}${sunSign ?? ''}`,
     )
     if (phaseCrystal) {
       const monthKey = formatMonthKey(event.validFrom)
@@ -252,7 +252,7 @@ export function recommendCrystals({
       (t) =>
         OUTER_PLANETS.has(t.transitPlanet) &&
         PERSONAL_PLANETS.has(t.natalPlanet) &&
-        HARD_ASPECTS.has(t.aspect)
+        HARD_ASPECTS.has(t.aspect),
     )
     .sort((a, b) => a.orb - b.orb)
 
@@ -261,7 +261,7 @@ export function recommendCrystals({
     const transitCrystal = pickBestMatch(
       catalog,
       (c) => c.planet === tightestTransit.transitPlanet,
-      `transit:${tightestTransit.transitPlanet}:${monthKey}`
+      `transit:${tightestTransit.transitPlanet}:${monthKey}`,
     )
     if (transitCrystal) {
       const planetBg =

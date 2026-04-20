@@ -1,11 +1,14 @@
 import { auth } from '@clerk/nextjs/server'
-import { getStripeStatus } from '@celestia/core/stripe/status'
+import { getSubscriptionTier } from '@celestia/core/subscription/tier'
+import { activatePremiumFromSession } from '@/lib/stripe/activate-from-session'
 
 /**
  * GET /api/stripe/status?session_id=cs_xxx
  *
- * Thin wrapper over @celestia/core getStripeStatus(). Used by the
- * /subscription/success page to poll until premium is active.
+ * Used by the /subscription/success page to poll until premium is active.
+ * If a Checkout session_id is supplied we attempt a fast-path activation
+ * against Stripe (web-only concern — mobile IAP goes through RevenueCat),
+ * then return the canonical tier from the DB either way.
  */
 export async function GET(request: Request) {
   const { userId } = await auth()
@@ -17,8 +20,11 @@ export async function GET(request: Request) {
   const sessionId = searchParams.get('session_id')
 
   try {
-    const data = await getStripeStatus(userId, sessionId)
-    return Response.json(data)
+    if (sessionId) {
+      await activatePremiumFromSession(userId, sessionId)
+    }
+    const tier = await getSubscriptionTier(userId)
+    return Response.json({ tier })
   } catch (err) {
     console.error('[api/stripe/status] error:', err)
     return Response.json({ tier: 'free' })
