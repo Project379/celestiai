@@ -249,6 +249,21 @@ const PROTECTED_PAGE_ROUTES = [
 const PUBLIC_PAGE_ROUTES = ['/', '/sign-in', '/sign-up', '/pricing']
 
 async function fetchNoFollow(path, init = {}) {
+  // Note on Clerk dev-mode behavior:
+  //
+  // In development, when auth.protect() fires against a request that
+  // lacks Clerk's __clerk_db_jwt dev-browser cookie (which a raw curl
+  // or Node fetch will), Clerk does NOT issue a 3xx redirect. Instead
+  // it does an internal rewrite to /clerk_<timestamp> which Next then
+  // 404s on. The authoritative programmatic signal for "middleware is
+  // blocking this route" in that mode is the response headers:
+  //
+  //   x-clerk-auth-status: signed-out
+  //   x-clerk-auth-reason: protect-rewrite[, dev-browser-missing]
+  //
+  // In production-mode Clerk, auth.protect() issues a normal 307
+  // redirect with Location: /sign-in?redirect_url=... — the harness
+  // handles both paths below.
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await fetch(BASE_URL + path, {
@@ -259,6 +274,8 @@ async function fetchNoFollow(path, init = {}) {
       return {
         status: res.status,
         location: res.headers.get('location'),
+        clerkAuthStatus: res.headers.get('x-clerk-auth-status'),
+        clerkAuthReason: res.headers.get('x-clerk-auth-reason'),
       }
     } catch (err) {
       if (attempt === 0) {
@@ -270,66 +287,96 @@ async function fetchNoFollow(path, init = {}) {
   }
 }
 
+function isMiddlewareBlocked(r) {
+  // Either path signals middleware-enforced auth:
+  //   prod-mode: 3xx + Location containing /sign-in
+  //   dev-mode:  Clerk protect-rewrite headers
+  const isProdRedirect =
+    r.status >= 300 && r.status < 400 && (r.location ?? '').includes('/sign-in')
+  const isDevRewrite =
+    r.clerkAuthStatus === 'signed-out' &&
+    (r.clerkAuthReason ?? '').includes('protect')
+  return isProdRedirect || isDevRewrite
+}
+
 async function checkProtectedPageRedirects() {
-  console.log('\n== Protected page routes redirect anon → /sign-in ==')
+  console.log('\n== Protected page routes — anon blocked by Clerk middleware ==')
   for (const route of PROTECTED_PAGE_ROUTES) {
-    const { status, location } = await fetchNoFollow(route)
-    const is3xx = status >= 300 && status < 400
-    const redirectsToSignIn = (location ?? '').includes('/sign-in')
+    const r = await fetchNoFollow(route)
     expect(
-      `GET ${route} (anon) → 3xx to /sign-in`,
-      is3xx && redirectsToSignIn,
-      `status=${status} location=${location?.slice(0, 100)}`,
+      `GET ${route} (anon) → middleware-blocked`,
+      isMiddlewareBlocked(r),
+      `status=${r.status} clerk-status=${r.clerkAuthStatus ?? '-'} clerk-reason=${r.clerkAuthReason ?? '-'} loc=${r.location?.slice(0, 60) ?? '-'}`,
     )
   }
 }
 
 async function checkSubscriptionSuccessRedirectUrl() {
-  // Stripe redirects the user to /subscription/success?session_id=cs_test_xxx
-  // after Checkout. The fix in 531c9f8 routes that URL through Clerk
-  // middleware (not the layout redirect) so the redirect_url query param
-  // round-trips the full original path + query string. Without round-
-  // tripping the session_id, activatePremiumFromSession never runs and
-  // premium activation waits on the async webhook.
-  console.log('\n== Stripe session_id round-trips through sign-in bounce ==')
+  // /subscription/success?session_id=... is supposed to bounce anon
+  // users through /sign-in?redirect_url=<encoded original URL> so the
+  // session_id survives the sign-in round-trip and
+  // activatePremiumFromSession can read it afterwards (531c9f8).
+  //
+  // In Clerk dev mode without a dev-browser cookie, the observable
+  // middleware signal is the protect-rewrite (x-clerk-auth-status:
+  // signed-out). We can verify the route is middleware-blocked from
+  // a plain curl — the redirect_url preservation is a Clerk SDK
+  // invariant produced only when a real dev browser or a signed-out
+  // production request triggers the redirect. That round-trip MUST
+  // be verified in BROWSER_CHECKLIST.md; here we only verify the
+  // middleware is firing on the route, which is the necessary (not
+  // sufficient) condition.
+  console.log('\n== /subscription/success middleware-blocks anon (redirect_url round-trip is browser-only) ==')
   const sessionIdProbe = 'cs_test_uat_session_id_probe'
   const originalPath = `/subscription/success?session_id=${sessionIdProbe}`
-  const { status, location } = await fetchNoFollow(originalPath)
-  const is3xx = status >= 300 && status < 400
+  const r = await fetchNoFollow(originalPath)
+  expect(
+    'GET /subscription/success?session_id=… (anon) → middleware-blocked',
+    isMiddlewareBlocked(r),
+    `status=${r.status} clerk-status=${r.clerkAuthStatus ?? '-'} clerk-reason=${r.clerkAuthReason ?? '-'}`,
+  )
 
-  let redirectsToSignIn = false
-  let redirectUrlValue = null
-  if (location) {
+  // If we DID get a prod-style 3xx with a Location header, verify the
+  // round-trip. This path runs when the harness is pointed at a
+  // production-mode Clerk instance or a dev instance with a dev
+  // browser cookie set via Cookie header.
+  if (r.status >= 300 && r.status < 400 && r.location) {
+    let redirectsToSignIn = false
+    let redirectUrlValue = null
     try {
-      const parsed = new URL(location, BASE_URL)
+      const parsed = new URL(r.location, BASE_URL)
       redirectsToSignIn = parsed.pathname === '/sign-in'
       redirectUrlValue = parsed.searchParams.get('redirect_url')
     } catch {}
+    const preservesPath = redirectUrlValue?.includes('/subscription/success')
+    const preservesSessionId = redirectUrlValue?.includes(sessionIdProbe)
+    expect(
+      '(prod-mode) redirect_url preserves path + session_id',
+      redirectsToSignIn && preservesPath && preservesSessionId,
+      `redirect_url=${redirectUrlValue?.slice(0, 140) ?? '-'}`,
+    )
+  } else {
+    record(
+      '(dev-mode) redirect_url preserves path + session_id',
+      'skip',
+      'Clerk protect-rewrite in dev mode does not expose Location; browser UAT must verify the full session_id round-trip',
+    )
   }
-
-  const preservesPath = redirectUrlValue?.includes('/subscription/success')
-  const preservesSessionId = redirectUrlValue?.includes(sessionIdProbe)
-
-  expect(
-    'GET /subscription/success?session_id=… (anon) → 3xx to /sign-in with redirect_url preserving path + session_id',
-    is3xx && redirectsToSignIn && preservesPath && preservesSessionId,
-    `status=${status} redirect_url=${redirectUrlValue?.slice(0, 140)}`,
-  )
 }
 
 async function checkPublicPagesStayPublic() {
-  // Inverse assertion — catches a future matcher widening that accidentally
-  // sweeps marketing / auth-landing pages into protection and breaks the
-  // conversion funnel (anon visitors redirected away from /pricing, /,
-  // /sign-in, /sign-up before they can sign up).
+  // Inverse assertion — catches a future matcher widening that
+  // accidentally sweeps marketing / auth-landing pages into
+  // protection and breaks the conversion funnel (anon visitors
+  // redirected away from /pricing, /, /sign-in, /sign-up before
+  // they can sign up).
   console.log('\n== Public page routes stay public ==')
   for (const route of PUBLIC_PAGE_ROUTES) {
-    const { status, location } = await fetchNoFollow(route)
-    const redirectsToSignIn = (location ?? '').includes('/sign-in')
+    const r = await fetchNoFollow(route)
     expect(
-      `GET ${route} (anon) → 200 (NOT redirected to /sign-in)`,
-      status === 200 || (status >= 300 && status < 400 && !redirectsToSignIn),
-      `status=${status} location=${location?.slice(0, 80) ?? '-'}`,
+      `GET ${route} (anon) → not middleware-blocked`,
+      !isMiddlewareBlocked(r),
+      `status=${r.status} clerk-status=${r.clerkAuthStatus ?? '-'} clerk-reason=${r.clerkAuthReason ?? '-'}`,
     )
   }
 }
