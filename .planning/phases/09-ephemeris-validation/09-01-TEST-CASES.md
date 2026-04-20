@@ -58,18 +58,17 @@ Merged into Queen Elizabeth II fixture — not a separate 6th case.
 
 **Implementation:** QE II reference-data file (`test/validation/reference-data/queen-elizabeth-ii.ts`) gets a `nativeSwisseph` column alongside `jpl` / `astronomyEngine` / `astrocom`. The `nativeSwisseph` snapshot is generated via the AGPL protocol documented in `reference-data/README.md § Moshier-vs-SE-files reference snapshot — AGPL protocol`.
 
-## Historical-tz caveat (Einstein + Kahlo)
+## Scope boundary — historical-tz cases (Einstein 1879, Kahlo 1907)
 
-Both cases predate standardized timezones in their birth regions:
+These two cases predate standardized civil timezones in their birth regions (Germany standardized CET in 1893; Mexico standardized ~1922). Birth certificates for both record Local Mean Time. Celestia's `localTimeToUTC` uses `geo-tz` modern-zone resolution, so Celestia interprets each birth time under its nearest modern civil zone — which produces a different UTC than the astro-community convention (LMT-based UTC).
 
-- **Germany** adopted Central European Time in 1893. March 1879 Ulm used Local Mean Time (LMT offset ≈ +0:39:54 vs UTC).
-- **Mexico** adopted standardized zones around 1922. July 1907 Coyoacán used LMT (offset ≈ -6:36:38 vs UTC).
+**What this means for §9.2/§9.3/§9.4:** For these two cases, reference-data queries (JPL Horizons, Astronomy Engine, astro.com) use **Celestia's computed UTC**, not the LMT-corrected UTC. This makes Einstein and Kahlo **self-consistency checks** — they validate that `sweph`'s output matches JPL/astro.com given whatever UTC Celestia feeds it — rather than full cross-validation checks.
 
-Celestia's `localTimeToUTC` uses modern `geo-tz` zone resolution, which would interpret these LMT-origin times as modern CET / America_Mexico_City zone times — a 20-36 minute UTC discrepancy, equivalent to 5-9° of Earth rotation.
+**What this does NOT validate:** whether Celestia's UTC is the astronomically-correct UTC for pre-standardized-tz birth data. That is a product-scope question about `localTimeToUTC`'s handling of historical dates, tracked separately as `09-01-PRECISION-FLOOR.md § Doc drift corrections` entry 4.
 
-**Consequence for reference-data sourcing:** JPL / Astronomy Engine / astro.com queries for these cases MUST use Celestia's computed UTC (from running the fixture through `calculateNatalChart` / `localTimeToUTC`), not the astro-community's LMT-corrected UTC. Otherwise Einstein and Kahlo will fail systematically for a known-explainable tz-interpretation reason rather than an ephemeris error. Full protocol in `reference-data/README.md § §9.1.1 Historical-tz interpretation`.
+**Why keep these cases despite the weaker validation role:** self-consistency checks still catch real ephemeris-math bugs downstream of the UTC input. Replacing Einstein/Kahlo with post-standardized-tz AA cases would mean sourcing new reference data for new cases; that cost isn't justified by the incremental validation strength, given the 7 synthetic cases carry the bulk of the actual cross-validation load.
 
-This is a decision worth revisiting at §9.5: if Celestia's stated scope includes accurate chart generation for pre-standardized-tz historical birth dates (e.g., for users researching genealogy), `localTimeToUTC` should be extended with an LMT branch for dates predating the birth-location's tz adoption. That's a product-scope question, not a §9 ephemeris-correctness question.
+Full reference-data-sourcing protocol for these cases lives in `reference-data/README.md § §9.1.1 Historical-tz interpretation`.
 
 ## What this list unblocks
 
