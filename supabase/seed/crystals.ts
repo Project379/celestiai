@@ -1,7 +1,5 @@
-import type { NewCrystal } from '../../schema'
-
 /**
- * Crystal seed catalog (30 stones)
+ * Crystal seed catalog (30 stones) — reference data.
  *
  * Covers all 12 zodiac signs, 10 planets, and all 8 lunar phases so the
  * recommendation engine can always find a match regardless of the user's
@@ -14,8 +12,35 @@ import type { NewCrystal } from '../../schema'
  * Bulgarian fields are authored in natural BG (verb-first where fitting,
  * subject-drop, clitic doubling, em-dashes, proper article usage) rather
  * than calqued from the English — per bulgarian-skill rules.
+ *
+ * This data is already loaded into production (crystals table, 30 rows).
+ * The file is kept as canonical reference for future ad-hoc reseeding
+ * against a fresh DB. No tooling consumes it at runtime — earlier Drizzle
+ * loader at packages/db/src/seed/crystals.ts was removed in the same
+ * commit as this one (see MIGRATION_TOOLING.md).
  */
-export type CrystalSeed = Omit<NewCrystal, 'id' | 'createdAt' | 'updatedAt'>
+export interface CrystalSeed {
+  slug: string
+  nameEn: string
+  nameBg: string | null
+  taglineEn: string
+  taglineBg: string | null
+  descriptionEn: string
+  descriptionBg: string | null
+  planet: string | null
+  zodiacSigns: string[]
+  moonPhases: string[]
+  element: string | null
+  chakra: string | null
+  hardness: number | null
+  colorPrimary: string
+  colorSecondary: string
+  colorAccent: string | null
+  svgVariant: string
+  rarity: string
+  keywords: string[]
+  properties: Record<string, unknown> | null
+}
 
 export const crystalsSeed: CrystalSeed[] = [
   // ——— MOON family ———
