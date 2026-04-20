@@ -52,13 +52,17 @@ export const birthDataSchema = z
 
     birthTimeKnown: z.boolean({ error: 'Моля, посочете дали знаете часа на раждане' }),
 
+    // Empty-string and null bypass the format check so the "missing time"
+    // case surfaces once via the superRefine below as an intent-state error
+    // rather than stacking a redundant format error on top.
     birthTime: z
       .string()
-      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
-        error: 'Часът трябва да е във формат HH:MM',
-      })
       .nullable()
-      .optional(),
+      .optional()
+      .refine(
+        (v) => v == null || v === '' || /^([01]\d|2[0-3]):([0-5]\d)$/.test(v),
+        { error: 'Часът трябва да е във формат HH:MM' },
+      ),
 
     approximateTimeRange: z
       .enum(approximateTimeRanges, {
@@ -156,13 +160,16 @@ export const updateBirthDataSchema = z
 
     birthTimeKnown: z.boolean().optional(),
 
+    // Matches create-schema behaviour: empty-string and null bypass the
+    // format check; the intent-state error handles the missing-time case.
     birthTime: z
       .string()
-      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
-        error: 'Часът трябва да е във формат HH:MM',
-      })
       .nullable()
-      .optional(),
+      .optional()
+      .refine(
+        (v) => v == null || v === '' || /^([01]\d|2[0-3]):([0-5]\d)$/.test(v),
+        { error: 'Часът трябва да е във формат HH:MM' },
+      ),
 
     approximateTimeRange: z
       .enum(approximateTimeRanges, {
