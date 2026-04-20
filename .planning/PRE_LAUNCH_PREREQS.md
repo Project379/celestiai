@@ -13,6 +13,7 @@
 **Status tags:**
 - `[not started]` — identified, not picked up
 - `[in progress]` — actively being worked, name the owner
+- `[partial]` — some sub-items resolved, others open; name what's open
 - `[blocked]` — waiting on a prerequisite; name the blocker
 - `[deferred post-ephemeris]` — intentionally held until ephemeris validation (item 6) closes; see status-change log below
 - `[done]` — shipped, verified, evidence link provided
@@ -40,6 +41,7 @@ Last reviewed: 2026-04-20
 | 6 | **Swiss Ephemeris output validation against JPL / astro.com reference** — golden-file tests comparing `@celestia/astrology` output against known reference data for ~10-20 historically significant dates or synthetic cases. Compare planet positions, house cusps, aspects to within a precision threshold (threshold calibration in §9.1, proposed 1 arc-minute pending sign-off). | `[in progress]` | §9 workstream | 2026-04-20 | **Genuine correctness gate.** If ephemeris outputs are wrong, the product is wrong regardless of UI polish. Opened as `§9` on 2026-04-20 after the sequencing pivot above. Workstream plan at `.planning/phases/09-ephemeris-validation/00-PLAN.md`. Six-sub-round baseline (§9.0 plan → §9.6 CI promotion); +N rounds if §9.2-§9.4 surface discrepancies requiring §9.5 fix work. Cross-reference: JPL Horizons for raw planetary positions, astro.com for full natal comparison (houses + aspects). |
 | 7 | **Privacy / GDPR compliance** — EU-resident user data handling. Cookie consent if tracking cookies are used (decision depends on item 1). User-accessible data export + deletion paths (partially exists at `/api/gdpr/*` — confirm complete). Privacy notice copy in Bulgarian, reviewed for legal accuracy. Data processor contracts with Clerk / Supabase / Stripe / the chosen analytics vendor. | `[not started]` | unassigned | 2026-04-20 | `apps/web/app/api/gdpr/export/route.ts` + `apps/web/app/api/gdpr/delete-account/route.ts` exist — audit what they actually export/delete and whether coverage is complete across every table that holds user data. The `users.trial_claimed_at` and `users.subscription_status` columns flagged as "extra in DB" in `SCHEMA_DRIFT_AUDIT.md` are relevant here — if they hold user-identifying data, GDPR export must include them. |
 | 8 | **Diary persistence — server-side storage, markdown export, GDPR deletion cascade** — the diary is currently localStorage-only (`hooks/useManifestEntries.ts`), which means users lose entries on browser clear or device change. Launch requires: (a) Supabase-backed persistence with RLS, (b) `/api/diary/*` CRUD endpoints with `ERR-DI-NNN` error domain, (c) markdown export of all entries per user, (d) GDPR deletion cascade when an account is deleted, (e) expansion from 8 single-variant prompts to 24+ (3 variants per phase × 8 phases) with cycle-based per-user rotation. | `[deferred post-ephemeris]` | §8 workstream (paused post-§8.0) | 2026-04-20 | Full workstream scoped in `.planning/phases/08-diary-persistence/00-PLAN.md`. Sub-rounds §8.1-§8.9 are all planning-complete and ready to execute. Paused 2026-04-20 behind item 6 (ephemeris) per the sequencing pivot in the status-change log above. Resumes at §8.1 when item 6 closes and user confirms re-open. Decisions captured in `.planning/research/DIARY_PRODUCT_DECISIONS.md` — durable regardless of pause length. |
+| 9 | **Third-party licensing compliance audit** — confirm all third-party-library and third-party-service licenses are compatible with closed-source SaaS deployment in EU. Libraries: `sweph` resolved via GPL-2.0 path (pinned to `2.10.0-11`; see `docs/licensing.md`), Professional License upgrade deferred to post-launch (see `.planning/POST_LAUNCH_UPGRADES.md` item 1). Remaining providers flagged for review: Clerk TOS, Supabase TOS, Stripe TOS, OpenRouter TOS, JPL Horizons API (NASA — public domain, likely clean), Astronomy Engine (MIT — clean). | `[partial]` | founder (TOS review is not Claude-Code-automatable) | 2026-04-20 | `sweph` license path resolved 2026-04-20 (§9.1) after the ephemeris-validation workstream surfaced the AGPL-vs-GPL-2.0 distinction. Open sub-items: service-provider TOS review across the five providers listed. Add new libraries here as they're introduced. |
 
 ---
 
@@ -61,6 +63,9 @@ Last reviewed: 2026-04-20
 
 **Release-process gates (per-release, not one-time):**
 - Item 3 — browser UAT sign-off. Recurring, not a one-shot.
+
+**Compliance gates:**
+- Item 9 — third-party licensing audit. `sweph` library-license piece resolved 2026-04-20 (§9.1); service-provider TOS review outstanding.
 
 ---
 
