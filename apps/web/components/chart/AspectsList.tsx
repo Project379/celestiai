@@ -1,12 +1,8 @@
 'use client'
 
-import type { AspectData } from '@celestia/astrology/client'
-import {
-  ASPECT_BG,
-  ASPECT_GLYPH,
-  PLANET_BG,
-  PLANET_GLYPH,
-} from './chart-sections'
+import type { AspectData, Planet } from '@celestia/astrology/client'
+import { PLANETS_BG, PLANET_GLYPHS } from '@celestia/astrology/client'
+import { ASPECT_BG, ASPECT_GLYPH } from './chart-sections'
 
 interface AspectsListProps {
   aspects: readonly AspectData[]
@@ -41,10 +37,10 @@ export function AspectsList({ aspects }: AspectsListProps) {
   return (
     <ul className="divide-y divide-slate-800/60">
       {sorted.map((aspect, i) => {
-        const p1Glyph = PLANET_GLYPH[aspect.planet1] ?? '✦'
-        const p2Glyph = PLANET_GLYPH[aspect.planet2] ?? '✦'
-        const p1Bg = PLANET_BG[aspect.planet1] ?? aspect.planet1
-        const p2Bg = PLANET_BG[aspect.planet2] ?? aspect.planet2
+        const p1Glyph = PLANET_GLYPHS[aspect.planet1 as Planet] ?? '✦'
+        const p2Glyph = PLANET_GLYPHS[aspect.planet2 as Planet] ?? '✦'
+        const p1Bg = PLANETS_BG[aspect.planet1 as Planet] ?? aspect.planet1
+        const p2Bg = PLANETS_BG[aspect.planet2 as Planet] ?? aspect.planet2
         const typeGlyph = ASPECT_GLYPH[aspect.aspect]
         const typeBg = ASPECT_BG[aspect.aspect]
         const accent = ASPECT_ACCENT[aspect.aspect]

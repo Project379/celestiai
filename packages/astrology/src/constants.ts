@@ -60,6 +60,30 @@ export const PLANETS_BG: Record<Planet, string> = {
 } as const
 
 /**
+ * Planet glyphs (Unicode).
+ *
+ * Canonical single source of truth — any display surface wanting a
+ * character glyph must import from here. The `Record<Planet, string>`
+ * typing forces completeness: a new entry in the Planet union will
+ * fail to compile here until its glyph is added, preventing the
+ * silent-fallback drift that caused northNode to render as raw
+ * "northNode" on the chart Аспекти / Детайли surfaces.
+ */
+export const PLANET_GLYPHS: Record<Planet, string> = {
+  sun: '☉',
+  moon: '☽',
+  mercury: '☿',
+  venus: '♀',
+  mars: '♂',
+  jupiter: '♃',
+  saturn: '♄',
+  uranus: '♅',
+  neptune: '♆',
+  pluto: '♇',
+  northNode: '☊',
+} as const
+
+/**
  * Ordered list of planets for calculation
  */
 export const PLANETS_ORDER: Planet[] = [

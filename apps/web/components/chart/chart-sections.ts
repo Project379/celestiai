@@ -19,19 +19,9 @@ export const SIGN_BG: Record<string, string> = {
   pisces:      'Риби',
 }
 
-export const PLANET_BG: Record<string, string> = {
-  sun:     'Слънце',
-  moon:    'Луна',
-  mercury: 'Меркурий',
-  venus:   'Венера',
-  mars:    'Марс',
-  jupiter: 'Юпитер',
-  saturn:  'Сатурн',
-  uranus:  'Уран',
-  neptune: 'Нептун',
-  pluto:   'Плутон',
-}
-
+// Lowercase aspect labels — styled for the inline aspect-row sentence
+// ("Нептун тригон Плутон") rather than the title-cased ASPECTS_BG used
+// in headers. Kept local because it's a styling adapter, not drift.
 export const ASPECT_BG: Record<string, string> = {
   conjunction: 'съвпад',
   sextile:     'секстил',
@@ -46,19 +36,6 @@ export const ASPECT_GLYPH: Record<string, string> = {
   square:      '□',
   trine:       '△',
   opposition:  '☍',
-}
-
-export const PLANET_GLYPH: Record<string, string> = {
-  sun:     '☉',
-  moon:    '☽',
-  mercury: '☿',
-  venus:   '♀',
-  mars:    '♂',
-  jupiter: '♃',
-  saturn:  '♄',
-  uranus:  '♅',
-  neptune: '♆',
-  pluto:   '♇',
 }
 
 /** Format degree + minutes within a sign — e.g. "12°34' Лъв". */

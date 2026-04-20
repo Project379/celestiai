@@ -1,11 +1,8 @@
 'use client'
 
-import type { PlanetPosition } from '@celestia/astrology/client'
-import {
-  PLANET_BG,
-  PLANET_GLYPH,
-  formatDegreeInSign,
-} from './chart-sections'
+import type { Planet, PlanetPosition } from '@celestia/astrology/client'
+import { PLANETS_BG, PLANET_GLYPHS } from '@celestia/astrology/client'
+import { formatDegreeInSign } from './chart-sections'
 
 interface PlanetsListProps {
   planets: readonly PlanetPosition[]
@@ -28,8 +25,8 @@ export function PlanetsList({
   return (
     <ul className="divide-y divide-slate-800/60">
       {planets.map((planet) => {
-        const nameBg = PLANET_BG[planet.planet] ?? planet.planet
-        const glyph = PLANET_GLYPH[planet.planet] ?? '✦'
+        const nameBg = PLANETS_BG[planet.planet as Planet] ?? planet.planet
+        const glyph = PLANET_GLYPHS[planet.planet as Planet] ?? '✦'
         const position = formatDegreeInSign(planet.signDegree, planet.sign)
         const retrograde = planet.speed < 0
         const isSelected = selectedPlanet === planet.planet
