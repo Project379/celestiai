@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "diag:drift": "node --env-file=.env.local scripts/diagnostics/audit-schema-drift.mjs",
+    "diag:probe-column": "node --env-file=.env.local scripts/diagnostics/probe-column-type.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.29",
@@ -49,6 +51,7 @@
     "eslint": "^9",
     "eslint-config-next": "^15",
     "postcss": "^8.5.1",
+    "postgres": "^3.4.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3"
   }
