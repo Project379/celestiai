@@ -4,6 +4,40 @@
 
 **Epistemic tags:** `[must-exercise]` blocks M3 continuation, `[should-exercise]` is recommended but non-blocking, `[deferred]` belongs to a later phase.
 
+## What programmatic UAT covers vs what stays browser-only
+
+The harness covers, on a real dev server + real Clerk backend + real Supabase:
+
+- Every `/api/*` route handler's auth gate, error branches, and happy path against both free and premium tiers.
+- `/api/oracle/generate` cap-gate: 3/day free, 429 CAP_REACHED on (cap+1)th attempt, premium bypass, cache-hit bypass, below-cap short-circuit.
+- Middleware is signed-out-blocking every protected page route (dev-mode signal = `x-clerk-auth-status: signed-out` + `x-clerk-auth-reason: protect-rewrite`).
+- Public pages (`/`, `/sign-in`, `/sign-up`, `/pricing`) stay public (not middleware-blocked).
+- Per-run cleanup of all user-scoped writes (charts, chart_calculations, ai_readings, user_daily_crystals, user_crystals, crystal_recommendations) + tier reset to free.
+
+The harness does NOT cover, and these items remain browser-only:
+
+- **Rendering fidelity.** Whether pages actually render correctly in a browser — HTML layout, CSS, hydration, animations, component interactivity. The harness verifies HTTP contracts, not pixels.
+- **Clerk's full sign-in round-trip.** In Clerk dev mode without a `__clerk_db_jwt` cookie, `auth.protect()` does a protect-rewrite rather than a real 3xx redirect with `Location: /sign-in?redirect_url=...`. The programmatic harness can confirm the middleware fires but cannot observe the `redirect_url` preservation. That round-trip must be exercised in a real browser — the Stripe `session_id` survival test in particular.
+- **Multi-profile / multi-cookie scenarios.** Stale session cookies, cross-tab auth state, dev HMR serving stale SSR HTML across auth changes — all require real browser state that fetch can't simulate. See `.planning/research/AUTH_TESTING_NOTES.md`.
+- **Server Component behavior under `React.cache`.** Harness hits route handlers, not Server Component render passes. Whether `getCrystalOfTheDay` dedupes correctly across multiple Server Components within a single render is framework behavior that requires a page load.
+- **Streaming endpoints.** `/api/horoscope/generate` and `/api/oracle/generate` are streaming responses under AI SDK semantics. Harness probes the cap-gate branch (429 short-circuit before the stream) and the cache-hit branch (200 cached JSON before the stream); the actual stream body is never consumed.
+- **Localization rendering.** Harness asserts BG strings appear in JSON bodies; whether those strings render correctly in the UI (font, direction, truncation, Zod-form error placement) is a visual check.
+
+**Release gate.** Don't declare M3 UAT complete on a programmatic pass alone. Every `[must-exercise]` item in this document must be signed off in a browser session against `pnpm --filter @celestia/web dev` in incognito with DevTools "Disable cache" on (see `AUTH_TESTING_NOTES.md` for why).
+
+---
+
+## Stripe session_id survives the sign-in bounce `[must-exercise]`
+
+**Why browser-only:** The fix in `531c9f8` routes `/subscription/success?session_id=…` through Clerk middleware so `auth.protect()` produces `/sign-in?redirect_url=<url-encoded original URL>` and the `session_id` query param round-trips through the sign-in flow. The programmatic harness can confirm the middleware fires (`x-clerk-auth-status: signed-out`) but **cannot observe the `redirect_url` value** because Clerk dev mode protect-rewrites rather than redirecting when no `__clerk_db_jwt` cookie exists. Verifying the round-trip requires a real browser that Clerk has issued a dev-browser cookie to.
+
+**Steps:**
+1. Sign out. Open incognito, load `http://localhost:3000/sign-in` once so Clerk issues a `__clerk_db_jwt` dev browser cookie. Sign out again or open a second incognito window without signing in.
+2. In DevTools Network tab with "Preserve log" and "Disable cache" on, navigate to `http://localhost:3000/subscription/success?session_id=cs_test_uat_probe_12345`.
+3. **Verify:** the navigation bounces to `http://localhost:3000/sign-in?redirect_url=%2Fsubscription%2Fsuccess%3Fsession_id%3Dcs_test_uat_probe_12345` (URL-encoded `session_id` intact in the `redirect_url` param).
+4. **Verify:** after signing in, you land back on `/subscription/success?session_id=cs_test_uat_probe_12345` with the `session_id` intact (visible in the URL bar or Network tab).
+5. Regression signal: if the bounce is to bare `/sign-in` with no `redirect_url`, OR if `redirect_url` is missing the `session_id` encoding, a matcher change has re-dropped `/subscription/success` and the payment-activation data loss is back.
+
 ---
 
 ## Stripe Checkout fast-path (`activatePremiumFromSession`) `[must-exercise]`
