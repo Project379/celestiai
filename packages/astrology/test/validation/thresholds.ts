@@ -1,14 +1,26 @@
 /**
  * Locked §9.2 thresholds — single source of truth.
  *
- * Source: .planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md (user-approved 2026-04-20).
+ * Source: .planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md
+ *   (user-approved 2026-04-20; Mean Node reference-source correction same day)
  * DO NOT EDIT without a corresponding planning-doc update and user sign-off.
+ *
+ * PER-BODY REFERENCE SOURCE:
+ *   Sun + 7 planets + Moon: JPL Horizons (physical-reality reference).
+ *   Mean Node: sweph Mean Node vs. Meeus Ch. 47 polynomial (independent
+ *     implementation of the same ELP2000-85 secular formula used by sweph's
+ *     Moshier mode). This is a code-path integrity check, NOT a physical-
+ *     reality check. See 09-01-HARNESS.md § Node validation — explicit scope.
+ *
+ * The constant is named PRIMARY_THRESHOLDS_ARCSEC (not JPL_*) because the
+ * reference source is heterogeneous across bodies — JPL for most, Meeus
+ * polynomial for Mean Node.
  */
 
 import type { Body, Status } from './types'
 
-/** Primary threshold (arc-seconds) vs JPL Horizons. */
-export const JPL_THRESHOLDS_ARCSEC: Record<Body, number> = {
+/** Primary threshold (arc-seconds) — see per-body reference source in the block comment above. */
+export const PRIMARY_THRESHOLDS_ARCSEC: Record<Body, number> = {
   sun: 1,
   mercury: 1,
   venus: 1,
@@ -19,6 +31,7 @@ export const JPL_THRESHOLDS_ARCSEC: Record<Body, number> = {
   neptune: 1,
   pluto: 1,
   moon: 3,
+  // Meeus polynomial reference — not JPL. See block comment above.
   northNode: 20,
 }
 
@@ -58,7 +71,7 @@ export const ASPECT_ORB_THRESHOLD_ARCSEC = 60
  * - pause-and-fix: delta > threshold × PAUSE_AND_FIX_MULTIPLIER
  */
 export function classifyBodyStatus(body: Body, deltaArcsec: number): Status {
-  const threshold = JPL_THRESHOLDS_ARCSEC[body]
+  const threshold = PRIMARY_THRESHOLDS_ARCSEC[body]
   if (deltaArcsec <= threshold) return 'pass'
   if (deltaArcsec > threshold * PAUSE_AND_FIX_MULTIPLIER) return 'pause-and-fix'
   return 'queue'
@@ -82,17 +95,17 @@ export function classifyPlanetBatch(
   if (planetDeltas.length === 0) return 'pass'
 
   const anyAbovePauseCeiling = planetDeltas.some(
-    (d) => d.deltaArcsec > JPL_THRESHOLDS_ARCSEC[d.body] * PAUSE_AND_FIX_MULTIPLIER,
+    (d) => d.deltaArcsec > PRIMARY_THRESHOLDS_ARCSEC[d.body] * PAUSE_AND_FIX_MULTIPLIER,
   )
   if (anyAbovePauseCeiling) return 'pause-and-fix'
 
   const countAboveQueueCeiling = planetDeltas.filter(
-    (d) => d.deltaArcsec > JPL_THRESHOLDS_ARCSEC[d.body] * QUEUE_MULTIPLIER,
+    (d) => d.deltaArcsec > PRIMARY_THRESHOLDS_ARCSEC[d.body] * QUEUE_MULTIPLIER,
   ).length
   if (countAboveQueueCeiling > 1) return 'pause-and-fix'
 
   const anyAboveThreshold = planetDeltas.some(
-    (d) => d.deltaArcsec > JPL_THRESHOLDS_ARCSEC[d.body],
+    (d) => d.deltaArcsec > PRIMARY_THRESHOLDS_ARCSEC[d.body],
   )
   return anyAboveThreshold ? 'queue' : 'pass'
 }

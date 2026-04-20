@@ -13,7 +13,7 @@ import {
   ASPECT_ORB_THRESHOLD_ARCSEC,
   ASTRONOMY_ENGINE_THRESHOLD_ARCSEC,
   HOUSE_THRESHOLD_ARCSEC,
-  JPL_THRESHOLDS_ARCSEC,
+  PRIMARY_THRESHOLDS_ARCSEC,
   SYSTEMIC_RULE_BODIES,
   classifyBodyStatus,
   classifyPlanetBatch,
@@ -71,7 +71,7 @@ function comparePlanets(
       const threshold =
         source === 'astronomyEngine'
           ? ASTRONOMY_ENGINE_THRESHOLD_ARCSEC
-          : JPL_THRESHOLDS_ARCSEC[ref.body]
+          : PRIMARY_THRESHOLDS_ARCSEC[ref.body]
       const status: Status =
         source === 'astronomyEngine'
           ? delta <= threshold

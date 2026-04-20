@@ -49,10 +49,18 @@ Stronger verification would require cross-referencing against Rodden's own publi
 
 | Source | Scope | Threshold | Notes |
 |---|---|---|---|
-| `jpl` | All 10 bodies + Mean Node | per-body (see `thresholds.ts`) | Primary. Ecliptic longitudes from JPL Horizons. |
+| `jpl` | **10 bodies only — Sun, Moon, Mercury-Pluto** (Mean Node is inline-referenced, not in per-case files — see § Mean Node — inline-reference asymmetry) | per-body (see `thresholds.ts`) | Primary. Ecliptic longitudes from JPL Horizons. |
 | `astronomyEngine` | 9 non-Moon non-Node bodies only | 1′ (60″) | Secondary sanity check. Astronomy Engine's ±1′ spec is coarser than Moon (3″) and Node (20″) thresholds — **do not** populate Moon or Node entries for this source. |
 | `astrocom` | Houses, aspects | 1′ (60″) | Manual transcription from astro.com natal-chart output. Spot-check transcription on first discrepancy pass. |
 | `nativeSwisseph` | One reference case (Moshier-vs-SE-files floor check, merged into QE II fixture) | same as `jpl` for planets | Generated locally via the AGPL reference-generation protocol below. |
+
+### Mean Node — inline-reference asymmetry
+
+Mean Node has a structurally different reference source from the other bodies. Per-case reference-data files **omit the `northNode` entry from their `planets.jpl` array** because JPL Horizons does not output astrology Mean Node — JPL only produces the instantaneous osculating ascending node (which is ~True Node, not Mean). See `09-01-HARNESS.md § Node validation — explicit scope` for the full rationale and epistemic qualifier.
+
+The Node reference is a ~5-line Meeus Ch. 47 polynomial implementation inline in the harness (lands with §9.2 code), not a snapshot file. If you're writing a new per-case reference-data file and wondering where `northNode` belongs: don't include it in `planets.jpl` at all. The Node comparison runs from inline harness code for every case.
+
+When you create a new per-case reference-data `.ts` file, include a header comment pointing here so a future reader doesn't look for a `northNode` entry and assume it's missing by mistake.
 
 ## §9.1.1 Historical-tz interpretation — query instant matters
 
