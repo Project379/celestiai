@@ -290,6 +290,13 @@ export interface CelestialCanvasProps {
   externalScrollRef?: React.RefObject<number | null>
   /** Callback: writes constellation screen positions each frame for overlay positioning */
   onPositionsUpdate?: (positions: Map<string, { x: number; y: number; stars: { sx: number; sy: number }[] }>) => void
+  /**
+   * Minimum opacity for planets that land inside the center content zone.
+   * Default 0.2 preserves decorative ambience on pages with sparse content.
+   * Pass 0 on information-dense routes (e.g. /chart right panel) where the
+   * 0.2 floor still reads over a dark glass panel with small text.
+   */
+  planetCenterFadeFloor?: number
 }
 
 export function CelestialCanvas({
@@ -301,6 +308,7 @@ export function CelestialCanvas({
   externalMouseRef,
   externalScrollRef,
   onPositionsUpdate,
+  planetCenterFadeFloor = 0.2,
 }: CelestialCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const internalMouseRef = useRef({ x: -1000, y: -1000 })
@@ -787,11 +795,13 @@ export function CelestialCanvas({
         const py = p.screenY - planetScrollOffset + pxOffsetY * 0.3
 
         // Safety net: dim planet if its position lands inside the content zone.
-        // Low floor (0.2) so planets become truly subtle when they drift into
-        // the dashboard hero, daily horoscope, or lunar phase card during scroll.
+        // Floor is route-configurable via `planetCenterFadeFloor` — 0.2 by
+        // default (dashboard, landing, rhythm — decorative ambience over
+        // sparse content), 0 on the chart route where dense aspect rows on
+        // a dark glass panel can't tolerate even 20% planet opacity.
         // Sun renders at full brightness for maximum glow.
         const sunDim = p.id === 'sun' ? 1 : 1
-        const planetFade = Math.max(0.2, centerFade(px, py)) * sunDim
+        const planetFade = Math.max(planetCenterFadeFloor, centerFade(px, py)) * sunDim
 
         const pulse = Math.sin(time * 0.8 + p.order * 1.3) * 0.08 + 0.92
         const sz = p.size * pulse
