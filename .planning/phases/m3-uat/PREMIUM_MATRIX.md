@@ -23,7 +23,7 @@
 | 10 | Recommendation collect action | `POST /api/crystals/collect` → core `collectCrystalRecommendation` (premium gate + collectRecommendation) | premium | premium | **no** |
 | 11 | Recommendation history | Part of `/api/crystals` payload (`recommendations[]` includes historical uncollected recs within window) | premium | premium | **no** |
 | 12 | Manual daily-crystal collect | `POST /api/crystals/daily/collect` → core `collectDailyCrystal` (premium gate) | premium | **product-decision #1** — if daily streak becomes free (item #6), this should move to free too so the UI's Collect button works for the free-tier streak hook | **depends on #1** |
-| 13 | Lunar diary (three-line journal) | `/rhythm/journal/page.tsx` renders `<ManifestDiaryContent/>`; entries stored in browser `localStorage` via `hooks/useManifestEntries.ts`; no server endpoint, no auth-layer gate, no UI-layer tier gate | **none / any authed user** | premium | **yes** — add UI-level gate on the diary surface (premium only; free users see a PremiumGate similar to `/you/crystals`). Also: diary is currently reachable on both `/rhythm` (embedded `<ManifestDiaryContent/>` on that page) and `/rhythm/journal` (standalone page) — the gate has to apply on both render sites, not just one |
+| 13 | Lunar diary (three-line journal) | `/rhythm/journal/page.tsx` renders `<ManifestDiaryContent/>`; entries stored in browser `localStorage` via `hooks/useManifestEntries.ts`; no server endpoint, no auth-layer gate, no UI-layer tier gate | **none / any authed user** | premium — **but only after server-side persistence ships (M4/M5 predecessor)** | **deferred** — decision 2026-04-20: no UI-only gate now. Cosmetic gates train power users to bypass and are worse than no gate. Diary stays open to all authed users until localStorage is replaced by a real endpoint that can enforce the gate server-side. Canonical render site consolidates to `/rhythm/journal` in a separate commit. |
 | 14 | Oracle (AI reading, topic: general) | `POST /api/oracle/generate` — topic `general` is allowed for any authed user; no cap | free (topic-based) | free (cap-based, TBD) | **yes — policy mismatch** — current impl gates by *topic*; matrix calls for gating by *message cap*. Surface as **product-decision #2** before code |
 | 15 | Oracle (AI reading, topics: love, career, health) | `POST /api/oracle/generate` — non-`general` topics return 403 PREMIUM_REQUIRED for free | **premium-only** | should be free-under-cap / premium-unlimited per matrix, topic-independent | **yes — same as #14** — current topic-gate is the wrong shape |
 | 16 | Oracle teaser (preview text for a reading topic) | `POST /api/oracle/teaser` — no tier check | free (any authed user) | free | **no** — consistent with "teaser is a free preview" |
@@ -69,12 +69,12 @@ Moving from topic-gate to cap-gate is a real semantic change, not a copy edit:
 
 ### Product-decision #3 — diary gate placement
 
-The lunar diary is currently un-gated (any authed user can use it; entries live in `localStorage`, so no server-side signal anyway). Two gate options:
+**Resolved 2026-04-20:** option 3b — no UI-only gate. The diary stays open to all authed users until server-side persistence ships (flagged as an M4/M5 predecessor in `DATA_FETCHING_INVENTORY.md §3.3` and §7.2). Rationale: cosmetic gates train power users to bypass — worse than no gate. Ship the premium gate when there is an actual server endpoint to enforce it on.
 
-- **3a (UI-only gate, cheap):** Wrap `<ManifestDiaryContent/>` in a `<PremiumGate/>` for free users. Same pattern as `/you/crystals`. Zero backend change. Works because the diary has no API to defend.
-- **3b (full gate):** Migrate diary to a server endpoint first (`/api/manifest/entries`) — already flagged as an M4/M5 gap in `DATA_FETCHING_INVENTORY.md §3.3` — and gate at both UI and API. More invasive; couples to the mobile-parity work.
+Consequence for this audit: diary is **not** in the §4/§5 fix set. The `/rhythm` → `/rhythm/journal` consolidation (product-decision #4) still ships in a separate commit because it is a UX fix, not a tier-gate fix.
 
-**Decision I need before touching code:** #3a now (easy win on the matrix fix), #3b later as part of mobile diary persistence. Separate commits.
+Prior option-3a drafted below for historical reference, not implemented:
+- ~~**3a (UI-only gate, cheap):** Wrap `<ManifestDiaryContent/>` in a `<PremiumGate/>` for free users.~~ **Rejected** — see rationale above.
 
 ### Product-decision #4 — diary canonical location
 
@@ -90,14 +90,24 @@ Currently diary content renders on both `/rhythm` (embedded as a section on that
 - **1 streak-shape bug** — free users never accumulate a streak; fix depends on product-decision #1.
 - **1 policy-shape mismatch** — oracle topic-gate vs cap-gate; depends on product-decision #2.
 
-## If product decisions resolve as recommended (#1a, #2 provisional-cap, #3a, diary canonical = `/rhythm/journal`)
+## Resolved decisions (2026-04-20 sign-off)
 
-Fix order, each its own commit:
+1. **#1a — daily streak free for all authed users.** Shipped in `cb54ede`.
+2. **#2 — oracle cap-gate.** Shape: replace topic-gate with daily message cap. Cap dimension: **Europe/Sofia calendar day** (not rolling 24h). Cap value: **`ORACLE_FREE_MESSAGES_PER_DAY=3`** free, unlimited premium. Value lives in env/named const so later changes are one-line.
+3. **#3 — diary gate deferred** — no UI-only gate; ship the premium gate with server-side persistence (M4/M5). Documented above.
+4. **#4 — canonical diary URL = `/rhythm/journal`.** `/rhythm` stops embedding `<ManifestDiaryContent/>` inline. URL-shape question (should `/diary` or `/journal` at top level replace the buried `/rhythm/journal`?) flagged for a later design pass, non-blocking.
 
-1. **transits gate removal** — `packages/core/src/horoscope/transits.ts` + `/api/transits/overview/route.ts`. Simple discriminated-union adjustment + route-handler cleanup.
-2. **daily-streak for free users** — lift the `isPremium` guard in `packages/core/src/crystals/today.ts` so auto-collect + streak compute for any authed user. Also decide whether `POST /api/crystals/daily/collect` should lose its premium gate to match (recommended yes; free users need a way to re-collect if the auto-collect race-loses to a client that already rendered).
-3. **diary premium gate (UI)** — wrap `<ManifestDiaryContent/>` in a `<PremiumGate/>` in both render sites (`/rhythm/journal` page and `/rhythm` page's embedded section), until #4 consolidates.
-4. **oracle cap-gate refactor** — larger change; own commit; depends on cap-dimension choice.
-5. **(§4 copy fixes land in parallel)**
+## Fix order (§4 + §5 combined, each its own commit)
 
-No code until these decisions are confirmed.
+Already landed:
+- `635f1a4` — **fix(api): bulgarian 401 on five user-scoped endpoints**
+- `956e044` — **fix(api): replace auth.protect() with explicit 401 in stripe/subscription and user**
+- `da69a9e` — **fix(api): transits premium-gate removal**
+- `cb54ede` — **feat(crystals): daily streak available to all authed users per premium matrix**
+
+Remaining:
+- **refactor(diary): defer premium gate until server-side persistence lands** — this commit (docs-only; PREMIUM_MATRIX.md + DATA_FETCHING_INVENTORY.md)
+- **refactor(pages): /rhythm/journal canonical, remove /rhythm inline diary embed**
+- **refactor(oracle): topic-gate → cap-gate, provisional 3/day free cap**
+
+Then §6 harness update.
