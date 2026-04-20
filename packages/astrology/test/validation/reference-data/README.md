@@ -72,6 +72,27 @@ Protocol: the JPL / Astronomy Engine adapter scripts (§9.1 upcoming work) shoul
 
 astro.com reference for houses + aspects should be transcribed by entering the fixture's birthDate/birthTime/lat/lon/city into astro.com's natal-chart form directly — astro.com's own tz handling will produce whatever chart astro.com produces for that input, which is the comparison target.
 
+## astro.com transcription protocol (§9.1 task 5c)
+
+astro.com's chart pages are bot-gated against automated fetch. Transcription is a human workflow. For each case:
+
+1. **Source URL:** navigate to [astro.com Extended Chart Selection](https://www.astro.com/cgi/chart.cgi). Enter the fixture's `birthDate`, `birthTime`, `city` (or lat/lon via manual coordinate entry). Select Placidus house system (default). Generate the natal chart.
+2. **Transcribe:**
+   - **12 house cusps** in order (Cusp 1 through Cusp 12). For each, record ecliptic longitude as a decimal degree (0-360). astro.com displays as "sign + degree + minute/second" — convert to decimal via `signIndex × 30 + degree + minute/60 + second/3600` where signs are aries=0..pisces=11.
+   - **Ascendant** and **Midheaven (MC)** as decimal degrees. These sit on Cusp 1 and Cusp 10 respectively; transcribe both explicitly.
+   - **Aspect table** from astro.com's aspect grid. For each aspect: `body1`, `body2` (ordered alphabetically in our fixtures), aspect type (conjunction/sextile/square/trine/opposition), orb in decimal degrees, applying (true/false).
+3. **Record metadata in file header:**
+   - Source URL used (the actual URL including query parameters after chart generation).
+   - Transcription date (ISO format).
+   - Transcriber (founder / Claude Code / etc.).
+4. **Error-rate acknowledgment:** at ~30 data points per case × ~9 cases = ~270 hand-typed values, expect 1-2% transcription error rate. First discrepancy pass in §9.2 / §9.3 / §9.4 will surface outliers; correct transcription errors at that pass before treating outliers as ephemeris bugs.
+5. **Spot-check procedure** (post-transcription, pre-commit):
+   - Re-read Cusp 1 and Cusp 10 aloud against the astro.com output (catches off-by-one sign errors on the most load-bearing cusps).
+   - Verify the applying/separating column for at least 3 aspects — this flips sign near-exact and is easy to miscopy.
+   - Check that the sum of longitudes modulo 360° is stable — large transcription errors skew this sum conspicuously.
+
+**Loading:** the transcribed data goes into the existing per-case reference-data `.ts` file under `houses.astrocom` and `aspects.astrocom`. See the example in `queen-elizabeth-ii.ts` once populated.
+
 ## Moshier-vs-SE-files reference snapshot — AGPL protocol
 
 **Licensing context:** Celestia uses `sweph` under GPL-2.0 (`2.10.0-11`, pinned) for license reasons documented in `docs/licensing.md`. The Moshier-vs-SE-files reference generation described below uses AGPL-licensed `.se1` data files to produce numeric output; **the output is committed as reference data, the data files are never committed**. This follows the working-assumption interpretation that AGPL/GPL obligations apply to the software and data, not to numeric outputs computed by it (analogous to compiler output not inheriting GPL from the compiler). If this interpretation is ever challenged, the reference data can be regenerated from JPL Horizons alone without SE files, losing the empirical Moshier floor check but preserving §9.2's primary validation.
