@@ -307,11 +307,12 @@ Restating per conversation so the sequence below is unambiguous:
 - Cleanup: delete `apps/mobile` inline type definitions that duplicate schema types
 - **Budget: 2-3 days** `[inferred]`
 
-**Phase M5 explicit predecessor — decide before starting:**
+**Phase M5 explicit predecessors — decide before starting:**
 
 | # | Predecessor | Owner | Doc |
 |---:|---|---|---|
 | 1 | **Bulgarian error-message placement decision** — today the Zod schemas in `apps/web/lib/validators/*` carry Bulgarian error copy (form-UX coupled). Mobile will hit the same endpoints and get the same Bulgarian JSON error bodies — but the surface that renders them (Expo form validation) needs to either (a) reuse the same Zod schemas from `packages/core/` with the BG messages already baked in, (b) keep schemas in web with English-default messages and have each surface translate, or (c) colocate BG+EN messages in shared schemas and let the surface pick. Carried as `[assumed]` through M2/M3 (schemas stay in web). M5 is where the assumption either holds (option a is cheap — move schemas to core as-is, mobile imports BG strings directly) or breaks (mobile wants English or user-locale messages, forcing a split). Must be decided explicitly before the mobile HTTP client is built so contracts don't churn. | Person starting M5. | `[planned]` — open a 1-page decision note under `.planning/research/` when M5 begins. |
+| 2 | **Per-field error-detail rendering contract** — `apps/web/components/birth-data/BirthDataWizard.tsx:95-98` reads only `error.error` from 400 responses and discards `error.details.<field>[]`. On web the path is cold in practice because `zodResolver` catches malformed submissions client-side before they reach the API, so the details channel has never been load-bearing. Mobile (M5) will hit the same endpoints with Expo form validation that does *not* share the web-side client Zod pass by default. Decide: (a) both surfaces render per-field detail and this becomes the contract, (b) mobile runs the same core schemas client-side so details stay cold on both surfaces, (c) something else. Settle the contract before the mobile HTTP client is built; fix the wizard's discard at the same time if the answer is (a) so web and mobile converge. Surfaced during the birth-data ten-input validator repro (2026-04-20). | Person starting M5. | `[planned]` — capture in the same decision note as row 1 or a sibling. |
 
 **Phase M6 (optional, post-Option-B) — Kill unused Drizzle OR adopt it:**
 - See §5.4
