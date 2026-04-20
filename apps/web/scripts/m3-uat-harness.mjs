@@ -10,15 +10,18 @@
  * Flow:
  *   1. Resolve/create a Clerk test user, mint a session JWT.
  *   2. Ensure users row exists in Supabase for that Clerk ID (free tier).
- *   3. Unauth 401 shape per endpoint (bulk).
- *   4. /api/planets/current happy path (public).
- *   5. Auth'd self-seed: POST /api/birth-data → chartId.
- *   6. GET/PATCH/DELETE birth-data flows against the seeded chart.
- *   7. POST /api/chart/calculate (fresh then cached).
- *   8. Flip tier=premium via service role → hit premium-gated endpoints.
- *   9. Flip tier=free → verify 403 PREMIUM_REQUIRED shape.
- *  10. Crystal picker divergence analysis (read-only catalog query).
- *  11. Cleanup: delete the test chart + audit rows + uncollected recs.
+ *   3. Unauth 401 shape per API endpoint (bulk).
+ *   4. Protected page routes redirect anon → /sign-in; public page
+ *      routes return 200; /subscription/success preserves session_id
+ *      through the redirect_url query param.
+ *   5. /api/planets/current happy path (public).
+ *   6. Auth'd self-seed: POST /api/birth-data → chartId.
+ *   7. GET/PATCH/DELETE birth-data flows against the seeded chart.
+ *   8. POST /api/chart/calculate (fresh then cached).
+ *   9. Flip tier=premium via service role → hit premium-gated endpoints.
+ *  10. Flip tier=free → verify 403 PREMIUM_REQUIRED shape.
+ *  11. Crystal picker divergence analysis (read-only catalog query).
+ *  12. Cleanup: delete the test chart + audit rows + uncollected recs.
  *
  * Writes ./RESULTS.json next to this script and prints human-readable log.
  */
@@ -214,6 +217,116 @@ async function checkUnauthGates() {
       `${ep.method} ${ep.path} → 401`,
       status === 401 && (json?.error?.includes('Неоторизиран') || json?.error === 'Unauthorized'),
       `status=${status} body=${JSON.stringify(json).slice(0, 80)}`,
+    )
+  }
+}
+
+// Protected page routes — anon HTML fetch must redirect to /sign-in via
+// Clerk middleware (auth.protect). Covers every path under (protected)/
+// that actually has a page.tsx today, plus /subscription/success which
+// lives there to catch the Stripe redirect. /pricing is deliberately
+// NOT here — it was moved out of (protected)/ in 7849a5d because it's
+// public marketing; an anon fetch to /pricing must return 200.
+const PROTECTED_PAGE_ROUTES = [
+  '/dashboard',
+  '/chart',
+  '/birth-data',
+  '/birth-data/new',
+  '/you',
+  '/you/crystals',
+  '/you/crystals/guide',
+  '/you/guide',
+  '/you/recommendations',
+  '/rhythm',
+  '/rhythm/journal',
+  '/circle',
+  '/subscription/success',
+]
+
+const PUBLIC_PAGE_ROUTES = ['/', '/sign-in', '/sign-up', '/pricing']
+
+async function fetchNoFollow(path, init = {}) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(BASE_URL + path, {
+        ...init,
+        redirect: 'manual',
+        signal: AbortSignal.timeout(60_000),
+      })
+      return {
+        status: res.status,
+        location: res.headers.get('location'),
+      }
+    } catch (err) {
+      if (attempt === 0) {
+        await new Promise((r) => setTimeout(r, 500))
+        continue
+      }
+      throw err
+    }
+  }
+}
+
+async function checkProtectedPageRedirects() {
+  console.log('\n== Protected page routes redirect anon → /sign-in ==')
+  for (const route of PROTECTED_PAGE_ROUTES) {
+    const { status, location } = await fetchNoFollow(route)
+    const is3xx = status >= 300 && status < 400
+    const redirectsToSignIn = (location ?? '').includes('/sign-in')
+    expect(
+      `GET ${route} (anon) → 3xx to /sign-in`,
+      is3xx && redirectsToSignIn,
+      `status=${status} location=${location?.slice(0, 100)}`,
+    )
+  }
+}
+
+async function checkSubscriptionSuccessRedirectUrl() {
+  // Stripe redirects the user to /subscription/success?session_id=cs_test_xxx
+  // after Checkout. The fix in 531c9f8 routes that URL through Clerk
+  // middleware (not the layout redirect) so the redirect_url query param
+  // round-trips the full original path + query string. Without round-
+  // tripping the session_id, activatePremiumFromSession never runs and
+  // premium activation waits on the async webhook.
+  console.log('\n== Stripe session_id round-trips through sign-in bounce ==')
+  const sessionIdProbe = 'cs_test_uat_session_id_probe'
+  const originalPath = `/subscription/success?session_id=${sessionIdProbe}`
+  const { status, location } = await fetchNoFollow(originalPath)
+  const is3xx = status >= 300 && status < 400
+
+  let redirectsToSignIn = false
+  let redirectUrlValue = null
+  if (location) {
+    try {
+      const parsed = new URL(location, BASE_URL)
+      redirectsToSignIn = parsed.pathname === '/sign-in'
+      redirectUrlValue = parsed.searchParams.get('redirect_url')
+    } catch {}
+  }
+
+  const preservesPath = redirectUrlValue?.includes('/subscription/success')
+  const preservesSessionId = redirectUrlValue?.includes(sessionIdProbe)
+
+  expect(
+    'GET /subscription/success?session_id=… (anon) → 3xx to /sign-in with redirect_url preserving path + session_id',
+    is3xx && redirectsToSignIn && preservesPath && preservesSessionId,
+    `status=${status} redirect_url=${redirectUrlValue?.slice(0, 140)}`,
+  )
+}
+
+async function checkPublicPagesStayPublic() {
+  // Inverse assertion — catches a future matcher widening that accidentally
+  // sweeps marketing / auth-landing pages into protection and breaks the
+  // conversion funnel (anon visitors redirected away from /pricing, /,
+  // /sign-in, /sign-up before they can sign up).
+  console.log('\n== Public page routes stay public ==')
+  for (const route of PUBLIC_PAGE_ROUTES) {
+    const { status, location } = await fetchNoFollow(route)
+    const redirectsToSignIn = (location ?? '').includes('/sign-in')
+    expect(
+      `GET ${route} (anon) → 200 (NOT redirected to /sign-in)`,
+      status === 200 || (status >= 300 && status < 400 && !redirectsToSignIn),
+      `status=${status} location=${location?.slice(0, 80) ?? '-'}`,
     )
   }
 }
@@ -670,6 +783,9 @@ async function main() {
   ])
 
   await checkUnauthGates()
+  await checkProtectedPageRedirects()
+  await checkSubscriptionSuccessRedirectUrl()
+  await checkPublicPagesStayPublic()
   await checkPublicHappyPaths()
   const chartId = await checkAuthHappyPaths(jwt, user.id)
   if (chartId) {
