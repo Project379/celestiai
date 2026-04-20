@@ -1,10 +1,20 @@
-# §9.1 — Precision-floor investigation (gate before harness scaffold)
+# §9.1 — Precision-floor investigation and locked thresholds
 
 **Opened:** 2026-04-20
-**Status:** findings complete; **blocks §9.1 harness scaffold + sample comparison until user approves revised thresholds**.
-**Scope:** the "first action in §9.1" from the opening planning message — verify the ephemeris backend actually in use and report the library's precision floor *before* test cases run against a threshold that may sit below that floor.
+**Status:** user-approved 2026-04-20. Thresholds locked. Unblocks §9.1 harness scaffold + test-case list + sample comparison.
+**Scope:** the "first action in §9.1" from the opening planning message — verify the ephemeris backend actually in use, report the library's precision floor, lock §9.2 thresholds that are defensible given that floor.
 
-**Epistemic tags used:** `[verified]` (observed in code or quoted from primary doc), `[inferred]` (reasoning from observations), `[runtime-check-needed]` (not yet observed).
+**Epistemic tags used:** `[verified]` (observed in code or quoted from primary doc), `[inferred]` (reasoning from observations), `[user-decision]` (authority is the user's direct call).
+
+---
+
+## Doc drift corrections (2026-04-20, same class as DRIZZLE_DECISION.md §9 reversal)
+
+1. **Planning docs repo-wide reference "swisseph-wasm"** — shipped dep is `sweph` (native N-API).
+2. **`COMPETITOR_ANALYSIS.md:501` claims topocentric Moon as a Celestia precision feature** — removed from code at `calculator.ts:42-45`, caused ~27′ parallax shift.
+3. **`COMPETITOR_ANALYSIS.md:211, 501, 531` position True Node as a precision differentiator** — per §9.1 decision, Celestia switched to Mean Node because True Node under Moshier (~70″) is ~14× less precise than Mean Node at modern dates (<5″ empirical, 20″ worst-case ceiling per Swiss Ephemeris docs).
+
+Full cleanup pass deferred to post-§9.6 — this breadcrumb exists so future readers searching for "swisseph-wasm," "topocentric Moon," or "True Node precision" find the trail.
 
 ---
 
@@ -12,8 +22,8 @@
 
 1. **Library identity: `sweph` v2.10.3-b-1 (native Node N-API bindings), not `swisseph-wasm`.** `[verified]` — `packages/astrology/package.json` dependency list; `packages/astrology/node_modules/sweph/package.json` name + version; `binding.gyp` confirms native C/C++ add-on build.
 2. **Ephemeris mode: Moshier (`SEFLG_MOSEPH`), exclusively.** `[verified]` — only flag combination used in `packages/astrology/src`; `calculator.ts:46` and `transit.ts:113` both pass `SEFLG_MOSEPH | SEFLG_SPEED` to `sweph.calc_ut`. No `set_ephe_path()` call anywhere in `@celestia/astrology`. No `.se1` or JPL data files are bundled with the `sweph` package (sweph README: *"This library does not include any ephemeris files by default"*).
-3. **Moshier precision floor is not uniform across bodies.** Planets are ≤1″ vs JPL; the Moon is "a few arc seconds" vs JPL. `[verified]` — quoted below from the Swiss Ephemeris official documentation.
-4. **Implication for §9.2 thresholds.** The planned uniform 1-arc-second JPL threshold is (a) at the planet precision floor — zero headroom, (b) below the Moon precision floor — it will fail the Moon routinely with no actual bug. Single proposal below re-tiers by body and preserves §9.5's branching multipliers.
+3. **Moshier precision floor is not uniform across bodies.** Planets ≤1″ vs JPL; Moon "a few arc seconds"; True Node ~70″; Mean Node <20″ worst-case over full range (≪5″ at modern dates). `[verified]` — quoted below from the Swiss Ephemeris official documentation.
+4. **Node-type decision: Mean Node.** `[user-decision]` `constants.ts:118` changed from `northNode: 11 // SE_TRUE_NODE` to `northNode: 10 // SE_MEAN_NODE` in this round's atomic commit. Rationale: True Node's ~70″ Moshier floor is incompatible with validation at arc-second tolerances; Mean Node's <5″ modern-date floor is compatible with a 20″ threshold that gives meaningful regression-detection.
 
 ---
 
@@ -45,7 +55,7 @@
 
 `[verified]` Houses: `sweph.houses(jd, lat, lon, HOUSE_SYSTEM_PLACIDUS)` at `calculator.ts:164` — takes no ephemeris flag. House computation in the Swiss Ephemeris depends on sidereal time / Earth rotation, **not** on planetary ephemeris tables. Moshier-vs-SE-files does not affect house output. `[inferred]` — from Swiss Ephemeris source (`swehouse.c`) and the `sweph.houses` signature not accepting flags.
 
-## Evidence — Moshier precision floor
+## Evidence — Moshier precision floor (planets and Moon)
 
 `[verified]` Quoted verbatim from the Swiss Ephemeris official documentation (`https://www.astro.com/swisseph/swisseph.htm`, Moshier section):
 
@@ -71,82 +81,92 @@
 `[verified]` Synthetic-case date-range check against those defines:
 - Year **1600** → JD ≈ 2305448 → **inside** Moshier range. OK.
 - Year **2200** → JD ≈ 2524593 → **inside** Moshier range. OK.
-- Neither synthetic case hits or approaches the edge of the Moshier window, so no edge-of-range headroom concern.
 
-`[inferred]` Moshier's "below 1 arc-second planets / few arc-seconds Moon" numbers are stated against modern JPL. Reference validation in §9.2 uses JPL Horizons (typically DE441), so the library's stated deviation and our reference are measuring the same thing.
+## Evidence — Moshier precision floor (lunar nodes)
+
+`[verified]` Quoted verbatim from the Swiss Ephemeris official documentation (`https://www.astro.com/swisseph/swisseph.htm`, lunar nodes section):
+
+> **Mean Node vs ELP2000-85:** *"its deviation from the mean node of ELP2000-85 is 0 for J2000 and remains below 20 arc seconds for the whole period."*
+
+> **Mean Node vs DE431 extension:** *"Estimated precision is 1 arcsec, relative to DE431."*
+
+> **True Node differences:**
+> - JPL-derived vs Swiss Ephemeris-derived: *"~ 0.1 arc second"*
+> - JPL-derived vs Moshier-derived: *"~ 70 arc seconds"*
+
+> **Precision warning:** *"If you want a precision of the order of at least one arc second, you have to choose either the JPL or the Swiss Ephemeris."*
+
+> **Node-type semantics:** *"In the strict sense of the word, even the 'true' nodes are true only twice a month"* (when the Moon crosses the ecliptic); monthly oscillations between those passages.
+
+`[verified]` Empirical constant check: `packages/astrology/node_modules/sweph/constants.js:25` → `SE_MEAN_NODE = 10`; line 26 → `SE_TRUE_NODE = 11`. Prior `constants.ts:118` used id 11 (True Node); this round's commit switches to id 10 (Mean Node).
 
 ---
 
-## Proposed threshold revision (§9.2 only — supersedes the 1″ uniform threshold)
+## Locked thresholds for §9.2
 
-The user's original framing in the opening message lists thresholds as a tiered stack (planets vs JPL; independent secondary comparison against Astronomy Engine; separate house/aspect thresholds). The revision below changes exactly one number in that stack: the JPL planet/Moon tier, split into two sub-tiers by body.
+### Primary threshold (vs JPL Horizons)
 
-**Proposed (single recommendation):**
-
-| Body | §9.2 JPL threshold | Pause-and-fix (§9.5 trigger) | Queue-for-later (§9.5 trigger) |
+| Body | Threshold vs JPL | Queue-for-later trigger | Pause-and-fix trigger |
 |---|---|---|---|
-| Sun, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto | 1 arc-second | any body drifts >10″ or >1 body drifts >5″ | all drifts ≤5″ but any >1″ |
-| Moon | 3 arc-seconds | Moon drifts >30″ or systemic issue suspected | Moon drifts >15″ but ≤30″ |
-| North Node | 1 arc-second | same as planets | same as planets |
+| Sun + 7 planets (Mercury through Pluto) | **1″** | any planet >1″, all ≤5″ | any planet >10″ **OR** >1 planet >5″ |
+| Moon | **3″** | >3″ but ≤15″ | >30″ **OR** >1 trigger across bodies |
+| Mean Node | **20″** | >20″ but ≤100″ | >200″ |
 
-Rationale, per tier:
+**Trigger scope:**
+- The *"any planet / >1 planet"* systemic-issue rule applies only to the **9 non-Moon non-Node bodies** (Sun + 7 planets).
+- Moon and Mean Node trigger independently. A threshold miss on the Moon or Node does not compose with the planet-systemic rule.
 
-- **Planets at 1″** preserves the user-proposed threshold at exactly the value Swiss Ephemeris documents as the Moshier-vs-JPL bound. Passes clean iff the library delivers what its own docs promise. Zero headroom by design — we want to catch any regression below the documented floor.
-- **Moon at 3″** sits above the "few arc-seconds" documented ceiling with just enough margin to avoid being at the floor. A 1″ or 2″ Moon threshold would flag noise as failure.
-- **10× / 5× branching multipliers** carry over from the user's pre-committed rule, per-body. Moon gets 30″/15″, matching the same tolerance ratio planets get.
+**Retroactive-tightening clause (Mean Node only):** the 20″ threshold reflects the worst-case ceiling Swiss Ephemeris documents across the full Moshier range. At modern birth dates (post-1950, the vast majority of Celestia's target users), actual Mean Node drift is expected in the low single-digit arc-seconds. If §9.2 runs show consistent <5″ drift at modern dates, the threshold can be retroactively tightened and the change re-committed with the supporting numbers.
 
-**Secondary check vs Astronomy Engine** — unchanged at **1 arc-minute** (60″). The secondary threshold is already 60× looser than the JPL tier, absorbing Astronomy Engine's own ±1′ stated accuracy and any Moshier floor below it.
+### Secondary sanity check (vs Astronomy Engine)
 
-**Houses vs astro.com at 1 arc-minute** — unchanged. House math is independent of ephemeris mode (see evidence above).
+| Body | Threshold vs Astronomy Engine | Scope note |
+|---|---|---|
+| Sun + 7 planets | **1′ (60″)** | sanity check only — Astronomy Engine's stated ±1′ accuracy means a tighter threshold is not meaningful |
+| Moon | **not checked** | Astronomy Engine's 1′ accuracy spec is coarser than the Moon's 3″ primary threshold; it cannot meaningfully validate the Moon at that level |
+| Mean Node | **not checked** | same rationale — 1′ spec > 20″ Node threshold |
 
-**Aspects vs astro.com at 1 arc-minute + correct type + correct applying/separating** — unchanged. Aspect orbs inherit planetary-longitude precision; at 1′ (60″) aspect threshold, worst-case 3″ Moon noise is 5% of threshold. Well within budget.
+Document this scope-limitation explicitly in the harness README so future readers don't wonder why Moon/Node have only one reference source.
 
-**Net effect:** only §9.2 gains one additional threshold entry (Moon). §9.3 and §9.4 proceed as originally planned.
+### House and aspect thresholds (unchanged from original proposal)
 
----
-
-## Alternative available (not recommended here, flagged for user decision)
-
-If the user prefers tighter bounds over the Moon exception, the precision floor can be lifted by loading the Swiss Ephemeris Moon data file (`semo_18.se1`, roughly 7 MB covering 1800-2400; `semo_24.se1` for 2400-3000). Add the file to the repo, call `sweph.set_ephe_path(...)` before calc, and switch the Moon-only branch to `SEFLG_SWIEPH`. Planets can stay on Moshier unchanged. This gets the Moon to ~0.001″ precision and lets a uniform 1″ JPL threshold apply to every body.
-
-Trade-offs the user should weigh:
-
-- **License.** `sweph` v2.10.1+ is AGPL-3.0-or-later. Ephemeris data files from Astrodienst are under the same terms unless a professional Swiss Ephemeris license is purchased. `[runtime-check-needed]` — confirm whether current deployment license situation accommodates AGPL before bundling data files.
-- **Repo weight.** `~7 MB` for the 1800-2400 Moon file is tolerable; the full planet file set is 30-50 MB and unnecessary if only the Moon is upgraded.
-- **Deployment path.** Serverless environments need the file accessible at calc time — bundle in `packages/astrology/data/` and set the path relative to the package, or copy into the Vercel function filesystem at build time. `[inferred]` — mechanism not yet tried in this codebase.
-
-Recommendation: accept the tiered Moshier thresholds. If §9.2 surfaces Moon discrepancies that the tiered threshold can't accommodate, revisit this alternative then. Don't preemptively take on AGPL-data-file deployment complexity.
+| Dimension | Threshold vs astro.com | Notes |
+|---|---|---|
+| House cusps (12 cusps + ASC + MC) | 1′ (60″) | house math independent of ephemeris mode (no flag on `sweph.houses`) |
+| Aspect orbs | 1′ (60″) | worst-case 3″ Moon noise is 5% of this threshold — inside budget |
+| Aspect type identification | exact match | conjunction / sextile / square / trine / opposition |
+| Applying / separating classification | exact match | via speed-comparison; verify semantic matches astro.com convention |
 
 ---
 
-## Library-identity drift (sidebar, non-blocking)
+## Rationale — why Mean Node over True Node
 
-Across ten+ planning docs (`PROJECT.md`, `STACK.md`, `ARCHITECTURE.md`, `COMPETITOR_ANALYSIS.md`, `PITFALLS.md`, `04-RESEARCH.md`, `Celestia_AI_Reference.md`, `SUMMARY.md`, `DATA_FETCHING_INVENTORY.md`, `08-diary-persistence/00-PLAN.md`, `09-ephemeris-validation/00-PLAN.md`, `09-ephemeris-validation/CONTEXT_HANDOFF.md`), the astrology engine is described as `swisseph-wasm`. The shipped dependency is `sweph` (native N-API). `04-RESEARCH.md` actually contemplated the choice ("sweph (native) vs swisseph-wasm — WASM adds complexity, native is faster on server") but downstream docs carried the `swisseph-wasm` label forward even though the code went native.
+Product context: `COMPETITOR_ANALYSIS.md:211, 501, 531` previously positioned True Node as a Celestia precision differentiator vs competitors using Mean Node. The marketing frame was written assuming the ephemeris backend could deliver sub-arc-second True Node precision. Under the shipped Moshier mode, that assumption is false — True Node's ~70″ Moshier floor is ~14× less precise than Mean Node's <5″ modern-date floor.
 
-**Consequences:**
+Switching to Mean Node:
 
-- `§9.0 00-PLAN.md` risk-register item #3 — *"swisseph-wasm vs. native swisseph divergence"* — is framed around a risk that cannot materialize in this codebase. The real analogue is the Moshier-vs-SE-files split covered above; treating that as the "library divergence" risk is the correct reframe.
-- Competitor-analysis copy (*"Built on swisseph-wasm server-side calculations"*) and README-adjacent research (`STACK.md` §9, `ARCHITECTURE.md` §6) misname the dependency. Not product-visible (no user sees these docs), but they are load-bearing for future contributor onboarding.
+- **Restores arc-second-level precision** for the node in the validated output. A 20″ threshold with expected <5″ actual drift is meaningful regression-detection; a 60″ threshold permanently parked at the ~70″ True Node floor is theatre.
+- **Matches astro.com / TimePassages default behaviour** for cross-user chart comparison. Users checking their Celestia chart against those tools will see agreement, not a systematic mismatch.
+- **Requires marketing copy revision** in the post-§9.6 cleanup pass. Either drop the Node-based precision claim entirely, or reframe as "Mean Node for classical-astrology agreement." Product decision on framing; this report flags it but does not resolve it.
 
-**Proposed handling:** doc-cleanup pass post-§9.6 (out of validation scope). Replace `swisseph-wasm` with `sweph (native Node bindings, Moshier mode)` across planning docs; rewrite §9.0's risk item #3 as the Moshier-vs-SE-files analogue. **Not blocking §9.2.** Flag only — waiting on user.
+The Swiss Ephemeris advisory *"In the strict sense of the word, even the 'true' nodes are true only twice a month"* reinforces the choice — monthly oscillation in the "true" node is arguably more noise than signal for chart-interpretation at UI precision, independent of the ephemeris-backend question.
 
 ---
 
-## What is blocked pending user decision
+## What is now unblocked
 
-- Harness scaffold in `packages/astrology/test/validation/` — not written yet.
-- Sample comparison for Queen Elizabeth II (or AA-confirmed alternative) — not run yet.
-- Test-case list AA-verification for Einstein, 2-4 additions — not started.
-- Reference-data sourcing plan (JPL Horizons adapter, astro.com transcription protocol, Astronomy Engine integration) — not started.
+- Harness scaffold at `packages/astrology/test/validation/` — fixture loader, threshold config file (single source of truth for the table above), comparison runner with human-readable output. Vitest-picked-up automatically, no separate package. Atomic commit, separable from the sample-comparison commit.
+- AA-rating verification for Einstein via Astro-Databank. Propose 2-4 additional AA-rated candidates (vary latitude, era, hemisphere) with Rodden ratings and birth-data sources. Surface for user approval before reference-data sourcing for those cases. Einstein drops from the set if Astro-Databank does not confirm AA rating.
+- JPL Horizons API adapter sketch — how to query planetary positions for a given (UTC instant, set of bodies), how to parse the response, where to commit reference-data snapshots.
+- Astronomy Engine integration — `astronomy-engine` npm package install + call; flag any API-surface differences that complicate comparison logic.
+- astro.com transcription protocol for 8-10 cases — exact fields to transcribe, commit format, spot-check procedure for catching transcription errors on the first discrepancy pass.
+- One reference case against a known-good native-Swiss-Ephemeris tool (not astro.com) — identification is part of §9.1 sourcing work; if harder to find than expected, flag rather than guess.
+- Sample end-to-end comparison using Queen Elizabeth II (AA-rated, no verification needed). Full tiered-threshold comparison output surfaced for user review before §9.2 opens.
 
-**All four wait on user approval of the tiered threshold proposal above.** Per the opening message: *"Propose relaxing §9.2's JPL threshold to 2-3 arc-seconds and surface to user for re-approval before proceeding. Don't silently loosen."*
+## Exit criteria for §9.1
 
-## Exit criteria for this precision-floor gate
-
-One of:
-
-1. **User approves tiered proposal as-is** → §9.1 continues with harness scaffold, test-case list work, sample comparison using tiered thresholds.
-2. **User picks the SE Moon file alternative** → `[runtime-check-needed]` license + deployment check before proceeding; then uniform 1″ thresholds everywhere, §9.1 continues.
-3. **User proposes different numbers** → thresholds committed at user-provided values; §9.1 continues.
-
-§9.0 `00-PLAN.md` will be updated as part of the §9.1 harness-scaffold commit (not this commit) to reflect the locked-in thresholds once approved, and to reframe risk-register item #3.
+1. Harness scaffold committed with threshold config wired to the locked table above.
+2. Test-case list user-approved (Einstein AA-verification + 2-4 additions + 7 synthetic + 1 reference case).
+3. Reference-data sourcing plan documented and user-reviewed (JPL adapter, Astronomy Engine integration, astro.com transcription protocol).
+4. Sample comparison output for Queen Elizabeth II reviewed by user.
+5. User signs off: *"proceed to §9.2."*

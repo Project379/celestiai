@@ -115,7 +115,11 @@ export const PLANET_IDS: Record<Planet, number> = {
   uranus: 7, // SE_URANUS
   neptune: 8, // SE_NEPTUNE
   pluto: 9, // SE_PLUTO
-  northNode: 11, // SE_TRUE_NODE
+  // Mean Node per §9.1 precision-floor decision
+  // (see .planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md)
+  // True Node (id 11) under Moshier has ~70″ deviation from JPL; Mean Node (id 10)
+  // has <20″ worst-case across full Moshier range, <5″ at modern dates.
+  northNode: 10, // SE_MEAN_NODE
 } as const
 
 /**
