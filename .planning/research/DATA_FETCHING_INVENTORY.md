@@ -320,6 +320,9 @@ Restating per conversation so the sequence below is unambiguous:
 - Budget if adopting: 3-5 days `[inferred]`
 - If killing: <1 day
 
+**Deferred UX items (logged, not gating any phase):**
+- **Transits panel density review** — deferred, user confirmed "good enough for now" during §7 Bug 3 follow-up 2026-04-20. Revisit if user reports density issues later.
+
 ### 7.3 What NOT to do during migration (user's explicit constraints, restated)
 
 - **Do not** leave business logic in `route.ts` files while also duplicating it in Server Components. That's Option A and it's the worst of both worlds.
