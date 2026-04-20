@@ -7,7 +7,10 @@
 
 import { calculateNatalChart } from '../../src/calculator'
 import type { ChartData, ChartInput, AspectData } from '../../src/types'
+import { getJulianDayUTC } from '../../src/utils/julian-day'
+import { localTimeToUTC } from '../../src/utils/timezone'
 
+import { computePlacidusCusps } from './adapters/placidus-inline'
 import { longitudeDeltaArcsec } from './delta'
 import {
   ASPECT_ORB_THRESHOLD_ARCSEC,
@@ -93,15 +96,38 @@ function comparePlanets(
   return out
 }
 
+function computeCaseJd(testCase: TestCase): number {
+  const date = new Date(`${testCase.birthDate}T00:00:00Z`)
+  const time = testCase.birthTime ?? '12:00'
+  const { utcHours, dayOffset } = localTimeToUTC(date, time, testCase.lat, testCase.lon)
+  return getJulianDayUTC(date, utcHours, dayOffset)
+}
+
 function compareHouses(
   chart: ChartData,
+  testCase: TestCase,
   references: ReferenceData,
 ): HouseCuspComparison[] {
   const out: HouseCuspComparison[] = []
-  const sources = Object.keys(references.houses ?? {}) as ReferenceSource[]
-  for (const source of sources) {
+
+  // §9.3 Tier 3 — inline Placidus reference is always computed, per case.
+  const jd = computeCaseJd(testCase)
+  const placidus = computePlacidusCusps(jd, testCase.lat, testCase.lon)
+  const inlineRef = {
+    cusps: placidus.cusps,
+    ascendant: placidus.ascendant,
+    mc: placidus.mc,
+  }
+  const allSources: Array<{ source: ReferenceSource; ref: typeof inlineRef }> = [
+    { source: 'inlinePlacidus', ref: inlineRef },
+  ]
+  const externalSources = Object.keys(references.houses ?? {}) as ReferenceSource[]
+  for (const source of externalSources) {
     const ref = references.houses?.[source]
-    if (!ref) continue
+    if (ref) allSources.push({ source, ref })
+  }
+
+  for (const { source, ref } of allSources) {
 
     out.push({
       cuspIndex: 0,
@@ -234,7 +260,7 @@ export function runCaseComparison(
   const chart = calculateNatalChart(buildChartInput(testCase))
 
   const planetComparisons = comparePlanets(chart, references)
-  const houseComparisons = compareHouses(chart, references)
+  const houseComparisons = compareHouses(chart, testCase, references)
   const aspectComparisons = compareAspects(chart, references)
 
   // Primary (JPL) planet batch status: composite rule over 9 planets.

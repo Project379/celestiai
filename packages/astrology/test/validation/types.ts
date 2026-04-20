@@ -11,10 +11,11 @@ import type { Planet, AspectType } from '../../src/types'
 export type Body = Planet
 
 export type ReferenceSource =
-  | 'jpl' // JPL Horizons — primary for planetary longitudes
+  | 'jpl' // JPL Horizons — primary for planetary longitudes (§9.2 Tier 1)
   | 'astronomyEngine' // Secondary sanity check — planets only (scope-limited)
-  | 'astrocom' // Houses + aspects
-  | 'nativeSwisseph' // Independent SE implementation — for wasm-vs-native spot-check
+  | 'inlinePlacidus' // Inline Meeus-based Placidus reference (§9.3 Tier 3)
+  | 'astrocom' // Optional post-§9.6 spot-check; demoted from primary per drift entry 6
+  | 'nativeSwisseph' // Moshier-vs-SE-files floor check (QE II only)
 
 export interface TestCase {
   id: string
