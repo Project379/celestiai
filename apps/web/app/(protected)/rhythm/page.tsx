@@ -5,12 +5,11 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import type { ChartRow } from '@/lib/types/chart'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
 import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
-import { ManifestDiaryContent } from '@/components/manifest/ManifestDiaryContent'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 export const metadata: Metadata = {
   title: 'Ритъм',
-  description: 'Лунна фаза, активни транзити и дневник — небесното време на твоята карта',
+  description: 'Лунна фаза и активни транзити — небесното време на твоята карта',
 }
 
 export default async function TransitsPage() {
@@ -57,12 +56,28 @@ export default async function TransitsPage() {
         <LunarPhaseCard />
       </section>
 
-      {/* Lunar diary — tied to the current phase; three-line-a-day
-         entries (intentions on the waxing half, gratitude on the
-         waning half). Sits directly under LunarPhaseCard so the diary
-         prompt matches the phase the user just read about. */}
+      {/* Diary lives at /rhythm/journal as its canonical URL. /rhythm
+         used to embed <ManifestDiaryContent /> inline too; the duplicate
+         render site was removed 2026-04-20 so the diary has one place
+         to live. Link below carries the reader there. */}
       <section aria-label="Лунен дневник" className="mb-16">
-        <ManifestDiaryContent />
+        <div className="mx-auto max-w-xl rounded-3xl border border-slate-200/10 bg-white/[0.02] px-6 py-10 text-center sm:px-10">
+          <p className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-400">
+            Лунен дневник
+          </p>
+          <p className="mb-5 font-display text-[15px] font-light leading-[1.85] text-slate-300">
+            Три реда на ден, водени от лунната фаза — манифестация, благодарност, освобождаване.
+          </p>
+          <Link
+            href="/rhythm/journal"
+            className="group inline-flex items-center gap-2 font-display text-[12px] font-medium tracking-wide text-slate-200 transition-colors duration-200 hover:text-amber-300"
+          >
+            Отвори дневника
+            <svg className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
       </section>
 
       {/* Transits — what's affecting the chart today */}
