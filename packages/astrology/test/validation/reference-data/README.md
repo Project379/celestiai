@@ -11,31 +11,17 @@ export const referenceData: ReferenceData = {
     jpl: [
       { body: 'sun', longitude: 30.123456 },
       { body: 'moon', longitude: 122.987654 },
-      // ... one entry per body
+      // ... 10 bodies (no northNode — see § Mean Node — inline-reference asymmetry)
     ],
     astronomyEngine: [
       { body: 'sun', longitude: 30.12344 },
       // ... 9 non-Moon non-Node bodies only (scope-limited — see below)
     ],
   },
-  houses: {
-    astrocom: {
-      cusps: [/* 12 cusp longitudes in order 1..12 */],
-      ascendant: 123.456,
-      mc: 234.567,
-    },
-  },
-  aspects: {
-    astrocom: [
-      {
-        body1: 'sun',
-        body2: 'moon',
-        type: 'square',
-        orb: 2.34,
-        applying: false,
-      },
-    ],
-  },
+  // Houses: validated by inline Placidus reference, not stored here.
+  //   See § Houses and aspects — inline references (no per-case data).
+  // Aspects: validated arithmetically + by synthetic unit tests in
+  //   aspects-synthetic.test.ts, not stored here.
 }
 ```
 
@@ -49,10 +35,17 @@ Stronger verification would require cross-referencing against Rodden's own publi
 
 | Source | Scope | Threshold | Notes |
 |---|---|---|---|
-| `jpl` | **10 bodies only — Sun, Moon, Mercury-Pluto** (Mean Node is inline-referenced, not in per-case files — see § Mean Node — inline-reference asymmetry) | per-body (see `thresholds.ts`) | Primary. Ecliptic longitudes from JPL Horizons. |
+| `jpl` | **10 bodies only — Sun, Moon, Mercury-Pluto** (Mean Node is inline-referenced, not in per-case files — see § Mean Node — inline-reference asymmetry) | per-body (see `thresholds.ts`) | Primary physical-reality reference. Ecliptic longitudes from JPL Horizons. |
 | `astronomyEngine` | 9 non-Moon non-Node bodies only | 1′ (60″) | Secondary sanity check. Astronomy Engine's ±1′ spec is coarser than Moon (3″) and Node (20″) thresholds — **do not** populate Moon or Node entries for this source. |
-| `astrocom` | Houses, aspects | 1′ (60″) | Manual transcription from astro.com natal-chart output. Spot-check transcription on first discrepancy pass. |
+| `inlinePlacidus` | Houses (12 cusps + ASC + MC) | 1′ (60″) | Reference is computed inline at comparison time from case `(JD, lat, lon)`. Not stored per-case — no data field to populate. See `adapters/placidus-inline.ts`. |
+| `astrocom` | Houses, aspects — **optional post-§9.6 spot-check only** | 1′ (60″) | Demoted from primary per `09-01-PRECISION-FLOOR.md § Doc drift corrections` entry 6. astro.com uses Swiss Ephemeris internally; comparison is sweph-family vs. sweph-family with a different UI, not sweph-vs-independent. §9 does not depend on astro.com. Transcription protocol preserved below in case a future reader wants to run a one-off spot-check, but not part of §9 routine work. |
 | `nativeSwisseph` | One reference case (Moshier-vs-SE-files floor check, merged into QE II fixture) | same as `jpl` for planets | Generated locally via the AGPL reference-generation protocol below. |
+
+### Houses and aspects — inline references (no per-case data)
+
+**Houses** are validated against an inline Placidus implementation (Meeus-based) computed at comparison time from each case's `(JD, lat, lon)`. See `09-01-HARNESS.md § Tier 3`. No per-case data file is written for houses; the comparison emits `referenceSource: 'inlinePlacidus'` in its output.
+
+**Aspects** are validated by (a) arithmetic derivation — if §9.2 planetary longitudes pass, aspects computed from them are correct by construction — plus (b) synthetic unit tests for the classification logic (`aspects-synthetic.test.ts`). No per-case aspect reference data. See `09-01-HARNESS.md § Tier 4`.
 
 ### Mean Node — inline-reference asymmetry
 
@@ -68,11 +61,11 @@ Fixtures record the birth time as documented (birth certificate / registry), whi
 
 **Reference-data sourcing for those cases MUST query JPL / Astronomy Engine / astro.com for the same UTC instant Celestia actually computes against**, not the astro-community's LMT-corrected UTC. If reference data is sourced for the LMT-corrected instant, the comparison will systematically fail for a known-explainable tz-interpretation reason rather than an ephemeris error.
 
-Protocol: the JPL / Astronomy Engine adapter scripts (§9.1 upcoming work) should take the `TestCase`, run it through Celestia's chart calculation to get the computed Julian Day, and use that JD as the query instant. This makes Celestia's own tz interpretation the source of truth for "what instant does this fixture reference."
+Protocol: the JPL / Astronomy Engine adapter scripts should take the `TestCase`, run it through Celestia's chart calculation to get the computed Julian Day, and use that JD as the query instant. This makes Celestia's own tz interpretation the source of truth for "what instant does this fixture reference." Inline Placidus (houses) is already handled this way by `comparison.ts` — it uses the JD derived from the test case's inputs.
 
-astro.com reference for houses + aspects should be transcribed by entering the fixture's birthDate/birthTime/lat/lon/city into astro.com's natal-chart form directly — astro.com's own tz handling will produce whatever chart astro.com produces for that input, which is the comparison target.
+## Optional astro.com transcription protocol (post-§9.6 spot-check, NOT part of §9 routine work)
 
-## astro.com transcription protocol (§9.1 task 5c)
+**This section is preserved for future use.** Per `09-01-PRECISION-FLOOR.md § Doc drift corrections` entry 6, astro.com is not an independent reference (it uses Swiss Ephemeris internally) and is not part of §9's routine validation path. §9 validates houses via the inline Placidus implementation and aspects via synthetic unit tests + arithmetic-from-longitudes. If a future reader wants to spot-check a specific discrepancy against astro.com after §9.6 closes (e.g., to investigate an unexpected Placidus-implementation divergence), follow the protocol below.
 
 astro.com's chart pages are bot-gated against automated fetch. Transcription is a human workflow. For each case:
 
@@ -91,7 +84,7 @@ astro.com's chart pages are bot-gated against automated fetch. Transcription is 
    - Verify the applying/separating column for at least 3 aspects — this flips sign near-exact and is easy to miscopy.
    - Check that the sum of longitudes modulo 360° is stable — large transcription errors skew this sum conspicuously.
 
-**Loading:** the transcribed data goes into the existing per-case reference-data `.ts` file under `houses.astrocom` and `aspects.astrocom`. See the example in `queen-elizabeth-ii.ts` once populated.
+**Loading:** the transcribed data goes into the existing per-case reference-data `.ts` file under `houses.astrocom` and `aspects.astrocom`. The `ReferenceSource` type retains `'astrocom'` and `comparison.ts` still iterates any `houses.astrocom` / `aspects.astrocom` entries found alongside the primary sources. If you populate these, the comparison output will include them as supplementary rows — **useful only for spot-check investigations**, not for routine validation.
 
 ## Moshier-vs-SE-files reference snapshot — AGPL protocol
 
