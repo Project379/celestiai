@@ -163,7 +163,7 @@ The rest are genuinely interactive (user triggers the fetch by action — pressi
 ### 3.3 Gaps
 
 `[verified]` Endpoints mobile needs that don't exist today:
-1. **Manifest diary persistence endpoint** — currently localStorage via `hooks/useManifestEntries.ts`. Mobile cannot use localStorage as a primary store (well, AsyncStorage exists but shouldn't be the source of truth cross-device). Needs `GET/POST /api/manifest/entries`.
+1. **Manifest diary persistence endpoint** — currently localStorage via `hooks/useManifestEntries.ts`. Mobile cannot use localStorage as a primary store (well, AsyncStorage exists but shouldn't be the source of truth cross-device). Needs `GET/POST /api/manifest/entries`. **Also the predecessor for the diary premium gate** — per the 2026-04-20 premium matrix decision, the diary tier gate deliberately ships with server-side persistence rather than as a UI-only gate on a localStorage surface (UI-only is cosmetic/bypassable). Gate lives in the new endpoint when it arrives.
 2. **Кръг CRUD** — entire people-graph endpoints are Phase B work, do not exist.
 3. **Lunar phase / meteor shower as HTTP endpoint** — `[open]` decision: duplicate the pure computation in `packages/core/` (cleaner, no server round-trip) or expose as endpoint (consistent pattern, enables server caching).
 
