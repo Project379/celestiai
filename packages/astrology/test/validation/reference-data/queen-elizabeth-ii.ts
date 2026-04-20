@@ -6,16 +6,24 @@
  *   Verified by running @celestia/astrology's localTimeToUTC against the
  *   fixture inputs (utcHours=1.666..., dayOffset=0).
  *
- * Coverage in this commit (§9.1 task 5a):
- *   - planets.jpl:             POPULATED. Apparent geocentric ecliptic
- *                              longitudes, 10 bodies (no northNode — see
- *                              inline-reference asymmetry note below).
- *   - planets.astronomyEngine: NOT YET POPULATED. Added in §9.1 task 5b.
+ * Coverage in this commit (§9.1 task 5b):
+ *   - planets.jpl:             POPULATED (task 5a). Apparent geocentric
+ *                              ecliptic longitudes, 10 bodies (no northNode
+ *                              — see inline-reference asymmetry note below).
+ *   - planets.astronomyEngine: POPULATED (this commit). 9 non-Moon non-Node
+ *                              bodies per locked scope.
  *   - houses.astrocom:         NOT YET POPULATED. Added in §9.1 task 5c.
  *   - aspects.astrocom:        NOT YET POPULATED. Added in §9.1 task 5c.
  *   - planets.nativeSwisseph:  NOT YET POPULATED. Moshier-vs-SE-files floor
  *                              check, added in §9.1 task 6 (sample comparison
  *                              round) via the AGPL protocol in README.md.
+ *
+ * Astronomy Engine generation protocol:
+ *   Computed 2026-04-20 via computeAstronomyEngineLongitudes() in
+ *   ../adapters/astronomy-engine.ts. Pure local computation, no network.
+ *   astronomy-engine npm package v2.1.19, VSOP87-based, ±1' stated accuracy.
+ *   Scope: 9 non-Moon non-Node bodies (Moon + Node intentionally skipped —
+ *   AE's ±1' floor is coarser than their primary thresholds).
  *
  * JPL Horizons generation protocol:
  *   Queried 2026-04-20 via the JPL Horizons API
@@ -52,6 +60,17 @@ export const referenceData: ReferenceData = {
       { body: 'uranus', longitude: 357.3559613 },
       { body: 'neptune', longitude: 142.0348474 },
       { body: 'pluto', longitude: 102.7061116 },
+    ],
+    astronomyEngine: [
+      { body: 'sun', longitude: 30.2059137 },
+      { body: 'mercury', longitude: 4.6621214 },
+      { body: 'venus', longitude: 343.9569815 },
+      { body: 'mars', longitude: 320.8669314 },
+      { body: 'jupiter', longitude: 322.5091628 },
+      { body: 'saturn', longitude: 234.4461431 },
+      { body: 'uranus', longitude: 357.3561529 },
+      { body: 'neptune', longitude: 142.0379241 },
+      { body: 'pluto', longitude: 102.7065759 },
     ],
   },
 }
