@@ -29,7 +29,7 @@
 For a non-streaming JSON endpoint, that's sufficient. For an **LLM streaming endpoint**, every one of those metrics is a trap:
 
 - `http_req_duration` **collapses TTFT and generation time into a single number**. A response that streams its first token in 200ms and finishes in 28s reports identically to one that hangs for 22s then dumps everything in 6s. The user experience is vastly different; the metric doesn't see it.
-- `http_reqs / s` **doesn't distinguish reqs that started streaming from reqs still waiting for upstream connection**. 50 reqs/s with 45 waiting on cold-cache BgGPT warm-up is a different system than 50 reqs/s with warm cache.
+- `http_reqs / s` **doesn't distinguish reqs that started streaming from reqs still waiting for upstream connection**. 50 reqs/s with 45 waiting on cold-cache OpenRouter/Llama warm-up is a different system than 50 reqs/s with warm cache.
 - `http_req_failed` **misses partial failures**. A stream that starts fine then aborts mid-way returns HTTP 200 with a truncated body. To k6 it looks fine.
 
 ## 2. What the test actually needs to measure
@@ -39,7 +39,7 @@ For a non-streaming JSON endpoint, that's sufficient. For an **LLM streaming end
 | Metric | Definition | Target |
 |---|---|---|
 | `ttft` (Trend) | Time from request open to first body byte (first streamed token) | p50 < 800ms, p95 < 1.8s [assumed — typical perceptual thresholds] |
-| `itl` (Trend) | Median inter-token latency within a stream (sampled every N tokens) | p50 < 60ms [assumed — baseline for BgGPT tier not yet measured] |
+| `itl` (Trend) | Median inter-token latency within a stream (sampled every N tokens) | p50 < 60ms [assumed — baseline for OpenRouter/Llama 3.3 70B tier not yet measured] |
 | `stream_duration` (Trend) | Total time from TTFT to last byte | p95 < 30s [assumed — soft UX cap] |
 | `stream_tokens` (Counter) | Total tokens streamed, to correlate with cost | reporting only |
 | `stream_aborted` (Counter) | Streams that closed mid-response | < 0.5% [assumed] |
@@ -52,32 +52,32 @@ For a non-streaming JSON endpoint, that's sufficient. For an **LLM streaming end
 
 ### Scenario A — mocked upstream, correctness
 - **Purpose:** validate that the test harness itself measures what we think it measures
-- **Upstream:** mock BgGPT with a local stub that emits tokens at deterministic cadence (10 tokens/s, 15-second total)
+- **Upstream:** mock the AI-streaming upstream with a local stub that emits tokens at deterministic cadence (10 tokens/s, 15-second total). Shape matches whatever Vercel AI SDK's `streamText` expects — provider-agnostic.
 - **Load:** 10 concurrent for 2 minutes
 - **Pass:** `ttft` and `itl` read sensibly; `stream_duration` ≈ 15s as expected
 - **Why first:** if the harness is broken, every downstream number is garbage
 
 ### Scenario B — warm cache, real traffic shape
 - **Purpose:** baseline under realistic MVP conditions
-- **Upstream:** real BgGPT (or fallback Claude), but requests deliberately hit pre-generated daily horoscope combinations (see Celestia_AI_Reference.md §3 — cached per sun-sign × moon-phase × day, ~100 unique per day)
+- **Upstream:** real OpenRouter (current primary — `meta-llama/llama-3.3-70b-instruct`, see AI_PROVIDER_DECISION.md), but requests deliberately hit pre-generated daily horoscope combinations (see Celestia_AI_Reference.md §3 — cached per sun-sign × moon-phase × day, ~100 unique per day)
 - **Load:** ramp 0 → 100 concurrent over 5min, hold 10min
 - **Pass:** `cache_hit` > 90%; `ttft` p95 < 500ms; cost per request near zero
 
 ### Scenario C — cold cache, worst case
 - **Purpose:** characterize behavior when cache is empty (first request of the day for a combo)
-- **Upstream:** real BgGPT, cache-bypass header set
+- **Upstream:** real OpenRouter, cache-bypass header set
 - **Load:** 50 concurrent for 5min
-- **Pass:** `ttft` p95 < 3s; `stream_aborted` < 1%; ** cost envelope** understood (this tells us AI bill per 1k cold requests)
+- **Pass:** `ttft` p95 < 3s; `stream_aborted` < 1%; ** cost envelope** understood (this tells us AI bill per 1k cold requests on current provider pricing)
 
 ### Scenario D — saturation probe, Bulgarian MVP target
 - **Purpose:** find where the system breaks under MVP-appropriate load (see §5 below for number derivation)
-- **Upstream:** real BgGPT, realistic cache hit mix (80% warm / 20% cold)
+- **Upstream:** real OpenRouter, realistic cache hit mix (80% warm / 20% cold)
 - **Load:** ramp 0 → 100 concurrent over 5min, hold 15min, then 100 → 200 over 5min, hold 10min
 - **Pass:** no degradation of `ttft` p95 above 2.5s up to 100; identify and document where p95 crosses 3s
 
 ### Scenario E — aspirational target (Celestia_AI_Reference §3)
 - **Purpose:** validate the 500-concurrent guideline from the reference doc
-- **Upstream:** real BgGPT, realistic cache mix
+- **Upstream:** real OpenRouter, realistic cache mix
 - **Load:** ramp 0 → 500 over 10min, hold 10min
 - **Pass:** system stays up; `ttft` p95 degrades gracefully, doesn't cliff
 - **When:** before Series-A-style growth push, not MVP launch
@@ -117,6 +117,17 @@ At **10k DAU × 2 interactions/day = 20k streaming responses/day**, with 30% of 
 
 The 500 number should stay in the reference doc as the aspirational architecture target. It should NOT be cited as "the load target" without the MVP-100 distinction.
 
+### 5.3 Provider-switch implications for this plan
+
+`[planned]` The scenarios themselves (TTFT, ITL, cold/warm cache, 85/100/500 concurrent, mocked-upstream-first) are **provider-agnostic** — they measure user-observable streaming behavior, not provider-specific quirks. The current provider (OpenRouter / Llama 3.3 70B) sets the concrete latency / cost numbers that the scenarios generate, but the harness doesn't need to change if the provider swaps.
+
+That said — **when BgGPT integration is revisited** (currently `[deferred / post-launch]`, per `AI_PROVIDER_DECISION.md §5` revisit conditions), two things need re-validation before treating post-revisit results as continuous with pre-revisit baselines:
+
+1. **Streaming-placement decision.** Whether `/api/horoscope/generate` + `/api/oracle/generate` run on Vercel Edge vs Serverless vs a dedicated streaming service depends on TTFT/ITL characteristics of the provider. BgGPT's latency profile may differ from Llama 3.3 70B (different model size, different host infra, different Bulgarian-token tokenizer costs). The §7.2 predecessor chain about streaming placement needs to be re-run against BgGPT measurements before committing to an architecture change.
+2. **Scenario B + C thresholds.** The `ttft p95 < 500ms` / `ttft p95 < 3s` targets were assumed against the OpenRouter/Llama profile. BgGPT numbers may land in a different range — requires either updated targets (reflecting BgGPT's measured baseline) or a deliberate decision to treat BgGPT's deviation from those targets as a blocker.
+
+Scenarios A, D, E stay valid without re-validation — A is provider-agnostic by construction; D and E are saturation probes whose pass conditions are relative to the measured baseline under whichever provider's running.
+
 ## 6. What runs when
 
 `[planned]` Pre-launch checklist ordering:
@@ -148,7 +159,7 @@ Format:
 | k6 installed or listed in any `package.json` | Not present. Grep of all package.json files returned zero matches. | All scenarios |
 | k6 script with custom TTFT / ITL / cache_hit / stream_aborted metrics | Does not exist. Zero files matching `*.k6.js` or `loadtest*` in the repo. | All scenarios |
 | Scenario A — mocked upstream harness | Does not exist. Nothing is instrumented today. Without A validating the harness, B/C numbers are unattributable. | B, C, D, E |
-| BgGPT managed API access (project ID, endpoint, rate limits) | `[open]` per `Celestia_AI_Reference.md §5` — pricing and DPA unverified. | B, C, D, E against real upstream |
+| OpenRouter API access (key, per-model rate limits, cost envelope for `meta-llama/llama-3.3-70b-instruct`) | `[open]` — `OPENROUTER_API_KEY` is present in `.env.local`, but the per-model rate-limit policy and expected cost-per-1k-requests haven't been documented against expected launch traffic. See `PRE_LAUNCH_PREREQS.md` for the verification row. | B, C, D, E against real upstream |
 | Staging deployment pinned to `fra1` | `vercel.json` exists but has no `regions` field. Default is `iad1` (US). | B, C (real-latency measurement) |
 | Supabase `eu-central-1` project confirmed | `[open]` — not verified in this audit | B, C (real-latency measurement) |
 
@@ -166,7 +177,7 @@ Format:
 6. **Confirm Supabase project region is `eu-central-1` or `eu-west-1`.** Cannot be changed after creation. If it's wrong, that's a much bigger conversation (data migration). Verify in Supabase Dashboard.
 7. **Write Scenario B script** — `loadtest/scenarios/B-warm-cache.js`. Ramp 0→100 concurrent over 5min, hold 10min, hit cached daily-horoscope endpoints.
 8. **Write Scenario C script** — `loadtest/scenarios/C-cold-cache.js`. 50 concurrent for 5min, `X-Cache-Bypass` header set.
-9. **Run B and C against staging** with `AI_PROVIDER=bggpt` (real) and record results in §7 above.
+9. **Run B and C against staging** with the real OpenRouter upstream (no env toggle needed — the existing route handlers already call OpenRouter; `AI_PROVIDER=mock` from step 3 is the opt-OUT). Record results in §7 above.
 
 ### 7.3 Time estimate [inferred]
 
@@ -236,7 +247,7 @@ loadtest/smoke/endpoints.test.ts  (or Playwright API test)
 
 ## 8. Open questions before implementation
 
-1. `[open]` BgGPT managed API pricing and rate limits — confirm before running any scenario against real upstream. Running Scenario C without this answered risks unexpected invoice.
-2. `[open]` What happens on BgGPT failure — does the Vercel AI SDK fall back to Claude automatically? If yes, Scenario C might accidentally test Claude. Need to disable fallback during load tests or track which provider served each request.
+1. `[open]` OpenRouter per-model rate limits and cost envelope for `meta-llama/llama-3.3-70b-instruct` — confirm before running any scenario against real upstream. Running Scenario C without this answered risks unexpected invoice. See `PRE_LAUNCH_PREREQS.md` for the verification row.
+2. `[open]` What happens on OpenRouter failure mid-stream — per `AI_PROVIDER_DECISION.md §3.3`, **no fallback is configured today**. Scenario C hits real OpenRouter without failover; a 429/5xx during the test produces a 500 from the route handler, which `stream_aborted` should count. Decide before running C: is any alternate-provider failover being added before launch? See `PRE_LAUNCH_PREREQS.md` fallback-strategy row.
 3. `[open]` Does Supabase `eu-central-1` have explicit rate limits on the `daily_horoscopes` lookup query? Cache hit is only fast if the lookup itself is fast.
 4. `[open]` Should we use Artillery or k6? The reference doc mentions both. k6 has stronger custom-metrics support via `k6/metrics`; Artillery's YAML DSL is friendlier. [assumed — k6 wins on metric flexibility, which is the decisive requirement here]

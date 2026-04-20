@@ -26,7 +26,7 @@ Celestia AI is a subscription-based astrology app targeting the Bulgarian market
 | Database | Supabase (Postgres) + Drizzle ORM |
 | Payments | Stripe (web) + RevenueCat (mobile IAP) |
 | Astronomical engine | `@celestia/astrology` package calling `swisseph-wasm` server-side |
-| AI (planned) | BgGPT API primary, Claude/GPT-4o fallback |
+| AI (current) | OpenRouter (meta-llama/llama-3.3-70b-instruct) via Vercel AI SDK. BgGPT deferred post-launch — see AI_PROVIDER_DECISION.md. |
 | Hosting (planned) | Vercel (Next.js) in EU region |
 
 ## Features shipped
@@ -182,13 +182,12 @@ Birth date, time, and place are borderline sensitive under Article 9 because the
 
 ### AI calls
 
-Sending chart data to OpenAI or Anthropic is a transfer of personal data to a US processor. Requirements:
+Sending chart data to OpenRouter (current primary) is a transfer of personal data to a US processor. Requirements:
 
-- DPA signed with the AI provider (both offer these on Pro/Business tiers; free-tier terms are typically not GDPR-suitable)
-- Disclosure in the privacy policy that AI providers generate reading content
-- For OpenAI: enable the zero-retention endpoint (available on API Pro with DPA) so data is not used for training
-- For Anthropic: equivalent no-training commitment via their API terms
-- BgGPT as primary reduces the surface area of this concern substantially — Bulgarian data stays with a Bulgarian institute
+- DPA signed with OpenRouter (verify availability and tier)
+- Disclosure in the privacy policy that OpenRouter + the underlying model host generate reading content
+- Confirm OpenRouter's and the backing model host's data-retention policy for API traffic
+- If BgGPT is later adopted as primary (currently deferred — see `AI_PROVIDER_DECISION.md`), Bulgarian data stays with a Bulgarian institute and the surface area of this concern shrinks substantially
 
 ## Biggest risks, ranked
 
@@ -202,29 +201,39 @@ Sending chart data to OpenAI or Anthropic is a transfer of personal data to a US
 
 # 5. AI provider strategy
 
-## The three realistic paths
+**2026-04-20 reality update:** The pre-implementation plan below (BgGPT primary, Claude/GPT-4o fallback) was never wired up. The product has been running on OpenRouter (`meta-llama/llama-3.3-70b-instruct`) throughout — no migration, just aspirational-vs-actual drift. See `.planning/research/AI_PROVIDER_DECISION.md` for the full reversal trail. BgGPT remains `[deferred / post-launch]` with three revisit conditions documented. This section preserves the original strategic thinking because the Bulgarian-quality tradeoffs and unit-economics discipline still apply to whatever provider is in use; only the "which provider ships first" decision was settled differently than the original plan.
+
+## Current reality (verified)
+
+`meta-llama/llama-3.3-70b-instruct` via OpenRouter (OpenAI-API-compatible aggregator). Called from three endpoints: `/api/oracle/generate`, `/api/oracle/teaser`, `/api/horoscope/generate`. No fallback configured — single provider, single model. See `PRE_LAUNCH_PREREQS.md` for the pre-launch gates (verify quota, document rate-limit policy, decide fallback strategy).
+
+## The three realistic paths (original strategic analysis, preserved)
 
 | Path | Fit for Celestia | Key tradeoff |
 | --- | --- | --- |
 | Frontier APIs (Claude/GPT) | Works but imperfect Bulgarian — occasional language confusion, Russian-flavored phrasing, wrong gendered forms. Bad for register-sensitive astrology copy. | Easiest, cheapest to ship; quality ceiling in Bulgarian; US data transfers. |
-| BgGPT managed API (INSAIT) | Primary choice. Bulgarian-native, state-of-the-art for Bulgarian, Bulgarian institute. | Managed API exists but pricing/SLA/DPA must be verified before commit. |
-| Open-source inference providers (Together, Fireworks, Replicate, Modal) | Host BgGPT for you, OpenAI-compatible endpoints. Cheaper than frontier. | Most are US-based — check data residency before using. |
+| BgGPT managed API (INSAIT) | Originally the primary choice. Bulgarian-native, state-of-the-art for Bulgarian, Bulgarian institute. | Managed API exists but pricing/SLA/DPA must be verified before commit. Currently `[deferred / post-launch]`. |
+| Open-source inference providers (Together, Fireworks, Replicate, Modal, **OpenRouter**) | Host various models for you, OpenAI-compatible endpoints. Cheaper than frontier. | Most are US-based — check data residency before using. **This is the path we actually took: OpenRouter + Llama 3.3 70B.** |
 
-## Recommendation
+## Original recommendation (superseded)
 
-BgGPT API primary, Claude or GPT-4o as fallback. Wire both from day one behind the Vercel AI SDK — the same `streamText` call works across providers, so switching is an env variable. This also protects against single-vendor outages.
+> BgGPT API primary, Claude or GPT-4o as fallback. Wire both from day one behind the Vercel AI SDK — the same `streamText` call works across providers, so switching is an env variable. This also protects against single-vendor outages.
 
-## Before committing to any model
+That recommendation was never wired. OpenRouter/Llama shipped instead. Fallback is `[not started]` per `PRE_LAUNCH_PREREQS.md`. The multi-provider-behind-AI-SDK pattern still applies when the fallback decision is made — adding an alternate provider is the same env-variable swap the original plan envisioned.
+
+## Before committing to any model (still applies)
 
 - Take 20 real horoscope prompts from the app
-- Run them through BgGPT, Claude Sonnet, and GPT-4o
+- Run them through the candidate models (today: Llama 3.3 70B; if BgGPT revisited, add BgGPT; comparison models like Claude Sonnet / GPT-4o optional)
 - Have a native Bulgarian speaker (ideally two) read the outputs without knowing which model produced which
 - Pick the one that sounds right for the register, not the one that benchmarks best
 - Re-run this eval quarterly — models change
 
+Llama 3.3 70B was presumably chosen without this eval being run explicitly; if launch quality is acceptable, great. If not, this eval is the next step before switching providers.
+
 ## Unit economics to check before launch
 
-Decide what a Premium tier must cost to work. If one Premium user at €9.99/month costs €3 in AI, there is room. If they cost €8, the model is broken. This is arithmetic — do it, write the answer in this document, and check actuals against it monthly.
+Decide what a Premium tier must cost to work. If one Premium user at €9.99/month costs €3 in AI, there is room. If they cost €8, the model is broken. This is arithmetic — do it, write the answer in this document, and check actuals against it monthly. OpenRouter's per-model pricing is the current reference; update this calc when the provider or model changes.
 
 ---
 
@@ -346,8 +355,8 @@ Nothing ships to one paying user without these. Items are grouped by when they m
 | Where does backend code live? | Next.js route handlers in `apps/web` | One deploy, shared package imports directly, streaming native, Expo and web hit same endpoints |
 | Add NestJS? | No | Structure tax for a team that doesn't exist; duplicates infrastructure already handled by Supabase and Next.js |
 | BaaS choice? | Supabase | Postgres fits relational astrology data; already committed; open-source and portable |
-| Primary AI provider? | BgGPT managed API | Bulgarian-native quality, Bulgarian institute, EU residency, no GPU to run |
-| Fallback AI? | Claude Sonnet or GPT-4o | Protection against single-vendor outage; wired from day one |
+| Primary AI provider? | **OpenRouter (`meta-llama/llama-3.3-70b-instruct`)** actually shipped. BgGPT was the original pre-implementation plan — never wired, `[deferred / post-launch]`. See AI_PROVIDER_DECISION.md. |
+| Fallback AI? | **None configured today.** Original plan (Claude Sonnet / GPT-4o as fallback) never shipped. `[not started]` in PRE_LAUNCH_PREREQS.md — separate row for the strategy decision. |
 | Self-host AI? | No (at launch) | Operational complexity not justified; managed API exists; if needed later, vLLM not Ollama |
 | Hosting region? | Vercel `fra1` + Supabase `eu-central-1` | Latency to Bulgarian users + GDPR residency posture |
 | Auth? | Keep Clerk, plan migration path | Works today via DPF; Schrems III is a tail risk; Supabase Auth is the documented fallback |
