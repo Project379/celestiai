@@ -22,45 +22,55 @@ const CHIPS: readonly { id: ChartSection; label: string }[] = [
  */
 export function ChartSectionChips({ active, onChange }: ChartSectionChipsProps) {
   return (
-    <div
-      role="tablist"
-      aria-label="Раздели на картата"
-      className="nav-scroll mb-8 flex items-center gap-2 overflow-x-auto pb-1"
-    >
-      {CHIPS.map((chip) => {
-        const isActive = active === chip.id
-        return (
-          <button
-            key={chip.id}
-            role="tab"
-            aria-selected={isActive}
-            type="button"
-            onClick={() => onChange(chip.id)}
-            className={`relative shrink-0 rounded-full border px-4 py-2 transition-colors duration-200 ${
-              isActive
-                ? 'border-amber-300/60 bg-amber-300/[0.04]'
-                : 'border-slate-700/60 hover:border-slate-500/80'
-            }`}
-          >
-            <span
-              className={`font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] ${
-                isActive ? 'text-amber-200' : 'text-slate-400'
+    <div className="relative mb-8">
+      <div
+        role="tablist"
+        aria-label="Раздели на картата"
+        className="nav-scroll flex items-center gap-2 overflow-x-auto pb-1"
+      >
+        {CHIPS.map((chip) => {
+          const isActive = active === chip.id
+          return (
+            <button
+              key={chip.id}
+              role="tab"
+              aria-selected={isActive}
+              type="button"
+              onClick={() => onChange(chip.id)}
+              className={`relative shrink-0 rounded-full border px-4 py-2 transition-colors duration-200 ${
+                isActive
+                  ? 'border-amber-300/60 bg-amber-300/[0.04]'
+                  : 'border-slate-700/60 hover:border-slate-500/80'
               }`}
             >
-              {chip.label}
-            </span>
+              <span
+                className={`font-cinzel text-[11px] font-semibold tracking-[0.04em] ${
+                  isActive ? 'text-amber-200' : 'text-slate-400'
+                }`}
+              >
+                {chip.label}
+              </span>
 
-            {isActive && (
-              <motion.span
-                layoutId="chart-section-chip-glow"
-                aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_18px_-4px_rgba(251,191,36,0.45)]"
-                transition={{ duration: 0.35, ease: [0.22, 0.68, 0.35, 1] }}
-              />
-            )}
-          </button>
-        )
-      })}
+              {isActive && (
+                <motion.span
+                  layoutId="chart-section-chip-glow"
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_18px_-4px_rgba(251,191,36,0.45)]"
+                  transition={{ duration: 0.35, ease: [0.22, 0.68, 0.35, 1] }}
+                />
+              )}
+            </button>
+          )
+        })}
+      </div>
+      {/* Right-edge gradient fade — scroll affordance when the chip row
+          overflows (e.g. at the lg:w-80 right-column width on the chart
+          page). Hidden scrollbar via nav-scroll means no native cue
+          otherwise. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#04030a] to-transparent"
+      />
     </div>
   )
 }
