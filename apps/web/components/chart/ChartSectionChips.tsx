@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { ChartSection } from './chart-sections'
 
@@ -21,9 +22,34 @@ const CHIPS: readonly { id: ChartSection; label: string }[] = [
  * tracked eyebrow language already established in ProtectedNav.
  */
 export function ChartSectionChips({ active, onChange }: ChartSectionChipsProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    const update = () => {
+      setCanScrollLeft(el.scrollLeft > 1)
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+    }
+
+    update()
+    el.addEventListener('scroll', update, { passive: true })
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+
+    return () => {
+      el.removeEventListener('scroll', update)
+      ro.disconnect()
+    }
+  }, [])
+
   return (
     <div className="relative mb-8">
       <div
+        ref={scrollRef}
         role="tablist"
         aria-label="Раздели на картата"
         className="nav-scroll flex items-center gap-2 overflow-x-auto pb-1"
@@ -63,14 +89,23 @@ export function ChartSectionChips({ active, onChange }: ChartSectionChipsProps) 
           )
         })}
       </div>
-      {/* Right-edge gradient fade — scroll affordance when the chip row
-          overflows (e.g. at the lg:w-80 right-column width on the chart
-          page). Hidden scrollbar via nav-scroll means no native cue
-          otherwise. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#04030a] to-transparent"
-      />
+      {/* Edge fades — soft scroll affordance when content overflows the
+          container. Conditional on actual overflow state (scrollLeft /
+          scrollWidth) so a chip row that fits the viewport renders flat
+          with no edges. Lower max opacity + wider gradient so the fade
+          reads as atmospheric softening rather than a painted bar. */}
+      {canScrollLeft && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-[#04030a]/60 via-[#04030a]/20 to-transparent transition-opacity duration-200"
+        />
+      )}
+      {canScrollRight && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#04030a]/60 via-[#04030a]/20 to-transparent transition-opacity duration-200"
+        />
+      )}
     </div>
   )
 }
