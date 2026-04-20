@@ -213,9 +213,12 @@ async function checkUnauthGates() {
       headers: { 'Content-Type': 'application/json' },
       body: ep.body ? JSON.stringify(ep.body) : undefined,
     })
+    // Post 635f1a4 — every user-scoped 401 body is BG. The EN
+    // "Unauthorized" fallback was removed; asserting the BG string
+    // alone catches regressions that re-introduce the EN throw.
     expect(
-      `${ep.method} ${ep.path} → 401`,
-      status === 401 && (json?.error?.includes('Неоторизиран') || json?.error === 'Unauthorized'),
+      `${ep.method} ${ep.path} → 401 Неоторизиран достъп`,
+      status === 401 && json?.error?.includes('Неоторизиран'),
       `status=${status} body=${JSON.stringify(json).slice(0, 80)}`,
     )
   }
@@ -488,15 +491,45 @@ async function checkAuthHappyPaths(jwt, clerkId) {
     `status=${stripe.status} tier=${stripe.json?.tier}`,
   )
 
-  // Free-tier crystals-today (auto-collect only for premium, so free just gets rotation)
+  // Free-tier crystals-today — post cb54ede, free users get auto-collect
+  // and a streak just like premium. isPremium still reflects DB tier for
+  // UI layering but the streak mechanic is no longer gated.
   const today = await fetchJson('/api/crystals/today', { headers: auth })
   expect(
-    'GET /api/crystals/today (free) → 200 + crystal + isPremium:false',
-    today.status === 200 && today.json?.crystal?.slug && today.json?.isPremium === false,
-    `status=${today.status} isPremium=${today.json?.isPremium}`,
+    'GET /api/crystals/today (free) → 200 + crystal + isPremium:false + streak computed',
+    today.status === 200 &&
+      today.json?.crystal?.slug &&
+      today.json?.isPremium === false &&
+      today.json?.streak &&
+      typeof today.json.streak.current === 'number',
+    `status=${today.status} isPremium=${today.json?.isPremium} streak.current=${today.json?.streak?.current}`,
   )
 
-  // Free-tier premium-gated endpoints → 403
+  // Free-tier daily/collect — post cb54ede, open to any authed user.
+  // Was 403 PREMIUM_REQUIRED pre-2026-04-20 matrix; now 200 with
+  // success:true. Second call is idempotent via the (user_id, date)
+  // unique index on user_daily_crystals.
+  const dailyCollectFree = await fetchJson('/api/crystals/daily/collect', {
+    method: 'POST',
+    headers: auth,
+  })
+  expect(
+    'POST /api/crystals/daily/collect (free) → 200 success:true',
+    dailyCollectFree.status === 200 && dailyCollectFree.json?.success === true,
+    `status=${dailyCollectFree.status} success=${dailyCollectFree.json?.success}`,
+  )
+
+  // Free-tier transits — post da69a9e, transits are free per matrix.
+  // Was 403 PREMIUM_REQUIRED; now 200 with activeTransits[].
+  const transitsFree = await fetchJson(`/api/transits/overview?chartId=${chartId}`, { headers: auth })
+  expect(
+    'GET /api/transits/overview (free) → 200 + activeTransits',
+    transitsFree.status === 200 && Array.isArray(transitsFree.json?.activeTransits),
+    `status=${transitsFree.status} activeTransits=${Array.isArray(transitsFree.json?.activeTransits)}`,
+  )
+
+  // /api/crystals (full overview: catalog + collection + recommendations)
+  // stays premium per matrix. Free 403 PREMIUM_REQUIRED is correct.
   const crystalsGet = await fetchJson('/api/crystals', { headers: auth })
   expect(
     'GET /api/crystals (free) → 403 PREMIUM_REQUIRED',
@@ -504,30 +537,15 @@ async function checkAuthHappyPaths(jwt, clerkId) {
     `status=${crystalsGet.status} code=${crystalsGet.json?.code}`,
   )
 
-  const transitsFree = await fetchJson(`/api/transits/overview?chartId=${chartId}`, { headers: auth })
-  expect(
-    'GET /api/transits/overview (free) → 403 PREMIUM_REQUIRED',
-    transitsFree.status === 403 && transitsFree.json?.code === 'PREMIUM_REQUIRED',
-    `status=${transitsFree.status} code=${transitsFree.json?.code}`,
-  )
-
-  const dailyCollectFree = await fetchJson('/api/crystals/daily/collect', {
-    method: 'POST',
-    headers: auth,
-  })
-  expect(
-    'POST /api/crystals/daily/collect (free) → 403',
-    dailyCollectFree.status === 403 && dailyCollectFree.json?.code === 'PREMIUM_REQUIRED',
-    `status=${dailyCollectFree.status}`,
-  )
-
+  // /api/crystals/collect (claim a recommendation) stays premium per
+  // matrix — recommendations are premium; the claim endpoint must be too.
   const collectFree = await fetchJson('/api/crystals/collect', {
     method: 'POST',
     headers: auth,
     body: JSON.stringify({ recommendationId: '00000000-0000-0000-0000-000000000000' }),
   })
   expect(
-    'POST /api/crystals/collect (free) → 403',
+    'POST /api/crystals/collect (free) → 403 PREMIUM_REQUIRED',
     collectFree.status === 403 && collectFree.json?.code === 'PREMIUM_REQUIRED',
     `status=${collectFree.status}`,
   )
@@ -563,7 +581,12 @@ async function checkPremiumPaths(jwt, clerkId, chartId) {
     `status=${overview.status} catalog.length=${overview.json?.catalog?.length} recs=${overview.json?.recommendations?.length}`,
   )
 
-  // Daily collect (idempotent)
+  // Daily collect (idempotent) — premium path. Note: the free-tier
+  // path already exercised daily/collect in the checkAuthHappyPaths
+  // block after cb54ede, so the "1st call" here is actually the N+1th
+  // call today for this test user. That's fine — we assert the
+  // alreadyCollected=true idempotent branch, which holds regardless
+  // of prior state within the same Sofia day.
   const daily1 = await fetchJson('/api/crystals/daily/collect', {
     method: 'POST',
     headers: auth,
@@ -573,7 +596,7 @@ async function checkPremiumPaths(jwt, clerkId, chartId) {
     headers: auth,
   })
   expect(
-    'POST /api/crystals/daily/collect 1st call → 200',
+    'POST /api/crystals/daily/collect (premium) → 200 success:true',
     daily1.status === 200 && daily1.json?.success === true,
     `status=${daily1.status} alreadyCollected=${daily1.json?.alreadyCollected}`,
   )
