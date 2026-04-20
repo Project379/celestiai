@@ -16,12 +16,22 @@ import { CelestialCanvas, CONSTELLATIONS, type ConstellationData } from './Celes
 export function CelestialBackground() {
   const pathname = usePathname()
   const interactive = pathname === '/dashboard'
-  // Dense-content route: /chart right column (lg:w-80) sits at fx
-  // 0.75-1.0 — past the centerFade protection zone, so the dimming
-  // mechanism never fires on the planets that collide with it
-  // (Jupiter/Neptune/Pluto at fx 0.80-0.83). Skip decorative planets
-  // entirely on /chart; other routes keep the ambient scatter.
-  const skipPlanets = pathname === '/chart'
+
+  // Decorative planets render only on ambient/marketing surfaces
+  // (landing, dashboard, pricing, auth). Text-focused pages skip them
+  // to keep content legible — planets were visually competing with
+  // dense text surfaces (chart, diary, crystals, guide) and adding no
+  // narrative value there. Allowlist established 2026-04-20 during
+  // §7 Bug 3 follow-up; extend by appending a route below when a new
+  // ambient surface needs the scatter, and prefer silence by default.
+  //
+  // startsWith(path + '/') catches nested auth routes
+  // (/sign-in/factor-one, /sign-up/verify-email-address, …) so
+  // Clerk's multi-step flows inherit the decoration.
+  const ENABLE_PLANETS_ON = ['/', '/dashboard', '/pricing', '/sign-in', '/sign-up']
+  const skipPlanets = !ENABLE_PLANETS_ON.some(
+    (path) => pathname === path || pathname.startsWith(path + '/'),
+  )
 
   const mouseRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 })
   const scrollRef = useRef<number>(0)

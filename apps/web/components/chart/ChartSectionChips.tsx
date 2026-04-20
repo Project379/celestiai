@@ -97,13 +97,13 @@ export function ChartSectionChips({ active, onChange }: ChartSectionChipsProps) 
       {canScrollLeft && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-[#04030a]/60 via-[#04030a]/20 to-transparent transition-opacity duration-200"
+          className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#04030a]/40 via-[#04030a]/15 to-transparent transition-opacity duration-200"
         />
       )}
       {canScrollRight && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#04030a]/60 via-[#04030a]/20 to-transparent transition-opacity duration-200"
+          className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#04030a]/40 via-[#04030a]/15 to-transparent transition-opacity duration-200"
         />
       )}
     </div>
