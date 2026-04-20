@@ -22,7 +22,7 @@ interface EditBirthDataDialogProps {
 const TIME_RANGE_LABELS: Record<string, string> = {
   morning: 'Сутрин (06:00–12:00)',
   afternoon: 'Следобед (12:00–18:00)',
-  evening: 'Вечер (18:00–24:00)',
+  evening: 'Вечер (18:00–23:59)',
   night: 'Нощ (00:00–06:00)',
 }
 
