@@ -104,4 +104,41 @@ If a future reader wants to regenerate the snapshot (e.g., ephemeris data versio
 
 ## Updating reference data
 
-JPL Horizons values for past dates do not drift (astronomical reality is stable). astro.com uses its own computation pipeline and could in principle change algorithms; if a previously-passing case drifts, investigate before regenerating reference data. Astronomy Engine updates its `astronomy-engine` npm package over time — if a new version surfaces a divergence from a committed snapshot, check the package changelog before treating it as a Celestia regression.
+### Determinism and drift — when regeneration is needed
+
+- **JPL Horizons for past dates (anything before the current UT):** astronomical reality is stable, so past-date queries do not drift. Exception: JPL may issue a new ephemeris generation (DE441 → DE442 → DE450, etc.) and Celestia may choose to upgrade. See § Inter-ephemeris-generation caveat below.
+- **JPL Horizons for future dates (2026 onwards at time of writing):** Horizons' "predict boundary" moves forward as new Earth-orientation-parameter (EOP) data is ingested. Queries near or past the predict boundary extrapolate — values can shift slightly as the server's EOP file updates. Typically not a Celestia-user concern because the validation corpus is natal-chart dates (past), not forward forecasts.
+- **Astronomy Engine:** deterministic by construction for a given `astronomy-engine` npm version. Package updates occasionally refine VSOP87 / lunar / Pluto coefficients. If a snapshot drifts after `pnpm install` picks up a new version, check the AE changelog before treating it as a Celestia regression.
+- **Inline Meeus Ch. 47 polynomial (Mean Node reference):** deterministic by implementation. No regeneration ever needed; reference value is recomputed at comparison time from each case's JD.
+- **Inline Placidus implementation (houses reference):** deterministic by implementation. No regeneration ever needed.
+- **astro.com:** demoted to optional spot-check per `09-01-PRECISION-FLOOR.md § Doc drift corrections` entry 6 (not independent — uses sweph internally). Not part of routine regeneration.
+
+### Regeneration procedure
+
+The generator lives at `test/validation/scripts/generate-reference-data.ts`. Used once during §9.2 to populate 11 of 12 cases; designed to be idempotent on subsequent runs.
+
+**To regenerate a single case** (e.g., JPL Horizons upgraded to DE442 and the snapshot needs refresh):
+
+1. Delete the existing `reference-data/<case-id>.ts` file.
+2. `pnpm --filter @celestia/astrology exec tsx test/validation/scripts/generate-reference-data.ts` — the generator iterates all fixtures, skips cases with existing reference-data files, and generates missing ones. Deleting the target file makes it the single generation target.
+3. `pnpm --filter @celestia/astrology typecheck` — verify the new file type-checks.
+4. `pnpm --filter @celestia/astrology test` — run the harness. Capture the diff in observed deltas against the previous snapshot. Sub-arcsec modern-era drift is unremarkable; significant far-range drift is the `[inferred]` inter-ephemeris-generation variance — see caveat below.
+5. Commit the regenerated file with a header noting the regeneration date, the JPL ephemeris generation in use, and the reason (upgrade, drift investigation, etc.).
+
+**Wall time:** ~10–20 seconds per case (10 sequential JPL Horizons queries). For all 12 cases, budget ~3–5 minutes. The generator is sequential-by-design to stay polite to the Horizons API.
+
+**Network:** Required for JPL Horizons queries. Astronomy Engine and Meeus/Placidus references are local. If running in an offline environment, AE-only regeneration can be scripted separately by skipping the JPL fetch block — not part of the routine workflow.
+
+### Inter-ephemeris-generation caveat — `[inferred]`
+
+**Observation:** Year 1600 Moon vs JPL shows 10.31″ delta; Year 2200 Moon shows 47.54″. SE docs claim Moshier Moon is `[verified]` 0.5″ vs **DE404** uniformly across 1369 BC – 3000 AD. The observed deltas exceed that claim by 20–100× at far-T.
+
+**Attribution (`[inferred]`):** The most plausible explanation is inter-ephemeris-generation divergence between DE404 (Moshier's fit target per SE docs) and DE441 (JPL Horizons' current). Moshier's fit to DE404 remains 0.5″ uniformly; DE441 vs DE404 at far-T is the source of the observed deltas. Other candidate contributors (frame-convention differences between Moshier's 1990s transformation code and current IAU conventions; time-scale handling at far-T) have not been eliminated. No primary source quantifies the relative contributions. Full framing in `09-02-LONGITUDE-REPORT.md § Tier 1 § Far-range cases`.
+
+**Forward-looking implication:** if future JPL ephemeris generations are released (DE442, DE450, etc.) and Celestia regenerates its reference data against them, **far-range observation magnitudes may shift in either direction**. A Year 1600 Moon delta that was 10.31″ against DE441 could be 6″ or 14″ against DE450 — the exact number depends on how the new generation's lunar theory differs from DE404 at that T. **This is expected inter-generation variance, not a Celestia-side regression.** Future readers regenerating far-range snapshots should:
+
+- Record the JPL ephemeris generation in the regenerated file's header (which the generator already does via the `API VERSION` / `Source: DE441` line in Horizons responses).
+- Compare the magnitude shift against modern-era cases from the same regeneration run. If modern-era cases (1879–2020) stay sub-arcsec and only far-range cases shift, the shift is inter-generation variance and the `[inferred]` attribution holds.
+- Only treat a delta shift as a Celestia-side regression if **modern-era cases also shift** by a non-noise amount. That would indicate either a sweph update, a Moshier-to-DE404 fit regression (unlikely), or a deeper issue worth surfacing.
+
+The modern-era `[verified]` claim is the load-bearing one. Far-range cases are scope-explicit `[observation]` records, not validation assertions. This distinction is captured in fixture-level `farRangeObservation: true` flags and in the consolidated §9.2 report.
