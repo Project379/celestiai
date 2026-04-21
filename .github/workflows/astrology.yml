@@ -1,0 +1,53 @@
+name: Astrology Validation
+
+# Runs the @celestia/astrology §9 validation harness as a CI regression gate.
+# See `.planning/phases/09-ephemeris-validation/09-06-CI-INTEGRATION.md` for
+# scope and design rationale.
+#
+# Triggers:
+#   - pull_request to develop/main when astrology files change
+#   - push to develop/main/mobile-parallel-test when astrology files change
+#     (feature-branch push-trigger supports verification runs without needing
+#     an open PR; narrow branch list prevents noise on short-lived branches)
+#
+# Path filter scoped to packages/astrology/** + this workflow file. Changes
+# outside the astrology package do not fire this workflow; typecheck-level
+# regressions in downstream consumers (apps/web) are covered by the existing
+# ci.yml workflow's `check:all` step.
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'packages/astrology/**'
+      - '.github/workflows/astrology.yml'
+  push:
+    branches: [develop, main, mobile-parallel-test]
+    paths:
+      - 'packages/astrology/**'
+      - '.github/workflows/astrology.yml'
+
+jobs:
+  validation:
+    name: §9 ephemeris validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck @celestia/astrology (src + test)
+        run: pnpm --filter @celestia/astrology typecheck
+
+      - name: Run §9 validation harness (39 tests across 12 cases)
+        run: pnpm --filter @celestia/astrology test
