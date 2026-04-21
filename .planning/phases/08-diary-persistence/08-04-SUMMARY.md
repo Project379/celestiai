@@ -1,8 +1,8 @@
 # §8.4 — API endpoints close summary
 
 **Opened:** 2026-04-21 (after §8.3 shipped `public.diary_entries` to prod).
-**Closed:** 2026-04-21.
-**Outcome:** 5 REST endpoints under `/api/diary/*` live on `mobile-parallel-test`, typecheck clean across all 5 packages, M3 UAT harness extended with unauth 401 gates + authenticated CRUD flow ready for founder-local execution.
+**Closed:** 2026-04-21 (real close after UAT pass + environmental-blocker recovery).
+**Outcome:** 5 REST endpoints under `/api/diary/*` live on `mobile-parallel-test`. UAT harness executed against dev server and **passed 81/82, fail: 0** — all 5 diary unauth 401 gates and all 11 diary CRUD assertions green. Zero non-diary regressions observed post-recovery (birth-data, chart/calculate, crystals, stripe, transits, oracle cap-gate, middleware gates all still pass). Environmental blocker (Next.js 15.5.9 bundler regression for native modules) surfaced during UAT and resolved via four-step escalation ladder — see drift-tracker #14 and the "Environmental-blocker recovery" section below.
 
 ---
 
@@ -92,7 +92,7 @@ Bulgarian error messages per the `birth-data.ts` register. The Zod layer is the 
 
 Cleanup function extended to DELETE any residual `diary_entries` rows for the test user.
 
-Harness parses clean (`node --check` pass). Execution gate is the founder-local env (dev server + CLERK_SECRET_KEY).
+Harness parses clean (`node --check` pass). Founder-local execution completed 2026-04-21 post-blocker-recovery: **pass: 81 / fail: 0 / total: 82** (the one non-passing assertion is a pre-existing `skip`, not related to §8.4). All 5 diary unauth 401 lines PASS with correct Bulgarian body. All 11 diary CRUD lines PASS — POST create + GET list + GET single + POST upsert (`created:false`) + UNIQUE invariant + PATCH + bad PATCH → 400 + DELETE + GET 404 after delete. RESULTS.json written to `.planning/phases/m3-uat/RESULTS.json` per harness convention.
 
 ## Scope observation — RLS vs service-role pattern
 
@@ -111,7 +111,7 @@ Post-surface consistency fix: `apps/web/app/api/diary/entries/route.ts` original
 - **True RLS policy test against real Clerk JWT.** The API layer uses service-role, so RLS is NOT the gate — `auth().userId` + explicit `.eq('user_id', userId)` is. A pure RLS test would require a Supabase client configured with the anon key and the user's Clerk JWT as bearer token, then SELECTing from `diary_entries` to verify isolation works at the policy layer. That's a §8.5+ concern if any future code path uses direct client-side `@supabase/supabase-js`; not shipped here.
 - **Cross-user isolation.** The harness runs against one test user; doesn't verify that user A can't see user B's entries. The explicit `.eq('user_id', userId)` + DB RLS combine to guarantee this, but integration-testing it would require minting two Clerk users.
 
-## Execution trail
+## Execution trail — endpoint work
 
 | Commit | SHA | What |
 |---|---|---|
@@ -122,6 +122,33 @@ Post-surface consistency fix: `apps/web/app/api/diary/entries/route.ts` original
 | 4 | `6775c3b` | PATCH `/api/diary/entries/[id]` + ERR-DI-006 |
 | 5 | `26b7536` | DELETE `/api/diary/entries/[id]` + ERR-DI-007 |
 | 6 | `4c4dac1` | M3 UAT harness additions: unauth gates + checkDiaryCrudFlow |
+| close | `4cbeca4` | Initial §8.4 close summary (pre-UAT, harness ready-to-run state) |
+| consolidation | `323ba60` | Service-role factory consistency fix + scope-observation block + drift #13 |
+
+## Environmental-blocker recovery trail
+
+Between the initial close (`4cbeca4`) and real close, the UAT attempt surfaced a Next.js-bundler regression unrelated to §8 scope. Four-step escalation ladder executed:
+
+| Commit | SHA | What |
+|---|---|---|
+| recovery 1 | `fd6dd8b` | `serverExternalPackages: ['sweph']` in `apps/web/next.config.js`. Insufficient alone. |
+| recovery 2 | `4832def` | `transpilePackages: ['@celestia/astrology', '@celestia/core']`. Insufficient in combination with #1. |
+| recovery 3 | `d9bd940` | `createRequire` refactor of three astrology files (calculator.ts, transit.ts, utils/julian-day.ts) to route sweph through CJS entry. Insufficient — sweph still entered Webpack's graph. |
+| recovery 4 | `7fa5684` | **Working combination.** Next pinned exact to `15.2.4` (dropped caret; lockfile regenerated); explicit `webpack.externals` hook added alongside the existing `serverExternalPackages`; diagnostic `console.log` at config-load time confirms config is being read. This landed the dev server green. |
+
+All four recovery artifacts **retained on the branch** — they compose defense-in-depth even though only #4's combination was strictly load-bearing for this specific regression. Detail in drift-tracker #14.
+
+## Durable infrastructure artifacts — post-§8.4
+
+Three patterns inherited by future Celestia work as load-bearing defaults (none to be removed casually):
+
+1. **Next.js pinned to `15.2.4` exact** (`apps/web/package.json`). Lockfile spec `15.2.4`, no caret. Rationale: 15.3+ exhibited a bundler regression where `serverExternalPackages` did not externalize native modules (sweph, likely also sharp / bcrypt / similar). Until Next 15.6+ or later restores the documented behavior, the exact pin prevents silent forward drift. Post-launch queued: re-test sweph externalization on each Next release as they ship; consider unpinning only when the regression is empirically resolved.
+2. **`webpack.externals` hook in `next.config.js`** marking `sweph` as an external for `isServer: true` builds. Known-working pattern across Next.js versions for native N-API modules. **Keep regardless of Next version** — it's a durable safety net orthogonal to `serverExternalPackages`. If a future native dep lands (e.g., a different crypto primitive), add it to the same hook.
+3. **`createRequire` pattern in `packages/astrology/src/{calculator,transit,utils/julian-day}.ts`** to route sweph through its CJS entry (`index.js`) rather than ESM entry (`index.mjs`). Defensive against any future bundler that statically analyzes `import * as sweph` and tries to bundle it. 39/39 tests still pass on this pattern; no behavior change vs the old ESM import. Keep.
+
+The diagnostic `console.log` in `next.config.js` (line ~80) is **removable** after the sweph saga stabilizes across a few deploys — it's just a belt-and-suspenders config-load confirmation. Not load-bearing.
+
+---
 
 ## Next: §8.5 opens
 
