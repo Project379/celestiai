@@ -2,6 +2,19 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['nativewind', 'react-native-css-interop'],
+  // sweph is a native N-API module (Swiss Ephemeris C/C++ bindings via
+  // node-gyp). Next.js's default Webpack behaviour tries to bundle it,
+  // which fails because the .node binary can't be bundled — under Node
+  // 24's stricter URL handling the failure surfaces as a confusing
+  // "path must be string or URL. Received URL" error at the bundled-
+  // module require frame. serverExternalPackages tells Next to
+  // externalize sweph so it's require()'d natively at runtime, which
+  // is how the Vitest-backed CI path already resolves it. Verified
+  // 2026-04-21 that sweph.calc_ut works standalone at Node 24 via
+  // `node -e` from packages/astrology — confirming the issue is
+  // bundler-only, not runtime. See doc-drift tracker #14 at
+  // .planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md.
+  serverExternalPackages: ['sweph'],
   experimental: {
     optimizePackageImports: [
       'framer-motion',
