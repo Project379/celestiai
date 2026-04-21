@@ -197,6 +197,11 @@ const UNAUTH_ENDPOINTS = [
   { method: 'GET', path: '/api/birth-data/00000000-0000-0000-0000-000000000000' },
   { method: 'PATCH', path: '/api/birth-data/00000000-0000-0000-0000-000000000000', body: {} },
   { method: 'DELETE', path: '/api/birth-data/00000000-0000-0000-0000-000000000000' },
+  { method: 'GET', path: '/api/diary/entries' },
+  { method: 'POST', path: '/api/diary/entries', body: {} },
+  { method: 'GET', path: '/api/diary/entries/00000000-0000-0000-0000-000000000000' },
+  { method: 'PATCH', path: '/api/diary/entries/00000000-0000-0000-0000-000000000000', body: {} },
+  { method: 'DELETE', path: '/api/diary/entries/00000000-0000-0000-0000-000000000000' },
   { method: 'GET', path: '/api/crystals' },
   { method: 'POST', path: '/api/crystals/collect', body: { recommendationId: 'x' } },
   { method: 'POST', path: '/api/crystals/daily/collect' },
@@ -942,6 +947,186 @@ async function checkOracleCapGate(jwt, clerkId, chartId) {
   await setTier(clerkId, 'free')
 }
 
+/**
+ * §8.4 integration check: real Clerk-authenticated CRUD against the
+ * diary API against prod Supabase. Exercises the full stack — Clerk
+ * auth() middleware extracts sub → route handler calls core →
+ * service-role Supabase client writes with explicit .eq(user_id).
+ * Also exercises RLS policies indirectly: the UNAUTH_ENDPOINTS list
+ * above asserts 401s for anonymous callers, and this auth'd flow
+ * confirms the row actually lands with the expected user_id and is
+ * visible on the caller's GET list (and not on anyone else's — the
+ * .eq scoping + RLS combined guarantee).
+ *
+ * §8.4 commit-7 discipline: if ANY of these assertions fails, stop
+ * and surface. Failure is a diagnosis event (JWT claim extraction,
+ * RLS policy-vs-JWT-shape mismatch, or Clerk config), not a patch
+ * event. Guessing the layer without evidence will compound the bug.
+ */
+async function checkDiaryCrudFlow(jwt, clerkId) {
+  console.log('\n== Diary CRUD (auth\'d, §8.4 integration) ==')
+  const auth = { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' }
+  const today = new Date().toISOString().slice(0, 10)
+
+  // POST: first write of the day — should create a new row.
+  const createBody = {
+    entryDate: today,
+    phaseId: 'new',
+    phaseName: 'Новолуние',
+    intentions: [
+      'Отварям място за яснота.',
+      'Поставям три намерения за цикъла.',
+      'Слушам какво е готово да се роди.',
+    ],
+  }
+  const create = await fetchJson('/api/diary/entries', {
+    method: 'POST',
+    headers: auth,
+    body: JSON.stringify(createBody),
+  })
+  if (!expect(
+    'POST /api/diary/entries → 200 + {created:true} + user_id matches clerkId',
+    create.status === 200 &&
+      create.json?.id &&
+      create.json.user_id === clerkId &&
+      create.json.created === true &&
+      create.json.entry_date === today &&
+      Array.isArray(create.json.intentions) &&
+      create.json.intentions.length === 3,
+    `status=${create.status} id=${create.json?.id} user_id=${create.json?.user_id} created=${create.json?.created}`,
+  )) return null
+  const entryId = create.json.id
+
+  // Validation failure branch — empty body should 400 with details.
+  const badCreate = await fetchJson('/api/diary/entries', {
+    method: 'POST',
+    headers: auth,
+    body: JSON.stringify({}),
+  })
+  expect(
+    'POST /api/diary/entries (bad input) → 400 + details{}',
+    badCreate.status === 400 && typeof badCreate.json?.details === 'object',
+    `status=${badCreate.status}`,
+  )
+
+  // GET list — new entry should appear.
+  const list = await fetchJson('/api/diary/entries', { headers: auth })
+  expect(
+    'GET /api/diary/entries → 200 + array containing entryId',
+    list.status === 200 &&
+      Array.isArray(list.json) &&
+      list.json.some((e) => e.id === entryId),
+    `status=${list.status} len=${list.json?.length}`,
+  )
+
+  // GET single — entry should be readable by id.
+  const getOne = await fetchJson(`/api/diary/entries/${entryId}`, { headers: auth })
+  expect(
+    `GET /api/diary/entries/${entryId} → 200 + row`,
+    getOne.status === 200 && getOne.json?.id === entryId,
+    `status=${getOne.status}`,
+  )
+
+  // GET non-existent — 404 with Bulgarian body.
+  const getMissing = await fetchJson(
+    '/api/diary/entries/00000000-0000-0000-0000-000000000000',
+    { headers: auth },
+  )
+  expect(
+    'GET /api/diary/entries/<nonexistent> → 404',
+    getMissing.status === 404 && getMissing.json?.error?.includes('не беше намерена'),
+    `status=${getMissing.status}`,
+  )
+
+  // POST same (user_id, today) again — upsert UPDATE path. Row id and
+  // created_at should stay the same; created should flip to false.
+  const upsertAgain = await fetchJson('/api/diary/entries', {
+    method: 'POST',
+    headers: auth,
+    body: JSON.stringify({
+      ...createBody,
+      intentions: [
+        'Обновено намерение едно.',
+        'Обновено намерение две.',
+        'Обновено намерение три.',
+      ],
+    }),
+  })
+  expect(
+    'POST /api/diary/entries (same day) → 200 + {created:false} + same id',
+    upsertAgain.status === 200 &&
+      upsertAgain.json?.id === entryId &&
+      upsertAgain.json.created === false &&
+      upsertAgain.json.intentions?.[0] === 'Обновено намерение едно.',
+    `status=${upsertAgain.status} id=${upsertAgain.json?.id} created=${upsertAgain.json?.created}`,
+  )
+
+  // Verify UNIQUE (user_id, entry_date) maintains single row via service role.
+  const { data: rows } = await supabase
+    .from('diary_entries')
+    .select('id')
+    .eq('user_id', clerkId)
+    .eq('entry_date', today)
+  expect(
+    'diary_entries UNIQUE(user_id, entry_date) holds — single row for (user, today)',
+    (rows?.length ?? 0) === 1 && rows[0].id === entryId,
+    `rows=${rows?.length} ids=[${rows?.map((r) => r.id).join(',')}]`,
+  )
+
+  // PATCH — intentions update.
+  const patch = await fetchJson(`/api/diary/entries/${entryId}`, {
+    method: 'PATCH',
+    headers: auth,
+    body: JSON.stringify({
+      intentions: [
+        'Final patch one.',
+        'Final patch two.',
+        'Final patch three.',
+      ],
+    }),
+  })
+  expect(
+    'PATCH /api/diary/entries/<id> → 200 + intentions updated',
+    patch.status === 200 && patch.json?.intentions?.[0] === 'Final patch one.',
+    `status=${patch.status}`,
+  )
+
+  // Invalid PATCH (wrong tuple length) → 400.
+  const badPatch = await fetchJson(`/api/diary/entries/${entryId}`, {
+    method: 'PATCH',
+    headers: auth,
+    body: JSON.stringify({ intentions: ['only one'] }),
+  })
+  expect(
+    'PATCH /api/diary/entries (bad input) → 400 + details{}',
+    badPatch.status === 400 && typeof badPatch.json?.details === 'object',
+    `status=${badPatch.status}`,
+  )
+
+  // DELETE — 204 no body.
+  const del = await fetchJson(`/api/diary/entries/${entryId}`, {
+    method: 'DELETE',
+    headers: auth,
+  })
+  expect(
+    'DELETE /api/diary/entries/<id> → 204',
+    del.status === 204,
+    `status=${del.status}`,
+  )
+
+  // GET after delete → 404.
+  const getAfterDelete = await fetchJson(`/api/diary/entries/${entryId}`, {
+    headers: auth,
+  })
+  expect(
+    'GET /api/diary/entries/<deleted-id> → 404',
+    getAfterDelete.status === 404,
+    `status=${getAfterDelete.status}`,
+  )
+
+  return entryId
+}
+
 async function pickerDivergenceAnalysis() {
   console.log('\n== Crystal picker divergence analysis ==')
   const { data: catalog } = await supabase
@@ -1014,8 +1199,9 @@ async function cleanup(chartId, clerkId) {
     .from('crystal_recommendations')
     .delete()
     .eq('user_id', clerkId)
+  await supabase.from('diary_entries').delete().eq('user_id', clerkId)
   await setTier(clerkId, 'free')
-  record('cleanup', 'pass', 'test chart, ai_readings, daily crystals, user_crystals, recs deleted; tier → free')
+  record('cleanup', 'pass', 'test chart, ai_readings, daily crystals, user_crystals, recs, diary entries deleted; tier → free')
 }
 
 async function main() {
@@ -1071,6 +1257,7 @@ async function main() {
     record('premium paths', 'skip', 'chart creation failed, cannot run premium flows')
   }
   if (chartId) await checkOracleCapGate(jwt, user.id, chartId)
+  await checkDiaryCrudFlow(jwt, user.id)
   const multiMatch = await pickerDivergenceAnalysis()
   if (chartId) await cleanup(chartId, user.id)
 
