@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { getLunarPhase, type LunarPhase } from '@/lib/moon-phase'
 import { useManifestEntries } from '@/hooks/useManifestEntries'
@@ -52,7 +52,7 @@ export function ManifestDiaryContent() {
   const today = useMemo(() => isoDate(now), [now])
   const todayFormatted = BG_DATE.format(now)
 
-  const { entries, isLoaded, saveEntry, findByDate, deleteEntry } = useManifestEntries()
+  const { entries, isLoaded, error, saveEntry, findByDate, deleteEntry, clearError } = useManifestEntries()
   const existingToday = findByDate(today)
 
   const handleSave = (intentions: [string, string, string]) => {
@@ -109,6 +109,32 @@ export function ManifestDiaryContent() {
           </span>
         </p>
       </motion.div>
+
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            key={error.code}
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3 }}
+            role="alert"
+            className="mb-8 flex items-start gap-3 rounded-xl border border-rose-400/15 bg-rose-500/[0.04] px-5 py-4"
+          >
+            <p className="flex-1 font-display text-[13px] leading-[1.7] text-rose-300/90">
+              {error.message}
+            </p>
+            <button
+              type="button"
+              onClick={clearError}
+              aria-label="Затвори"
+              className="shrink-0 rounded-full px-2 py-1 font-cinzel text-[11px] text-rose-300/70 transition-colors hover:text-rose-200"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <motion.section
         initial="hidden"

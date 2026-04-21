@@ -6,16 +6,37 @@ import type { ManifestEntry } from '@/lib/manifest/types'
 
 const STORAGE_KEY = 'celestia.manifest.entries.v1'
 
+export type ManifestEntriesErrorCode = 'ERR-DI-001' | 'ERR-DI-002'
+
+export interface ManifestEntriesError {
+  code: ManifestEntriesErrorCode
+  message: string
+}
+
+const ERROR_MESSAGES: Record<ManifestEntriesErrorCode, string> = {
+  'ERR-DI-001':
+    'Не успяхме да запазим страницата в дневника. Опитай отново. Код: ERR-DI-001.',
+  'ERR-DI-002':
+    'Не успяхме да заредим дневника. Опитай отново. Код: ERR-DI-002.',
+}
+
 /**
  * Backend-swap boundary. Today: localStorage. Tomorrow: Supabase.
  * Return shape stays the same — the UI never knows which is underneath.
  *
+ * Error IDs emitted by this hook (see PRE_LAUNCH_PREREQS.md item 2 for
+ * the monitoring-swap path when Sentry/equivalent ships):
+ *   ERR-DI-001 — localStorage write failed (quota exceeded or storage disabled)
+ *   ERR-DI-002 — localStorage read corruption (invalid JSON)
+ *
  * When the API exists, replace the effect body with a fetch and replace
- * saveEntry with a POST; no component changes required.
+ * saveEntry with a POST; no component changes required. The ERR-DI-NNN
+ * namespace extends with ERR-DI-003+ for server paths (see §8.4 plan).
  */
 export function useManifestEntries() {
   const [entries, setEntries] = useState<ManifestEntry[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const [error, setError] = useState<ManifestEntriesError | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -25,8 +46,9 @@ export function useManifestEntries() {
         const parsed = JSON.parse(raw) as ManifestEntry[]
         setEntries(Array.isArray(parsed) ? parsed : [])
       }
-    } catch {
-      // corrupted storage — start clean
+    } catch (e) {
+      console.error('[ERR-DI-002] useManifestEntries read corruption:', e)
+      setError({ code: 'ERR-DI-002', message: ERROR_MESSAGES['ERR-DI-002'] })
     }
     setIsLoaded(true)
   }, [])
@@ -35,8 +57,9 @@ export function useManifestEntries() {
     setEntries(next)
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-    } catch {
-      // quota exceeded — silent; UI state is still updated
+    } catch (e) {
+      console.error('[ERR-DI-001] useManifestEntries write failed:', e)
+      setError({ code: 'ERR-DI-001', message: ERROR_MESSAGES['ERR-DI-001'] })
     }
   }
 
@@ -88,5 +111,7 @@ export function useManifestEntries() {
     [entries],
   )
 
-  return { entries, isLoaded, saveEntry, deleteEntry, findByDate }
+  const clearError = useCallback(() => setError(null), [])
+
+  return { entries, isLoaded, error, saveEntry, deleteEntry, findByDate, clearError }
 }
