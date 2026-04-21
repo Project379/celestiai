@@ -6,7 +6,12 @@
  * a single continuous time scale.
  */
 
-import * as sweph from 'sweph'
+// sweph via createRequire (CJS entry) — same rationale as
+// calculator.ts. See doc-drift tracker #14 and the preserved
+// apps/web/next.config.js serverExternalPackages + transpilePackages.
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+const sweph = require('sweph') as typeof import('sweph')
 
 /**
  * Convert a date and time to Julian Day number
