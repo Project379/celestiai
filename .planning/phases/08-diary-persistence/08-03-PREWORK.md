@@ -85,6 +85,22 @@ Dashboard path: Supabase project dashboard → **Project Settings → Branching*
 
 **Interim status:** awaiting founder dashboard check. Once the outcome is known, this section gets a `Branching outcome: N` note; §8.3 proceeds along the matching path.
 
+### Branching outcome: 1 — available on current plan (2026-04-21, founder-verified)
+
+Founder confirmed via dashboard: **preview branches are available on the current Celestia plan.** Persistent branches require an upgrade; preview branches — short-lived, ephemeral, auto-paused/deleted — are sufficient for §8.3's schema-experimental use case.
+
+**§8.3 proceeds on path (c) — Supabase branching.** Concrete steps:
+
+1. Create preview branch (CLI or dashboard). Working name: `preview-8-3-diary` or `diary-entries-migration`. Capture the branch's connection string — it differs from prod's `DATABASE_URL`.
+2. Run the migration against the preview branch (`supabase db push` pointed at the branch, or `psql -f <migration>.sql $BRANCH_DATABASE_URL`, matching whichever Supabase-CLI convention lands cleanly).
+3. Run the 14-fact probe against the branch. Capture output as `08-03-PROBE-BRANCH.txt`.
+4. Surface probe output for founder review.
+5. On approval: apply migration to prod via matching Supabase-CLI path; run probe against prod; capture as `08-03-PROBE-PROD.txt`.
+6. Verify identical pass pattern between branch-probe and prod-probe outputs. Any delta = drift signal; stop and surface, don't close.
+7. Delete preview branch as the last step to avoid orphaned-branch cost / confusion.
+
+Discipline carry-forward: stop-and-surface if migration fails against preview; don't proceed to prod; stop-and-surface on any branch-vs-prod probe delta; delete preview branch before §8.3 close.
+
 ---
 
 ## Action 2 — Probe script status
