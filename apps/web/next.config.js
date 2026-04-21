@@ -20,6 +20,22 @@ const nextConfig = {
   // bundler-only, not runtime. See doc-drift tracker #14 at
   // .planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md.
   serverExternalPackages: ['sweph'],
+  // Belt-and-suspenders externalization at the Webpack layer. The
+  // serverExternalPackages config above is the newer sugar but did not
+  // take effect through three attempted configurations on Next 15.5.9
+  // — sweph still ended up in the RSC server vendor chunks with
+  // `webpack=true` confirmed via node-gyp-build's self-detection.
+  // Explicit `config.externals` is the known-working pattern for
+  // native modules (sweph, sharp, bcrypt, etc.) across Next.js
+  // versions. Paired with the pinned `next: 15.2.4` in package.json
+  // so a future 15.5+ regression is not regression-sensitive on this
+  // code path. See doc-drift tracker #14.
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = [...(config.externals || []), 'sweph']
+    }
+    return config
+  },
   experimental: {
     optimizePackageImports: [
       'framer-motion',
@@ -55,5 +71,17 @@ const nextConfig = {
     ]
   },
 }
+
+// Config-load diagnostic — fires at Next.js boot time. Confirms the file
+// is actually being read and surfaces the current externalization config
+// values. If this line doesn't appear near the top of `pnpm dev` output,
+// the config file isn't being loaded by Next (cache / resolution issue).
+// Can be removed after the sweph-externalization saga stabilizes.
+console.log(
+  '[next.config] loaded. serverExternalPackages:',
+  nextConfig.serverExternalPackages,
+  'webpack externals hook:',
+  typeof nextConfig.webpack === 'function' ? 'present' : 'missing',
+)
 
 module.exports = nextConfig
