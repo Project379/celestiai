@@ -1,5 +1,11 @@
 import type { LunarPhaseId } from '@/lib/moon-phase'
 
+// Structured 3-field diary exercise for the /rhythm/journal writing surface.
+// Distinct from `phase.journalPrompt` in packages/core/src/lib/moon-phase.ts
+// (single reflective question on the /rhythm lunar-phase card) — separation
+// is intentional: different surfaces, different modalities (active writing
+// vs passive reflection). Do not consolidate without reviewing both surfaces.
+
 /**
  * Phase-specific diary prompts. Three fields per phase — the user writes
  * three intentions (or reflections, or gratitudes — depending on phase).

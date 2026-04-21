@@ -40,7 +40,12 @@ export interface LunarPhase {
   affirmation: string // first-person
   crystal: string // name + short why
   ritual: string // practice suggestion
-  journalPrompt: string // single question
+  // Single reflective question shown on the LunarPhaseCard at /rhythm.
+  // Distinct from `MANIFEST_PROMPTS` in apps/web/lib/manifest/prompts.ts
+  // (structured 3-field diary exercise for /rhythm/journal) — separation
+  // is intentional: different surfaces, different modalities (passive
+  // reflection vs active writing). Do not consolidate without reviewing both.
+  journalPrompt: string
   nextMajor: {
     id: LunarPhaseId
     name: string
