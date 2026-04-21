@@ -1,5 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
-import { getDiaryEntry, updateDiaryEntry } from '@celestia/core/diary/entries'
+import {
+  deleteDiaryEntry,
+  getDiaryEntry,
+  updateDiaryEntry,
+} from '@celestia/core/diary/entries'
 import { updateDiaryEntrySchema } from '@/lib/validators/diary'
 
 /**
@@ -10,8 +14,7 @@ import { updateDiaryEntrySchema } from '@/lib/validators/diary'
  *                is a legitimate response, not an error).
  *   ERR-DI-006 — PATCH update threw / core returned UPDATE_FAILED
  *                (404 on NOT_FOUND stays plain, distinct from 5xx).
- *
- * DELETE (ERR-DI-007) lands in a subsequent commit.
+ *   ERR-DI-007 — DELETE failed (core returned DELETE_FAILED or threw).
  */
 
 interface RouteParams {
@@ -99,6 +102,42 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       {
         error: 'Не успяхме да обновим страницата. Опитай отново. Код: ERR-DI-006.',
         code: 'ERR-DI-006',
+      },
+      { status: 500 },
+    )
+  }
+}
+
+export async function DELETE(_request: Request, { params }: RouteParams) {
+  const { userId } = await auth()
+  if (!userId) {
+    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+  }
+
+  try {
+    const { id } = await params
+    const result = await deleteDiaryEntry(userId, id)
+    if (!result.ok) {
+      console.error(
+        '[ERR-DI-007] DELETE /api/diary/entries/[id] delete failed:',
+        result.error,
+        result.message,
+      )
+      return Response.json(
+        {
+          error: 'Не успяхме да изтрием страницата. Опитай отново. Код: ERR-DI-007.',
+          code: 'ERR-DI-007',
+        },
+        { status: 500 },
+      )
+    }
+    return new Response(null, { status: 204 })
+  } catch (error) {
+    console.error('[ERR-DI-007] DELETE /api/diary/entries/[id] unhandled error:', error)
+    return Response.json(
+      {
+        error: 'Не успяхме да изтрием страницата. Опитай отново. Код: ERR-DI-007.',
+        code: 'ERR-DI-007',
       },
       { status: 500 },
     )
