@@ -244,7 +244,7 @@ export function DashboardContent({
       {/* ── Layer C · Bento launchpad ────────────────────────
          2×2 grid of scannable tiles. Each tile leads to its deep
          destination: Crystal → /you/crystals (full card + collection),
-         Lunar → /rhythm (full lunar card + meteor + transits + diary),
+         Lunar → /rhythm (full lunar card + meteor + transits),
          Transit → /rhythm (same, transit-focused scroll),
          Кръг → /circle (people-graph + premium wedge per §4 Rule 1).
          The tiles are intentionally compact — deep content lives at
