@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['nativewind', 'react-native-css-interop'],
+  transpilePackages: [
+    'nativewind',
+    'react-native-css-interop',
+    '@celestia/astrology',
+    '@celestia/core',
+  ],
   // sweph is a native N-API module (Swiss Ephemeris C/C++ bindings via
   // node-gyp). Next.js's default Webpack behaviour tries to bundle it,
   // which fails because the .node binary can't be bundled — under Node
