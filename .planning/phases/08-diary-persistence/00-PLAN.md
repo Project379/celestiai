@@ -177,8 +177,10 @@ Dependencies between sub-rounds: §8.3 blocks §8.4 (migration must land before 
   - No offline queue for later retry in §8.5 — that's a scope expansion worth explicit discussion if desired. Default is "tell the user the save failed, let them retry manually." `[inferred]`
 - Drop the localStorage read/write code entirely. The old key `celestia.manifest.entries.v1` is abandoned (Implementation Decision 1).
 - Revisit all `useManifestEntries` consumers — they only touch the hook's return API, which doesn't change. No component rewrites expected. `[verified from audit §2.1]`
+- **UX-feedback follow-up from §8.2 sealing:** `apps/web/components/manifest/ManifestEntryForm.tsx:125-131` textareas gain `maxLength={500}` — pre-submit hint matching the Zod + DB CHECK cap per §8.2 Decision B. Small diff, ships in §8.5 alongside the hook rewrite so the client cap and server cap land together. `[user-decision 2026-04-21]`
+- **Client-side `isoDate` switches to Europe/Sofia (A2 sealing note):** the §8.2 A decision was A2 (client-submitted `entry_date`), which makes `ManifestDiaryContent.tsx:18-23` authoritative for the value the server stores. `isoDate` should continue to compute a browser-local calendar day — matches the "user's lived day" semantic sealed in §8.2 §A. No change required here; flagged as the decision's visible surface in §8.5. (Contrast: A1 would have required switching `isoDate` to Sofia; A2 specifically does not.)
 
-**Exit criteria:** hook swapped; diary entries persist across devices when tested with a shared Clerk account on two browsers; localStorage is not written to; no component edits needed beyond any error-UX surfacing for the new error codes.
+**Exit criteria:** hook swapped; diary entries persist across devices when tested with a shared Clerk account on two browsers; localStorage is not written to; no component edits needed beyond any error-UX surfacing for the new error codes; textarea `maxLength={500}` applied per §8.2 sealing.
 
 **Risk:** SSR/hydration — `ManifestDiaryContent` is a `'use client'` component and mounts the hook only client-side, so no hydration mismatch expected. Worth verifying in §8.9.
 

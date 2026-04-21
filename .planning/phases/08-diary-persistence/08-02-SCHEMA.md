@@ -1,7 +1,8 @@
 # §8.2 — `diary_entries` Schema Design
 
 **Opened:** 2026-04-21 (§8.2)
-**Status:** **DRAFT — awaiting user review of scrutiny points A/B/C before §8.3 executes.**
+**Sealed:** 2026-04-21 — all decisions (A/B/C/D/E/F/G and index hedge) ratified by user.
+**Status:** **SEALED. §8.3 drafts the migration from the DDL in this doc.**
 **Predecessor:** §8.1 closed at `bc06c3a` (ERR-DI-NNN error domain shipped, §8.5 TODO planted).
 **Successor:** §8.3 drafts + runs the migration file based on the decisions sealed here.
 **Plan ref:** `.planning/phases/08-diary-persistence/00-PLAN.md` §8.2.
@@ -18,7 +19,7 @@
 
 Produce a reviewable schema design for the `diary_entries` table before the migration file is drafted in §8.3. This is a pure design artifact: no SQL executes in §8.2. Every column, constraint, index, and RLS rule is scrutinized on its own merits starting from the §8.0 sketch — nothing is rubber-stamped.
 
-Three specific scrutiny points (A/B/C) require explicit user decision before §8.2 closes; a handful of smaller choices are called out and tentatively resolved in-line with `[inferred]` tags the user can override.
+Three specific scrutiny points (A/B/C) required explicit user decision before §8.2 closed; a handful of smaller choices were called out and resolved in-line. **All decisions sealed 2026-04-21** — see each section's `[user-decision] **Sealed:**` line. Option analyses and tradeoffs are preserved below for audit trail; the `## Sealed DDL` section near the bottom reflects the ratified schema.
 
 ---
 
@@ -76,9 +77,13 @@ Client does not submit `entry_date` on `POST /api/diary/entries`. `PATCH` cannot
 
 **Option A3 — Hybrid.** Client submits `entry_date` as a hint; server overrides with Sofia-computed value if the client's value is not in the set {today-Sofia, yesterday-Sofia} to permit a 1-day backfill window. More logic; hedged intent.
 
-`[inferred]` **Recommendation: A1 (server-interpreted).** Bulgarian market + Sofia-anchored display formatter + no existing UI for backfill all point the same way. Surfacing nonetheless — timezone semantics are a data-integrity contract the user should ratify, not a coding preference.
+`[user-decision]` **Sealed: A2 (client-submitted).** Client computes `entry_date` in their local timezone and POSTs; server trusts. Rationale: aligns with the diary-as-personal-ritual semantic — the entry captures the user's *lived* day, not Sofia's calendar day. Avoids the A1 silent-overwrite travel case that advisor surfaced (Tokyo-at-02:00-JST user computing `today = tomorrow-Sofia` and upserting over yesterday-Sofia's entry).
 
-**User: pick A1, A2, or A3.**
+**A2 Zod constraints (§8.4 scope):** the endpoint validator rejects obviously-wrong dates to bound client trust without demanding server-side timezone compute:
+- Reject dates more than **1 day in the future** (accounts for client-clock drift and minor timezone-boundary cases without allowing arbitrary future-dating).
+- Reject dates earlier than the user's `users.created_at` (nothing to write about before the account existed).
+
+Both bounds are Zod-layer rejections surfaced via the ERR-DI-NNN namespace in §8.4. DB-level CHECK for these is not added — the Zod layer is authoritative; the DB trusts what the endpoint accepted.
 
 ---
 
@@ -102,9 +107,13 @@ Client does not submit `entry_date` on `POST /api/diary/entries`. `PATCH` cannot
 - A generous cap with headroom: 500 chars. UTF-8 Bulgarian is 2 bytes/char → ~1 KB max per element, ~3 KB per entry.
 - Overly generous: 2000+ chars begins to feel like "long journal entry" rather than "three intentions."
 
-`[inferred]` **Recommendation: both Zod and DB CHECK, N = 500.**
+`[user-decision]` **Sealed: both Zod and DB CHECK, N = 500 chars per element.**
 
-Implementation sketch:
+**Two-voice framing (ratified):** Zod is the authoritative user-facing gate; the DB CHECK is a silent defense-in-depth guardrail. They don't speak to the user in two voices:
+- **Zod rejection** → user sees a Bulgarian error via the ERR-DI-NNN namespace at the §8.4 endpoint layer.
+- **DB CHECK rejection** (should never fire in practice — if it does, something bypassed Zod) → the endpoint returns `ERR-DI-003` (generic "write failed") to the user; the constraint-violation detail is logged to `console.error` with the ID tag for engineering triage, **not** surfaced to the UI.
+
+DB implementation:
 ```sql
 intentions TEXT[] NOT NULL
   CHECK (array_length(intentions, 1) = 3)
@@ -112,9 +121,9 @@ intentions TEXT[] NOT NULL
   CHECK (char_length(intentions[2]) BETWEEN 1 AND 500)
   CHECK (char_length(intentions[3]) BETWEEN 1 AND 500)
 ```
-(Using `char_length` not `octet_length` so the constraint talks in user-visible characters, not UTF-8 bytes. The lower bound `>= 1` also enforces Decision E's "all three filled" guard at DB level, paired with Zod.)
+(Using `char_length` not `octet_length` so the constraint talks in user-visible characters, not UTF-8 bytes. The lower bound `>= 1` also enforces Decision E's "all three filled" guard at DB level.)
 
-Zod layer (to be finalized in §8.4):
+Zod layer (finalized in §8.4):
 ```ts
 intentions: z.tuple([
   z.string().min(1, { error: 'Моля, попълни и трите намерения' }).max(500, { error: 'Текстът е твърде дълъг — макс. 500 символа' }),
@@ -122,7 +131,7 @@ intentions: z.tuple([
 ])
 ```
 
-**User: confirm "both layers, N = 500", or specify a different N / different enforcement layering.**
+**§8.5 scope addition (captured here so it's not memory-dependent):** `apps/web/components/manifest/ManifestEntryForm.tsx:125-131` textareas need `maxLength={500}` added as UX-feedback — ship in §8.5 alongside the hook rewrite. Applied when the server-backed path lands; until then the Zod layer is the only cap on write and users get a post-submit rejection rather than a pre-submit hint. `[user-decision]` this is an acceptable trade for the interim. (Tracked at `00-PLAN.md §8.5`.)
 
 ---
 
@@ -149,46 +158,41 @@ intentions: z.tuple([
 - **Con:** Requires `users.clerk_id` to be a `UNIQUE` or `PRIMARY KEY` constraint target. `[inferred]` likely already true given existing `.eq('clerk_id', ...)` query patterns treating it as the natural key, but should be verified in §8.3 before the migration runs.
 - **Con:** Account-deletion behaviour becomes implicit (cascaded by DB) rather than explicit (one line in the GDPR endpoint). Future debugging of "where did these diary entries go?" becomes harder if the engineer doesn't immediately check for FKs.
 
-`[inferred]` **Recommendation: C1 (match existing pattern, RLS-only).** Consistency with 6+ existing user-scoped tables is worth more than the marginal automatic-cascade benefit. §8.7's explicit cleanup line is trivial (one query) and keeps GDPR behavior discoverable by reading a single route file.
+`[user-decision]` **Sealed: C1 (RLS-only, match existing pattern).** All current user-scoped tables (`charts`, `chart_calculations`, `oracle_readings`, `user_daily_crystals`, `user_crystals`, `push_subscriptions`) are RLS-only with no FK to `users`. Breaking the pattern for diary alone creates inconsistency a future reader has to resolve without benefit. §8.7's explicit `DELETE FROM diary_entries WHERE user_id = ?` handles GDPR cascade as planned.
 
-Counter-case worth naming: if the user's longer-term vision is *every* user-scoped table should get an FK going forward (starting here, migrating existing tables later), then picking C2 now makes §8.2 the precedent. Acceptable direction, but it's a schema-style decision that outlives §8.
-
-**User: pick C1 or C2.**
+**Deferred precedent note:** if the codebase ever migrates toward FK-cascade as a cross-cutting pattern, that's a separate architectural workstream touching all 6+ user-scoped tables together. Not §8's problem; flagged here so the option isn't lost if the architecture debate opens later.
 
 ---
 
-## Smaller choices (tentatively resolved in-line; user can override)
+## Smaller choices — all sealed
 
 ### D. `phase_id` constraint
 
-`phase_id TEXT NOT NULL` — `[inferred]` keep as unconstrained TEXT matching how the codebase treats `LunarPhaseId` elsewhere (Zod enum at the endpoint boundary, not at DB). Add a `COMMENT ON COLUMN` documenting the expected value set:
+`[user-decision]` **Sealed: `phase_id TEXT NOT NULL` plus `COMMENT ON COLUMN` plus Zod enum at endpoint.** No PG `ENUM` type, no `CHECK (phase_id IN (...))` — matches codebase convention for enum values (Zod at the endpoint boundary, not at DB). Schema churn when the `LunarPhaseId` set expands stays minimal.
+
+Column comment (lands with migration):
 ```sql
 COMMENT ON COLUMN public.diary_entries.phase_id IS
   'LunarPhaseId snapshot at write time. Valid values: '
   '''new'' | ''waxing_crescent'' | ''first_quarter'' | ''waxing_gibbous'' | '
   '''full'' | ''waning_gibbous'' | ''last_quarter'' | ''waning_crescent''. '
-  'Snapshot is deliberate (Decision C): if phase logic changes, prior entries '
-  'keep their original phase label.';
+  'Snapshot is deliberate (DIARY_PRODUCT_DECISIONS.md Decision C): '
+  'if phase logic changes, prior entries keep their original phase label.';
 ```
-
-Alternative would be a PG `ENUM` type or `CHECK (phase_id IN (...))`. Both tighten safety; both add schema churn when the set ever expands. `[inferred]` TEXT + comment + Zod enum is the right weight for this value-set.
 
 ### E. Empty-string guard on `intentions`
 
-Already folded into the CHECK constraint in scrutiny B (`char_length >= 1`). Zod also validates `.min(1)` per element. Belt and suspenders, no separate surfacing needed.
+`[user-decision]` **Sealed: folded into the B length CHECK (`char_length BETWEEN 1 AND 500`).** Zod also validates `.min(1)` per element. Belt and suspenders, no separate constraint.
 
-### F. `updated_at` maintenance
+### F. `updated_at` maintenance — generic reusable trigger function
 
-`updated_at TIMESTAMPTZ NOT NULL DEFAULT now()` is correct for INSERT. For UPDATE, Postgres does *not* auto-update the default. Two options:
+`[user-decision]` **Sealed: F1 trigger, with the trigger function shipped as a GENERIC reusable primitive `public.set_updated_at()`, not diary-scoped.** Rationale: this is a repo-wide utility that should exist once, not be reimplemented per-table. One-time cost, permanent reuse. Any future table needing `updated_at` maintenance uses the same trigger function.
 
-- **F1 — Trigger.** Install a `BEFORE UPDATE` trigger that rewrites `updated_at` to `now()`. Fires regardless of who performs the update.
-- **F2 — Application-code.** Every `UPDATE`/`PATCH` handler explicitly sets `updated_at = now()`. Requires discipline; easy to forget.
+`[verified via grep]` no existing `set_updated_at` function or `CREATE TRIGGER` exists anywhere in the repo; diary is the introducer of this primitive.
 
-`[inferred]` **Picking F1 (trigger).** More reliable, standard Postgres idiom, and the trigger is 8 lines of SQL. Will include in the §8.3 migration.
-
-Trigger sketch:
+Generic function (lands with §8.3 migration):
 ```sql
-CREATE OR REPLACE FUNCTION public.diary_entries_set_updated_at()
+CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS trigger AS $$
 BEGIN
   NEW.updated_at = now();
@@ -196,31 +200,39 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+COMMENT ON FUNCTION public.set_updated_at() IS
+  'Generic BEFORE UPDATE trigger function. Sets NEW.updated_at = now(). '
+  'Introduced by the §8.2 diary_entries migration. Reusable across any '
+  'table with an updated_at TIMESTAMPTZ column.';
+```
+
+Diary-side trigger references the generic function:
+```sql
 CREATE TRIGGER diary_entries_updated_at
   BEFORE UPDATE ON public.diary_entries
   FOR EACH ROW
-  EXECUTE FUNCTION public.diary_entries_set_updated_at();
+  EXECUTE FUNCTION public.set_updated_at();
 ```
-
-`[verified via grep across `supabase/` and `.planning/`]` no existing `set_updated_at` function or `CREATE TRIGGER` exists anywhere in the repo. §F's trigger is therefore new-for-diary, not reusable. If the user wants a generic `public.set_updated_at()` function introduced here as a reusable primitive for future tables, say so and §8.3 drafts the generic form; otherwise it stays `diary_entries_set_updated_at()` scoped to this table.
 
 ### G. Correction to §8.0 plan — `clerk_id()` helper
 
-The §8.0 plan (`00-PLAN.md` §8.2) references `user_id = clerk_id()` as "the existing JWT-claim helper used on `charts`." `[verified]` no such helper exists. The actual pattern across the codebase (and in every planning-doc RLS snippet in `.planning/research/` and `03-birth-data-database/`) is `(select auth.jwt()->>'sub') = user_id`. This doc uses the correct form; §8.3's migration should not reference a nonexistent `clerk_id()` function.
+`[user-decision]` **Sealed: plan-doc delta acknowledged.** The §8.0 plan (`00-PLAN.md` §8.2) references `user_id = clerk_id()` as "the existing JWT-claim helper used on `charts`." `[verified via grep]` no such helper exists. The actual pattern across the codebase is `(select auth.jwt()->>'sub') = user_id` inline in RLS policies. This doc uses the correct form throughout.
 
-(Non-blocking for §8.2 sign-off — just flagging the plan-doc vs reality delta so §8.3 drafts cleanly.)
+**Doc-drift tracker:** this finding is entry **#10** in the planning-doc-vs-code drift tracker at `.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md`. Captured there because it's the tenth instance of this drift pattern in ~30 rounds of work across §9 and §8 — persistent enough to deserve a process-discipline reminder: any planning doc claim about an "existing helper" or "established pattern" should be **grep-verified at the time the doc is written**, not at the time the doc is executed against. Without this discipline the drift is silent until a downstream round trips on it.
 
 ---
 
-## Proposed DDL (contingent on A1/C1 recommendations; adjust after user decision)
+## Sealed DDL (from A2 / B-500 / C1 / D-TEXT / E-char_length / F-generic-trigger / G-correct-RLS)
 
 ```sql
 -- supabase/migrations/YYYYMMDDHHMMSS_create_diary_entries.sql
+-- §8.3 drafts the file with a concrete timestamp. DDL body below is frozen
+-- by §8.2; any deviation in §8.3 must surface back here first.
 
 CREATE TABLE public.diary_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL DEFAULT (select auth.jwt()->>'sub'),
-  entry_date DATE NOT NULL DEFAULT ((now() AT TIME ZONE 'Europe/Sofia')::date),
+  entry_date DATE NOT NULL,
   phase_id TEXT NOT NULL,
   phase_name TEXT NOT NULL,
   intentions TEXT[] NOT NULL,
@@ -237,31 +249,33 @@ CREATE TABLE public.diary_entries (
 COMMENT ON COLUMN public.diary_entries.phase_id IS
   'LunarPhaseId snapshot at write time. See §D of 08-02-SCHEMA.md.';
 COMMENT ON COLUMN public.diary_entries.entry_date IS
-  'Europe/Sofia calendar day. Server-computed on INSERT. See §A of 08-02-SCHEMA.md.';
+  'Client-submitted in the user''s local timezone (§A sealed A2). '
+  'Endpoint Zod validator rejects dates > 1 day future and dates earlier '
+  'than users.created_at. See §A of 08-02-SCHEMA.md for rationale.';
 ```
+
+Per A2, `entry_date` has **no `DEFAULT`** — the POST endpoint requires the client to send it. Zod guards the value. The UNIQUE (user_id, entry_date) constraint enforces the upsert key.
 
 ### Indexes
 
 ```sql
--- DESC variant intentionally omitted — UNIQUE (user_id, entry_date)'s
--- implicit ASC index can reverse-scan efficiently on PG 13+ for the
--- list-newest-first pattern. Add later if EXPLAIN ANALYZE shows a
--- planner regression. User may opt to include it up-front as a hedge.
+-- DESC variant intentionally omitted (sealed 2026-04-21) — UNIQUE
+-- (user_id, entry_date)'s implicit ASC index reverse-scans efficiently
+-- on PG 13+ for the list-newest-first pattern. Revisit only if
+-- production EXPLAIN ANALYZE shows a planner regression.
 
 CREATE INDEX diary_entries_user_phase_idx
   ON public.diary_entries (user_id, phase_id);
 ```
 
-Rationale:
-- `(user_id, entry_date DESC)` — primary read pattern is "list this user's entries, newest first" for `ManifestHistory`. DESC matches scan direction. `[verified from ManifestHistory consumption pattern]`.
+Rationale (sealed):
+- `UNIQUE (user_id, entry_date)` implicit ASC index — handles both the upsert-key equality lookup and the list-newest-first scan via PG 13+ planner reverse-scan. `[user-decision]` **Sealed: no explicit DESC index.** Premature without an `EXPLAIN ANALYZE`-backed regression. Revisit if production profiling shows the reverse-scan doesn't perform.
 - `(user_id, phase_id)` — supports the variant-rotation count query in §8.8 (`COUNT(*) WHERE user_id = ? AND phase_id = ?`). `[verified from §8.8 plan]`.
 
-Note the `UNIQUE (user_id, entry_date)` constraint implicitly creates a `(user_id, entry_date)` ASC index. On PG 13+, the planner can reverse-scan an ASC index efficiently for `ORDER BY entry_date DESC`, so the explicit DESC variant is a **hedge, not a requirement** — the UNIQUE index is likely sufficient for the list-newest-first scan in practice. `[inferred]` Recommendation: **drop the explicit DESC index for now** and add it later only if `EXPLAIN ANALYZE` on the list endpoint shows a planner regression. Keeps the migration minimal. User can override if they want the hedge up-front.
-
-### `updated_at` trigger
+### `updated_at` trigger (generic function per §F sealing)
 
 ```sql
-CREATE OR REPLACE FUNCTION public.diary_entries_set_updated_at()
+CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS trigger AS $$
 BEGIN
   NEW.updated_at = now();
@@ -269,10 +283,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+COMMENT ON FUNCTION public.set_updated_at() IS
+  'Generic BEFORE UPDATE trigger function. Sets NEW.updated_at = now(). '
+  'Introduced by the §8.2 diary_entries migration. Reusable across any '
+  'table with an updated_at TIMESTAMPTZ column.';
+
 CREATE TRIGGER diary_entries_updated_at
   BEFORE UPDATE ON public.diary_entries
   FOR EACH ROW
-  EXECUTE FUNCTION public.diary_entries_set_updated_at();
+  EXECUTE FUNCTION public.set_updated_at();
 ```
 
 ### RLS policies
@@ -308,22 +327,38 @@ Format: `supabase/migrations/YYYYMMDDHHMMSS_create_diary_entries.sql`. Follows t
 
 ---
 
-## Open questions for user (§8.2 sign-off gate)
+## Ratified decisions summary (2026-04-21 sign-off)
 
-1. **Scrutiny A:** A1 (server-interpreted Europe/Sofia) or A2 (client-submitted) or A3 (hybrid)?
-2. **Scrutiny B:** confirm "Zod + DB CHECK, N = 500 chars per element", or revise layering / N.
-3. **Scrutiny C:** C1 (RLS-only, match existing) or C2 (FK with `ON DELETE CASCADE`)?
-4. **Smaller points D/E/F:** any of the `[inferred]` resolutions the user wants to overturn?
-5. **Anything else the user spots in the DDL or RLS blocks that should be revised before §8.3 drafts the migration.**
+| Decision | Ratified choice | Notes |
+|---|---|---|
+| **A** — `entry_date` tz semantics | **A2** client-submitted | Endpoint Zod rejects `>1` day future + dates `<` `users.created_at`. |
+| **B** — `intentions` length cap | Zod (voice) + DB CHECK (silent guardrail), **N = 500** | Two-voice framing sealed. ERR-DI-003 for DB-CHECK violations, not a second Bulgarian message. |
+| **C** — FK vs RLS-only | **C1** RLS-only | Matches existing pattern across 6+ user-scoped tables. §8.7 explicit cascade. |
+| **D** — `phase_id` constraint | TEXT + COMMENT + Zod enum | No PG ENUM, no CHECK-IN. |
+| **E** — empty-string guard | Folded into B's `char_length BETWEEN 1 AND 500` | — |
+| **F** — `updated_at` maintenance | **F1** trigger, **generic** `public.set_updated_at()` function | New reusable primitive. |
+| **G** — §8.0 `clerk_id()` reference | Confirmed non-existent helper; doc uses inline `(select auth.jwt()->>'sub') = user_id` | Drift-tracker entry **#10** filed. |
+| Index hedge | No explicit `(user_id, entry_date DESC)` | Reverse-scan via UNIQUE ASC index; add later if `EXPLAIN ANALYZE` regresses. |
 
 ---
 
-## Exit criteria (§8.2 close gate)
+## §8.3 prerequisites (carried forward from user sealing instructions)
 
-- User ratifies decisions on A/B/C (and smaller points if they want to push back).
-- Any DDL/index/RLS adjustments agreed.
-- `08-02-SCHEMA.md` updated to reflect ratified decisions (no more `[inferred]` recommendations as open questions — all decisions sealed).
-- §8.3 opens with the approved schema, migration file drafted from the sealed DDL and executed via Supabase CLI. No application code changes in §8.3.
+1. **Local-first execution gate.** Before running the migration against prod, attempt it against a local Supabase instance (dev database or local docker) if one is available. Verify columns / indexes / RLS policies / trigger create without error. Only then push to prod. **If no local instance is available, surface that before running prod DDL** — don't run DDL untested if there's a local path available.
+2. **Probe script evidence.** Post-migration verification via a diagnostics probe mirroring the `apps/web/scripts/diagnostics/probe-column-type.mjs` pattern that closed Bug-1 in §7. Output confirms columns / types / constraints / indexes / RLS policies match this sealed DDL exactly. Probe output committed as evidence in the §8.3 close.
+3. **Atomic commits per deliverable.** Migration file creation; migration execution; probe script; probe output — each in a focused commit.
+4. **Surface-before-doing on deviations.** If the Supabase CLI rejects any part of this DDL for a reason not anticipated here, surface before working around. Don't force a migration through.
+
+---
+
+## Exit criteria — **achieved 2026-04-21**
+
+- ✅ User ratified A/B/C (+ D/E/F/G + index hedge).
+- ✅ DDL / indexes / RLS / trigger reflect ratified decisions.
+- ✅ `[inferred]` recommendations on ratified points replaced with `[user-decision]` **Sealed:** notation, rationale preserved.
+- ✅ Drift-tracker entry #10 filed for §G.
+- ✅ `00-PLAN.md` §8.5 scope updated with `maxLength={500}` textarea follow-up.
+- ➡️ **§8.3 opens** with the migration drafted from the sealed DDL and executed via Supabase CLI. Pure DB round — no application code changes in §8.3.
 
 ---
 
