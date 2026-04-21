@@ -51,6 +51,51 @@ export function createClient(databaseUrl = process.env.DATABASE_URL) {
 }
 
 /**
+ * Iterate a facts list on a provided sql client. Prints a pass/fail
+ * line per fact and a summary line. Does NOT close the client and does
+ * NOT call process.exit — the caller controls lifecycle.
+ *
+ * Returns { passed, failed, total } so callers can decide exit code.
+ *
+ * Used by both `runProbe` (top-level probe runner) and
+ * `dry-run-migration.mjs` (needs to run facts on an in-transaction sql
+ * client so the probe sees the uncommitted migration state).
+ */
+export async function runFactsOnClient({ sql, facts, label }) {
+  let passed = 0
+  let failed = 0
+
+  if (label) console.log(`schema-probe: ${label}`)
+
+  for (const fact of facts) {
+    let result
+    try {
+      result = await fact.run(sql)
+    } catch (err) {
+      result = {
+        passed: false,
+        expected: '(no throw)',
+        actual: `threw: ${err.message}`,
+      }
+    }
+    const tag = result.passed ? 'PASS' : 'FAIL'
+    console.log(`[${tag}] ${fact.name}`)
+    if (!result.passed) {
+      console.log(`       expected: ${result.expected}`)
+      console.log(`       actual:   ${result.actual}`)
+    }
+    if (result.details?.length) {
+      for (const d of result.details) console.log(`       ${d}`)
+    }
+    result.passed ? passed++ : failed++
+  }
+
+  console.log('')
+  console.log(`── summary ── ${passed} pass / ${failed} fail / ${facts.length} total`)
+  return { passed, failed, total: facts.length }
+}
+
+/**
  * Run the facts list in order, print a pass/fail table, exit with
  * code 0 on all-pass, 1 on any fail. Always closes the client.
  *
@@ -59,48 +104,18 @@ export function createClient(databaseUrl = process.env.DATABASE_URL) {
  */
 export async function runProbe({ facts, label, databaseUrl }) {
   const sql = createClient(databaseUrl)
-  let passed = 0
-  let failed = 0
-  const lines = []
+  let result
 
   try {
     const urlLabel = (databaseUrl ?? process.env.DATABASE_URL ?? '').replace(/:[^@/]+@/, ':***@')
-    console.log(`schema-probe: ${label ?? 'unnamed'}`)
     console.log(`DB: ${urlLabel}`)
     console.log('')
-
-    for (const fact of facts) {
-      let result
-      try {
-        result = await fact.run(sql)
-      } catch (err) {
-        result = {
-          passed: false,
-          expected: '(no throw)',
-          actual: `threw: ${err.message}`,
-        }
-      }
-      const tag = result.passed ? 'PASS' : 'FAIL'
-      const line = `[${tag}] ${fact.name}`
-      lines.push(line)
-      console.log(line)
-      if (!result.passed) {
-        console.log(`       expected: ${result.expected}`)
-        console.log(`       actual:   ${result.actual}`)
-      }
-      if (result.details?.length) {
-        for (const d of result.details) console.log(`       ${d}`)
-      }
-      result.passed ? passed++ : failed++
-    }
-
-    console.log('')
-    console.log(`── summary ── ${passed} pass / ${failed} fail / ${facts.length} total`)
+    result = await runFactsOnClient({ sql, facts, label })
   } finally {
     await sql.end({ timeout: 5 })
   }
 
-  process.exit(failed > 0 ? 1 : 0)
+  process.exit(result.failed > 0 ? 1 : 0)
 }
 
 // ─── Fact factories ───────────────────────────────────────────────────

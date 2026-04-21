@@ -101,6 +101,42 @@ Founder confirmed via dashboard: **preview branches are available on the current
 
 Discipline carry-forward: stop-and-surface if migration fails against preview; don't proceed to prod; stop-and-surface on any branch-vs-prod probe delta; delete preview branch before §8.3 close.
 
+### Branching outcome: 2-corrected — reversed after Management API 402 (2026-04-21, same day)
+
+**Outcome 1 above reversed on first execution attempt.** When step 3 of the branching plan ran:
+
+```
+$ pnpm exec supabase branches create preview-8-3-diary
+Exit code 1
+unexpected create branch status 402: {"message":"Branching is supported only on the Pro plan or above"}
+Your organization does not have access to this feature. Upgrade your plan:
+https://supabase.com/dashboard/org/kkdoogjaodsjqvaunmmv/billing
+```
+
+The Management API enforced a paid-plan gate that the Supabase dashboard's Branches page did not visibly enforce. `[verified]` reconciliation (founder-ratified): the dashboard surfaces the Branches page and its "Create branch" button for **upgrade-discovery** purposes — advertising the feature — while the Management API is authoritative on plan-tier entitlement. Advisor misread the screenshot as "available" when the UI was actually promoting the feature to drive an upgrade.
+
+This is a **dashboard-state-vs-API-state drift** (not the planning-doc-vs-code drift tracked in `.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md`). Different class; not added to that tracker unless the founder directs. Captured here in-line for §8 audit trail.
+
+**§8.3 path-reversal: (c) dropped, fall back to (d) via pure-Node dry-run.** Rationale:
+
+- `[user-decision]` No Supabase Pro upgrade for this migration. §8 projects 1-2 more migrations total (§8.3 and possibly §8.8 if prompt-variants needs a table); $25/mo + per-branch compute doesn't pencil against that frequency.
+- `[user-decision]` Consistent with the sweph Professional License deferral in §9A — pre-launch cash conservation.
+- `[verified]` The dry-run approach is free, pure-Node (uses the already-installed `postgres` npm package), and catches the migration-failure class that matters for this DDL: parse errors, constraint syntax errors, trigger-function reference errors, CHECK-expression issues. What it misses — RLS JWT-shape mismatches — isn't caught by preview branches either (a preview DB has no real Clerk users); that risk is addressed in §8.4 integration testing regardless of path.
+
+**Revised §8.3 execution plan (path (d)):**
+
+1. Amend this doc (done — this block).
+2. Refactor `lib/schema-probe.mjs` + `probe-diary-schema.mjs` so the 14-fact list is importable from a standalone module (`lib/diary-facts.mjs`); expose a `runFactsOnClient` primitive that accepts an existing sql client (for transaction-scoped facts execution).
+3. Write `apps/web/scripts/diagnostics/dry-run-migration.mjs`: opens transaction against `DATABASE_URL`, reads a migration file, executes it inside the transaction via `postgres.js` `sql.unsafe()`, runs facts on the same transaction via `runFactsOnClient`, throws a sentinel to force ROLLBACK, captures probe result for exit code. Reusable for future migrations.
+4. Run dry-run against prod `DATABASE_URL`. Capture output to `08-03-DRY-RUN.txt`. All 14 facts must pass inside the transaction. ROLLBACK is unconditional — nothing persists.
+5. Surface dry-run output for founder review. Stop-and-surface if any fact fails or DDL errors.
+6. On approval: `pnpm exec supabase db push` applies migration to prod.
+7. Run probe against prod: `08-03-PROBE-PROD.txt`. All 14 facts must match dry-run pass pattern exactly.
+8. Compare dry-run and prod-probe. Any divergence = stop-and-surface.
+9. `08-03-SUMMARY.md` + post-close `git status --ignored` verification.
+
+No preview branch to delete; no branch-cleanup step. Simplified by three operations compared to path (c).
+
 ---
 
 ## Action 2 — Probe script status

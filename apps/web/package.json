@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "diag:drift": "node --env-file=.env.local scripts/diagnostics/audit-schema-drift.mjs",
     "diag:probe-column": "node --env-file=.env.local scripts/diagnostics/probe-column-type.mjs",
-    "diag:probe-diary": "node --env-file=.env.local scripts/diagnostics/probe-diary-schema.mjs"
+    "diag:probe-diary": "node --env-file=.env.local scripts/diagnostics/probe-diary-schema.mjs",
+    "diag:dry-run-migration": "node --env-file=.env.local scripts/diagnostics/dry-run-migration.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.0",
