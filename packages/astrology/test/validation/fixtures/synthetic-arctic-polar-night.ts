@@ -28,5 +28,6 @@ export const testCase: TestCase = {
   lon: 23.0,
   city: 'Kautokeino, Norway',
   notes:
-    'Polar-night Placidus edge case. Inline reference returns NaN for intermediate cusps; comparison classifies as queue. Report as polar-edge observation, not pause-and-fix.',
+    'Polar-night Placidus edge case. Intermediate cusps (2/3/5/6/8/9/11/12) are mathematically undefined at |tan φ · tan D| ≥ 1 and are skipped via skipIntermediateCusps. ASC / MC / Cusps 1,4,7,10 still validate against the inline reference.',
+  skipIntermediateCusps: true,
 }

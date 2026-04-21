@@ -31,6 +31,26 @@ export interface TestCase {
   city?: string
   notes?: string
   sources?: string[] // citation URLs (Astro-Databank, etc.)
+  /**
+   * Skip intermediate Placidus cusps (2, 3, 5, 6, 8, 9, 11, 12) in the Tier 3
+   * houses comparison. Set true for polar-circle cases where Placidus is
+   * mathematically undefined (|tan φ · tan D| ≥ 1) and the inline reference
+   * returns NaN. ASC / MC / Cusps 1, 4, 7, 10 still compare normally.
+   */
+  skipIntermediateCusps?: boolean
+  /**
+   * Mark the case as a far-range [observation] case. Primary-reference
+   * (Tier 1, JPL) threshold violations for this case are classified as
+   * observations rather than propagating to case-level pause-and-fix.
+   * Per-body rows still report their raw status for the report tables; the
+   * case-level overallStatus treats Tier-1 exceedances as 'pass' so the
+   * harness assertion reflects the user-classified [observation] ruling
+   * rather than the mechanical pause-and-fix trigger. Use for cases outside
+   * the ~1900-2100 modern-era window where observed deltas reflect
+   * inter-ephemeris-generation divergence (DE404 vs DE441) rather than a
+   * bug in the library under test.
+   */
+  farRangeObservation?: boolean
 }
 
 export interface PlanetReference {

@@ -176,10 +176,22 @@ function compareHouses(
           ? 'pass'
           : 'queue',
     })
+    // Intermediate Placidus cusps (2, 3, 5, 6, 8, 9, 11, 12) are undefined at
+    // polar-circle latitudes where |tan φ · tan D| ≥ 1. Fixtures for those
+    // cases set `skipIntermediateCusps: true` so the inline-reference NaN
+    // doesn't masquerade as a queue-worthy delta. ASC, MC, and the quadrant
+    // cusps (1 = ASC, 4 = IC, 7 = DSC, 10 = MC) still validate normally.
+    const intermediateCuspIndexes = new Set([1, 2, 4, 5, 7, 8, 10, 11]) // 0-based
     for (let i = 0; i < 12; i++) {
       const celestiaCusp = chart.houses[i]?.cuspLongitude
       const refCusp = ref.cusps[i]
       if (celestiaCusp === undefined || refCusp === undefined) continue
+      if (
+        testCase.skipIntermediateCusps &&
+        intermediateCuspIndexes.has(i)
+      ) {
+        continue
+      }
       const delta = longitudeDeltaArcsec(celestiaCusp, refCusp)
       out.push({
         cuspIndex: i + 1,
@@ -305,10 +317,22 @@ export function runCaseComparison(
     ...aspectComparisons.map((c) => c.status),
   ]
 
+  // Far-range [observation] cases: Tier 1 (JPL) threshold violations are
+  // classified as observations per the user-approved §9.2 ruling, because the
+  // observed deltas reflect inter-ephemeris-generation divergence (DE404 vs
+  // DE441) at far-T rather than a bug in sweph's Moshier code. The per-body
+  // rows still show their raw mechanical statuses in the report tables — only
+  // the case-level overallStatus is demoted. See lessons-learned section in
+  // 09-02-LONGITUDE-REPORT.md on branching-rule meta-finding.
+  const tier1Statuses: Status[] = testCase.farRangeObservation
+    ? []
+    : [
+        planetBatchStatus,
+        moonJpl?.status ?? 'pass',
+        nodeJpl?.status ?? 'pass',
+      ]
   const overallStatus = mostSevere([
-    planetBatchStatus,
-    moonJpl?.status ?? 'pass',
-    nodeJpl?.status ?? 'pass',
+    ...tier1Statuses,
     ...secondaryAndHouseStatuses,
   ])
 

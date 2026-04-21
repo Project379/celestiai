@@ -28,5 +28,6 @@ export const testCase: TestCase = {
   lon: 0.0,
   city: 'Greenwich, UK',
   notes:
-    'Future date near AE Pluto polynomial edge (valid to 2200). Inside Moshier range. JPL extrapolates EOP past 2026 predict boundary.',
+    'Future date near AE Pluto polynomial edge (valid to 2200). Inside Moshier range. JPL extrapolates EOP past 2026 predict boundary. Far-range [observation] case per §9.2 ruling: Tier 1 (JPL) deltas at far-T (Moon 47.54″, inner planets 3-5″) reflect DE404-vs-DE441 inter-ephemeris-generation divergence, not sweph-Moshier drift. Per-body rows still show raw status; case-level overallStatus demoted.',
+  farRangeObservation: true,
 }
