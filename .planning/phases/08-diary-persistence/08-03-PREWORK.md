@@ -65,6 +65,26 @@ Postgres DDL is transactional. Connecting to prod via `psql "$DATABASE_URL"` and
 
 **Founder call needed:** pick among (a), (b), (c), (d)+(b), or another combination.
 
+### Branching availability verification (2026-04-21, per founder request before defaulting to (d))
+
+Attempted to verify whether option (c) — Supabase branching — is available on the current plan without a dashboard round-trip.
+
+- `[verified]` `.gitignore:11` contains `supabase/.branches/`. The Supabase CLI writes this directory when branching is active locally. Presence of the entry suggests someone was aware of the feature enough to pre-emptively gitignore its working dir, but **does not confirm** the plan tier has it enabled. Could be speculative hygiene.
+- `[verified via WebFetch]` Supabase's public branching docs (`https://supabase.com/docs/guides/deployment/branching`) describe the feature, the two branch types (Preview vs Persistent), and the two enablement paths (GitHub integration, dashboard beta) — but **do not state which plan tier gates the feature** in the text retrievable via WebFetch. The pricing page (`https://supabase.com/pricing`) is JS-rendered and returns only a page title through the fetcher, not a plan comparison table.
+- `[inferred]` Branching has historically been a paid-tier feature (Pro $25/month and up), with per-branch compute charges, but I can't verify this from primary-source text the fetcher can see today. Training data on plan tiers is not a substitute for the current dashboard state.
+
+**What this means concretely.** The verification can't close without a ~30-second check the founder performs directly:
+
+Dashboard path: Supabase project dashboard → **Project Settings → Branching** (or **Settings → Integrations → Branching**, depending on UI revision). The page will either offer a "Enable branching" toggle (available on current plan) or surface a plan-upgrade prompt (not available on current plan). Either state is a crisp answer.
+
+**Three closing outcomes from founder's dashboard check:**
+
+- **Outcome 1 — Branching available on current plan:** use (c). Clean isolated test on a branch DB, probe script against the branch, merge/promote to main after verification. No convention contradiction, no residual prod risk.
+- **Outcome 2 — Branching requires a plan upgrade:** do **not** upgrade plans for a single migration. Fall back to (d) + (b). Note in this doc below.
+- **Outcome 3 — Branching unavailable entirely / dashboard doesn't surface the feature:** fall back to (d) + (b). Note in this doc below.
+
+**Interim status:** awaiting founder dashboard check. Once the outcome is known, this section gets a `Branching outcome: N` note; §8.3 proceeds along the matching path.
+
 ---
 
 ## Action 2 — Probe script status
