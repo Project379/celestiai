@@ -75,15 +75,15 @@ export async function GET(request: Request) {
 /**
  * POST /api/diary/entries — upsert on (user_id, entry_date).
  *
- * HTTP semantic (commit-2 founder surface): 201 Created when a new
- * row was inserted; 200 OK when an existing (same user, same date)
- * row was updated. Response body is identical in both cases — the
- * DiaryEntryRow.
- *
- * Client currently supports this semantic via fetch response.status
- * discrimination; if founder prefers a single 200 OK for both paths
- * with { created: boolean } in the body, this branch collapses to
- * one return with status 200 and the flag in the payload.
+ * HTTP semantic (sealed 2026-04-21 post commit-2 surface, Alt A):
+ * **always 200 OK**, with the create-vs-update signal carried in the
+ * response body as `{ ...DiaryEntryRow, created: boolean }`. Unifies
+ * the success path at the HTTP layer (no status-code branching in
+ * hook / mobile / integration tests) while preserving the telemetric
+ * signal for any client that needs it. Inconsistent with birth-data.ts's
+ * 201-on-create pattern — birth-data isn't an upsert so the parity
+ * argument is weaker than it looks; pragmatic-post-REST convention
+ * used by Stripe and similar favors unified 200 for upsert paths.
  */
 export async function POST(request: Request) {
   const { userId } = await auth()
@@ -155,7 +155,10 @@ export async function POST(request: Request) {
       )
     }
 
-    return Response.json(result.data, { status: result.created ? 201 : 200 })
+    return Response.json(
+      { ...result.data, created: result.created },
+      { status: 200 },
+    )
   } catch (error) {
     console.error('[ERR-DI-003] POST /api/diary/entries unhandled error:', error)
     return Response.json(
