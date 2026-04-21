@@ -4,13 +4,43 @@ Canonical record of licensing decisions for third-party libraries and services t
 
 ## Swiss Ephemeris (via `sweph` npm package)
 
-**Decision:** GPL-2.0-or-later via `sweph@2.10.0-11` pin (latest revision on the `gpl` dist-tag).
-**Date of decision:** 2026-04-20 (§9.1, `.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md` round).
+**Decision:** GPL-2.0-or-later via workspace-wide `sweph@2.10.0-11` pin, enforced by a pnpm override at the monorepo root.
+**Date of initial decision:** 2026-04-20 (§9.1, `.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md` round).
+**Date of workspace-wide enforcement:** 2026-04-21 (§9A, `.planning/phases/09A-licensing-compliance/00-SUMMARY.md`). Prior to this date, only `packages/astrology` was pinned; `packages/core` had drifted to the AGPL-3.0-licensed `sweph@2.10.3-b-1` — see § Drift discovery and remediation below.
 **Alternative considered:** Swiss Ephemeris Professional License (CHF 750 one-time, per Astrodienst's price list). **Deferred post-launch** — see `.planning/POST_LAUNCH_UPGRADES.md` item 1.
+
+### Enforcement mechanism (post-§9A)
+
+`sweph@2.10.0-11` is pinned in **every workspace package that depends on sweph directly** (currently `packages/astrology` and `packages/core`), and additionally enforced by a pnpm override at the repository root:
+
+```jsonc
+// package.json (root)
+{
+  "pnpm": {
+    "overrides": {
+      "sweph": "2.10.0-11"
+    }
+  }
+}
+```
+
+The override means pnpm force-resolves any `sweph` specifier — in any current or future workspace package, or any transitive dep — to `2.10.0-11`, regardless of what the requesting package's specifier says. A future package addition with `"sweph": "^2.x"` will resolve to `2.10.0-11` via the override; a developer explicitly trying to override the override would need to either remove the root-level entry (a deliberate, reviewable commit) or use a non-pnpm install path (which wouldn't surface in this project's workflow).
+
+This is the **durable guardrail** that didn't exist during the §9.1 round — `packages/astrology`'s pin alone was insufficient because each workspace package resolves its own deps independently. The override closes that gap.
 
 ### Version-string note
 
-The `sweph` README directs GPL users to either `npm install sweph@gpl` or `npm install sweph@2.10.0`. npm has **no bare `sweph@2.10.0`** release — all actual GPL releases are `2.10.0-<revision>` (revisions 1-11 as of pin date). The `gpl` dist-tag resolves to `2.10.0-11` at time of writing. We pin to the explicit numeric version `2.10.0-11` rather than the `gpl` dist-tag so future upstream revisions don't silently upgrade us.
+The `sweph` README directs GPL users to either `npm install sweph@gpl` or `npm install sweph@2.10.0`. npm has **no bare `sweph@2.10.0`** release — all actual GPL releases are `2.10.0-<revision>` (revisions 1-11 as of pin date). The `gpl` dist-tag resolves to `2.10.0-11` at time of writing. We pin to the explicit numeric version `2.10.0-11` rather than the `gpl` dist-tag so future upstream revisions don't silently upgrade us. The same explicit version is used in both the package-level specifiers and the root-level pnpm override.
+
+### Drift discovery and remediation — 2026-04-21
+
+During §9.6 post-close sweph-pin verification (see `.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md § Doc drift corrections` entry #9), `packages/core/package.json` was found to carry `"sweph": "^2.10.3-4"` resolving to `sweph@2.10.3-b-1`, which Astrodienst has licensed as `(AGPL-3.0-or-later OR LGPL-3.0-or-later)`. `packages/core/src/horoscope/transit-analysis.ts` imports sweph and calls `sweph.calc_ut` at runtime — not a dev-only dep. This placed part of the Celestia server-side code on the AGPL-3.0 path while `docs/licensing.md` claimed the workspace was on the GPL-2.0 path.
+
+**Attribution:** `packages/core` was created after the `packages/astrology` GPL-2.0 pin (`d5811fb`, 2026-04-20) and picked up sweph via the default latest-matching-semver convention. Nothing enforced the workspace-wide pin until §9A added the pnpm override.
+
+**Scope impact pre-remediation:** this was a potential pre-launch licensing compliance issue, not a past production exposure — neither `packages/core` nor its consumers had shipped to production at time of discovery. Remediation commits (§9A tasks 2-3, `6bb4ff2`) landed before any public launch.
+
+**Lesson carried forward:** "pin the dep in the package" is insufficient in a monorepo. "Pin the dep workspace-wide via overrides" is needed to make the license-path discipline durable against future package additions. The pnpm override is the explicit mechanism making the GPL-2.0 path enforceable without ongoing human vigilance.
 
 ### Reasoning
 
@@ -48,8 +78,8 @@ When a revisit trigger fires:
 1. Download the Swiss Ephemeris Professional License contract from [astro.com/swisseph/secont_e.pdf](http://www.astro.com/swisseph/secont_e.pdf).
 2. Sign the contract; email to `webmaster@astro.ch` per Astrodienst's stated process.
 3. Pay via [astro.com/swisseph/swephprice_e.htm](https://www.astro.com/swisseph/swephprice_e.htm) (CHF 750 one-time as of 2026-04-20).
-4. Bump `packages/astrology/package.json` `sweph` to the latest version (`2.10.3-5` or later).
-5. Update this file: replace the GPL-2.0 reasoning section with a Professional License record (contract location, signature date, license holder name).
+4. Bump `sweph` to the latest version (`2.10.3-5` or later) in three places, in one atomic commit: `packages/astrology/package.json`, `packages/core/package.json`, and the root `package.json`'s `pnpm.overrides.sweph` entry. Run `pnpm install` to regenerate the lockfile; verify the override no longer holds older versions in place.
+5. Update this file: replace the GPL-2.0 reasoning section with a Professional License record (contract location, signature date, license holder name). Update the Enforcement mechanism section above if the override pattern changes (likely stays the same with a different target version).
 6. Update `.planning/POST_LAUNCH_UPGRADES.md` item 1 to `[done]`.
 7. Optional: update any README credibility copy ("professionally-licensed Swiss Ephemeris" if desired — not required, not user-visible).
 
