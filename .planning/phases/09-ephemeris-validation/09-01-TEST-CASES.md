@@ -91,3 +91,25 @@ Full reference-data-sourcing protocol for these cases lives in `reference-data/R
 - Reference-data sourcing plan (next §9.1 deliverable — JPL adapter, Astronomy Engine integration, astro.com transcription protocol).
 - Sample end-to-end comparison using QE II (final §9.1 deliverable).
 - §9.2 (planetary longitude validation) — runs on these 12 cases (5 famous + 7 synthetic), with QE II also carrying the `nativeSwisseph` Moshier-floor data point.
+
+## Test-case selection protocol (§9.2 extension, 2026-04-21)
+
+For any test case dated outside the modern-era window (roughly **±100 years from J2000**, i.e., ~1900-2100), the selection protocol requires two additional pre-selection checks before the fixture is locked. Both were discovered during §9.2 generation (S6 at 1600, S7 at 2200) and are codified here so future cases don't re-surface the same issues.
+
+**1. JPL Horizons per-body coverage check (both bounds).** DE441 is Horizons' current ephemeris; its service-side coverage has body-specific caps that narrow toward the ends of the theoretical DE441 range:
+
+- Lower-bound gaps observed 2026-04-21: **Saturn** pre-1749-12-30, **Pluto** pre-1800-01-02. Other pre-1900 bodies not fully surveyed.
+- Upper-bound gaps observed 2026-04-21: **Jupiter** post-2200-01-08, **Pluto** post-2199-12-28. Other post-2100 bodies not fully surveyed.
+
+Run a quick `COMMAND=<body-id>` probe at the proposed date for all 10 bodies (Sun + Moon + Mercury through Pluto) and confirm each returns a `$$SOE`/`$$EOE` block rather than a `"No ephemeris for target"` message. Bodies missing from Horizons at the proposed date fall back to Astronomy Engine secondary validation (60″ threshold) — that's acceptable, but it must be an informed trade-off, not a surprise mid-run. Doc-drift entry #8 in `09-01-PRECISION-FLOOR.md` records the finding.
+
+**2. Astronomy Engine accuracy-at-date verification.** AE's underlying VSOP87 planetary theory is guaranteed to 1″ precision for Jupiter/Saturn within 2000 years of J2000 per the VSOP87 primary distribution. Inner planets have wider envelopes. AE's Pluto approach (verified against NOVAS/TOP2013) is narrower — approximately 1700-2200 AD. For cases inside this ~1500 BCE to 3500 CE range, the 60″ secondary threshold remains meaningful. For cases at ±5000+ years from J2000, the verification becomes non-trivial and must be done explicitly before AE is used as a reference:
+
+- Check AE accuracy envelope at the proposed date against VSOP87 / AE documentation.
+- If accuracy envelope exceeds 60″ at the proposed date, AE can still be used but the threshold comparison becomes a "within expected model precision" check rather than a tight sanity check. Note the scope-limitation in the fixture's header comment.
+
+For S6 (1600, ~400 years out) and S7 (2200, 200 years out), both checks resolved inside the guaranteed envelopes; verification was implicit. For a future ±5000+ year case it would be explicit work with primary-source citations.
+
+**3. Far-range case marker (fixture flag).** Cases outside ~1900-2100 that surface Tier 1 (JPL) threshold violations attributable to inter-ephemeris-generation divergence (DE404, which Moshier is fit to at 0.5″ per SE docs, vs DE441, which JPL Horizons serves) should set `farRangeObservation: true` on the fixture. The flag demotes case-level overallStatus for Tier 1 exceedances from `pause-and-fix` to `pass` (treated as `[observation]`) while preserving the raw per-body mechanical statuses in the report tables. See `packages/astrology/test/validation/types.ts` for the flag definition and `comparison.ts` for the demotion logic. Rationale captured in the §9.2 report's lessons-learned section (branching-rule meta-finding).
+
+These three items together formalize the "test-case selection for non-modern dates requires additional diligence" learning from §9.2.
