@@ -5,7 +5,7 @@ import type { LunarPhaseId } from '@/lib/moon-phase'
  * three intentions (or reflections, or gratitudes — depending on phase).
  *
  * Rhythm: waxing phases ask for forward-looking intentions;
- * pълнолуние and waning phases ask for reflection and release.
+ * пълнолуние and waning phases ask for reflection and release.
  */
 export interface ManifestPrompt {
   heading: string
