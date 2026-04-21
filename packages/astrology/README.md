@@ -1,6 +1,8 @@
 # @celestia/astrology
 
 Swiss Ephemeris-based astrology engine for Celestia AI. Computes natal charts, transits, and aspects via the `sweph` native N-API binding (GPL-2.0 path; see `docs/licensing.md` at the repo root).
+<!-- §9.6 CI-pipeline verification marker: trivial edit to trigger astrology.yml end-to-end. -->
+
 
 **Ephemeris mode:** Moshier (`SEFLG_MOSEPH`), built-in polynomial fit to JPL DE404 — no external data files required. Moon `[verified]` to 0.5″ vs DE404 uniformly across 1369 BC – 3000 AD per Swiss Ephemeris docs; planet floor ≤1″; Mean Node ceiling 20″ across 3000 BCE – 3000 CE. Rationale and source citations live in `.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md`.
 
