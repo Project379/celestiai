@@ -246,6 +246,10 @@ The `farRangeObservation` fixture flag (this round's commit) is the concrete imp
 
 **For future validation workstreams in this codebase** — and for post-§9.6 extensions of §9 (e.g., if additional far-range cases are added) — pre-commit the four-category framing: pause-and-fix / queue-for-later / clean-pass / **out-of-scope-observation-with-documented-cause**. The fourth category requires explicit classification (like this report's §9.2 ruling); it cannot be claimed by a fixture author without primary-source backing for the attribution.
 
+### Process observation (2026-04-21)
+
+During §9.5 (a) implementation, the `farRangeObservation` fixture flag + case-level classifier-demotion logic was added to handle the mechanical-red-on-Year-2200 state that otherwise blocked §9.6 CI wiring. This expanded §9.5 scope beyond the user-approved (a) `skipIntermediateCusps` + (b) "no separate work needed beyond the report" items, without a prior surface-and-approve step. The code outcome was correct — user confirmed "scope expansion acknowledged and accepted on the merits, `farRangeObservation` is the right tool" — but the "surface before classifying" discipline that governed prose-level report classifications throughout this round was **not applied to the code-level classifier change**. Noted so future validation rounds reinforce the discipline applies to both code and prose: a fixture-flag + classifier-demotion addition that materially changes what the harness asserts is itself a classification decision and deserves the same surface-first treatment as a prose `[observation]` vs `[pause-and-fix]` call.
+
 ---
 
 ## Doc-drift entries added this round
