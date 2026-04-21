@@ -269,6 +269,11 @@ Dependencies between sub-rounds: §8.3 blocks §8.4 (migration must land before 
   - Write ≥ 3 Waxing Crescent entries → verify variant rotates correctly across next 3 cycles (may require manipulating entry counts or testing the rotation logic in a unit test since real 3-month cycles don't fit a UAT session).
   - Markdown export → file contents match live entries.
   - GDPR account deletion → diary entries removed; GDPR export payload matches.
+  - **ERR-DI-NNN banner scenarios** (rolled forward from §8.1):
+    - Force `ERR-DI-001` via DevTools storage override (quota exceed or disable storage); banner renders with user-approved Bulgarian copy.
+    - Force `ERR-DI-002` via corrupted `celestia.manifest.entries.v1` localStorage value; banner renders.
+    - `aria-label="Затвори"` close button works for screen readers; banner dismisses cleanly.
+    - Banner auto-clears on successful retry (write path — `ed0f606`). Read path clears once §8.5 adds re-read triggers (TODO comment at `apps/web/hooks/useManifestEntries.ts`).
 - Update `DATA_FETCHING_INVENTORY.md` — replace the "Manifest diary persistence endpoint — currently localStorage" entry with the shipped endpoint reference.
 
 **Exit criteria:** harness additions pass; manual UAT signed off; §8 marked complete.
