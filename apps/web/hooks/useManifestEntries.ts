@@ -57,6 +57,7 @@ export function useManifestEntries() {
     setEntries(next)
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      setError(null)
     } catch (e) {
       console.error('[ERR-DI-001] useManifestEntries write failed:', e)
       setError({ code: 'ERR-DI-001', message: ERROR_MESSAGES['ERR-DI-001'] })
