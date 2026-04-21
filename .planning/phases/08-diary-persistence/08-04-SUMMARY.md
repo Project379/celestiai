@@ -94,6 +94,18 @@ Cleanup function extended to DELETE any residual `diary_entries` rows for the te
 
 Harness parses clean (`node --check` pass). Execution gate is the founder-local env (dev server + CLERK_SECRET_KEY).
 
+## Scope observation — RLS vs service-role pattern
+
+Post-§8.4 architectural verification (grep across 25 API route files under `apps/web/app/api/`) confirmed: **RLS policies on user-scoped tables function as defense-in-depth; primary access control is app-layer `.eq('user_id', userId)` with `auth().userId` from Clerk middleware.** §8.2's RLS design on `public.diary_entries` is still correct; its role in the security model is backup, not primary.
+
+This pattern is universal across the codebase. Every authenticated user-scoped endpoint uses either `createServiceSupabaseClient` (`@/lib/supabase/service` — 14 routes including oracle, horoscope, stripe, GDPR, push, webhooks, cron) or `createCoreSupabaseClient` (`@celestia/core/lib/supabase` — used inside core package operations called from birth-data, chart/calculate, crystals, transits route handlers). Both factories have explicit docstrings that state they bypass RLS and require manual `.eq('user_id', userId)` filtering.
+
+**No endpoint in the codebase uses anon-client-with-forwarded-JWT** where RLS would be the actual gate. That pattern is reserved for any future direct client-side `@supabase/supabase-js` usage from the browser — today that's zero; if §8.5+ ever adopts it, the RLS policies are ready.
+
+Post-surface consistency fix: `apps/web/app/api/diary/entries/route.ts` originally inlined `createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {...})` rather than importing the `createServiceSupabaseClient` factory. Functionally identical but stylistically out-of-convention. Amended to match the codebase pattern in the §8.4 close-consolidation commit. Drift-tracker entry **#13** filed for the "asserted pattern ≠ verified pattern" class.
+
+---
+
 ## What the harness does NOT cover
 
 - **True RLS policy test against real Clerk JWT.** The API layer uses service-role, so RLS is NOT the gate — `auth().userId` + explicit `.eq('user_id', userId)` is. A pure RLS test would require a Supabase client configured with the anon key and the user's Clerk JWT as bearer token, then SELECTing from `diary_entries` to verify isolation works at the policy layer. That's a §8.5+ concern if any future code path uses direct client-side `@supabase/supabase-js`; not shipped here.

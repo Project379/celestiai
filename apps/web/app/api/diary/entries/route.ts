@@ -1,9 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
-import { createClient } from '@supabase/supabase-js'
 import {
   listDiaryEntries,
   upsertDiaryEntry,
 } from '@celestia/core/diary/entries'
+import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { createDiaryEntrySchema } from '@/lib/validators/diary'
 
 /**
@@ -22,21 +22,16 @@ import { createDiaryEntrySchema } from '@/lib/validators/diary'
  * to the user.
  */
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-
 /**
  * users.created_at bound check for POST entry_date validation (§A2
- * sealing). Reads via service-role to bypass RLS on the users table.
- * Returns null if the user row doesn't exist yet — caller treats
- * absent-user as "no lower bound to enforce"; the users row will be
- * upserted on first write elsewhere in the system if needed.
+ * sealing). Uses the established service-role factory — consistent
+ * with the 14+ other user-scoped endpoints in the codebase. Returns
+ * null if the user row doesn't exist yet — caller treats absent-user
+ * as "no lower bound to enforce"; the users row will be upserted on
+ * first write elsewhere in the system if needed.
  */
 async function readUserCreatedAt(userId: string): Promise<string | null> {
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+  const supabase = createServiceSupabaseClient()
   const { data } = await supabase
     .from('users')
     .select('created_at')
