@@ -1,0 +1,36 @@
+
+> @celestia/web@0.1.0 diag:dry-run-migration C:\Users\ntone\Desktop\sub-project\apps\web
+> node --env-file=.env.local scripts/diagnostics/dry-run-migration.mjs "C:/Users/ntone/Desktop/sub-project/supabase/migrations/20260421150801_create_diary_entries.sql"
+
+dry-run-migration
+migration: C:\Users\ntone\Desktop\sub-project\supabase\migrations\20260421150801_create_diary_entries.sql
+facts:     C:\Users\ntone\Desktop\sub-project\apps\web\scripts\diagnostics\lib\diary-facts.mjs (19 facts)
+DB:        postgresql://postgres.zsypmpswqrhkfvlnowcp:***@aws-1-eu-west-2.pooler.supabase.com:6543/postgres
+
+── applying migration inside BEGIN/ROLLBACK transaction ──
+migration DDL applied inside transaction. Running facts probe...
+
+schema-probe: dry-run probe (in-transaction, pre-rollback)
+[PASS] table public.diary_entries exists
+[PASS] column specs match on public.diary_entries (8 columns)
+[PASS] PRIMARY KEY on public.diary_entries(id)
+[PASS] UNIQUE constraint diary_entries_unique_user_date on public.diary_entries(user_id, entry_date)
+[PASS] index diary_entries_user_phase_idx exists on public.diary_entries over (user_id, phase_id)
+[PASS] index absent on public.diary_entries matching "entry_date DESC" (§8.2 dropped the DESC hedge; UNIQUE ASC reverse-scans on PG 13+)
+[PASS] CHECK diary_entries_intentions_count on public.diary_entries contains "array_length(intentions, 1) = 3"
+[PASS] CHECK diary_entries_intention_1_len on public.diary_entries contains "char_length(intentions[1])"
+[PASS] CHECK diary_entries_intention_2_len on public.diary_entries contains "char_length(intentions[2])"
+[PASS] CHECK diary_entries_intention_3_len on public.diary_entries contains "char_length(intentions[3])"
+[PASS] RLS enabled on public.diary_entries
+[PASS] RLS policy diary_entries_select_own (SELECT) on public.diary_entries contains "auth.jwt()"
+[PASS] RLS policy diary_entries_insert_own (INSERT) on public.diary_entries contains "auth.jwt()"
+[PASS] RLS policy diary_entries_update_own (UPDATE) on public.diary_entries contains "auth.jwt()"
+[PASS] RLS policy diary_entries_delete_own (DELETE) on public.diary_entries contains "auth.jwt()"
+[PASS] trigger diary_entries_updated_at on public.diary_entries calls public.set_updated_at
+[PASS] function public.set_updated_at exists with source containing "NEW.updated_at"
+[PASS] COMMENT ON COLUMN public.diary_entries.phase_id contains "LunarPhaseId"
+[PASS] COMMENT ON FUNCTION public.set_updated_at contains "Generic"
+
+── summary ── 19 pass / 0 fail / 19 total
+
+── transaction rolled back. No DB state persisted. ──

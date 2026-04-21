@@ -47,7 +47,18 @@ COMMENT ON FUNCTION public.set_updated_at() IS
 
 CREATE TABLE public.diary_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT NOT NULL DEFAULT (select auth.jwt()->>'sub'),
+  -- user_id has no DEFAULT. §8.4 endpoints pass it explicitly from the
+  -- authenticated JWT sub. Historical note: §8.2 sealed with a
+  -- DEFAULT (select auth.jwt()->>'sub') clause, but §8.3's dry-run
+  -- surfaced Postgres 0A000 "cannot use subquery in DEFAULT expression"
+  -- — the (select ...) wrapper is valid in RLS context (planner-cached
+  -- per-query constant) but invalid in DEFAULT context. Rather than
+  -- patch syntax to the unverified scalar form, DEFAULT was dropped
+  -- entirely — endpoints pass user_id explicitly. Louder failure mode:
+  -- omitted user_id hits NOT NULL violation rather than silent default.
+  -- See .planning/phases/08-diary-persistence/08-02-SCHEMA.md § Sealed
+  -- DDL § 2026-04-21 post-seal correction, and doc-drift tracker #11.
+  user_id TEXT NOT NULL,
   entry_date DATE NOT NULL,
   phase_id TEXT NOT NULL,
   phase_name TEXT NOT NULL,

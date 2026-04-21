@@ -44,7 +44,10 @@ export const FACTS = [
     table: 'diary_entries',
     columns: [
       { column: 'id', dataType: 'uuid', nullable: false, defaultContains: 'gen_random_uuid' },
-      { column: 'user_id', dataType: 'text', nullable: false, defaultContains: 'auth.jwt' },
+      // user_id has no DEFAULT post-§8.3 correction; §8.4 endpoints
+      // pass it explicitly from the authenticated JWT sub. See migration
+      // file comment + 08-02-SCHEMA.md § post-seal correction + drift #11.
+      { column: 'user_id', dataType: 'text', nullable: false },
       { column: 'entry_date', dataType: 'date', nullable: false },
       { column: 'phase_id', dataType: 'text', nullable: false },
       { column: 'phase_name', dataType: 'text', nullable: false },

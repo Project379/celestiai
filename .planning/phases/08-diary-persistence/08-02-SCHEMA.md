@@ -224,14 +224,19 @@ CREATE TRIGGER diary_entries_updated_at
 
 ## Sealed DDL (from A2 / B-500 / C1 / D-TEXT / E-char_length / F-generic-trigger / G-correct-RLS)
 
+**2026-04-21 post-seal correction.** The sealed DEFAULT expression for `user_id` was `(select auth.jwt()->>'sub')`. §8.3's dry-run surfaced Postgres 0A000 `"cannot use subquery in DEFAULT expression"` — the `(select ...)` subquery form is valid in RLS-policy context (per-query constant, planner-cached) but invalid in column `DEFAULT` context. Rather than patch to the unverified scalar form `DEFAULT (auth.jwt()->>'sub')` (no primary-source evidence of it working against Supabase's `auth.jwt()` in a `CREATE TABLE` DEFAULT), **the DEFAULT was dropped entirely**. §8.4 API endpoints will pass `user_id` explicitly from the authenticated JWT sub, matching the codebase's existing pattern for authenticated INSERTs. Simpler, one fewer layer of implicit behavior, and the failure mode becomes a loud `NOT NULL` violation if an endpoint forgets — better pre-launch than silent auto-population. Original sealed form preserved as a commented historical line in the DDL block below. Drift-tracker entry **#11** filed for the pattern-transfer error (RLS syntax ≠ DEFAULT syntax). `[user-decision 2026-04-21]`
+
 ```sql
 -- supabase/migrations/YYYYMMDDHHMMSS_create_diary_entries.sql
 -- §8.3 drafts the file with a concrete timestamp. DDL body below is frozen
--- by §8.2; any deviation in §8.3 must surface back here first.
+-- by §8.2 as corrected 2026-04-21; any deviation in §8.3 must surface
+-- back here first.
 
 CREATE TABLE public.diary_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT NOT NULL DEFAULT (select auth.jwt()->>'sub'),
+  -- user_id: no DEFAULT. Endpoints pass explicitly from auth JWT sub.
+  -- Historical sealed form (pre-correction): DEFAULT (select auth.jwt()->>'sub')
+  user_id TEXT NOT NULL,
   entry_date DATE NOT NULL,
   phase_id TEXT NOT NULL,
   phase_name TEXT NOT NULL,
@@ -254,7 +259,7 @@ COMMENT ON COLUMN public.diary_entries.entry_date IS
   'than users.created_at. See §A of 08-02-SCHEMA.md for rationale.';
 ```
 
-Per A2, `entry_date` has **no `DEFAULT`** — the POST endpoint requires the client to send it. Zod guards the value. The UNIQUE (user_id, entry_date) constraint enforces the upsert key.
+Per A2, `entry_date` has **no `DEFAULT`** — the POST endpoint requires the client to send it. Zod guards the value. Per the 2026-04-21 post-seal correction, `user_id` also has **no `DEFAULT`** — endpoints pass it explicitly from auth middleware's JWT sub. The UNIQUE (user_id, entry_date) constraint enforces the upsert key.
 
 ### Indexes
 

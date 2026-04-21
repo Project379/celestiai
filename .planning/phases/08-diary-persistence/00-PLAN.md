@@ -155,8 +155,9 @@ Dependencies between sub-rounds: §8.3 blocks §8.4 (migration must land before 
   - `ERR-DI-006` PATCH update failed.
   - `ERR-DI-007` DELETE failed.
 - M3 UAT harness stub — unauth 401 shape tests, same as the birth-data endpoints from the §6 harness updates.
+- **Explicit `user_id` handling (added from §8.3 post-seal correction).** `diary_entries.user_id` has no DB-level DEFAULT; every INSERT must pass `user_id` explicitly from the Clerk-authed middleware's JWT sub. `[user-decision 2026-04-21]` — matches codebase pattern for authenticated INSERTs; omission produces a loud `NOT NULL` violation rather than silent auto-population. Zod validation at the endpoint ensures the auth context supplied it. No fallback to DB DEFAULT. Same applies to any `/api/diary/*` endpoint that writes — INSERT and UPSERT alike. See `08-02-SCHEMA.md § Sealed DDL § 2026-04-21 post-seal correction` and drift-tracker entry #11.
 
-**Exit criteria:** five endpoints live on `mobile-parallel-test`, typecheck clean, UAT harness 401 assertions pass. User approves Bulgarian error copy before ship.
+**Exit criteria:** five endpoints live on `mobile-parallel-test`, typecheck clean, UAT harness 401 assertions pass. User approves Bulgarian error copy before ship. All INSERT-type endpoints pass `user_id` explicitly; none rely on a DB DEFAULT.
 
 **Estimated scope:** 2-3 rounds — this is the largest sub-round and deserves its own plan checkpoint if it exceeds single-commit digestibility.
 
