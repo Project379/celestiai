@@ -19,7 +19,8 @@
     "./horoscope/transit-analysis": "./src/horoscope/transit-analysis.ts",
     "./horoscope/transits": "./src/horoscope/transits.ts",
     "./charts/calculate": "./src/charts/calculate.ts",
-    "./charts/birth-data": "./src/charts/birth-data.ts"
+    "./charts/birth-data": "./src/charts/birth-data.ts",
+    "./diary/entries": "./src/diary/entries.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
