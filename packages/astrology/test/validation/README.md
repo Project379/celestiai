@@ -1,8 +1,8 @@
 # §9 Ephemeris validation harness
 
-Validates `@celestia/astrology` outputs against reference data (JPL Horizons, Astronomy Engine, astro.com). Locked thresholds from §9.1 live in `thresholds.ts` as the single source of truth.
+Validates `@celestia/astrology` outputs against reference data (JPL Horizons, Astronomy Engine, inline Meeus polynomials). Locked thresholds from §9.1 live in `thresholds.ts` as the single source of truth.
 
-See `../../../../.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md` for decision rationale and citations.
+See `../../../../.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md` for decision rationale and citations. Package-level README at `../../README.md` covers the harness role, epistemic tag vocabulary, and CI enforcement.
 
 ## Running
 
@@ -40,11 +40,13 @@ Thresholds are locked by planning-doc sign-off. To change one:
 3. Update `thresholds.ts`. Update any affected test-case references.
 4. Commit together — code + planning doc in one atomic commit.
 
-## §9.6 promotion path
+## §9.6 CI integration — done
 
-The harness is already at the location Vitest picks up tests. §9.6 adds:
-- `turbo.json` `test` task wiring across the monorepo.
-- Root-level `test` script.
-- CI config to run `pnpm --filter @celestia/astrology test` on PRs touching `packages/astrology/**`.
-- Fail-the-build semantics for `queue`-level discrepancies (currently they pass; §9.6 tightens).
-- Reference-data update protocol documentation.
+Permanent regression gate wired 2026-04-21:
+
+- `turbo.json` carries a `test` task; root-level `pnpm test` delegates to turbo.
+- `.github/workflows/astrology.yml` runs `typecheck` + `test` on pull_request + push events touching `packages/astrology/**`. Branches: develop, main, mobile-parallel-test.
+- Harness assertion remains `not.toBe('pause-and-fix')`. `queue`-level per-body statuses (e.g., Einstein Neptune 1.18″ scope-boundary observation) are preserved in the report output but do not fail CI — tightening to `fail-on-queue` was out of scope for §9.6 and would immediately break CI on the known-accepted Einstein observation. Re-open via planning-doc update + `09-01-PRECISION-FLOOR.md § Locked thresholds` amendment if the team wants stricter semantics later.
+- Reference-data update protocol lives in `reference-data/README.md § Updating reference data`. Includes the `[inferred]` DE404-vs-DE441 caveat on far-range observation magnitudes.
+
+See `.planning/phases/09-ephemeris-validation/09-06-CI-INTEGRATION.md` for the close artifact.
