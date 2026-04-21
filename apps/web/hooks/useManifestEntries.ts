@@ -49,6 +49,9 @@ export function useManifestEntries() {
     } catch (e) {
       console.error('[ERR-DI-002] useManifestEntries read corruption:', e)
       setError({ code: 'ERR-DI-002', message: ERROR_MESSAGES['ERR-DI-002'] })
+      // §8.5 TODO: when hook is swapped to server-backed, clear this banner
+      // on successful refetch — same pattern as ed0f606 cleared 001 on
+      // successful retry. Read runs once on mount today, so nothing to clear.
     }
     setIsLoaded(true)
   }, [])
