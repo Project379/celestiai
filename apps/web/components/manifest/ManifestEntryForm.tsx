@@ -127,6 +127,7 @@ function Field({ index, label, placeholder, value, onChange }: FieldProps) {
         onChange={onChange}
         placeholder={placeholder}
         rows={2}
+        maxLength={500}
         className="w-full resize-none rounded-lg border border-slate-300/[0.08] bg-slate-900/30 px-4 py-3 font-display text-[15px] font-light leading-[1.75] text-slate-100 placeholder:font-light placeholder:text-slate-500/50 backdrop-blur-sm transition-colors duration-200 focus:border-amber-300/40 focus:bg-slate-900/50 focus:outline-none focus:ring-0"
       />
     </div>
