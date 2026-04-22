@@ -7,7 +7,6 @@ import type { ManifestEntry } from '@/lib/manifest/types'
 interface ManifestHistoryProps {
   entries: ManifestEntry[]
   currentDate: string
-  onDelete: (id: string) => void
 }
 
 const BG_DATE = new Intl.DateTimeFormat('bg-BG', {
@@ -16,11 +15,7 @@ const BG_DATE = new Intl.DateTimeFormat('bg-BG', {
   year: 'numeric',
 })
 
-export function ManifestHistory({
-  entries,
-  currentDate,
-  onDelete,
-}: ManifestHistoryProps) {
+export function ManifestHistory({ entries, currentDate }: ManifestHistoryProps) {
   const past = entries.filter(e => e.date !== currentDate)
 
   if (past.length === 0) {
@@ -34,19 +29,14 @@ export function ManifestHistory({
   return (
     <ul className="divide-y divide-slate-300/[0.06]">
       {past.map(entry => (
-        <HistoryItem
-          key={entry.id}
-          entry={entry}
-          onDelete={() => onDelete(entry.id)}
-        />
+        <HistoryItem key={entry.id} entry={entry} />
       ))}
     </ul>
   )
 }
 
-function HistoryItem({ entry, onDelete }: { entry: ManifestEntry; onDelete: () => void }) {
+function HistoryItem({ entry }: { entry: ManifestEntry }) {
   const [expanded, setExpanded] = useState(false)
-  const [confirming, setConfirming] = useState(false)
 
   const formatted = BG_DATE.format(new Date(entry.date))
 
@@ -101,38 +91,6 @@ function HistoryItem({ entry, onDelete }: { entry: ManifestEntry; onDelete: () =
                 </li>
               ))}
             </ol>
-
-            <div className="mt-5 flex items-center justify-end gap-4 border-t border-slate-300/[0.05] pt-4">
-              {confirming ? (
-                <>
-                  <p className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-                    Сигурен/на?
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setConfirming(false)}
-                    className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-slate-500 transition-colors hover:text-slate-200"
-                  >
-                    Назад
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onDelete}
-                    className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-rose-300/90 transition-colors hover:text-rose-200"
-                  >
-                    Изтрий
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirming(true)}
-                  className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-slate-500 transition-colors hover:text-rose-300"
-                >
-                  Изтрий запис
-                </button>
-              )}
-            </div>
           </motion.div>
         )}
       </AnimatePresence>

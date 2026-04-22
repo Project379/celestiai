@@ -52,7 +52,7 @@ export function ManifestDiaryContent() {
   const today = useMemo(() => isoDate(now), [now])
   const todayFormatted = BG_DATE.format(now)
 
-  const { entries, isLoaded, error, saveEntry, findByDate, deleteEntry, clearError } = useManifestEntries()
+  const { entries, isLoaded, error, saveEntry, findByDate, clearError } = useManifestEntries()
   const existingToday = findByDate(today)
 
   const handleSave = (intentions: [string, string, string]) => {
@@ -174,11 +174,7 @@ export function ManifestDiaryContent() {
         </div>
 
         {isLoaded && (
-          <ManifestHistory
-            entries={entries}
-            currentDate={today}
-            onDelete={deleteEntry}
-          />
+          <ManifestHistory entries={entries} currentDate={today} />
         )}
       </motion.section>
 
