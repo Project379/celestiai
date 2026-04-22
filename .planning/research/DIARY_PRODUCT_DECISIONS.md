@@ -142,6 +142,28 @@ Option 5 (random) was rejected because lunar practice intentionally has a rhythm
 
 ---
 
+### Decision G — Delete UI: none, diary entries are account-lifetime permanent `[user-decision, 2026-04-22]`
+
+**Context:** §8.5 hook swap surfaced that a delete UI exists today in `ManifestHistory.tsx:105-135` — expandable past entries show an "Изтрий запис" button with a "Сигурен/на?" confirmation flow, wired through to the hook's `deleteEntry` → `DELETE /api/diary/entries/[id]`. Decisions A–F never ratified this surface; it predates the workstream and was inherited from the localStorage-era implementation. The server `DELETE` endpoint was shipped in §8.4 as part of full CRUD coverage.
+
+**Options considered:**
+1. **Keep the delete UI as inherited.** Users can delete individual entries with confirm. Matches the inherited behaviour; no code removal needed.
+2. **Ship §8.5 without a user-facing delete UI.** Entries are lifetime-permanent from the user's perspective. Only GDPR account deletion (§8.7) removes them.
+3. **Gate delete behind a settings / advanced toggle.** Delete is available but intentionally hidden — user has to work to find it.
+
+**Decision:** option 2 — no delete UI in §8.5. Diary entries remain available for the lifetime of the user's account. `[user-decision, 2026-04-22]`
+
+**Rationale:** A diary is a personal record across lunar cycles. The product intent of "practice across time" argues against easy deletion — users reading back their journey months later shouldn't find gaps from impulse-deletes. Entries can be updated (same-date upsert preserves id, rewrites intentions), which covers the "I wrote something I didn't mean" case without losing the date-anchored record of having practiced that day. Full deletion only makes sense at GDPR account-deletion granularity.
+
+**Implementation impact:**
+- §8.5 ships without delete UI. `ManifestHistory.tsx` loses the "Изтрий запис" / "Сигурен/на?" block; `onDelete` prop removed; `ManifestDiaryContent.tsx` no longer wires `deleteEntry`.
+- Server `DELETE /api/diary/entries/[id]` endpoint **retained** — §8.7 uses it (or the underlying service-role DELETE at the table level) to cascade diary entries on GDPR account deletion. Cost of retaining an endpoint with no client UI caller is low; cost of removing then re-adding if requirements shift is higher.
+- Hook `useManifestEntries.deleteEntry` method **retained** symmetrically — defensive-available if any future code path adds delete UI, and pairs naturally with the retained `ERR-DI-007` registry entry. No current consumer calls it.
+- `ERR-DI-007` (delete failed) remains in the error registry — unused by client code but available if any future path ever adds delete UI.
+- §8.9 UAT removes the browser-level "delete happy path" and "delete failure rollback" checks. DELETE coverage remains at the harness level (`m3-uat-harness.mjs` already tests the endpoint round-trip per the §8.4 81/82 run).
+
+---
+
 ## Implementation decisions
 
 ### Decision 1 — Existing localStorage entries: abandon on migration `[user-decision]`
