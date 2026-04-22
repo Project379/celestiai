@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { getLunarPhase, type LunarPhase } from '@/lib/moon-phase'
 import { useManifestEntries } from '@/hooks/useManifestEntries'
+import { downloadDiaryMarkdown } from '@/lib/diary/export'
 import { ManifestEntryForm } from './ManifestEntryForm'
 import { ManifestHistory } from './ManifestHistory'
 
@@ -62,6 +63,10 @@ export function ManifestDiaryContent() {
       phaseName: phase.name,
       intentions,
     })
+  }
+
+  const handleExport = () => {
+    downloadDiaryMarkdown(entries, new Date())
   }
 
   return (
@@ -171,6 +176,16 @@ export function ManifestDiaryContent() {
           <p className="font-cinzel text-[9.5px] text-slate-500">
             {entries.length} {entries.length === 1 ? 'запис' : 'записа'}
           </p>
+          {entries.length > 0 && (
+            <button
+              type="button"
+              onClick={handleExport}
+              className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-slate-500 transition-colors hover:text-amber-300"
+            >
+              <span aria-hidden className="mr-1.5">↓</span>
+              Изтегли дневника
+            </button>
+          )}
         </div>
 
         {isLoaded && (
