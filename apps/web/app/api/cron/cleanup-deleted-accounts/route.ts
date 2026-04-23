@@ -1,5 +1,6 @@
 import { clerkClient } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { deleteUserDiaryEntries } from '@celestia/core/diary/entries'
 
 /**
  * GET /api/cron/cleanup-deleted-accounts
@@ -81,6 +82,20 @@ export async function GET(req: Request) {
         .from('push_subscriptions')
         .delete()
         .eq('user_id', clerkId)
+
+      // Delete diary entries (§8.7). Uses the core helper per the
+      // §8.7 direction-of-travel ratification — new cascade tables go
+      // through packages/core/src/diary/entries.ts rather than inline
+      // Supabase calls. Helper returns { ok: true } | { ok: false, error,
+      // message }; a false result is logged and the batch continues,
+      // matching the "one failure shouldn't stop the batch" semantic.
+      const diaryResult = await deleteUserDiaryEntries(clerkId)
+      if (!diaryResult.ok) {
+        console.error(
+          `[Cron Cleanup] diary_entries delete failed for ${clerkId}:`,
+          diaryResult.message,
+        )
+      }
 
       // Delete user record
       await supabase
