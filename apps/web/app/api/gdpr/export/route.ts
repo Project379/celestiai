@@ -17,12 +17,14 @@ export async function GET() {
   const supabase = createServiceSupabaseClient()
 
   // Fetch all user data in parallel
-  const [chartsRes, readingsRes, horoscopesRes, userRes] = await Promise.all([
-    supabase.from('charts').select('*').eq('user_id', userId),
-    supabase.from('ai_readings').select('*').eq('user_id', userId),
-    supabase.from('daily_horoscopes').select('*').eq('user_id', userId),
-    supabase.from('users').select('*').eq('clerk_id', userId).single(),
-  ])
+  const [chartsRes, readingsRes, horoscopesRes, diaryRes, userRes] =
+    await Promise.all([
+      supabase.from('charts').select('*').eq('user_id', userId),
+      supabase.from('ai_readings').select('*').eq('user_id', userId),
+      supabase.from('daily_horoscopes').select('*').eq('user_id', userId),
+      supabase.from('diary_entries').select('*').eq('user_id', userId),
+      supabase.from('users').select('*').eq('clerk_id', userId).single(),
+    ])
 
   const exportData = {
     exportedAt: new Date().toISOString(),
@@ -35,6 +37,7 @@ export async function GET() {
     charts: chartsRes.data ?? [],
     aiReadings: readingsRes.data ?? [],
     dailyHoroscopes: horoscopesRes.data ?? [],
+    diaryEntries: diaryRes.data ?? [],
   }
 
   after(() => logAuditEvent(userId, 'account.data_export'))
