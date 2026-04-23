@@ -80,6 +80,10 @@ export type DeleteDiaryEntryResult =
   | { ok: true }
   | { ok: false; error: 'DELETE_FAILED'; message: string }
 
+export type DeleteUserDiaryEntriesResult =
+  | { ok: true }
+  | { ok: false; error: 'DELETE_FAILED'; message: string }
+
 // ─── Operations ──────────────────────────────────────────────────────
 
 /**
@@ -288,6 +292,33 @@ export async function deleteDiaryEntry(
 
   if (error) {
     console.error('[core/diary/entries] delete failed:', error)
+    return { ok: false, error: 'DELETE_FAILED', message: error.message }
+  }
+
+  return { ok: true }
+}
+
+/**
+ * Delete every diary entry belonging to a user — bulk cascade for
+ * GDPR account deletion (§8.7). Called from the Vercel cron
+ * `cleanup-deleted-accounts` after the 30-day grace window expires.
+ *
+ * Idempotent at the row-count level: zero matching rows is still
+ * `{ ok: true }`. Failure is a real Supabase error, not "no rows
+ * matched." Callers on the cascade path wrap in their own try/catch
+ * so a diary-specific failure does not abort the per-user loop.
+ */
+export async function deleteUserDiaryEntries(
+  userId: string,
+): Promise<DeleteUserDiaryEntriesResult> {
+  const supabase = createCoreSupabaseClient()
+  const { error } = await supabase
+    .from('diary_entries')
+    .delete()
+    .eq('user_id', userId)
+
+  if (error) {
+    console.error('[core/diary/entries] bulk delete failed:', error)
     return { ok: false, error: 'DELETE_FAILED', message: error.message }
   }
 
