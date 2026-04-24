@@ -55,6 +55,10 @@ export function ManifestDiaryContent() {
 
   const { entries, isLoaded, error, saveEntry, findByDate, clearError } = useManifestEntries()
   const existingToday = findByDate(today)
+  const entryCountForPhase = useMemo(
+    () => entries.filter(e => e.phaseId === phase.id).length,
+    [entries, phase.id],
+  )
 
   const handleSave = (intentions: [string, string, string]) => {
     saveEntry({
@@ -157,6 +161,7 @@ export function ManifestDiaryContent() {
             phase={phase}
             today={todayFormatted}
             existing={existingToday}
+            entryCountForPhase={entryCountForPhase}
             onSave={handleSave}
           />
         )}

@@ -10,6 +10,7 @@ interface ManifestEntryFormProps {
   phase: LunarPhase
   today: string
   existing: ManifestEntry | null
+  entryCountForPhase: number
   onSave: (intentions: [string, string, string]) => void
 }
 
@@ -17,9 +18,10 @@ export function ManifestEntryForm({
   phase,
   today,
   existing,
+  entryCountForPhase,
   onSave,
 }: ManifestEntryFormProps) {
-  const prompt = getManifestPrompt(phase.id)
+  const prompt = getManifestPrompt(phase.id, entryCountForPhase)
   const [values, setValues] = useState<[string, string, string]>(
     existing ? [...existing.intentions] : ['', '', ''],
   )
