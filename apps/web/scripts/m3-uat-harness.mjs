@@ -1185,6 +1185,151 @@ async function pickerDivergenceAnalysis() {
   return multiMatch
 }
 
+// ───────────────────────────────────────────────────────────────────────
+// §8.9 pure-function verification blocks — no API, no shared state.
+// Both modules use `import type` only, so Node 24's built-in type-strip
+// handles the .ts imports without a transpile step.
+// ───────────────────────────────────────────────────────────────────────
+
+async function checkRotationMath() {
+  console.log('\n== Diary prompt rotation math (pure-function, no API) ==')
+  const { getManifestPrompt, MANIFEST_PROMPTS } = await import(
+    '../lib/manifest/prompts.ts'
+  )
+
+  const variantCounts = Object.fromEntries(
+    Object.entries(MANIFEST_PROMPTS).map(([k, v]) => [k, v.length]),
+  )
+  expect(
+    'MANIFEST_PROMPTS shape — 7 phases × 3 variants + last_quarter × 2',
+    variantCounts.new === 3 &&
+      variantCounts.waxing_crescent === 3 &&
+      variantCounts.first_quarter === 3 &&
+      variantCounts.waxing_gibbous === 3 &&
+      variantCounts.full === 3 &&
+      variantCounts.waning_gibbous === 3 &&
+      variantCounts.last_quarter === 2 &&
+      variantCounts.waning_crescent === 3,
+    `counts=${JSON.stringify(variantCounts)}`,
+  )
+
+  // 3-variant rotation against the `new` phase: distinct headings for
+  // 0/1/2, then variant-0 returns at 3 (one wrap) and 6 (two wraps).
+  const new0 = getManifestPrompt('new', 0)
+  const new1 = getManifestPrompt('new', 1)
+  const new2 = getManifestPrompt('new', 2)
+  const new3 = getManifestPrompt('new', 3)
+  const new6 = getManifestPrompt('new', 6)
+  expect(
+    'rotation 3-variant: new — entry-count N → variants[N % 3]',
+    new0.heading !== new1.heading &&
+      new1.heading !== new2.heading &&
+      new0.heading !== new2.heading &&
+      new3.heading === new0.heading &&
+      new6.heading === new0.heading,
+    `0:"${new0.heading}" 1:"${new1.heading}" 2:"${new2.heading}" 3:"${new3.heading}" 6:"${new6.heading}"`,
+  )
+
+  // 2-variant rotation against last_quarter: 0/1 distinct, then variant-0
+  // returns at 2 (one wrap) and 4 (two wraps).
+  const lq0 = getManifestPrompt('last_quarter', 0)
+  const lq1 = getManifestPrompt('last_quarter', 1)
+  const lq2 = getManifestPrompt('last_quarter', 2)
+  const lq4 = getManifestPrompt('last_quarter', 4)
+  expect(
+    'rotation 2-variant: last_quarter — entry-count N → variants[N % 2]',
+    lq0.heading !== lq1.heading &&
+      lq2.heading === lq0.heading &&
+      lq4.heading === lq0.heading,
+    `0:"${lq0.heading}" 1:"${lq1.heading}" 2:"${lq2.heading}" 4:"${lq4.heading}"`,
+  )
+
+  // Every phase: large entry count maps cleanly back to variant-0 when
+  // count is divisible by variant length. Catches off-by-one drift.
+  let rotationOk = true
+  const drift = []
+  for (const [phase, variants] of Object.entries(MANIFEST_PROMPTS)) {
+    const v0 = getManifestPrompt(phase, 0)
+    const wrapped = getManifestPrompt(phase, variants.length * 5)
+    if (v0.heading !== wrapped.heading) {
+      rotationOk = false
+      drift.push(`${phase}: v0="${v0.heading}" wrapped="${wrapped.heading}"`)
+    }
+  }
+  expect(
+    'rotation invariant: getManifestPrompt(phase, k * variants.length).heading === variants[0].heading for all 8 phases',
+    rotationOk,
+    rotationOk ? '8/8 phases wrap cleanly' : drift.join('; '),
+  )
+}
+
+async function checkMarkdownExport() {
+  console.log('\n== Diary markdown export (pure-function, no API) ==')
+  const { buildDiaryMarkdown, buildDiaryFilename } = await import(
+    '../lib/diary/export.ts'
+  )
+
+  const exportedAt = new Date('2026-04-26T12:00:00Z')
+  const sampleEntries = [
+    {
+      id: 'e1',
+      date: '2026-04-25',
+      phaseName: 'Новолуние',
+      intentions: ['Първо', 'Второ', 'Трето'],
+    },
+    {
+      id: 'e2',
+      date: '2026-04-26',
+      phaseName: 'Растяща сърп',
+      intentions: ['А', 'Б', 'В'],
+    },
+  ]
+  const md = buildDiaryMarkdown(sampleEntries, exportedAt)
+
+  expect(
+    'markdown export starts with UTF-8 BOM (U+FEFF)',
+    md.charCodeAt(0) === 0xfeff,
+    `first-codepoint=0x${md.charCodeAt(0).toString(16)}`,
+  )
+  expect(
+    'markdown export contains "# Лунен дневник" title',
+    md.includes('# Лунен дневник'),
+    null,
+  )
+  expect(
+    'markdown export contains Bulgarian long-form export-date line ("Изтеглен на ... г.")',
+    md.includes('Изтеглен на ') && md.includes(' г.'),
+    null,
+  )
+  expect(
+    'markdown export uses U+00B7 MIDDLE DOT separator (not bullet/em-dash)',
+    md.includes(' · ') && !md.includes(' • ') && !md.includes(' — '),
+    null,
+  )
+  expect(
+    'markdown export numbers intentions I./II./III. for each entry',
+    md.includes('I. Първо') &&
+      md.includes('II. Второ') &&
+      md.includes('III. Трето') &&
+      md.includes('I. А') &&
+      md.includes('II. Б') &&
+      md.includes('III. В'),
+    null,
+  )
+  expect(
+    'markdown export includes both entries\' phase names',
+    md.includes('Новолуние') && md.includes('Растяща сърп'),
+    null,
+  )
+
+  const filename = buildDiaryFilename(exportedAt)
+  expect(
+    'buildDiaryFilename → celestia-дневник-YYYY-MM-DD.md',
+    /^celestia-дневник-\d{4}-\d{2}-\d{2}\.md$/.test(filename),
+    `filename=${filename}`,
+  )
+}
+
 async function cleanup(chartId, clerkId) {
   console.log('\n== Cleanup ==')
   if (chartId) {
@@ -1259,6 +1404,8 @@ async function main() {
   if (chartId) await checkOracleCapGate(jwt, user.id, chartId)
   await checkDiaryCrudFlow(jwt, user.id)
   const multiMatch = await pickerDivergenceAnalysis()
+  await checkRotationMath()
+  await checkMarkdownExport()
   if (chartId) await cleanup(chartId, user.id)
 
   console.log(`\n== Summary ==`)
