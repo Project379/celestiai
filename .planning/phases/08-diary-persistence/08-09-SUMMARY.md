@@ -58,14 +58,17 @@ Seeds a fresh diary entry with the existing test user's session JWT, then hits `
 
 ### Block 4 — GDPR cascade smoke (env-gated, isolated test user)
 
-Spins a dedicated throwaway Clerk user (`m3uat-cascade@celestia-ai.dev`, overridable via `UAT_CASCADE_EMAIL` env var), seeds a diary entry, back-dates `users.deletion_scheduled_at` past now, then hits `GET /api/cron/cleanup-deleted-accounts` with the cron Bearer token. After cron returns, service-role queries verify diary entries, users row, and the Clerk account itself are all gone.
+Spins a dedicated throwaway Clerk user (`m3uat-cascade@celestia-ai.dev`, overridable via `UAT_CASCADE_EMAIL` env var), seeds a diary entry **and asserts the seed succeeded** before proceeding, back-dates `users.deletion_scheduled_at` past now, then hits `GET /api/cron/cleanup-deleted-accounts` with the cron Bearer token. After cron returns, service-role queries verify diary entries, users row, and the Clerk account itself are all gone.
+
+The seed assertion is load-bearing: without it, the downstream `diary_entries → 0 rows` assertion would pass trivially if the seed silently failed (the cascade would have nothing to delete and the count would be 0 for the wrong reason). The seed gate rules out that trivial-pass case, so a green diary-cascade assertion is genuine proof that the cron deleted a confirmed-planted entry — not just proof that the diary table is empty.
 
 | # | Assertion | What it catches |
 |---|---|---|
-| 1 | `GET /api/cron/cleanup-deleted-accounts` → 200 + `deleted ≥ 1` | Cron endpoint or auth regression; cascade row-count drop |
-| 2 | Service-role query: `SELECT COUNT(*) FROM diary_entries WHERE user_id = <cascade_user>` → 0 | `deleteUserDiaryEntries` helper regression — diary entries leaking past the cascade |
-| 3 | Service-role query: `SELECT COUNT(*) FROM users WHERE clerk_id = <cascade_user>` → 0 | `users` row leak past the cascade |
-| 4 | Clerk REST: `GET /v1/users/<cascade_user>` throws (404 from Clerk) | Clerk account leak past the cascade — `clerk.users.deleteUser` not being called or silently failing |
+| 1 | Setup: `POST /api/diary/entries` → 200 with id (seed planted) | Seed regression — without this, downstream diary-cascade assertion can pass for the wrong reason |
+| 2 | `GET /api/cron/cleanup-deleted-accounts` → 200 + `deleted ≥ 1` | Cron endpoint or auth regression; cascade row-count drop |
+| 3 | Service-role query: `SELECT COUNT(*) FROM diary_entries WHERE user_id = <cascade_user>` → 0 | `deleteUserDiaryEntries` helper regression — diary entries leaking past the cascade. Combined with assertion #1, this is real cascade verification (entry was confirmed seeded, then confirmed deleted) — not a tautology when the seed silently failed |
+| 4 | Service-role query: `SELECT COUNT(*) FROM users WHERE clerk_id = <cascade_user>` → 0 | `users` row leak past the cascade |
+| 5 | Clerk REST: `GET /v1/users/<cascade_user>` throws (404 from Clerk) | Clerk account leak past the cascade — `clerk.users.deleteUser` not being called or silently failing |
 
 **Env-gating decision:** if `process.env.CRON_SECRET` is missing, the block records a documented skip (`'CRON_SECRET not set — pre-launch sweep should export it before running the harness'`) rather than failing. Rationale: the harness should remain broadly runnable across CI / dev / contractor environments without secret provisioning. The pre-launch full-verification sweep, run by the founder before launch, exports `CRON_SECRET` and gets the assertions hard-required.
 
@@ -93,10 +96,10 @@ Three drifts between the §8.9 plan spec and the actual code were corrected unil
 | | Pass | Fail | Skip | Total |
 |---|---|---|---|---|
 | Pre-§8.9 baseline | 81 | 0 | 1 | 82 |
-| Post-§8.9 (CRON_SECRET set) | 100 | 0 | 1 | 101 |
-| Post-§8.9 (CRON_SECRET unset) | 96 | 0 | 5 | 101 |
+| Post-§8.9 (CRON_SECRET set) | 101 | 0 | 1 | 102 |
+| Post-§8.9 (CRON_SECRET unset) | 96 | 0 | 6 | 102 |
 
-Delta breakdown: +4 (rotation) + 7 (markdown) + 4 (GDPR shape) + 4 (cascade) = +19 pass, all four blocks active.
+Delta breakdown: +4 (rotation) + 7 (markdown) + 4 (GDPR shape) + 5 (cascade incl. seed assertion) = +20 pass, all four blocks active.
 
 ---
 
@@ -131,7 +134,8 @@ If any of the four steps fails, surface immediately; do not launch.
 |---|---|---|
 | Pure-function blocks | `8752f51` | `test(uat): §8.9 harness additions for diary rotation math + markdown export` |
 | API blocks | `1204017` | `test(uat): §8.9 harness additions for GDPR export shape + cascade smoke` |
-| Close summary | (this doc) | §8.9 close summary |
+| Close summary | `348388e` | `docs(diary): §8.9 close summary + PRE_LAUNCH_PREREQS item 8 → done` |
+| Cascade seed assertion | (this commit) | `test(uat): §8.9 cascade — assert diary seed planted before verifying cascade deleted it` |
 
 ---
 

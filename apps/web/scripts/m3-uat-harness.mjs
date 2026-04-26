@@ -1415,8 +1415,12 @@ async function checkGdprCascadeSmoke() {
     }
 
     // Seed a diary entry so the cascade has cross-table state to delete.
+    // Assert the seed succeeded — without this gate, the downstream
+    // diary_entries → 0 rows assertion would pass trivially if the seed
+    // silently failed (the cascade would have nothing to delete, and
+    // the count would be 0 for the wrong reason).
     const today = new Date().toISOString().slice(0, 10)
-    await fetchJson('/api/diary/entries', {
+    const seed = await fetchJson('/api/diary/entries', {
       method: 'POST',
       headers: cascadeAuth,
       body: JSON.stringify({
@@ -1430,6 +1434,11 @@ async function checkGdprCascadeSmoke() {
         ],
       }),
     })
+    if (!expect(
+      'cascade setup: POST /api/diary/entries → 200 with id (seed for cascade verification)',
+      seed.status === 200 && seed.json?.id,
+      `status=${seed.status}`,
+    )) return
 
     // Back-date deletion_scheduled_at past now so the cron's
     // `.lte('deletion_scheduled_at', now)` filter picks this user up.

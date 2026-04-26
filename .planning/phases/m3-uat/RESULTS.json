@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-04-26T13:41:59.800Z",
+  "timestamp": "2026-04-26T13:53:14.276Z",
   "baseUrl": "http://localhost:3000",
   "clerkUserId": "user_3CbyCbEF4mvNgdKfSXyMlstgxix",
-  "pass": 100,
+  "pass": 101,
   "fail": 0,
   "results": [
     {
@@ -193,7 +193,7 @@
     {
       "name": "POST /api/birth-data → 201 + chart row",
       "status": "pass",
-      "detail": "status=201 id=848a4c05-9f03-4c4e-95f8-f0d037c8c32e"
+      "detail": "status=201 id=9cadcede-1523-4d34-8bf5-8cb76999fef1"
     },
     {
       "name": "POST /api/birth-data (bad input) → 400 + details{}",
@@ -206,7 +206,7 @@
       "detail": "status=200 len=1"
     },
     {
-      "name": "GET /api/birth-data/848a4c05-9f03-4c4e-95f8-f0d037c8c32e → 200",
+      "name": "GET /api/birth-data/9cadcede-1523-4d34-8bf5-8cb76999fef1 → 200",
       "status": "pass",
       "detail": "status=200"
     },
@@ -353,7 +353,7 @@
     {
       "name": "POST /api/diary/entries → 200 + {created:true} + user_id matches clerkId",
       "status": "pass",
-      "detail": "status=200 id=09c8a3dd-5693-4ae5-b52f-11b56d6135a2 user_id=user_3CbyCbEF4mvNgdKfSXyMlstgxix created=true"
+      "detail": "status=200 id=06348669-6f28-4918-a7c3-3979474df508 user_id=user_3CbyCbEF4mvNgdKfSXyMlstgxix created=true"
     },
     {
       "name": "POST /api/diary/entries (bad input) → 400 + details{}",
@@ -366,7 +366,7 @@
       "detail": "status=200 len=1"
     },
     {
-      "name": "GET /api/diary/entries/09c8a3dd-5693-4ae5-b52f-11b56d6135a2 → 200 + row",
+      "name": "GET /api/diary/entries/06348669-6f28-4918-a7c3-3979474df508 → 200 + row",
       "status": "pass",
       "detail": "status=200"
     },
@@ -378,12 +378,12 @@
     {
       "name": "POST /api/diary/entries (same day) → 200 + {created:false} + same id",
       "status": "pass",
-      "detail": "status=200 id=09c8a3dd-5693-4ae5-b52f-11b56d6135a2 created=false"
+      "detail": "status=200 id=06348669-6f28-4918-a7c3-3979474df508 created=false"
     },
     {
       "name": "diary_entries UNIQUE(user_id, entry_date) holds — single row for (user, today)",
       "status": "pass",
-      "detail": "rows=1 ids=[09c8a3dd-5693-4ae5-b52f-11b56d6135a2]"
+      "detail": "rows=1 ids=[06348669-6f28-4918-a7c3-3979474df508]"
     },
     {
       "name": "PATCH /api/diary/entries/<id> → 200 + intentions updated",
@@ -478,7 +478,7 @@
     {
       "name": "GDPR export.diaryEntries contains the just-created entry id",
       "status": "pass",
-      "detail": "entries=1 probe_id=11d8dce5-121a-4c99-83a6-69bf614c540f"
+      "detail": "entries=1 probe_id=925e19e7-67da-485b-b423-69a6c9eed3f6"
     },
     {
       "name": "GDPR export shape — exportedAt + user + charts + aiReadings + dailyHoroscopes + diaryEntries",
@@ -489,6 +489,11 @@
       "name": "cleanup",
       "status": "pass",
       "detail": "test chart, ai_readings, daily crystals, user_crystals, recs, diary entries deleted; tier → free"
+    },
+    {
+      "name": "cascade setup: POST /api/diary/entries → 200 with id (seed for cascade verification)",
+      "status": "pass",
+      "detail": "status=200"
     },
     {
       "name": "GET /api/cron/cleanup-deleted-accounts → 200 + deleted ≥ 1",
@@ -508,7 +513,7 @@
     {
       "name": "cascade verified: Clerk user deleted by cron",
       "status": "pass",
-      "detail": "clerk_user_user_3Cthkb4BrYxMDoqquBbNz5HAou5_still_exists=false"
+      "detail": "clerk_user_user_3Ctj7WRyBvmCe42CVRcswhqKl8h_still_exists=false"
     }
   ],
   "multiMatch": [
