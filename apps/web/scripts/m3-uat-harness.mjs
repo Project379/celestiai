@@ -132,14 +132,14 @@ async function warmRoutes(paths) {
   }
 }
 
-async function ensureClerkUser() {
-  console.log('  ensureClerkUser: listing users...')
-  const query = encodeURIComponent(TEST_EMAIL)
+async function ensureClerkUser(email = TEST_EMAIL) {
+  console.log(`  ensureClerkUser: listing users for ${email}...`)
+  const query = encodeURIComponent(email)
   const existing = await clerkFetch(`/users?email_address=${query}&limit=10`)
   console.log(`  ensureClerkUser: list returned ${Array.isArray(existing) ? existing.length : 'n/a'}`)
   if (Array.isArray(existing)) {
     const match = existing.find((u) =>
-      (u.email_addresses ?? []).some((e) => e.email_address === TEST_EMAIL),
+      (u.email_addresses ?? []).some((e) => e.email_address === email),
     )
     if (match) {
       console.log(`  ensureClerkUser: reusing user ${match.id}`)
@@ -147,11 +147,11 @@ async function ensureClerkUser() {
     }
   }
 
-  console.log('  ensureClerkUser: creating new user')
+  console.log(`  ensureClerkUser: creating new user ${email}`)
   const created = await clerkFetch('/users', {
     method: 'POST',
     body: JSON.stringify({
-      email_address: [TEST_EMAIL],
+      email_address: [email],
       password: 'uat-' + Math.random().toString(36).slice(2) + 'Aa1!',
       skip_password_checks: true,
       skip_password_requirement: true,
@@ -1186,9 +1186,14 @@ async function pickerDivergenceAnalysis() {
 }
 
 // ───────────────────────────────────────────────────────────────────────
-// §8.9 pure-function verification blocks — no API, no shared state.
-// Both modules use `import type` only, so Node 24's built-in type-strip
-// handles the .ts imports without a transpile step.
+// §8.9 additions — diary persistence verification round.
+// Pure-function blocks (rotation, markdown) import .ts source directly;
+// Node 24's built-in type-strip makes that work since both modules use
+// `import type` only (no runtime path-alias resolution needed).
+// API blocks (GDPR export shape, GDPR cascade) hit the dev server like
+// the rest of the harness. Cascade is env-gated on CRON_SECRET and
+// uses a dedicated throwaway Clerk user — destructive op, full
+// isolation from the shared TEST_EMAIL flow.
 // ───────────────────────────────────────────────────────────────────────
 
 async function checkRotationMath() {
@@ -1330,6 +1335,176 @@ async function checkMarkdownExport() {
   )
 }
 
+async function checkGdprExportShape(jwt, clerkId) {
+  console.log('\n== GDPR export shape (diaryEntries array) ==')
+  const auth = { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' }
+  const today = new Date().toISOString().slice(0, 10)
+
+  // checkDiaryCrudFlow deletes its own entry at the end, so seed a fresh
+  // one here. The trailing cleanup() will sweep this row alongside the
+  // rest of the test user's data.
+  const create = await fetchJson('/api/diary/entries', {
+    method: 'POST',
+    headers: auth,
+    body: JSON.stringify({
+      entryDate: today,
+      phaseId: 'new',
+      phaseName: 'Новолуние',
+      intentions: [
+        'GDPR shape probe — намерение 1.',
+        'GDPR shape probe — намерение 2.',
+        'GDPR shape probe — намерение 3.',
+      ],
+    }),
+  })
+  if (!expect(
+    'GDPR setup: POST /api/diary/entries → 200 with id',
+    create.status === 200 && create.json?.id,
+    `status=${create.status}`,
+  )) return
+  const entryId = create.json.id
+
+  const exp = await fetchJson('/api/gdpr/export', { headers: auth })
+  expect(
+    'GET /api/gdpr/export → 200 + diaryEntries array',
+    exp.status === 200 && Array.isArray(exp.json?.diaryEntries),
+    `status=${exp.status} diaryEntries-type=${Array.isArray(exp.json?.diaryEntries) ? 'array' : typeof exp.json?.diaryEntries}`,
+  )
+  expect(
+    'GDPR export.diaryEntries contains the just-created entry id',
+    Array.isArray(exp.json?.diaryEntries) &&
+      exp.json.diaryEntries.some((e) => e.id === entryId),
+    `entries=${exp.json?.diaryEntries?.length ?? 0} probe_id=${entryId}`,
+  )
+  expect(
+    'GDPR export shape — exportedAt + user + charts + aiReadings + dailyHoroscopes + diaryEntries',
+    exp.json &&
+      typeof exp.json.exportedAt === 'string' &&
+      'user' in exp.json &&
+      Array.isArray(exp.json.charts) &&
+      Array.isArray(exp.json.aiReadings) &&
+      Array.isArray(exp.json.dailyHoroscopes) &&
+      Array.isArray(exp.json.diaryEntries),
+    `keys=${exp.json ? Object.keys(exp.json).sort().join(',') : 'null'}`,
+  )
+}
+
+async function checkGdprCascadeSmoke() {
+  console.log('\n== GDPR cascade smoke (env-gated on CRON_SECRET) ==')
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    record(
+      'gdpr cascade smoke',
+      'skip',
+      'CRON_SECRET not set — pre-launch sweep should export it before running the harness',
+    )
+    return
+  }
+
+  const cascadeEmail =
+    process.env.UAT_CASCADE_EMAIL ?? 'm3uat-cascade@celestia-ai.dev'
+  let cascadeUserId = null
+  try {
+    const cascadeUser = await ensureClerkUser(cascadeEmail)
+    cascadeUserId = cascadeUser.id
+    await ensureUserRow(cascadeUser.id, 'free')
+    const { jwt: cascadeJwt } = await mintSessionToken(cascadeUser.id)
+    const cascadeAuth = {
+      Authorization: `Bearer ${cascadeJwt}`,
+      'Content-Type': 'application/json',
+    }
+
+    // Seed a diary entry so the cascade has cross-table state to delete.
+    const today = new Date().toISOString().slice(0, 10)
+    await fetchJson('/api/diary/entries', {
+      method: 'POST',
+      headers: cascadeAuth,
+      body: JSON.stringify({
+        entryDate: today,
+        phaseId: 'new',
+        phaseName: 'Новолуние',
+        intentions: [
+          'cascade probe — намерение 1.',
+          'cascade probe — намерение 2.',
+          'cascade probe — намерение 3.',
+        ],
+      }),
+    })
+
+    // Back-date deletion_scheduled_at past now so the cron's
+    // `.lte('deletion_scheduled_at', now)` filter picks this user up.
+    const yesterday = new Date(Date.now() - 86400000).toISOString()
+    await supabase
+      .from('users')
+      .update({ deletion_scheduled_at: yesterday })
+      .eq('clerk_id', cascadeUser.id)
+
+    // Trigger the cron — endpoint is GET (not POST) per route.ts:13.
+    const cronRes = await fetchJson('/api/cron/cleanup-deleted-accounts', {
+      headers: { Authorization: `Bearer ${cronSecret}` },
+    })
+    expect(
+      'GET /api/cron/cleanup-deleted-accounts → 200 + deleted ≥ 1',
+      cronRes.status === 200 &&
+        typeof cronRes.json?.deleted === 'number' &&
+        cronRes.json.deleted >= 1,
+      `status=${cronRes.status} body=${JSON.stringify(cronRes.json)}`,
+    )
+
+    // Service-role verification — diary_entries gone for this user.
+    const { count: diaryCount } = await supabase
+      .from('diary_entries')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', cascadeUser.id)
+    expect(
+      'cascade verified: diary_entries for cascade-user → 0 rows',
+      (diaryCount ?? -1) === 0,
+      `diary_count=${diaryCount}`,
+    )
+
+    // Service-role verification — users row gone.
+    const { count: userCount } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('clerk_id', cascadeUser.id)
+    expect(
+      'cascade verified: users row for cascade-user → 0 rows',
+      (userCount ?? -1) === 0,
+      `user_count=${userCount}`,
+    )
+
+    // Service-role verification — Clerk account gone (cron also calls
+    // clerk.users.deleteUser, per route.ts:107-108).
+    let clerkStillExists = false
+    try {
+      await clerkFetch(`/users/${cascadeUser.id}`)
+      clerkStillExists = true
+    } catch {
+      clerkStillExists = false
+    }
+    expect(
+      'cascade verified: Clerk user deleted by cron',
+      !clerkStillExists,
+      `clerk_user_${cascadeUser.id}_still_exists=${clerkStillExists}`,
+    )
+
+    cascadeUserId = null  // Cascade ran clean — skip defensive cleanup.
+  } finally {
+    // Defensive cleanup if cascade didn't fully run (assertion failed
+    // mid-flow, exception thrown, etc.). Best-effort; tolerant of
+    // already-deleted state.
+    if (cascadeUserId) {
+      try {
+        await supabase.from('diary_entries').delete().eq('user_id', cascadeUserId)
+        await supabase.from('users').delete().eq('clerk_id', cascadeUserId)
+        await clerkFetch(`/users/${cascadeUserId}`, { method: 'DELETE' }).catch(() => {})
+      } catch {
+        // Swallow — defensive only.
+      }
+    }
+  }
+}
+
 async function cleanup(chartId, clerkId) {
   console.log('\n== Cleanup ==')
   if (chartId) {
@@ -1406,7 +1581,9 @@ async function main() {
   const multiMatch = await pickerDivergenceAnalysis()
   await checkRotationMath()
   await checkMarkdownExport()
+  await checkGdprExportShape(jwt, user.id)
   if (chartId) await cleanup(chartId, user.id)
+  await checkGdprCascadeSmoke()
 
   console.log(`\n== Summary ==`)
   console.log(`pass: ${pass} / fail: ${fail} / total: ${results.length}`)
