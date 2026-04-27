@@ -23,6 +23,7 @@
     "@clerk/nextjs": "^6.36.9",
     "@clerk/themes": "^2.4.49",
     "@hookform/resolvers": "^5.2.2",
+    "@sentry/nextjs": "10.50.0",
     "@supabase/supabase-js": "^2.49.1",
     "ai": "^6.0.86",
     "d3-selection": "^3.0.0",
