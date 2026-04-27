@@ -6,10 +6,11 @@ import {
 } from '@celestia/core/charts/birth-data'
 import { logAuditEvent } from '@/lib/audit'
 import { updateBirthDataSchema } from '@/lib/validators/birth-data'
+import { logServerError } from '@/lib/monitoring/log-server-error'
 
 /**
- * Error IDs emitted by this handler (see PRE_LAUNCH_PREREQS.md item 2
- * for the monitoring-swap path when Sentry/equivalent ships):
+ * Error IDs emitted by this handler (wired to Sentry via logServerError
+ * in §10.2; see PRE_LAUNCH_PREREQS.md item 2 for the monitoring rationale):
  *   ERR-BD-002 — PATCH update threw / failed unexpectedly (404 stays as
  *                plain "Данните не бяха намерени", distinct category)
  *   ERR-BD-003 — DELETE failed (core returned DELETE_FAILED or threw)
@@ -38,7 +39,9 @@ export async function GET(_request: Request, { params }: RouteParams) {
     }
     return Response.json(result.data)
   } catch (error) {
-    console.error('[ERR-BD-005] GET /api/birth-data/[id] failed:', error)
+    logServerError('ERR-BD-005', error, {
+      context: 'GET /api/birth-data/[id] failed',
+    })
     return Response.json(
       {
         error: 'Не успяхме да заредим рождените данни. Опитай отново. Код: ERR-BD-005.',
@@ -86,7 +89,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return Response.json(result.data)
   } catch (error) {
-    console.error('[ERR-BD-002] PATCH /api/birth-data/[id] failed:', error)
+    logServerError('ERR-BD-002', error, {
+      context: 'PATCH /api/birth-data/[id] failed',
+    })
     return Response.json(
       {
         error: 'Не успяхме да обновим рождените данни. Опитай отново. Код: ERR-BD-002.',
@@ -107,11 +112,10 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     const { id } = await params
     const result = await deleteBirthChart(userId, id)
     if (!result.ok) {
-      console.error(
-        '[ERR-BD-003] DELETE /api/birth-data/[id] delete failed:',
-        result.error,
-        result.message,
-      )
+      logServerError('ERR-BD-003', result.error, {
+        context: 'DELETE /api/birth-data/[id] delete failed',
+        message: result.message,
+      })
       return Response.json(
         {
           error: 'Не успяхме да изтрием рождените данни. Опитай отново. Код: ERR-BD-003.',
@@ -122,7 +126,9 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     }
     return new Response(null, { status: 204 })
   } catch (error) {
-    console.error('[ERR-BD-003] DELETE /api/birth-data/[id] unhandled error:', error)
+    logServerError('ERR-BD-003', error, {
+      context: 'DELETE /api/birth-data/[id] unhandled error',
+    })
     return Response.json(
       {
         error: 'Не успяхме да изтрием рождените данни. Опитай отново. Код: ERR-BD-003.',

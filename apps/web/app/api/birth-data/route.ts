@@ -4,10 +4,11 @@ import {
   listBirthCharts,
 } from '@celestia/core/charts/birth-data'
 import { createBirthDataSchema } from '@/lib/validators/birth-data'
+import { logServerError } from '@/lib/monitoring/log-server-error'
 
 /**
- * Error IDs emitted by this handler (see PRE_LAUNCH_PREREQS.md item 2
- * for the monitoring-swap path when Sentry/equivalent ships):
+ * Error IDs emitted by this handler (wired to Sentry via logServerError
+ * in §10.2; see PRE_LAUNCH_PREREQS.md item 2 for the monitoring rationale):
  *   ERR-BD-001 — POST insert failed (DB write rejected post-validation)
  *   ERR-BD-004 — GET list failed (listBirthCharts threw)
  */
@@ -25,7 +26,9 @@ export async function GET() {
     const charts = await listBirthCharts(userId)
     return Response.json(charts)
   } catch (error) {
-    console.error('[ERR-BD-004] GET /api/birth-data list failed:', error)
+    logServerError('ERR-BD-004', error, {
+      context: 'GET /api/birth-data list failed',
+    })
     return Response.json(
       {
         error: 'Не успяхме да заредим списъка с рождени данни. Опитай отново. Код: ERR-BD-004.',
@@ -64,11 +67,10 @@ export async function POST(request: Request) {
 
     const result = await createBirthChart(userId, validation.data)
     if (!result.ok) {
-      console.error(
-        '[ERR-BD-001] POST /api/birth-data insert failed:',
-        result.error,
-        result.message,
-      )
+      logServerError('ERR-BD-001', result.error, {
+        context: 'POST /api/birth-data insert failed',
+        message: result.message,
+      })
       return Response.json(
         {
           error: 'Не успяхме да запазим рождените данни. Опитай отново. Код: ERR-BD-001.',
@@ -80,7 +82,9 @@ export async function POST(request: Request) {
 
     return Response.json(result.data, { status: 201 })
   } catch (error) {
-    console.error('[ERR-BD-001] POST /api/birth-data unhandled error:', error)
+    logServerError('ERR-BD-001', error, {
+      context: 'POST /api/birth-data unhandled error',
+    })
     return Response.json(
       {
         error: 'Не успяхме да запазим рождените данни. Опитай отново. Код: ERR-BD-001.',
