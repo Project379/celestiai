@@ -91,5 +91,11 @@ module.exports = withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,
+  // Same-origin proxy so client-side Sentry events bypass the project's
+  // strict CSP connect-src allowlist (and any future ad-blocker that
+  // detects *.sentry.io). Sentry's webpack plugin auto-generates the
+  // route at build time. Middleware analysis confirmed /monitoring is
+  // not in isProtectedRoute, so no Clerk auth interception. Drift #17.
+  tunnelRoute: '/monitoring',
   silent: !process.env.CI,
 })
