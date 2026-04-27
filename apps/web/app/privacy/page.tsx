@@ -117,7 +117,21 @@ export default function PrivacyPage() {
             <SectionHeader numeral="IV" eyebrow="Права" title="Твоите права" />
             <dl className="max-w-2xl divide-y divide-white/[0.05] border-y border-white/[0.05]">
               {[
-                { title: 'Експорт на данни',   desc: 'Можеш да изтеглиш всичките си данни по всяко време чрез JSON файл от настройките за поверителност.' },
+                {
+                  title: 'Експорт на данни',
+                  desc: (
+                    <>
+                      Можеш да изтеглиш всичките си данни по всяко време; пиши на{' '}
+                      <a
+                        href="mailto:support@celestia.app"
+                        className="text-amber-300 underline decoration-amber-300/40 underline-offset-4 transition-colors hover:text-amber-200 hover:decoration-amber-300/80"
+                      >
+                        support@celestia.app
+                      </a>
+                      , докато подготвяме автоматичното изтегляне.
+                    </>
+                  ),
+                },
                 { title: 'Изтриване на акаунт', desc: 'Можеш да заявиш изтриване с 30-дневен гратисен период, през който заявката може да бъде отменена.' },
                 { title: 'Възстановяване',      desc: 'През гратисния период от 30 дни можеш да възстановиш акаунта си по всяко време.' },
               ].map((item) => (
