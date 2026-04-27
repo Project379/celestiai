@@ -5,10 +5,11 @@ import {
   updateDiaryEntry,
 } from '@celestia/core/diary/entries'
 import { updateDiaryEntrySchema } from '@/lib/validators/diary'
+import { logServerError } from '@/lib/monitoring/log-server-error'
 
 /**
- * Error IDs emitted by this handler (see PRE_LAUNCH_PREREQS.md item 2
- * for the monitoring-swap path when Sentry/equivalent ships):
+ * Error IDs emitted by this handler (wired to Sentry via logServerError
+ * in §10.2; see PRE_LAUNCH_PREREQS.md item 2 for the monitoring rationale):
  *   ERR-DI-005 — GET single diary-entry fetch threw unexpectedly
  *                (404 stays a distinct category — "запис не е намерен"
  *                is a legitimate response, not an error).
@@ -38,7 +39,9 @@ export async function GET(_request: Request, { params }: RouteParams) {
     }
     return Response.json(result.data)
   } catch (error) {
-    console.error('[ERR-DI-005] GET /api/diary/entries/[id] failed:', error)
+    logServerError('ERR-DI-005', error, {
+      context: 'GET /api/diary/entries/[id] failed',
+    })
     return Response.json(
       {
         error: 'Не успяхме да заредим страницата. Опитай отново. Код: ERR-DI-005.',
@@ -81,11 +84,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
           { status: 404 },
         )
       }
-      console.error(
-        '[ERR-DI-006] PATCH /api/diary/entries/[id] update failed:',
-        result.error,
-        result.message,
-      )
+      logServerError('ERR-DI-006', result.error, {
+        context: 'PATCH /api/diary/entries/[id] update failed',
+        message: result.message,
+      })
       return Response.json(
         {
           error: 'Не успяхме да обновим страницата. Опитай отново. Код: ERR-DI-006.',
@@ -97,7 +99,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return Response.json(result.data)
   } catch (error) {
-    console.error('[ERR-DI-006] PATCH /api/diary/entries/[id] unhandled error:', error)
+    logServerError('ERR-DI-006', error, {
+      context: 'PATCH /api/diary/entries/[id] unhandled error',
+    })
     return Response.json(
       {
         error: 'Не успяхме да обновим страницата. Опитай отново. Код: ERR-DI-006.',
@@ -118,11 +122,10 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     const { id } = await params
     const result = await deleteDiaryEntry(userId, id)
     if (!result.ok) {
-      console.error(
-        '[ERR-DI-007] DELETE /api/diary/entries/[id] delete failed:',
-        result.error,
-        result.message,
-      )
+      logServerError('ERR-DI-007', result.error, {
+        context: 'DELETE /api/diary/entries/[id] delete failed',
+        message: result.message,
+      })
       return Response.json(
         {
           error: 'Не успяхме да изтрием страницата. Опитай отново. Код: ERR-DI-007.',
@@ -133,7 +136,9 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     }
     return new Response(null, { status: 204 })
   } catch (error) {
-    console.error('[ERR-DI-007] DELETE /api/diary/entries/[id] unhandled error:', error)
+    logServerError('ERR-DI-007', error, {
+      context: 'DELETE /api/diary/entries/[id] unhandled error',
+    })
     return Response.json(
       {
         error: 'Не успяхме да изтрием страницата. Опитай отново. Код: ERR-DI-007.',

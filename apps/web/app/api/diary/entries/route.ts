@@ -5,10 +5,11 @@ import {
 } from '@celestia/core/diary/entries'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { createDiaryEntrySchema } from '@/lib/validators/diary'
+import { logServerError } from '@/lib/monitoring/log-server-error'
 
 /**
- * Error IDs emitted by this handler (see PRE_LAUNCH_PREREQS.md item 2
- * for the monitoring-swap path when Sentry/equivalent ships):
+ * Error IDs emitted by this handler (wired to Sentry via logServerError
+ * in §10.2; see PRE_LAUNCH_PREREQS.md item 2 for the monitoring rationale):
  *   ERR-DI-003 — POST upsert failed (core returned UPSERT_FAILED or
  *                unhandled throw during the upsert path)
  *   ERR-DI-004 — GET list failed (listDiaryEntries threw)
@@ -18,8 +19,8 @@ import { createDiaryEntrySchema } from '@/lib/validators/diary'
  * collection endpoint. Per §8.2 Decision B's two-voice framing, Zod
  * rejections surface as 400 with Bulgarian field errors; DB CHECK
  * violations that slip past Zod surface as ERR-DI-003 (generic write
- * failed) with the constraint detail console.error'd but not exposed
- * to the user.
+ * failed) with the constraint detail logged via logServerError but not
+ * exposed to the user.
  */
 
 /**
@@ -56,7 +57,9 @@ export async function GET(request: Request) {
     const entries = await listDiaryEntries(userId, phaseId ? { phaseId } : {})
     return Response.json(entries)
   } catch (error) {
-    console.error('[ERR-DI-004] GET /api/diary/entries list failed:', error)
+    logServerError('ERR-DI-004', error, {
+      context: 'GET /api/diary/entries list failed',
+    })
     return Response.json(
       {
         error: 'Не успяхме да заредим дневника. Опитай отново. Код: ERR-DI-004.',
@@ -136,11 +139,10 @@ export async function POST(request: Request) {
 
     const result = await upsertDiaryEntry(userId, validation.data)
     if (!result.ok) {
-      console.error(
-        '[ERR-DI-003] POST /api/diary/entries upsert failed:',
-        result.error,
-        result.message,
-      )
+      logServerError('ERR-DI-003', result.error, {
+        context: 'POST /api/diary/entries upsert failed',
+        message: result.message,
+      })
       return Response.json(
         {
           error: 'Не успяхме да запазим страницата в дневника. Опитай отново. Код: ERR-DI-003.',
@@ -155,7 +157,9 @@ export async function POST(request: Request) {
       { status: 200 },
     )
   } catch (error) {
-    console.error('[ERR-DI-003] POST /api/diary/entries unhandled error:', error)
+    logServerError('ERR-DI-003', error, {
+      context: 'POST /api/diary/entries unhandled error',
+    })
     return Response.json(
       {
         error: 'Не успяхме да запазим страницата в дневника. Опитай отново. Код: ERR-DI-003.',
