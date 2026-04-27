@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { LunarPhaseId } from '@/lib/moon-phase'
 import type { ManifestEntry } from '@/lib/manifest/types'
+import { logClientError } from '@/lib/monitoring/log-client-error'
 
 /**
  * Diary entries hook — server-backed since §8.5 (prior: localStorage).
@@ -119,10 +120,9 @@ export function useManifestEntries() {
         }
       } catch (e) {
         if (!cancelled) {
-          console.error(
-            '[ERR-DI-008] GET /api/diary/entries network failure:',
-            e,
-          )
+          logClientError('ERR-DI-008', e, {
+            context: 'GET /api/diary/entries network failure',
+          })
           setError({
             code: 'ERR-DI-008',
             message: ERROR_MESSAGES['ERR-DI-008'],
@@ -222,10 +222,9 @@ export function useManifestEntries() {
         })
         setError(null)
       } catch (e) {
-        console.error(
-          '[ERR-DI-008] POST /api/diary/entries network failure:',
-          e,
-        )
+        logClientError('ERR-DI-008', e, {
+          context: 'POST /api/diary/entries network failure',
+        })
         setEntries(snapshot)
         setError({
           code: 'ERR-DI-008',
@@ -270,10 +269,9 @@ export function useManifestEntries() {
         }
         setError(null)
       } catch (e) {
-        console.error(
-          '[ERR-DI-008] DELETE /api/diary/entries/[id] network failure:',
-          e,
-        )
+        logClientError('ERR-DI-008', e, {
+          context: 'DELETE /api/diary/entries/[id] network failure',
+        })
         setEntries(snapshot)
         setError({
           code: 'ERR-DI-008',
