@@ -16,12 +16,14 @@ re-evaluation. Sourced from sub-round 1 commit 1.1 ratifications.
 **Deferred:** `expo-local-authentication`, EAS Dev Client setup, TestFlight
 distribution.
 
-**Trigger:** Apple Developer Program enrollment ($99/year, requires registered
-entity). Founder not enrolled as of 2026-04-28; entity registration not
-complete.
+**Trigger:** Late Phase C / early Phase D, before App Store submission.
+Apple Developer Program enrollment ($99/year, requires registered entity)
+gates this; founder not enrolled as of 2026-04-28. Phases A, B, and most
+of C run in Expo Go on real iPhone.
 
-**Sub-round when ready:** Phase A sub-round 1.5 OR Phase B sub-round 1,
-whichever comes first after enrollment.
+**Sub-round when ready:** Inserted into Phase C close or Phase D opener
+once enrollment completes. Per founder strategy: launch both surfaces in
+parallel; mobile leads post-launch on new features.
 
 **Why bundled:** biometric requires Dev Client (Expo Go cannot exercise
 `expo-local-authentication`); Dev Client requires EAS; EAS practically
