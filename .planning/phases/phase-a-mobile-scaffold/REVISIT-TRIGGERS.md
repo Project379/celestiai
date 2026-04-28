@@ -38,37 +38,52 @@ Bundling = single closure event when enrollment completes.
 - `eas init` + EAS build configuration
 - TestFlight provisioning
 
-## 2. Sign in with Apple
+## 2. Sign in with Apple — runtime feature deferred (peer installed for bundle compat)
 
-**Deferred:** `expo-apple-authentication`.
+**Status:** `expo-apple-authentication ~7.2.4` installed in the commit-1.3-prep
+fix round (see drift #20 in `09-01-PRECISION-FLOOR.md`). Peer is required at
+compile time because `@clerk/expo` statically analyzes a dynamic `import("expo-apple-authentication")`
+in `hooks/useSignInWithApple.ios.js:51`. Runtime feature (Sign in with
+Apple button on sign-in screen) is NOT wired.
 
-**Trigger:** Sign in with Apple feature request lands. Likely Phase B+ when
-OAuth provider list expands. Apple requires this if any other OAuth provider
-is offered on iOS, so likely co-arrives with item 3.
+**Trigger to wire runtime feature:** Sign in with Apple feature request
+lands. Likely Phase B+ when OAuth provider list expands. Apple requires
+this if any other OAuth provider is offered on iOS, so likely co-arrives
+with item 3.
 
-**Re-add path:** `pnpm exec expo install expo-apple-authentication` + iOS
-entitlement config in `app.json` ios section.
+**Wire-up path:** add iOS entitlement config in `app.json` ios section +
+implement `useSignInWithApple()` hook on sign-in screen.
 
-## 3. OAuth providers (Google, Microsoft, etc.)
+## 3. OAuth providers (Google, Microsoft, etc.) — runtime feature deferred (peers installed for bundle compat)
 
-**Deferred:** `expo-web-browser`, `expo-auth-session`.
+**Status:** `expo-web-browser ~14.2.0` and `expo-auth-session ~6.2.1`
+installed in the commit-1.3-prep fix round (see drift #20). Peers are
+required at compile time because `@clerk/expo` statically analyzes
+dynamic imports of them in `hooks/useOAuth.js:55`, `hooks/useSSO.js:53`,
+and a synchronous `require("expo-web-browser")` in
+`provider/ClerkProvider.js:280` (gated by `if (isWeb())`). Runtime
+features (OAuth provider buttons on sign-in screen) are NOT wired.
 
-**Trigger:** First OAuth provider feature request lands. Google sign-in
-commonly first. Phase B+.
+**Trigger to wire runtime feature:** First OAuth provider feature
+request lands. Google sign-in commonly first. Phase B+.
 
-**Re-add path:** `pnpm exec expo install expo-web-browser expo-auth-session`
-+ Clerk dashboard provider config + `useOAuth()` hook wiring on sign-in
-screen.
+**Wire-up path:** Clerk dashboard provider config + `useOAuth()` or
+`useSSO()` hook wiring on sign-in screen. The Expo CLI auto-added
+`expo-web-browser` plugin to `app.json` plugins array on install — no
+additional plugin config needed.
 
-## 4. Passkeys
+## 4. Passkeys — runtime feature deferred (peer installed for bundle compat)
 
-**Deferred:** `@clerk/expo-passkeys`.
+**Status:** `@clerk/expo-passkeys ^1.0.17` installed in the
+commit-1.3-prep fix round (see drift #20). Peer is required at compile
+time because `@clerk/expo/passkeys/index.js:24` synchronously requires
+it. Runtime feature (passkey enrollment + auth) is NOT wired.
 
-**Trigger:** Passkey support feature request lands. Post-launch enhancement;
-low priority pre-launch.
+**Trigger to wire runtime feature:** Passkey support feature request
+lands. Post-launch enhancement; low priority pre-launch.
 
-**Re-add path:** `pnpm add @clerk/expo-passkeys` + ClerkProvider
-`__experimental_passkeys` config.
+**Wire-up path:** add `__experimental_passkeys` config to ClerkProvider
++ implement passkey hooks on sign-in / settings screens.
 
 ## 5. Reanimated v4 bump
 
