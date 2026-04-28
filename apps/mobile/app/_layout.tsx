@@ -19,7 +19,7 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: '#08060f' },
           }}
         >
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(authed)" />
         </Stack>
       </SafeAreaProvider>
     </ClerkProvider>
