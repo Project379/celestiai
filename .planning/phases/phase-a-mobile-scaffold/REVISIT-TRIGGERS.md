@@ -85,21 +85,26 @@ lands. Post-launch enhancement; low priority pre-launch.
 **Wire-up path:** add `__experimental_passkeys` config to ClerkProvider
 + implement passkey hooks on sign-in / settings screens.
 
-## 5. Reanimated v4 bump
+## 5. Reanimated v4 bump — landed at SDK 54 upgrade (was: deferred to Phase B)
 
-**Current pin:** `react-native-reanimated: ~3.16.7`. Confirmed working with
-RN 0.79.0 + `newArchEnabled: true`.
+**Status:** `react-native-reanimated@~4.1.7` + `react-native-worklets@0.5.1`
+installed at the SDK 53 → 54 upgrade commit. Original deferral to Phase B
+Skia work was forced earlier than planned by SDK 54 alignment — SDK 54
+ships with Reanimated 4 by default. Migration cost was zero (no Reanimated
+worklet API usage anywhere in `apps/mobile/`); the bump was free, just
+installed and moved on.
 
-**Trigger:** Skia + Reanimated v4 work begins in Phase B — chart
-visualization, gesture-driven Кръг premium spine, animated transit
-indicators.
+**Trigger fired:** SDK 54 forcing function (see drift #21 in
+`09-01-PRECISION-FLOOR.md`). Phase A sub-round 1 commit 1.3 verification
+round-trip 4 — Expo Go on iPhone refused SDK 53 project, forcing
+project-side bump to SDK 54, which forced Reanimated 4 alignment.
 
-**Reason for deferral:** v4 is a breaking-change major bump; touches every
-Reanimated-using component. Sub-round 1 auth flow uses no Reanimated
-worklets. Migration cost only justified when Skia work demands it.
-
-**Re-add path:** `pnpm exec expo install react-native-reanimated@^4.1.0` (or
-whichever 4.x line supports current RN at the time).
+**Wire-up status for Phase B Skia work:** when Skia rendering work begins
+in Phase B (chart visualization, gesture-driven Кръг premium spine,
+animated transit indicators), Reanimated 4 is already in place with the
+worklets peer correctly installed. `babel-preset-expo` (now ~54.0.10)
+handles the Reanimated plugin configuration automatically. No additional
+bumps expected for Phase B Skia work.
 
 ## Appendix — Pre-existing peer warnings (not action items)
 
