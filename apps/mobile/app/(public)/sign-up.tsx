@@ -40,12 +40,19 @@ export default function SignUpScreen() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const handleSignUp = async () => {
     if (!isLoaded || submitting) return
     setError(null)
+
+    if (password !== confirmPassword) {
+      setError('Паролите не съвпадат')
+      return
+    }
+
     setSubmitting(true)
 
     try {
@@ -76,7 +83,12 @@ export default function SignUpScreen() {
     }
   }
 
-  const canSubmit = isLoaded && email.length > 0 && password.length >= 8 && !submitting
+  const canSubmit =
+    isLoaded &&
+    email.length > 0 &&
+    password.length >= 8 &&
+    confirmPassword.length >= 8 &&
+    !submitting
 
   return (
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
@@ -132,9 +144,27 @@ export default function SignUpScreen() {
               className="rounded-2xl border border-slate-700/60 px-4 py-4 text-[16px] text-slate-100"
             />
           </View>
-          <Text className="mb-8 text-[12px] leading-[1.5] text-slate-500">
+          <Text className="mb-5 text-[12px] leading-[1.5] text-slate-500">
             Минимум 8 символа.
           </Text>
+
+          <View className="mb-8">
+            <Text className="mb-2 font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-500">
+              Потвърди парола
+            </Text>
+            <TextInput
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="••••••••"
+              placeholderTextColor="#475569"
+              autoCapitalize="none"
+              autoComplete="new-password"
+              secureTextEntry
+              textContentType="newPassword"
+              editable={!submitting}
+              className="rounded-2xl border border-slate-700/60 px-4 py-4 text-[16px] text-slate-100"
+            />
+          </View>
 
           {error && (
             <Text className="mb-6 text-[13px] leading-[1.6] text-rose-400">
