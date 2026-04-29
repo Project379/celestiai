@@ -64,9 +64,13 @@ export default function SignInScreen() {
         return
       }
 
-      // Step 3: status should be 'complete' for email+password baseline.
-      // Other statuses (needs_second_factor, needs_client_trust, etc.) are
-      // not configured for our flow; surface as unexpected.
+      // Step 3: branch on status. 2FA-enabled accounts return 'needs_second_factor'
+      // and the in-progress signIn is shared via Clerk client to /two-factor.
+      if (signIn.status === 'needs_second_factor') {
+        router.replace('/two-factor' as never)
+        return
+      }
+
       if (signIn.status !== 'complete') {
         setError(`Неочакван статус: ${signIn.status}`)
         return
