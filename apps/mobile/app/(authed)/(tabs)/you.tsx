@@ -76,9 +76,9 @@ export default function YouScreen() {
         <Pressable
           onPress={handleSignOut}
           disabled={signingOut}
-          className="mt-16 self-center"
+          className="mt-16 self-center rounded-2xl border border-slate-700/60 px-8 py-3"
         >
-          <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-500">
+          <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-200">
             {signingOut ? 'Излизане' : 'Излез'}
           </Text>
         </Pressable>
