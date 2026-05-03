@@ -20,6 +20,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(authed)" />
+          <Stack.Screen name="(public)" />
         </Stack>
       </SafeAreaProvider>
     </ClerkProvider>
