@@ -5,7 +5,7 @@ import { AuthFormWrapper } from '@/components/auth/AuthFormWrapper'
 
 export const metadata: Metadata = {
   title: 'Регистрация',
-  description: 'Създай своя Celestia AI акаунт безплатно',
+  description: 'Създай своя Stellaeum AI акаунт безплатно',
 }
 
 const clerkAppearance = {

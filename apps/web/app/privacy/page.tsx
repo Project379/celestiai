@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Политика за поверителност',
-  description: 'Как Celestia AI събира, използва и защитава личните ти данни',
+  description: 'Как Stellaeum AI събира, използва и защитава личните ти данни',
 }
 
 function SectionHeader({ numeral, eyebrow, title }: { numeral: string; eyebrow: string; title: string }) {
@@ -123,10 +123,10 @@ export default function PrivacyPage() {
                     <>
                       Можеш да изтеглиш всичките си данни по всяко време; пиши на{' '}
                       <a
-                        href="mailto:support@celestia.app"
+                        href="mailto:support@stellaeum.app"
                         className="text-amber-300 underline decoration-amber-300/40 underline-offset-4 transition-colors hover:text-amber-200 hover:decoration-amber-300/80"
                       >
-                        support@celestia.app
+                        support@stellaeum.app
                       </a>
                       , докато подготвяме автоматичното изтегляне.
                     </>
@@ -161,10 +161,10 @@ export default function PrivacyPage() {
             <p className="max-w-2xl font-display text-[15px] leading-[1.85] text-slate-300/90">
               За въпроси относно поверителността на данните, пиши ни на{' '}
               <a
-                href="mailto:support@celestia.app"
+                href="mailto:support@stellaeum.app"
                 className="text-amber-300 underline decoration-amber-300/40 underline-offset-4 transition-colors hover:text-amber-200 hover:decoration-amber-300/80"
               >
-                support@celestia.app
+                support@stellaeum.app
               </a>
               .
             </p>

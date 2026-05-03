@@ -72,7 +72,7 @@ export function buildDiaryMarkdown(
 }
 
 /**
- * celestia-дневник-YYYY-MM-DD.md — YYYY-MM-DD is today's browser-local
+ * stellaeum-дневник-YYYY-MM-DD.md — YYYY-MM-DD is today's browser-local
  * calendar day, consistent with isoDate() in ManifestDiaryContent per
  * §A2 sealing (user's lived day, not Europe/Sofia server time).
  */
@@ -80,7 +80,7 @@ export function buildDiaryFilename(today: Date): string {
   const y = today.getFullYear()
   const m = String(today.getMonth() + 1).padStart(2, '0')
   const d = String(today.getDate()).padStart(2, '0')
-  return `celestia-дневник-${y}-${m}-${d}.md`
+  return `stellaeum-дневник-${y}-${m}-${d}.md`
 }
 
 /**

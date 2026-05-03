@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
   // Configure VAPID details for web-push authentication
   webpush.setVapidDetails(
-    'mailto:hello@celestia.app',
+    'mailto:hello@stellaeum.app',
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
     process.env.VAPID_PRIVATE_KEY!
   )

@@ -237,7 +237,7 @@ function ActivatedState() {
       >
         <span className="font-light text-slate-400">Добре дошъл в </span>
         <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.22)]">
-          Celestia.
+          Stellaeum.
         </span>
       </motion.h1>
       <motion.p

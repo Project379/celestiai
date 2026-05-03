@@ -6,7 +6,7 @@ import { SuccessContent } from './SuccessContent'
 
 export const metadata: Metadata = {
   title: 'Абонаментът е активен',
-  description: 'Добре дошъл в Celestia Premium',
+  description: 'Добре дошъл в Stellaeum Premium',
   robots: { index: false, follow: false },
 }
 

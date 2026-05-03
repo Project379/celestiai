@@ -96,7 +96,7 @@ export function LoadingAnimation() {
           <span className="h-px w-10 bg-gradient-to-l from-transparent to-amber-300/40" />
         </div>
         <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-400">
-          Celestia
+          Stellaeum
         </p>
         <p className="font-display text-[13px] font-light text-slate-500">
           подреждa звездите…

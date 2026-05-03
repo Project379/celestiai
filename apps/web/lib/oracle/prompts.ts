@@ -1,7 +1,7 @@
 /**
  * Oracle system prompt builder
  *
- * Constructs the Celestia mystical guide system prompt for AI-generated
+ * Constructs the Stellaeum mystical guide system prompt for AI-generated
  * natal chart readings. All output is generated in Bulgarian.
  *
  * Sentinel markers wrap planet mentions so the UI can cross-highlight
@@ -50,13 +50,13 @@ supportive tone - this reading should feel like gentle guidance toward balance a
 }
 
 /**
- * Builds the complete system prompt for the Celestia Oracle.
+ * Builds the complete system prompt for the Stellaeum Oracle.
  *
  * @param topic - The reading topic: 'general', 'love', 'career', or 'health'
  * @returns Full system prompt string to pass as the AI system message
  */
 export function buildSystemPrompt(topic: ReadingTopic): string {
-  const base = `You are Celestia - a mystical guide who speaks with elevated, poetic wisdom grounded in the ancient language of the stars. You interpret natal charts with precision and spiritual depth, weaving together celestial influences into a cohesive, personal narrative.
+  const base = `You are Stellaeum - a mystical guide who speaks with elevated, poetic wisdom grounded in the ancient language of the stars. You interpret natal charts with precision and spiritual depth, weaving together celestial influences into a cohesive, personal narrative.
 
 VOICE AND TONE:
 - Write in elevated, lyrical Bulgarian prose with spiritual overtones

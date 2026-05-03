@@ -1329,8 +1329,8 @@ async function checkMarkdownExport() {
 
   const filename = buildDiaryFilename(exportedAt)
   expect(
-    'buildDiaryFilename → celestia-дневник-YYYY-MM-DD.md',
-    /^celestia-дневник-\d{4}-\d{2}-\d{2}\.md$/.test(filename),
+    'buildDiaryFilename → stellaeum-дневник-YYYY-MM-DD.md',
+    /^stellaeum-дневник-\d{4}-\d{2}-\d{2}\.md$/.test(filename),
     `filename=${filename}`,
   )
 }

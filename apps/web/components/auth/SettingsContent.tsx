@@ -56,8 +56,8 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
 
   const planName =
     subscriptionData?.interval === 'year'
-      ? 'Celestia Премиум (Годишен)'
-      : 'Celestia Премиум (Месечен)'
+      ? 'Stellaeum Премиум (Годишен)'
+      : 'Stellaeum Премиум (Месечен)'
 
   async function handleOpenPortal() {
     setPortalLoading(true)
@@ -168,7 +168,7 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
             </p>
           )}
           <p className="mb-6 text-sm leading-relaxed text-slate-400">
-            Абонирай се отново и продължи да се наслаждаваш на пълния достъп до Celestia.
+            Абонирай се отново и продължи да се наслаждаваш на пълния достъп до Stellaeum.
           </p>
           <Link
             href="/pricing"

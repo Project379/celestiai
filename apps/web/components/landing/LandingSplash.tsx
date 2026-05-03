@@ -20,7 +20,7 @@ const RING_DOTS = Array.from({ length: 12 }, (_, i) => {
 
 /**
  * Full-screen intro splash for the landing page.
- * Shows "Celestia" with a rotating star ring, then fades out.
+ * Shows "Stellaeum" with a rotating star ring, then fades out.
  */
 export function LandingSplash({ children }: { children: React.ReactNode }) {
   const [done, setDone] = useState(false)
@@ -124,7 +124,7 @@ export function LandingSplash({ children }: { children: React.ReactNode }) {
               transition={{ duration: 0.8, delay: 0.35, ease: [0.22, 0.68, 0.35, 1] }}
             >
               <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.22)]">
-                Celestia
+                Stellaeum
               </span>
             </motion.h1>
 

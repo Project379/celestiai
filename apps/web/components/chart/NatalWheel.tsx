@@ -27,7 +27,7 @@ interface NatalWheelProps {
   size?: number
 }
 
-// Editorial Celestia palette — amber / violet / slate / cyan / rose,
+// Editorial Stellaeum palette — amber / violet / slate / cyan / rose,
 // soft and desaturated, matching the dashboard and hero accents.
 const PLANET_COLORS: Record<string, string> = {
   sun: '#fcd34d',        // amber-300 (matches hero amber)
@@ -321,7 +321,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
         .attr('stroke-width', 2)
         .style('pointer-events', 'none')
 
-      // Draw MC line (thicker, highlighted) — amber to match Celestia accent
+      // Draw MC line (thicker, highlighted) — amber to match Stellaeum accent
       const mcAngle = longitudeToScreenRad(chart.mc.longitude, rotationDeg)
       g.append('line')
         .attr('x1', center + Math.cos(mcAngle) * (houseInnerRadius * 0.5))
@@ -407,7 +407,7 @@ export function NatalWheel({chart, onPlanetSelect, selectedPlanet, size = 600,}:
           .attr('stroke-width', 1)
           .attr('opacity', 0.78)
 
-        // Planet circle background — matches Celestia bg (#08060f)
+        // Planet circle background — matches Stellaeum bg (#08060f)
         planetGroup
           .append('circle')
           .attr('class', 'planet-bg')

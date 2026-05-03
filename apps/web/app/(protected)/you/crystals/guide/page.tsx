@@ -5,7 +5,7 @@ import { CrystalsGuideContent } from '@/components/astrology-guide/CrystalsGuide
 export const metadata: Metadata = {
   title: 'Ръководство за кристали',
   description:
-    'Тридесет кристала, подредени по планета и лунна фаза — как Celestia ги избира и защо.',
+    'Тридесет кристала, подредени по планета и лунна фаза — как Stellaeum ги избира и защо.',
 }
 
 export default async function CrystalsGuidePage() {

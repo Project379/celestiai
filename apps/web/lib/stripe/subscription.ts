@@ -168,7 +168,7 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> 
 
   const clerkUserId = subscription.metadata?.clerkUserId
   if (!clerkUserId) {
-    // Invoice events can come from non-Celestia subscriptions - log and skip
+    // Invoice events can come from non-Stellaeum subscriptions - log and skip
     console.warn(
       `[Webhook] handleInvoicePaid: missing clerkUserId in subscription metadata (sub: ${subscription.id}) - skipping`
     )

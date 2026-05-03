@@ -6,7 +6,7 @@ import type {
   UserRecommendationState,
 } from '@/lib/stories/types'
 
-const STORAGE_KEY = 'celestia.stories.state.v1'
+const STORAGE_KEY = 'stellaeum.stories.state.v1'
 
 /**
  * Backend-swap boundary. Today: localStorage. Tomorrow: Supabase.

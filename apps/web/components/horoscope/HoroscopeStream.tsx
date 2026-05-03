@@ -112,7 +112,7 @@ export function HoroscopeStream({ text, isStreaming }: HoroscopeStreamProps) {
         </div>
         <div className="flex flex-col items-center gap-2">
           <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
-            Celestia
+            Stellaeum
           </p>
           <p className="font-display text-[14px] font-light leading-relaxed text-slate-300">
             консултира звездите…

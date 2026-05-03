@@ -27,7 +27,7 @@ export function AuthHeader() {
             filter: 'drop-shadow(0 0 20px rgba(167, 139, 250, 0.35))',
           }}
         >
-          Celestia AI
+          Stellaeum AI
         </h1>
         <span className="text-[13px] leading-none text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.6)]">✦</span>
         <span

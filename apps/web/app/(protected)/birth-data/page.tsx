@@ -5,7 +5,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { BirthDataWizard } from '@/components/birth-data/BirthDataWizard'
 
 export const metadata: Metadata = {
-  title: 'Рождени данни - Celestia AI',
+  title: 'Рождени данни - Stellaeum AI',
   description: 'Въведи данните си за раждане за точни астрологични изчисления',
 }
 

@@ -245,7 +245,7 @@ export function AstrologyReference() {
             aria-hidden
             className="h-px w-5 bg-gradient-to-r from-transparent to-slate-300/40"
           />
-          Celestia · Речник
+          Stellaeum · Речник
         </p>
         <h2 className="mt-3 font-display text-[1.35rem] font-semibold leading-tight tracking-tight sm:text-[1.55rem]">
           <span className="font-light text-slate-400">Астрологичен </span>

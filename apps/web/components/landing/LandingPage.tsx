@@ -35,7 +35,7 @@ export function LandingPage() {
                 <span className="h-px w-14 bg-gradient-to-l from-transparent to-amber-300/50" />
               </div>
               <p className="mb-7 font-cinzel text-[11px] font-semibold uppercase tracking-[0.48em] text-slate-500">
-                Celestia AI
+                Stellaeum AI
               </p>
 
               <h1 className="font-display text-[2.5rem] leading-[1.1] tracking-tight sm:text-[3.25rem] md:text-[4rem]">
@@ -111,7 +111,7 @@ export function LandingPage() {
           <footer className="border-t border-white/[0.05]">
             <div className="container mx-auto flex flex-col items-center gap-4 px-4 py-10 md:flex-row md:justify-between">
               <p className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.34em] text-slate-600">
-                &copy; 2026 Celestia AI
+                &copy; 2026 Stellaeum AI
               </p>
               <div className="flex items-center gap-3" aria-hidden>
                 <span className="h-px w-8 bg-gradient-to-r from-transparent to-amber-300/30" />

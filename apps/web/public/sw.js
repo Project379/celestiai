@@ -7,11 +7,11 @@ self.addEventListener('push', function (event) {
     try {
       data = event.data.json()
     } catch (e) {
-      data = { title: 'Celestia', body: event.data.text() }
+      data = { title: 'Stellaeum', body: event.data.text() }
     }
   }
 
-  const title = data.title || 'Celestia'
+  const title = data.title || 'Stellaeum'
   const options = {
     body: data.body || '',
     icon: data.icon || '/icon-192x192.png',

@@ -17,7 +17,7 @@ import { logClientError } from '@/lib/monitoring/log-client-error'
  *
  *   ERR-DI-002 — localStorage read corruption.
  *     Defensive-retain post §8.5 hook swap: no current code path reads
- *     the abandoned `celestia.manifest.entries.v1` key, but the registry
+ *     the abandoned `stellaeum.manifest.entries.v1` key, but the registry
  *     entry is kept available for any future code path (debugging,
  *     migration, adjacent hook) that touches the stale data still
  *     present in user browsers per §8.0 Implementation Decision 1.

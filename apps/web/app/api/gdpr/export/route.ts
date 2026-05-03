@@ -46,7 +46,7 @@ export async function GET() {
   return new Response(json, {
     headers: {
       'Content-Type': 'application/json',
-      'Content-Disposition': 'attachment; filename="celestia-data-export.json"',
+      'Content-Disposition': 'attachment; filename="stellaeum-data-export.json"',
     },
   })
 }

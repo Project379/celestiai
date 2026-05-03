@@ -209,7 +209,7 @@ export function AstrologyGuideContent() {
         </h1>
         <p className="mt-6 max-w-xl font-display text-[17px] font-light leading-[1.85] text-slate-300 sm:text-[18px]">
           Пътеводител от древните вавилонски звездочетци до прецизните алгоритми,
-          с които Celestia изчислява твоята натална карта.
+          с които Stellaeum изчислява твоята натална карта.
         </p>
         <div className="mt-7 flex items-center gap-3">
           <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
@@ -235,7 +235,7 @@ export function AstrologyGuideContent() {
         {/* Editorial pull-quote - the one callout we preserve */}
         <figure className="mt-10 max-w-2xl border-l border-amber-300/40 pl-6">
           <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.36em] text-amber-300/80">
-            Celestia
+            Stellaeum
           </p>
           <blockquote className="font-display text-[17px] font-light leading-[1.8] text-slate-200/95">
             Използваме <span className="font-medium text-slate-100">Swiss Ephemeris</span> - най-прецизните астрономически изчисления в света, разработени от Astrodienst и базирани на НАСА данни.
@@ -420,7 +420,7 @@ export function AstrologyGuideContent() {
         </div>
 
         <p className="mt-10 max-w-2xl text-[16px] leading-[1.85] text-slate-300/90">
-          <span className="text-slate-100">Celestia</span> изчислява транзитите в реално време и ги съпоставя с наталната ти карта - за да знаеш какви небесни влияния действат върху теб точно сега и как да ги използваш в своя полза.
+          <span className="text-slate-100">Stellaeum</span> изчислява транзитите в реално време и ги съпоставя с наталната ти карта - за да знаеш какви небесни влияния действат върху теб точно сега и как да ги използваш в своя полза.
         </p>
       </Section>
 
@@ -553,7 +553,7 @@ export function AstrologyGuideContent() {
         </div>
 
         <p className="mt-10 max-w-2xl text-[16px] leading-[1.85] text-slate-200/95">
-          <span className="text-white">Celestia</span> изчислява текущата лунна фаза в реално време и я показва на таблото ти, с конкретна насока за манифестация според мястото, където се намира цикълът в момента. На дашборда намираш и пълния манифест за всяка фаза: афирмация, кристал, ритуал и въпрос за дневника.
+          <span className="text-white">Stellaeum</span> изчислява текущата лунна фаза в реално време и я показва на таблото ти, с конкретна насока за манифестация според мястото, където се намира цикълът в момента. На дашборда намираш и пълния манифест за всяка фаза: афирмация, кристал, ритуал и въпрос за дневника.
         </p>
       </Section>
 
@@ -561,7 +561,7 @@ export function AstrologyGuideContent() {
 
       {/* ── VII · Method ─────────────────────────────────── */}
       <Section index={7}>
-        <SectionMark numeral="VII" eyebrow="Метод" title="Как Celestia изчислява твоята карта" />
+        <SectionMark numeral="VII" eyebrow="Метод" title="Как Stellaeum изчислява твоята карта" />
         <ol className="max-w-2xl divide-y divide-white/[0.05] border-y border-white/[0.05]">
           {calculationSteps.map((item) => (
             <li key={item.numeral} className="grid grid-cols-[3rem_1fr] items-baseline gap-x-5 py-5">

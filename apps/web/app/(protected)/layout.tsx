@@ -67,7 +67,7 @@ export default async function ProtectedLayout({
                 <span className="relative font-cinzel text-xs font-bold text-amber-200/90">C</span>
               </div>
               <span className="font-cinzel text-[12px] font-semibold uppercase tracking-[0.22em] text-slate-100/90 transition-colors group-hover:text-white">
-                Celestia
+                Stellaeum
               </span>
             </Link>
 

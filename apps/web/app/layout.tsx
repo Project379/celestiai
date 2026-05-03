@@ -27,22 +27,22 @@ const cinzel = Cinzel({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Celestia AI - Твоят астрологичен приятел',
-    template: '%s | Celestia AI',
+    default: 'Stellaeum AI - Твоят астрологичен приятел',
+    template: '%s | Stellaeum AI',
   },
   description: 'Персонализирани хороскопи и астрологични прогнози, създадени за теб',
-  applicationName: 'Celestia AI',
-  keywords: ['астрология', 'хороскоп', 'натална карта', 'транзити', 'Celestia'],
+  applicationName: 'Stellaeum AI',
+  keywords: ['астрология', 'хороскоп', 'натална карта', 'транзити', 'Stellaeum'],
   openGraph: {
     type: 'website',
     locale: 'bg_BG',
-    siteName: 'Celestia AI',
-    title: 'Celestia AI - Твоят астрологичен приятел',
+    siteName: 'Stellaeum AI',
+    title: 'Stellaeum AI - Твоят астрологичен приятел',
     description: 'Персонализирани хороскопи и астрологични прогнози, създадени за теб',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Celestia AI',
+    title: 'Stellaeum AI',
     description: 'Персонализирани хороскопи и астрологични прогнози',
   },
 }
