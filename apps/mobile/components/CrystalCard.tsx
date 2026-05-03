@@ -15,7 +15,7 @@ export function CrystalCard() {
   if (!data && isLoading) {
     return (
       <View className={TILE_CLASS}>
-        <Text className={LABEL_CLASS}>Кристал</Text>
+        <Text className={LABEL_CLASS}>Кристал за днес</Text>
         <Text className={PRIMARY_CLASS}>Зареждане</Text>
       </View>
     )
@@ -24,7 +24,7 @@ export function CrystalCard() {
   if (!data && error) {
     return (
       <View className={TILE_CLASS}>
-        <Text className={LABEL_CLASS}>Кристал</Text>
+        <Text className={LABEL_CLASS}>Кристал за днес</Text>
         <Text className={PRIMARY_CLASS}>Не се получи</Text>
       </View>
     )
@@ -33,23 +33,21 @@ export function CrystalCard() {
   if (!data) {
     return (
       <View className={TILE_CLASS}>
-        <Text className={LABEL_CLASS}>Кристал</Text>
+        <Text className={LABEL_CLASS}>Кристал за днес</Text>
         <Text className={PRIMARY_CLASS}>—</Text>
       </View>
     )
   }
 
-  const { crystal, lunarPhase, streak } = data
+  const { crystal, lunarPhase } = data
   const name = crystal.name_bg ?? crystal.name_en
-  const streakText = streak ? `серия ${streak.current}` : null
 
   return (
     <View className={TILE_CLASS}>
-      <Text className={LABEL_CLASS}>Кристал</Text>
+      <Text className={LABEL_CLASS}>Кристал за днес</Text>
       <Text className={PRIMARY_CLASS}>{name}</Text>
       <Text className={SECONDARY_CLASS}>
-        {lunarPhase.name}
-        {streakText ? ` · ${streakText}` : ''}
+        за {lunarPhase.name.toLowerCase()}
         {error ? <Text className="text-rose-400"> ·</Text> : null}
       </Text>
     </View>

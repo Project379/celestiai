@@ -174,6 +174,41 @@ bumping all muted colors would override the brand language without
 founder input. Surfacing here so the decision is made before launch
 rather than discovered at App Store review.
 
+## 8. Hardcoded mobile streak footer drift from web vocabulary
+
+**Status:** `apps/mobile/app/(authed)/(tabs)/index.tsx` contains a hardcoded
+streak footer reading «· серия 12 ·». Web's actual streak rendering on
+the production Crystal-of-the-Day full-card (`apps/web/components/crystals/
+CrystalOfTheDayCard.tsx:63`) uses a different vocabulary entirely:
+- Day 1: «1 ден»
+- Day N (N>1): «{N} поредни дни»
+
+The mobile footer was placeholder text that misled the sub-round 2.4
+calibration of the Crystal tile streak format toward «серия N» — neither
+web tile nor web full-card uses that vocabulary anywhere. Sub-round 2.5-fix-2
+removed streak from the Crystal tile entirely (mirrors web tile's choice),
+which dissolved the immediate visual mismatch — but the footer drift
+remains.
+
+**Trigger:** When the streak footer becomes data-driven (likely sub-round
+3+ when streak data wires to a dedicated streak surface). Don't treat
+the hardcoded «· серия 12 ·» as canonical — align to web's «1 ден» /
+«{N} поредни дни» format with proper Bulgarian count-form handling at
+that point.
+
+**Sub-round when ready:** Whichever sub-round wires the dynamic streak
+footer. Calibration follows web vocabulary; bulgarian-skill discipline
+applies if any mobile-specific adaptation is needed (e.g., footer width
+constraints).
+
+**Why documented:** This drift caused 2.4 to miscalibrate streak phrasing
+(picked «серия N» based on the hardcoded footer's apparent convention).
+Future founder/maintainer shouldn't repeat the mistake by treating the
+placeholder as a source of truth. Going-forward discipline (ratified
+sub-round 2.5): for shared mobile/web data surfaces, mobile mirrors web's
+existing Bulgarian vocabulary; mobile-specific surfaces get
+bulgarian-skill calibration.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
