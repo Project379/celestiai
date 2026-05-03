@@ -1,5 +1,4 @@
 import { useClerk, useUser } from '@clerk/expo'
-import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -26,17 +25,12 @@ function getDisplayName(user: ReturnType<typeof useUser>['user']): string {
 export default function YouScreen() {
   const { user } = useUser()
   const { signOut } = useClerk()
-  const [signingOut, setSigningOut] = useState(false)
 
   const handleSignOut = async () => {
-    if (signingOut) return
-    setSigningOut(true)
     try {
       await signOut()
     } catch (err) {
       if (__DEV__) console.warn('[YouScreen] signOut failed:', err)
-    } finally {
-      setSigningOut(false)
     }
   }
 
@@ -75,11 +69,10 @@ export default function YouScreen() {
 
         <Pressable
           onPress={handleSignOut}
-          disabled={signingOut}
           className="mt-16 self-center rounded-2xl border border-slate-700/60 px-8 py-3"
         >
           <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-200">
-            {signingOut ? 'Излизане' : 'Излез'}
+            Излез
           </Text>
         </Pressable>
       </ScrollView>
