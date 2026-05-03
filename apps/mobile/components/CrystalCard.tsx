@@ -39,15 +39,16 @@ export function CrystalCard() {
     )
   }
 
-  const { crystal, lunarPhase } = data
+  const { crystal } = data
   const name = crystal.name_bg ?? crystal.name_en
+  const tagline = crystal.tagline_bg ?? crystal.tagline_en
 
   return (
     <View className={TILE_CLASS}>
       <Text className={LABEL_CLASS}>Кристал за днес</Text>
       <Text className={PRIMARY_CLASS}>{name}</Text>
       <Text className={SECONDARY_CLASS}>
-        за {lunarPhase.name.toLowerCase()}
+        {tagline}
         {error ? <Text className="text-rose-400"> ·</Text> : null}
       </Text>
     </View>
