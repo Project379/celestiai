@@ -25,7 +25,7 @@ export function CrystalCard() {
     return (
       <View className={TILE_CLASS}>
         <Text className={LABEL_CLASS}>Кристал</Text>
-        <Text className={PRIMARY_CLASS}>Не успях</Text>
+        <Text className={PRIMARY_CLASS}>Не се получи</Text>
       </View>
     )
   }
@@ -41,7 +41,7 @@ export function CrystalCard() {
 
   const { crystal, lunarPhase, streak } = data
   const name = crystal.name_bg ?? crystal.name_en
-  const streakText = streak ? `ден ${streak.current}` : null
+  const streakText = streak ? `серия ${streak.current}` : null
 
   return (
     <View className={TILE_CLASS}>
