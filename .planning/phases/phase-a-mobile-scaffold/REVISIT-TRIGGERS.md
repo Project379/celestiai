@@ -106,6 +106,74 @@ worklets peer correctly installed. `babel-preset-expo` (now ~54.0.10)
 handles the Reanimated plugin configuration automatically. No additional
 bumps expected for Phase B Skia work.
 
+## 6. 2FA challenge flow — implementation shipped, paid-feature gated
+
+**Status:** `apps/mobile/app/(public)/two-factor.tsx` shipped in sub-round
+1.4-2fa (commit `3c7c318`) and the surrounding sign-in branching is wired
+in `sign-in.tsx` to route on `signIn.status === 'needs_second_factor'`.
+TOTP, SMS phone code, and backup code strategies are all implemented with
+strategy switching, with Bulgarian copy calibrated in 1.4d. Code is
+production-ready; runtime path is currently unreachable.
+
+**Why unreachable:** Clerk Multi-Factor Authentication is a paid-plan
+feature and is not included on the Hobby plan currently in use. Without
+MFA enabled at the Clerk dashboard level, no user account can be enrolled
+in 2FA, so `signIn.status === 'needs_second_factor'` never returns from
+`signIn.password()`. The branch is defensively wired but inert.
+
+**Trigger:** Clerk plan upgrade (Pro or higher) for production launch, OR
+explicit business decision to defer 2FA to post-launch and remove the
+unreachable code paths. Sub-round 1.7 verification surfaced this; founder
+ratified keep-as-is for upgrade-readiness.
+
+**Sub-round when ready:** Post-Clerk-upgrade verification — re-run
+sub-round 1.7 verification matrix Phase 5 (2FA flow) end-to-end with a
+test user enrolled in TOTP. No code changes expected; just confirm the
+existing implementation works against the live MFA endpoint. If
+Clerk's API shape has changed since 1.4-2fa shipped, fold corrections
+into the verification commit.
+
+**Re-add path (if removed instead of upgraded):**
+- Delete `apps/mobile/app/(public)/two-factor.tsx`
+- Remove the 2FA branching block from `sign-in.tsx`'s `handleSignIn`
+- Remove the `(public)` group's two-factor screen entry from
+  `app/_layout.tsx` if explicitly declared
+
+## 7. Color contrast audit — pre-launch accessibility-vs-brand decision
+
+**Deferred:** Comprehensive color-contrast audit against WCAG AA / AAA
+across the mobile UI palette.
+
+**Status:** Slate-500 (and similar muted tones used for eyebrows, helper
+text, hints, and the sign-out button label) on the `#08060f` background
+likely fails WCAG AA contrast for normal-sized text. The aesthetic
+matches the warm-poetic Celestia brand voice (low-contrast, intimate,
+candle-lit feel) and is consistent across web and mobile surfaces. The
+trade-off has not been deliberately made — the muted palette evolved
+organically from the brand brief without an accessibility lens applied.
+
+**Trigger:** Pre-public-launch (Phase D close, before App Store
+submission). May trigger earlier if:
+- Bulgarian or EU accessibility regulation requires WCAG AA compliance
+  for paid services (founder to verify with legal review for Bulgarian
+  market)
+- A user with visual-accessibility needs reports unreadable copy during
+  beta or testing
+- Apple App Store review surfaces accessibility concerns at submission
+
+**Sub-round when ready:** Phase D accessibility pass. Audit each muted
+color usage and decide per-context: keep brand aesthetic with mitigation
+(e.g., system-level "Increase Contrast" iOS / Android settings honored
+automatically by NativeWind tokens), bump tones to AA-compliant
+equivalents (e.g., slate-500 → slate-400 for body text, slate-300 for
+helpers), or split into a brand-mode vs. accessibility-mode toggle.
+
+**Why deferred:** This is a deliberate accessibility-vs-brand tension
+that needs a product decision, not a mechanical fix. Unilaterally
+bumping all muted colors would override the brand language without
+founder input. Surfacing here so the decision is made before launch
+rather than discovered at App Store review.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
