@@ -111,7 +111,7 @@ export default function SignInScreen() {
           </Text>
 
           <Text className="mb-12 text-[26px] font-light leading-[1.3] text-slate-100">
-            Влез в Celestia
+            Влез в Stellaeum
           </Text>
 
           <View className="mb-5">

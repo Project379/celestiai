@@ -37,7 +37,7 @@ export default function ChartScreen() {
         </View>
 
         {/* Natal wheel placeholder */}
-        <View className="mb-10 aspect-square items-center justify-center rounded-full border border-violet-celestia/20">
+        <View className="mb-10 aspect-square items-center justify-center rounded-full border border-violet-stellaeum/20">
           <Text className="font-cinzel text-[11px] uppercase tracking-[0.38em] text-slate-500">
             натална карта
           </Text>

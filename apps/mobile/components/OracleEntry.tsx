@@ -19,7 +19,7 @@ export function OracleEntry() {
         accessibilityRole="button"
         accessibilityLabel="Отвори Оракула"
         onPress={handlePress}
-        className="h-14 w-14 items-center justify-center rounded-full border border-amber-300/40 bg-violet-celestia/20"
+        className="h-14 w-14 items-center justify-center rounded-full border border-amber-300/40 bg-violet-stellaeum/20"
         style={{
           shadowColor: '#fbbf24',
           shadowOffset: { width: 0, height: 0 },

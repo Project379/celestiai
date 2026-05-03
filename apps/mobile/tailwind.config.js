@@ -10,8 +10,8 @@ module.exports = {
     extend: {
       colors: {
         bg: '#08060f',
-        'amber-celestia': '#fbbf24',
-        'violet-celestia': '#8b5cf6',
+        'amber-stellaeum': '#fbbf24',
+        'violet-stellaeum': '#8b5cf6',
       },
       fontFamily: {
         cinzel: ['Cinzel'],

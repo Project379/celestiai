@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { CrystalCard } from '@/components/CrystalCard'
 
 const TILE_CLASS =
-  'flex-1 min-w-[46%] rounded-2xl border border-violet-celestia/25 px-4 py-5'
+  'flex-1 min-w-[46%] rounded-2xl border border-violet-stellaeum/25 px-4 py-5'
 const TILE_LABEL_CLASS =
   'font-cinzel text-[9px] uppercase tracking-[0.32em] text-amber-300/80'
 const TILE_HINT_CLASS = 'mt-2 text-[13.5px] font-light text-slate-200'

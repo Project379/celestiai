@@ -10,7 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 type RelationKind = { key: string; label: string; tint: string; border: string }
 
 const KINDS: RelationKind[] = [
-  { key: 'partner', label: 'Партньор', tint: 'bg-violet-celestia/10', border: 'border-violet-celestia/40' },
+  { key: 'partner', label: 'Партньор', tint: 'bg-violet-stellaeum/10', border: 'border-violet-stellaeum/40' },
   { key: 'friend',  label: 'Приятел',  tint: 'bg-amber-300/5',       border: 'border-amber-300/40' },
   { key: 'crush',   label: 'Crush',    tint: 'bg-rose-500/5',        border: 'border-rose-400/30' },
 ]
