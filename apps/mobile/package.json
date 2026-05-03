@@ -12,6 +12,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@celestia/core": "workspace:*",
     "@celestia/ui": "workspace:*",
     "@clerk/expo": "^3.2.4",
     "@clerk/expo-passkeys": "^1.0.17",
