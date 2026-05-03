@@ -1,5 +1,5 @@
 import { cache } from 'react'
-import { getCrystalOfTheDay as coreGetCrystalOfTheDay } from '@celestia/core/crystals/today'
+import { getCrystalOfTheDay as coreGetCrystalOfTheDay } from '@stellaeum/core/crystals/today'
 
 /**
  * React.cache() wrapper over the shared `getCrystalOfTheDay` function.
@@ -16,6 +16,6 @@ import { getCrystalOfTheDay as coreGetCrystalOfTheDay } from '@celestia/core/cry
  *
  * Route handlers should NOT import this wrapper — they are not inside a
  * React render pass, so the cache has no effect. They should import the
- * unwrapped function directly from `@celestia/core/crystals/today`.
+ * unwrapped function directly from `@stellaeum/core/crystals/today`.
  */
 export const getCrystalOfTheDay = cache(coreGetCrystalOfTheDay)

@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { getCachedLatestChart, getCachedUserTier } from '@/lib/supabase/queries'
 import { getCrystalOfTheDay } from '@/lib/crystals/today'
 import type { ChartRow } from '@/lib/types/chart'
-import type { CrystalOfTheDayResponse } from '@celestia/core'
+import type { CrystalOfTheDayResponse } from '@stellaeum/core'
 import { DashboardContent } from '../../../components/dashboard/DashboardContent'
 import { LoadingAnimation } from '@/components/LoadingAnimation'
 

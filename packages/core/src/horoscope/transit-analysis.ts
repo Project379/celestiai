@@ -8,15 +8,15 @@ import {
   getJulianDay,
   getZodiacSign,
   longitudeToSignDegree,
-} from '@celestia/astrology'
+} from '@stellaeum/astrology'
 import type {
   AspectType,
   HouseData,
   Planet,
   PlanetPosition,
   ZodiacSign,
-} from '@celestia/astrology/client'
-import type { TransitAspect } from '@celestia/astrology'
+} from '@stellaeum/astrology/client'
+import type { TransitAspect } from '@stellaeum/astrology'
 
 type TimedTransitPlanet = Omit<PlanetPosition, 'house'> & { house: number }
 

@@ -1,5 +1,5 @@
 /**
- * Client-safe exports from @celestia/astrology
+ * Client-safe exports from @stellaeum/astrology
  *
  * These exports contain only types and constants that are safe to use
  * in client-side React components. They do not include any server-side
@@ -8,8 +8,8 @@
  * @example
  * ```typescript
  * // In a 'use client' component:
- * import { ZODIAC_SIGNS_BG, PLANETS_BG } from '@celestia/astrology/client'
- * import type { ChartData, PlanetPosition } from '@celestia/astrology/client'
+ * import { ZODIAC_SIGNS_BG, PLANETS_BG } from '@stellaeum/astrology/client'
+ * import type { ChartData, PlanetPosition } from '@stellaeum/astrology/client'
  * ```
  */
 

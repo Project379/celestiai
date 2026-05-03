@@ -3,7 +3,7 @@ import { generateText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
-import type { ChartData } from '@celestia/astrology/client'
+import type { ChartData } from '@stellaeum/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
 
 /**

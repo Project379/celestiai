@@ -1,12 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
-import { getCrystalsOverview } from '@celestia/core/crystals/overview'
+import { getCrystalsOverview } from '@stellaeum/core/crystals/overview'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/crystals?chartId=...
  *
- * Thin wrapper over @celestia/core getCrystalsOverview(). Premium-only.
+ * Thin wrapper over @stellaeum/core getCrystalsOverview(). Premium-only.
  * Core handles the lazy recommendation generation + duplicate cleanup
  * that keeps the collection flow consistent on every read.
  */

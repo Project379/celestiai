@@ -1,5 +1,5 @@
 /**
- * Astrology calculation types for @celestia/astrology
+ * Astrology calculation types for @stellaeum/astrology
  *
  * These types represent the data structures used for natal chart calculations
  * using Swiss Ephemeris.

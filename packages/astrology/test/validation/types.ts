@@ -1,7 +1,7 @@
 /**
  * Types for §9 ephemeris-validation harness.
  *
- * Scope: validating @celestia/astrology outputs against reference data.
+ * Scope: validating @stellaeum/astrology outputs against reference data.
  * See ../../../.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md
  * for locked thresholds and decision rationale.
  */

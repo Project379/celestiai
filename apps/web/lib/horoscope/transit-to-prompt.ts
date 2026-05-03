@@ -1,10 +1,10 @@
-import type { TransitAspect } from '@celestia/astrology'
-import type { AspectType, Planet, PlanetPosition, ZodiacSign } from '@celestia/astrology/client'
+import type { TransitAspect } from '@stellaeum/astrology'
+import type { AspectType, Planet, PlanetPosition, ZodiacSign } from '@stellaeum/astrology/client'
 import {
   ASPECTS_BG,
   PLANETS_BG,
   ZODIAC_SIGNS_BG,
-} from '@celestia/astrology/client'
+} from '@stellaeum/astrology/client'
 import type { TransitOverview } from './transit-analysis'
 import { transitOverviewToPromptText } from './transit-analysis'
 

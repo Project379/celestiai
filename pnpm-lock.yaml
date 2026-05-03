@@ -23,12 +23,6 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@celestia/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@celestia/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@clerk/expo':
         specifier: ^3.2.4
         version: 3.2.4(fpwbume2djshay62hutwgzyon4)
@@ -38,6 +32,12 @@ importers:
       '@expo/metro-runtime':
         specifier: ~6.1.2
         version: 6.1.2(expo@54.0.34)(react-dom@19.1.0(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.6)(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(utf-8-validate@6.0.6))(react@19.1.0)
+      '@stellaeum/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@stellaeum/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@supabase/supabase-js':
         specifier: ^2.49.1
         version: 2.91.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -150,15 +150,6 @@ importers:
       '@ai-sdk/react':
         specifier: ^3.0.88
         version: 3.0.88(react@19.2.3)(zod@4.3.6)
-      '@celestia/astrology':
-        specifier: workspace:*
-        version: link:../../packages/astrology
-      '@celestia/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@celestia/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@clerk/localizations':
         specifier: ^3.35.1
         version: 3.35.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -174,6 +165,15 @@ importers:
       '@sentry/nextjs':
         specifier: 10.50.0
         version: 10.50.0(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.0(@opentelemetry/api@1.9.1))(next@15.2.4(@babel/core@7.28.6)(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.106.2)
+      '@stellaeum/astrology':
+        specifier: workspace:*
+        version: link:../../packages/astrology
+      '@stellaeum/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@stellaeum/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@supabase/supabase-js':
         specifier: ^2.49.1
         version: 2.91.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -292,7 +292,7 @@ importers:
 
   packages/core:
     dependencies:
-      '@celestia/astrology':
+      '@stellaeum/astrology':
         specifier: workspace:*
         version: link:../astrology
       '@supabase/supabase-js':

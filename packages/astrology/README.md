@@ -1,4 +1,4 @@
-# @celestia/astrology
+# @stellaeum/astrology
 
 Swiss Ephemeris-based astrology engine for Celestia AI. Computes natal charts, transits, and aspects via the `sweph` native N-API binding (GPL-2.0 path; see `docs/licensing.md` at the repo root).
 
@@ -8,8 +8,8 @@ Swiss Ephemeris-based astrology engine for Celestia AI. Computes natal charts, t
 ## Package scripts
 
 ```bash
-pnpm --filter @celestia/astrology typecheck   # tsc --noEmit (src + test)
-pnpm --filter @celestia/astrology test        # vitest — runs §9 validation harness
+pnpm --filter @stellaeum/astrology typecheck   # tsc --noEmit (src + test)
+pnpm --filter @stellaeum/astrology test        # vitest — runs §9 validation harness
 ```
 
 ## Source layout
@@ -59,7 +59,7 @@ Reference-data files under `test/validation/reference-data/` are committed snaps
 
 ## CI enforcement
 
-GitHub Actions workflow at `.github/workflows/astrology.yml` runs `pnpm --filter @celestia/astrology typecheck` + `pnpm --filter @celestia/astrology test` on every PR and push touching `packages/astrology/**` (branches: develop, main, mobile-parallel-test). 39 tests across 12 cases must pass for the workflow to succeed. See `.planning/phases/09-ephemeris-validation/09-06-CI-INTEGRATION.md` for design rationale.
+GitHub Actions workflow at `.github/workflows/astrology.yml` runs `pnpm --filter @stellaeum/astrology typecheck` + `pnpm --filter @stellaeum/astrology test` on every PR and push touching `packages/astrology/**` (branches: develop, main, mobile-parallel-test). 39 tests across 12 cases must pass for the workflow to succeed. See `.planning/phases/09-ephemeris-validation/09-06-CI-INTEGRATION.md` for design rationale.
 
 ## Further reading
 

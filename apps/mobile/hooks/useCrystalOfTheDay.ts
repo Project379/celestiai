@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/expo'
 import {
   CrystalOfTheDayResponseSchema,
   type CrystalOfTheDayResponse,
-} from '@celestia/core/crystals/schemas'
+} from '@stellaeum/core/crystals/schemas'
 import { useCallback, useEffect, useState } from 'react'
 
 import { useApiClient } from '@/lib/api/client'
@@ -18,7 +18,7 @@ interface UseCrystalOfTheDayResult {
  * Hook for fetching today's lunar-phase-driven crystal for the signed-in user.
  *
  * Calls GET /api/crystals/today (a thin wrapper over getCrystalOfTheDay in
- * @celestia/core/crystals/today). Validates the response against
+ * @stellaeum/core/crystals/today). Validates the response against
  * CrystalOfTheDayResponseSchema before returning. Auto-fetches on mount and
  * whenever the Clerk auth state changes; consumers can also call refetch()
  * manually.
@@ -30,7 +30,7 @@ interface UseCrystalOfTheDayResult {
  *
  * Side effect to be aware of: each authenticated read auto-collects the
  * crystal into user_daily_crystals via the unique-index idempotent insert
- * pattern documented in @celestia/core/crystals/today. First mount of the
+ * pattern documented in @stellaeum/core/crystals/today. First mount of the
  * day creates the row.
  */
 export function useCrystalOfTheDay(): UseCrystalOfTheDayResult {

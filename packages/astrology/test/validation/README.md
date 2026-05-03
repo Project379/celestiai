@@ -1,13 +1,13 @@
 # §9 Ephemeris validation harness
 
-Validates `@celestia/astrology` outputs against reference data (JPL Horizons, Astronomy Engine, inline Meeus polynomials). Locked thresholds from §9.1 live in `thresholds.ts` as the single source of truth.
+Validates `@stellaeum/astrology` outputs against reference data (JPL Horizons, Astronomy Engine, inline Meeus polynomials). Locked thresholds from §9.1 live in `thresholds.ts` as the single source of truth.
 
 See `../../../../.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md` for decision rationale and citations. Package-level README at `../../README.md` covers the harness role, epistemic tag vocabulary, and CI enforcement.
 
 ## Running
 
 ```bash
-pnpm --filter @celestia/astrology test
+pnpm --filter @stellaeum/astrology test
 ```
 
 Vitest picks up `harness.test.ts` automatically. When no fixtures are loaded the harness is a skipped test with a note. Once fixtures land, Vitest iterates each case, runs the comparison, prints a markdown report to the console, and fails iff any case has `pause-and-fix` status.

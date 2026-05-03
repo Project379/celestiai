@@ -9,7 +9,7 @@
  * `noUncheckedIndexedAccess` go quiet at the call site. These helpers throw
  * named errors that point at the specific bounded-access that was wrong.
  *
- * Introduced 2026-04-18 in Phase M2 after strict-mode in @celestia/core
+ * Introduced 2026-04-18 in Phase M2 after strict-mode in @stellaeum/core
  * surfaced the first post-M1 possibly-undefined sites. Retrofit:
  *   - packages/core/src/lib/moon-phase.ts (BOUNDARIES/MAJOR_EVENTS fallbacks)
  * replaced the ! assertions added in M1.

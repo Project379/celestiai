@@ -3,7 +3,7 @@ import {
   deleteDiaryEntry,
   getDiaryEntry,
   updateDiaryEntry,
-} from '@celestia/core/diary/entries'
+} from '@stellaeum/core/diary/entries'
 import { updateDiaryEntrySchema } from '@/lib/validators/diary'
 import { logServerError } from '@/lib/monitoring/log-server-error'
 

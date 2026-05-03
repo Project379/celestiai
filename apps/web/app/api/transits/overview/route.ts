@@ -1,10 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
-import { getTransitsOverview } from '@celestia/core/horoscope/transits'
+import { getTransitsOverview } from '@stellaeum/core/horoscope/transits'
 
 /**
  * GET /api/transits/overview?chartId=...
  *
- * Thin wrapper over @celestia/core getTransitsOverview(). Core function
+ * Thin wrapper over @stellaeum/core getTransitsOverview(). Core function
  * returns a discriminated-union result; this wrapper maps it to HTTP
  * status codes.
  */

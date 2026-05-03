@@ -2,8 +2,8 @@ import {
   calculateNatalChart,
   calculateDailyTransits,
   calculateTransitAspects,
-} from '@celestia/astrology'
-import type { PlanetPosition } from '@celestia/astrology'
+} from '@stellaeum/astrology'
+import type { PlanetPosition } from '@stellaeum/astrology'
 import { getLunarPhase } from '../lib/moon-phase'
 import { createCoreSupabaseClient } from '../lib/supabase'
 import { getSubscriptionTier } from '../subscription/tier'

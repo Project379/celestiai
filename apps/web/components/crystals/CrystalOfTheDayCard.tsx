@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { CrystalGem, type GemVariant } from './CrystalGem'
-import type { CrystalOfTheDayResponse } from '@celestia/core'
+import type { CrystalOfTheDayResponse } from '@stellaeum/core'
 
 interface CrystalOfTheDayCardProps {
   /**

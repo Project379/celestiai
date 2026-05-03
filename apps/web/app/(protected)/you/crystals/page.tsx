@@ -7,7 +7,7 @@ import { getCrystalOfTheDay } from '@/lib/crystals/today'
 import { CrystalCollectionContent } from '@/components/crystals/CrystalCollectionContent'
 import { CrystalOfTheDayCard } from '@/components/crystals/CrystalOfTheDayCard'
 import { LoadingAnimation } from '@/components/LoadingAnimation'
-import type { CrystalOfTheDayResponse } from '@celestia/core'
+import type { CrystalOfTheDayResponse } from '@stellaeum/core'
 
 export const metadata: Metadata = {
   title: 'Кристали',

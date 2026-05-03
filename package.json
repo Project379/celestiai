@@ -1,5 +1,5 @@
 {
-  "name": "celestia-ai",
+  "name": "stellaeum",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",

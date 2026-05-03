@@ -1,9 +1,9 @@
-import { getCurrentPlanets } from '@celestia/core/planets/current'
+import { getCurrentPlanets } from '@stellaeum/core/planets/current'
 
 /**
  * GET /api/planets/current
  *
- * Thin wrapper over @celestia/core getCurrentPlanets(). Public endpoint
+ * Thin wrapper over @stellaeum/core getCurrentPlanets(). Public endpoint
  * — no auth. Response cached 10min because planetary motion is slow.
  */
 export function GET() {

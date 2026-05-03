@@ -1,12 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
-import { calculateChartForUser } from '@celestia/core/charts/calculate'
+import { calculateChartForUser } from '@stellaeum/core/charts/calculate'
 import { chartCalculationSchema } from '@/lib/validators/chart'
 import { logAuditEvent } from '@/lib/audit'
 
 /**
  * POST /api/chart/calculate
  *
- * Thin wrapper over @celestia/core calculateChartForUser(). Core returns a
+ * Thin wrapper over @stellaeum/core calculateChartForUser(). Core returns a
  * discriminated-union result; we map it to HTTP. Audit event fires only on
  * fresh (non-cached) compute to preserve the pre-extraction behavior.
  */

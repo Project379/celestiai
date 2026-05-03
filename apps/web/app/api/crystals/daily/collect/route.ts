@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
-import { collectDailyCrystal } from '@celestia/core/crystals/daily-collect'
+import { collectDailyCrystal } from '@stellaeum/core/crystals/daily-collect'
 
 export const dynamic = 'force-dynamic'
 

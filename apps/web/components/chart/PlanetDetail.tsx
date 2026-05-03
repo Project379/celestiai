@@ -10,7 +10,7 @@ import {
   type PlanetPosition,
   type PointData,
   type ZodiacSign,
-} from '@celestia/astrology/client'
+} from '@stellaeum/astrology/client'
 import {
   getPlanetInterpretation,
   getRisingInterpretation,

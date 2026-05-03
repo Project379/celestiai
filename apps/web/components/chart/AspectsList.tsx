@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import type { AspectData, AspectType, Planet } from '@celestia/astrology/client'
-import { PLANETS_BG, PLANET_GLYPHS } from '@celestia/astrology/client'
+import type { AspectData, AspectType, Planet } from '@stellaeum/astrology/client'
+import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
 import { ASPECT_BG, ASPECT_GLYPH } from './chart-sections'
 
 interface AspectsListProps {

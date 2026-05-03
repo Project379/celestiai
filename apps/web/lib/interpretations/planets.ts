@@ -1,5 +1,5 @@
-import type {AspectData, Planet, ZodiacSign} from '@celestia/astrology/client'
-import {PLANETS_BG, ZODIAC_SIGNS_BG} from '@celestia/astrology/client'
+import type {AspectData, Planet, ZodiacSign} from '@stellaeum/astrology/client'
+import {PLANETS_BG, ZODIAC_SIGNS_BG} from '@stellaeum/astrology/client'
 
 export interface InterpretationData {
     title: string

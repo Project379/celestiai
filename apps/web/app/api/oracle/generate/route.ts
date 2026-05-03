@@ -5,7 +5,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
 import { stripSentinels } from '@/lib/oracle/planet-parser'
-import type { ChartData } from '@celestia/astrology/client'
+import type { ChartData } from '@stellaeum/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
 import { logAuditEvent } from '@/lib/audit'
 

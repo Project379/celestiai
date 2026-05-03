@@ -1,6 +1,6 @@
 name: Astrology Validation
 
-# Runs the @celestia/astrology §9 validation harness as a CI regression gate.
+# Runs the @stellaeum/astrology §9 validation harness as a CI regression gate.
 # See `.planning/phases/09-ephemeris-validation/09-06-CI-INTEGRATION.md` for
 # scope and design rationale.
 #
@@ -46,8 +46,8 @@ jobs:
       - name: Install dependencies (frozen lockfile)
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck @celestia/astrology (src + test)
-        run: pnpm --filter @celestia/astrology typecheck
+      - name: Typecheck @stellaeum/astrology (src + test)
+        run: pnpm --filter @stellaeum/astrology typecheck
 
       - name: Run §9 validation harness (39 tests across 12 cases)
-        run: pnpm --filter @celestia/astrology test
+        run: pnpm --filter @stellaeum/astrology test

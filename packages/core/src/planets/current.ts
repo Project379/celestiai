@@ -1,4 +1,4 @@
-import { calculateNatalChart } from '@celestia/astrology'
+import { calculateNatalChart } from '@stellaeum/astrology'
 
 /**
  * Simplified planet position for the current-sky endpoint. Consumed by

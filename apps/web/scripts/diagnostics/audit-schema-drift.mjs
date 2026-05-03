@@ -5,7 +5,7 @@
  * disagree.
  *
  * Invoke:
- *   pnpm --filter @celestia/web run diag:drift
+ *   pnpm --filter @stellaeum/web run diag:drift
  * or:
  *   node --env-file=apps/web/.env.local \
  *        apps/web/scripts/diagnostics/audit-schema-drift.mjs

@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Celestia",
-    "slug": "celestia",
+    "name": "Stellaeum",
+    "slug": "stellaeum",
     "version": "0.1.0",
     "orientation": "portrait",
-    "scheme": "celestia",
+    "scheme": "stellaeum",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.celestia.app"
+      "bundleIdentifier": "com.stellaeum.app"
     },
     "android": {
-      "package": "com.celestia.app"
+      "package": "com.stellaeum.app"
     },
     "plugins": [
       "expo-router",

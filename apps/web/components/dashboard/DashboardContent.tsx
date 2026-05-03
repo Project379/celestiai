@@ -16,7 +16,7 @@ import { getActiveMeteorShower } from '@/lib/meteor-showers'
 import { composeWelcome } from '@/lib/welcome-compose'
 import type { ChartRow } from '@/lib/types/chart'
 
-import type { CrystalOfTheDayResponse } from '@celestia/core'
+import type { CrystalOfTheDayResponse } from '@stellaeum/core'
 
 interface DashboardContentProps {
   firstName: string

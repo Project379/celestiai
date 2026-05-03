@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 /**
- * Service-role Supabase client factory for @celestia/core.
+ * Service-role Supabase client factory for @stellaeum/core.
  *
  * Env-only. No Clerk. No React. No Next.js. This mirrors the pattern in
  * `apps/web/lib/supabase/service.ts` but lives in the shared package so

@@ -16,7 +16,7 @@
  */
 
 import type { LunarPhase } from '../lib/moon-phase'
-import type { PlanetPosition } from '@celestia/astrology'
+import type { PlanetPosition } from '@stellaeum/astrology'
 
 export type CrystalTriggerType = 'birthstone' | 'lunar_phase' | 'transit'
 

@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import {
   listDiaryEntries,
   upsertDiaryEntry,
-} from '@celestia/core/diary/entries'
+} from '@stellaeum/core/diary/entries'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { createDiaryEntrySchema } from '@/lib/validators/diary'
 import { logServerError } from '@/lib/monitoring/log-server-error'

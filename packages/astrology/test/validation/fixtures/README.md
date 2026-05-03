@@ -23,7 +23,7 @@ export const testCase: TestCase = {
 ## Conventions
 
 - `id` is a slug used to join against reference data. Must be unique.
-- `birthTime` is in the birth location's local time; `@celestia/astrology` handles UTC conversion.
+- `birthTime` is in the birth location's local time; `@stellaeum/astrology` handles UTC conversion.
 - Famous cases **must** be Rodden AA-rated (birth certificate or equivalent documentary source). B-rated and below get dropped.
 - Synthetic cases use `kind: 'synthetic'` and omit `rodden`.
 - Reference cases (validated against an independent native-SE tool) use `kind: 'reference'`.

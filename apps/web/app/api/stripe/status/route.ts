@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
-import { getSubscriptionTier } from '@celestia/core/subscription/tier'
+import { getSubscriptionTier } from '@stellaeum/core/subscription/tier'
 import { activatePremiumFromSession } from '@/lib/stripe/activate-from-session'
 
 /**

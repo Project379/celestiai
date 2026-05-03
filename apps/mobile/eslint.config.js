@@ -9,17 +9,17 @@ module.exports = defineConfig([
   {
     files: ['**/*.{ts,tsx}'],
     rules: {
-      // @celestia/core declares sweph (native N-API addon) as a dep. Several
+      // @stellaeum/core declares sweph (native N-API addon) as a dep. Several
       // core paths transitively pull it (crystals/today, planets/current,
       // horoscope/transits, charts/calculate). Mobile must use subpath imports
-      // that don't pull sweph (e.g. @celestia/core/crystals/schemas — zod-only)
-      // to keep the Metro bundle clean. Barrel `import x from '@celestia/core'`
+      // that don't pull sweph (e.g. @stellaeum/core/crystals/schemas — zod-only)
+      // to keep the Metro bundle clean. Barrel `import x from '@stellaeum/core'`
       // breaks the build.
       'no-restricted-imports': ['error', {
         paths: [
           {
-            name: '@celestia/core',
-            message: 'Use subpath imports of @celestia/core (e.g. @celestia/core/crystals/schemas) — barrel imports pull sweph (native Node module) into the Metro bundle and break the build.',
+            name: '@stellaeum/core',
+            message: 'Use subpath imports of @stellaeum/core (e.g. @stellaeum/core/crystals/schemas) — barrel imports pull sweph (native Node module) into the Metro bundle and break the build.',
           },
         ],
       }],

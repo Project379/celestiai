@@ -3,7 +3,7 @@
  *
  * Case: see ../fixtures/queen-elizabeth-ii.ts
  * Fixture → UTC: 1926-04-21 02:40 London (BST = UTC+1) → 1926-04-21 01:40 UTC.
- *   Verified by running @celestia/astrology's localTimeToUTC against the
+ *   Verified by running @stellaeum/astrology's localTimeToUTC against the
  *   fixture inputs (utcHours=1.666..., dayOffset=0).
  *
  * Coverage in this commit (§9.1 task 5b):

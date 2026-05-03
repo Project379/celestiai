@@ -1,5 +1,5 @@
-import { calculateNatalChart } from '@celestia/astrology'
-import type { ChartData, PlanetPosition, HouseData, PointData } from '@celestia/astrology'
+import { calculateNatalChart } from '@stellaeum/astrology'
+import type { ChartData, PlanetPosition, HouseData, PointData } from '@stellaeum/astrology'
 import { createCoreSupabaseClient } from '../lib/supabase'
 import { buildTransitOverview, type TransitOverview } from './transit-analysis'
 
@@ -25,7 +25,7 @@ interface CalculationRow {
  *
  *   - Chart ownership verified by chartId → charts.user_id === userId
  *   - Calculation is read from chart_calculations cache if present, or
- *     computed via @celestia/astrology and written back on miss
+ *     computed via @stellaeum/astrology and written back on miss
  *   - Returns the TransitOverview structure built by buildTransitOverview
  *
  * Returns a discriminated-union result so the route-handler wrapper can

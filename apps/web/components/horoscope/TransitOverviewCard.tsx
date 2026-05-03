@@ -3,8 +3,8 @@
 import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ASPECTS_BG, PLANETS_BG, ZODIAC_SIGNS_BG } from '@celestia/astrology/client'
-import type { Planet } from '@celestia/astrology/client'
+import { ASPECTS_BG, PLANETS_BG, ZODIAC_SIGNS_BG } from '@stellaeum/astrology/client'
+import type { Planet } from '@stellaeum/astrology/client'
 import { AstrologyReference } from '../chart/AstrologyReference'
 import type {
   ActiveTransitDetail,

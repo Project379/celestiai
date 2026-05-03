@@ -1,6 +1,6 @@
 'use client'
 
-import type { HouseData } from '@celestia/astrology/client'
+import type { HouseData } from '@stellaeum/astrology/client'
 import { formatDegreeInSign } from './chart-sections'
 
 interface HousesListProps {

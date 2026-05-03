@@ -6,8 +6,8 @@ const nextConfig = {
   transpilePackages: [
     'nativewind',
     'react-native-css-interop',
-    '@celestia/astrology',
-    '@celestia/core',
+    '@stellaeum/astrology',
+    '@stellaeum/core',
   ],
   // sweph is a native N-API module (Swiss Ephemeris C/C++ bindings via
   // node-gyp). Next.js's default Webpack behaviour tries to bundle it,

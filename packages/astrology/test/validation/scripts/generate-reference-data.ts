@@ -17,7 +17,7 @@
  * skips that body and logs a warning; the emitted snapshot simply omits
  * the missing bodies under `planets.astronomyEngine`.
  *
- * Run: `pnpm --filter @celestia/astrology exec tsx test/validation/scripts/generate-reference-data.ts`
+ * Run: `pnpm --filter @stellaeum/astrology exec tsx test/validation/scripts/generate-reference-data.ts`
  */
 
 import { existsSync, readdirSync, writeFileSync } from 'node:fs'

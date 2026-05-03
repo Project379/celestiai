@@ -1,6 +1,6 @@
 import { clerkClient } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { deleteUserDiaryEntries } from '@celestia/core/diary/entries'
+import { deleteUserDiaryEntries } from '@stellaeum/core/diary/entries'
 
 /**
  * GET /api/cron/cleanup-deleted-accounts

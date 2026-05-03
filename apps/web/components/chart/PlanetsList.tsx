@@ -1,7 +1,7 @@
 'use client'
 
-import type { Planet, PlanetPosition } from '@celestia/astrology/client'
-import { PLANETS_BG, PLANET_GLYPHS } from '@celestia/astrology/client'
+import type { Planet, PlanetPosition } from '@stellaeum/astrology/client'
+import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
 import { formatDegreeInSign } from './chart-sections'
 
 interface PlanetsListProps {

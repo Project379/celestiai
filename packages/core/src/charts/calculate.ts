@@ -1,5 +1,5 @@
-import { calculateNatalChart } from '@celestia/astrology'
-import type { ChartData } from '@celestia/astrology'
+import { calculateNatalChart } from '@stellaeum/astrology'
+import type { ChartData } from '@stellaeum/astrology'
 import { createCoreSupabaseClient } from '../lib/supabase'
 
 export type CalculateChartResult =
@@ -17,7 +17,7 @@ export type CalculateChartResult =
  *   - Chart existence → CHART_NOT_FOUND
  *   - Ownership mismatch → FORBIDDEN
  *   - chart_calculations cache hit → returns cached, cached=true
- *   - Cache miss → compute via @celestia/astrology, write back, cached=false
+ *   - Cache miss → compute via @stellaeum/astrology, write back, cached=false
  *   - Calculation failure → CALC_ERROR (caller maps to 500 + BG message)
  *
  * Audit logging stays at the route-handler call site so the core package

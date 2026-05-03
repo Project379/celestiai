@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import {
   createBirthChart,
   listBirthCharts,
-} from '@celestia/core/charts/birth-data'
+} from '@stellaeum/core/charts/birth-data'
 import { createBirthDataSchema } from '@/lib/validators/birth-data'
 import { logServerError } from '@/lib/monitoring/log-server-error'
 

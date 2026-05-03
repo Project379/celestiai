@@ -1,4 +1,4 @@
-# @celestia/core
+# @stellaeum/core
 
 Framework-agnostic business logic and data access. Zero framework dependencies.
 
@@ -24,7 +24,7 @@ Per `.planning/research/CACHE_WRAP_CONVENTION.md`:
 ```ts
 // apps/web/lib/crystals/today.ts  — thin cached wrapper at call site
 import { cache } from 'react'
-import { getCrystalOfTheDay as coreGetCrystalOfTheDay } from '@celestia/core/crystals/today'
+import { getCrystalOfTheDay as coreGetCrystalOfTheDay } from '@stellaeum/core/crystals/today'
 
 export const getCrystalOfTheDay = cache(coreGetCrystalOfTheDay)
 ```
@@ -40,7 +40,7 @@ const crystal = await getCrystalOfTheDay(userId)  // React.cache dedupes within 
 ```ts
 // apps/web/app/api/crystals/today/route.ts
 import { auth } from '@clerk/nextjs/server'
-import { getCrystalOfTheDay } from '@celestia/core/crystals/today'  // unwrapped core fn
+import { getCrystalOfTheDay } from '@stellaeum/core/crystals/today'  // unwrapped core fn
 
 export async function GET() {
   const { userId } = await auth()
@@ -51,13 +51,13 @@ export async function GET() {
 
 ### From React Native (mobile)
 
-Mobile clients don't import `@celestia/core` for runtime data access — the package constructs a Supabase service client with secrets, which shouldn't reach the mobile bundle. Instead, mobile calls the web route handler over HTTP:
+Mobile clients don't import `@stellaeum/core` for runtime data access — the package constructs a Supabase service client with secrets, which shouldn't reach the mobile bundle. Instead, mobile calls the web route handler over HTTP:
 
 ```ts
 const res = await fetch(`${API_BASE}/api/crystals/today`)
 ```
 
-Mobile can import Zod schemas from `@celestia/core/crystals/schemas` for response validation — those are pure types and compile-time-only.
+Mobile can import Zod schemas from `@stellaeum/core/crystals/schemas` for response validation — those are pure types and compile-time-only.
 
 ## Adding a new function
 

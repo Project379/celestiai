@@ -3,7 +3,7 @@ import {
   deleteBirthChart,
   getBirthChart,
   updateBirthChart,
-} from '@celestia/core/charts/birth-data'
+} from '@stellaeum/core/charts/birth-data'
 import { logAuditEvent } from '@/lib/audit'
 import { updateBirthDataSchema } from '@/lib/validators/birth-data'
 import { logServerError } from '@/lib/monitoring/log-server-error'

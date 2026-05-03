@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import type { CrystalOfTheDayResponse } from '@celestia/core'
+import type { CrystalOfTheDayResponse } from '@stellaeum/core'
 
 interface CrystalTileProps {
   /**

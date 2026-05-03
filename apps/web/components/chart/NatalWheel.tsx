@@ -4,8 +4,8 @@ import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
 import { select } from 'd3-selection'
 import { arc } from 'd3-shape'
 import { useD3 } from '@/hooks/useD3'
-import type { ChartData, PlanetPosition, AspectData } from '@celestia/astrology/client'
-import { ZODIAC_SIGNS_BG, PLANETS_BG, ZODIAC_SIGNS_ORDER } from '@celestia/astrology/client'
+import type { ChartData, PlanetPosition, AspectData } from '@stellaeum/astrology/client'
+import { ZODIAC_SIGNS_BG, PLANETS_BG, ZODIAC_SIGNS_ORDER } from '@stellaeum/astrology/client'
 // Traditional natal wheel convention:
 //   - Ascendant anchored at the 9 o'clock (left) position
 //   - Zodiac signs proceed counterclockwise from the Ascendant
@@ -13,7 +13,7 @@ import { ZODIAC_SIGNS_BG, PLANETS_BG, ZODIAC_SIGNS_ORDER } from '@celestia/astro
 // with `Math.cos`/`Math.sin` and SVG y-down screen coordinates.
 const longitudeToScreenRad = (longitude: number, rotationDeg: number) =>
   ((180 - (longitude - rotationDeg)) * Math.PI) / 180
-import type { ZodiacSign, Planet, AspectType } from '@celestia/astrology/client'
+import type { ZodiacSign, Planet, AspectType } from '@stellaeum/astrology/client'
 import { GlyphDefs } from '@/components/icons/CelestialIcons'
 
 interface NatalWheelProps {

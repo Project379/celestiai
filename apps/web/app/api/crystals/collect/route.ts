@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
-import { collectCrystalRecommendation } from '@celestia/core/crystals/collect'
+import { collectCrystalRecommendation } from '@stellaeum/core/crystals/collect'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
  *
  * Body: { recommendationId: string }
  *
- * Thin wrapper over @celestia/core collectCrystalRecommendation().
+ * Thin wrapper over @stellaeum/core collectCrystalRecommendation().
  * Premium-only. Idempotent — collecting the same rec twice is a no-op.
  */
 export async function POST(req: Request) {

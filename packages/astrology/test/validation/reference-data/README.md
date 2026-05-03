@@ -120,9 +120,9 @@ The generator lives at `test/validation/scripts/generate-reference-data.ts`. Use
 **To regenerate a single case** (e.g., JPL Horizons upgraded to DE442 and the snapshot needs refresh):
 
 1. Delete the existing `reference-data/<case-id>.ts` file.
-2. `pnpm --filter @celestia/astrology exec tsx test/validation/scripts/generate-reference-data.ts` — the generator iterates all fixtures, skips cases with existing reference-data files, and generates missing ones. Deleting the target file makes it the single generation target.
-3. `pnpm --filter @celestia/astrology typecheck` — verify the new file type-checks.
-4. `pnpm --filter @celestia/astrology test` — run the harness. Capture the diff in observed deltas against the previous snapshot. Sub-arcsec modern-era drift is unremarkable; significant far-range drift is the `[inferred]` inter-ephemeris-generation variance — see caveat below.
+2. `pnpm --filter @stellaeum/astrology exec tsx test/validation/scripts/generate-reference-data.ts` — the generator iterates all fixtures, skips cases with existing reference-data files, and generates missing ones. Deleting the target file makes it the single generation target.
+3. `pnpm --filter @stellaeum/astrology typecheck` — verify the new file type-checks.
+4. `pnpm --filter @stellaeum/astrology test` — run the harness. Capture the diff in observed deltas against the previous snapshot. Sub-arcsec modern-era drift is unremarkable; significant far-range drift is the `[inferred]` inter-ephemeris-generation variance — see caveat below.
 5. Commit the regenerated file with a header noting the regeneration date, the JPL ephemeris generation in use, and the reason (upgrade, drift investigation, etc.).
 
 **Wall time:** ~10–20 seconds per case (10 sequential JPL Horizons queries). For all 12 cases, budget ~3–5 minutes. The generator is sequential-by-design to stay polite to the Horizons API.

@@ -1,9 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import type { PlanetPosition, PointData } from '@celestia/astrology/client'
-import { ZODIAC_SIGNS_BG, PLANETS_BG } from '@celestia/astrology/client'
-import type { ZodiacSign } from '@celestia/astrology/client'
+import type { PlanetPosition, PointData } from '@stellaeum/astrology/client'
+import { ZODIAC_SIGNS_BG, PLANETS_BG } from '@stellaeum/astrology/client'
+import type { ZodiacSign } from '@stellaeum/astrology/client'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 interface BigThreeCardsProps {

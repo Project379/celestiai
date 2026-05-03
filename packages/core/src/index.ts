@@ -1,6 +1,6 @@
-// Main entry point for @celestia/core.
+// Main entry point for @stellaeum/core.
 //
-// Prefer subpath imports (e.g. `@celestia/core/crystals/today`) when
+// Prefer subpath imports (e.g. `@stellaeum/core/crystals/today`) when
 // possible — they're stable across refactors and keep bundle-level
 // dead-code elimination simple. This barrel export exists for
 // convenience and tests.

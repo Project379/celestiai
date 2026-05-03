@@ -1,7 +1,7 @@
 'use client'
 
 import useSWR from 'swr'
-import type { ChartData } from '@celestia/astrology/client'
+import type { ChartData } from '@stellaeum/astrology/client'
 
 interface UseChartResult {
   /** Calculated chart data */

@@ -36,7 +36,7 @@ import type {
 } from './types'
 
 function buildChartInput(testCase: TestCase): ChartInput {
-  // Swiss Ephemeris expects a Date; localTimeToUTC in @celestia/astrology handles
+  // Swiss Ephemeris expects a Date; localTimeToUTC in @stellaeum/astrology handles
   // local→UTC conversion internally given lat/lon. Pass a UTC-midnight anchor for the
   // birth date; calculator.ts uses the date components (year/month/day) from it.
   const date = new Date(`${testCase.birthDate}T00:00:00Z`)

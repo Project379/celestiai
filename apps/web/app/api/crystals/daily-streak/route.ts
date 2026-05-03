@@ -1,12 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
-import { getCrystalOfTheDay } from '@celestia/core/crystals/today'
+import { getCrystalOfTheDay } from '@stellaeum/core/crystals/today'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/crystals/daily-streak
  *
- * Thin wrapper over @celestia/core getCrystalOfTheDay({ includeHistory: true }).
+ * Thin wrapper over @stellaeum/core getCrystalOfTheDay({ includeHistory: true }).
  *
  * Response shape `{ streak, days, today }` is preserved verbatim from the
  * pre-M2 endpoint for backward compat with existing consumers

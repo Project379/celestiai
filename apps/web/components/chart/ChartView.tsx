@@ -12,7 +12,7 @@ import { PlanetsList } from './PlanetsList'
 import { AspectsList } from './AspectsList'
 import { HousesList } from './HousesList'
 import type { ChartSection } from './chart-sections'
-import type { PlanetPosition, PointData } from '@celestia/astrology/client'
+import type { PlanetPosition, PointData } from '@stellaeum/astrology/client'
 
 const NatalWheel = dynamic(
   () => import('./NatalWheel').then((m) => ({ default: m.NatalWheel })),
@@ -23,7 +23,7 @@ const AstrologyReference = dynamic(
   () => import('./AstrologyReference').then((m) => ({ default: m.AstrologyReference })),
   { ssr: false }
 )
-import { UNKNOWN_TIME_DISCLAIMER_BG } from '@celestia/astrology/client'
+import { UNKNOWN_TIME_DISCLAIMER_BG } from '@stellaeum/astrology/client'
 
 interface ChartViewProps {
   chartId: string
