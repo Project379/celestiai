@@ -1,6 +1,14 @@
 import { ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { CrystalCard } from '@/components/CrystalCard'
+
+const TILE_CLASS =
+  'flex-1 min-w-[46%] rounded-2xl border border-violet-celestia/25 px-4 py-5'
+const TILE_LABEL_CLASS =
+  'font-cinzel text-[9px] uppercase tracking-[0.32em] text-amber-300/80'
+const TILE_HINT_CLASS = 'mt-2 text-[13.5px] font-light text-slate-200'
+
 export default function DnesScreen() {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-bg">
@@ -29,24 +37,23 @@ export default function DnesScreen() {
           </Text>
         </View>
 
-        {/* Bento launchpad — Layer C (2×2 grid placeholder) */}
+        {/* Bento launchpad — Layer C (2×2 grid). Crystal tile is data-driven
+            via <CrystalCard /> (sub-round 2). Other three remain hardcoded
+            until their respective endpoints land. */}
         <View className="mb-10 flex-row flex-wrap gap-3">
-          {[
-            { label: 'Кристал', hint: 'Розов кварц' },
-            { label: 'Лунна фаза', hint: 'Ден 7/29' },
-            { label: 'Транзит', hint: 'Венера △ Сатурн' },
-            { label: 'Кръг', hint: 'Добави човек' },
-          ].map((tile) => (
-            <View
-              key={tile.label}
-              className="flex-1 min-w-[46%] rounded-2xl border border-violet-celestia/25 px-4 py-5"
-            >
-              <Text className="font-cinzel text-[9px] uppercase tracking-[0.32em] text-amber-300/80">
-                {tile.label}
-              </Text>
-              <Text className="mt-2 text-[13.5px] font-light text-slate-200">{tile.hint}</Text>
-            </View>
-          ))}
+          <CrystalCard />
+          <View className={TILE_CLASS}>
+            <Text className={TILE_LABEL_CLASS}>Лунна фаза</Text>
+            <Text className={TILE_HINT_CLASS}>Ден 7/29</Text>
+          </View>
+          <View className={TILE_CLASS}>
+            <Text className={TILE_LABEL_CLASS}>Транзит</Text>
+            <Text className={TILE_HINT_CLASS}>Венера △ Сатурн</Text>
+          </View>
+          <View className={TILE_CLASS}>
+            <Text className={TILE_LABEL_CLASS}>Кръг</Text>
+            <Text className={TILE_HINT_CLASS}>Добави човек</Text>
+          </View>
         </View>
 
         {/* Streak footer — Layer D */}
