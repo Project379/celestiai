@@ -16,8 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 // Bulgarian error mapping — first-pass draft, calibrated in commit 1.4d via bulgarian-skill
 const ERROR_MESSAGES: Record<string, string> = {
   form_code_incorrect: 'Грешен код',
-  form_code_expired: 'Кодът изтече. Заяви нов.',
-  form_param_format_invalid: 'Невалиден формат на код',
+  form_code_expired: 'Кодът изтече. Изпрати нов.',
+  form_param_format_invalid: 'Невалиден код',
   verification_failed: 'Потвърждението не успя. Опитай отново.',
   too_many_attempts: 'Твърде много опити. Изчакай малко.',
 }
@@ -156,7 +156,7 @@ export default function TwoFactorScreen() {
 
   const bodyText =
     strategy === 'totp'
-      ? 'Въведи 6-цифрения код от приложението си за удостоверяване.'
+      ? 'Въведи 6-цифрения код от приложението за удостоверяване.'
       : strategy === 'phone_code'
         ? 'Изпратихме 6-цифрен код на телефона ти. Въведи го по-долу.'
         : 'Въведи един от резервните си кодове.'
@@ -224,7 +224,7 @@ export default function TwoFactorScreen() {
 
           {resentNotice && (
             <Text className="mb-6 text-[13px] leading-[1.6] text-amber-300">
-              Изпратихме нов код.
+              Изпратихме нов код
             </Text>
           )}
 
@@ -244,7 +244,7 @@ export default function TwoFactorScreen() {
                   canSubmit ? 'text-amber-200' : 'text-slate-600'
                 }`}
               >
-                {submitting ? 'Проверка' : 'Потвърди'}
+                {submitting ? 'Потвърждаване' : 'Потвърди'}
               </Text>
             </View>
           </Pressable>

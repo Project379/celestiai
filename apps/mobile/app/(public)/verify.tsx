@@ -15,10 +15,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 // Bulgarian error mapping — first-pass draft, calibrated in commit 1.4d via bulgarian-skill
 const ERROR_MESSAGES: Record<string, string> = {
-  form_code_incorrect: 'Грешен код за потвърждение',
-  form_code_expired: 'Кодът изтече. Заяви нов.',
-  verification_already_verified: 'Вече потвърден',
-  verification_expired: 'Кодът изтече. Заяви нов.',
+  form_code_incorrect: 'Грешен код',
+  form_code_expired: 'Кодът изтече. Изпрати нов.',
+  verification_already_verified: 'Вече е потвърден',
+  verification_expired: 'Кодът изтече. Изпрати нов.',
   verification_failed: 'Потвърждението не успя. Опитай отново.',
   too_many_attempts: 'Твърде много опити. Изчакай малко.',
 }
@@ -144,7 +144,7 @@ export default function VerifyScreen() {
 
           {resentNotice && (
             <Text className="mb-6 text-[13px] leading-[1.6] text-amber-300">
-              Изпратихме нов код.
+              Изпратихме нов код
             </Text>
           )}
 
@@ -164,7 +164,7 @@ export default function VerifyScreen() {
                   canSubmit ? 'text-amber-200' : 'text-slate-600'
                 }`}
               >
-                {submitting ? 'Проверка' : 'Потвърди'}
+                {submitting ? 'Потвърждаване' : 'Потвърди'}
               </Text>
             </View>
           </Pressable>

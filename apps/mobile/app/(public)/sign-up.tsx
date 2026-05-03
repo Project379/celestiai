@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 // Bulgarian error mapping — first-pass draft, calibrated in commit 1.4d via bulgarian-skill
 const ERROR_MESSAGES: Record<string, string> = {
   form_identifier_exists: 'Вече има профил с този имейл',
-  form_param_format_invalid: 'Невалиден формат на имейл',
+  form_param_format_invalid: 'Невалиден имейл',
   form_password_pwned: 'Тази парола е твърде често срещана. Избери по-силна.',
   form_password_length_too_short: 'Паролата е твърде кратка (мин. 8 символа)',
   form_password_size_in_bytes_exceeded: 'Паролата е твърде дълга',
@@ -145,7 +145,7 @@ export default function SignUpScreen() {
             />
           </View>
           <Text className="mb-5 text-[12px] leading-[1.5] text-slate-500">
-            Минимум 8 символа.
+            Минимум 8 символа
           </Text>
 
           <View className="mb-8">
@@ -188,7 +188,7 @@ export default function SignUpScreen() {
                   canSubmit ? 'text-amber-200' : 'text-slate-600'
                 }`}
               >
-                {submitting ? 'Изпращане' : 'Създай'}
+                {submitting ? 'Създаване' : 'Създай'}
               </Text>
             </View>
           </Pressable>

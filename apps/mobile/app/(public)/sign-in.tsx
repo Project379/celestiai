@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 const ERROR_MESSAGES: Record<string, string> = {
   form_identifier_not_found: 'Няма профил с този имейл',
   form_password_incorrect: 'Грешна парола',
-  form_param_format_invalid: 'Невалиден формат на имейл',
+  form_param_format_invalid: 'Невалиден имейл',
   form_param_nil: 'Попълни всички полета',
   too_many_attempts: 'Твърде много опити. Изчакай малко.',
 }
@@ -172,7 +172,7 @@ export default function SignInScreen() {
                   canSubmit ? 'text-amber-200' : 'text-slate-600'
                 }`}
               >
-                {submitting ? 'Зареждане' : 'Влез'}
+                {submitting ? 'Влизане' : 'Влез'}
               </Text>
             </View>
           </Pressable>
