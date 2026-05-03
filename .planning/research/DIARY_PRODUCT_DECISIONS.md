@@ -112,7 +112,7 @@ Option 5 (random) was rejected because lunar practice intentionally has a rhythm
 **Rationale:** Since the full workstream ships before launch (Decision A), deferring export by a few sub-rounds doesn't expose users to data loss — the server migration solves the primary "clearing browser loses diary" problem. Post-migration, export from server data is the right single code path. Skipping is not an option given the EU audience and GDPR.
 
 **Implementation impact:**
-- §8.6 scope: markdown download of all entries for the logged-in user, generated client-side from a `GET /api/diary/entries` response. Format: `YYYY-MM-DD, Фаза, intention 1, intention 2, intention 3` sections. Bulgarian filename (`celestia-дневник-YYYY-MM-DD.md` or similar).
+- §8.6 scope: markdown download of all entries for the logged-in user, generated client-side from a `GET /api/diary/entries` response. Format: `YYYY-MM-DD, Фаза, intention 1, intention 2, intention 3` sections. Bulgarian filename (`stellaeum-дневник-YYYY-MM-DD.md` or similar).
 - Format decision deferred to §8.6 sub-round — markdown is a provisional default; JSON is also viable for machine-readable backup. User picks in §8.6.
 - No pre-migration export ships in §8.1 or earlier.
 
@@ -168,7 +168,7 @@ Option 5 (random) was rejected because lunar practice intentionally has a rhythm
 
 ### Decision 1 — Existing localStorage entries: abandon on migration `[user-decision]`
 
-**Context:** Decision A ships server persistence. Question: what happens to data in `celestia.manifest.entries.v1` on the first post-migration login?
+**Context:** Decision A ships server persistence. Question: what happens to data in `stellaeum.manifest.entries.v1` on the first post-migration login?
 
 **Options considered:**
 1. **Migrate on first login.** Read localStorage, POST each entry to the server, clear localStorage on success. Preserves existing writes but complicates the hook swap (§8.5 needs a one-time migration path).
@@ -181,7 +181,7 @@ Option 5 (random) was rejected because lunar practice intentionally has a rhythm
 
 **Implementation impact:**
 - §8.5 hook swap: no migration path. The new server-backed hook simply reads from `/api/diary/entries` and never touches localStorage.
-- Old localStorage key `celestia.manifest.entries.v1` left untouched — not cleared, not read. Browser data stays user-owned; if they ever want to recover, they can inspect DevTools. Post-launch, a localStorage-hygiene pass can delete the stale key (out of scope here).
+- Old localStorage key `stellaeum.manifest.entries.v1` left untouched — not cleared, not read. Browser data stays user-owned; if they ever want to recover, they can inspect DevTools. Post-launch, a localStorage-hygiene pass can delete the stale key (out of scope here).
 - Pre-launch communication: user-facing note if any early-access tester has entries they want to preserve — they can screenshot or DevTools-export before we ship §8.5. Low-urgency given small population.
 
 ---

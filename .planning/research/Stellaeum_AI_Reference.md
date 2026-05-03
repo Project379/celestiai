@@ -1,10 +1,10 @@
-# Celestia AI — Technical & Operational Reference
+# Stellaeum AI — Technical & Operational Reference
 
 *Architecture, compliance, and launch readiness*
 
 ## About this document
 
-This is a working reference for Celestia AI — a subscription astrology app for the Bulgarian market. It consolidates the architectural decisions, production-readiness requirements, GDPR obligations, AI provider strategy, and known risks that have been worked through across multiple sessions. It is intentionally opinionated. Where something is uncertain or depends on external information, that is called out explicitly.
+This is a working reference for Stellaeum AI — a subscription astrology app for the Bulgarian market. It consolidates the architectural decisions, production-readiness requirements, GDPR obligations, AI provider strategy, and known risks that have been worked through across multiple sessions. It is intentionally opinionated. Where something is uncertain or depends on external information, that is called out explicitly.
 
 *Nothing here is legal advice. The GDPR sections in particular describe an engineering posture and obligations as they have been publicly documented; a Bulgarian lawyer with data-protection expertise is required before any paying user signs up.*
 
@@ -12,7 +12,7 @@ This is a working reference for Celestia AI — a subscription astrology app for
 
 # 1. Product snapshot
 
-Celestia AI is a subscription-based astrology app targeting the Bulgarian market. It combines Swiss-Ephemeris-grade astronomical calculations with AI-authored readings delivered in Bulgarian, wrapped in an editorial-dark visual language (Cinzel eyebrows over slate backdrops, violet and amber accents, Bulgarian throughout).
+Stellaeum AI is a subscription-based astrology app targeting the Bulgarian market. It combines Swiss-Ephemeris-grade astronomical calculations with AI-authored readings delivered in Bulgarian, wrapped in an editorial-dark visual language (Cinzel eyebrows over slate backdrops, violet and amber accents, Bulgarian throughout).
 
 ## Stack
 
@@ -25,7 +25,7 @@ Celestia AI is a subscription-based astrology app targeting the Bulgarian market
 | Auth | Clerk |
 | Database | Supabase (Postgres) + Drizzle ORM |
 | Payments | Stripe (web) + RevenueCat (mobile IAP) |
-| Astronomical engine | `@celestia/astrology` package calling `swisseph-wasm` server-side |
+| Astronomical engine | `@stellaeum/astrology` package calling `swisseph-wasm` server-side |
 | AI (current) | OpenRouter (meta-llama/llama-3.3-70b-instruct) via Vercel AI SDK. BgGPT deferred post-launch — see AI_PROVIDER_DECISION.md. |
 | Hosting (planned) | Vercel (Next.js) in EU region |
 
@@ -52,14 +52,14 @@ Current branch: `gemstone-integration-premium`. Лунен дневник and И
 
 Across multiple conversations the same shape of question kept surfacing in different disguises: Next.js API routes, Next + NestJS, a separate mobile backend, NestJS for scalability, NestJS for security. The pattern underneath was the same — looking for a reason to add a new backend framework to a stack that already has one.
 
-**The consistent answer: you already have a backend. Supabase + the shared `@celestia/astrology` package covers the data and domain layers. The real question is where the small amount of additional server code lives.**
+**The consistent answer: you already have a backend. Supabase + the shared `@stellaeum/astrology` package covers the data and domain layers. The real question is where the small amount of additional server code lives.**
 
 ## The decision: Next.js route handlers in `apps/web`
 
-For Celestia AI specifically, server-side code belongs in Next.js route handlers inside the existing `apps/web`. Rationale:
+For Stellaeum AI specifically, server-side code belongs in Next.js route handlers inside the existing `apps/web`. Rationale:
 
 - One deployment target (Vercel) — not two
-- The `@celestia/astrology` package imports directly, with no WASM re-bundling for a second runtime
+- The `@stellaeum/astrology` package imports directly, with no WASM re-bundling for a second runtime
 - Streaming AI responses work natively
 - Expo and web hit the same endpoints — no duplication
 - Clerk, Supabase, Stripe, and RevenueCat SDKs are already configured for this surface
@@ -73,7 +73,7 @@ For Celestia AI specifically, server-side code belongs in Next.js route handlers
 
 ## When to add a dedicated `apps/api` (not yet)
 
-Reserve this for after a real wall is hit. Legitimate triggers would be: complex non-CRUD domain logic spanning many tables, heavy background job infrastructure (BullMQ + Redis), custom real-time protocols (gRPC, WebSockets with custom logic, MQTT), tight orchestration across 10+ third-party services, regulated-industry compliance, or a team growing past ~8 people. Celestia AI meets none of these today.
+Reserve this for after a real wall is hit. Legitimate triggers would be: complex non-CRUD domain logic spanning many tables, heavy background job infrastructure (BullMQ + Redis), custom real-time protocols (gRPC, WebSockets with custom logic, MQTT), tight orchestration across 10+ third-party services, regulated-industry compliance, or a team growing past ~8 people. Stellaeum AI meets none of these today.
 
 ## What was explicitly rejected and why
 
@@ -82,7 +82,7 @@ Reserve this for after a real wall is hit. Legitimate triggers would be: complex
 | NestJS as main backend | Structure tax without a team. Duplicates auth, WASM packaging, deploy pipeline, and env vars. Kills solo-dev velocity. |
 | Firebase over Supabase | NoSQL is awkward for relational astrology data (charts, transits, users, subscriptions). Already committed to Postgres. |
 | Self-hosted NestJS + Postgres instead of Supabase | Writing auth, RLS, backups, and connection pooling from scratch is the highest-risk code in any app. Supabase has been audited and hardened. |
-| Splitting frontend/backend into separate repos | Loses shared types and shared `@celestia/astrology` package. Adds friction without benefit at current scale. |
+| Splitting frontend/backend into separate repos | Loses shared types and shared `@stellaeum/astrology` package. Adds friction without benefit at current scale. |
 
 ---
 
@@ -151,7 +151,7 @@ Supabase project region: `eu-central-1` (Frankfurt) or `eu-west-1` (Ireland). Ch
 
 ## Data residency
 
-GDPR does not strictly require EU storage, but it restricts transfers outside the EEA unless adequate safeguards exist. For the Celestia stack, this means:
+GDPR does not strictly require EU storage, but it restricts transfers outside the EEA unless adequate safeguards exist. For the Stellaeum stack, this means:
 
 | Service | Residency posture |
 | --- | --- |
@@ -174,7 +174,7 @@ GDPR does not strictly require EU storage, but it restricts transfers outside th
 - Breach notification plan — 72-hour window to notify КЗЛД. One-page written procedure is enough.
 - Records of Processing Activities (ROPA, Article 30) — list: what data, why, legal basis, retention, recipients. Template from the lawyer.
 
-## Celestia-specific GDPR points
+## Stellaeum-specific GDPR points
 
 ### Birth data
 
@@ -209,7 +209,7 @@ Sending chart data to OpenRouter (current primary) is a transfer of personal dat
 
 ## The three realistic paths (original strategic analysis, preserved)
 
-| Path | Fit for Celestia | Key tradeoff |
+| Path | Fit for Stellaeum | Key tradeoff |
 | --- | --- | --- |
 | Frontier APIs (Claude/GPT) | Works but imperfect Bulgarian — occasional language confusion, Russian-flavored phrasing, wrong gendered forms. Bad for register-sensitive astrology copy. | Easiest, cheapest to ship; quality ceiling in Bulgarian; US data transfers. |
 | BgGPT managed API (INSAIT) | Originally the primary choice. Bulgarian-native, state-of-the-art for Bulgarian, Bulgarian institute. | Managed API exists but pricing/SLA/DPA must be verified before commit. Currently `[deferred / post-launch]`. |

@@ -60,7 +60,7 @@ Recent decisions affecting current work:
 - [01-02]: React.createElement for dynamic tag Text component
 - [01-03]: Nonce-based CSP with dynamic rendering via connection()
 - [01-03]: Dev mode allows unsafe-eval/unsafe-inline for hot reload
-- [01-03]: @celestia/ui as explicit workspace dependency
+- [01-03]: @stellaeum/ui as explicit workspace dependency
 - [02-01]: clerkMiddleware replaces custom CSP middleware
 - [02-01]: ClerkProvider with bgBG localization and dynamic prop
 - [02-02]: Canvas-based star animation for performance
@@ -96,7 +96,7 @@ Recent decisions affecting current work:
 - [04-02]: Cache-first pattern: check cache before calculation
 - [04-02]: JSONB columns for flexible chart data storage
 - [04-02]: Unique constraint on chart_id (one calculation per chart)
-- [04-03]: Separate @celestia/astrology/client for browser-safe imports
+- [04-03]: Separate @stellaeum/astrology/client for browser-safe imports
 - [04-03]: D3 arc generator for zodiac segments with element colors
 - [04-03]: useD3 hook pattern for React/D3 integration
 - [04-03]: Responsive layout at lg (1024px) breakpoint
@@ -212,7 +212,7 @@ Phase 3.1 (Bugfixes & Landing Page) is complete with all issues fixed:
 
 Phase 4 (Astrology Engine & Charts) is complete with all requirements satisfied:
 
-**Swiss Ephemeris:** @celestia/astrology package with sweph native bindings
+**Swiss Ephemeris:** @stellaeum/astrology package with sweph native bindings
 **Calculation API:** POST /api/chart/calculate with caching
 **Visualization:** D3.js natal wheel with 10 planets, 12 zodiac segments, aspect lines
 **Big Three:** Sun, Moon, Rising cards with Bulgarian translations

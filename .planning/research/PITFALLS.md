@@ -1,4 +1,4 @@
-# Celestia AI - Critical Pitfalls & Risk Research
+# Stellaeum AI - Critical Pitfalls & Risk Research
 
 > Research conducted: 2026-01-19
 > Stack: Turborepo + Solito (Next.js 15 + Expo SDK 52) + Clerk + Supabase + Drizzle ORM + NativeWind v4 + React Native Skia + D3.js + swisseph-wasm + Stripe + RevenueCat

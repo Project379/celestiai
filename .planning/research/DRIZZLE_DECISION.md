@@ -9,7 +9,7 @@
 
 ## 1. Why this decision exists
 
-`[verified]` `packages/db/` contains complete Drizzle schemas for every table (users, charts, crystals, audit_logs, ai_readings, daily_horoscopes, push_subscriptions, webhook_events, and more — 18 schema files) plus 10 applied migrations in `packages/db/drizzle/0000..0009_*.sql`. `[verified]` Zero files in `apps/web/` import from `@celestia/db` or use Drizzle for queries. All 103 `.from(table).select(...)` query sites in `apps/web/` use `@supabase/supabase-js` fluent builder.
+`[verified]` `packages/db/` contains complete Drizzle schemas for every table (users, charts, crystals, audit_logs, ai_readings, daily_horoscopes, push_subscriptions, webhook_events, and more — 18 schema files) plus 10 applied migrations in `packages/db/drizzle/0000..0009_*.sql`. `[verified]` Zero files in `apps/web/` import from `@stellaeum/db` or use Drizzle for queries. All 103 `.from(table).select(...)` query sites in `apps/web/` use `@supabase/supabase-js` fluent builder.
 
 `[inferred]` Someone set up Drizzle schemas and migrations, then chose the Supabase client over Drizzle for querying. Before reversing that choice for Option B, the reasoning needs to be surfaced or it gets re-made and re-reversed.
 
@@ -21,7 +21,7 @@
 
 `[verified — apps/web/lib/types/chart.ts]` A file-level doc comment explicitly states:
 
-> *"Supabase returns snake_case column names, unlike the Drizzle schema (`@celestia/db/schema`) which uses camelCase. This type is the single source of truth for the Supabase response shape across the web app. If the Drizzle `charts` schema changes, update this type to match."*
+> *"Supabase returns snake_case column names, unlike the Drizzle schema (`@stellaeum/db/schema`) which uses camelCase. This type is the single source of truth for the Supabase response shape across the web app. If the Drizzle `charts` schema changes, update this type to match."*
 
 The type itself is a hand-maintained `interface ChartRow` with snake_case fields (`birth_date`, `birth_time`, `city_name`, etc.).
 
@@ -121,10 +121,10 @@ Cost: rebuilding migration history, retooling scripts, losing the schemas as can
 
 `[planned]` Given this decision:
 
-- `packages/core/` data-access functions import `Database` from `@/lib/types/database.generated` — NO, can't, that's an `apps/web`-internal path. Move the generated file to `packages/db/src/database.generated.ts` and re-export from `@celestia/db`. That's where it belongs anyway (it's a description of what's in the DB, which is `packages/db`'s job).
+- `packages/core/` data-access functions import `Database` from `@/lib/types/database.generated` — NO, can't, that's an `apps/web`-internal path. Move the generated file to `packages/db/src/database.generated.ts` and re-export from `@stellaeum/db`. That's where it belongs anyway (it's a description of what's in the DB, which is `packages/db`'s job).
 - `packages/core/` constructs its own typed Supabase client via the factory in `packages/db/src/client.ts`. Signature becomes: `createSupabaseClient(accessToken: () => Promise<string | null>): SupabaseClient<Database>`.
 - Hand-maintained `ChartRow` → `Tables<'charts'>` swap is a pre-Phase-M1 chore. Do it before scaffolding `packages/core/` so the first shared function lands with proper types from day one.
-- Drizzle remains `packages/db/src/schema/**` + `packages/db/drizzle/**` + drizzle-kit scripts. `@celestia/db`'s exported surface stays minimal (client factory, generated types, nothing else).
+- Drizzle remains `packages/db/src/schema/**` + `packages/db/drizzle/**` + drizzle-kit scripts. `@stellaeum/db`'s exported surface stays minimal (client factory, generated types, nothing else).
 
 `[open]` One question this decision does not resolve: `packages/db/src/schema/` camelCase TypeScript types are now redundant with `Tables<'charts'>` (snake_case). Keep both? Delete the schema-derived types from the exported surface? `[planned]` Recommend keeping the Drizzle schemas (they're the canonical column definitions) but not re-exporting their inferred types. Query code uses `Tables<>` from generated types; migration code uses the Drizzle schemas directly.
 
@@ -152,7 +152,7 @@ Either of two shapes, decision point not work:
 }
 ```
 
-Script writes to `packages/db/src/database.generated.ts` (inside the package — belongs with the rest of the DB source). `[planned]` Re-export from `packages/db/src/index.ts` so consumers import via `@celestia/db`.
+Script writes to `packages/db/src/database.generated.ts` (inside the package — belongs with the rest of the DB source). `[planned]` Re-export from `packages/db/src/index.ts` so consumers import via `@stellaeum/db`.
 
 ### Step 3 — Run `pnpm db:types` once, commit the output
 
@@ -184,7 +184,7 @@ The script regenerates types and fails if the generated file differs from what's
 ### Step 5 — Update `createServiceSupabaseClient()` and siblings to use the `Database` generic
 
 ```ts
-import type { Database } from '@celestia/db'
+import type { Database } from '@stellaeum/db'
 // ...
 return createClient<Database>(url, key, { ... })
 ```
@@ -194,7 +194,7 @@ Four files to update in `apps/web/lib/supabase/`: `service.ts`, `server.ts`, `pu
 ### Step 6 — Migrate `ChartRow` imports to `Tables<'charts'>`
 
 ```ts
-import type { Tables } from '@celestia/db'
+import type { Tables } from '@stellaeum/db'
 type ChartRow = Tables<'charts'>  // local alias, optional, can be inlined
 ```
 
@@ -259,7 +259,7 @@ The "sunk investment of 10 migrations" argument collapses when the migrations do
 
 ### New decision
 
-**Remove Drizzle entirely.** Nothing queries through it at runtime (`[verified]` 0 consumers of `@celestia/db` across `apps/` and `packages/`, per 2026-04-20 grep). The schemas are stranded fiction. The migrations are unreliable.
+**Remove Drizzle entirely.** Nothing queries through it at runtime (`[verified]` 0 consumers of `@stellaeum/db` across `apps/` and `packages/`, per 2026-04-20 grep). The schemas are stranded fiction. The migrations are unreliable.
 
 **Adopt Supabase CLI for migrations going forward.** Pairs naturally with `supabase gen types typescript` for the type-generation path that §6 Step 2 of this doc already planned. One tool for two jobs (migrations + types), whereas Drizzle currently does only the first.
 

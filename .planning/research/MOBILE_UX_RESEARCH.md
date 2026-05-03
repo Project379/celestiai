@@ -1,4 +1,4 @@
-# Celestia Mobile UX Research
+# Stellaeum Mobile UX Research
 
 **Written:** 2026-04-18
 **Scope:** IA + layout recommendations for the web→mobile transition
@@ -40,7 +40,7 @@
 
 **Oracle (persistent, contextual):** One tap from anywhere, pre-loads context of the current screen. *Expression is platform-specific — FAB on Android/web, nav-bar glyph on iOS (§2.6).*
 
-**One load-bearing insight:** 5 of 6 upcoming features are relational. Celestia is becoming a **people-graph product**, not a bigger solo app. `Кръг` is not just another tab — it is the product's new spine and the entire premium wedge. Monetization, virality, and retention all live in that one tab. Everything else in this doc derives from that fact.
+**One load-bearing insight:** 5 of 6 upcoming features are relational. Stellaeum is becoming a **people-graph product**, not a bigger solo app. `Кръг` is not just another tab — it is the product's new spine and the entire premium wedge. Monetization, virality, and retention all live in that one tab. Everything else in this doc derives from that fact.
 
 ---
 
@@ -56,7 +56,7 @@ You described the six upcoming features almost as a laundry list:
 
 **Five of six are relational.** One is time-based.
 
-Today, Celestia is a solo-user product: *your* chart, *your* horoscope, *your* crystal. The current IA (`/dashboard /chart /transits /crystals /manifest /recommendations /astrology-guide`) has **zero slots for other people**. If you bolt compatibility into the nav as one more top-level label, you've added label #8 to a nav already breaking on 7 Cyrillic words. If you hide it in a sub-page, you've buried the monetization wedge — 100% of these features are paid.
+Today, Stellaeum is a solo-user product: *your* chart, *your* horoscope, *your* crystal. The current IA (`/dashboard /chart /transits /crystals /manifest /recommendations /astrology-guide`) has **zero slots for other people**. If you bolt compatibility into the nav as one more top-level label, you've added label #8 to a nav already breaking on 7 Cyrillic words. If you hide it in a sub-page, you've buried the monetization wedge — 100% of these features are paid.
 
 Nebula does **$516k/month US revenue** as a "one-stop mainstream hub." The feature carrying that revenue is compatibility. Co-Star's biggest redesign push was *"putting more focus on how you compare with friends."* This is not coincidence — the people graph is the proven astrology monetization lever because:
 
@@ -70,11 +70,11 @@ The architectural move: **promote the people graph from "feature" to primary des
 **Why "Кръг" (Circle) and not "Хора" (People) or "Приятели" (Friends):**
 - `Хора` = cold, social-graph-y, reads like Facebook
 - `Приятели` = platonic only; doesn't cover partners, crushes, ex-partners for closure-reading
-- `Кръг` = has the mystical weight Celestia's voice needs. A circle is an inner circle, a sacred circle, a planetary orbit. The metaphor carries the editorial tone and matches the existing Cinzel/hairline aesthetic. Also pairs naturally with the Instagram "Close Friends" pattern (200-person cap, mutual consent) for the linked-charts feature.
+- `Кръг` = has the mystical weight Stellaeum's voice needs. A circle is an inner circle, a sacred circle, a planetary orbit. The metaphor carries the editorial tone and matches the existing Cinzel/hairline aesthetic. Also pairs naturally with the Instagram "Close Friends" pattern (200-person cap, mutual consent) for the linked-charts feature.
 
 **Why "Ти" (You) and not "Аз" (I / Me):**
 - `Аз` is aggressive, SaaS, American tab-bar speak
-- `Ти` is the app addressing you in the second person — consistent with the Celestia oracle voice ("Слънцето е в твоя ъгъл"). The app speaks *to* you, not *for* you.
+- `Ти` is the app addressing you in the second person — consistent with the Stellaeum oracle voice ("Слънцето е в твоя ъгъл"). The app speaks *to* you, not *for* you.
 
 ---
 
@@ -142,7 +142,7 @@ The natal wheel sits at the top, full-width, collapsible. On tap → full-screen
 4. **Retrograde marked, not hidden.** Your existing `R` in Cinzel is good — keep it.
 5. **Aspect patterns highlighted.** Grand trine, T-square, yod, kite — these are the "aha" moments that make someone screenshot and share.
 
-The goal: an amateur astrologer opens Celestia and finds *more precision* than Co-Star, *less density* than Astro.com, all in Bulgarian. That's the wedge.
+The goal: an amateur astrologer opens Stellaeum and finds *more precision* than Co-Star, *less density* than Astro.com, all in Bulgarian. That's the wedge.
 
 ### 2.3 Кръг (Circle) — the people graph + premium spine
 
@@ -315,7 +315,7 @@ Advisor trimmed this to three astrology + two adjacent. Here's what we can steal
 
 **Don't steal:**
 - Chani's meditation/sleep-stories/audio integration. That's their wedge (queer feminist wellness brand), not yours. You're science-precise + Bulgarian cultural fit. Audio would be a distraction.
-- Chani's queer/feminist explicit positioning. Your market (Bulgaria, 22-40 women, mixed progressive/traditional) reads this differently than LA. Celestia's voice is knowing-older-sister, not activist.
+- Chani's queer/feminist explicit positioning. Your market (Bulgaria, 22-40 women, mixed progressive/traditional) reads this differently than LA. Stellaeum's voice is knowing-older-sister, not activist.
 
 ### 5.3 Nebula — steal the funnel, soften the greed
 
@@ -323,18 +323,18 @@ Advisor trimmed this to three astrology + two adjacent. Here's what we can steal
 - Compatibility-first IA. Their compatibility tab is top-tier nav. Our Кръг mirrors this.
 - Three-axis model (romance/friendship/work). We can offer this as a "mode" toggle inside a relationship detail screen.
 - $516k/mo revenue validates the wedge. This is *proof* the people graph monetizes — not a guess.
-- Mainstream accessibility. Nebula is beginner-friendly. Celestia should be too, then reveal depth.
+- Mainstream accessibility. Nebula is beginner-friendly. Stellaeum should be too, then reveal depth.
 
 **Don't steal:**
 - $7.99/week pricing. It's predatory and churns hard.
 - Hard paywalls before any value. Soft-blur in-reading converts better.
-- "One-stop hub" positioning — that's generic. Celestia's position is sharper: *premium precision, Bulgarian-first.*
+- "One-stop hub" positioning — that's generic. Stellaeum's position is sharper: *premium precision, Bulgarian-first.*
 
 ### 5.4 Sanctuary — borrow the Oracle FAB metaphor, not the human astrologers
 
 **Steal:**
 - Live-chat as primary interaction. The Oracle FAB is our async-LLM-powered version of Sanctuary's "tap button, professional replies in minutes."
-- Playful welcoming onboarding. Sanctuary's colors are warmer than Chani's — Celestia's current palette is deep violet/amber, which is on the cold side. Consider warming onboarding specifically (not the rest of the app).
+- Playful welcoming onboarding. Sanctuary's colors are warmer than Chani's — Stellaeum's current palette is deep violet/amber, which is on the cold side. Consider warming onboarding specifically (not the rest of the app).
 
 **Don't steal:**
 - Human astrologer marketplace. That's a whole operations layer (payments to pros, scheduling, quality control) that's not in your stack. Stick with AI.
@@ -352,14 +352,14 @@ Advisor trimmed this to three astrology + two adjacent. Here's what we can steal
 ### 5.6 Duolingo — steal streak mechanics, not the frog
 
 **Steal:**
-- **23.5-hour reminder** after last session. The reason: users return at the same time they practiced the day before. For Celestia: send "Небесен ритъм за днес" at the time the user opened the app yesterday, not 8AM for everyone.
+- **23.5-hour reminder** after last session. The reason: users return at the same time they practiced the day before. For Stellaeum: send "Небесен ритъм за днес" at the time the user opened the app yesterday, not 8AM for everyone.
 - **Streak freezes** as a subscription perk. Premium users get 3 free freezes/month (Duolingo's model). This adds a small ongoing reason to stay subscribed beyond feature access.
-- **Home-screen widget** drove 60% retention increase at Duolingo. For Celestia: iOS/Android widget showing today's lunar phase + streak + first sentence of horoscope. Absolute priority for mobile launch.
+- **Home-screen widget** drove 60% retention increase at Duolingo. For Stellaeum: iOS/Android widget showing today's lunar phase + streak + first sentence of horoscope. Absolute priority for mobile launch.
 - **7-day streak as psychological threshold.** Design specifically for surviving the first week. Day 3 and day 5 are the drop-off points; give them a small celebration.
 
 **Don't steal:**
 - The shame mechanic. Duo the owl's passive-aggressive tone. Bulgarian users trust seriousness, not guilt-trips.
-- The cartoon visual vocabulary. Completely off-tone for Celestia.
+- The cartoon visual vocabulary. Completely off-tone for Stellaeum.
 
 ### 5.7 Oura — steal the Today tab pattern
 
@@ -368,7 +368,7 @@ This is the clearest single pattern borrow in the whole doc.
 **Steal directly:**
 - **3-tab bottom + scan-in-2s top row.** Oura's structure is (Today / Vitals / My Health) with circular scores at the top. We adapt: 5-tab bottom (Днес/Карта/Кръг/Ритъм/Ти) with a small ambient strip at top of Днес.
 - **Morning-first assumption.** Users open astrology apps in the morning just like Oura. Design the first-scroll content for that moment.
-- **Rolling-window metrics over single-day scores.** Oura's Resilience Metric is a 14-day trend. For Celestia: a "Небесно настроение" trend over 7 or 14 days, showing aggregate intensity of transits. This is a real differentiator vs Co-Star's single-day snapshots.
+- **Rolling-window metrics over single-day scores.** Oura's Resilience Metric is a 14-day trend. For Stellaeum: a "Небесно настроение" trend over 7 or 14 days, showing aggregate intensity of transits. This is a real differentiator vs Co-Star's single-day snapshots.
 - **Trend framing.** "Твоят ритъм е по-плавен от седмица назад" beats "Днес: 73%." Words over numbers, especially for a mystical product.
 
 ---
@@ -381,11 +381,11 @@ This is the clearest single pattern borrow in the whole doc.
 - 200-person cap is too many for astrology — cap at 50 people total (Dunbar-adjacent).
 
 **Strava followers + segments (people + data):**
-- Strava's segment leaderboards ranked by followers. For Celestia: a transit feed filtered by Кръг ("Venus square Mars is hot today — 3 people in your circle feel it strongest: Емма, Мартин, Иван").
+- Strava's segment leaderboards ranked by followers. For Stellaeum: a transit feed filtered by Кръг ("Venus square Mars is hot today — 3 people in your circle feel it strongest: Емма, Мартин, Иван").
 - Free tier shows top 10 only; paid shows full list. Our parallel: free tier shows Sun/Moon/Rising for Кръг members; paid shows full synastry.
 
 **Calm's Daily Calm (10-min themed session):**
-- Opens with ambient sound (rain/crickets), not a menu. For Celestia: consider a first-open-of-the-day animation (slow fade-in with a single star, 2 seconds) before revealing the dashboard. Cheap, creates daily ritual feeling.
+- Opens with ambient sound (rain/crickets), not a menu. For Stellaeum: consider a first-open-of-the-day animation (slow fade-in with a single star, 2 seconds) before revealing the dashboard. Cheap, creates daily ritual feeling.
 - Themed daily content (Gratitude / Anxiety / Patience). Your horoscope could have a daily theme drawn from dominant transit — "Днешната тема: преход."
 
 **Spotify bento grid (discovery):**
@@ -402,11 +402,11 @@ Research found **no major Bulgarian-native mobile astrology app.** The Bulgarian
 - BG-Mamma forum threads
 - Facebook pages
 
-**Implications for Celestia:**
+**Implications for Stellaeum:**
 
 1. **The gap is real.** Bulgarian users currently either (a) use English-language Co-Star/Chani/Nebula with translation friction, or (b) visit dated Bulgarian websites with no chart visualization. There is no modern native mobile astrology app in Bulgarian. This is a greenfield.
 
-2. **Authority figures matter.** Bulgarian users trust named astrologers. The Celestia brand itself doesn't have a face. Consider a future content pillar: collaborations with established Bulgarian astrologers (monthly forecast written by Мира Кунева, voiced-over transit explanation by Божидар Ръсовски). This is how you acquire trust in Bulgaria — borrow it from existing authorities. See `COMPETITOR_ANALYSIS.md` for more.
+2. **Authority figures matter.** Bulgarian users trust named astrologers. The Stellaeum brand itself doesn't have a face. Consider a future content pillar: collaborations with established Bulgarian astrologers (monthly forecast written by Мира Кунева, voiced-over transit explanation by Божидар Ръсовски). This is how you acquire trust in Bulgaria — borrow it from existing authorities. See `COMPETITOR_ANALYSIS.md` for more.
 
 3. **Cyrillic text density affects layouts.** Bulgarian words are ~15-20% longer than English equivalents on average (Ръководство = 11 chars, Guide = 5). Your current nav already shows the strain. Specific implications:
    - **Tab labels:** "Днес / Карта / Кръг / Ритъм / Ти" — all ≤5 chars. This works. Avoid 7+ char labels in tab bar.
@@ -416,13 +416,13 @@ Research found **no major Bulgarian-native mobile astrology app.** The Bulgarian
 
 4. **Localization-only markets (Romania, Serbia, Greece).** The same stack that wins Bulgaria can expand to nearby non-English markets with the same "no modern native app" gap. Post-MVP growth path.
 
-5. **Cultural fit — astrology + Orthodox tradition.** Bulgarian culture blends Orthodox Christianity with folk mysticism (баби/врачки, self-identified psychics). Don't position against or in conflict with faith — Celestia sits next to, not instead of. Avoid aggressive Western-wellness language ("manifest your abundance" etc.).
+5. **Cultural fit — astrology + Orthodox tradition.** Bulgarian culture blends Orthodox Christianity with folk mysticism (баби/врачки, self-identified psychics). Don't position against or in conflict with faith — Stellaeum sits next to, not instead of. Avoid aggressive Western-wellness language ("manifest your abundance" etc.).
 
 ---
 
 ## 8. "Correct science" — what it means on mobile
 
-You flagged this explicitly. It's positioning, not just UX. Co-Star gets dunked on by professional astrologers for being shallow; Celestia's wedge is *precision-plus-beauty*.
+You flagged this explicitly. It's positioning, not just UX. Co-Star gets dunked on by professional astrologers for being shallow; Stellaeum's wedge is *precision-plus-beauty*.
 
 Concrete mobile implications:
 
@@ -445,7 +445,7 @@ The LLM must not hallucinate astrology. System prompt should include:
 - Current transit calculations from `/api/transits`
 - Rules against predictions that contradict the chart (e.g., don't tell a Capricorn they're emotionally flighty)
 
-**What this buys:** social proof from the Bulgarian astrology community. If Мира Кунева or Николай Дойнов publicly endorses Celestia because "accuracy is real," you've won the hardest customers in the market.
+**What this buys:** social proof from the Bulgarian astrology community. If Мира Кунева or Николай Дойнов publicly endorses Stellaeum because "accuracy is real," you've won the hardest customers in the market.
 
 ---
 
@@ -630,10 +630,10 @@ Implementation surfaces:
 - **Кръг → relationship share** — "Емма и аз — 94%" card with teaser synastry line and a CTA link. Recipient sees preview in browser; tapping CTA opens app install or web login
 - **Днес → share daily reading** — horoscope text + lunar glyph + sign, same editorial aesthetic
 
-All share images generated server-side via a `/api/og/*` route (Next.js handles this natively). Free-tier share includes Celestia watermark; premium removes it — secondary upsell lever beyond Кръг.
+All share images generated server-side via a `/api/og/*` route (Next.js handles this natively). Free-tier share includes Stellaeum watermark; premium removes it — secondary upsell lever beyond Кръг.
 
 ### 11.5 Ghost profile merge — YES, viral vector
-**Decided:** Ghost profiles are implemented. Merge prompt when the email/phone of a ghost matches a new signup: "Emma на Celestia ли е? Свържи." Every ghost profile becomes a pending acquisition — this is the inbound referral mechanism.
+**Decided:** Ghost profiles are implemented. Merge prompt when the email/phone of a ghost matches a new signup: "Emma на Stellaeum ли е? Свържи." Every ghost profile becomes a pending acquisition — this is the inbound referral mechanism.
 
 Technical: ghost profile stored with `owner_user_id` (you) + email/phone for future matching. On new signup, backend checks ghost profile matches and prompts both users for linked-chart consent.
 
@@ -641,7 +641,7 @@ Technical: ghost profile stored with `owner_user_id` (you) + email/phone for fut
 **Decided:** Mobile-led rollout per §10. Web runs in parallel via universal components in `packages/ui` + shared API routes [planned], but the three retention wedges (background push scheduling, home-screen widgets, Duolingo-style pattern-time notifications) are native-only [verified — web Push API doesn't support background scheduling or widgets]. Phase B ships Кръг native-first.
 
 ### 11.7 Oracle context cost — BgGPT primary, frontier fallback, cache + hardcap
-**Decided:** AI stack already locked in `Celestia_AI_Reference.md §5` — BgGPT API (INSAIT, Bulgarian-native, EU-resident) as primary, Claude Sonnet or GPT-4o as fallback behind Vercel AI SDK. Wired from day one so switching is an env variable.
+**Decided:** AI stack already locked in `Stellaeum_AI_Reference.md §5` — BgGPT API (INSAIT, Bulgarian-native, EU-resident) as primary, Claude Sonnet or GPT-4o as fallback behind Vercel AI SDK. Wired from day one so switching is an env variable.
 
 Specifically for the Oracle FAB:
 - **Cache aggressively.** Pre-computed chart explanations (Sun in Leo, Moon in Cancer, Asc in Virgo, etc.) are shared across users. ~100 combinations × base placements fits in Supabase with 30-day TTL. First user pays the generation cost; subsequent users hit cache.
@@ -669,7 +669,7 @@ The people-graph wedge only works if new users are primed to add relationships b
 5. **Relationship prompt — THIS IS THE WEDGE** — "Кой друг ти е важен?" Three visual cards: `Партньор` / `Приятел` / `Crush`. Tapping any one opens the add-person flow directly. "Пропусни" is available but de-emphasized (grey, small, bottom). 15 sec.
 6. **Dashboard** — Днес renders with whatever they added (or empty bento card if skipped).
 
-Total: ~60 sec to dashboard, with one relationship already in the Кръг for ~70%+ of users (realistic target based on conversion funnels in similar apps). This single flow decision determines whether Celestia is a solo-app or a people-graph app at day-1 retention.
+Total: ~60 sec to dashboard, with one relationship already in the Кръг for ~70%+ of users (realistic target based on conversion funnels in similar apps). This single flow decision determines whether Stellaeum is a solo-app or a people-graph app at day-1 retention.
 
 ### 12.2 Кръг empty state — the highest-leverage screen in the app
 
@@ -712,7 +712,7 @@ If a new user skipped the onboarding relationship prompt (§12.1) and later taps
 
 ---
 
-## 13. Integration notes — cross-reference with `Celestia_AI_Reference.md`
+## 13. Integration notes — cross-reference with `Stellaeum_AI_Reference.md`
 
 The reference doc covers architecture, GDPR, AI strategy, and webhooks. This UX doc covers IA and layout. They're complementary. Four insights from the reference doc change how Phase A/B should be executed — they aren't just infra concerns, they shape the product.
 
@@ -726,7 +726,7 @@ Reference doc §3.1: daily horoscopes are pre-generated once per (sun-sign × mo
 - **Opens the door to prefetch.** Today's horoscope for the whole user's Кръг can be prefetched in one batch at cron time — no N+1 problem surfacing "today in your circle."
 - **Personalization is local composition.** The hero reading is sun-sign × moon-phase generic; the *sign quip* and *name* are user-specific. Compose at render, don't LLM-call.
 
-Means the hero reading copy is more "editorial column" than "personal letter." Correct tone for the Celestia voice anyway.
+Means the hero reading copy is more "editorial column" than "personal letter." Correct tone for the Stellaeum voice anyway.
 
 ### 13.2 BgGPT primary = the Bulgarian voice is actually Bulgarian
 
@@ -746,7 +746,7 @@ Reference doc §4 is explicit: birth data is borderline Article 9 (philosophical
 - **Privacy policy must disclose ghost profiles.** Standard consent language isn't enough. "When you add a person to your Кръг, their birth data is stored for the purpose of astrological comparison. You are responsible for having a valid reason to process their data."
 - **Ghost profile UX must frame it correctly.** When adding Emma, the confirmation step should say something like: "Ти си отговорен да обясниш на Емма, че използваш данните ѝ." Not a checkbox, a sentence. Transfers responsibility where it legally sits.
 - **Ghost-to-real merge must re-consent.** When Emma later signs up and the merge prompt fires (§11.5), Emma must explicitly consent to having her ghost data merged — "Константин запази твоя рожден ден в приложението. Да запазим ли и да свържем ли картите?" Not auto-merge.
-- **Right-to-deletion cascades through ghost profiles.** If Emma contacts Celestia asking to be deleted (yes, Emma who isn't even a user can do this under GDPR), the deletion must reach every user's Кръг who has her as a ghost. Reference doc §4 checklist item on right-to-deletion applies here.
+- **Right-to-deletion cascades through ghost profiles.** If Emma contacts Stellaeum asking to be deleted (yes, Emma who isn't even a user can do this under GDPR), the deletion must reach every user's Кръг who has her as a ghost. Reference doc §4 checklist item on right-to-deletion applies here.
 - **This is premium-only for a reason.** Ghost profile creation should arguably be gated behind premium — serious GDPR exposure shouldn't live in the free tier where abuse risk is higher. Revisit in §4 premium wedge strategy.
 
 ### 13.4 Webhook reliability determines Кръг's viral quality
@@ -778,7 +778,7 @@ These are part of Phase A's definition-of-done alongside the IA work.
 
 ## 14. What I recommend reading next
 
-- `Celestia_AI_Reference.md` — architecture, GDPR, AI provider, webhook patterns. Directly shapes Phase A/B per §13 above.
+- `Stellaeum_AI_Reference.md` — architecture, GDPR, AI provider, webhook patterns. Directly shapes Phase A/B per §13 above.
 - `COMPETITOR_ANALYSIS.md` and `COMPETITOR_FIELD_GUIDE.md` — existing strategic research that pairs with this doc
 - `PITFALLS.md` — know the failure modes before Phase B
 - Fabien Cartal's Co-Star redesign case study (external) — shortest version of the same IA reasoning applied to the competitor we're borrowing most from

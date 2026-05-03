@@ -209,6 +209,74 @@ sub-round 2.5): for shared mobile/web data surfaces, mobile mirrors web's
 existing Bulgarian vocabulary; mobile-specific surfaces get
 bulgarian-skill calibration.
 
+## 9. Sentry org slug rename — blocked on plan tier
+
+**Status:** During sub-round 3 (Stellaeum rename) Layer 2 dashboard work,
+founder attempted to rename the Sentry org slug from the celestia-prefixed
+identifier. Sentry's plan tier requires migration to rename org slugs;
+the rename is blocked without either upgrading the plan or migrating to
+a new Sentry org. Project name within the org was renamed cosmetically
+(no DSN change).
+
+**Trigger:** Phase D pre-launch decision — accept the cosmetic
+stuck-name OR plan migration. Cost-benefit weighs Sentry plan upgrade
+vs. brand-consistency value of an internal org slug never seen by users.
+
+**Sub-round when ready:** Dedicated Sentry migration task or
+accept-and-document as historical drift.
+
+**Re-add path (if migrated):** create new Sentry org at the desired
+slug, update SENTRY_ORG and SENTRY_PROJECT env vars in deployment
+secrets, swap DSNs (org-bound), confirm error events flow into the new
+org, retire the old org.
+
+## 10. Test email domain `@celestia-ai.dev` — kept as historical
+
+**Status:** UAT harness (`apps/web/scripts/m3-uat-harness.mjs:37,1405`)
+test email domains kept as `m3uat@celestia-ai.dev` and
+`m3uat-cascade@celestia-ai.dev` per sub-round 3 ratification 10. Kept
+as-is despite the Stellaeum rename because they are arbitrary
+identifiers in test infrastructure — never user-facing — and renaming
+requires registering `@stellaeum.dev` (~$10–15 + DNS + email-receiving
+setup) for what is functionally a stable test fixture.
+
+**Trigger:** Domain registration costs covered AND test infra cleanup
+priority justifies the touch. Likely when Phase D pre-launch surfaces
+test-infrastructure polish.
+
+**Sub-round when ready:** Dedicated test infra cleanup task.
+
+**Re-add path:** Register a domain (likely `stellaeum.dev` or related),
+update Clerk dashboard email-allowlist for the new domain, change the
+two harness lines + any associated test-user ensure helpers, retire the
+old domain.
+
+## 11. GitHub repository rename `Project379/celestiai` → TBD
+
+**Status:** GitHub repo at `github.com/Project379/celestiai` retains
+the original `celestiai` slug. The single tracked code reference at
+`packages/core/tsconfig.json:7` (a `STRICTNESS_DEFERRED` comment
+linking to issue #8) was preserved as-is per sub-round 3 ratification 5
+because the URL doesn't change with the code rename — and the linked
+issue is itself historical context.
+
+**Trigger:** When public visibility matters (Phase D approach) OR when
+the brand-consistency value outweighs the URL-stability cost
+(GitHub repo rename touches: all clone URLs, all GitHub Actions
+secrets/permissions, all README badges, all linked issues/PRs from
+external sources, the URL in `packages/core/tsconfig.json:7`).
+
+**Sub-round when ready:** Dedicated GitHub admin task. Repo rename is
+mechanically simple; the cascade through external references is the
+cost.
+
+**Re-add path:** GitHub repo Settings → Rename → confirm. Update remote
+URLs in local clones (`git remote set-url`). Update
+`packages/core/tsconfig.json:7` comment. Audit GitHub Actions secrets
+that reference the old repo path (`secrets.GITHUB_TOKEN` is automatic;
+custom secrets may be repo-pathed). Update any external references
+(third-party docs, badges, README links from forks).
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have

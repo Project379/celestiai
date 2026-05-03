@@ -1,6 +1,6 @@
 # Migration Tooling
 
-**Canonical path for Celestia AI schema changes, effective 2026-04-20.**
+**Canonical path for Stellaeum AI schema changes, effective 2026-04-20.**
 
 This doc replaces the migration half of `.planning/research/DRIZZLE_DECISION.md` (see §9 of that file for the reversal). Drizzle is removed; Supabase CLI owns migrations and typed-client generation from here on.
 
@@ -62,7 +62,7 @@ The project-ref comes from the Supabase dashboard URL. Don't commit it — it's 
 Run via:
 
 ```bash
-pnpm --filter @celestia/web run diag:drift
+pnpm --filter @stellaeum/web run diag:drift
 ```
 
 Today the script still reads the old Drizzle snapshot; re-target is a follow-up task when `packages/db/` is deleted.

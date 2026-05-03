@@ -82,7 +82,7 @@ TOTAL: 13 drifted across 16 tables (147 columns scanned)
 ## Reproducing this audit
 
 ```bash
-pnpm --filter @celestia/web run diag:drift
+pnpm --filter @stellaeum/web run diag:drift
 # or
 node --env-file=apps/web/.env.local \
      apps/web/scripts/diagnostics/audit-schema-drift.mjs

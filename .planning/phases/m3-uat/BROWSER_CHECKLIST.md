@@ -23,7 +23,7 @@ The harness does NOT cover, and these items remain browser-only:
 - **Streaming endpoints.** `/api/horoscope/generate` and `/api/oracle/generate` are streaming responses under AI SDK semantics. Harness probes the cap-gate branch (429 short-circuit before the stream) and the cache-hit branch (200 cached JSON before the stream); the actual stream body is never consumed.
 - **Localization rendering.** Harness asserts BG strings appear in JSON bodies; whether those strings render correctly in the UI (font, direction, truncation, Zod-form error placement) is a visual check.
 
-**Release gate.** Don't declare M3 UAT complete on a programmatic pass alone. Every `[must-exercise]` item in this document must be signed off in a browser session against `pnpm --filter @celestia/web dev` in incognito with DevTools "Disable cache" on (see `AUTH_TESTING_NOTES.md` for why).
+**Release gate.** Don't declare M3 UAT complete on a programmatic pass alone. Every `[must-exercise]` item in this document must be signed off in a browser session against `pnpm --filter @stellaeum/web dev` in incognito with DevTools "Disable cache" on (see `AUTH_TESTING_NOTES.md` for why).
 
 ---
 

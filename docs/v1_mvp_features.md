@@ -1,4 +1,4 @@
-# Celestia AI — v1.0 Feature Roadmap
+# Stellaeum AI — v1.0 Feature Roadmap
 
 **Last updated:** 2026-04-02
 **Audience:** Developers, product managers, stakeholders
@@ -8,7 +8,7 @@
 
 ## At a Glance
 
-Celestia AI is a premium astrology app for the Bulgarian market. Users enter their birth data, get a precise natal chart calculated by Swiss Ephemeris, and receive AI-powered personalized readings. The business model is freemium: free users get a basic personality reading; premium subscribers (€6.99/mo) unlock love, career, health readings, synastry, and more.
+Stellaeum AI is a premium astrology app for the Bulgarian market. Users enter their birth data, get a precise natal chart calculated by Swiss Ephemeris, and receive AI-powered personalized readings. The business model is freemium: free users get a basic personality reading; premium subscribers (€6.99/mo) unlock love, career, health readings, synastry, and more.
 
 **What's built:** A fully functional web app with auth, birth charts, AI Oracle, daily horoscopes, Stripe payments, and GDPR compliance.
 
@@ -360,7 +360,7 @@ Organized into 6 waves. Each wave builds on the previous one. Within a wave, fea
 
 **What it does:** Reduces the monthly subscription price from €9.99 to €6.99.
 
-**Why it matters:** At €6.99, Celestia is cheaper than Netflix (€7.99) in Bulgaria. Research shows this price point is 0.51% of the average Bulgarian salary — frictionless for the target demographic. The 30% price reduction should increase conversion enough to more than offset the per-user revenue drop.
+**Why it matters:** At €6.99, Stellaeum is cheaper than Netflix (€7.99) in Bulgaria. Research shows this price point is 0.51% of the average Bulgarian salary — frictionless for the target demographic. The 30% price reduction should increase conversion enough to more than offset the per-user revenue drop.
 
 **Tech:** Create new Stripe Price object, update `STRIPE_PRICE_MONTHLY` env var, update display text in `PricingContent.tsx` and `PricingSection.tsx`.
 
@@ -446,7 +446,7 @@ Organized into 6 waves. Each wave builds on the previous one. Within a wave, fea
 **Code sharing strategy:**
 | Layer | Shared between web & mobile? |
 |-------|------------------------------|
-| Types & constants | Yes — import from `@celestia/astrology/client` |
+| Types & constants | Yes — import from `@stellaeum/astrology/client` |
 | Validation schemas | Yes — move to `packages/shared/` |
 | API call logic | Yes — extract from hooks into shared service layer |
 | UI components | No — web uses Tailwind/D3, mobile uses NativeWind/Skia |

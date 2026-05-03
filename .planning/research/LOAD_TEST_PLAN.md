@@ -8,7 +8,7 @@
 
 ## Why this doc exists
 
-`[verified — Celestia_AI_Reference.md §3]` The reference doc says *"Load test before launch with k6 or Artillery against the streaming endpoint at 500 concurrent connections — 10 is not a load test."*
+`[verified — Stellaeum_AI_Reference.md §3]` The reference doc says *"Load test before launch with k6 or Artillery against the streaming endpoint at 500 concurrent connections — 10 is not a load test."*
 
 `[inferred]` That's framing as a credible-test-floor guideline ("10 is not a load test"), not a derived traffic estimate from expected Bulgarian MVP DAU. Previous chat treated the 500 number as a measured SLO — it isn't.
 
@@ -59,7 +59,7 @@ For a non-streaming JSON endpoint, that's sufficient. For an **LLM streaming end
 
 ### Scenario B — warm cache, real traffic shape
 - **Purpose:** baseline under realistic MVP conditions
-- **Upstream:** real OpenRouter (current primary — `meta-llama/llama-3.3-70b-instruct`, see AI_PROVIDER_DECISION.md), but requests deliberately hit pre-generated daily horoscope combinations (see Celestia_AI_Reference.md §3 — cached per sun-sign × moon-phase × day, ~100 unique per day)
+- **Upstream:** real OpenRouter (current primary — `meta-llama/llama-3.3-70b-instruct`, see AI_PROVIDER_DECISION.md), but requests deliberately hit pre-generated daily horoscope combinations (see Stellaeum_AI_Reference.md §3 — cached per sun-sign × moon-phase × day, ~100 unique per day)
 - **Load:** ramp 0 → 100 concurrent over 5min, hold 10min
 - **Pass:** `cache_hit` > 90%; `ttft` p95 < 500ms; cost per request near zero
 
@@ -75,7 +75,7 @@ For a non-streaming JSON endpoint, that's sufficient. For an **LLM streaming end
 - **Load:** ramp 0 → 100 concurrent over 5min, hold 15min, then 100 → 200 over 5min, hold 10min
 - **Pass:** no degradation of `ttft` p95 above 2.5s up to 100; identify and document where p95 crosses 3s
 
-### Scenario E — aspirational target (Celestia_AI_Reference §3)
+### Scenario E — aspirational target (Stellaeum_AI_Reference §3)
 - **Purpose:** validate the 500-concurrent guideline from the reference doc
 - **Upstream:** real OpenRouter, realistic cache mix
 - **Load:** ramp 0 → 500 over 10min, hold 10min
@@ -84,7 +84,7 @@ For a non-streaming JSON endpoint, that's sufficient. For an **LLM streaming end
 
 ## 4. Why cache-hit matters more than raw concurrency
 
-`[verified — per Celestia_AI_Reference.md §3 and §5]` The daily horoscope endpoint generates ONCE per (sun-sign × moon-phase) combination per day. That's <100 unique responses for the entire user base on any given day. Everything else is a cache lookup from Supabase.
+`[verified — per Stellaeum_AI_Reference.md §3 and §5]` The daily horoscope endpoint generates ONCE per (sun-sign × moon-phase) combination per day. That's <100 unique responses for the entire user base on any given day. Everything else is a cache lookup from Supabase.
 
 `[inferred]` Implication: under warm-cache conditions, the AI streaming endpoint is effectively serving static content and can trivially handle hundreds of concurrent. The real bottleneck is **cold-cache request rate** (first request of the day per combo, or Oracle FAB conversations which are per-user-unique).
 
@@ -100,7 +100,7 @@ These caps come from `MOBILE_UX_RESEARCH.md §11.7` as proposals, not shipped co
 ### Forward model: how much traffic does Bulgarian MVP realistically produce?
 
 - Bulgarian internet-adult population: ~5M `[assumed]`
-- Celestia TAM (women 22-40, spiritual/wellness-leaning): ~300-500k `[assumed]`
+- Stellaeum TAM (women 22-40, spiritual/wellness-leaning): ~300-500k `[assumed]`
 - Year-1 DAU target: 1-3% of TAM → 3k-15k DAU `[assumed]`
 - AI interactions per DAU: 1-3 `[assumed — varies by tier and Oracle adoption]`
 
@@ -111,7 +111,7 @@ At **10k DAU × 2 interactions/day = 20k streaming responses/day**, with 30% of 
 
 ### What this says about the 500 number
 
-- `[verified — Celestia_AI_Reference.md §3]` 500 concurrent is the architecture *target* in the reference doc. It is **not** a measured SLO, **not** a user-derived requirement, and **not** MVP-calibrated.
+- `[verified — Stellaeum_AI_Reference.md §3]` 500 concurrent is the architecture *target* in the reference doc. It is **not** a measured SLO, **not** a user-derived requirement, and **not** MVP-calibrated.
 - `[inferred]` 500 is credibly ~5× above forward-modeled MVP traffic. The reference doc's framing ("10 is not a load test") suggests it's a floor for "test like you mean it," not an expected-load estimate.
 - `[planned]` **Proposal:** gate MVP launch at Scenario D passing (100 concurrent Bulgarian MVP traffic, cache-mix realistic). Hold Scenario E (500 concurrent) as the Year-1 or international-expansion gate. Both need TTFT/ITL instrumentation — neither is satisfied by default k6 metrics.
 
@@ -173,7 +173,7 @@ Format:
 2. **Write Scenario A script** — `loadtest/scenarios/A-mocked-harness.js`. Script defines custom metrics (`ttft`, `itl`, `stream_duration`, `stream_aborted`, `stream_stalled`, `cache_hit`, `stream_tokens`), connects to a local Next dev server with a deterministic mock upstream swapped in via env var (e.g. `AI_PROVIDER=mock`), runs 10 concurrent for 2 minutes, asserts that the custom metrics read sensibly.
 3. **Add mock-upstream toggle to `apps/web`** — tiny change behind `AI_PROVIDER=mock`: return a stream that emits deterministic tokens at 10 tokens/s for 15s. Doesn't touch production code path. One day of work including tests.
 4. **Run Scenario A locally.** `pnpm dev` + `k6 run loadtest/scenarios/A-mocked-harness.js`. Iterate until metrics land where §2 targets them. This proves the harness works.
-5. **Pin Vercel regions.** Edit `apps/web/vercel.json` to add `"regions": ["fra1"]` per `Celestia_AI_Reference.md §3`. Deploy to staging. Small change, no code impact.
+5. **Pin Vercel regions.** Edit `apps/web/vercel.json` to add `"regions": ["fra1"]` per `Stellaeum_AI_Reference.md §3`. Deploy to staging. Small change, no code impact.
 6. **Confirm Supabase project region is `eu-central-1` or `eu-west-1`.** Cannot be changed after creation. If it's wrong, that's a much bigger conversation (data migration). Verify in Supabase Dashboard.
 7. **Write Scenario B script** — `loadtest/scenarios/B-warm-cache.js`. Ramp 0→100 concurrent over 5min, hold 10min, hit cached daily-horoscope endpoints.
 8. **Write Scenario C script** — `loadtest/scenarios/C-cold-cache.js`. 50 concurrent for 5min, `X-Cache-Bypass` header set.

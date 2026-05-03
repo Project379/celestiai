@@ -32,8 +32,8 @@ Items deliberately deferred from pre-launch for cost, scope, or cash-flow reason
 - Monthly revenue > CHF 5,000 (rough heuristic — CHF 750 becomes noise).
 - Astrodienst publicly challenges GPL-2.0 ASP interpretation or pursues similar cases.
 - Bulgarian/EU jurisdiction case law shifts on GPL-2.0 "distribution" for SaaS.
-- Celestia considers distributing a client-side app (mobile native, desktop).
-- Celestia adds any `sweph`-dependent code to the client-side (mobile) surface.
+- Stellaeum considers distributing a client-side app (mobile native, desktop).
+- Stellaeum adds any `sweph`-dependent code to the client-side (mobile) surface.
 
 **Why wait:**
 

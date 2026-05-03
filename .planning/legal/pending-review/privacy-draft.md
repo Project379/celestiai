@@ -25,11 +25,11 @@
   design (Cinzel eyebrow + display font + section-by-section dl/dt/dd).
 -->
 
-# Политика за поверителност — Celestia AI
+# Политика за поверителност — Stellaeum AI
 
 **Последна актуализация на черновата:** 2026-04-27 (предстои преглед от адвокат)
 
-**Метаописание (за TSX `<Metadata>`):** *Как Celestia AI събира, използва и защитава личните ти данни.*
+**Метаописание (за TSX `<Metadata>`):** *Как Stellaeum AI събира, използва и защитава личните ти данни.*
 
 ---
 
@@ -51,7 +51,7 @@ here. -->
 
 ## I — Какви данни събираме
 
-При използване на Celestia AI събираме следните категории лични данни:
+При използване на Stellaeum AI събираме следните категории лични данни:
 
 - **Идентификационни данни на профила** — имейл адрес, идентификатор от Clerk (auth провайдъра), при наличие на регистрация.
 - **Рождени данни** — дата, час и място на раждане. Използват се за изчисление на наталната ти карта.
@@ -122,10 +122,10 @@ convention may differ from this structuring. -->
 - **Право на възражение** *(чл. 21)* — можеш да възразиш срещу обработване, основано на легитимен интерес.
 - **Право да подадеш жалба** — пред Комисията за защита на личните данни (КЗЛД) на адрес `kzld.bg`, ако смяташ, че обработваме данните ти неправомерно.
 
-**Как да упражниш тези права:** засега изпрати заявка на support@celestia.app — обработваме отговор в законовия срок до един месец. Автоматичен интерфейс за изтегляне и заявка за изтриване предстои в следваща версия на приложението.
+**Как да упражниш тези права:** засега изпрати заявка на support@stellaeum.app — обработваме отговор в законовия срок до един месец. Автоматичен интерфейс за изтегляне и заявка за изтриване предстои в следваща версия на приложението.
 
 <!-- COUNSEL-REVIEW: Once §11.2 ships /privacy-settings UI (post Phase A
-mobile scaffolding), the "support@celestia.app" path becomes a
+mobile scaffolding), the "support@stellaeum.app" path becomes a
 fallback. The text should be updated then. Until then, this is the
 current truth. -->
 
@@ -149,11 +149,11 @@ defers this decision to Item 1. -->
 
 За въпроси относно обработването на личните ти данни, заявки по ОРЗД или сигнали за съмнение за нарушение, пиши ни на:
 
-**support@celestia.app**
+**support@stellaeum.app**
 
 <!-- COUNSEL-REVIEW: GDPR Art. 37 thresholds for mandatory DPO
 appointment (Длъжностно лице по защита на данните, ДЛЗД) likely not
-triggered for Celestia's current scale (no large-scale special-category
+triggered for Stellaeum's current scale (no large-scale special-category
 processing, no large-scale systematic monitoring). Counsel should
 confirm and advise whether to add an explicit "ДЛЗД не е назначено
 съгласно чл. 37 ОРЗД, тъй като дейностите по обработване не попадат
@@ -241,7 +241,7 @@ met. -->
 
 ## XI — Списък на обработващите
 
-Следните трети страни обработват лични данни от името на Celestia AI:
+Следните трети страни обработват лични данни от името на Stellaeum AI:
 
 | Обработващ | Цел | Регион | Политика за поверителност |
 |---|---|---|---|

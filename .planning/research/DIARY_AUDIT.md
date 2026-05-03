@@ -65,7 +65,7 @@
 | `apps/web/components/manifest/ManifestDiaryContent.tsx` | Top-level diary surface | `useManifestEntries`, `getLunarPhase`, header copy hardcoded in-component | `/rhythm/journal/page.tsx` |
 | `apps/web/components/manifest/ManifestEntryForm.tsx` | 3-field textarea form + submit | `getManifestPrompt(phase.id)` from `lib/manifest/prompts.ts` | `ManifestDiaryContent` |
 | `apps/web/components/manifest/ManifestHistory.tsx` | Expandable list of past entries with delete-with-confirm | Entries passed as prop (no direct data access) | `ManifestDiaryContent` |
-| `apps/web/hooks/useManifestEntries.ts` | localStorage CRUD — read, upsert-by-date, delete | `window.localStorage` key `celestia.manifest.entries.v1` | `ManifestDiaryContent` |
+| `apps/web/hooks/useManifestEntries.ts` | localStorage CRUD — read, upsert-by-date, delete | `window.localStorage` key `stellaeum.manifest.entries.v1` | `ManifestDiaryContent` |
 | `apps/web/lib/manifest/prompts.ts` | Prompt library (8 phases × `{ heading, lead, fieldLabels[3], placeholders[3] }`) | Hardcoded Bulgarian copy | `ManifestEntryForm` |
 | `apps/web/lib/manifest/types.ts` | `ManifestEntry`, `ManifestDraft` types | — | Hook + components |
 
@@ -88,7 +88,7 @@
 
 ### 3.1 localStorage persistence `[verified]`
 
-- **Key:** `celestia.manifest.entries.v1` (the `.v1` suffix is versioning — future breaking schema changes can bump to `.v2` without colliding; current code does not read any prior-version key).
+- **Key:** `stellaeum.manifest.entries.v1` (the `.v1` suffix is versioning — future breaking schema changes can bump to `.v2` without colliding; current code does not read any prior-version key).
 - **Value shape:** JSON-encoded `ManifestEntry[]` array.
 - **Entry schema** (`lib/manifest/types.ts:10-18`):
 
@@ -224,11 +224,11 @@ One thing I cannot verify from code alone: whether any out-of-band element (dash
 
 3. **Silent localStorage failures `[inferred]`** (§3.2) — quota exceeded and corrupted JSON both caught silently. Not diary-specific; also present in `useDailyHoroscope.ts` and `useStoryList.ts` per the grep. Product-level decision on whether client-side storage failures deserve any UI feedback.
 
-4. **No cross-tab sync `[runtime-check-needed]`** (§3.2) — two tabs writing to `celestia.manifest.entries.v1` will overwrite each other on save. Not blocking but worth noting if mobile-web + desktop-web simultaneous use is a scenario.
+4. **No cross-tab sync `[runtime-check-needed]`** (§3.2) — two tabs writing to `stellaeum.manifest.entries.v1` will overwrite each other on save. Not blocking but worth noting if mobile-web + desktop-web simultaneous use is a scenario.
 
 5. **Bulgarian-register typo in doc comment** (§4.4) — `lib/manifest/prompts.ts:8` — *"pълнолуние"* mixed-alphabet artefact. Internal, not user-facing. Defer per the existing pattern.
 
-6. **localStorage keys inventory `[inferred]`**: the app uses at least three localStorage keys (`celestia.manifest.entries.v1`, the horoscope cache in `useDailyHoroscope.ts`, the story list in `useStoryList.ts`). No centralized inventory of keys or size-budget tracking. Flag for a future localStorage-hygiene pass; not diary-specific.
+6. **localStorage keys inventory `[inferred]`**: the app uses at least three localStorage keys (`stellaeum.manifest.entries.v1`, the horoscope cache in `useDailyHoroscope.ts`, the story list in `useStoryList.ts`). No centralized inventory of keys or size-budget tracking. Flag for a future localStorage-hygiene pass; not diary-specific.
 
 ---
 

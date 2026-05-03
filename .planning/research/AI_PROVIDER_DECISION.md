@@ -12,7 +12,7 @@
 
 | Source | Claim |
 |---|---|
-| Round-1 stack snapshot (`Celestia_AI_Reference.md`) | "BgGPT primary (INSAIT), Claude/GPT-4o fallback via AI SDK" |
+| Round-1 stack snapshot (`Stellaeum_AI_Reference.md`) | "BgGPT primary (INSAIT), Claude/GPT-4o fallback via AI SDK" |
 | 2026-04-20 conversation (pre-audit) | "Google Gemini only (in .env)" |
 | Actual code + `.env.local` (verified) | OpenRouter (`meta-llama/llama-3.3-70b-instruct`), no fallback |
 
@@ -24,7 +24,7 @@ This is the same pattern as `DRIZZLE_DECISION.md §9` — document decisions and
 
 ## 2. Original plan (aspirational, never wired)
 
-`[verified — Celestia_AI_Reference.md round-1 snapshot]` The initial stack claim:
+`[verified — Stellaeum_AI_Reference.md round-1 snapshot]` The initial stack claim:
 
 - **Primary:** BgGPT (INSAIT Institute's Bulgarian-optimized LLM) — chosen for native-Bulgarian quality advantage over English-primary models
 - **Fallback:** Claude or GPT-4o via Vercel AI SDK's multi-provider support — chosen so a BgGPT outage didn't stop the product
@@ -93,7 +93,7 @@ Both are being cleaned up in a dedicated chore commit at the tail of this docs b
 
 `[verified]` For the trail:
 
-1. **Planning doc said BgGPT primary** (Celestia_AI_Reference.md, round 1) — aspirational; was never wired.
+1. **Planning doc said BgGPT primary** (Stellaeum_AI_Reference.md, round 1) — aspirational; was never wired.
 2. **Recent conversation memory said Gemini primary** — that was my incorrect recollection in the 2026-04-20 thread. Gemini was also never wired; the `@ai-sdk/google` dep in package.json may have contributed to the mis-memory. Apologies for the confusion.
 3. **Actual code always used OpenRouter/Llama** — verified by reading the three generating endpoints + `.env.local` + package.json imports.
 
@@ -127,7 +127,7 @@ None of these hold today. All three are plausible futures.
 
 `[verified]` Three planning docs need updating as a result of pinning this reality:
 
-- `Celestia_AI_Reference.md` — replace "BgGPT primary, Claude/GPT-4o fallback" with the OpenRouter/Llama reality. Preserve BgGPT references where they describe the deferred future.
+- `Stellaeum_AI_Reference.md` — replace "BgGPT primary, Claude/GPT-4o fallback" with the OpenRouter/Llama reality. Preserve BgGPT references where they describe the deferred future.
 - `LOAD_TEST_PLAN.md` — provider under test in §5.2 is OpenRouter/Llama, not BgGPT. Predecessor chain entry about "BgGPT API access" becomes "OpenRouter API access." Add §5.3 forward-looking note about the BgGPT revisit requiring re-validation.
 - `PRE_LAUNCH_PREREQS.md` — the AI-provider verification row becomes OpenRouter-specific. Add a separate row for fallback-strategy decision.
 
@@ -137,7 +137,7 @@ Shipping as a trio of commits right after this doc, so each source of truth poin
 
 ## 7. Trail
 
-- Earlier aspirational plan: `.planning/research/Celestia_AI_Reference.md` round-1 snapshot (pre-update)
+- Earlier aspirational plan: `.planning/research/Stellaeum_AI_Reference.md` round-1 snapshot (pre-update)
 - Current provider code: `apps/web/app/api/oracle/generate/route.ts`, `oracle/teaser/route.ts`, `horoscope/generate/route.ts`
 - Env: `apps/web/.env.local` (OPENROUTER_API_KEY only)
 - Cleanup of leftover scaffolding: dedicated chore commit at the tail of the 2026-04-20 docs block

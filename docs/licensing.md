@@ -34,7 +34,7 @@ The `sweph` README directs GPL users to either `npm install sweph@gpl` or `npm i
 
 ### Drift discovery and remediation — 2026-04-21
 
-During §9.6 post-close sweph-pin verification (see `.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md § Doc drift corrections` entry #9), `packages/core/package.json` was found to carry `"sweph": "^2.10.3-4"` resolving to `sweph@2.10.3-b-1`, which Astrodienst has licensed as `(AGPL-3.0-or-later OR LGPL-3.0-or-later)`. `packages/core/src/horoscope/transit-analysis.ts` imports sweph and calls `sweph.calc_ut` at runtime — not a dev-only dep. This placed part of the Celestia server-side code on the AGPL-3.0 path while `docs/licensing.md` claimed the workspace was on the GPL-2.0 path.
+During §9.6 post-close sweph-pin verification (see `.planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md § Doc drift corrections` entry #9), `packages/core/package.json` was found to carry `"sweph": "^2.10.3-4"` resolving to `sweph@2.10.3-b-1`, which Astrodienst has licensed as `(AGPL-3.0-or-later OR LGPL-3.0-or-later)`. `packages/core/src/horoscope/transit-analysis.ts` imports sweph and calls `sweph.calc_ut` at runtime — not a dev-only dep. This placed part of the Stellaeum server-side code on the AGPL-3.0 path while `docs/licensing.md` claimed the workspace was on the GPL-2.0 path.
 
 **Attribution:** `packages/core` was created after the `packages/astrology` GPL-2.0 pin (`d5811fb`, 2026-04-20) and picked up sweph via the default latest-matching-semver convention. Nothing enforced the workspace-wide pin until §9A added the pnpm override.
 
@@ -44,12 +44,12 @@ During §9.6 post-close sweph-pin verification (see `.planning/phases/09-ephemer
 
 ### Reasoning
 
-Celestia is closed-source SaaS calling `sweph` from a server API route (`apps/web/app/api/*`). Library choice between `sweph` versions:
+Stellaeum is closed-source SaaS calling `sweph` from a server API route (`apps/web/app/api/*`). Library choice between `sweph` versions:
 
 - **`sweph@2.10.1+` (latest: 2.10.3-5)** is **AGPL-3.0-or-later**. AGPL §13 (Remote Network Interaction) requires source disclosure to users who interact with the software over a network — directly targets closed-source SaaS. Incompatible with shipping closed-source without a Swiss Ephemeris Professional License (LGPL-3.0 alternative path opens only for paid licensees).
 - **`sweph@2.10.0-<rev>`** is **GPL-2.0-or-later OR LGPL-3.0-or-later**. GPL-2.0 has no network-interaction clause. Mainstream interpretation: GPL-2.0 does not trigger source-disclosure obligations for software provided over a network without physical distribution of the binary. This is the "ASP loophole" that AGPL-3.0 was explicitly written to close.
 
-Pinning to `2.10.0-11` keeps Celestia on a free-license path pre-launch. Upstream Swiss Ephemeris algorithm content at the `2.10.0` boundary is current enough — Moshier ephemeris (our only runtime path, per `09-01-PRECISION-FLOOR.md`) is stable C code that hasn't substantively changed since SE 2.10.0.
+Pinning to `2.10.0-11` keeps Stellaeum on a free-license path pre-launch. Upstream Swiss Ephemeris algorithm content at the `2.10.0` boundary is current enough — Moshier ephemeris (our only runtime path, per `09-01-PRECISION-FLOOR.md`) is stable C code that hasn't substantively changed since SE 2.10.0.
 
 ### Known uncertainty
 
@@ -68,8 +68,8 @@ Reconsider the GPL-2.0 path and move to Professional License if any of the follo
 1. **Revenue reaches a level where CHF 750 is negligible.** Rough heuristic: monthly revenue > CHF 5,000.
 2. **Astrodienst publicly challenges GPL-2.0 ASP interpretation** or pursues similar cases against any SaaS product using `sweph@gpl`.
 3. **Bulgarian/EU jurisdiction case law shifts** on GPL-2.0 "distribution" interpretation — specifically any ruling that "provision over a network" counts as "distribution" for GPL-2.0 §3 purposes.
-4. **Celestia considers distributing a client-side app** (mobile native binaries, desktop installers). Physical binary distribution triggers GPL-2.0 source-disclosure even under mainstream interpretation — this is textbook GPL-2.0 coverage, not ASP-loophole-dependent.
-5. **Celestia adds any `sweph`-dependent code to the client-side (mobile) surface** for the same reason as (4). The current architecture keeps `sweph` server-side only — any change there re-opens the license question.
+4. **Stellaeum considers distributing a client-side app** (mobile native binaries, desktop installers). Physical binary distribution triggers GPL-2.0 source-disclosure even under mainstream interpretation — this is textbook GPL-2.0 coverage, not ASP-loophole-dependent.
+5. **Stellaeum adds any `sweph`-dependent code to the client-side (mobile) surface** for the same reason as (4). The current architecture keeps `sweph` server-side only — any change there re-opens the license question.
 
 ### Upgrade path
 

@@ -111,7 +111,7 @@ The rest are genuinely interactive (user triggers the fetch by action — pressi
 `[verified via full-file reads of 4 route handlers]`:
 
 - `/api/crystals/today/route.ts` (150 lines): streak computation, daily rotation math, auto-collect, premium check — **all inline**. Only `fetchCatalog` is extracted to `@/lib/crystals/queries`.
-- `/api/chart/calculate/route.ts` (138 lines): auth, ownership verification, cache lookup, cache write, audit logging — **all inline**. Only `calculateNatalChart` (pure ephemeris calc) is extracted to `@celestia/astrology`.
+- `/api/chart/calculate/route.ts` (138 lines): auth, ownership verification, cache lookup, cache write, audit logging — **all inline**. Only `calculateNatalChart` (pure ephemeris calc) is extracted to `@stellaeum/astrology`.
 - `/api/transits/overview/route.ts` (105 lines): premium gate, chart ownership verify, calculation lookup-or-compute-and-cache orchestration — **all inline**. Only `buildTransitOverview` (pure aspect analysis) is extracted to `@/lib/horoscope/transit-analysis`.
 - `/api/horoscope/generate/route.ts` (255 lines, partial read): streaming setup, prompt building, transit analysis — **partially extracted** (`buildDailyHoroscopePrompt`, `buildTransitOverview`, `transitAndNatalToPromptText`) but orchestration inline.
 
@@ -131,8 +131,8 @@ The rest are genuinely interactive (user triggers the fetch by action — pressi
 
 `[verified]`:
 - `apps/web/lib/` (co-located with web app, 13 sub-directories). This is the current logic layer.
-- `packages/astrology` (pure ephemeris + chart math). Used by route handlers via `@celestia/astrology`.
-- `packages/db` exists with Drizzle schemas, but **`[verified]` no file in `apps/web/` imports from `@celestia/db` or uses Drizzle.** Supabase is accessed via `@supabase/supabase-js` query builder only. Drizzle is currently unused by the web app.
+- `packages/astrology` (pure ephemeris + chart math). Used by route handlers via `@stellaeum/astrology`.
+- `packages/db` exists with Drizzle schemas, but **`[verified]` no file in `apps/web/` imports from `@stellaeum/db` or uses Drizzle.** Supabase is accessed via `@supabase/supabase-js` query builder only. Drizzle is currently unused by the web app.
 
 `[inferred]` `apps/web/lib/` serves roughly the role the user wants `packages/core/` to serve — shared business logic — but it's scoped to `apps/web`, so `apps/mobile` cannot import from it. That's the hoist target for Option B.
 
@@ -197,7 +197,7 @@ The rest are genuinely interactive (user triggers the fetch by action — pressi
 
 ### 5.1 Swiss Ephemeris weight
 
-`[open]` `@celestia/astrology` wraps `swisseph-wasm`. `[verified]` it's already being called inside route handlers (`/api/chart/calculate`, `/api/transits/overview`) and working. `[open]` The question is whether it works cleanly inside Server Components too — specifically cold-start cost on Vercel serverless. Per `Celestia_AI_Reference.md §3`, WASM init adds 500ms-2s on cold start. For an SSR page that awaits the calc in its render path, that's user-visible latency.
+`[open]` `@stellaeum/astrology` wraps `swisseph-wasm`. `[verified]` it's already being called inside route handlers (`/api/chart/calculate`, `/api/transits/overview`) and working. `[open]` The question is whether it works cleanly inside Server Components too — specifically cold-start cost on Vercel serverless. Per `Stellaeum_AI_Reference.md §3`, WASM init adds 500ms-2s on cold start. For an SSR page that awaits the calc in its render path, that's user-visible latency.
 
 Proposed resolution [planned]: Server Components should not compute ephemeris on the render path. Always serve from `chart_calculations` cache (Supabase row keyed by `chart_id`). The compute-and-cache step lives in a shared function that any surface can call; route handlers expose it over HTTP for mobile (or web client components), and Server Components hit the cache only. Cache misses trigger async recompute, not synchronous block.
 

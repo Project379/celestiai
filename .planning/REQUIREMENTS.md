@@ -1,4 +1,4 @@
-# Requirements: Celestia AI
+# Requirements: Stellaeum AI
 
 **Defined:** 2026-01-21
 **Core Value:** Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.

@@ -1,4 +1,4 @@
-# Celestia AI
+# Stellaeum AI
 
 ## What This Is
 

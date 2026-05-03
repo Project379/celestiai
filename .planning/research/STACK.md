@@ -1,7 +1,7 @@
 # Stack Research
 
 **Domain:** Mobile-first astrology/horoscope SaaS with premium subscription (Bulgarian market)
-**Project:** Celestia AI - Universal Web + iOS astrology app
+**Project:** Stellaeum AI - Universal Web + iOS astrology app
 **Researched:** 2026-01-19
 **Overall Confidence:** HIGH
 
@@ -62,10 +62,10 @@ This research validates the chosen tech stack for building a universal astrology
 
 ```bash
 # Initialize Turborepo with pnpm
-npx create-turbo@latest celestia-ai --package-manager pnpm
+npx create-turbo@latest stellaeum-ai --package-manager pnpm
 
 # Or use Solito template directly
-npx create-solito-app@latest celestia-ai -t with-tailwind
+npx create-solito-app@latest stellaeum-ai -t with-tailwind
 ```
 
 ### Core Dependencies (apps/web - Next.js)
@@ -445,8 +445,8 @@ const nextConfig = {
     'solito',
     'nativewind',
     'react-native-css-interop',
-    '@celestia/ui',
-    '@celestia/db',
+    '@stellaeum/ui',
+    '@stellaeum/db',
   ],
   experimental: {
     forceSwcTransforms: true,
@@ -507,5 +507,5 @@ export default defineConfig({
 
 ---
 
-*Stack research for: Celestia AI - Universal Astrology App*
+*Stack research for: Stellaeum AI - Universal Astrology App*
 *Researched: 2026-01-19*

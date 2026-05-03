@@ -1,6 +1,6 @@
 # Processor DPA Audit
 
-**Purpose:** track Data Processing Agreement status for every personal-data processor used by Celestia AI in production. Required by GDPR Art. 28 — controllers must have a DPA in place with each processor before live traffic flows.
+**Purpose:** track Data Processing Agreement status for every personal-data processor used by Stellaeum AI in production. Required by GDPR Art. 28 — controllers must have a DPA in place with each processor before live traffic flows.
 
 **Status:** founder-driven, in progress. Opened 2026-04-27 as part of §11.4.
 

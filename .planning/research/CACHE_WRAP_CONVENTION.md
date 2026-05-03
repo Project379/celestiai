@@ -32,8 +32,8 @@ Concretely: if a shared-package data function benefits from request-scoped dedup
 
 **Shared package (`packages/core/crystals/today.ts`):**
 ```ts
-import type { Database } from '@celestia/db'
-import { createSupabaseClient } from '@celestia/db'
+import type { Database } from '@stellaeum/db'
+import { createSupabaseClient } from '@stellaeum/db'
 import { getLunarPhase } from './lunar-phase'  // also core
 
 export async function getCrystalOfTheDay(userId: string | null) {
@@ -46,7 +46,7 @@ export async function getCrystalOfTheDay(userId: string | null) {
 **Web call-site wrapper (`apps/web/lib/crystals/today.ts`):**
 ```ts
 import { cache } from 'react'
-import { getCrystalOfTheDay as coreGetCrystalOfTheDay } from '@celestia/core/crystals/today'
+import { getCrystalOfTheDay as coreGetCrystalOfTheDay } from '@stellaeum/core/crystals/today'
 
 // Request-scoped dedupe — multiple Server Components (layout + page + tile)
 // that ask for today's crystal in the same render pass get one fetch.
@@ -62,7 +62,7 @@ const crystal = await getCrystalOfTheDay(userId)
 
 **Route handler consumer (`apps/web/app/api/crystals/today/route.ts`):**
 ```ts
-import { getCrystalOfTheDay } from '@celestia/core/crystals/today'
+import { getCrystalOfTheDay } from '@stellaeum/core/crystals/today'
 // Route handlers import the unwrapped core function directly — no render pass,
 // no benefit from React.cache. Each request is its own async call.
 
@@ -75,7 +75,7 @@ export async function GET() {
 
 **Mobile consumer (`apps/mobile/...`):**
 ```ts
-// Mobile calls the route handler over HTTP. Never imports from @celestia/core
+// Mobile calls the route handler over HTTP. Never imports from @stellaeum/core
 // directly for client-side data (doesn't have DB credentials). If caching is
 // wanted on mobile, it's explicit — AsyncStorage, React Query, whatever is
 // chosen — but that's a mobile-specific layer, not cache() from react.
