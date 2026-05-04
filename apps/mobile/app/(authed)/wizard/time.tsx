@@ -66,6 +66,12 @@ export default function WizardTimeScreen() {
   const birthTime = useWatch({ control, name: 'birthTime' })
 
   const [showIosPicker, setShowIosPicker] = useState(false)
+  // Snapshot of the picker's initial Date at modal-open time. Stable
+  // across re-renders during the user's spinner interaction so iOS does
+  // not treat per-onChange RHF updates as external value changes and
+  // snap the spinner back. RHF still tracks the latest emitted time
+  // via setValue in onChange below.
+  const [iosPickerValue, setIosPickerValue] = useState<Date>(() => new Date())
 
   const handleTimeKnownChange = (known: boolean) => {
     setValue('birthTimeKnown', known, { shouldValidate: true })
@@ -96,6 +102,7 @@ export default function WizardTimeScreen() {
         },
       })
     } else {
+      setIosPickerValue(initial)
       setShowIosPicker(true)
     }
   }
@@ -163,7 +170,7 @@ export default function WizardTimeScreen() {
               }`}
               style={{
                 top: 6,
-                left: birthTimeKnown ? 26 : 4,
+                left: birthTimeKnown ? 26 : 6,
                 transform: [{ rotate: '45deg' }],
               }}
             />
@@ -288,7 +295,7 @@ export default function WizardTimeScreen() {
               className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6"
             >
               <DateTimePicker
-                value={parseHHMM(getValues('birthTime'))}
+                value={iosPickerValue}
                 mode="time"
                 display="spinner"
                 is24Hour
