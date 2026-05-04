@@ -1,7 +1,7 @@
 'use client'
 
 import { useFormContext, useWatch } from 'react-hook-form'
-import type { BirthData, ApproximateTimeRange } from '@/lib/validators/birth-data'
+import type { BirthData, ApproximateTimeRange } from '@stellaeum/core/charts/schemas'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 interface TimeStepProps {

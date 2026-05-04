@@ -1,6 +1,23 @@
 import { z } from 'zod'
 
 /**
+ * Zod schemas for the birth-data flow. These are the wire contract shared
+ * between:
+ *   - packages/core/src/charts/birth-data.ts internal function input types
+ *     (CreateBirthChartInput / UpdateBirthChartInput are z.infer aliases)
+ *   - apps/web route handlers — POST /api/birth-data and
+ *     PATCH /api/birth-data/[id] safeParse() validation
+ *   - apps/web BirthDataWizard, DateStep, TimeStep, LocationStep,
+ *     ConfirmStep, EditBirthDataDialog — RHF zodResolver + BirthData type
+ *   - apps/mobile (authed)/(wizard) screens — RHF zodResolver + BirthData
+ *     type, identical Bulgarian error messages as web
+ *
+ * Bulgarian error messages live alongside the schema definition so every
+ * consumer surfaces the same UX-coupled copy. If you change this schema,
+ * every consumer sees the new shape on next build.
+ */
+
+/**
  * Approximate time ranges for when exact birth time is unknown
  * Per CONTEXT.md specifications:
  * - morning: 06:00-12:00
@@ -196,7 +213,7 @@ export const updateBirthDataSchema = z
 
     manualCoordinates: z.boolean().optional(),
   })
-  .superRefine((data, ctx) => {
+  .superRefine((data, _ctx) => {
     // Only validate time/range relationship if birthTimeKnown is being updated
     if (data.birthTimeKnown !== undefined) {
       if (data.birthTimeKnown === true && data.birthTime === undefined) {

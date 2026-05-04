@@ -7,7 +7,7 @@ import {
   updateBirthDataSchema,
   type UpdateBirthData,
   approximateTimeRanges,
-} from '@/lib/validators/birth-data'
+} from '@stellaeum/core/charts/schemas'
 import { CitySearch } from './CitySearch'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 import type { ChartRow } from '@/lib/types/chart'

@@ -5,7 +5,7 @@ import {
   updateBirthChart,
 } from '@stellaeum/core/charts/birth-data'
 import { logAuditEvent } from '@/lib/audit'
-import { updateBirthDataSchema } from '@/lib/validators/birth-data'
+import { updateBirthDataSchema } from '@stellaeum/core/charts/schemas'
 import { logServerError } from '@/lib/monitoring/log-server-error'
 
 /**

@@ -1,7 +1,7 @@
 'use client'
 
 import { useFormContext } from 'react-hook-form'
-import type { BirthData } from '@/lib/validators/birth-data'
+import type { BirthData } from '@stellaeum/core/charts/schemas'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 interface DateStepProps {

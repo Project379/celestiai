@@ -3,7 +3,7 @@ import {
   createBirthChart,
   listBirthCharts,
 } from '@stellaeum/core/charts/birth-data'
-import { createBirthDataSchema } from '@/lib/validators/birth-data'
+import { createBirthDataSchema } from '@stellaeum/core/charts/schemas'
 import { logServerError } from '@/lib/monitoring/log-server-error'
 
 /**

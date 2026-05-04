@@ -1,39 +1,14 @@
 import { createCoreSupabaseClient } from '../lib/supabase'
+import type { BirthData, UpdateBirthData } from './schemas'
 
 /**
- * Input types mirror the Zod-inferred shapes validated by the route-
- * handler layer (apps/web/lib/validators/birth-data.ts). Keeping the
- * schemas in web preserves the Bulgarian error messages that are UX-
- * coupled; core consumes the already-validated payload.
+ * Input types are z.infer aliases over the shared schemas in ./schemas.
+ * Single source of truth: the Zod definition (with Bulgarian error
+ * messages) is the wire contract for web route handlers, web wizard
+ * components, mobile wizard components, and these core helpers.
  */
-export interface CreateBirthChartInput {
-  name: string
-  birthDate: string // YYYY-MM-DD
-  birthTimeKnown: boolean
-  birthTime?: string | null
-  approximateTimeRange?: 'morning' | 'afternoon' | 'evening' | 'night' | null
-  cityId?: string | null
-  cityName: string
-  latitude: number
-  longitude: number
-}
-
-export interface UpdateBirthChartInput {
-  name?: string
-  birthDate?: string
-  birthTimeKnown?: boolean
-  birthTime?: string | null
-  approximateTimeRange?:
-    | 'morning'
-    | 'afternoon'
-    | 'evening'
-    | 'night'
-    | null
-  cityId?: string | null
-  cityName?: string
-  latitude?: number
-  longitude?: number
-}
+export type CreateBirthChartInput = BirthData
+export type UpdateBirthChartInput = UpdateBirthData
 
 export interface BirthChartRow {
   id: string
