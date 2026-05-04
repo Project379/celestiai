@@ -2,6 +2,8 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 
+import { StepIndicator } from '@/components/wizard/StepIndicator'
+
 export default function WizardDateScreen() {
   const router = useRouter()
 
@@ -11,6 +13,8 @@ export default function WizardDateScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 64 }}
       >
+        <StepIndicator currentStep={1} />
+
         <View className="mb-8">
           <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/75">
             I · Кога
@@ -25,10 +29,10 @@ export default function WizardDateScreen() {
 
         <View className="mb-12 rounded-xl border border-white/[0.06] bg-white/[0.015] px-4 py-6">
           <Text className="font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-500">
-            Placeholder · 4.3
+            Placeholder · 4.3-b
           </Text>
           <Text className="mt-2 text-[13px] font-light leading-relaxed text-slate-400">
-            Името + native date picker landват в подкръг 4.3.
+            Името + native date picker landват в подкръг 4.3-b.
           </Text>
         </View>
 

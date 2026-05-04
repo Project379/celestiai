@@ -2,6 +2,8 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 
+import { StepIndicator } from '@/components/wizard/StepIndicator'
+
 export default function WizardTimeScreen() {
   const router = useRouter()
 
@@ -11,6 +13,8 @@ export default function WizardTimeScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 64 }}
       >
+        <StepIndicator currentStep={2} />
+
         <View className="mb-8">
           <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/75">
             II · Час
