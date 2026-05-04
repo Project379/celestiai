@@ -362,6 +362,53 @@ walkthrough. User-visible at the very first impression of the brand
 but out-of-scope for mobile birth-wizard work. Logged for a dedicated
 landing-page polish pass.
 
+## 15. Clerk application display name still references «celestia»
+
+**Status:** During sub-round 4.3 founder verification of mobile sign-up
++ sign-in flows, the Clerk-managed password re-entry modal displayed
+the application name as «celestia» rather than the renamed
+«Stellaeum». The sub-round 3 Layer 2 dashboard rename pass missed the
+application/display name setting in the Clerk dashboard — it is a
+separate field from the internal project name and from URL slugs.
+
+**Trigger:** Discovered during sub-round 4 verification.
+
+**Sub-round when ready:** Founder dashboard task (~2 min).
+NOT blocking sub-round 4 mobile birth-wizard work.
+
+**Fix path:** Clerk dashboard → Application settings → set
+application/display name to «Stellaeum». No code change.
+
+**Why documented:** Founder-observed user-visible drift from the
+brand rename. Easy fix but easy to lose track of without a logged
+item.
+
+## 16. Mobile sign-up form missing firstName + lastName
+
+**Status:** Web sign-up form requires `firstName` and `lastName`
+fields at signup; mobile sign-up (`apps/mobile/app/(public)/sign-up.tsx`,
+sub-round 1.4b) collects only `emailAddress` and `password`. New
+mobile users land in the app without a profile name and cannot fill
+it without a manual edit step later. Real divergence between web
+and mobile auth surfaces; not caught at sub-round 1.4b verification.
+
+**Trigger:** Pre-launch UX consistency pass, OR whenever the mobile
+auth flow is next touched.
+
+**Sub-round when ready:** Mobile auth polish sub-round (could fold
+into a future "mobile UX consistency" sub-round).
+
+**Fix path:** Add `firstName` and `lastName` `TextInput` fields to
+`apps/mobile/app/(public)/sign-up.tsx`, mirroring web's signup form
+layout. Pass them to `signUp.create({ emailAddress, password,
+firstName, lastName })`. Bulgarian copy mirrors web's existing labels
+(shared surface → direct mirror).
+
+**Why documented:** Surfaced during sub-round 4 founder verification
+while creating fresh test accounts. Web/mobile parity ought to be
+tighter; missing fields create downstream profile-display issues
+(e.g., the `Ти` tab's name display falls back to email-prefix).
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
