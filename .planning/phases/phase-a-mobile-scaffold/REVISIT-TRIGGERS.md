@@ -277,6 +277,91 @@ that reference the old repo path (`secrets.GITHUB_TOKEN` is automatic;
 custom secrets may be repo-pathed). Update any external references
 (third-party docs, badges, README links from forks).
 
+## 12. Web account deletion confirmation copy mismatch
+
+**Status:** The account-deletion confirmation flow on web has a copy
+mismatch between the type-to-confirm prompt and the button label. The
+prompt asks the user to type «Изтриване на акаунта» (verbal-noun form,
+"Deletion of the account") to confirm, but the button label reads
+«Изтрий акаунта» (imperative verb form, "Delete the account"). A user
+typing what's printed on the button — the natural action — fails the
+match check.
+
+**Trigger:** Pre-launch UX pass, OR whenever the account-deletion
+surface is next touched.
+
+**Sub-round when ready:** Dedicated web-side polish sub-round, OR fold
+into the next sub-round that touches account/settings UI on web.
+
+**Fix path:** Pick one form and use it consistently — either rephrase
+the prompt to align with the button, or relabel the button to align
+with the prompt. bulgarian-skill calibration to confirm the chosen
+form reads naturally in the surrounding context.
+
+**Why documented:** Surfaced during sub-round 4.0 founder web
+walkthrough preparing for the mobile birth-wizard ground-truth
+gathering. Out-of-scope for sub-round 4 but is a launch-blocker if
+not addressed before public release.
+
+## 13. Birth date validation error references internal schema format
+
+**Status:** The `birthDate` field's regex validation in
+`packages/core/src/charts/schemas.ts` (lifted from
+`apps/web/lib/validators/birth-data.ts` in sub-round 4.1) emits the
+error «Датата трябва да е във формат YYYY-MM-DD». The message
+references the internal storage format the user never sees — browsers
+present locale-formatted dates (DD.MM.YYYY in Bulgarian locales) via
+the native picker; mobile presents native iOS/Android pickers.
+The user has no way to "produce" a YYYY-MM-DD string and shouldn't
+need to know the format exists.
+
+**Trigger:** Pre-launch UX polish, OR whenever birth-data error UX is
+next revisited.
+
+**Sub-round when ready:** Dedicated UX polish sub-round, OR fold into
+a sub-round that touches the shared schema. Edit is mechanical:
+replace the regex `error` with «Моля, изберете дата на раждане»
+(matching the existing required-field message) or a similar
+user-friendly Bulgarian phrasing.
+
+**Why documented:** Surfaced during sub-round 4.0 founder web
+walkthrough. The path is latent rather than active (native pickers
+on both surfaces cannot produce a malformed string), but the message
+is incorrect if/when it surfaces. Single-line fix corrects both web
+and mobile via the shared schema — concrete benefit of the 4.1 lift.
+
+## 14. Web landing splash heading overflow at default viewport
+
+**Status:** The landing-page splash heading «Звездите имат какво да
+ти кажат.» renders with the trailing «кажат.» portion clipped on the
+right side at default desktop viewport widths. Likely causes: a
+`max-width` or container `overflow-hidden` constraint cutting the
+gradient/clip-path text; insufficient inline-padding compensation;
+or a `bg-clip-text` gradient mask that fails at sub-pixel positioning
+at certain viewport widths.
+
+**Trigger:** Pre-launch landing-page polish, OR whenever the landing
+splash component is next touched. May surface earlier as a
+public-visibility concern if landing traffic begins before the
+polish sub-round.
+
+**Sub-round when ready:** Dedicated landing-page sub-round, OR fold
+into a Phase D launch-readiness pass.
+
+**Fix path:** Inspect the splash heading container's CSS — likely
+candidates: a `max-w-*` Tailwind utility that is too tight, an
+`overflow-hidden` cascade from a parent decorative container, or a
+`bg-clip-text` gradient that fails to render the final glyph at
+certain widths. Browser dev tools width-resize can isolate the
+breakpoint at which clipping starts. Fix with a wider container,
+additional `pr-*` inline padding, or a different gradient-text
+technique.
+
+**Why documented:** Surfaced during sub-round 4.0 founder web
+walkthrough. User-visible at the very first impression of the brand
+but out-of-scope for mobile birth-wizard work. Logged for a dedicated
+landing-page polish pass.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
