@@ -12,11 +12,12 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@stellaeum/core": "workspace:*",
-    "@stellaeum/ui": "workspace:*",
     "@clerk/expo": "^3.2.4",
     "@clerk/expo-passkeys": "^1.0.17",
     "@expo/metro-runtime": "~6.1.2",
+    "@react-native-community/datetimepicker": "8.4.4",
+    "@stellaeum/core": "workspace:*",
+    "@stellaeum/ui": "workspace:*",
     "@supabase/supabase-js": "^2.49.1",
     "expo": "~54.0.34",
     "expo-apple-authentication": "~8.0.8",
