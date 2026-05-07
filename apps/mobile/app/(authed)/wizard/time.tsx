@@ -9,7 +9,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { useFormContext, useWatch } from 'react-hook-form'
+import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker'
@@ -63,15 +63,8 @@ export default function WizardTimeScreen() {
     control,
     name: 'approximateTimeRange',
   })
-  const birthTime = useWatch({ control, name: 'birthTime' })
 
   const [showIosPicker, setShowIosPicker] = useState(false)
-  // Snapshot of the picker's initial Date at modal-open time. Stable
-  // across re-renders during the user's spinner interaction so iOS does
-  // not treat per-onChange RHF updates as external value changes and
-  // snap the spinner back. RHF still tracks the latest emitted time
-  // via setValue in onChange below.
-  const [iosPickerValue, setIosPickerValue] = useState<Date>(() => new Date())
 
   const handleTimeKnownChange = (known: boolean) => {
     setValue('birthTimeKnown', known, { shouldValidate: true })
@@ -102,7 +95,6 @@ export default function WizardTimeScreen() {
         },
       })
     } else {
-      setIosPickerValue(initial)
       setShowIosPicker(true)
     }
   }
@@ -169,9 +161,16 @@ export default function WizardTimeScreen() {
                 birthTimeKnown ? 'bg-amber-300/90' : 'bg-slate-500'
               }`}
               style={{
-                top: 6,
+                top: '50%',
                 left: birthTimeKnown ? 26 : 6,
-                transform: [{ rotate: '45deg' }],
+                transform: [{ translateY: -4 }, { rotate: '45deg' }],
+                ...(birthTimeKnown && {
+                  shadowColor: 'rgb(251, 191, 36)',
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.7,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }),
               }}
             />
           </View>
@@ -183,18 +182,24 @@ export default function WizardTimeScreen() {
             <Text className="mb-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-500">
               Точен час
             </Text>
-            <Pressable
-              onPress={handleTimePress}
-              className="border-b border-white/[0.08] px-1 py-3"
-            >
-              <Text
-                className={`text-[16px] tabular-nums ${
-                  birthTime ? 'text-slate-100' : 'text-slate-600'
-                }`}
-              >
-                {birthTime ?? 'Избери час'}
-              </Text>
-            </Pressable>
+            <Controller
+              control={control}
+              name="birthTime"
+              render={({ field: { value } }) => (
+                <Pressable
+                  onPress={handleTimePress}
+                  className="border-b border-white/[0.08] px-1 py-3"
+                >
+                  <Text
+                    className={`text-[16px] tabular-nums ${
+                      value ? 'text-slate-100' : 'text-slate-600'
+                    }`}
+                  >
+                    {value ?? 'Избери час'}
+                  </Text>
+                </Pressable>
+              )}
+            />
             {errors.birthTime && (
               <Text className="mt-2 text-[12px] text-rose-300/90">
                 {errors.birthTime.message}
@@ -295,7 +300,11 @@ export default function WizardTimeScreen() {
               className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6"
             >
               <DateTimePicker
-                value={iosPickerValue}
+                value={
+                  getValues('birthTime')
+                    ? parseHHMM(getValues('birthTime'))
+                    : new Date()
+                }
                 mode="time"
                 display="spinner"
                 is24Hour
