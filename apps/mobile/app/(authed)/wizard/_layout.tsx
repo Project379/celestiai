@@ -1,8 +1,10 @@
-import { Stack } from 'expo-router'
+import { useEffect } from 'react'
+import { Stack, useRouter } from 'expo-router'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import { birthDataSchema, type BirthData } from '@stellaeum/core/charts/schemas'
+import { useApiClient } from '@/lib/api/client'
 
 /**
  * Birth-data wizard Stack layout.
@@ -14,8 +16,17 @@ import { birthDataSchema, type BirthData } from '@stellaeum/core/charts/schemas'
  * exactly.
  *
  * Bulgarian step titles in the Stack header mirror web's STEP_LABELS.
+ *
+ * Mount-time existing-chart redirect (sub-round 4.7): if the user
+ * already has a saved birth chart, bounce to Днес. Soft-prevention only
+ * — failures are swallowed so the user proceeds with the wizard
+ * regardless of network/auth hiccups (server-side dedup catches any
+ * duplicate-create at POST time).
  */
 export default function WizardLayout() {
+  const router = useRouter()
+  const { apiFetch } = useApiClient()
+
   const methods = useForm<BirthData>({
     resolver: zodResolver(birthDataSchema),
     mode: 'onBlur',
@@ -32,6 +43,18 @@ export default function WizardLayout() {
       manualCoordinates: false,
     },
   })
+
+  useEffect(() => {
+    apiFetch('/api/birth-data')
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          router.replace('/')
+        }
+      })
+      .catch(() => {
+        // Soft prevention — let user proceed with wizard on fetch failure.
+      })
+  }, [apiFetch, router])
 
   return (
     <FormProvider {...methods}>
