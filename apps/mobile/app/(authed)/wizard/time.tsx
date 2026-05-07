@@ -162,7 +162,7 @@ export default function WizardTimeScreen() {
               }`}
               style={{
                 top: '50%',
-                left: birthTimeKnown ? 24 : 6,
+                left: birthTimeKnown ? 21 : 6,
                 transform: [{ translateY: -4 }, { rotate: '45deg' }],
                 ...(birthTimeKnown && {
                   shadowColor: 'rgb(251, 191, 36)',
