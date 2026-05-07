@@ -162,12 +162,7 @@ export default function WizardTimeScreen() {
               }`}
               style={{
                 top: '50%',
-                // Mirrors web's `left-[calc(100%-14px)]` (= 26px on a 40px
-                // border-box track) for ON, `left-[6px]` for OFF. Shifted
-                // ON by +2 to compensate for RN's absolute-positioning
-                // origin rendering 1-2px left of CSS's padding-box semantics
-                // — observed visually on iOS during fix-2 verification.
-                left: birthTimeKnown ? 28 : 6,
+                left: birthTimeKnown ? 26 : 6,
                 transform: [{ translateY: -4 }, { rotate: '45deg' }],
                 ...(birthTimeKnown && {
                   shadowColor: 'rgb(251, 191, 36)',
