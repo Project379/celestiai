@@ -3,6 +3,7 @@ import {
   FlatList,
   Modal,
   Pressable,
+  StyleSheet,
   Text,
   View,
   type NativeScrollEvent,
@@ -134,15 +135,18 @@ export function TimePicker({
       visible={visible}
       onRequestClose={handleDismiss}
     >
-      <Pressable
-        className="flex-1 justify-end bg-black/50"
-        onPress={handleDismiss}
-      >
+      <View className="flex-1 justify-end">
+        {/* Backdrop sibling — absolute-positioned dim layer below the sheet
+            in the responder tree, so taps in the sheet area reach FlatList
+            before this Pressable can claim the responder. Tapping the
+            dimmed area above the sheet still dismisses. */}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handleDismiss}
+          className="bg-black/50"
+        />
         {visible && (
-          <Pressable
-            onPress={(e) => e.stopPropagation()}
-            className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6"
-          >
+          <View className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6">
             <Text className="mb-4 text-center font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-300/75">
               Час на раждане
             </Text>
@@ -194,9 +198,9 @@ export function TimePicker({
                 Готово
               </Text>
             </Pressable>
-          </Pressable>
+          </View>
         )}
-      </Pressable>
+      </View>
     </Modal>
   )
 }
