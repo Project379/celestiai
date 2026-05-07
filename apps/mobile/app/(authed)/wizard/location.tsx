@@ -181,7 +181,10 @@ export default function WizardLocationScreen() {
                             : String(value)
                         }
                         onChangeText={(t) => {
-                          const parsed = parseFloat(t.replace(',', '.'))
+                          const sanitized = t
+                            .replace(',', '.')
+                            .replace(/[^0-9.\-]/g, '')
+                          const parsed = parseFloat(sanitized)
                           onChange(Number.isNaN(parsed) ? undefined : parsed)
                         }}
                         onBlur={onBlur}
@@ -213,7 +216,10 @@ export default function WizardLocationScreen() {
                             : String(value)
                         }
                         onChangeText={(t) => {
-                          const parsed = parseFloat(t.replace(',', '.'))
+                          const sanitized = t
+                            .replace(',', '.')
+                            .replace(/[^0-9.\-]/g, '')
+                          const parsed = parseFloat(sanitized)
                           onChange(Number.isNaN(parsed) ? undefined : parsed)
                         }}
                         onBlur={onBlur}
