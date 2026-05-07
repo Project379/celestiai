@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Modal,
   Platform,
@@ -81,36 +81,6 @@ export default function WizardTimeScreen() {
   const [iosPickerLocalValue, setIosPickerLocalValue] =
     useState<Date | null>(null)
 
-  // [4.4-debug-3] diagnostic instrumentation — REVERT before sub-round 4 close.
-  console.log(
-    '[TimeStep render] birthTimeKnown:',
-    birthTimeKnown,
-    'birthTime:',
-    getValues('birthTime'),
-    'iosPickerLocalValue:',
-    iosPickerLocalValue?.toISOString() ?? null,
-    'showIosPicker:',
-    showIosPicker,
-  )
-  {
-    const rhfStored = getValues('birthTime')
-    const rhfDate = rhfStored ? parseHHMM(rhfStored) : null
-    const localMs = iosPickerLocalValue?.getTime() ?? null
-    const rhfMs = rhfDate?.getTime() ?? null
-    console.log(
-      '[TimeStep ms check] iosPickerLocalValue ms:',
-      localMs,
-      'parseHHMM(rhf) ms:',
-      rhfMs,
-      'equal:',
-      localMs === rhfMs,
-    )
-  }
-
-  useEffect(() => {
-    console.log('[TimeStep modal] showIosPicker:', showIosPicker)
-  }, [showIosPicker])
-
   const handleTimeKnownChange = (known: boolean) => {
     setValue('birthTimeKnown', known, { shouldValidate: true })
     if (known) {
@@ -140,37 +110,16 @@ export default function WizardTimeScreen() {
         },
       })
     } else {
-      console.log(
-        '[TimeStep handleTimePress] iOS branch entered, initial value:',
-        initial.toISOString(),
-        'ms:',
-        initial.getTime(),
-      )
       setIosPickerLocalValue(initial)
       setShowIosPicker(true)
     }
   }
 
   const handleIosPickerDismiss = () => {
-    console.log(
-      '[TimeStep handleIosPickerDismiss] final iosPickerLocalValue:',
-      iosPickerLocalValue?.toISOString() ?? null,
-      'ms:',
-      iosPickerLocalValue?.getTime() ?? null,
-    )
     if (iosPickerLocalValue) {
-      const hhmm = dateToHHMM(iosPickerLocalValue)
-      console.log(
-        '[TimeStep handleIosPickerDismiss] dateToHHMM result:',
-        hhmm,
-      )
-      setValue('birthTime', hhmm, {
+      setValue('birthTime', dateToHHMM(iosPickerLocalValue), {
         shouldValidate: true,
       })
-      console.log(
-        '[TimeStep handleIosPickerDismiss] birthTime after setValue:',
-        getValues('birthTime'),
-      )
     }
     setShowIosPicker(false)
   }
@@ -376,33 +325,13 @@ export default function WizardTimeScreen() {
               className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6"
             >
               <DateTimePicker
-                value={(() => {
-                  const v = iosPickerLocalValue ?? new Date()
-                  console.log(
-                    '[TimeStep value prop] passing to picker:',
-                    v.toISOString(),
-                    'ms:',
-                    v.getTime(),
-                    '(local:',
-                    iosPickerLocalValue?.toISOString() ?? null,
-                    ')',
-                  )
-                  return v
-                })()}
+                value={iosPickerLocalValue ?? new Date()}
                 mode="time"
                 display="spinner"
                 is24Hour
                 themeVariant="dark"
                 locale="bg-BG"
                 onChange={(_event, selectedDate) => {
-                  console.log(
-                    '[TimeStep onChange] selectedDate:',
-                    selectedDate?.toISOString() ?? null,
-                    'ms:',
-                    selectedDate?.getTime() ?? null,
-                    'type:',
-                    _event?.type,
-                  )
                   if (selectedDate) {
                     setIosPickerLocalValue(selectedDate)
                   }
