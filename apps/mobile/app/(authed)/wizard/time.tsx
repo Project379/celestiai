@@ -38,14 +38,15 @@ function dateToHHMM(d: Date): string {
 }
 
 function parseHHMM(time: string | null | undefined): Date {
-  // Anchor to Unix epoch (1970-01-01) instead of today. iOS DateTimePicker
-  // mode='time' internally re-anchors any inbound Date to 1970-01-01,
-  // emitting epoch-anchored Dates from onChange. Today-anchored input
-  // makes isEqualToDate return false for the round-trip and triggers
-  // setDate snap-back mid-gesture. Local arithmetic (setHours) preserves
-  // user-intent: wheel "07:00" Bulgaria local roundtrips through "07:00"
-  // string and matches Android's DateTimePickerAndroid storage semantics.
-  const d = new Date(0)
+  // Today-anchored Date. fix-5's epoch anchor (new Date(0)) was reverted
+  // because it constrained iOS mode='time' picker's internal time range
+  // to a 2-hour window in Bulgaria local (-7200000 to 0 ms, observed via
+  // debug-3 after fix-6 library rollback to 8.4.4). Today-anchored value
+  // gives picker its full 24-hour wheel range. Combined with fix-4's
+  // uncontrolled-while-open architecture, the controlled-component
+  // snap-back risk is mitigated by echoing back the picker's emitted
+  // Date verbatim (no roundtrip drift during interactive scroll).
+  const d = new Date()
   if (time && /^\d{2}:\d{2}$/.test(time)) {
     const [h, m] = time.split(':').map(Number)
     d.setHours(h, m, 0, 0)
@@ -376,7 +377,7 @@ export default function WizardTimeScreen() {
             >
               <DateTimePicker
                 value={(() => {
-                  const v = iosPickerLocalValue ?? new Date(0)
+                  const v = iosPickerLocalValue ?? new Date()
                   console.log(
                     '[TimeStep value prop] passing to picker:',
                     v.toISOString(),
