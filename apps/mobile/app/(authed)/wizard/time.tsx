@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import {
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -10,15 +9,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Controller, useFormContext, useWatch } from 'react-hook-form'
-import DateTimePicker, {
-  DateTimePickerAndroid,
-} from '@react-native-community/datetimepicker'
+import { DateTimePickerAndroid } from '@react-native-community/datetimepicker'
 
 import type {
   ApproximateTimeRange,
   BirthData,
 } from '@stellaeum/core/charts/schemas'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
+import { TimePicker } from '@/components/wizard/TimePicker'
 
 const TIME_RANGES: {
   value: ApproximateTimeRange
@@ -37,15 +35,10 @@ function dateToHHMM(d: Date): string {
   return `${h}:${m}`
 }
 
+// Helpers used only by Android's imperative DateTimePickerAndroid.open()
+// path. iOS uses the custom <TimePicker /> component which operates on
+// HH:MM strings directly (no Date objects, no timezone conversion).
 function parseHHMM(time: string | null | undefined): Date {
-  // Today-anchored Date. fix-5's epoch anchor (new Date(0)) was reverted
-  // because it constrained iOS mode='time' picker's internal time range
-  // to a 2-hour window in Bulgaria local (-7200000 to 0 ms, observed via
-  // debug-3 after fix-6 library rollback to 8.4.4). Today-anchored value
-  // gives picker its full 24-hour wheel range. Combined with fix-4's
-  // uncontrolled-while-open architecture, the controlled-component
-  // snap-back risk is mitigated by echoing back the picker's emitted
-  // Date verbatim (no roundtrip drift during interactive scroll).
   const d = new Date()
   if (time && /^\d{2}:\d{2}$/.test(time)) {
     const [h, m] = time.split(':').map(Number)
@@ -73,13 +66,6 @@ export default function WizardTimeScreen() {
   })
 
   const [showIosPicker, setShowIosPicker] = useState(false)
-  // Local picker state for iOS uncontrolled-while-open pattern. Echoes
-  // back the Date the native picker emits so its internal state and the
-  // value prop never drift apart on the millisecond axis. Committed to
-  // RHF only on dismiss. Android uses the imperative
-  // DateTimePickerAndroid.open() API and does not need this state.
-  const [iosPickerLocalValue, setIosPickerLocalValue] =
-    useState<Date | null>(null)
 
   const handleTimeKnownChange = (known: boolean) => {
     setValue('birthTimeKnown', known, { shouldValidate: true })
@@ -95,10 +81,9 @@ export default function WizardTimeScreen() {
   }
 
   const handleTimePress = () => {
-    const initial = parseHHMM(getValues('birthTime'))
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
-        value: initial,
+        value: parseHHMM(getValues('birthTime')),
         mode: 'time',
         is24Hour: true,
         onChange: (event, selectedDate) => {
@@ -110,18 +95,8 @@ export default function WizardTimeScreen() {
         },
       })
     } else {
-      setIosPickerLocalValue(initial)
       setShowIosPicker(true)
     }
-  }
-
-  const handleIosPickerDismiss = () => {
-    if (iosPickerLocalValue) {
-      setValue('birthTime', dateToHHMM(iosPickerLocalValue), {
-        shouldValidate: true,
-      })
-    }
-    setShowIosPicker(false)
   }
 
   const handleNext = async () => {
@@ -308,46 +283,16 @@ export default function WizardTimeScreen() {
         </View>
       </ScrollView>
 
-      {/* iOS modal time picker — Android uses imperative DateTimePickerAndroid.open() */}
+      {/* iOS uses custom TimePicker; Android uses imperative DateTimePickerAndroid.open() */}
       {Platform.OS === 'ios' && (
-        <Modal
-          transparent
-          animationType="slide"
+        <TimePicker
           visible={showIosPicker}
-          onRequestClose={handleIosPickerDismiss}
-        >
-          <Pressable
-            className="flex-1 justify-end bg-black/50"
-            onPress={handleIosPickerDismiss}
-          >
-            <Pressable
-              onPress={(e) => e.stopPropagation()}
-              className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6"
-            >
-              <DateTimePicker
-                value={iosPickerLocalValue ?? new Date()}
-                mode="time"
-                display="spinner"
-                is24Hour
-                themeVariant="dark"
-                locale="bg-BG"
-                onChange={(_event, selectedDate) => {
-                  if (selectedDate) {
-                    setIosPickerLocalValue(selectedDate)
-                  }
-                }}
-              />
-              <Pressable
-                onPress={handleIosPickerDismiss}
-                className="mt-2 self-center rounded-full border border-amber-300/40 px-6 py-2.5"
-              >
-                <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
-                  Готово
-                </Text>
-              </Pressable>
-            </Pressable>
-          </Pressable>
-        </Modal>
+          initialHHMM={getValues('birthTime')}
+          onDismiss={(hhmm) => {
+            setValue('birthTime', hhmm, { shouldValidate: true })
+            setShowIosPicker(false)
+          }}
+        />
       )}
     </SafeAreaView>
   )
