@@ -440,6 +440,42 @@ on the web surface that mobile is mirroring; correcting it
 unilaterally on mobile would create web/mobile drift, which is the
 opposite of what the mirror discipline intends.
 
+## 18. iOS exact-time picker — custom built; revisit if Apple Developer enrollment unblocks Path B
+
+**Status:** `apps/mobile/components/wizard/TimePicker.tsx` (sub-round 4.4-fix-9, ~190 lines) replaces `@react-native-community/datetimepicker` mode='time' on iOS after 8 hypothesis-driven fix attempts on the library failed. Two-column FlatList wheel picker (hours 00-23, minutes 00-59), HH:MM strings throughout (no Date objects, no timezone surface), `Haptics.selectionAsync()` per snap tick, center selection band overlay, commit-on-any-dismiss semantic. Android keeps the existing imperative `DateTimePickerAndroid.open()` for parity with working production code (D-4.4-fix9-1 ratification).
+
+**Why custom-built:** The community library's iOS mode='time' implementation re-anchors any inbound Date to 1970-01-01 internally and exhibits at least three distinct failure modes (controlled-component snap-back, JS-vs-native version-mismatch when JS upgraded ahead of Expo Go's bundled native, range-constraint when value is epoch-anchored). Path B (library swap to `react-native-date-picker`) was investigated during the saga and rejected for two reasons: (a) Expo Go incompatibility — requires Dev Client which requires Apple Developer enrollment per REVISIT-TRIGGERS item 1; (b) open RN 0.81 + New Architecture crash issues against the latest 5.0.13 release with no maintainer response on the issue tracker.
+
+**Trigger to revisit:** Apple Developer Program enrollment lands (currently REVISIT-TRIGGERS item 1 deferred to Phase D). With Dev Client available, `react-native-date-picker` becomes a viable swap. The custom picker is fine to keep; reconsidering only if visual consistency with the date picker (which still uses `@react-native-community/datetimepicker`) becomes a UX concern, OR if a dedicated polish sub-round wants to replace both the date and time pickers with a single library for parity.
+
+**Sub-round when ready:** Phase D pre-launch UI polish OR dedicated mobile picker-parity sub-round. NOT blocking sub-round 4 close — current implementation works correctly.
+
+**Re-add path (if migrating to `react-native-date-picker`):**
+- `pnpm exec expo install react-native-date-picker` from `apps/mobile`
+- Verify RN 0.81 + Fabric crashes (issues #945, #937, #940) resolved in current release
+- Replace `apps/mobile/components/wizard/TimePicker.tsx` with library's `<DatePicker modal mode="time" .../>`
+- Optionally migrate Android time picker (currently on community datetimepicker) for parity
+- Verify Bulgarian locale + 24-hour mode + dark theme via library props
+
+**Why documented:** Saga consumed ~7 hours of fix-attempt cycles before custom build resolved it. Future Claude session encountering similar library-vs-native mismatch on iOS picker should consider custom build as a first-class option after 2-3 failed fix attempts, not as a last resort. Lessons captured in `SUB-ROUND-4-CLOSE.md` "Picker saga retrospective" section.
+
+## 19. VirtualizedList nested in ScrollView warning in CitySearch
+
+**Status:** RN dev tools surfaces "VirtualizedLists should never be nested inside plain ScrollViews with the same orientation" warning when the city autocomplete dropdown is open. Source: `apps/mobile/components/wizard/CitySearch.tsx`'s `FlatList` (dropdown results, max 280px height with `nestedScrollEnabled`) renders inside `apps/mobile/app/(authed)/wizard/location.tsx`'s parent `ScrollView`. Performance warning only — app functions normally, warning is dismissible.
+
+**Why deferred:** Cities list is bounded (`/api/cities/search` returns max 20 results per query per `apps/web/app/api/cities/search/route.ts:26`). Virtualization defeat is negligible at this size. Refactoring location.tsx to avoid the nested-scroll pattern would require either (a) replacing the parent `ScrollView` with `FlatList` using `ListHeaderComponent`/`ListFooterComponent` for the static content, OR (b) moving the CitySearch dropdown outside the ScrollView via Modal/portal pattern. Both are non-trivial changes orthogonal to sub-round 4's wizard-shippability goal.
+
+**Trigger:** Dedicated wizard polish sub-round OR user feedback flagging lag in city autocomplete on slower devices. Could surface earlier if React Native deprecates the warning to an error in a future RN version.
+
+**Sub-round when ready:** Dedicated mobile polish or perf sub-round.
+
+**Fix path:**
+- Option A: `location.tsx` `ScrollView` → `FlatList` with `data=[1]` and the wizard content rendered via `ListHeaderComponent`. CitySearch's FlatList becomes a sibling, not nested.
+- Option B: Move CitySearch dropdown into a Modal-style overlay using RN's `Modal` component. Search input stays in the parent ScrollView, dropdown renders as a separate native window.
+- Option C: Accept as performance trade-off given small list size; suppress warning in dev builds via `LogBox.ignoreLogs(['VirtualizedLists should never be nested'])` if visual noise becomes a focus issue.
+
+**Why documented:** Surfaced during sub-round 4.7 verification. Not blocking; not bug-class severity. Future maintainer evaluating mobile perf should know this is an acknowledged trade-off, not a missed warning.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
