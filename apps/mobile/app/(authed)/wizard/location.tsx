@@ -175,7 +175,7 @@ export default function WizardLocationScreen() {
                     name="latitude"
                     render={({ field: { value, onChange, onBlur } }) => (
                       <TextInput
-                        value={
+                        defaultValue={
                           value == null || Number.isNaN(value)
                             ? ''
                             : String(value)
@@ -207,7 +207,7 @@ export default function WizardLocationScreen() {
                     name="longitude"
                     render={({ field: { value, onChange, onBlur } }) => (
                       <TextInput
-                        value={
+                        defaultValue={
                           value == null || Number.isNaN(value)
                             ? ''
                             : String(value)
