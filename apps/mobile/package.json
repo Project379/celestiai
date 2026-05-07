@@ -16,7 +16,7 @@
     "@clerk/expo-passkeys": "^1.0.17",
     "@expo/metro-runtime": "~6.1.2",
     "@hookform/resolvers": "^5.2.2",
-    "@react-native-community/datetimepicker": "8.4.4",
+    "@react-native-community/datetimepicker": "9.1.0",
     "@stellaeum/core": "workspace:*",
     "@stellaeum/ui": "workspace:*",
     "@supabase/supabase-js": "^2.49.1",
