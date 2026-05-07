@@ -409,6 +409,37 @@ while creating fresh test accounts. Web/mobile parity ought to be
 tighter; missing fields create downstream profile-display issues
 (e.g., the `Ти` tab's name display falls back to email-prefix).
 
+## 17. Web TIME_RANGES hour string formatting asymmetry
+
+**Status:** The shared `TIME_RANGES` data source on web uses inconsistent
+hour-string formatting across the four ranges:
+
+- morning: `'06 - 12'`
+- afternoon: `'12 - 18'`
+- evening: `'18:00–23:59'` ← different format (HH:MM with en-dash)
+- night: `'00 - 06'`
+
+The evening range uses an en-dash + HH:MM format while the other three
+use a hyphen + HH format. Mobile mirrors web verbatim per shared-surface
+mirror discipline (sub-round 2.5 ratification), so the inconsistency
+surfaces on mobile as well. Pre-existing web bug not introduced by mobile
+sub-round 4.4.
+
+**Trigger:** Pre-launch UX consistency pass, OR whenever `TIME_RANGES`
+is next touched on web.
+
+**Sub-round when ready:** Web-side data normalization. Pick one format
+(likely `'18 - 24'` to match the others, or normalize all four to
+`'HH:MM–HH:MM'`). bulgarian-skill calibration only if framing copy
+around the value changes. Mobile inherits the change automatically via
+shared mirror discipline.
+
+**Why documented:** Surfaced during sub-round 4.4 mobile time-step
+verification. Not blocking sub-round 4 because the asymmetry exists
+on the web surface that mobile is mirroring; correcting it
+unilaterally on mobile would create web/mobile drift, which is the
+opposite of what the mirror discipline intends.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have

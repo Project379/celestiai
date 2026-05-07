@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Modal,
   Platform,
@@ -65,6 +65,20 @@ export default function WizardTimeScreen() {
   })
 
   const [showIosPicker, setShowIosPicker] = useState(false)
+
+  // [4.4-debug-1] diagnostic instrumentation — REVERT before sub-round 4 close.
+  console.log(
+    '[TimeStep render] birthTimeKnown:',
+    birthTimeKnown,
+    'birthTime:',
+    getValues('birthTime'),
+    'showIosPicker:',
+    showIosPicker,
+  )
+
+  useEffect(() => {
+    console.log('[TimeStep modal] showIosPicker:', showIosPicker)
+  }, [showIosPicker])
 
   const handleTimeKnownChange = (known: boolean) => {
     setValue('birthTimeKnown', known, { shouldValidate: true })
@@ -300,21 +314,40 @@ export default function WizardTimeScreen() {
               className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6"
             >
               <DateTimePicker
-                value={
-                  getValues('birthTime')
+                value={(() => {
+                  const v = getValues('birthTime')
                     ? parseHHMM(getValues('birthTime'))
                     : new Date()
-                }
+                  console.log(
+                    '[TimeStep value prop] rhf:',
+                    getValues('birthTime'),
+                    'pickerValue:',
+                    v.toISOString(),
+                  )
+                  return v
+                })()}
                 mode="time"
                 display="spinner"
                 is24Hour
                 themeVariant="dark"
                 locale="bg-BG"
                 onChange={(_event, selectedDate) => {
+                  console.log(
+                    '[TimeStep onChange] event:',
+                    _event,
+                    'selectedDate:',
+                    selectedDate,
+                    'type:',
+                    _event?.type,
+                  )
                   if (selectedDate) {
                     setValue('birthTime', dateToHHMM(selectedDate), {
                       shouldValidate: true,
                     })
+                    console.log(
+                      '[TimeStep after setValue] birthTime:',
+                      getValues('birthTime'),
+                    )
                   }
                 }}
               />
