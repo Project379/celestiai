@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +15,49 @@ import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import type { BirthData } from '@stellaeum/core/charts/schemas'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { CitySearch, type City } from '@/components/wizard/CitySearch'
+
+/**
+ * Coordinate input with controlled local string state. Display text is
+ * sanitized to digits / '.' / '-' on each keystroke (visible in TextInput).
+ * RHF receives the parsed number, or undefined when the input is not a
+ * complete numeric value (e.g. lone '.', empty string, lone '-'). Local
+ * string holds verbatim so a trailing '.' persists while the user is
+ * still typing.
+ */
+function CoordinateField({
+  initialValue,
+  onChange,
+  onBlur,
+  placeholder,
+}: {
+  initialValue: number | undefined | null
+  onChange: (n: number | undefined) => void
+  onBlur: () => void
+  placeholder: string
+}) {
+  const [text, setText] = useState(
+    initialValue == null || Number.isNaN(initialValue)
+      ? ''
+      : String(initialValue),
+  )
+
+  return (
+    <TextInput
+      value={text}
+      onChangeText={(raw) => {
+        const clean = raw.replace(',', '.').replace(/[^0-9.\-]/g, '')
+        setText(clean)
+        const parsed = parseFloat(clean)
+        onChange(Number.isNaN(parsed) ? undefined : parsed)
+      }}
+      onBlur={onBlur}
+      placeholder={placeholder}
+      placeholderTextColor="#475569"
+      keyboardType="numbers-and-punctuation"
+      className="border-b border-white/[0.08] px-1 py-2.5 text-[16px] tabular-nums text-slate-100"
+    />
+  )
+}
 
 export default function WizardLocationScreen() {
   const router = useRouter()
@@ -174,24 +218,11 @@ export default function WizardLocationScreen() {
                     control={control}
                     name="latitude"
                     render={({ field: { value, onChange, onBlur } }) => (
-                      <TextInput
-                        defaultValue={
-                          value == null || Number.isNaN(value)
-                            ? ''
-                            : String(value)
-                        }
-                        onChangeText={(t) => {
-                          const sanitized = t
-                            .replace(',', '.')
-                            .replace(/[^0-9.\-]/g, '')
-                          const parsed = parseFloat(sanitized)
-                          onChange(Number.isNaN(parsed) ? undefined : parsed)
-                        }}
+                      <CoordinateField
+                        initialValue={value}
+                        onChange={onChange}
                         onBlur={onBlur}
                         placeholder="42.6977"
-                        placeholderTextColor="#475569"
-                        keyboardType="numbers-and-punctuation"
-                        className="border-b border-white/[0.08] px-1 py-2.5 text-[16px] tabular-nums text-slate-100"
                       />
                     )}
                   />
@@ -209,24 +240,11 @@ export default function WizardLocationScreen() {
                     control={control}
                     name="longitude"
                     render={({ field: { value, onChange, onBlur } }) => (
-                      <TextInput
-                        defaultValue={
-                          value == null || Number.isNaN(value)
-                            ? ''
-                            : String(value)
-                        }
-                        onChangeText={(t) => {
-                          const sanitized = t
-                            .replace(',', '.')
-                            .replace(/[^0-9.\-]/g, '')
-                          const parsed = parseFloat(sanitized)
-                          onChange(Number.isNaN(parsed) ? undefined : parsed)
-                        }}
+                      <CoordinateField
+                        initialValue={value}
+                        onChange={onChange}
                         onBlur={onBlur}
                         placeholder="23.3219"
-                        placeholderTextColor="#475569"
-                        keyboardType="numbers-and-punctuation"
-                        className="border-b border-white/[0.08] px-1 py-2.5 text-[16px] tabular-nums text-slate-100"
                       />
                     )}
                   />
