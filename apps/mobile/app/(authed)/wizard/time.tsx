@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Modal,
   Platform,
@@ -65,20 +65,13 @@ export default function WizardTimeScreen() {
   })
 
   const [showIosPicker, setShowIosPicker] = useState(false)
-
-  // [4.4-debug-1] diagnostic instrumentation — REVERT before sub-round 4 close.
-  console.log(
-    '[TimeStep render] birthTimeKnown:',
-    birthTimeKnown,
-    'birthTime:',
-    getValues('birthTime'),
-    'showIosPicker:',
-    showIosPicker,
-  )
-
-  useEffect(() => {
-    console.log('[TimeStep modal] showIosPicker:', showIosPicker)
-  }, [showIosPicker])
+  // Local picker state for iOS uncontrolled-while-open pattern. Echoes
+  // back the Date the native picker emits so its internal state and the
+  // value prop never drift apart on the millisecond axis. Committed to
+  // RHF only on dismiss. Android uses the imperative
+  // DateTimePickerAndroid.open() API and does not need this state.
+  const [iosPickerLocalValue, setIosPickerLocalValue] =
+    useState<Date | null>(null)
 
   const handleTimeKnownChange = (known: boolean) => {
     setValue('birthTimeKnown', known, { shouldValidate: true })
@@ -109,8 +102,18 @@ export default function WizardTimeScreen() {
         },
       })
     } else {
+      setIosPickerLocalValue(initial)
       setShowIosPicker(true)
     }
+  }
+
+  const handleIosPickerDismiss = () => {
+    if (iosPickerLocalValue) {
+      setValue('birthTime', dateToHHMM(iosPickerLocalValue), {
+        shouldValidate: true,
+      })
+    }
+    setShowIosPicker(false)
   }
 
   const handleNext = async () => {
@@ -303,56 +306,31 @@ export default function WizardTimeScreen() {
           transparent
           animationType="slide"
           visible={showIosPicker}
-          onRequestClose={() => setShowIosPicker(false)}
+          onRequestClose={handleIosPickerDismiss}
         >
           <Pressable
             className="flex-1 justify-end bg-black/50"
-            onPress={() => setShowIosPicker(false)}
+            onPress={handleIosPickerDismiss}
           >
             <Pressable
               onPress={(e) => e.stopPropagation()}
               className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6"
             >
               <DateTimePicker
-                value={(() => {
-                  const v = getValues('birthTime')
-                    ? parseHHMM(getValues('birthTime'))
-                    : new Date()
-                  console.log(
-                    '[TimeStep value prop] rhf:',
-                    getValues('birthTime'),
-                    'pickerValue:',
-                    v.toISOString(),
-                  )
-                  return v
-                })()}
+                value={iosPickerLocalValue ?? new Date()}
                 mode="time"
                 display="spinner"
                 is24Hour
                 themeVariant="dark"
                 locale="bg-BG"
                 onChange={(_event, selectedDate) => {
-                  console.log(
-                    '[TimeStep onChange] event:',
-                    _event,
-                    'selectedDate:',
-                    selectedDate,
-                    'type:',
-                    _event?.type,
-                  )
                   if (selectedDate) {
-                    setValue('birthTime', dateToHHMM(selectedDate), {
-                      shouldValidate: true,
-                    })
-                    console.log(
-                      '[TimeStep after setValue] birthTime:',
-                      getValues('birthTime'),
-                    )
+                    setIosPickerLocalValue(selectedDate)
                   }
                 }}
               />
               <Pressable
-                onPress={() => setShowIosPicker(false)}
+                onPress={handleIosPickerDismiss}
                 className="mt-2 self-center rounded-full border border-amber-300/40 px-6 py-2.5"
               >
                 <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
