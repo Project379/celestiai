@@ -38,6 +38,9 @@ importers:
       '@react-native-community/datetimepicker':
         specifier: 8.4.4
         version: 8.4.4(expo@54.0.34)(react-native@0.81.5(@babel/core@7.28.6)(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(utf-8-validate@6.0.6))(react@19.1.0)
+      '@stellaeum/astrology':
+        specifier: workspace:*
+        version: link:../../packages/astrology
       '@stellaeum/core':
         specifier: workspace:*
         version: link:../../packages/core
