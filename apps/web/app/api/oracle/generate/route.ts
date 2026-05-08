@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
-import { streamText } from 'ai'
+import { generateText, streamText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
@@ -99,6 +99,8 @@ export async function POST(req: Request) {
     }
 
     const validatedTopic = topic as ReadingTopic
+    const url = new URL(req.url)
+    const jsonOnly = url.searchParams.get('format') === 'json'
     const supabase = createServiceSupabaseClient()
 
     // 3. Upsert user row (default 'free'), read tier. Used for the
@@ -215,7 +217,58 @@ export async function POST(req: Request) {
     const systemPrompt = buildSystemPrompt(validatedTopic)
     const chartPromptText = chartToPromptText(chartData)
 
-    // 10. Stream via OpenRouter / meta-llama/llama-3.3-70b-instruct
+    logAuditEvent(userId, 'data.ai_reading', { chartId, topic: validatedTopic })
+
+    // 10a. Mobile path — non-streaming JSON response. Mirrors the
+    //      ?format=json branch in /api/horoscope/generate added in
+    //      sub-round 5.3 (REVISIT-TRIGGERS item 20 logs the streaming
+    //      polish for mobile). react-native-sse is finicky on iOS so
+    //      mobile collects the full text and renders once. Web's
+    //      streaming path stays untouched below.
+    if (jsonOnly) {
+      const result = await generateText({
+        model: openrouter(LLAMA_MODEL),
+        system: systemPrompt,
+        prompt: chartPromptText,
+        temperature: 0.85,
+        maxOutputTokens: 2000,
+      })
+
+      try {
+        const cleanContent = stripSentinels(result.text)
+        const generatedAt = new Date()
+        const expiresAt = new Date(generatedAt)
+        expiresAt.setDate(expiresAt.getDate() + 7)
+
+        await supabase.from('ai_readings').upsert(
+          {
+            chart_id: chartId,
+            user_id: userId,
+            topic: validatedTopic,
+            content: cleanContent,
+            generated_at: generatedAt.toISOString(),
+            expires_at: expiresAt.toISOString(),
+            last_regenerated_at: regenerate ? generatedAt.toISOString() : null,
+            model_version: LLAMA_MODEL,
+          },
+          { onConflict: 'chart_id,topic' }
+        )
+
+        return Response.json({
+          content: cleanContent,
+          cached: false,
+          generatedAt: generatedAt.toISOString(),
+        })
+      } catch (err) {
+        console.error('[Oracle Generate] Failed to save reading:', err)
+        return Response.json(
+          { error: 'Грешка при запазване на четенето' },
+          { status: 500 }
+        )
+      }
+    }
+
+    // 10b. Web path — stream via OpenRouter / meta-llama/llama-3.3-70b-instruct
     const result = streamText({
       model: openrouter(LLAMA_MODEL),
       system: systemPrompt,
@@ -223,7 +276,7 @@ export async function POST(req: Request) {
       temperature: 0.85,
       maxOutputTokens: 2000,
 
-      // 10. onFinish: upsert completed reading into ai_readings
+      // onFinish: upsert completed reading into ai_readings
       onFinish: async ({ text }) => {
         try {
           const cleanContent = stripSentinels(text)
@@ -254,8 +307,6 @@ export async function POST(req: Request) {
         }
       },
     })
-
-    logAuditEvent(userId, 'data.ai_reading', { chartId, topic: validatedTopic })
 
     // Return streaming response - toTextStreamResponse() is the v6 API
     // useCompletion with streamProtocol: 'text' reads this format
