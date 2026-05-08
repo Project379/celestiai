@@ -7,7 +7,7 @@ import {
   getActiveMeteorShower,
   daysUntilPeak,
   type MeteorShower,
-} from '@/lib/meteor-showers'
+} from '@stellaeum/core/welcome'
 
 /**
  * Днес bento tile — live lunar phase with next-major countdown and

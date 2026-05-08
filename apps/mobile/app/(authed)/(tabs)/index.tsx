@@ -3,10 +3,20 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { getLunarPhase } from '@stellaeum/core/moon-phase'
+import {
+  composeWelcome,
+  getActiveMeteorShower,
+  getSunSign,
+} from '@stellaeum/core/welcome'
 
 import { CrystalCard } from '@/components/CrystalCard'
 import { useApiClient } from '@/lib/api/client'
 import { useDailyHoroscope, stripPlanetSentinels } from '@/hooks/useDailyHoroscope'
+
+interface ChartSummary {
+  id: string
+  birth_date: string
+}
 
 const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   weekday: 'long',
@@ -24,19 +34,42 @@ const TILE_HINT_CLASS = 'mt-2 text-[13.5px] font-light text-slate-200'
 export default function DnesScreen() {
   const router = useRouter()
   const { apiFetch } = useApiClient()
-  // undefined = still resolving, null = no chart, string = chart UUID.
-  const [chartId, setChartId] = useState<string | null | undefined>(undefined)
-  const horoscope = useDailyHoroscope(chartId)
+  // undefined = still resolving, null = no chart, ChartSummary = chart loaded.
+  // Tracks both id (for the horoscope query) and birth_date (for sun-sign
+  // computation in composeWelcome) so a single GET /api/birth-data response
+  // serves both purposes.
+  const [chart, setChart] = useState<ChartSummary | null | undefined>(undefined)
+  const horoscope = useDailyHoroscope(chart?.id)
 
-  // Single `now` snapshot per render — date + lunar phase derive from the
-  // same moment so they can never disagree across the «midnight tick» edge.
-  const { todayFormatted, lunarPhase } = useMemo(() => {
+  // Single `now` snapshot per mount — date, lunar phase, meteor shower, and
+  // hour-of-day all derive from the same moment so welcome composition stays
+  // internally consistent. A re-mount past midnight Sofia produces a new
+  // snapshot; intra-session midnight ticks aren't covered (acceptable for
+  // launch — web does setInterval here, mobile defers that polish).
+  const { todayFormatted, lunarPhase, hourSnapshot, meteorShower } = useMemo(() => {
     const now = new Date()
     return {
       todayFormatted: BG_DATE_FORMAT.format(now),
       lunarPhase: getLunarPhase(now),
+      hourSnapshot: now.getHours(),
+      meteorShower: getActiveMeteorShower(now),
     }
   }, [])
+
+  // welcome.summary is the «Небесен ритъм» paragraph — phase opener × sign-
+  // element flavor × optional meteor note. firstName is empty because the
+  // greeting block (#1) is deferred to a future polish round; composeWelcome
+  // uses firstName only for the greeting line which we don't render.
+  const welcome = useMemo(() => {
+    const sunSign = chart?.birth_date ? getSunSign(chart.birth_date) : null
+    return composeWelcome({
+      firstName: '',
+      sunSign,
+      lunarPhase,
+      meteorShower,
+      hour: hourSnapshot,
+    })
+  }, [chart?.birth_date, lunarPhase, meteorShower, hourSnapshot])
 
   // Refetch on focus so post-wizard-submit returning to Днес reflects
   // the newly created chart even if the screen wasn't unmounted by the
@@ -48,15 +81,19 @@ export default function DnesScreen() {
         .then((data) => {
           if (cancelled) return
           if (Array.isArray(data) && data.length > 0) {
-            const first = data[0] as { id?: unknown }
-            setChartId(typeof first.id === 'string' ? first.id : null)
+            const first = data[0] as { id?: unknown; birth_date?: unknown }
+            if (typeof first.id === 'string' && typeof first.birth_date === 'string') {
+              setChart({ id: first.id, birth_date: first.birth_date })
+            } else {
+              setChart(null)
+            }
           } else {
-            setChartId(null)
+            setChart(null)
           }
         })
         .catch(() => {
           // D-4.7-4: assume no chart on fetch failure.
-          if (!cancelled) setChartId(null)
+          if (!cancelled) setChart(null)
         })
       return () => {
         cancelled = true
@@ -82,38 +119,47 @@ export default function DnesScreen() {
 
         {/* Hero reading area — Layer B. Branches on chart resolution state:
             - undefined (loading birth-data): blank space (D-4.7-3)
-            - string (chart exists): daily horoscope content under «Небесен ритъм»
-              eyebrow. Sub-round 5.4 will rearrange this — «Небесен ритъм»
-              becomes welcome.summary from composeWelcome, daily horoscope
-              moves to its own block. For 5.3 they share the eyebrow.
+            - chart loaded: «Небесен ритъм» welcome.summary paragraph followed
+              by «Дневен хороскоп» eyebrow + LLM-generated horoscope content.
+              Mirrors web's DashboardContent.tsx blocks #2 and #4. Block #1
+              (greeting h1) and #3 (sign quip) deferred per mid-scope ratification.
             - null (no chart): empty-state CTA mirroring web's DashboardContent. */}
-        {chartId && (
+        {chart && (
           <View className="mb-10">
             <Text className="mb-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
               Небесен ритъм
             </Text>
-            {horoscope.isLoading && (
-              <Text className="text-[15px] font-light leading-[1.8] text-slate-400 italic">
-                Звездите шепнат…
+            <Text className="text-[16.5px] font-light leading-[1.8] text-slate-200">
+              {welcome.summary}
+            </Text>
+
+            <View className="mt-10">
+              <Text className="mb-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
+                Дневен хороскоп
               </Text>
-            )}
-            {horoscope.isError && !horoscope.data?.content && (
-              <View className="rounded-xl border border-rose-400/15 bg-rose-500/[0.04] px-4 py-3">
-                <Text className="text-[14px] font-light leading-[1.6] text-rose-300/85">
-                  Звездите мълчат — опитай отново след миг.
+              {horoscope.isLoading && (
+                <Text className="text-[15px] font-light leading-[1.8] text-slate-400 italic">
+                  Звездите шепнат…
                 </Text>
-              </View>
-            )}
-            {horoscope.data?.unavailable && !horoscope.data?.content && (
-              <Text className="text-[15px] font-light leading-[1.8] text-slate-400 italic">
-                Хороскопът за днес още не е готов.
-              </Text>
-            )}
-            {horoscope.data?.content && <HoroscopeBody content={horoscope.data.content} />}
+              )}
+              {horoscope.isError && !horoscope.data?.content && (
+                <View className="rounded-xl border border-rose-400/15 bg-rose-500/[0.04] px-4 py-3">
+                  <Text className="text-[14px] font-light leading-[1.6] text-rose-300/85">
+                    Звездите мълчат — опитай отново след миг.
+                  </Text>
+                </View>
+              )}
+              {horoscope.data?.unavailable && !horoscope.data?.content && (
+                <Text className="text-[15px] font-light leading-[1.8] text-slate-400 italic">
+                  Хороскопът за днес още не е готов.
+                </Text>
+              )}
+              {horoscope.data?.content && <HoroscopeBody content={horoscope.data.content} />}
+            </View>
           </View>
         )}
 
-        {chartId === null && (
+        {chart === null && (
           <View className="mb-10">
             <Text className="mb-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
               Небесен ритъм
@@ -155,7 +201,7 @@ export default function DnesScreen() {
         </View>
 
         {/* Streak footer — Layer D. Hidden in empty state (mirrors web). */}
-        {chartId && (
+        {chart && (
           <Text className="text-center font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-500">
             · серия 12 ·
           </Text>

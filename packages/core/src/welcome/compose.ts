@@ -14,7 +14,7 @@
  * missing.
  */
 
-import type { LunarPhase } from './moon-phase'
+import type { LunarPhase } from '../lib/moon-phase'
 import type { MeteorShower } from './meteor-showers'
 
 export interface WelcomeContext {

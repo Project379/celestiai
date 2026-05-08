@@ -9,7 +9,7 @@ import {
   getNextMeteorShower,
   daysUntilPeak,
   type MeteorShower,
-} from '@/lib/meteor-showers'
+} from '@stellaeum/core/welcome'
 
 /**
  * Free-tier dashboard card: current lunar phase + manifesting guidance.

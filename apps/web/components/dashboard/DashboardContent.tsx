@@ -12,8 +12,11 @@ import {
   TransitTile,
 } from '@/components/dashboard/tiles'
 import { getLunarPhase } from '@/lib/moon-phase'
-import { getActiveMeteorShower } from '@/lib/meteor-showers'
-import { composeWelcome } from '@/lib/welcome-compose'
+import {
+  composeWelcome,
+  getActiveMeteorShower,
+  getSunSign,
+} from '@stellaeum/core/welcome'
 import type { ChartRow } from '@/lib/types/chart'
 
 import type { CrystalOfTheDayResponse } from '@stellaeum/core'
@@ -51,24 +54,6 @@ const fadeUp = {
       ease: [0.22, 0.68, 0.35, 1] as const,
     },
   }),
-}
-
-function getSunSign(birthDate: string): string {
-  const d = new Date(birthDate)
-  const m = d.getMonth() + 1
-  const day = d.getDate()
-  if ((m === 3 && day >= 21) || (m === 4 && day <= 19)) return 'Овен'
-  if ((m === 4 && day >= 20) || (m === 5 && day <= 20)) return 'Телец'
-  if ((m === 5 && day >= 21) || (m === 6 && day <= 20)) return 'Близнаци'
-  if ((m === 6 && day >= 21) || (m === 7 && day <= 22)) return 'Рак'
-  if ((m === 7 && day >= 23) || (m === 8 && day <= 22)) return 'Лъв'
-  if ((m === 8 && day >= 23) || (m === 9 && day <= 22)) return 'Дева'
-  if ((m === 9 && day >= 23) || (m === 10 && day <= 22)) return 'Везни'
-  if ((m === 10 && day >= 23) || (m === 11 && day <= 21)) return 'Скорпион'
-  if ((m === 11 && day >= 22) || (m === 12 && day <= 21)) return 'Стрелец'
-  if ((m === 12 && day >= 22) || (m === 1 && day <= 19)) return 'Козирог'
-  if ((m === 1 && day >= 20) || (m === 2 && day <= 18)) return 'Водолей'
-  return 'Риби'
 }
 
 const SIGN_QUIPS: Record<string, string> = {
