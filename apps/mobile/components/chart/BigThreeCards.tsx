@@ -1,9 +1,9 @@
 import { Pressable, Text, View } from 'react-native'
+import Svg, { Path } from 'react-native-svg'
 
 import {
   PLANETS_BG,
   PLANET_GLYPHS,
-  ZODIAC_GLYPHS,
   ZODIAC_SIGNS_BG,
 } from '@stellaeum/astrology/client'
 import type {
@@ -11,13 +11,19 @@ import type {
   PointData,
   ZodiacSign,
 } from '@stellaeum/astrology/client'
+import { ZODIAC_GLYPH_PATHS } from '@stellaeum/core/charts/glyphs'
 
 /**
  * Mobile port of apps/web/components/chart/BigThreeCards.tsx. Same
  * three-row layout, same Bulgarian sign-trait labels, same Слънце ·
- * Луна · Асцендент framing. Uses Unicode planet/sign glyphs instead of
- * web's custom SVG line-art (CelestialIcons.tsx) per SR 6 ratification.
+ * Луна · Асцендент framing. Sign glyphs use the shared custom SVG
+ * line-art from @stellaeum/core/charts/glyphs (the same paths that
+ * NatalWheel renders on the outer ring); the eyebrow planet glyphs
+ * remain Unicode per SR 6 ratification.
  */
+
+const SIGN_ICON_SIZE = 22
+const SIGN_ICON_STROKE = '#e2e8f0'
 
 interface BigThreeCardsProps {
   sun: PlanetPosition
@@ -82,7 +88,7 @@ function BigThreeRow({
 }: RowProps) {
   const signKey = sign.toLowerCase() as ZodiacSign
   const signLabel = ZODIAC_SIGNS_BG[signKey] ?? sign
-  const signGlyph = ZODIAC_GLYPHS[signKey] ?? ''
+  const signGlyphPaths = ZODIAC_GLYPH_PATHS[signKey]
   return (
     <Pressable
       onPress={onPress}
@@ -116,8 +122,27 @@ function BigThreeRow({
         </Text>
       </View>
 
-      <View className="mb-1.5 flex-row items-baseline" style={{ gap: 12 }}>
-        <Text className="text-[20px] text-slate-200">{signGlyph}</Text>
+      <View className="mb-1.5 flex-row items-center" style={{ gap: 12 }}>
+        {signGlyphPaths && (
+          <Svg
+            width={SIGN_ICON_SIZE}
+            height={SIGN_ICON_SIZE}
+            viewBox="0 0 24 24"
+          >
+            {signGlyphPaths.map((d, i) => (
+              <Path
+                key={i}
+                d={d}
+                fill="none"
+                stroke={SIGN_ICON_STROKE}
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+          </Svg>
+        )}
         <Text className="text-[24px] font-semibold tracking-tight text-slate-100">
           {signLabel}
         </Text>
