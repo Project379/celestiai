@@ -476,6 +476,41 @@ opposite of what the mirror discipline intends.
 
 **Why documented:** Surfaced during sub-round 4.7 verification. Not blocking; not bug-class severity. Future maintainer evaluating mobile perf should know this is an acknowledged trade-off, not a missed warning.
 
+## 23. Web Oracle cap-reached path fails silently (post 2026-04-20 cap-gate refactor)
+
+**Status:** `apps/web/components/oracle/OraclePanelGlobal.tsx` destructures
+`useOracleReading()` but does NOT render its `error` state. When a free-tier
+user hits the daily cap, `/api/oracle/generate` returns 429 with body
+`{ code: 'CAP_REACHED', cap, tier }`; `useCompletion` rejects, `error` is
+set on the hook, and the panel shows nothing. The pre-refactor scaffolding
+— `LockedTopicTeaser` + `lockedTopicShown` state — is still in the file
+but `setLockedTopicShown(topic)` is never called from any code path.
+
+Mobile (sub-round 7.4) actively wires the same 429 response into a
+`CapReachedNotice` text-only surface, intentionally diverging from web
+to ship a usable cap-reached state. Per founder ratification (SR 7
+discussion): mobile leads here; web catches up later.
+
+**Trigger:** Next time someone touches `OraclePanelGlobal.tsx` OR a
+free-tier user reports confusion about hitting the cap on web (the
+current silent-failure UX is a real gap, just not blocking).
+
+**Sub-round when ready:** Web polish round post-Phase A. Could batch
+with: deciding the fate of dead `LockedTopicTeaser` scaffolding (delete
+or revive in a different shape), and wiring an equivalent text-only
+notice on web.
+
+**Fix path:**
+- Detect 429 + `code: 'CAP_REACHED'` in `useOracleReading.ts` (web hook)
+  and expose a typed cap-reached error similar to the mobile hook's
+  `GenerationError` discriminated union.
+- Render that state in `OraclePanelGlobal.tsx` next to (or instead of)
+  the saved-reading view when active.
+- Decide: reuse the existing `LockedTopicTeaser` blur+CTA component
+  (and wire a real upgrade path), OR mirror mobile's text-only notice
+  for parity until paywall surfaces are unified.
+- Delete the dead `lockedTopicShown` state if option B.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
