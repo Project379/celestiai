@@ -1,10 +1,18 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
+import { getLunarPhase } from '@stellaeum/core/moon-phase'
 
 import { CrystalCard } from '@/components/CrystalCard'
 import { useApiClient } from '@/lib/api/client'
+
+const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'Europe/Sofia',
+})
 
 const TILE_CLASS =
   'flex-1 min-w-[46%] rounded-2xl border border-violet-stellaeum/25 px-4 py-5'
@@ -16,6 +24,16 @@ export default function DnesScreen() {
   const router = useRouter()
   const { apiFetch } = useApiClient()
   const [chartExists, setChartExists] = useState<boolean | null>(null)
+
+  // Single `now` snapshot per render — date + lunar phase derive from the
+  // same moment so they can never disagree across the «midnight tick» edge.
+  const { todayFormatted, lunarPhase } = useMemo(() => {
+    const now = new Date()
+    return {
+      todayFormatted: BG_DATE_FORMAT.format(now),
+      lunarPhase: getLunarPhase(now),
+    }
+  }, [])
 
   // Refetch on focus so post-wizard-submit returning to Днес reflects
   // the newly created chart even if the screen wasn't unmounted by the
@@ -48,10 +66,10 @@ export default function DnesScreen() {
         {/* Ambient header — scan in 2s (MOBILE_UX_RESEARCH §2.1 Layer A) */}
         <View className="mb-10">
           <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
-            понеделник, 18 април
+            {todayFormatted}
           </Text>
           <Text className="mt-2 font-cinzel text-[11px] uppercase tracking-[0.32em] text-amber-200/90">
-            ☾  Растяща луна · ден 7
+            ☾  {lunarPhase.name} · ден {Math.round(lunarPhase.phaseDay)}
           </Text>
         </View>
 
