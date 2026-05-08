@@ -10,7 +10,6 @@ import Svg, {
 
 import {
   PLANET_GLYPHS,
-  ZODIAC_GLYPHS,
   ZODIAC_SIGNS_ORDER,
 } from '@stellaeum/astrology/client'
 import type {
@@ -20,6 +19,7 @@ import type {
   PlanetPosition,
   ZodiacSign,
 } from '@stellaeum/astrology/client'
+import { ZODIAC_GLYPH_PATHS } from '@stellaeum/core/charts/glyphs'
 
 /**
  * Mobile natal-wheel render via react-native-svg. Direct port of
@@ -221,23 +221,36 @@ export function NatalWheel({
           )
         })}
 
-        {/* Zodiac glyphs (Unicode) */}
+        {/* Zodiac glyphs — custom SVG line-art ported from web's
+            CelestialIcons.tsx via @stellaeum/core/charts/glyphs.
+            Each glyph is in a 24×24 viewBox; we translate to the
+            target position and scale via <G transform>. Strokes use
+            vectorEffect="non-scaling-stroke" so they stay at 1.5px
+            in screen space regardless of the scale factor. */}
         {ZODIAC_SIGNS_ORDER.map((sign, index) => {
           const angle = longitudeToScreenRad(index * 30 + 15, rotationDeg)
           const x = center + Math.cos(angle) * labelRadius
           const y = center + Math.sin(angle) * labelRadius
+          const glyphSize = size * 0.055
+          const scale = glyphSize / 24
           return (
-            <SvgText
+            <G
               key={`glyph-${sign}`}
-              x={x}
-              y={y}
-              fill="rgba(226, 232, 240, 0.78)"
-              fontSize={size * 0.05}
-              textAnchor="middle"
-              alignmentBaseline="central"
+              transform={`translate(${x - glyphSize / 2} ${y - glyphSize / 2}) scale(${scale})`}
             >
-              {ZODIAC_GLYPHS[sign]}
-            </SvgText>
+              {ZODIAC_GLYPH_PATHS[sign].map((d, i) => (
+                <Path
+                  key={i}
+                  d={d}
+                  fill="none"
+                  stroke="rgba(226, 232, 240, 0.78)"
+                  strokeWidth={1.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
+            </G>
           )
         })}
 

@@ -23,6 +23,7 @@
     "./charts/birth-data": "./src/charts/birth-data.ts",
     "./charts/schemas": "./src/charts/schemas.ts",
     "./charts/interpretations": "./src/charts/interpretations.ts",
+    "./charts/glyphs": "./src/charts/glyphs.ts",
     "./diary/entries": "./src/diary/entries.ts"
   },
   "scripts": {

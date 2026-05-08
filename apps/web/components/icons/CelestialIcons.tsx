@@ -13,6 +13,24 @@
  */
 
 import React, { type ReactNode } from 'react'
+import { ZODIAC_GLYPH_PATHS } from '@stellaeum/core/charts/glyphs'
+import type { ZodiacSign } from '@stellaeum/astrology/client'
+
+/**
+ * Render the shared zodiac glyph paths. Same data is consumed by
+ * apps/mobile/components/chart/NatalWheel.tsx so any geometry tweak
+ * propagates to both surfaces. Stroke styling inherits from the
+ * surrounding <svg>'s BASE attrs.
+ */
+function ZodiacPaths({ sign }: { sign: ZodiacSign }) {
+  return (
+    <>
+      {ZODIAC_GLYPH_PATHS[sign].map((d, i) => (
+        <path key={i} d={d} />
+      ))}
+    </>
+  )
+}
 
 /* ═══════════════════════════════════════════════════════════════
    SHARED SVG PROPS
@@ -182,136 +200,62 @@ export function RisingIcon({ size, className }: IconProps) {
 
 /** ♈ Aries - V stem with small inward half-circles at each tip */
 export function AriesIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      {/* Stem + left arm + small half-circle curling inward */}
-      <path d="M12 21V13L4 6C1 6 1 11 4 11" />
-      {/* Right arm + small half-circle curling outward */}
-      <path d="M12 13L20 6C23 6 23 11 20 11" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="aries" /></Svg>
 }
 
 /** ♉ Taurus - circle with bull horns */
 export function TaurusIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <circle cx={12} cy={16} r={5.5} />
-      <path d="M4 4c0 4 3.5 6.5 8 6.5s8-2.5 8-6.5" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="taurus" /></Svg>
 }
 
 /** ♊ Gemini - two pillars */
 export function GeminiIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <path d="M5 3h14" />
-      <path d="M5 21h14" />
-      <path d="M8 3c-.5 4-.5 14 0 18" />
-      <path d="M16 3c.5 4 .5 14 0 18" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="gemini" /></Svg>
 }
 
 /** ♋ Cancer - 69-shape / crab claws */
 export function CancerIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <path d="M4 10c0-5 16-5 16 0" />
-      <path d="M20 14c0 5-16 5-16 0" />
-      <circle cx={7} cy={10} r={3} />
-      <circle cx={17} cy={14} r={3} />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="cancer" /></Svg>
 }
 
 /** ♌ Leo - lion tail + loop */
 export function LeoIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <circle cx={8} cy={14} r={4.5} />
-      <path d="M12.5 14c0-6 3-10 5-10s3 2 3 4-2 4-4 3" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="leo" /></Svg>
 }
 
 /** ♍ Virgo - three vertical strokes + crossed tail */
 export function VirgoIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <path d="M4 20V8c0-3 3-4 4-1v13" />
-      <path d="M8 20V8c0-3 3-4 4-1v13" />
-      <path d="M12 20V8c0-3 3-4 4-1v5" />
-      <path d="M16 12c0 3 2 5 4 4" />
-      <path d="M18.5 12l2 6" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="virgo" /></Svg>
 }
 
 /** ♎ Libra - scales / horizon with setting sun */
 export function LibraIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <path d="M3 20h18" />
-      <path d="M3 15h18" />
-      <path d="M7 15a5 5 0 0 1 10 0" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="libra" /></Svg>
 }
 
 /** ♏ Scorpio - three strokes + arrow tail */
 export function ScorpioIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <path d="M4 20V8c0-3 3-4 4-1v13" />
-      <path d="M8 20V8c0-3 3-4 4-1v13" />
-      <path d="M12 20V8c0-3 3-4 4-1v8c0 3 2 5 4 4" />
-      <path d="M18 16l3 3-3 3" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="scorpio" /></Svg>
 }
 
 /** ♐ Sagittarius - arrow diagonal */
 export function SagittariusIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <path d="M4 20L20 4" />
-      <path d="M13 4h7v7" />
-      <path d="M7 13l5 5" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="sagittarius" /></Svg>
 }
 
 /** ♑ Capricorn - Handwritten n with top-left stroke and outer overlapping loop ending inwards */
 export function CapricornIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <path d="M 5.5 8 Q 7 7 8.5 9 L 8.5 16" />
-      <path d="M 8.5 9 C 8.5 4 14.5 4 14.5 9 V 15 C 14.5 18.5 19.5 20.5 19.5 16 C 19.5 11.5 13.5 11.5 13.5 16 C 13.5 20.5 11.5 21.5 10.5 20.5" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="capricorn" /></Svg>
 }
 
 /** ♒ Aquarius - two wavy lines */
 export function AquariusIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <path d="M3 9l2.5-3 3 3 3-3 3 3 3-3 2.5 3" />
-      <path d="M3 16l2.5-3 3 3 3-3 3 3 3-3 2.5 3" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="aquarius" /></Svg>
 }
 
 /** ♓ Pisces - two arcs with horizontal bar */
 export function PiscesIcon({ size, className }: IconProps) {
-  return (
-    <Svg size={size} className={className}>
-      <path d="M4 12h16" />
-      <path d="M4 4c6 4 6 12 0 16" />
-      <path d="M20 4c-6 4-6 12 0 16" />
-    </Svg>
-  )
+  return <Svg size={size} className={className}><ZodiacPaths sign="pisces" /></Svg>
 }
 
 /* ═══════════════════════════════════════════════════════════════
