@@ -25,6 +25,17 @@ const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   timeZone: 'Europe/Sofia',
 })
 
+// Daily horoscope title-block subtitle format mirrors web's
+// DailyHoroscope.tsx BG_DATE_FORMAT: day numeric + month long + year numeric,
+// no weekday. Web uses this to anchor the «Дневен хороскоп» card with the
+// reading's date.
+const BG_HOROSCOPE_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'Europe/Sofia',
+})
+
 const TILE_CLASS =
   'flex-1 min-w-[46%] rounded-2xl border border-violet-stellaeum/25 px-4 py-5'
 const TILE_LABEL_CLASS =
@@ -46,10 +57,11 @@ export default function DnesScreen() {
   // internally consistent. A re-mount past midnight Sofia produces a new
   // snapshot; intra-session midnight ticks aren't covered (acceptable for
   // launch — web does setInterval here, mobile defers that polish).
-  const { todayFormatted, lunarPhase, hourSnapshot, meteorShower } = useMemo(() => {
+  const { todayFormatted, horoscopeDateFormatted, lunarPhase, hourSnapshot, meteorShower } = useMemo(() => {
     const now = new Date()
     return {
       todayFormatted: BG_DATE_FORMAT.format(now),
+      horoscopeDateFormatted: BG_HOROSCOPE_DATE_FORMAT.format(now),
       lunarPhase: getLunarPhase(now),
       hourSnapshot: now.getHours(),
       meteorShower: getActiveMeteorShower(now),
@@ -113,7 +125,7 @@ export default function DnesScreen() {
             {todayFormatted}
           </Text>
           <Text className="mt-2 font-cinzel text-[11px] uppercase tracking-[0.32em] text-amber-200/90">
-            ☾  {lunarPhase.name} · ден {Math.round(lunarPhase.phaseDay)}
+            ☾  {lunarPhase.name}
           </Text>
         </View>
 
@@ -133,25 +145,45 @@ export default function DnesScreen() {
               {welcome.summary}
             </Text>
 
-            <View className="mt-10">
-              <Text className="mb-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
+            {/* Daily horoscope title block — three-line stack mirrors web's
+                DailyHoroscope.tsx (Oraculum Diei eyebrow → Дневен хороскоп
+                h2 → reading's date). Web also surrounds this with an
+                animated sun sigil and a decorative northNode divider; mobile
+                renders text-only for now (visual richness is a future
+                polish round). */}
+            <View className="mt-10 mb-6 items-center">
+              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-200/85">
+                Oraculum Diei
+              </Text>
+              <Text className="mt-2 text-[22px] font-semibold tracking-tight text-white">
                 Дневен хороскоп
               </Text>
+              <Text className="mt-1.5 text-[12.5px] font-light text-slate-400">
+                {horoscopeDateFormatted}
+              </Text>
+            </View>
+
+            <View>
               {horoscope.isLoading && (
-                <Text className="text-[15px] font-light leading-[1.8] text-slate-400 italic">
-                  Звездите шепнат…
-                </Text>
+                <View className="items-center py-6">
+                  <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+                    Stellaeum
+                  </Text>
+                  <Text className="mt-2 text-[14px] font-light leading-relaxed text-slate-300">
+                    консултира звездите…
+                  </Text>
+                </View>
               )}
               {horoscope.isError && !horoscope.data?.content && (
                 <View className="rounded-xl border border-rose-400/15 bg-rose-500/[0.04] px-4 py-3">
                   <Text className="text-[14px] font-light leading-[1.6] text-rose-300/85">
-                    Звездите мълчат — опитай отново след миг.
+                    Звездите мълчат - опитай отново след миг.
                   </Text>
                 </View>
               )}
               {horoscope.data?.unavailable && !horoscope.data?.content && (
                 <Text className="text-[15px] font-light leading-[1.8] text-slate-400 italic">
-                  Хороскопът за днес още не е готов.
+                  Вчерашното послание вече е отминало.
                 </Text>
               )}
               {horoscope.data?.content && <HoroscopeBody content={horoscope.data.content} />}
@@ -203,7 +235,7 @@ export default function DnesScreen() {
         {/* Streak footer — Layer D. Hidden in empty state (mirrors web). */}
         {chart && (
           <Text className="text-center font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-500">
-            · серия 12 ·
+            · небесен ритъм ·
           </Text>
         )}
       </ScrollView>
