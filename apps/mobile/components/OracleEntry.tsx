@@ -1,13 +1,27 @@
+import { useRouter } from 'expo-router'
 import { Pressable, Text, View } from 'react-native'
 
+import { useFirstChart } from '@/hooks/useFirstChart'
+
 /**
- * Oracle persistent entry. Platform-specific expression per MOBILE_UX_RESEARCH §2.6:
- * Android/web = FAB, iOS = nav-bar glyph (deferred; FAB used as placeholder).
- * Wiring to the Oracle chat screen comes in Phase B.
+ * Oracle persistent entry. Platform-specific expression per
+ * MOBILE_UX_RESEARCH §2.6: Android/web = FAB, iOS = nav-bar glyph
+ * (deferred; FAB used as placeholder).
+ *
+ * Sub-round 7.6 wires `handlePress` to `router.push('/oracle')` and
+ * hides the FAB until the user has a chart — same gating web's
+ * `OracleFab` applies (`if (!hasChart) return null`). Without a chart
+ * the Oracle screen has nothing to do, so showing the entry would be
+ * a footgun.
  */
 export function OracleEntry() {
+  const router = useRouter()
+  const { data: firstChart } = useFirstChart()
+
+  if (!firstChart) return null
+
   const handlePress = () => {
-    // TODO Phase B: open Oracle chat with contextual pre-prompt for current tab
+    router.push('/oracle')
   }
 
   return (
