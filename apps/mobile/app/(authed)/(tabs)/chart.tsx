@@ -11,7 +11,7 @@ export default function ChartScreen() {
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 120 }}
       >
         <Text className="mb-6 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
-          Твоята карта
+          Натална карта · Твоята небесна подпис
         </Text>
 
         {/* Scroll-chips (MOBILE_UX_RESEARCH §2.2) */}
@@ -41,13 +41,7 @@ export default function ChartScreen() {
           <Text className="font-cinzel text-[11px] uppercase tracking-[0.38em] text-slate-500">
             натална карта
           </Text>
-          <Text className="mt-2 text-[12px] text-slate-600">Skia render · Phase B</Text>
         </View>
-
-        <Text className="text-[14px] font-light leading-[1.8] text-slate-300">
-          Placeholder for Big Three editorial rows. Correct-science surface per research §8 —
-          exposes real degrees, orbs, house system, retrograde, aspect patterns.
-        </Text>
       </ScrollView>
     </SafeAreaView>
   )

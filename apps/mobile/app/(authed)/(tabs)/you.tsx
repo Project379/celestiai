@@ -2,13 +2,17 @@ import { useClerk, useUser } from '@clerk/expo'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+// First four hints mirror apps/web/components/you/YouHub.tsx verbatim.
+// Premium and Settings are mobile-only entries (web hosts them in the
+// top-right UserMenu); their hints are bulgarian-skill-calibrated to match
+// the surrounding voice (comma/«и» noun-list pattern).
 const SECTIONS = [
-  { label: 'Кристали', hint: 'monthly + daily' },
-  { label: 'Дневник', hint: 'manifest entries' },
-  { label: 'Препоръки', hint: 'monthly arcs' },
-  { label: 'Ръководство', hint: 'reference guide' },
-  { label: 'Премиум', hint: 'subscription · manage' },
-  { label: 'Настройки', hint: 'account · privacy · notifications' },
+  { label: 'Кристали', hint: 'месечни прозорци + дневна серия' },
+  { label: 'Дневник', hint: 'лунен дневник — по три реда' },
+  { label: 'Препоръки', hint: 'месечни книги и филми' },
+  { label: 'Ръководство', hint: 'планети, знаци, къщи, аспекти' },
+  { label: 'Премиум', hint: 'абонамент и плащане' },
+  { label: 'Настройки', hint: 'акаунт, поверителност, известия' },
 ] as const
 
 function getDisplayName(user: ReturnType<typeof useUser>['user']): string {
@@ -48,7 +52,7 @@ export default function YouScreen() {
 
         <View className="mb-10">
           <Text className="text-[26px] font-light text-slate-100">{displayName}</Text>
-          <Text className="mt-1 text-[13px] text-slate-500">Sun · Moon · Rising placeholder</Text>
+          <Text className="mt-1 text-[13px] text-slate-500">Слънце · Луна · Асцендент</Text>
         </View>
 
         <View className="gap-0">

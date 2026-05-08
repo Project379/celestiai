@@ -98,7 +98,7 @@ export default function WizardConfirmScreen() {
         e instanceof ApiError
           ? ((e.body as { error?: string } | null)?.error ??
             'Грешка при запазване')
-          : 'Грешка при свързване със сървъра'
+          : 'Неизвестна грешка'
       setSubmitError(msg)
     } finally {
       setIsSubmitting(false)

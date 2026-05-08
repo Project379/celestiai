@@ -11,7 +11,7 @@ export default function RhythmScreen() {
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 120 }}
       >
         <Text className="mb-6 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
-          Небесен ритъм
+          Текущо небе
         </Text>
 
         <View className="mb-10 flex-row gap-2">
@@ -32,15 +32,6 @@ export default function RhythmScreen() {
             </View>
           ))}
         </View>
-
-        <Text className="mb-4 text-[14px] font-light leading-[1.8] text-slate-300">
-          Transits · lunar cycle · manifest diary (sub) · yearly forecast (premium).
-          Timeline rendering comes in Phase B.
-        </Text>
-        <Text className="text-[12px] leading-[1.7] text-slate-500">
-          Manifest (dream) diary surfaces here under Месец per research §2.4.
-          Oracle FAB writes to diary via a Запиши в дневника shortcut.
-        </Text>
       </ScrollView>
     </SafeAreaView>
   )
