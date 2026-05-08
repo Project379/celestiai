@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { stripSentinels, extractPlanetMentions } from '@/lib/oracle/planet-parser'
+import { stripSentinels, extractPlanetMentions } from '@stellaeum/core/oracle/planet-parser'
 
 interface ReadingStreamProps {
   /** Accumulated streaming text from useCompletion */

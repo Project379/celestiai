@@ -7,7 +7,7 @@ import { TopicCards } from './TopicCards'
 import { ReadingStream } from './ReadingStream'
 import { LockedTopicTeaser } from './LockedTopicTeaser'
 import { TOPIC_META, type OracleTopic } from './TopicCard'
-import { stripSentinels } from '@/lib/oracle/planet-parser'
+import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
 
 interface OraclePanelGlobalProps {
   chartId: string | null

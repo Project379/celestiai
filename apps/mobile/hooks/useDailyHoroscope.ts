@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
+import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
+
 import { useApiClient } from '@/lib/api/client'
 
 interface DailyHoroscopeResponse {
@@ -62,11 +64,9 @@ export function useDailyHoroscope(chartId: string | null | undefined) {
 }
 
 /**
- * Strips [planet:KEY]name[/planet] sentinel markers from the LLM output,
- * keeping the inner Bulgarian planet name. Web parses these into colored
- * spans (PLANET_COLORS in HoroscopeStream.tsx); mobile renders plain text
- * for now — colored sentinels are REVISIT-TRIGGERS item 22.
+ * Re-export of the shared sentinel stripper. Source of truth lives at
+ * @stellaeum/core/oracle/planet-parser (lifted in SR 7.0a). Web parses
+ * sentinels into colored spans via PLANET_COLORS; mobile renders plain
+ * text — colored sentinels are REVISIT-TRIGGERS item 22.
  */
-export function stripPlanetSentinels(text: string): string {
-  return text.replace(/\[planet:\w+\]([\s\S]*?)\[\/planet\]/g, '$1')
-}
+export const stripPlanetSentinels = stripSentinels

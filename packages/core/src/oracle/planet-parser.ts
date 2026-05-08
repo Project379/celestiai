@@ -1,9 +1,9 @@
 /**
- * Planet sentinel parser and stripper
- *
- * Utilities for working with [planet:KEY]...[/planet] sentinel markers
- * that the AI embeds in generated readings. These markers enable
- * cross-highlighting between the reading text and the natal wheel.
+ * Planet sentinel parser and stripper — shared between web (Oracle reading
+ * stream + saved-reading rendering) and mobile (Oracle screen + daily
+ * horoscope hook). Lifted from apps/web/lib/oracle/planet-parser.ts during
+ * SR 7.0a; mobile previously inlined a duplicate `stripPlanetSentinels`
+ * regex inside apps/mobile/hooks/useDailyHoroscope.ts.
  *
  * Sentinel format: [planet:KEY]Bulgarian planet name[/planet]
  * Example: [planet:mars]Марс[/planet]
@@ -26,8 +26,6 @@
  * // => ['mars', 'sun']
  */
 export function extractPlanetMentions(text: string): string[] {
-  // Create a fresh RegExp each call to avoid stateful lastIndex issues
-  // Use [\s\S]*? instead of .*? with 's' flag for ES2017 compatibility
   const sentinelRegex = /\[planet:(\w+)\]([\s\S]*?)\[\/planet\]/g
   const keys: string[] = []
 
@@ -54,8 +52,6 @@ export function extractPlanetMentions(text: string): string[] {
  * // => 'Марс в Скорпион'
  */
 export function stripSentinels(text: string): string {
-  // Create a fresh RegExp each call to avoid stateful lastIndex issues
-  // Use [\s\S]*? instead of .*? with 's' flag for ES2017 compatibility
   const sentinelRegex = /\[planet:(\w+)\]([\s\S]*?)\[\/planet\]/g
   return text.replace(sentinelRegex, (_match, _key, innerText: string) => innerText)
 }
