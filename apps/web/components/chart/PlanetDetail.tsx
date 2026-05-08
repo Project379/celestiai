@@ -14,7 +14,7 @@ import {
 import {
   getPlanetInterpretation,
   getRisingInterpretation,
-} from '@/lib/interpretations/planets'
+} from '@stellaeum/core/charts/interpretations'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 interface PlanetDetailProps {

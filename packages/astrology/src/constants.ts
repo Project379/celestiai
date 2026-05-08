@@ -84,6 +84,29 @@ export const PLANET_GLYPHS: Record<Planet, string> = {
 } as const
 
 /**
+ * Zodiac sign glyphs (Unicode).
+ *
+ * Mobile uses these for system-font rendering of zodiac symbols on the
+ * natal wheel; web has its own custom SVG line-art via `<GlyphDefs />`
+ * but can fall back to these if the SVG path bundle is too heavy. Both
+ * surfaces share the same source-of-truth via this Record.
+ */
+export const ZODIAC_GLYPHS: Record<ZodiacSign, string> = {
+  aries: '♈',
+  taurus: '♉',
+  gemini: '♊',
+  cancer: '♋',
+  leo: '♌',
+  virgo: '♍',
+  libra: '♎',
+  scorpio: '♏',
+  sagittarius: '♐',
+  capricorn: '♑',
+  aquarius: '♒',
+  pisces: '♓',
+} as const
+
+/**
  * Ordered list of planets for calculation
  */
 export const PLANETS_ORDER: Planet[] = [
