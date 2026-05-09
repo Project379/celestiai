@@ -139,6 +139,32 @@ This is what's currently active in production. Verified by curl audit pattern po
 - [ ] Has the table been added to the per-table classification table in this doc?
 - [ ] Post-deploy: has the curl audit pattern been run against the new endpoint to verify (return `[]` for INTERNAL/USER_DATA-without-auth, rows for CATALOG)?
 
+## Server-side access pattern (B.0e clarification, 2026-05-09)
+
+The actual server-side Supabase access pattern in `apps/web` is uniformly:
+
+```ts
+const supabase = createServiceSupabaseClient()  // service role, bypasses RLS
+const { data } = await supabase
+  .from('<table>')
+  .select('*')
+  .eq('user_id', userId)                          // manual ownership filter
+```
+
+This is the pattern documented under INTERNAL and used for USER_DATA tables above. **There is no second server-side path.** The B.0d Task 2 audit confirmed every API route, every `(protected)/page.tsx` server-side fetch, every cron handler, every Stripe webhook, and every GDPR / oracle / horoscope / diary / push route uses `createServiceSupabaseClient()` + `.eq('user_id', …)`. RLS is the second line of defense — service role bypasses it; ownership is enforced by the manual `user_id` filter.
+
+### Deleted in B.0e: `apps/web/lib/supabase/server.ts` (`createServerSupabaseClient`)
+
+A vestigial factory that predated the Clerk third-party-auth migration. It fetched a Clerk JWT via the legacy `template: 'supabase'` shape and injected it as a Bearer header for RLS-driven authentication. **It had zero callers** `[verified 2026-05-09 via repo-wide grep]` — execution diverged from the Phase 3 plan (which had aspirationally promised "all API routes import `createServerSupabaseClient()`" in `03-VERIFICATION.md`). Deleted in B.0e to ratify the de-facto architecture and remove the third-path-nobody-uses ambiguity.
+
+### Browser-side: `useSupabaseClient` exists but has zero callers
+
+The hook in `apps/web/lib/supabase/client.ts` uses the modern `accessToken()` callback (third-party-auth-compatible) and is correct as written, but **no Client Component currently invokes it** `[verified 2026-05-09]`. Web's browser code reaches the database exclusively through Server Component reads + API route writes. If a future phase needs RLS-authed browser reads (e.g., real-time subscriptions, optimistic updates), deliberately re-introduce a caller at that point — the hook is ready and the third-party-auth integration on Supabase is wired.
+
+### Why this matters for table classification
+
+The USER_DATA RLS policies above (owner-match via `auth.jwt() ->> 'sub'`) are not currently exercised by any browser query path on web. They are fail-safe protection: if the publishable key is misused or a future direct-browser-read is introduced without thinking, RLS will deny anon access and require a valid Clerk JWT. They cost nothing operationally and represent zero blast radius today. Keep them — but understand that B.0d's lockdown gets its real-world enforcement from `ENABLE ROW LEVEL SECURITY` denying anon (the INTERNAL posture's mechanism), not from owner-match policies blocking legitimate-but-misrouted reads.
+
 ## Supabase SQL Editor BEGIN/COMMIT silent-failure quirk
 
 **Discovered during B.0d remediation 2026-05-09.**

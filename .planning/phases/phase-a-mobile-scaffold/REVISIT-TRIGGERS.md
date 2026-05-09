@@ -809,7 +809,11 @@ isn't lost in the Phase B push-delivery noise.
 
 **Why documented:** Founder ratified the 10-event lock with explicit acknowledgment that new surfaces need coverage later. Logging here so the expansion isn't surprise scope at the 4-week post-soft-launch retro.
 
-## 30. apps/web/lib/supabase/server.ts JWT fallback + public.ts cleanup (B.0e)
+## 30. apps/web/lib/supabase/server.ts JWT fallback + public.ts cleanup (B.0e) — CLOSED 2026-05-09
+
+**Resolution (B.0e close 2026-05-09):** Investigation pass found `createServerSupabaseClient` had **zero callers** in apps/web — the Phase 3 plan had aspirationally said "all API routes use it," but execution diverged to `createServiceSupabaseClient` + manual `user_id` filter universally. Founder ratified Option A: delete `server.ts` outright (rather than modernize it to the third-party-auth pattern), strip `public.ts` debug logs, and fold doc updates into the same sub-round (`RENAME.md` Pattern A claim superseded; `DATA_FETCHING_INVENTORY.md` line 181 marked deleted; `SECURITY-MODEL.md` gained a "Server-side access pattern" section). Doc-debt sweep across older planning docs filed as REVISIT-31. Mobile-side audit filed as REVISIT-32. Halt triggers preserved — neither surfaced. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** Surfaced during B.0d audit 2026-05-09 while reading the Supabase factory map. Two concerns in the same file family:
 
@@ -859,6 +863,45 @@ Diagnostic logs left in from a debugging session. Logs the existence of env vars
 **Halt triggers:** if the JWT template state surfaces a Clerk dashboard config drift that affects mobile too (mobile uses a similar template via `accessToken()` in `apps/mobile/lib/api/client.ts`), expand B.0e scope to cover both surfaces.
 
 **Why documented:** B.0d's audit + verification showed RLS now enforces correctly. But B.0d's SECURITY-MODEL.md INTERNAL/USER_DATA classifications assume the JWT path works for browser-side queries via `useSupabaseClient()`. The server.ts path is a parallel, less-used branch that may be silently broken — needs confirmation before Stream P sub-rounds start landing code that depends on it.
+
+## 31. .planning/ doc-debt sweep — periodic execution-vs-aspiration audit
+
+**Status:** Filed during B.0e close 2026-05-09. The B.0e audit surfaced multiple `.planning/` documents that cite Pattern A / "supabase JWT template" as live architecture, when in fact the codebase has been on the third-party-auth pattern for some time and `createServerSupabaseClient` was dead code. Examples found in B.0e:
+
+- `.planning/research/DATA_FETCHING_INVENTORY.md:181` — load-bearing inventory table (updated inline in B.0e)
+- `.planning/RENAME.md:38` — Pattern A "RESOLVED" claim (updated inline in B.0e)
+- `.planning/phases/phase-a-mobile-scaffold/SUB-ROUND-1-CLOSE.md:97, 153, 169, 195` — sub-round close referencing Pattern A as the active design (historical, not updated)
+- `.planning/phases/phase-a-mobile-scaffold/SUB-ROUND-2-CLOSE.md:84, 130, 149, 168, 176` — sub-round close referencing Pattern A (historical, not updated)
+- `.planning/phases/phase-a-mobile-scaffold/SUB-ROUND-3-CLOSE.md:102, 147` — close doc claiming Pattern A "RESOLVED" via dashboard verification (historical, not updated)
+- `.planning/phases/phase-a-mobile-scaffold/HANDOFF-2026-05-08.md:278, 303, 320` — handoff lock claim (historical, not updated)
+- `.planning/phases/03-birth-data-database/03-VERIFICATION.md:64` — claim "All API routes import and call createServerSupabaseClient()" was aspirational and false at the time
+- `.planning/phases/03-birth-data-database/03-RESEARCH.md:537, 559, 592` and `03-01-PLAN.md:180, 257`, `03-03-PLAN.md:32-34` — Phase 3 plan/research artifacts that defined a server.ts that was never adopted
+
+The pattern is **plan-doc claims diverging from codebase reality** as execution proceeds. Close docs and verification reports lock in a moment-in-time view that downstream readers (and Claude's planning agents) treat as canonical. When two or three sub-rounds later the implementation has drifted, the planning docs no longer reflect it.
+
+**Trigger:** every 4–6 weeks **OR** when a planning doc gets cited as foundational for a new sub-round (read it first, verify the claim still holds, surface drift as a halt-trigger before proceeding).
+
+**Sub-round when ready:** opportunistic standalone sub-round, scoped narrow: pick the top 5–10 `.planning/` docs by recency / citation-frequency, verify each "as of <date>" architectural claim against the current codebase, mark superseded claims with a one-line correction note pointing to the superseding sub-round (B.0e style).
+
+**What NOT to do:** do not rewrite history. Close docs and handoffs are historical record. Add correction notes inline (`> SUPERSEDED 2026-05-09 by B.0e — see RENAME.md`) but preserve the original text so future archaeology still works.
+
+**Why documented:** the cost of stale planning docs compounds — by the time someone (Claude or human) cites a months-old "RESOLVED" note as load-bearing, the cost of the unverified claim can be hours of investigation or, in the worst case, a B.0d-class incident built on a foundation nobody re-checked.
+
+## 32. Audit `apps/mobile/*` for direct Supabase-anon usage drift
+
+**Status:** Filed during B.0e close 2026-05-09. B.0e was scoped to web (`apps/web/lib/supabase/`) per the locked sub-round chain. The parallel mobile inventory hasn't been audited under post-B.0d conditions.
+
+**Concern:** mobile may have direct `supabase.from('<table>').select(...)` calls using the publishable anon key — which under pre-B.0d conditions returned data freely from RLS-disabled tables. Now that the B.0d lockdown is live, those same paths return `[]` (INTERNAL/USER_DATA without auth) and the mobile app may be silently losing data. Conversely, some mobile callers may correctly route through Clerk-authed `accessToken` and work fine — the audit is to confirm which is which, not to assume drift.
+
+**Trigger:** opportunistically during any mobile sub-round that touches data fetching (most of Stream K's Кръг ports will), **OR** before SR 9 soft-launch readiness check — whichever comes first.
+
+**Sub-round when ready:** likely a 30–45 minute standalone audit:
+
+1. Grep `apps/mobile/` for `from('`, `createClient(`, and `useSupabaseClient`.
+2. For each reach: confirm it's authenticating via `accessToken()` callback with a live Clerk session, OR routing through an API endpoint, OR using anon for explicitly CATALOG tables (`bulgarian_cities`, `crystals`, `crystal_listings`, `crystal_vendors`).
+3. Surface any direct anon read against an INTERNAL or USER_DATA table — those would be silently broken under B.0d lockdown.
+
+**Why documented:** B.0d remediation was applied at the database layer and verified via REST-API curl audit. The web audit (B.0e) confirmed the data-fetching pattern is uniform. Mobile is the parallel surface where the same audit hasn't been performed and where a different historical implementation pattern could exist.
 
 ## Appendix — Pre-existing peer warnings (not action items)
 
