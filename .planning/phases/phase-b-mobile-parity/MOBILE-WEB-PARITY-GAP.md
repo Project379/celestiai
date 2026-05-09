@@ -34,7 +34,7 @@ When opening a Stream P sub-round, find the items in scope, set them to `in prog
 | 1.1 | Greeting block — «Добро утро, {firstName}.» (h1, gradient text via `bg-clip-text`) | `DashboardContent.tsx:163-170` | deferred per inline comment line 137 of mobile `index.tsx` | not started |
 | 1.2 | Sign-quip block — 12 hand-written Bulgarian one-liners per sun sign (`SIGN_QUIPS` map) | `DashboardContent.tsx:59-72` | deferred per inline comment line 137 of mobile `index.tsx` | not started |
 | 1.3 | Premium badge in ambient header (when `isPremium`) | `DashboardContent.tsx:140-146` | not rendered | not started |
-| 1.4 | Animated sun sigil — violet+gold pulsing glow with `boxShadow` keyframes wrapping the daily-horoscope title | `DailyHoroscope.tsx:54-80` | static text-only stack | not started |
+| 1.4 | Animated sun sigil — violet+gold pulsing glow with `boxShadow` keyframes wrapping the daily-horoscope title | `DailyHoroscope.tsx:54-80` | static text-only stack | not started — D8 budget concern: Reanimated 4 port harder than framer-motion source suggests (~150–250 LOC realistic, NOT ~50). Cross-references P.2.7. If P.1.4 + P.2.7 both balloon, may warrant standalone polish sub-round per founder ratification 2026-05-09 |
 | 1.5 | Sentinel color rendering on horoscope planet mentions (`HoroscopeStream` parses `[planet:KEY]…[/planet]` markers and colors via `PLANET_COLORS`) | `apps/web/components/horoscope/HoroscopeStream.tsx` | strips via `stripPlanetSentinels` (REVISIT-22 logged) | not started |
 | 1.6 | SSE streaming text via `useCompletion` | `useDailyHoroscope.ts` (web) | mobile uses `?format=json` (REVISIT-20 logged) | not started |
 | 1.7 | Real `LunarTile` data-driven from current lunar phase | `apps/web/components/dashboard/tiles/LunarTile.tsx` | hardcoded «Ден 7/29» | not started |
@@ -56,7 +56,7 @@ When opening a Stream P sub-round, find the items in scope, set them to `in prog
 | 2.4 | `AspectsList` — Aspects chip: all aspects with planet pair + type + orb + applying flag | `apps/web/components/chart/AspectsList.tsx` | placeholder | not started |
 | 2.5 | `HousesList` — Houses chip: 12 house cusps with sign + interpretation | `apps/web/components/chart/HousesList.tsx` | placeholder | not started |
 | 2.6 | `NatalWheelLegend` — small legend block above wheel | `apps/web/components/chart/NatalWheelLegend.tsx` | not ported | not started |
-| 2.7 | Wheel arrival animation — zoom-from-stars (scale 0.08→1, blur 18px→0, arrival glow flash, persistent halo) | `ChartView.tsx:210-243` | static render | not started |
+| 2.7 | Wheel arrival animation — zoom-from-stars (scale 0.08→1, blur 18px→0, arrival glow flash, persistent halo) | `ChartView.tsx:210-243` | static render | not started — D8 budget recalibrated to ~150–250 LOC (NOT ~50) per founder ratification 2026-05-09. Reanimated 4 worklet semantics + react-native-svg blur platform-conditional + multi-keyframe sequence interpolation. Cross-references P.1.4 sun sigil. |
 
 ---
 
@@ -104,12 +104,13 @@ Mobile renders 6 sections as a visual list, none clickable. Web has 4 sections a
 |---|---|---|---|---|
 | 5.1 | All 4 web sections are working `<Link>` routes (Кристали, Дневник, Препоръки, Ръководство) | `YouHub.tsx:6-11` | mobile shows the labels but NO routes are wired — none are clickable | not started |
 | 5.2 | `/you/crystals` — monthly windows + daily streak + collection view | `apps/web/app/(protected)/you/crystals/page.tsx` + `apps/web/components/crystals/*` | absent on mobile (mobile has only the Днес bento Crystal tile) | not started |
-| 5.3 | `/you/recommendations` — stories catalog (8 daily picks per lunar phase + 12 monthly arcs per sun sign) | `apps/web/app/(protected)/you/recommendations/page.tsx` + `apps/web/components/stories/*` | absent on mobile | not started |
+| 5.3 | `/you/recommendations` — stories catalog (8 daily picks per lunar phase + 12 monthly arcs per sun sign) | `apps/web/app/(protected)/you/recommendations/page.tsx` + `apps/web/components/stories/*` | absent on mobile | not started — D7 ratified AsyncStorage parity (mirrors web's localStorage stage). **REVISIT-28 filed** for cross-device sync migration at Phase C/D. P.7 investigation surfaces in-app notice decision («Препоръките ти се запомнят на това устройство» vs accept silent drift). |
 | 5.4 | `/you/guide` — full astrology reference (planets / signs / houses / aspects) | `apps/web/app/(protected)/you/guide/*` | absent on mobile | not started |
 | 5.5 | `/rhythm/journal` — lunar diary | tracked in Section 4 (item 4.7) | absent on mobile | not started — duplicate of 4.7 |
 | 5.6 | Subscription management (Stripe Customer Portal link, billing date, cancel/reactivate, payment method) | `apps/web/app/(protected)/subscription/*` + Clerk popover SettingsContent | absent on mobile | not started |
 | 5.7 | Account settings (auth/email/password/notification preferences/account deletion, GDPR export, privacy) | Clerk popover SettingsContent | absent on mobile | not started |
 | 5.8 | Dynamic Big-Three subtitle (display actual sun/moon/rising signs instead of hardcoded literal «Слънце · Луна · Асцендент») | n/a — web doesn't have this surface (web's profile shape is different) | mobile shows literal hardcoded text, not user data | not started — mobile-only enhancement, not strict parity |
+| 5.9 | Ти→Премиум destination — "what you'd get" surface (offerings + features + CTA → MobilePaywall trigger) | n/a — web hosts pricing in `/pricing` SEO landing; mobile pattern is different (no standalone /pricing route) | section listed in mobile `you.tsx` SECTIONS array, not wired to a route | not started — P.5 stubs the route, P.11 builds the destination content per ratified D3 modification 2026-05-09 |
 
 ---
 
@@ -157,6 +158,13 @@ These were filed in `.planning/phases/phase-a-mobile-scaffold/REVISIT-TRIGGERS.m
 | 23 | Web Oracle cap-reached path fails silently | "Phase B middle weeks before soft launch" (reclassified at Phase A close) | **active — Stream P web-touching work; founder + friend coordination required (B.0)** |
 
 Items 24, 25, 26, 27 stay where they are (Section 7, 1, 7, 6.3 respectively).
+
+**Newly filed at Stream P planning ratification 2026-05-09 (deferred, not active):**
+
+| REVISIT # | Item | Trigger | Cross-reference |
+|---|---|---|---|
+| 28 | Recommendations state Supabase migration — cross-device sync | Phase C/D revisits cross-device sync (user feedback or broader cross-device state workstream) | D7 ratification; Section 5 item 5.3 (P.7) |
+| 29 | PostHog telemetry expansion to new mobile surfaces | 4 weeks post-soft-launch when usage patterns visible | D10 ratification; covers all P.4 / P.7 / P.6 / P.8 / P.10 / P.9 / P.11 / P.16 surfaces shipping without event coverage during Stream P |
 
 ---
 

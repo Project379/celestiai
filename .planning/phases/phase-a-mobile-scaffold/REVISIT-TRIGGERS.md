@@ -758,6 +758,57 @@ could ship to TestFlight unverified. The SR 8 commit body documents the
 limitation but a separate REVISIT entry ensures the verification step
 isn't lost in the Phase B push-delivery noise.
 
+## 28. Recommendations state Supabase migration — cross-device sync
+
+**Status:** Phase B Stream P P.7 ports `apps/web/components/stories/*` and `apps/web/lib/stories/catalog.ts` to mobile, and per founder ratification D7 (2026-05-09) uses **AsyncStorage** for the per-user `read/saved/skipped` state map — mirroring web's current localStorage stage (`stellaeum.stories.state.v1` storage key). The web `useStoryList.ts` docstring explicitly calls itself the "backend-swap boundary."
+
+**Known trade-off accepted at Phase B opening:** web ↔ mobile state will NOT sync. A user who marks a recommendation as "read" on web will not see that state reflected on mobile, and vice versa. This is a deliberate Stream P ship-velocity trade-off — backend lift is a Phase C/D opt-in, not a Stream P requirement.
+
+**Optional Stream P decision (P.7 investigation):** add an in-app notice clarifying the device-local persistence (e.g., «Препоръките ти се запомнят на това устройство») vs accept silent drift. Founder picks during P.7 investigation pass.
+
+**Trigger:** Phase C/D revisits cross-device sync. Concrete signals that should drive prioritization:
+
+- User feedback flagging "I marked X as read on web but it shows unread on mobile"
+- Soft-launch users who use both surfaces report the friction
+- A broader cross-device state-sync workstream opens (e.g., reading-history elsewhere in the app needing sync)
+
+**Sub-round when ready:** A dedicated Stream-K-or-Phase-C migration sub-round. Likely scope:
+
+- Supabase migration: `recommendation_state` table with columns `(user_id, recommendation_id, status, updated_at)` + RLS so users only see their own
+- API route `GET/POST /api/recommendations/state` for read/write
+- Replace `useStoryList` hook body on both surfaces — keep call sites unchanged, swap storage from localStorage/AsyncStorage to API-backed
+- Migration path for existing local state: on first authenticated read, push existing local state to server (one-shot upload), then the server is canonical
+- GDPR cascade: extend `cleanup-deleted-accounts` cron to drop `recommendation_state` rows on account delete
+
+**Re-add path:** the `useStoryList` hook signature is the swap boundary — both surfaces consume it, both can be updated in one commit on each surface.
+
+**Why documented:** Founder ratified the AsyncStorage choice with explicit acknowledgment of the silent-drift trade-off. Logging here so the migration isn't surprise scope when cross-device sync demand surfaces.
+
+## 29. PostHog telemetry expansion to new mobile surfaces
+
+**Status:** Phase B Stream P P.13 wires PostHog with the **10-event taxonomy locked at Phase A close ratification** (`app_opened`, `wizard_started`, `wizard_step_completed`, `wizard_completed`, `chart_viewed`, `oracle_opened`, `oracle_topic_selected`, `oracle_reading_generated`, `oracle_cap_reached`, `push_permission_prompted`/`response`). Per founder ratification D10 (2026-05-09): no event additions during Stream P.
+
+**Acknowledged scope gap:** the 10-event taxonomy was locked before the Phase B parity reframe. New mobile surfaces shipping in Stream P (diary at P.4, recommendations at P.7, crystals collection at P.6, astrology guide at P.8, account settings at P.10, subscription management at P.9, pricing/Премиум destination at P.11) currently have **zero PostHog event coverage**. This is intentional — adding events for surfaces that don't yet exist would lock taxonomy against unbuilt UI; soft-launch users are the ones who generate the meaningful data.
+
+**Trigger:** **4 weeks post-soft-launch when usage patterns are visible.** Concrete signals:
+
+- PostHog dashboard shows surfaces with high traffic but no event coverage (the team can't answer questions about engagement on diary / recommendations / etc.)
+- Soft-launch retention investigation needs cross-surface funnel data the current 10 events don't provide
+- A specific paid-feature conversion question requires events that aren't in the taxonomy yet
+
+**Sub-round when ready:** Phase C event expansion sub-round. Likely candidate events (NOT locked, surface in expansion sub-round investigation):
+
+- `diary_entry_started`, `diary_entry_saved` (P.4 surface)
+- `recommendation_opened`, `recommendation_marked_read`, `recommendation_dismissed` (P.7)
+- `crystal_collected` (already partly covered via Crystal of the Day; expansion = collection-view interactions)
+- `guide_section_viewed` (P.8)
+- `settings_changed`, `account_deletion_requested`, `gdpr_export_requested` (P.10)
+- `subscription_status_viewed`, `subscription_managed` (P.9)
+- `paywall_shown`, `paywall_dismissed`, `paywall_converted` (P.11)
+- `push_notification_tapped`, `push_notification_dismissed` (P.16 + delivery)
+
+**Why documented:** Founder ratified the 10-event lock with explicit acknowledgment that new surfaces need coverage later. Logging here so the expansion isn't surprise scope at the 4-week post-soft-launch retro.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
