@@ -809,6 +809,57 @@ isn't lost in the Phase B push-delivery noise.
 
 **Why documented:** Founder ratified the 10-event lock with explicit acknowledgment that new surfaces need coverage later. Logging here so the expansion isn't surprise scope at the 4-week post-soft-launch retro.
 
+## 30. apps/web/lib/supabase/server.ts JWT fallback + public.ts cleanup (B.0e)
+
+**Status:** Surfaced during B.0d audit 2026-05-09 while reading the Supabase factory map. Two concerns in the same file family:
+
+**Concern A — `server.ts` JWT fallback path may be silently broken.**
+
+```ts
+// apps/web/lib/supabase/server.ts
+let token: string | null = null
+try {
+  token = await session.getToken({ template: 'supabase' })
+  console.log('[Supabase Server] Got Supabase token:', !!token)
+} catch (e) {
+  console.log('[Supabase Server] No Supabase JWT template, using default token')
+  token = await session.getToken()
+}
+
+if (!token) {
+  console.log('[Supabase Server] No token available, using anon client with userId header')
+}
+```
+
+The function tries to fetch a Clerk JWT with the 'supabase' template, falls back to the default Clerk token if absent, falls back further to anon-client-no-token if both fail. Per SR 3 Layer 2 dashboard work, the 'supabase' template was created in Clerk on 2026-01-31 (Pattern A confirmed). But after the SR 3 Stellaeum rename + various Clerk dashboard touchpoints since, the template's existence and shape are unverified. **Current callers of `createServerSupabaseClient()` likely silently fall through to the default-token branch and may be sending tokens Supabase doesn't accept as auth context for RLS evaluation.**
+
+This was masked pre-B.0d because most server-side queries used `createServiceSupabaseClient()` (service role bypass), so RLS state didn't matter. With B.0d's RLS lockdown in effect, any caller still using `createServerSupabaseClient()` against an RLS-protected table will silently get `[]` if the Clerk JWT template fallback is wrong.
+
+**Concern B — `public.ts` debug `console.log` artifacts.**
+
+```ts
+// apps/web/lib/supabase/public.ts
+console.log('[Supabase] URL present:', !!supabaseUrl, 'Key present:', !!supabaseAnonKey)
+// ...
+console.error('[Supabase] Missing env vars:', { supabaseUrl, supabaseAnonKey: supabaseAnonKey?.slice(0, 20) + '...' })
+```
+
+Diagnostic logs left in from a debugging session. Logs the existence of env vars on every `createPublicSupabaseClient()` call — clutters server logs and partially leaks the publishable-key prefix in error paths. Not security-critical (key is public anyway) but pollutes Sentry / Vercel logs.
+
+**Trigger:** **Fires immediately after B.0d close — queued as B.0e** per founder spec 2026-05-09. Investigation-pass-first per speed-mode discipline.
+
+**Sub-round when ready:** B.0e. Likely scope:
+
+1. Inventory `createServerSupabaseClient()` callers via grep — list every API route + component that uses it.
+2. Verify Clerk dashboard JWT template state — does 'supabase' template still exist? What's its current shape (claims, signing algorithm)? Does the template emit `sub` correctly for Pattern A RLS policies?
+3. For each caller of `createServerSupabaseClient()`: confirm the table being queried is RLS-protected via the Clerk JWT path, not service-role-bypass. If RLS-protected and JWT template is broken, those queries are silently failing under the new B.0d lockdown.
+4. Decide: fix the JWT template, OR migrate all callers to `createServiceSupabaseClient()` + manual user filter (the more common pattern in the codebase already).
+5. Strip `console.log` debug artifacts from `public.ts`. Replace with `logError('ERR-WEB-SUPA-001', err)` if the env-var-missing path needs reporting (Sentry already wired in §10).
+
+**Halt triggers:** if the JWT template state surfaces a Clerk dashboard config drift that affects mobile too (mobile uses a similar template via `accessToken()` in `apps/mobile/lib/api/client.ts`), expand B.0e scope to cover both surfaces.
+
+**Why documented:** B.0d's audit + verification showed RLS now enforces correctly. But B.0d's SECURITY-MODEL.md INTERNAL/USER_DATA classifications assume the JWT path works for browser-side queries via `useSupabaseClient()`. The server.ts path is a parallel, less-used branch that may be silently broken — needs confirmation before Stream P sub-rounds start landing code that depends on it.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
