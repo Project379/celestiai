@@ -32,7 +32,6 @@ export default function AuthedLayout() {
         options={{
           title: 'Оракул',
           headerBackTitle: 'Назад',
-          headerLeftContainerStyle: { paddingLeft: 16 },
         }}
       />
     </Stack>

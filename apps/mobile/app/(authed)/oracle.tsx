@@ -71,6 +71,7 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
               accessibilityRole="button"
               accessibilityLabel={activeTopic ? 'Назад към темите' : 'Назад'}
               hitSlop={12}
+              style={{ paddingLeft: 16 }}
             >
               <Text style={{ color: '#fcd34d', fontSize: 28, lineHeight: 28 }}>
                 ‹
