@@ -511,6 +511,62 @@ notice on web.
   for parity until paywall surfaces are unified.
 - Delete the dead `lockedTopicShown` state if option B.
 
+## 24. iOS edge-swipe and Android hardware back bypass Oracle reading-view back handler
+
+**Status:** SR 7.8 added a custom `headerLeft` to the Oracle screen that
+branches on `activeTopic` — when a reading is open, the header back
+arrow clears local state and returns to the topic grid; otherwise it
+falls back to `router.back()` and pops to dashboard. This works for the
+visible header arrow but does NOT intercept two other back affordances:
+
+- **iOS edge-swipe-back gesture.** Swiping from the left edge while
+  inside a reading triggers the native pop animation directly through
+  `expo-router`'s underlying `react-native-screens` stack — it skips the
+  React-side `headerLeft` handler entirely. Result: user is popped to
+  dashboard instead of returning to the topic grid.
+- **Android hardware back button.** The system back button fires through
+  `BackHandler` and `navigation.goBack()`, which also bypasses the
+  custom `headerLeft`. Same end-state as iOS edge-swipe.
+
+`apps/mobile/app/(authed)/oracle.tsx` renders both topic grid and
+reading view inline gated by `activeTopic` local state from
+`useOracleReading`; the only path that observes that state is the
+`headerLeft` button.
+
+**Why deferred:** Founder spec for SR 7.8 explicitly scoped to "back
+arrow only." SR 7 is closing on the visible-header behavior; SR 7.8
+commit body documents the gap. Not a regression — the inline-state
+pattern is novel to SR 7, so this is "incomplete" rather than "broken".
+Real users will encounter it: iOS users swiping back is common.
+
+**Trigger:** Post-Phase-A polish OR user feedback flagging "Oracle back
+gesture pops me to Днес." Could surface earlier if SR 8 push notifications
+deep-link into a specific topic and a back-gesture-pop UX gap creates a
+loop.
+
+**Sub-round when ready:** Dedicated mobile UX polish round, OR fold into
+SR 8 if push deep-links land there.
+
+**Fix path (two viable options):**
+
+- *Option A (recommended): hijack the navigation event.* Use
+  `useFocusEffect` + `navigation.addListener('beforeRemove', ...)` in
+  `OracleScreenInner`. When `activeTopic` is set, call
+  `e.preventDefault()` and `clearActiveTopic()` instead. Catches both
+  edge-swipe and hardware back through the same code path. ~20 LOC.
+- *Option B: split into two routes.* Move the reading view out of
+  `oracle.tsx` and into `oracle/[topic].tsx`. Topic grid pushes
+  `oracle/love`, reading view is a real route, native back stack handles
+  everything. Larger refactor (~80 LOC + URL-state plumbing) but removes
+  the inline-state-vs-navigation impedance mismatch entirely. Pairs well
+  with eventual deep-link support from push notifications.
+
+**Why documented:** Surfaced during SR 7 verification (chart-bearing
+account, iOS), founder ratified scoping SR 7.8 to header-only and
+filing the gesture/hardware-back gap here. Future maintainer touching
+the Oracle screen should know the inline-state-gated pattern has known
+gaps the route-split fix would close cleanly.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
