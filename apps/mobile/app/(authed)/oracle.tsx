@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router'
+import { Redirect, Stack, useRouter } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -41,6 +41,7 @@ export default function OracleScreen() {
 }
 
 function OracleScreenInner({ chartId }: { chartId: string }) {
+  const router = useRouter()
   const {
     savedReadings,
     activeTopic,
@@ -51,8 +52,33 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
     currentReading,
   } = useOracleReading(chartId)
 
+  // Custom header back: when a topic reading is open, the screen renders
+  // grid+reading inline gated by activeTopic local state — the system back
+  // would pop to dashboard and skip the grid. Branch on local state so a
+  // single button handles both cases.
+  const handleHeaderBack = () => {
+    if (activeTopic) clearActiveTopic()
+    else router.back()
+  }
+
   return (
     <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
+      <Stack.Screen
+        options={{
+          headerLeft: () => (
+            <Pressable
+              onPress={handleHeaderBack}
+              accessibilityRole="button"
+              accessibilityLabel={activeTopic ? 'Назад към темите' : 'Назад'}
+              hitSlop={12}
+            >
+              <Text style={{ color: '#fcd34d', fontSize: 28, lineHeight: 28 }}>
+                ‹
+              </Text>
+            </Pressable>
+          ),
+        }}
+      />
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48 }}
       >
