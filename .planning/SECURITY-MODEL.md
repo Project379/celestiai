@@ -63,11 +63,11 @@ Public reference data. Anyone can read; nobody writes via the API (only seed scr
 | `chart_calculations` | INTERNAL | Chart-calc API writes via service role; chart-id-keyed (no user_id column on this table). Browser receives chart data via `/api/chart/calculate` API JSON, not directly. |
 | `processed_webhook_events` | INTERNAL | Stripe webhook handler (idempotency check); only the webhook route touches this. |
 | `daily_transits` | INTERNAL | Date-keyed shared cache; horoscope generation API reads/writes via service role. Browser reads `daily_horoscopes` (per-user-computed result), not transits directly. |
-| `charts` | USER_DATA | Birth-data PII per user; browser reads/writes via Clerk session. RLS from migration 0008. |
-| `ai_readings` | USER_DATA | Cached Oracle readings per user/chart/topic; browser reads via Clerk session. RLS from 0008. |
-| `daily_horoscopes` | USER_DATA | Cached daily horoscope per user/chart/date; browser reads via Clerk session. RLS from 0008. |
-| `push_subscriptions` | USER_DATA | Per-user push endpoints; browser writes (subscribe/unsubscribe) via Clerk session. RLS from 0008. |
-| `subscription_quotas` | USER_DATA | Cap-gate accounting per user. RLS from 0008 (SELECT-only owner policy; writes via service role). |
+| `charts` | USER_DATA | Birth-data PII per user; browser reads/writes via Clerk session. RLS from `20260413141504_schema_hardening.sql`. |
+| `ai_readings` | USER_DATA | Cached Oracle readings per user/chart/topic; browser reads via Clerk session. RLS from `20260413141504_schema_hardening.sql`. |
+| `daily_horoscopes` | USER_DATA | Cached daily horoscope per user/chart/date; browser reads via Clerk session. RLS from `20260413141504_schema_hardening.sql`. |
+| `push_subscriptions` | USER_DATA | Per-user push endpoints; browser writes (subscribe/unsubscribe) via Clerk session. RLS from `20260413141504_schema_hardening.sql`. |
+| `subscription_quotas` | USER_DATA | Cap-gate accounting per user. RLS from `20260413141504_schema_hardening.sql` (SELECT-only owner policy; writes via service role). See B.0f footnote below — wiring deferred to its own sub-round. |
 | `diary_entries` | USER_DATA | Лунен дневник per user. RLS from `20260421150801_create_diary_entries.sql`. |
 | `user_crystals` | USER_DATA | Per-user crystal collection; browser reads via Clerk session. RLS added in B.0d remediation. |
 | `user_daily_crystals` | USER_DATA | Per-user daily crystal visits. RLS added in B.0d remediation. |
@@ -75,6 +75,12 @@ Public reference data. Anyone can read; nobody writes via the API (only seed scr
 | `crystals` | CATALOG | Crystal display data. Public-read policy added in B.0d. |
 | `crystal_listings` | CATALOG | Phase B+ vendor display (currently empty). Public-read policy added in B.0d. |
 | `crystal_vendors` | CATALOG | Phase B+ vendor display (currently empty). Public-read policy added in B.0d. |
+
+### Footnote — `subscription_quotas` wiring (B.0f, queued after B.0c close)
+
+The table exists in production from migration `20260413141504_schema_hardening.sql`, but no application code currently reads or writes it. **Wiring fires in B.0f as a dedicated sub-round** after the B.0c foundation port closes — this keeps B.0c focused on the canonical-architecture port (~1,175 LOC) without absorbing quota-refactor scope creep.
+
+**Decided spec for B.0f:** scope is AI generation (Oracle, daily horoscope, future synastry interpretations); monthly calendar period anchor; fresh start with no backfill of existing reading counts; refactor `/api/oracle/generate` step 7 from row-counting on `ai_readings` to quota-table reads; premium tier uncapped initially (NULL `ai_readings_limit` or no row created — reconsider when cost-envelope analysis surfaces a defensible cap number). Helpers to ship: `getCurrentPeriodQuota` (creates row if absent), `incrementQuotaUsage` (atomic SQL `UPDATE … SET ai_readings_used = ai_readings_used + 1` to avoid read-then-write races). Cache hits MUST NOT count against quota — preserves the SR 7 behavior. Daily horoscope cap (currently uncapped) gets 1/day enforcement via the same quota table.
 
 ## The B.0d remediation migration
 
