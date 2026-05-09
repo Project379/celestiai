@@ -567,6 +567,165 @@ filing the gesture/hardware-back gap here. Future maintainer touching
 the Oracle screen should know the inline-state-gated pattern has known
 gaps the route-split fix would close cleanly.
 
+## 25. RevenueCat SDK install + provider scaffold deferred to Phase B opening sub-round
+
+**Status:** SR 8 originally scoped 8.4 as a code-side scaffold for
+`react-native-purchases` (RevenueCat SDK install + provider context +
+`Purchases.configure()` at app root, ~60 LOC). Deferred per founder
+ratification 2026-05-09 in favor of moving the install to the Phase B
+opening sub-round.
+
+**Why deferred:** SDK churn risk over the ~6–8-week gap between Phase A
+close and Phase B paywall work. The provider does nothing useful until
+Phase B's "Днешен ден в твоя кръг" paywall opens; installing it now
+just means we'd ship JS bundle weight for code that has no callers,
+plus we'd need to track and apply any breaking SDK updates between
+install and use. RevenueCat publishes regular SDK updates; pinning a
+6-8-week-old version at Phase B opening would force a forced upgrade
+on the founder before paywall code lands.
+
+The actual lead-time work (RevenueCat dashboard config — products,
+entitlements, offerings + Apple App Store product config) is
+founder-track, not code, and proceeds in parallel during Phase A
+close. Apple App Store product config has 1–2 week lead time per the
+SR 8 brief; founder begins this when Apple Developer Program
+enrollment lands.
+
+**Trigger:** Phase B opens. The first sub-round of Phase B should
+either be the RevenueCat code-side scaffold (~60 LOC: SDK install +
+`<RevenueCatProvider>` component + `Purchases.configure()` with
+platform-split keys per ratified D10), OR fold it into the same commit
+as the first paywall UI sub-round if they're cohesive — founder call
+at Phase B planning.
+
+**Sub-round when ready:** Phase B opener. Decision points carried
+forward from D9/D10:
+- D9: dedicated `<RevenueCatProvider>` component vs top-level wrap in
+  `apps/mobile/app/_layout.tsx`. Default ratification: dedicated
+  provider component (mirrors Clerk's structure).
+- D10: `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` + `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`
+  with `Platform.select()` per RevenueCat best practice.
+
+**Re-add path:**
+- `pnpm exec expo install react-native-purchases` from `apps/mobile`
+- Verify SDK 54 + RN 0.81 + Reanimated 4 compat at Phase B time
+  (Context7 docs check before install, per the halt-trigger discipline)
+- Wire `<RevenueCatProvider>` per D9 ratification
+- Wire `Purchases.configure({ apiKey: Platform.select({ ios: ..., android: ... }) })`
+  per D10
+- Founder loads RevenueCat dashboard config (entitlements, offerings)
+  before paywall UI work
+
+**Why documented:** Founder ratified the deferral 2026-05-09 in the SR 8
+investigation thread. SR 8 closes Phase A's launch-readiness infra DOD
+minus this one item — Phase B opener is the explicit trigger so the
+deferral doesn't go quiet between rounds.
+
+## 26. push_tokens schema + RLS + token registration endpoint design
+
+**Status:** SR 8.3 scaffolds the iOS/Android push permission flow
+(`apps/mobile/lib/notifications/maybePromptPushPermission.ts`), but per
+founder D7 modification 2026-05-09 the token retrieval result lives in
+AsyncStorage only — no Supabase migration, no `push_tokens` table, no
+backend registration endpoint. Token stash key:
+`@stellaeum/push_token`.
+
+**Why deferred:** Phase A's §13.5 requirement is "permission scaffold
+(no notifications yet, just the plumbing)" — token storage on the
+device satisfies the scaffold scope. Backend integration only matters
+when Phase B's push delivery work opens, and the schema decision is
+non-trivial:
+
+- Token has metadata (platform iOS/Android, device id, registered_at,
+  revoked_at lifecycle) that doesn't fit a JSONB array on `users`
+- Multi-device support (same user on iPhone + iPad) needs a 1:N table,
+  not a column
+- Revocation handling (token rotation, app uninstall) needs a
+  registration endpoint that can mark old tokens as revoked
+- Cleanup cadence (stale tokens older than N days with no successful
+  send) is a separate cron concern
+
+Designing all of this now without a concrete delivery target risks
+shipping schema that doesn't match Phase B's actual push needs.
+
+**Trigger:** Phase B push delivery sub-round opens. Per
+`MOBILE_UX_RESEARCH.md §10` Phase B exit criteria, push fires daily
+horoscope at the user's pattern-time (23.5h rule), so the schema +
+endpoint must land before that.
+
+**Sub-round when ready:** First Phase B push-delivery sub-round.
+Likely scope:
+- Supabase migration: `push_tokens` table with columns
+  `(id, user_id, token, platform, device_id, registered_at,
+  revoked_at, last_sent_at)` + RLS so users can only see their own
+  tokens
+- API route `POST /api/push/register` accepting `{ token, platform,
+  device_id }` from the mobile client, upserting on
+  `(user_id, device_id)`
+- Mobile-side: extend `maybePromptPushPermission` to call
+  `/api/push/register` after AsyncStorage stash on grant; or add a
+  separate sync hook that runs on app open to upload any locally
+  stashed token
+- Cleanup cron extending `cleanup-deleted-accounts` GDPR cascade
+  pattern to also revoke tokens on account deletion
+
+**Why documented:** Token registration is the gate between scaffolded
+permission and actual push delivery. SR 8.3 commit message references
+this revisit; logging here so the schema design isn't a surprise at
+Phase B opening.
+
+## 27. Push token retrieval verification post-Dev Client
+
+**Status:** `getExpoPushTokenAsync` rejects on Expo Go SDK 49+ — the
+call requires a Dev Client / standalone build. SR 8.3's scaffold catches
+the rejection via `logError('ERR-MOB-PUSH-005', err)` and keeps the
+`@stellaeum/notif_prompted` flag set on the device, which means the
+prompt won't re-fire even though token retrieval silently failed.
+
+This is by design for the SR 8 scaffold scope: the permission prompt
+itself is verifiable in Expo Go (system API works), and the failure
+path is logged. But the token retrieval branch — the actual
+`getExpoPushTokenAsync` → AsyncStorage stash → Sentry breadcrumb chain —
+is unverified in Phase A.
+
+**Trigger (intersects REVISIT-1 reclassification per founder ratification
+2026-05-09):** SR 9 EAS Dev Client build at the **end of Phase B**, not
+Phase D. This is a reclassification: the original handoff doc placed
+SR 9 (EAS + TestFlight + biometric, bundled per REVISIT-1) at "late
+Phase C / early Phase D, before App Store submission." Founder
+ratified during the SR 7→8 thread that the TestFlight cut moves to
+Phase B close — soft launch is the milestone driving Apple Developer
+enrollment, not GA submission.
+
+REVISIT-1, REVISIT-23, and this item all need re-examination in the
+Phase A close planning sweep so the trigger conditions reflect the
+actual sequence.
+
+**Sub-round when ready:** SR 9 (Phase B close) — EAS Dev Client build
++ TestFlight provisioning + biometric (`expo-local-authentication`).
+At that point, push token retrieval becomes testable end-to-end:
+
+1. Manual reset on the test device:
+   `AsyncStorage.removeItem('@stellaeum/notif_prompted')` and
+   `AsyncStorage.removeItem('@stellaeum/push_token')`
+2. Generate a fresh Oracle reading on the Dev Client / TestFlight build
+3. Confirm Alert pre-prompt fires
+4. Tap «Да, разказвай ми» → confirm iOS system dialog appears
+5. Tap "Allow" → confirm AsyncStorage gets a real
+   `ExponentPushToken[xxx]` value
+6. Confirm Sentry breadcrumb posts "Push token registered" (info
+   level)
+
+If the EAS projectId is missing in `app.json` extra.eas at that point,
+the scaffold logs a warning breadcrumb and exits cleanly — that's the
+expected behavior pre-`eas init`. After `eas init`, the projectId
+should be picked up automatically.
+
+**Why documented:** Without this revisit, the token-retrieval branch
+could ship to TestFlight unverified. The SR 8 commit body documents the
+limitation but a separate REVISIT entry ensures the verification step
+isn't lost in the Phase B push-delivery noise.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
