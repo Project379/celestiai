@@ -5,22 +5,26 @@
 See: .planning/PROJECT.md (updated 2026-05-09)
 
 **Core value:** Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.
-**Current focus:** v1.0 mobile-led launch — Phase A close ratification 2026-05-09; Phase B (Кръг native-primary + soft-launch milestone) opens next
+**Current focus:** v1.0 mobile-led launch — Phase A complete; Phase B opened 2026-05-09 with two streams (Stream P parity, Stream K Кръг)
 
 ## Current Position — v1.0 mobile-led launch
 
 Milestone: v1.0 mobile-led launch
-Phase: A of 4 - COMPLETE pending close ratification
-Sub-round: SR 8 of SR 9 - SR 8 complete; SR 9 (EAS Dev Client + TestFlight + biometric, bundled per REVISIT-1) deferred to end of Phase B per soft-launch milestone reclassification
-Status: Phase A close ratification 2026-05-09 — Sentry + feature flags + push perms scaffold all shipped; RevenueCat deferred to Phase B opener (REVISIT-25); push_tokens schema deferred to first Phase B push-delivery sub-round (REVISIT-26)
-Last activity: 2026-05-09 — Completed SR 8 close docs commit (b657f24 → 0da244c trail) and pushed mobile-parallel-test to origin
+Phase: B of 4 - OPEN (two parallel streams)
+  - Stream P (Parity): port web features to mobile per `.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md` — Toni's primary work
+  - Stream K (Кръг): port Кръг features as friend ships them on web — per-port reactive investigation
+Sub-round: investigation pass complete 2026-05-09 (Phase B re-plan after soft-launch quality bar reframe); Stream P sub-round layering surfaced for ratification
+Status: Phase B docs in place (parity gap inventory + handoff); Stream P ratification pending; friend coordination conversation gates first Stream P sub-round
+Last activity: 2026-05-09 — Phase B opening docs commit (parity gap inventory + handoff + state updates)
 
-Progress (Phase A): [####################] 100%
+Progress (Phase A): [####################] 100% — closed per documented exit criteria
+Progress (Phase B Stream P): [....................] 0% — ratification pending
+Progress (Phase B Stream K): [....................] 0% — gated on friend coordination
 Progress (v1.0 milestone): [#####...............] 25% (1 of 4 phases complete)
 
-Awaiting: Phase A close ratification by founder. See `.planning/PHASE-A-CLOSE-RATIFICATION.md` for the strategic items tracking (cost envelope, telemetry vendor, Apple Developer enrollment, GDPR/ToS, friend coordination).
+Awaiting: Stream P sub-round layering ratification + friend coordination conversation. See `.planning/phases/phase-b-mobile-parity/HANDOFF-2026-05-09.md` for strategic items tracking (cost envelope, PostHog, Apple Developer enrollment, GDPR/ToS, friend coordination).
 
-Phase B does NOT auto-fire. Founder will explicitly open Phase B SR 1 (Кръг native-primary investigation pass) when ready — likely after a 2-3 day rest break and the friend coordination conversation.
+Phase B soft-launch quality bar = full web parity (less Friends groups, deferred to future research). TestFlight at end of Phase B remains; timeline TBD based on parity work duration. No auto-fire of Stream P sub-rounds — founder ratifies layering first.
 
 ## Current Position — v0.1 web MVP (HISTORICAL)
 

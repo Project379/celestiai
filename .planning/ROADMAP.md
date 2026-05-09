@@ -447,9 +447,9 @@ Speed-mode discipline preserved: investigation pass before any code in a sub-rou
 
 ### Phases
 
-- [x] **Phase A: Mobile scaffold** (~2 weeks, 2026-04-18 → 2026-05-09) — Auth, first fetch, rename, birth-data wizard, horoscope, chart, Oracle, infra batch. **Exit criterion:** TestFlight build navigates 5 tabs, renders chart, opens Oracle.
-- [ ] **Phase B: Кръг native-primary** (~4–6 weeks, NEXT) — Add-person flow, synastry calc, free Sun/Moon/Rising compatibility, first paid feature, RevenueCat paywall, push at user pattern-time. **Soft-launch milestone.**
-- [ ] **Phase C: Remaining premium features** (~8–12 weeks) — Crush reports, couples linked, friends groups, yearly forecast, deep synastry. Native retention plumbing.
+- [x] **Phase A: Mobile scaffold** (2026-04-18 → 2026-05-09, ~3 weeks) — Auth, first fetch, rename, birth-data wizard, horoscope, chart, Oracle, infra batch. **Exit criterion:** TestFlight build navigates 5 tabs, renders chart, opens Oracle. Closed per documented exit criteria.
+- [ ] **Phase B: Mobile parity + Кръг** (OPEN 2026-05-09, timeline TBD) — Two parallel streams: Stream P ports all missing web features to mobile per `MOBILE-WEB-PARITY-GAP.md`; Stream K ports Кръг features as friend ships them on web. Soft-launch quality bar reframed 2026-05-09 to **full web parity less Friends groups (deferred to future research)**. **Soft-launch milestone** at end of Phase B: TestFlight + Google Play internal track, 50–100 Bulgarian users.
+- [ ] **Phase C: Remaining premium features** (~8–12 weeks) — Crush reports, couples linked, yearly forecast, deep synastry, **Friends groups research**. Native retention plumbing: home-screen widgets, biometric anchored quick-open, expanded notification taxonomy.
 - [ ] **Phase D: Web reposition** — Bulgarian SEO acquisition funnel, shareable chart surfaces, desktop becomes read-only-ish, Oracle chat remains on web.
 
 ### Phase A — Mobile scaffold (COMPLETE)
@@ -462,38 +462,34 @@ Speed-mode discipline preserved: investigation pass before any code in a sub-rou
 
 **Sub-round close docs:** `.planning/phases/phase-a-mobile-scaffold/SUB-ROUND-{1,2,3,4,7,8}-CLOSE.md`. (5 and 6 are documented in the SR 6 handoff doc rather than dedicated close summaries.)
 
-### Phase B — Кръг native-primary (NEXT)
+### Phase B — Mobile parity + Кръг (OPEN)
 
-**Goal:** One complete revenue loop validated end-to-end on real Bulgarian users — install → birth data → add Emma to your Кръг → free Sun/Moon/Rising compatibility → hit paywall on «Днешен ден в твоя кръг» → convert to premium via RevenueCat → receive a push at the user's pattern-time the next day. **Soft-launch milestone closes Phase B.**
+**Goal:** Soft-launch invites go out to 50–100 Bulgarian users on a mobile app at FULL web parity (less Friends groups, deferred to future research). One complete revenue loop validated end-to-end via the soft-launch milestone — install → birth data → use the full feature surface (chart, Oracle, daily horoscope with streaming, lunar diary, recommendations, crystals collection, astrology guide, Кръг compatibility, paid features) → convert to premium via RevenueCat → receive push notifications at the user's pattern-time. **Soft-launch milestone closes Phase B.**
+
+**Two parallel streams** per founder ratification 2026-05-09:
+
+- **Stream P (Parity)** — port all missing web features to mobile per `.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md`. Single source of truth for Stream P scope, status tracked per-item. Toni's primary work.
+- **Stream K (Кръг)** — port Кръг features as friend ships them on web. Per-port reactive investigation pass when each feature lands. Sequence dictated by friend's web shipping order. Friends groups deferred to future research.
 
 **Soft-launch milestone (end of Phase B):**
 
 - TestFlight internal beta + Google Play internal track open
 - 50–100 Bulgarian users invited (founder network + targeted recruitment)
-- Real push delivery, real RevenueCat purchases, real synastry feedback collected before GA
-- SR 9 (EAS Dev Client + TestFlight provisioning + biometric `expo-local-authentication`, bundled per REVISIT-1) fires alongside the soft-launch cut
-- Apple Developer Program enrollment must complete before SR 9 (founder track during Phase A close → Phase B middle weeks)
+- Real push delivery, real RevenueCat purchases, real synastry feedback, real diary use, real recommendations engagement collected before GA
+- SR 9 (EAS Dev Client + TestFlight provisioning + biometric `expo-local-authentication`, bundled per REVISIT-1) fires alongside the soft-launch cut as Stream P P.17
+- Apple Developer Program enrollment must complete before P.17 (founder track during Stream P middle weeks)
 
 **Carry-forward from Phase A close:**
 
-- REVISIT-25 (RevenueCat code-side scaffold) lands in Phase B opener — `react-native-purchases` SDK install + `<RevenueCatProvider>` per ratified D9 + platform-split env keys per ratified D10
-- REVISIT-26 (push_tokens schema + RLS + registration endpoint) lands in the first Phase B push-delivery sub-round
-- REVISIT-27 (Expo Go push token retrieval verification) closes when SR 9's Dev Client build lands
-- Telemetry vendor wiring (PostHog selected at Phase A close ratification) opens the Phase B opener with the 10-event taxonomy from `PHASE-A-CLOSE-RATIFICATION.md`
+- REVISIT-25 (RevenueCat code-side scaffold) lands in Stream P P.15 (renamed from "Phase B opener" — RevenueCat sequencing depends on parity work order)
+- REVISIT-26 (push_tokens schema + RLS + registration endpoint) lands in Stream P P.16
+- REVISIT-27 (Expo Go push token retrieval verification) closes when P.17's Dev Client build lands
+- Telemetry vendor wiring (PostHog selected at Phase A close ratification) opens Stream P P.13 with the 10-event taxonomy from `phase-b-mobile-parity/HANDOFF-2026-05-09.md`
+- REVISIT-23 (web Oracle cap-reached silent failure) — promoted to active scope as Stream P web-touching item; founder + friend coordination required
 
-**Sub-rounds (planned, surfaced in Phase B opener investigation pass):**
+**Stream P sub-round investigation:** initial layering surfaced 2026-05-09 (~18 sub-rounds covering Днес/Карта/Ритъм/Ти tab parity batches + sub-routes + infra + SR 9 + soft-launch verification). Awaiting founder ratification before any code commits. See `phase-b-mobile-parity/HANDOFF-2026-05-09.md` and the parity gap inventory.
 
-Likely scope per `MOBILE_UX_RESEARCH.md §10` Phase B framing — exact sub-round breakdown ratified at Phase B open, not now:
-
-- Кръг tab UI scaffold (currently empty placeholder)
-- Add-person flow (ghost-user mode for non-registered users in your Кръг)
-- Synastry calculation API + cache
-- Free compat surface (Sun/Moon/Rising one-line score)
-- First paid feature: «Днешен ден в твоя кръг» (daily transit feed filtered by Кръг members)
-- RevenueCat code-side install + paywall UI + tier sync with Stripe webhooks
-- Push delivery: backend → push_tokens registration → daily cron at user pattern-time
-- SR 9: EAS Dev Client + TestFlight + biometric (bundled, REVISIT-1)
-- Soft-launch verification matrix on real Bulgarian users
+**Stream K sub-round investigation:** NOT pre-planned. Friend's coordination conversation (gating Stream P start) also informs Stream K shipping order expectations. Per-port log lives at `phase-b-mobile-parity/STREAM-K-PORT-LOG.md` (created when first Кръг port lands).
 
 ### Phase C — Remaining premium features
 
