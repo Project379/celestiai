@@ -17,6 +17,7 @@
     "@expo/metro-runtime": "~6.1.2",
     "@hookform/resolvers": "^5.2.2",
     "@react-native-community/datetimepicker": "8.4.4",
+    "@sentry/react-native": "~7.2.0",
     "@stellaeum/astrology": "workspace:*",
     "@stellaeum/core": "workspace:*",
     "@stellaeum/ui": "workspace:*",

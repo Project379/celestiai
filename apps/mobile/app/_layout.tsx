@@ -1,4 +1,5 @@
 import '../global.css'
+import '@/lib/monitoring/sentry'
 
 import { ClerkProvider } from '@clerk/expo'
 import { tokenCache } from '@clerk/expo/token-cache'
