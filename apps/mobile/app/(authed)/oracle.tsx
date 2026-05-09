@@ -7,6 +7,7 @@ import { ReadingBody } from '@/components/oracle/ReadingBody'
 import { TopicCards } from '@/components/oracle/TopicCards'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useOracleReading } from '@/hooks/useOracleReading'
+import { maybePromptPushPermission } from '@/lib/notifications/maybePromptPushPermission'
 
 /**
  * Mobile Oracle screen — full-screen route under (authed) with the
@@ -50,7 +51,16 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
     isGenerating,
     generationError,
     currentReading,
-  } = useOracleReading(chartId)
+  } = useOracleReading(chartId, {
+    // SR 8.3: ask for push permission after the first successful Oracle
+    // reading completes. Idempotency is enforced inside
+    // maybePromptPushPermission via the @stellaeum/notif_prompted
+    // AsyncStorage flag, so this fires across multiple fresh generations
+    // until the user has been prompted once.
+    onFreshGeneration: () => {
+      void maybePromptPushPermission()
+    },
+  })
 
   // Custom header back: when a topic reading is open, the screen renders
   // grid+reading inline gated by activeTopic local state — the system back

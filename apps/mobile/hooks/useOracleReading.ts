@@ -39,6 +39,17 @@ export interface CurrentReading {
   fresh: boolean
 }
 
+interface UseOracleReadingOptions {
+  /**
+   * Fires when a fresh /api/oracle/generate call succeeds for a topic
+   * that did not have a saved reading. Does NOT fire on saved-reading
+   * cache hits or cap-reached errors. Used by SR 8.3's push permission
+   * trigger — the first-ever-successful-Oracle-reading event is the
+   * deliberate moment to ask for push permission.
+   */
+  onFreshGeneration?: () => void
+}
+
 /**
  * Mobile hook for the Oracle screen.
  *
@@ -58,7 +69,10 @@ export interface CurrentReading {
  * Pass null chartId to disable the saved-readings query (e.g. while
  * useFirstChart is still resolving).
  */
-export function useOracleReading(chartId: string | null) {
+export function useOracleReading(
+  chartId: string | null,
+  options?: UseOracleReadingOptions,
+) {
   const { apiFetch } = useApiClient()
   const queryClient = useQueryClient()
   const [activeTopic, setActiveTopic] = useState<OracleTopic | null>(null)
@@ -98,6 +112,7 @@ export function useOracleReading(chartId: string | null) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: savedReadingsKey })
+      options?.onFreshGeneration?.()
     },
   })
 
