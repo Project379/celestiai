@@ -16,14 +16,32 @@ re-evaluation. Sourced from sub-round 1 commit 1.1 ratifications.
 **Deferred:** `expo-local-authentication`, EAS Dev Client setup, TestFlight
 distribution.
 
-**Trigger:** Late Phase C / early Phase D, before App Store submission.
-Apple Developer Program enrollment ($99/year, requires registered entity)
-gates this; founder not enrolled as of 2026-04-28. Phases A, B, and most
-of C run in Expo Go on real iPhone.
+**Trigger (RECLASSIFIED 2026-05-09 at Phase A close ratification):**
+**End of Phase B — fires alongside the soft-launch milestone, not late
+Phase C / early Phase D as originally scoped.** TestFlight cut is the
+soft-launch milestone (50–100 Bulgarian users via TestFlight + Google
+Play internal track), not the GA submission gate. Apple Developer
+Program enrollment ($99/year, requires registered entity) drives the
+trigger date — **founder action: begin enrollment within 2 weeks of
+Phase A close (by 2026-05-23 at the latest), complete before SR 9 fires
+at Phase B close (~6–8 weeks out).**
 
-**Sub-round when ready:** Inserted into Phase C close or Phase D opener
-once enrollment completes. Per founder strategy: launch both surfaces in
-parallel; mobile leads post-launch on new features.
+The original "late Phase C / early Phase D" framing assumed TestFlight
+was a GA-submission gate; the soft-launch reframe pulls it forward by
+~2–3 months. Apple Developer enrollment lead time is 1–2 weeks for
+individual accounts, longer for organization accounts requiring D-U-N-S
+number lookup; founder picks individual vs organization at enrollment
+start (see `.planning/PHASE-A-CLOSE-RATIFICATION.md`).
+
+**Sub-round when ready:** SR 9 at end of Phase B (planned scope: EAS
+build config + TestFlight provisioning + `expo-local-authentication`
+runtime wiring on the sign-in / settings screens). REVISIT-27 (push
+token retrieval verification post-Dev Client) closes in the same SR 9
+window.
+
+**Phases A and most of B continue running in Expo Go on real iPhone**
+(unchanged from original framing); Phase B ends with the SR 9 build
+that opens TestFlight distribution.
 
 **Why bundled:** biometric requires Dev Client (Expo Go cannot exercise
 `expo-local-authentication`); Dev Client requires EAS; EAS practically
@@ -491,14 +509,26 @@ Mobile (sub-round 7.4) actively wires the same 429 response into a
 to ship a usable cap-reached state. Per founder ratification (SR 7
 discussion): mobile leads here; web catches up later.
 
-**Trigger:** Next time someone touches `OraclePanelGlobal.tsx` OR a
-free-tier user reports confusion about hitting the cap on web (the
-current silent-failure UX is a real gap, just not blocking).
+**Trigger (RECLASSIFIED 2026-05-09 at Phase A close ratification):**
+**Phase B middle weeks — fires before soft-launch milestone, not "next
+time someone touches OraclePanelGlobal" as originally scoped.** Soft
+launch invites 50–100 Bulgarian users to both TestFlight and the live
+web product; web users hitting the cap-reached state with no UI
+feedback is a real soft-launch UX gap (web is still the discovery
+surface for the founder's network and SEO acquisition is on the v1.0
+roadmap). Mobile's CapReachedNotice serves as the parity reference;
+porting the text-only notice to web is mechanical (~30 LOC).
 
-**Sub-round when ready:** Web polish round post-Phase A. Could batch
-with: deciding the fate of dead `LockedTopicTeaser` scaffolding (delete
-or revive in a different shape), and wiring an equivalent text-only
-notice on web.
+The reclassification ambiguity flagged at Phase A close (founder noted
+"REVISIT-23 (TestFlight)" which doesn't match this item's actual web
+cap-reached scope — see PHASE-A-CLOSE-RATIFICATION.md note) is the
+trigger to revisit alongside Phase B's web-parity sub-round.
+
+**Sub-round when ready:** Phase B web-parity sub-round, mid-phase. Could
+batch with: deciding the fate of dead `LockedTopicTeaser` scaffolding
+(delete or revive in a different shape), and wiring an equivalent
+text-only notice on web. NOT a launch-blocking hard correctness gate
+but is a soft-launch UX completeness item.
 
 **Fix path:**
 - Detect 429 + `code: 'CAP_REACHED'` in `useOracleReading.ts` (web hook)
@@ -688,18 +718,20 @@ path is logged. But the token retrieval branch — the actual
 `getExpoPushTokenAsync` → AsyncStorage stash → Sentry breadcrumb chain —
 is unverified in Phase A.
 
-**Trigger (intersects REVISIT-1 reclassification per founder ratification
-2026-05-09):** SR 9 EAS Dev Client build at the **end of Phase B**, not
-Phase D. This is a reclassification: the original handoff doc placed
-SR 9 (EAS + TestFlight + biometric, bundled per REVISIT-1) at "late
-Phase C / early Phase D, before App Store submission." Founder
-ratified during the SR 7→8 thread that the TestFlight cut moves to
-Phase B close — soft launch is the milestone driving Apple Developer
-enrollment, not GA submission.
+**Trigger (CONFIRMED 2026-05-09 at Phase A close ratification):**
+**SR 9 EAS Dev Client build at end of Phase B, alongside the soft-launch
+milestone.** REVISIT-1 was reclassified to the same trigger window —
+both items fire together at the Phase B close SR 9 build. The original
+handoff doc placed SR 9 (EAS + TestFlight + biometric, bundled per
+REVISIT-1) at "late Phase C / early Phase D, before App Store
+submission." Phase A close ratification confirmed the reframe: TestFlight
+cut is the soft-launch milestone (50–100 Bulgarian users), not GA
+submission, so SR 9 pulls forward by ~2–3 months.
 
-REVISIT-1, REVISIT-23, and this item all need re-examination in the
-Phase A close planning sweep so the trigger conditions reflect the
-actual sequence.
+REVISIT-1, REVISIT-23, and this item were all examined in the Phase A
+close planning sweep (this commit). Trigger conditions now reflect the
+actual sequence: REVISIT-1 → SR 9 at Phase B close; REVISIT-23 → Phase B
+mid-phase web-parity sub-round; REVISIT-27 → SR 9 alongside REVISIT-1.
 
 **Sub-round when ready:** SR 9 (Phase B close) — EAS Dev Client build
 + TestFlight provisioning + biometric (`expo-local-authentication`).
