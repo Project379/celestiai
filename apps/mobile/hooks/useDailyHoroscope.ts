@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
 
 import { useApiClient } from '@/lib/api/client'
+import { useFeatureFlag } from '@/hooks/useFeatureFlag'
 
 interface DailyHoroscopeResponse {
   content: string | null
@@ -46,10 +47,11 @@ function getTodayString(): string {
 export function useDailyHoroscope(chartId: string | null | undefined) {
   const { apiFetch } = useApiClient()
   const today = getTodayString()
+  const ffEnabled = useFeatureFlag('daily_horoscope')
 
   return useQuery({
     queryKey: ['daily-horoscope', chartId, today],
-    enabled: !!chartId,
+    enabled: !!chartId && ffEnabled,
     queryFn: async () => {
       const raw = await apiFetch(
         `/api/horoscope/generate?date=${today}&format=json`,

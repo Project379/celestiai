@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { ApiError, useApiClient } from '@/lib/api/client'
+import { useFeatureFlag } from '@/hooks/useFeatureFlag'
 
 export type OracleTopic = 'general' | 'love' | 'career' | 'health'
 
@@ -61,12 +62,13 @@ export function useOracleReading(chartId: string | null) {
   const { apiFetch } = useApiClient()
   const queryClient = useQueryClient()
   const [activeTopic, setActiveTopic] = useState<OracleTopic | null>(null)
+  const ffEnabled = useFeatureFlag('oracle')
 
   const savedReadingsKey = ['oracle-readings', chartId] as const
 
   const savedReadingsQuery = useQuery({
     queryKey: savedReadingsKey,
-    enabled: !!chartId,
+    enabled: !!chartId && ffEnabled,
     queryFn: async (): Promise<Record<string, SavedReading>> => {
       const raw = await apiFetch(
         `/api/oracle/readings?chartId=${encodeURIComponent(chartId!)}`,
@@ -142,6 +144,11 @@ export function useOracleReading(chartId: string | null) {
     generateMutation.reset()
     if (savedReadings[topic]) {
       // Saved reading exists — render it directly, no API call.
+      return
+    }
+    if (!ffEnabled) {
+      // Kill switch is off; do not fire the AI generation call. Saved
+      // readings (if any) still render; new generations no-op.
       return
     }
     generateMutation.mutate({ topic, regenerate: false })
