@@ -27,7 +27,10 @@ export default function AuthedLayout() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="wizard" options={{ headerShown: false }} />
-      <Stack.Screen name="oracle" options={{ title: 'Оракул' }} />
+      <Stack.Screen
+        name="oracle"
+        options={{ title: 'Оракул', headerBackTitle: 'Назад' }}
+      />
     </Stack>
   )
 }
