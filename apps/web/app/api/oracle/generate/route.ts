@@ -318,6 +318,19 @@ export async function POST(req: Request) {
       },
     })
 
+    // result.consumeStream() drains the LLM stream server-side regardless of
+    // client connection state. Guarantees onFinish fires (persisting the
+    // reading to ai_readings cache) even when the user navigates away
+    // mid-stream. Combined with no abortSignal: the upstream Llama call also
+    // runs to completion, so a fully-formed cached reading is available on
+    // user retry. Trade: slot consumed on abort, but content remains
+    // available via cache for the user to revisit. Documented Vercel AI SDK
+    // pattern. The jsonOnly path inherits the same semantics automatically
+    // via the await + no-abortSignal pattern (server-side await completes
+    // regardless of client disconnect; no consumeStream equivalent needed
+    // for non-streaming generateText). See B.0f-2-fix-2 close note.
+    result.consumeStream()
+
     return result.toTextStreamResponse()
   } catch (error) {
     // Setup error before stream returned. If we already cap-claimed, refund.
