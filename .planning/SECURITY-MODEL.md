@@ -76,11 +76,29 @@ Public reference data. Anyone can read; nobody writes via the API (only seed scr
 | `crystal_listings` | CATALOG | Phase B+ vendor display (currently empty). Public-read policy added in B.0d. |
 | `crystal_vendors` | CATALOG | Phase B+ vendor display (currently empty). Public-read policy added in B.0d. |
 
-### Footnote — `subscription_quotas` wiring (B.0f, queued after B.0c close)
+### Footnote — `subscription_quotas` wiring (B.0f — CLOSED 2026-05-10)
 
-The table exists in production from migration `20260413141504_schema_hardening.sql`, but no application code currently reads or writes it. **Wiring fires in B.0f as a dedicated sub-round** after the B.0c foundation port closes — this keeps B.0c focused on the canonical-architecture port (~1,175 LOC) without absorbing quota-refactor scope creep.
+The table exists in production from migration `20260413141504_schema_hardening.sql`. Wiring landed in B.0f across four sub-commits (`01fef4d` → `aee772b`, closed 2026-05-10). All RLS reads via the per-user SELECT policy (`subscription_quotas_owner_select`); all writes (insert, update via RPC) via service role bypass. No direct browser writes — quota mutations are exclusively through `/api/oracle/generate`.
 
-**Decided spec for B.0f:** scope is AI generation (Oracle, daily horoscope, future synastry interpretations); monthly calendar period anchor; fresh start with no backfill of existing reading counts; refactor `/api/oracle/generate` step 7 from row-counting on `ai_readings` to quota-table reads; premium tier uncapped initially (NULL `ai_readings_limit` or no row created — reconsider when cost-envelope analysis surfaces a defensible cap number). Helpers to ship: `getCurrentPeriodQuota` (creates row if absent), `incrementQuotaUsage` (atomic SQL `UPDATE … SET ai_readings_used = ai_readings_used + 1` to avoid read-then-write races). Cache hits MUST NOT count against quota — preserves the SR 7 behavior. Daily horoscope cap (currently uncapped) gets 1/day enforcement via the same quota table.
+**Application surface (post-B.0f close):**
+- **Helper library** `apps/web/lib/subscriptions/quota.ts` — four exports: `getCurrentPeriodQuota` (idempotent find-or-create), `checkQuotaAvailable` (premium short-circuit + free-tier read), `incrementQuotaUsage` (atomic conditional cap-claim via RPC), `decrementQuotaUsage` (refund path via RPC).
+- **Postgres RPC functions** added in migration `20260510130557_quota_functions.sql`:
+  - `increment_quota_if_available(p_user_id, p_period_start) RETURNS integer` — atomic conditional UPDATE; returns new used count or NULL on race-loss / cap-reached.
+  - `decrement_quota_usage(p_user_id, p_period_start) RETURNS integer` — atomic UPDATE with `GREATEST(0, ai_readings_used - 1)` floor; returns new used count or NULL when row doesn't exist.
+  - Both functions atomic at row level via Postgres MVCC; concurrent writers serialize on the row lock during UPDATE.
+- **Consumer:** only `/api/oracle/generate` reads/writes the quota. `/api/horoscope/generate` is exempt per D6=β (daily horoscope doesn't count against the unified Oracle bucket). `/api/oracle/teaser` is exempt (free→premium conversion teaser, counting it would penalize the conversion mechanism).
+
+**Final spec landed:**
+- Free tier: 3 readings/month (schema default `ai_readings_limit=3`; `ORACLE_FREE_MESSAGES_PER_DAY` env var deleted as part of canonical-source-of-truth cleanup).
+- Premium tier: uncapped (D1 — no quota row created; `checkQuotaAvailable` short-circuits with `available: true`).
+- Period: monthly calendar anchor (Europe/Sofia month start = `period_start`, last day of month = `period_end`).
+- Fresh start: no backfill of existing `ai_readings` counts; first AI request of new period creates row from zero.
+- Regenerations exempt from quota (B.0f-2-fix-1 ratification — separate 24-hour-per-chart-topic cooldown still applies via existing rate-limit at step 6 of the route).
+- Cache hits never increment quota (Pattern B: cap-check + cap-claim run only after step-5 cache miss, on the path that calls the LLM).
+- Pattern B atomic cap-claim BEFORE LLM call; refund-on-failure via `decrementQuotaUsage` in the four refund paths (chart-not-found pre-Llama, jsonOnly inner catch, streamText `onError`, streamText `onFinish` persist failure, outer catch).
+- Approach C `result.consumeStream()` ensures the LLM stream completes server-side regardless of client connection state — onFinish fires reliably and the reading persists, so a quota slot consumed mid-abort still results in a fully cached reading available on retry. The jsonOnly path (mobile) inherits Approach C semantics automatically via `await generateText` without `abortSignal`.
+
+**REVISIT-34** filed for cap magnitude re-evaluation post Кръг soft-launch close (Path Z framing — 3/month is experimental, not permanent).
 
 ## The B.0d remediation migration
 

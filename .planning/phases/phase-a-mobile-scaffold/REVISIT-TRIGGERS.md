@@ -926,6 +926,102 @@ The pattern is **plan-doc claims diverging from codebase reality** as execution 
 
 **Why documented:** captures the intentional hierarchical-naming migration completed in B.0c-3 + leaves a low-priority cleanup hook for the next reader who touches the file. Without this note, a future reader might re-add the flat name on assumption it's still active.
 
+## 34. Cap magnitude re-evaluation post Кръг soft-launch close (Path Z experimental framing)
+
+**Status:** Filed during B.0f-3 close 2026-05-10. The free-tier monthly cap of 3 readings is **deliberately experimental** (Path Z framing per founder ratification at B.0f opening). Schema default `ai_readings_limit=3` IS the cap, NOT a placeholder; env-var `ORACLE_FREE_MESSAGES_PER_DAY` was deleted as canonical-source-of-truth-cleanup. The 3/month value is a soft-launch experiment chosen for the pre-Кръг window where Oracle uncap is the only premium value proposition; it is ~30× tighter than the prior effective rate (3/day ≈ 90/month) and may be too restrictive once Кръг features land and broaden the premium tier's value.
+
+**Trigger:** post-Phase-B soft-launch close, OR 4 weeks of soft-launch usage data — whichever first.
+
+**Decision criteria** (from PostHog telemetry once P.13 wiring lands):
+- Conversion rate: free → premium attribution rate. If <2% over 4-week window, cap may be too restrictive (users churning rather than converting).
+- Churn rate: 30-day retention of free users. Drop-off correlated with `oracle_cap_reached` events suggests the cap is the friction point.
+- Daily active free users: aggregate engagement of free users hitting the cap-reached state. Low DAU + high cap-reached frequency = cap is product-blocking, not conversion-driving.
+- `oracle_cap_reached` event frequency from PostHog (event #9 in the 10-event taxonomy — already on the locked taxonomy list per HANDOFF item 2.D10).
+
+**Sub-round when ready:** Phase C onset OR post-soft-launch retro. Likely scope:
+1. Pull PostHog data on the four metrics above for the 4-week soft-launch window.
+2. Decide: keep 3/month, raise to 10/month, raise to 90/month (parity with prior daily rate), or restructure entirely (per-surface buckets, regenerations counted, etc.).
+3. Update schema default via migration (single ALTER TABLE statement on `subscription_quotas`).
+4. Update Bulgarian copy if cap value changes (single string interpolation already pulls from `quota.limit`, so copy auto-updates with schema).
+
+**Why documented:** the 3/month cap is intentionally tight for soft launch but is NOT a permanent design decision. Without this REVISIT, the cap could ossify by inertia. Filing here makes the experimental nature explicit and gives future-Toni/Claude a clear reconsider trigger backed by data.
+
+## 35. m3-uat harness disposition — rewrite vs delete
+
+**Status:** Filed during B.0f-3 close 2026-05-10. B.0f-2 added a fail-fast `throw` at the top of `apps/web/scripts/m3-uat-harness.mjs`'s `main()` because the cap-gate test block (lines 745–~935) was predicated on the OLD `ai_readings`-row-count cap mechanism — now obsolete after B.0f-2 migrated the cap to `subscription_quotas`. The harness has not been run in 8+ sub-rounds (vestigial from milestone 3); pre-existing `.planning/phases/m3-uat/RESULTS.json` working-tree drift confirms it's not in active rotation.
+
+**Concern:** harness is now hard-failing at first invocation. This is intentional (signals out-of-date status to anyone running it) but leaves a decision pending: rewrite the cap-gate block to pre-seed `subscription_quotas` rows via service role, OR delete the harness entirely if a proper API integration test layer (REVISIT-36) replaces it.
+
+**Trigger:** decided alongside REVISIT-36 (API test layer evaluation), since the rewrite-vs-delete question depends on whether m3-uat is the test infrastructure going forward OR whether something modern (vitest+msw, playwright) replaces it.
+
+**Sub-round when ready:** opportunistic — likely folded into the same sub-round that resolves REVISIT-36. Two paths:
+- **Rewrite path:** ~80 LOC update to the cap-gate test block. Pre-seed `subscription_quotas` row with `ai_readings_used=ai_readings_limit` instead of `ai_readings` rows. Verify cap-reached, cache-bypass, premium-bypass, below-cap behaviors against the new mechanism. Keeps m3-uat as the regression coverage harness.
+- **Delete path:** remove `apps/web/scripts/m3-uat-harness.mjs` and `.planning/phases/m3-uat/RESULTS.json` entirely. Replace coverage with whatever test layer REVISIT-36 picks. Cleanest if the new test layer covers the same scenarios.
+
+**Why documented:** the fail-fast throw is a stopgap, not a resolution. Without this REVISIT, the harness rots in place indefinitely. Decision tied to REVISIT-36 outcome.
+
+## 36. API integration test layer evaluation
+
+**Status:** Filed during B.0f-3 close 2026-05-10. Investigation during B.0f-1 confirmed `apps/web/` has no API integration test layer — no `*.test.*` or `*.spec.*` files anywhere, no `test` script in `apps/web/package.json`, no test runner deps (vitest/jest/playwright/supertest), no `__tests__/`/`tests/`/`e2e/` directories. Root `package.json`'s `"test": "turbo run test"` is effectively a no-op (no app defines a test script). `CLAUDE.md` references `npm test` and `npm run test:e2e` aspirationally — neither is wired up.
+
+**Concern:** all B.0c, B.0f, and Stream P API correctness is verified via manual smoke tests against a running dev server. This worked for the B.0 chain but doesn't scale: every new API route is a fresh manual smoke surface, every refactor risks silent regression on routes nobody re-smokes. Approach B vs C ratification debates would have been faster with regression tests; race-condition assertions on quota helpers (Pattern B) currently rely on production observation.
+
+**Trigger:** Phase B middle weeks (~weeks 3-4 of Stream P) **OR** before SR 9 / Phase B soft launch closes — whichever first. SR 9 is the soft-launch readiness check; shipping to 50–100 Bulgarian users with no API regression coverage is the kind of thing the readiness check should flag.
+
+**Sub-round when ready:** standalone evaluation sub-round. Scope:
+1. **Pick a stack.** Three credible options: (a) **vitest + MSW** for unit + integration coverage of API routes — fast, in-process, Next.js server-action friendly; (b) **Playwright API tests** — already a partial dep candidate per CLAUDE.md, runs against a live dev server, slower but closer to real user; (c) **continue manual-smoke-only** — punt to Phase C, accept regression risk through soft launch.
+2. **Pilot coverage.** Implement ~5 high-leverage tests as proof-of-concept: cap-claim race condition (Pattern B atomicity), cap-reached 429 shape, cache-hit no-decrement, premium uncapped, regenerate-exempt path. ~50–100 LOC of test code.
+3. **CI wiring.** Add `apps/web/package.json` `test` script. Verify root `turbo run test` picks it up. Optionally GitHub Actions CI run on push.
+4. **Close REVISIT-35.** Decide whether m3-uat harness gets rewritten (Path Rewrite) or replaced entirely (Path Delete) based on the chosen test stack's coverage.
+
+**Why documented:** soft launch with 50–100 users + no automated regression coverage is a risk that compounds with every new sub-round. Filing this REVISIT puts the evaluation on a calendar trigger (Phase B middle weeks) rather than letting it slide until production breaks.
+
+## 37. `useOracleReading` completion-state staleness across topic transitions
+
+**Status:** Filed during B.0f-3 close 2026-05-10. Pre-existing bug surfaced (not caused) during B.0f-2-fix-1's hook refactor. The web `useOracleReading` hook's `completion` state stays populated across topic transitions — when user generates topic A, gets streamed text, then navigates to topic B (which has a saved reading), the panel's `showStream` condition (gating on `Boolean(completion)`) evaluates true with topic A's stale streamed text, while topic B's saved reading is masked by `showSavedReading`'s `!completion` gate. Net: user sees topic A's text labeled as topic B.
+
+The B.0f-2-fix-1 refactor (replacing `useCompletion` with manual fetch + ReadableStream) preserved this behavior intentionally — the bug existed before the refactor; widening the refactor scope to fix it would have bloated B.0f-2-fix-1 unnecessarily.
+
+**Trigger:** P.12 (Oracle parity polish) — natural fit since P.12 is already scoped for Oracle UX alignment between web and mobile. Mobile uses `@tanstack/react-query` with explicit mutation reset on `clearActiveTopic`, so the bug doesn't manifest there.
+
+**Sub-round when ready:** within P.12. ~5 LOC fix: clear `completion` state in the `setActiveTopic` wrapper at `apps/web/hooks/useOracleReading.ts` (already wraps `setActiveTopicState` to clear `generationError`; just add `setCompletion('')` to the same wrapper). Alternative: clear `completion` whenever the active topic changes via a `useEffect`. Either is ~5 LOC.
+
+**Why documented:** the bug is reproducible (generate A, navigate to B with a saved reading) and visible to soft-launch users who use multiple topics. Without filing, it stays invisible in code review since the buggy state is across-component coordination not single-file logic.
+
+## 38. Dead `LockedTopicTeaser.tsx` file + orphan `lockedTopicShown` state cleanup
+
+**Status:** Filed during B.0f-3 close 2026-05-10. B.0f-2-fix-1 dropped the `LockedTopicTeaser` import + JSX render block from `OraclePanelGlobal.tsx` per founder's "~3-line removal" scope. The component file itself (`apps/web/components/oracle/LockedTopicTeaser.tsx`) remains but is now unimported from anywhere — confirmed orphan via grep. Adjacent dead state in `OraclePanelGlobal.tsx`: `lockedTopicShown` useState, `teaserContent`/`loadingTeaser` state, `handleRequestTeaser` callback. References to `lockedTopicShown` survive in conditionals (handleClose, handleTopicSelect, modalTitle, footer back-button) — always-falsy dead branches but TypeScript doesn't error.
+
+**Concern:** dead code with stable references is the kind of thing that confuses future readers ("why is `lockedTopicShown` here? what would set it?") and obscures the actual render logic. Cumulative drift cost over time.
+
+**Trigger:** opportunistic during P.12 (Oracle parity polish), OR fold into REVISIT-37 fix (same file, similar scope). Could also trigger if a future paywall/upgrade-flow sub-round repurposes the LockedTopicTeaser component for a new locked-feature surface — in which case this cleanup converts to a "revive in different shape" decision.
+
+**Sub-round when ready:** ~30-line removal. Steps:
+1. Delete `apps/web/components/oracle/LockedTopicTeaser.tsx`.
+2. In `OraclePanelGlobal.tsx`: remove `lockedTopicShown` useState + `setLockedTopicShown` call sites (handleClose, handleTopicSelect set to null with no-op effect, footer back-button onClick).
+3. Remove `teaserContent`/`loadingTeaser` state + `handleRequestTeaser` callback.
+4. Simplify `modalTitle` ternary (drop the `lockedTopicShown` branch).
+5. TS green check.
+
+**Why documented:** without this REVISIT, dead code rots indefinitely. The LockedTopicTeaser component is also a tempting "scaffold to revive" target — explicit deletion forces the conversation about what should actually fill the locked-topic UX space when it's needed.
+
+## 40. Web Oracle missing regenerate + stop button UX
+
+**Status:** Filed during B.0f-3 close 2026-05-10. (REVISIT-39 deliberately skipped — Approach A incremental persist not needed; Approach C addresses partial-content preservation as a side effect of `consumeStream()`.) Surfaced during B.0f-2-fix-2 smoke testing: founder ran T-Norm, T-Critical-1 (abort+return), T-Critical-2 (abort+DB cache), T-Cap, T-Cache, T-Regenerate-Cooldown — all six passed. T-Stop and post-cooldown T-Regenerate were **skipped** because the web Oracle UI lacks both a regenerate button and a stop button. The backend logic for both paths is correctly implemented (regenerate-exempt skips quota in B.0f-2-fix-1; Approach C makes stop client-cosmetic-only in B.0f-2-fix-2) but unreachable via web UI today.
+
+Pre-existing parity gap with mobile, which has both buttons.
+
+**Concern:** the web Oracle is the soft-launch discovery surface for the founder's network and SEO acquisition. Free users hitting the cap have no in-product recourse to retry generation (regenerate button) and no in-product way to abort a slow stream (stop button). Both are mobile-parity gaps that affect soft-launch UX completeness.
+
+**Trigger:** P.12 (Oracle parity polish) — natural fit since P.12 is already scoped for Oracle UX alignment between web and mobile.
+
+**Sub-round when ready (P.12 scope items):**
+1. **Port mobile's regenerate button to web.** Mobile's pattern is straightforward: button visible only when a saved reading exists, gates on the 24-hour cooldown via `last_regenerated_at`. Web's `OraclePanelGlobal.tsx` already has a `handleRegenerate` callback and a `canRegenerate` boolean — the button JSX is missing. ~20 LOC port.
+2. **Decide on web stop button.** Approach C makes the server-side stream complete regardless of client connection state; the client's stop button is now client-cosmetic only (closes the visible stream, server keeps generating to populate cache). Two choices: (a) add a "Stop" button to web with the same cosmetic semantics — gives users a way to close the panel mid-stream without confusion; (b) skip the stop button entirely on web — less screen real estate, accepts that users use the close-X or back-button to abort. Recommend (a) for parity with mobile, with copy that frames it correctly (e.g., "Прекъсни четенето" — pause/break the reading — rather than "Stop" which implies cancellation).
+3. **Re-evaluate mobile's stop button under Approach C semantics.** Mobile's existing stop button suggests cancellation but the server now completes regardless. Two choices: (a) re-label to match new semantics ("Прекъсни четенето" or similar non-cancel framing); (b) remove the button on the rationale that visible "Stop" with no cancel effect is misleading UX. Founder picks at P.12 sub-round.
+
+**Why documented:** the founder smoke test surfaced this gap. Without filing, the regenerate/stop UX work falls between B.0f's "this is correct backend-side" and P.12's "Oracle parity polish" — risk of nobody owning it. Filing here ties it explicitly to P.12 with three sub-questions to resolve, so P.12 picks it up cleanly.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
