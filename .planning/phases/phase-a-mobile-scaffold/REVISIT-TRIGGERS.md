@@ -903,7 +903,11 @@ The pattern is **plan-doc claims diverging from codebase reality** as execution 
 
 **Why documented:** B.0d remediation was applied at the database layer and verified via REST-API curl audit. The web audit (B.0e) confirmed the data-fetching pattern is uniform. Mobile is the parallel surface where the same audit hasn't been performed and where a different historical implementation pattern could exist.
 
-## 33. Orphaned `payment.webhook_received` flat audit type entry in `apps/web/lib/audit.ts`
+## 33. Orphaned `payment.webhook_received` flat audit type entry in `apps/web/lib/audit.ts` — CLOSED 2026-05-10
+
+**Resolution (B.0f-1 close 2026-05-10):** Removed the flat `'payment.webhook_received'` line from the `AuditEventType` union in `apps/web/lib/audit.ts`. Pre-removal grep confirmed zero callers in `apps/web/` — only the union declaration itself referenced it. New `'system.payment.quota_refund_failed'` audit type added in the same commit (consumed by `apps/web/lib/subscriptions/quota.ts` decrementQuotaUsage refund-failure path). TS green pre-commit. Original surface context retained below for historical reference.
+
+---
 
 **Status:** Filed during B.0c-6 close 2026-05-10. B.0c-3 ported CA-0002's webhook route, which uses the hierarchical audit name `system.payment.webhook_received` instead of the prior flat `payment.webhook_received`. The flat union member at `apps/web/lib/audit.ts:23` is now orphaned — no remaining caller in the codebase imports or emits it.
 
