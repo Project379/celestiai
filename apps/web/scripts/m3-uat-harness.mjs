@@ -1534,6 +1534,12 @@ async function cleanup(chartId, clerkId) {
 }
 
 async function main() {
+  throw new Error(
+    'm3-uat-harness is out of date as of B.0f-2 quota refactor (2026-05-10). ' +
+      'Cap mechanism migrated from ai_readings row-counting to subscription_quotas table. ' +
+      'See REVISIT-35 for harness disposition (rewrite vs delete) — pending test layer evaluation.',
+  )
+
   console.log(`M3 UAT harness — ${new Date().toISOString()}`)
   console.log(`Base URL: ${BASE_URL}`)
 

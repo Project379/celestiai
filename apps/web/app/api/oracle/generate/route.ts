@@ -8,37 +8,38 @@ import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
 import type { ChartData } from '@stellaeum/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
 import { logAuditEvent } from '@/lib/audit'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
+import {
+  checkQuotaAvailable,
+  decrementQuotaUsage,
+  incrementQuotaUsage,
+} from '@/lib/subscriptions/quota'
 
 /**
  * POST /api/oracle/generate
- * Streams an AI-generated natal chart reading via Gemini.
+ * Streams an AI-generated natal chart reading via OpenRouter / Llama.
  *
- * Flow (post 2026-04-20 premium-matrix cap-gate refactor):
+ * Flow (post-B.0f-2 quota refactor 2026-05-10):
  * 1. Auth check
  * 2. Parse & validate body (chartId, topic, regenerate)
- * 3. Upsert user row + read subscription tier
+ * 3. Ensure app-user row + read AppUser shape
  * 4. Chart ownership verification
- * 5. Cache check - return cached reading without calling Gemini
- *    (cache hits do NOT count against the daily cap)
+ * 5. Cache check — return cached reading without quota interaction
+ *    (cache hits do NOT count against the monthly cap)
  * 6. Regeneration rate limit (once per day per chart-topic pair)
- * 7. Daily cap for free tier — Europe/Sofia calendar day, default 3
- *    readings/day, configurable via ORACLE_FREE_MESSAGES_PER_DAY env
+ * 7. Quota cap-claim (Pattern B, monthly cap from subscription_quotas):
+ *    7a. checkQuotaAvailable — premium short-circuits, free reads
+ *        the current period row for { used, limit, periodStart }
+ *    7b. incrementQuotaUsage — atomic conditional UPDATE before Llama
+ *        call. Race-loss returns 429 same as cap-reached. Premium skips.
  * 8. Load chart calculation data
  * 9. Build prompts from chart data
- * 10. Stream via OpenRouter / Llama
- * 11. onFinish: upsert completed reading into ai_readings
+ * 10. Stream / generate via OpenRouter / Llama
+ * 11. onFinish / await: upsert completed reading into ai_readings
+ * 12. On any failure in 10–11: decrementQuotaUsage refund (free tier only)
  */
 export const maxDuration = 60
 const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
-
-/**
- * Daily cap for free-tier oracle readings. Premium tier removes the
- * cap entirely. Env override lets the cap change without a code
- * deploy once a production value is chosen.
- */
-const ORACLE_FREE_MESSAGES_PER_DAY = Number(
-  process.env.ORACLE_FREE_MESSAGES_PER_DAY ?? '3',
-)
 
 const openrouter = createOpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
@@ -47,36 +48,16 @@ const openrouter = createOpenAI({
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
 
-/**
- * UTC ISO timestamp for the start of today's Europe/Sofia calendar
- * day. Used as the lower bound for counting readings against the
- * free-tier daily cap. Simpler to communicate to users than a
- * rolling 24-hour window.
- */
-function sofiaDayStartUtcIso(now: Date = new Date()): string {
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Europe/Sofia',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  })
-  const parts = Object.fromEntries(
-    fmt.formatToParts(now).map((p) => [p.type, p.value]),
-  )
-  const h = parseInt(parts.hour, 10) % 24
-  const m = parseInt(parts.minute, 10)
-  const s = parseInt(parts.second, 10)
-  const msSinceSofiaMidnight = ((h * 60 + m) * 60 + s) * 1000
-  return new Date(now.getTime() - msSinceSofiaMidnight).toISOString()
-}
-
 export async function POST(req: Request) {
   // 1. Auth check
   const { userId } = await auth()
   if (!userId) {
     return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
   }
+
+  // Hoisted so refund paths in the outer catch + stream callbacks can see it.
+  // Set non-null only after a successful cap-claim against a free-tier row.
+  let claimedPeriodStart: Date | null = null
 
   try {
     // 2. Parse and validate body
@@ -103,20 +84,11 @@ export async function POST(req: Request) {
     const jsonOnly = url.searchParams.get('format') === 'json'
     const supabase = createServiceSupabaseClient()
 
-    // 3. Upsert user row (default 'free'), read tier. Used for the
-    //    cap check in step 7; no topic-level gate anymore.
-    await supabase
-      .from('users')
-      .upsert(
-        { clerk_id: userId, subscription_tier: 'free' },
-        { onConflict: 'clerk_id', ignoreDuplicates: true },
-      )
-    const { data: userRow } = await supabase
-      .from('users')
-      .select('subscription_tier')
-      .eq('clerk_id', userId)
-      .single()
-    const tier = userRow?.subscription_tier === 'premium' ? 'premium' : 'free'
+    // 3. Ensure app-user row + read AppUser shape. Replaces the prior raw
+    //    upsert + tier-read; ensureUserRecord handles brand-new-user
+    //    creation idempotently and returns the AppUser shape that the
+    //    quota helpers expect.
+    const user = await ensureUserRecord(userId)
 
     // 4. Chart ownership verification
     const { data: chart, error: chartError } = await supabase
@@ -133,7 +105,7 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Неоторизиран достъп' }, { status: 403 })
     }
 
-    // 5. Cache check - return cached reading without calling Gemini
+    // 5. Cache check — return cached reading without quota interaction
     const now = new Date().toISOString()
     const { data: existingReading } = await supabase
       .from('ai_readings')
@@ -151,7 +123,7 @@ export async function POST(req: Request) {
       })
     }
 
-    // 6. Regeneration rate limit - once per day per chart-topic pair
+    // 6. Regeneration rate limit — once per day per chart-topic pair
     if (regenerate && existingReading?.last_regenerated_at) {
       const lastRegen = new Date(existingReading.last_regenerated_at)
       const hoursElapsed =
@@ -164,28 +136,38 @@ export async function POST(req: Request) {
       }
     }
 
-    // 7. Daily cap for free tier. Europe/Sofia calendar day. Cache
-    //    hits (step 5) skipped this branch already, so the count
-    //    reflects actual generations the user triggered today.
-    if (tier !== 'premium') {
-      const sofiaDayStart = sofiaDayStartUtcIso()
-      const { count } = await supabase
-        .from('ai_readings')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('generated_at', sofiaDayStart)
+    // 7a. Pre-flight quota check. Premium short-circuits with available=true;
+    //     free path reads the current period row for { used, limit, periodStart }.
+    const quota = await checkQuotaAvailable(user)
+    if (!quota.available) {
+      return Response.json(
+        {
+          error: `Достигна месечния лимит от ${quota.limit} четения. Премиум абонаментът премахва ограничението.`,
+          code: 'CAP_REACHED',
+          cap: quota.limit,
+          tier: user.subscription_tier,
+        },
+        { status: 429 }
+      )
+    }
 
-      if ((count ?? 0) >= ORACLE_FREE_MESSAGES_PER_DAY) {
+    // 7b. Atomic cap-claim BEFORE generation (Pattern B). Premium has no
+    //     quota row by D1 — skip the increment. Free tier increments via
+    //     RPC; race-loss (NULL return) is treated as cap-reached.
+    if (user.subscription_tier !== 'premium') {
+      const claim = await incrementQuotaUsage(userId, quota.periodStart)
+      if (!claim.success) {
         return Response.json(
           {
-            error: `Достигна дневния лимит от ${ORACLE_FREE_MESSAGES_PER_DAY} четения. Премиум абонаментът премахва ограничението.`,
+            error: `Достигна месечния лимит от ${quota.limit} четения. Премиум абонаментът премахва ограничението.`,
             code: 'CAP_REACHED',
-            cap: ORACLE_FREE_MESSAGES_PER_DAY,
-            tier,
+            cap: quota.limit,
+            tier: user.subscription_tier,
           },
-          { status: 429 },
+          { status: 429 }
         )
       }
+      claimedPeriodStart = quota.periodStart
     }
 
     // 8. Load chart calculation data
@@ -198,13 +180,17 @@ export async function POST(req: Request) {
       .single()
 
     if (calcError || !calculation) {
+      // Refund the cap-claim — no generation will happen.
+      if (claimedPeriodStart) {
+        await decrementQuotaUsage(userId, claimedPeriodStart)
+      }
       return Response.json(
         { error: 'Натална карта не е изчислена. Моля, изчислете картата първо.' },
         { status: 404 }
       )
     }
 
-    // 8. Build prompts
+    // 9. Build prompts
     const chartData: ChartData = {
       planets: calculation.planet_positions as ChartData['planets'],
       houses: calculation.house_cusps as ChartData['houses'],
@@ -226,15 +212,15 @@ export async function POST(req: Request) {
     //      mobile collects the full text and renders once. Web's
     //      streaming path stays untouched below.
     if (jsonOnly) {
-      const result = await generateText({
-        model: openrouter(LLAMA_MODEL),
-        system: systemPrompt,
-        prompt: chartPromptText,
-        temperature: 0.85,
-        maxOutputTokens: 2000,
-      })
-
       try {
+        const result = await generateText({
+          model: openrouter(LLAMA_MODEL),
+          system: systemPrompt,
+          prompt: chartPromptText,
+          temperature: 0.85,
+          maxOutputTokens: 2000,
+        })
+
         const cleanContent = stripSentinels(result.text)
         const generatedAt = new Date()
         const expiresAt = new Date(generatedAt)
@@ -260,6 +246,9 @@ export async function POST(req: Request) {
           generatedAt: generatedAt.toISOString(),
         })
       } catch (err) {
+        if (claimedPeriodStart) {
+          await decrementQuotaUsage(userId, claimedPeriodStart)
+        }
         console.error('[Oracle Generate] Failed to save reading:', err)
         return Response.json(
           { error: 'Грешка при запазване на четенето' },
@@ -268,7 +257,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // 10b. Web path — stream via OpenRouter / meta-llama/llama-3.3-70b-instruct
+    // 10b. Web path — stream via OpenRouter / meta-llama/llama-3.3-70b-instruct.
+    //      Refund hook captured as a const for closure clarity (the let above
+    //      is also visible, but const here documents that callbacks won't be
+    //      racing further mutation).
+    const refundPeriodStart = claimedPeriodStart
     const result = streamText({
       model: openrouter(LLAMA_MODEL),
       system: systemPrompt,
@@ -302,16 +295,29 @@ export async function POST(req: Request) {
             }
           )
         } catch (err) {
-          // Log but don't fail - stream already returned to client
           console.error('[Oracle Generate] Failed to save reading:', err)
+          if (refundPeriodStart) {
+            await decrementQuotaUsage(userId, refundPeriodStart)
+          }
+        }
+      },
+
+      onError: ({ error }) => {
+        console.error('[Oracle Generate] Stream error:', error)
+        if (refundPeriodStart) {
+          // Fire-and-forget; decrementQuotaUsage swallows its own errors
+          // and audits via system.payment.quota_refund_failed when needed.
+          void decrementQuotaUsage(userId, refundPeriodStart)
         }
       },
     })
 
-    // Return streaming response - toTextStreamResponse() is the v6 API
-    // useCompletion with streamProtocol: 'text' reads this format
     return result.toTextStreamResponse()
   } catch (error) {
+    // Setup error before stream returned. If we already cap-claimed, refund.
+    if (claimedPeriodStart) {
+      await decrementQuotaUsage(userId, claimedPeriodStart)
+    }
     console.error('[Oracle Generate] Unhandled error:', error)
     return Response.json(
       { error: 'Грешка при генериране на четенето' },
