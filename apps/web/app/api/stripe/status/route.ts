@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
-import { getSubscriptionTier } from '@stellaeum/core/subscription/tier'
 import { activatePremiumFromSession } from '@/lib/stripe/activate-from-session'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 /**
  * GET /api/stripe/status?session_id=cs_xxx
@@ -9,6 +9,10 @@ import { activatePremiumFromSession } from '@/lib/stripe/activate-from-session'
  * If a Checkout session_id is supplied we attempt a fast-path activation
  * against Stripe (web-only concern — mobile IAP goes through RevenueCat),
  * then return the canonical tier from the DB either way.
+ *
+ * Activate failure (defensive) falls through to a fresh DB read — the
+ * webhook will catch up regardless. Tier-read failure returns 'free' so
+ * the success page never sees a 500.
  */
 export async function GET(request: Request) {
   const { userId } = await auth()
@@ -19,14 +23,19 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const sessionId = searchParams.get('session_id')
 
-  try {
-    if (sessionId) {
+  if (sessionId) {
+    try {
       await activatePremiumFromSession(userId, sessionId)
+    } catch (err) {
+      console.error('[api/stripe/status] activate failed, falling through:', err)
     }
-    const tier = await getSubscriptionTier(userId)
-    return Response.json({ tier })
+  }
+
+  try {
+    const appUser = await ensureUserRecord(userId)
+    return Response.json({ tier: appUser.subscription_tier })
   } catch (err) {
-    console.error('[api/stripe/status] error:', err)
+    console.error('[api/stripe/status] tier read failed:', err)
     return Response.json({ tier: 'free' })
   }
 }
