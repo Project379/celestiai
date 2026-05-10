@@ -903,6 +903,21 @@ The pattern is **plan-doc claims diverging from codebase reality** as execution 
 
 **Why documented:** B.0d remediation was applied at the database layer and verified via REST-API curl audit. The web audit (B.0e) confirmed the data-fetching pattern is uniform. Mobile is the parallel surface where the same audit hasn't been performed and where a different historical implementation pattern could exist.
 
+## 33. Orphaned `payment.webhook_received` flat audit type entry in `apps/web/lib/audit.ts`
+
+**Status:** Filed during B.0c-6 close 2026-05-10. B.0c-3 ported CA-0002's webhook route, which uses the hierarchical audit name `system.payment.webhook_received` instead of the prior flat `payment.webhook_received`. The flat union member at `apps/web/lib/audit.ts:23` is now orphaned — no remaining caller in the codebase imports or emits it.
+
+**Concern:** purely a hygiene issue. A type-union entry with no producers and no consumers is dead surface area. Leaving it in place doesn't break anything; removing it tightens the type contract by one row.
+
+**Trigger:** opportunistic — fold into any sub-round that touches `apps/web/lib/audit.ts` for other reasons (e.g., a future audit-event taxonomy expansion under D10 / REVISIT-29 PostHog wiring overlap, or a Phase C audit-event consolidation pass). Do not open a standalone sub-round for this — too small to justify the overhead.
+
+**Sub-round when ready:** opportunistic, ~1-line edit:
+1. Verify via `grep -rn "payment.webhook_received" apps/web/` that the flat name has zero callers (the CA-0002-derived hierarchical names — `system.payment.webhook_received`, `system.payment.webhook_ignored`, `system.security.stripe_ownership_mismatch` — should be the only ones in use).
+2. Delete the `'payment.webhook_received'` line from the `AuditEventType` union at `apps/web/lib/audit.ts`.
+3. `npx tsc --noEmit` green check.
+
+**Why documented:** captures the intentional hierarchical-naming migration completed in B.0c-3 + leaves a low-priority cleanup hook for the next reader who touches the file. Without this note, a future reader might re-add the flat name on assumption it's still active.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
