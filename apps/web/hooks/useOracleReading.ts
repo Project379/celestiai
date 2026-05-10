@@ -1,6 +1,5 @@
 'use client'
 
-import { useCompletion } from '@ai-sdk/react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 /**
@@ -14,14 +13,33 @@ export interface SavedReading {
   teaserContent: string | null
 }
 
+interface CapReachedError {
+  kind: 'cap-reached'
+  cap: number
+}
+
+interface GenericGenerationError {
+  kind: 'generic'
+  message: string
+}
+
+export type GenerationError = CapReachedError | GenericGenerationError
+
 /**
  * useOracleReading
  *
- * Client hook that drives the AI reading experience:
- * - Streams a reading via POST /api/oracle/generate using useCompletion
- * - Manages saved readings fetched from GET /api/oracle/readings
- * - Tracks which topic is currently being generated or viewed
- * - Auto-refreshes saved readings when generation completes
+ * Client hook driving the Oracle reading experience on web. Mirrors
+ * apps/mobile/hooks/useOracleReading.ts in shape — manual fetch +
+ * structured generationError mapping — so the cap-reached 429 from
+ * /api/oracle/generate ({ code: 'CAP_REACHED', cap }) flows through
+ * to a typed `generationError.kind === 'cap-reached'` that the panel
+ * renders via <CapReachedNotice />.
+ *
+ * Replaces the prior @ai-sdk/react useCompletion path (B.0f-2-fix-1
+ * 2026-05-10) — useCompletion's error.message format depends on the
+ * SDK version and isn't reliably parseable for structured 429 bodies,
+ * so we read the response status manually and switch between JSON
+ * (error path) and ReadableStream (success path) based on status.
  *
  * @param chartId - The chart UUID to generate readings for
  */
@@ -29,24 +47,27 @@ export function useOracleReading(chartId: string) {
   const [savedReadings, setSavedReadings] = useState<
     Record<string, SavedReading>
   >({})
-  const [activeTopic, setActiveTopic] = useState<string | null>(null)
+  const [activeTopic, setActiveTopicState] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [completion, setCompletion] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [generationError, setGenerationError] = useState<GenerationError | null>(
+    null,
+  )
 
-  // Track previous isLoading to detect transition from true -> false
+  const abortRef = useRef<AbortController | null>(null)
   const wasLoadingRef = useRef(false)
 
-  const { completion, isLoading, error, stop, complete, setCompletion } =
-    useCompletion({
-      api: '/api/oracle/generate',
-      // Use 'text' protocol to match toTextStreamResponse() on the server
-      // AI SDK v6 removed the 'data' stream protocol for useCompletion
-      streamProtocol: 'text',
-    })
-
   /**
-   * Fetches all saved readings for this chart from the server.
-   * Updates savedReadings state as a map keyed by topic.
+   * Auto-clears generationError on topic transitions so the cap-reached
+   * notice for topic A doesn't leak into topic B's saved-reading view.
+   * Existing behavior of setActiveTopic preserved aside from this.
    */
+  const setActiveTopic = useCallback((topic: string | null) => {
+    setActiveTopicState(topic)
+    setGenerationError(null)
+  }, [])
+
   const fetchSavedReadings = useCallback(async () => {
     if (!chartId) return
 
@@ -78,36 +99,110 @@ export function useOracleReading(chartId: string) {
     void fetchSavedReadings()
   }, [fetchSavedReadings])
 
-  // Auto-refresh saved readings when generation completes (isLoading: true -> false)
+  // Auto-refresh saved readings when generation completes (true → false)
   useEffect(() => {
     if (wasLoadingRef.current && !isLoading) {
-      // Generation just finished — refresh saved readings from DB
       void fetchSavedReadings()
     }
     wasLoadingRef.current = isLoading
   }, [isLoading, fetchSavedReadings])
 
   /**
-   * Initiates generation of an AI reading for the given topic.
-   * Sets the active topic and calls the streaming API.
+   * Aborts any in-flight stream. Stops the loading spinner without
+   * surfacing the abort as an error.
+   */
+  const stop = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort()
+      abortRef.current = null
+    }
+    setIsLoading(false)
+  }, [])
+
+  /**
+   * Initiates generation of an AI reading for the given topic. Manual
+   * fetch + ReadableStream pattern — non-200 responses are parsed as
+   * JSON for structured error mapping (cap-reached vs generic), 200
+   * responses are consumed chunk-by-chunk into the completion state.
    *
    * @param topic - Reading topic: 'general' | 'love' | 'career' | 'health'
-   * @param regenerate - If true, bypasses cache and regenerates (rate limited to once/day)
+   * @param regenerate - If true, bypasses cache + cap (rate-limited 24h/topic)
    */
   const generateReading = useCallback(
     async (topic: string, regenerate = false) => {
-      setActiveTopic(topic)
+      // Cancel any in-flight stream before starting a new one.
+      if (abortRef.current) {
+        abortRef.current.abort()
+      }
+      const controller = new AbortController()
+      abortRef.current = controller
+
+      setActiveTopicState(topic)
       setCompletion('')
+      setGenerationError(null)
+      setIsLoading(true)
 
       try {
-        await complete('', {
-          body: { chartId, topic, regenerate },
+        const res = await fetch('/api/oracle/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chartId, topic, regenerate }),
+          signal: controller.signal,
         })
-      } catch {
-        // Error is surfaced via the `error` state from useCompletion
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => null)
+          if (res.status === 429 && data?.code === 'CAP_REACHED') {
+            setGenerationError({
+              kind: 'cap-reached',
+              cap: typeof data.cap === 'number' ? data.cap : 3,
+            })
+          } else {
+            setGenerationError({
+              kind: 'generic',
+              message:
+                typeof data?.error === 'string'
+                  ? data.error
+                  : 'Грешка при генериране на четенето',
+            })
+          }
+          return
+        }
+
+        if (!res.body) {
+          throw new Error('Empty response body from /api/oracle/generate')
+        }
+
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let accumulated = ''
+        // ReadableStream consumer — mirrors useCompletion's text-protocol
+        // streaming behavior so ReadingStream renders chunk-by-chunk.
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          accumulated += decoder.decode(value, { stream: true })
+          setCompletion(accumulated)
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          // User clicked stop — don't surface as a user-facing error.
+          return
+        }
+        console.error('[useOracleReading] generation failed:', err)
+        setGenerationError({
+          kind: 'generic',
+          message: 'Грешка при генериране на четенето',
+        })
+      } finally {
+        setIsLoading(false)
+        if (abortRef.current === controller) {
+          abortRef.current = null
+        }
       }
     },
-    [chartId, complete, setCompletion]
+    [chartId],
   )
 
   return {
@@ -115,15 +210,15 @@ export function useOracleReading(chartId: string) {
     completion,
     /** True while generation is in progress */
     isLoading,
-    /** Error from the streaming API, if any */
-    error,
+    /** Structured generation error: cap-reached or generic */
+    generationError,
     /** Stop the current generation stream */
     stop,
     /** Saved readings indexed by topic */
     savedReadings,
     /** The topic currently being generated or viewed */
     activeTopic,
-    /** Manually set the active topic without triggering generation */
+    /** Manually set the active topic; auto-clears generationError */
     setActiveTopic,
     /** Error from fetching saved readings, if any */
     fetchError,

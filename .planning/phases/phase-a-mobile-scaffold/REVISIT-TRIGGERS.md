@@ -494,7 +494,11 @@ opposite of what the mirror discipline intends.
 
 **Why documented:** Surfaced during sub-round 4.7 verification. Not blocking; not bug-class severity. Future maintainer evaluating mobile perf should know this is an acknowledged trade-off, not a missed warning.
 
-## 23. Web Oracle cap-reached path fails silently (post 2026-04-20 cap-gate refactor)
+## 23. Web Oracle cap-reached path fails silently (post 2026-04-20 cap-gate refactor) — CLOSED 2026-05-10
+
+**Resolution (B.0f-2-fix-1 close 2026-05-10):** Web hook `useOracleReading.ts` refactored from `useCompletion` (opaque error.message format, SDK-version-dependent) to manual fetch + ReadableStream + AbortController, mirroring mobile's pattern. 429 responses are now parsed as JSON before any stream-reader path is entered, and `code: 'CAP_REACHED'` maps to a structured `generationError: { kind: 'cap-reached', cap }` discriminated union exactly like mobile's hook. Web `CapReachedNotice` ported from `apps/mobile/components/oracle/CapReachedNotice.tsx` to `apps/web/components/oracle/CapReachedNotice.tsx` (web JSX + Tailwind adaptation; same Bulgarian copy, same accessibility-text role). Bulgarian copy unified across both surfaces with Variant 2 monthly framing (B.0f-2-fix-1 ratification): «Изчерпа {cap} безплатни четения за този месец. Звездите ще говорят отново идния месец.» — replaces mobile's prior daily-framed copy now that B.0f-1 made the cap monthly. `OraclePanelGlobal.tsx` destructures `generationError` and renders `<CapReachedNotice>` between the empty-state and stream branches; dead `LockedTopicTeaser` import + render block dropped. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** `apps/web/components/oracle/OraclePanelGlobal.tsx` destructures
 `useOracleReading()` but does NOT render its `error` state. When a free-tier

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useOracleReading } from '@/hooks/useOracleReading'
 import { TopicCards } from './TopicCards'
 import { ReadingStream } from './ReadingStream'
-import { LockedTopicTeaser } from './LockedTopicTeaser'
+import { CapReachedNotice } from './CapReachedNotice'
 import { TOPIC_META, type OracleTopic } from './TopicCard'
 import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
 
@@ -34,6 +34,7 @@ function OraclePanel({ chartId }: { chartId: string }) {
   const {
     completion,
     isLoading,
+    generationError,
     stop,
     savedReadings,
     activeTopic,
@@ -244,15 +245,8 @@ function OraclePanel({ chartId }: { chartId: string }) {
                 </div>
               )}
 
-              {lockedTopicShown && !activeTopic && (
-                <LockedTopicTeaser
-                  topic={lockedTopicShown}
-                  teaserContent={teaserContent[lockedTopicShown] ?? null}
-                  isLoadingTeaser={loadingTeaser[lockedTopicShown] ?? false}
-                  onRequestTeaser={() =>
-                    void handleRequestTeaser(lockedTopicShown)
-                  }
-                />
+              {activeTopic && generationError?.kind === 'cap-reached' && (
+                <CapReachedNotice cap={generationError.cap} />
               )}
 
               {showStream && (

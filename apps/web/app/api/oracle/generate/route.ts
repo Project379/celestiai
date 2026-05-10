@@ -136,27 +136,15 @@ export async function POST(req: Request) {
       }
     }
 
-    // 7a. Pre-flight quota check. Premium short-circuits with available=true;
-    //     free path reads the current period row for { used, limit, periodStart }.
-    const quota = await checkQuotaAvailable(user)
-    if (!quota.available) {
-      return Response.json(
-        {
-          error: `Достигна месечния лимит от ${quota.limit} четения. Премиум абонаментът премахва ограничението.`,
-          code: 'CAP_REACHED',
-          cap: quota.limit,
-          tier: user.subscription_tier,
-        },
-        { status: 429 }
-      )
-    }
-
-    // 7b. Atomic cap-claim BEFORE generation (Pattern B). Premium has no
-    //     quota row by D1 — skip the increment. Free tier increments via
-    //     RPC; race-loss (NULL return) is treated as cap-reached.
-    if (user.subscription_tier !== 'premium') {
-      const claim = await incrementQuotaUsage(userId, quota.periodStart)
-      if (!claim.success) {
+    // 7. Quota cap-claim (Pattern B). Regenerations are exempt per
+    //    B.0f-2-fix-1 ratification — they fall through directly to the
+    //    chart-load step, no checkQuotaAvailable, no incrementQuotaUsage.
+    //    The 24-hour regenerate rate-limit at step 6 still applies.
+    if (!regenerate) {
+      // 7a. Pre-flight quota check. Premium short-circuits with available=true;
+      //     free path reads the current period row for { used, limit, periodStart }.
+      const quota = await checkQuotaAvailable(user)
+      if (!quota.available) {
         return Response.json(
           {
             error: `Достигна месечния лимит от ${quota.limit} четения. Премиум абонаментът премахва ограничението.`,
@@ -167,7 +155,25 @@ export async function POST(req: Request) {
           { status: 429 }
         )
       }
-      claimedPeriodStart = quota.periodStart
+
+      // 7b. Atomic cap-claim BEFORE generation. Premium has no quota row
+      //     by D1 — skip the increment. Free tier increments via RPC;
+      //     race-loss (NULL return) is treated as cap-reached.
+      if (user.subscription_tier !== 'premium') {
+        const claim = await incrementQuotaUsage(userId, quota.periodStart)
+        if (!claim.success) {
+          return Response.json(
+            {
+              error: `Достигна месечния лимит от ${quota.limit} четения. Премиум абонаментът премахва ограничението.`,
+              code: 'CAP_REACHED',
+              cap: quota.limit,
+              tier: user.subscription_tier,
+            },
+            { status: 429 }
+          )
+        }
+        claimedPeriodStart = quota.periodStart
+      }
     }
 
     // 8. Load chart calculation data
