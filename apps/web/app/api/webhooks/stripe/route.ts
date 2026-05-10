@@ -1,30 +1,30 @@
 import { after } from 'next/server'
 import Stripe from 'stripe'
+import { logAuditEvent } from '@/lib/audit'
 import { stripe } from '@/lib/stripe/client'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import {
   handleCheckoutComplete,
-  handleSubscriptionUpdated,
-  handleSubscriptionDeleted,
   handleInvoicePaid,
+  handleInvoicePaymentFailed,
+  handleSubscriptionDeleted,
+  handleSubscriptionUpdated,
+  StripeWebhookIgnoredError,
 } from '@/lib/stripe/subscription'
-import { logAuditEvent } from '@/lib/audit'
+import { createServiceSupabaseClient } from '@/lib/supabase/service'
 
 /**
  * POST /api/webhooks/stripe
  *
  * Processes Stripe webhook events for subscription lifecycle management.
  *
- * CRITICAL: Uses request.text() (raw body) - NEVER request.json().
+ * CRITICAL: Uses request.text() (raw body), never request.json().
  * Stripe signature verification requires the exact raw bytes sent.
  *
- * Idempotency: checks processed_webhook_events before processing.
- * Returns 500 on processing errors so Stripe retries delivery.
- * Returns 200 immediately for duplicate events.
+ * Idempotency: checks processed_webhook_events before processing; marks
+ * processed on success AND on StripeWebhookIgnoredError so Stripe stops retrying
+ * intentionally-ignored events. Returns 500 only on real processing errors.
  */
 export async function POST(request: Request) {
-  // CRITICAL: Read raw text body for signature verification
-  // request.json() would re-parse and break the HMAC check
   const body = await request.text()
   const sig = request.headers.get('stripe-signature')!
 
@@ -46,7 +46,6 @@ export async function POST(request: Request) {
 
   const supabase = createServiceSupabaseClient()
 
-  // Idempotency check - return 200 immediately for already-processed events
   const { data: existing } = await supabase
     .from('processed_webhook_events')
     .select('id')
@@ -58,19 +57,28 @@ export async function POST(request: Request) {
     return new Response('OK', { status: 200 })
   }
 
-  // Audit log all webhook events — non-blocking, runs after response
-  after(() => logAuditEvent(null, 'payment.webhook_received', { eventType: event.type, eventId: event.id }))
+  const eventId = event.id
+  const eventType = event.type
+  after(() =>
+    logAuditEvent(null, 'system.payment.webhook_received', {
+      eventType,
+      eventId,
+    })
+  )
 
-  // Process event - return 500 on error so Stripe retries
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        // Only process subscription checkouts - not one-time payments
         if (session.mode === 'subscription') {
           await handleCheckoutComplete(session)
           const clerkUserId = session.metadata?.clerkUserId ?? null
-          after(() => logAuditEvent(clerkUserId, 'payment.subscription_created', { stripeSubscriptionId: session.subscription }))
+          const stripeSubscriptionId = session.subscription
+          after(() =>
+            logAuditEvent(clerkUserId, 'payment.subscription_created', {
+              stripeSubscriptionId,
+            })
+          )
         }
         break
       }
@@ -85,7 +93,12 @@ export async function POST(request: Request) {
         const sub = event.data.object as Stripe.Subscription
         await handleSubscriptionDeleted(sub)
         const clerkUserId = sub.metadata?.clerkUserId ?? null
-        after(() => logAuditEvent(clerkUserId, 'payment.subscription_cancelled', { stripeSubscriptionId: sub.id }))
+        const stripeSubscriptionId = sub.id
+        after(() =>
+          logAuditEvent(clerkUserId, 'payment.subscription_cancelled', {
+            stripeSubscriptionId,
+          })
+        )
         break
       }
 
@@ -96,19 +109,22 @@ export async function POST(request: Request) {
       }
 
       case 'invoice.payment_failed': {
-        // Log only - Stripe retries automatically; no action needed from us
-        console.warn(
-          `[Webhook] Invoice payment failed: ${event.id} - Stripe will retry`
-        )
+        const invoice = event.data.object as Stripe.Invoice
+        await handleInvoicePaymentFailed(invoice)
         break
       }
 
       default:
-        // Unhandled event types are silently ignored
+        after(() =>
+          logAuditEvent(null, 'system.payment.webhook_ignored', {
+            eventType,
+            eventId,
+            reason: 'unhandled_event_type',
+          })
+        )
         console.log(`[Webhook] Unhandled event type: ${event.type}`)
     }
 
-    // Record successful processing for idempotency
     await supabase.from('processed_webhook_events').insert({
       stripe_event_id: event.id,
       event_type: event.type,
@@ -117,9 +133,21 @@ export async function POST(request: Request) {
 
     return new Response('OK', { status: 200 })
   } catch (err) {
+    if (err instanceof StripeWebhookIgnoredError) {
+      console.warn(
+        `[Webhook] Ignored event ${event.id} (${event.type}): ${err.message}`,
+        err.metadata
+      )
+      await supabase.from('processed_webhook_events').insert({
+        stripe_event_id: event.id,
+        event_type: event.type,
+        processed_at: new Date().toISOString(),
+      })
+      return new Response('OK', { status: 200 })
+    }
+
     const message = err instanceof Error ? err.message : String(err)
     console.error(`[Webhook] Processing error for event ${event.id}:`, message)
-    // Return 500 so Stripe retries delivery
     return new Response(`Processing error: ${message}`, { status: 500 })
   }
 }
