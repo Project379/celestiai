@@ -6,6 +6,7 @@ import type { SubscriptionOverview } from '@/lib/stripe/subscription-overview'
 
 const fallbackOverview: SubscriptionOverview = {
   tier: 'free',
+  subscriptionStatus: 'inactive',
   subscriptionData: null,
   subscriptionExpiresAt: null,
 }
@@ -14,6 +15,7 @@ export function AccountSubscriptionPage() {
   const [overview, setOverview] = useState<SubscriptionOverview>(fallbackOverview)
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
+  const [retryToken, setRetryToken] = useState(0)
 
   useEffect(() => {
     let isMounted = true
@@ -51,7 +53,13 @@ export function AccountSubscriptionPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [retryToken])
+
+  const handleRetry = () => {
+    setIsLoading(true)
+    setHasError(false)
+    setRetryToken((t) => t + 1)
+  }
 
   if (isLoading) {
     return (
@@ -63,10 +71,17 @@ export function AccountSubscriptionPage() {
 
   if (hasError) {
     return (
-      <div className="px-1 py-4">
+      <div className="space-y-3 px-1 py-4">
         <p className="text-sm text-rose-300">
           Не успяхме да заредим информацията за абонамента.
         </p>
+        <button
+          type="button"
+          onClick={handleRetry}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-200 transition-all hover:border-violet-300/30 hover:bg-violet-500/[0.07] hover:text-white"
+        >
+          Опитай отново
+        </button>
       </div>
     )
   }
