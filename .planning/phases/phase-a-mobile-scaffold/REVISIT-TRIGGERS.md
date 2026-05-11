@@ -1022,6 +1022,46 @@ Pre-existing parity gap with mobile, which has both buttons.
 
 **Why documented:** the founder smoke test surfaced this gap. Without filing, the regenerate/stop UX work falls between B.0f's "this is correct backend-side" and P.12's "Oracle parity polish" — risk of nobody owning it. Filing here ties it explicitly to P.12 with three sub-questions to resolve, so P.12 picks it up cleanly.
 
+## 41. MOBILE-WEB-PARITY-GAP.md periodic staleness sweep (first instance: P.1 close 2026-05-11)
+
+**Status:** Filed during P.1 close 2026-05-11. First concrete instance of REVISIT-31 doc-debt sweep applied to the parity-gap inventory. P.1's investigation pass surfaced three categories of spec staleness that the original 2026-05-09 enumeration missed because it was written from web's comment-target state, not as-shipped state:
+
+1. **Item 1.6 SSE drift.** Spec described mobile-using-JSON as the gap; investigation discovered web's client had silently dropped `useCompletion` too. Both surfaces non-streaming at UX layer despite backend SSE intact. Re-classified to deferred-silent-close + Yesterday tab carved out as item 1.11.
+2. **Items 1.8 (Transit) and 1.9 (Circle) static-on-web.** Spec described mobile's hardcoded data as the gap implying web is data-driven; investigation found web tiles are also static link cards with inline "Phase B: replace with real X" comments. Re-classified to done-at-parity + cross-surface REVISIT for data-driven port.
+3. **Item 1.11 Yesterday tab and 1.12 tile-tap navigation surfaced as new rows.** Both visible side-by-side gaps not enumerated in the original sweep.
+
+**Concern:** the parity-gap inventory is the single source of truth for Stream P scope. Doc staleness leads to investigation passes re-discovering the same questions or pre-investigation halt-and-surface for items already resolved. Compound cost across 18 Stream P sub-rounds.
+
+**Trigger:** **periodic — every Stream P sub-round close performs a focused sweep of its just-closed surface's parity-gap section.** P.1-f's sweep covered Section 1; P.2-f (or single-commit P.2 close) sweeps Section 2; etc. Also fires opportunistically when spec staleness is surfaced mid-investigation.
+
+**Cross-cutting items also surfaced during P.1 sweep (not section-specific):**
+
+- **CrystalCard border + eyebrow font-weight divergence** (closed inline in P.1-f sweep — `apps/mobile/components/CrystalCard.tsx`). Mobile was `border-violet-stellaeum/25` + default font-weight; web is `border-amber-300/25` + `font-semibold`. Aligned to web in P.1-f.
+- **Stale comment in `apps/mobile/hooks/useDailyHoroscope.ts`** referencing REVISIT-20 streaming-text-upgrade as still-active. REVISIT-20 closed via re-classification when item 1.6 closed silently in P.1-f. Comment scheduled for cleanup at next opportunistic touch (1-line edit; not urgent).
+- **`PLANET_HEX_COLORS` map drift risk** (`apps/mobile/app/(authed)/(tabs)/index.tsx`) vs web's `PLANET_COLORS` Tailwind class map (`apps/web/components/horoscope/HoroscopeStream.tsx`). Both maps must agree on the per-planet color identity; drift between them produces silent visual divergence. **Possible refactor:** centralize as `PLANET_HEX_COLORS` constants in `@stellaeum/core/oracle/planet-parser` alongside `parseSentinels`; web derives Tailwind classes from the hex constants. Defer to a future cross-surface visual-consistency sub-round.
+- **Ambient header restructure deferred to P.9.** When P.9 ships tier-source and flips `isPremium`, the parent View at mobile `index.tsx` ambient header should restructure from vertical stack to `flex-row justify-between` so Premium badge sits right-aligned alongside the date+lunar line (mirrors web `DashboardContent.tsx:130-148`).
+
+**Sub-round when ready:** every Stream P sub-round close from P.2 onward includes a section-focused sweep of MOBILE-WEB-PARITY-GAP.md as the final commit step (or atomic with the close commit). Cumulative cost ~5-15 LOC per sweep; doc updates dominate.
+
+**Why documented:** P.1's investigation overhead was high partly because the spec was stale. Future sub-rounds are tightened by sweeping the relevant section before opening the investigation pass — or, equivalently, by maintaining the doc current via close-time sweeps so the next investigation reads cleanly. This REVISIT institutionalizes the close-time sweep practice.
+
+## 42. Mobile font stack — Cinzel Cyrillic-incompatibility + missing `font-display` equivalent
+
+**Status:** Filed during P.1 close 2026-05-11. Surfaced during P.1-b (greeting block port). Mobile's Tailwind config (`apps/mobile/tailwind.config.js`) defines only one custom font family: `font-cinzel` → `['Cinzel']`. Cinzel is a Latin display font intended for uppercase eyebrow labels (`tracking-[0.42em] uppercase`); it has limited or no Cyrillic glyph support. Web's `font-display` (a serif loaded via Google Fonts) doesn't exist on mobile. Web's Bulgarian body text + h1 greeting use `font-display` for the serif editorial feel; mobile falls back to the platform-default sans-serif, which renders Cyrillic correctly but loses the editorial register.
+
+**Concern:** typographic register is part of the visual identity. Founder's design language is cosmic+editorial, and the serif font is load-bearing for the editorial feel. Falling back to system sans-serif on mobile means iOS (San Francisco) and Android (Roboto) render the greeting + body text in their respective system fonts — recognizable but not editorially-distinctive.
+
+**Trigger:** post-soft-launch typographic-polish sub-round, OR fires opportunistically if founder receives user feedback that mobile typography feels "off-brand" vs web. Not gating soft launch — Cyrillic renders cleanly in system fonts, content is readable.
+
+**Sub-round when ready:** Phase C/D typographic polish. Steps:
+1. Pick a Cyrillic-supporting serif equivalent for web's `font-display` (candidates: Cormorant, Lora, EB Garamond, Source Serif Pro — all have decent Cyrillic glyph coverage on Google Fonts).
+2. Load via `expo-font` at app root (`apps/mobile/app/_layout.tsx`).
+3. Add `display: ['<picked-font>']` to `apps/mobile/tailwind.config.js` fontFamily section.
+4. Audit mobile components for explicit `font-cinzel` usage on mixed-case text (should be uppercase eyebrows only) — flip mixed-case usages to `font-display` once available.
+5. Re-evaluate the greeting block in `apps/mobile/app/(authed)/(tabs)/index.tsx:177` (currently no font class for Cinzel-incompatibility reasons).
+
+**Why documented:** the Cinzel limitation is invisible until you try to render mixed-case Bulgarian text in it (which P.1-b did — initial attempt had `font-cinzel` on the greeting, fell back to system sans because of glyph absence). Without filing, future contributors may repeat the mistake. Filing this also captures the broader "mobile typography is system-default sans-serif everywhere except eyebrows" state that may be worth a holistic review post-soft-launch.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have

@@ -292,6 +292,38 @@ export default function DnesScreen() {
               </Text>
             </View>
 
+            {/* Decorative divider (P.1-f Part 2). Mirrors web DailyHoroscope.tsx:101-110 —
+                hairline + ✦ + ornament + ✦ + hairline. NorthNode celestial icon
+                substituted with a rotated amber diamond (no mobile celestial-icon
+                system; substitution per ratification). */}
+            <View className="mb-6 flex-row items-center" style={{ gap: 16 }}>
+              <View className="h-px flex-1 bg-slate-300/20" />
+              <View className="flex-row items-center" style={{ gap: 10 }}>
+                <Text className="text-[8px] text-slate-300/55">✦</Text>
+                <View className="h-1.5 w-1.5 rotate-45 bg-amber-300/70" />
+                <Text className="text-[8px] text-slate-300/55">✦</Text>
+              </View>
+              <View className="h-px flex-1 bg-slate-300/20" />
+            </View>
+
+            {/* Date tab switcher (P.1-f Part 1, item 1.11). Today/Yesterday lazy-
+                fetch; Yesterday tab disabled with «Неналично» label when the
+                yesterdayQuery returns unavailable. Mirrors web tab UI at
+                DailyHoroscope.tsx:113-125. */}
+            <View className="mb-7 flex-row justify-center" style={{ gap: 40 }}>
+              <DateTab
+                active={horoscope.selectedDate === 'today'}
+                onPress={() => horoscope.setSelectedDate('today')}
+                label="Днес"
+              />
+              <DateTab
+                active={horoscope.selectedDate === 'yesterday' && !horoscope.yesterdayUnavailable}
+                disabled={horoscope.yesterdayUnavailable}
+                onPress={() => horoscope.setSelectedDate('yesterday')}
+                label={horoscope.yesterdayUnavailable ? 'Неналично' : 'Вчера'}
+              />
+            </View>
+
             <View>
               {horoscope.isLoading && (
                 <View className="items-center py-6">
@@ -315,7 +347,14 @@ export default function DnesScreen() {
                   Вчерашното послание вече е отминало.
                 </Text>
               )}
-              {horoscope.data?.content && <HoroscopeBody content={horoscope.data.content} />}
+              {horoscope.data?.content && (
+                <View>
+                  {/* Drop-cap quote ornament (P.1-f Part 3) — large amber «"» behind
+                      the start of the horoscope body. Mirrors web DailyHoroscope.tsx:130-137. */}
+                  <Text pointerEvents="none" style={{ position: 'absolute', left: -4, top: -16, fontFamily: 'Cinzel', fontSize: 56, lineHeight: 56, color: 'rgba(251,191,36,0.15)' }}>{'“'}</Text>
+                  <HoroscopeBody content={horoscope.data.content} />
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -516,6 +555,49 @@ function SunSigil() {
         </Svg>
       </View>
     </View>
+  )
+}
+
+// Date tab — typographic underline-active button mirroring web's
+// TabButton at apps/web/components/horoscope/DailyHoroscope.tsx:189-227.
+// Active = amber underline + amber label. Disabled = slate-700 unclickable.
+function DateTab({
+  active,
+  disabled,
+  onPress,
+  label,
+}: {
+  active: boolean
+  disabled?: boolean
+  onPress: () => void
+  label: string
+}) {
+  return (
+    <Pressable
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
+      style={{ paddingBottom: 8 }}
+    >
+      <Text
+        className={`font-cinzel text-[11px] font-semibold uppercase tracking-[0.28em] ${
+          active ? 'text-amber-200' : disabled ? 'text-slate-700' : 'text-slate-400'
+        }`}
+      >
+        {label}
+      </Text>
+      {active && (
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 1,
+            backgroundColor: 'rgba(251,191,36,0.7)', // amber-400/70
+          }}
+        />
+      )}
+    </Pressable>
   )
 }
 
