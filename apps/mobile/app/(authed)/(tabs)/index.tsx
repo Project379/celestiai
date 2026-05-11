@@ -5,6 +5,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import { getLunarPhase } from '@stellaeum/core/moon-phase'
 import {
   composeWelcome,
+  daysUntilPeak,
   getActiveMeteorShower,
   getSunSign,
 } from '@stellaeum/core/welcome'
@@ -36,11 +37,17 @@ const BG_HOROSCOPE_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   timeZone: 'Europe/Sofia',
 })
 
-const TILE_CLASS =
-  'flex-1 min-w-[46%] rounded-2xl border border-violet-stellaeum/25 px-4 py-5'
-const TILE_LABEL_CLASS =
-  'font-cinzel text-[9px] uppercase tracking-[0.32em] text-amber-300/80'
-const TILE_HINT_CLASS = 'mt-2 text-[13.5px] font-light text-slate-200'
+// Лунна фаза tile countdown text — mirrors web's LunarTile.formatCountdown
+// (apps/web/components/dashboard/tiles/LunarTile.tsx). Returns Bulgarian
+// strings for time-until the next major lunar event.
+function formatCountdown(daysAway: number): string {
+  if (daysAway < 1 / 24) return 'съвсем скоро'
+  const days = Math.floor(daysAway)
+  const hours = Math.floor((daysAway - days) * 24)
+  if (days === 0) return `${hours} ч`
+  if (hours === 0) return `${days} д`
+  return `${days} д ${hours} ч`
+}
 
 export default function DnesScreen() {
   const router = useRouter()
@@ -57,14 +64,16 @@ export default function DnesScreen() {
   // internally consistent. A re-mount past midnight Sofia produces a new
   // snapshot; intra-session midnight ticks aren't covered (acceptable for
   // launch — web does setInterval here, mobile defers that polish).
-  const { todayFormatted, horoscopeDateFormatted, lunarPhase, hourSnapshot, meteorShower } = useMemo(() => {
+  const { todayFormatted, horoscopeDateFormatted, lunarPhase, hourSnapshot, meteorShower, meteorPeakDays } = useMemo(() => {
     const now = new Date()
+    const shower = getActiveMeteorShower(now)
     return {
       todayFormatted: BG_DATE_FORMAT.format(now),
       horoscopeDateFormatted: BG_HOROSCOPE_DATE_FORMAT.format(now),
       lunarPhase: getLunarPhase(now),
       hourSnapshot: now.getHours(),
-      meteorShower: getActiveMeteorShower(now),
+      meteorShower: shower,
+      meteorPeakDays: shower ? daysUntilPeak(shower) : null,
     }
   }, [])
 
@@ -212,23 +221,57 @@ export default function DnesScreen() {
           </View>
         )}
 
-        {/* Bento launchpad — Layer C (2×2 grid). Crystal tile is data-driven
-            via <CrystalCard /> (sub-round 2). Other three remain hardcoded
-            until their respective endpoints land. Renders in both empty
-            and existing-chart states (mirrors web). */}
+        {/* Bento launchpad — Layer C (2×2 grid). P.1-a parity port:
+            - CrystalCard: data-driven via /api/crystals/today (item 1.10
+              accepted divergence — mobile shows brief loading shimmer where
+              web pre-fetches via Server Component; Expo Router server
+              components don't exist in this codebase).
+            - LunarTile: data-driven from lunarPhase + meteorShower (item 1.7).
+            - TransitTile: static placeholder copy matching web's current
+              state (item 1.8 — web's TransitTile.tsx is also a static link
+              card; data-driven top-transit deferred for both surfaces).
+            - CircleTile: empty-state CTA with subtitle (item 1.9 — Friends
+              groups deferred per founder ratification 2026-05-09).
+            Tile-tap navigation unenumerated, deferred until destinations
+            exist on mobile (P.6 /you/crystals, P.3 /rhythm, etc.). */}
         <View className="mb-10 flex-row flex-wrap gap-3">
           <CrystalCard />
-          <View className={TILE_CLASS}>
-            <Text className={TILE_LABEL_CLASS}>Лунна фаза</Text>
-            <Text className={TILE_HINT_CLASS}>Ден 7/29</Text>
+          <View className="flex-1 min-w-[46%] rounded-2xl border border-violet-400/25 px-4 py-5">
+            <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-violet-300/90">
+              Лунна фаза
+            </Text>
+            <Text className="mt-3 text-[15px] font-light text-slate-100">
+              {lunarPhase.name}
+            </Text>
+            <Text className="mt-1 font-cinzel text-[9.5px] uppercase tracking-[0.26em] text-slate-500">
+              {lunarPhase.illumination}% осветление
+            </Text>
+            <Text className="mt-4 text-[12px] font-light text-slate-400">
+              <Text className="text-amber-300/80">☾ </Text>
+              до {lunarPhase.nextMajor.name.toLowerCase()} · <Text className="text-slate-200">{formatCountdown(lunarPhase.nextMajor.daysAway)}</Text>
+            </Text>
+            {meteorShower && (
+              <Text className="mt-2 text-[12px] font-light text-amber-300/80">
+                ☄ {meteorShower.name}
+                {meteorPeakDays !== null && meteorPeakDays > 0 && ` · пик след ${meteorPeakDays} д`}
+                {meteorPeakDays === 0 && ' · пик тази нощ'}
+              </Text>
+            )}
           </View>
-          <View className={TILE_CLASS}>
-            <Text className={TILE_LABEL_CLASS}>Транзит</Text>
-            <Text className={TILE_HINT_CLASS}>Венера △ Сатурн</Text>
+          <View className="flex-1 min-w-[46%] rounded-2xl border border-slate-700/60 px-4 py-5">
+            <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-slate-400">
+              Транзити
+            </Text>
+            <Text className="mt-3 text-[15px] font-light text-slate-100">Небесно време</Text>
+            <Text className="mt-1 text-[12px] font-light text-slate-500">активните аспекти към картата ти</Text>
+            <Text className="mt-4 font-cinzel text-[9px] uppercase tracking-[0.28em] text-slate-600">виж всички</Text>
           </View>
-          <View className={TILE_CLASS}>
-            <Text className={TILE_LABEL_CLASS}>Кръг</Text>
-            <Text className={TILE_HINT_CLASS}>Добави човек</Text>
+          <View className="flex-1 min-w-[46%] rounded-2xl border border-rose-400/20 px-4 py-5">
+            <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-rose-300/90">
+              Кръг
+            </Text>
+            <Text className="mt-3 text-[15px] font-light text-slate-100">Добави човек</Text>
+            <Text className="mt-1 text-[12px] font-light text-slate-500">партньор · приятел · crush</Text>
           </View>
         </View>
 
