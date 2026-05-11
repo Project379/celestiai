@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
+import { useUser } from '@clerk/expo'
 import { getLunarPhase } from '@stellaeum/core/moon-phase'
 import {
   composeWelcome,
@@ -37,6 +38,24 @@ const BG_HOROSCOPE_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   timeZone: 'Europe/Sofia',
 })
 
+// 12 hand-written Bulgarian one-liners per sun sign. Lifted verbatim from
+// apps/web/components/dashboard/DashboardContent.tsx:59-72 (D2 mirror
+// discipline — no calibration, zero net-new strings).
+const SIGN_QUIPS: Record<string, string> = {
+  'Овен':      'Марс пак те тласка напред - независимо дали имаш план или не. Поне изглежда убедено.',
+  'Телец':     'Венера обещава удоволствие. Сатурн напомня за задълженията. Ти вероятно знаеш кое печели.',
+  'Близнаци':  'Два гласа в главата ти не са проблем. Проблемът е, когато и двата са прави едновременно.',
+  'Рак':       'Луната е в твоя ъгъл. Усещаш всичко - включително нещата, за които другите нямат думи.',
+  'Лъв':       'Слънцето не е само за показ - но трябва да признаем, малко драма никога не е навредила.',
+  'Дева':      'Меркурий анализира. Ти анализираш. Разликата е, че Меркурий спира в края на краищата.',
+  'Везни':     'Везните са в баланс. За колко дълго - зависи от теб и от онзи имейл, на който все още не отговаряш.',
+  'Скорпион':  'Плутон вижда всичко. Ти виждаш всичко. Фактически няма смисъл да крием нищо от никого.',
+  'Стрелец':   'Юпитер е щедър. Ти - с добри намерения, непоследователни резултати и неоправдан оптимизъм. Работи.',
+  'Козирог':   'Сатурн одобрява усилията ти. Малък, тих знак за одобрение - продължавай без суетене.',
+  'Водолей':   'Уран прави нещата интересни. Ти правиш нещата странни. Разбирате се по начин, трудно обясним.',
+  'Риби':      'Нептун замъглява. Ти мечтаеш. Понякога е трудно да се каже кое е кое - и не е задължително.',
+}
+
 // Лунна фаза tile countdown text — mirrors web's LunarTile.formatCountdown
 // (apps/web/components/dashboard/tiles/LunarTile.tsx). Returns Bulgarian
 // strings for time-until the next major lunar event.
@@ -52,6 +71,11 @@ function formatCountdown(daysAway: number): string {
 export default function DnesScreen() {
   const router = useRouter()
   const { apiFetch } = useApiClient()
+  const { user } = useUser()
+  // Fallback mirrors apps/web/app/(protected)/dashboard/page.tsx:20 ('Потребител')
+  // so the greeting block never renders «Добро утро, .» during Clerk hydration
+  // or when a Clerk account has no firstName set.
+  const firstName = user?.firstName?.trim() || 'Потребител'
   // undefined = still resolving, null = no chart, ChartSummary = chart loaded.
   // Tracks both id (for the horoscope query) and birth_date (for sun-sign
   // computation in composeWelcome) so a single GET /api/birth-data response
@@ -77,20 +101,24 @@ export default function DnesScreen() {
     }
   }, [])
 
+  // sunSign at render scope so the sign-quip block (item 1.2) and the
+  // welcome composer both consume the same derivation.
+  const sunSign = chart?.birth_date ? getSunSign(chart.birth_date) : null
+
   // welcome.summary is the «Небесен ритъм» paragraph — phase opener × sign-
-  // element flavor × optional meteor note. firstName is empty because the
-  // greeting block (#1) is deferred to a future polish round; composeWelcome
-  // uses firstName only for the greeting line which we don't render.
-  const welcome = useMemo(() => {
-    const sunSign = chart?.birth_date ? getSunSign(chart.birth_date) : null
-    return composeWelcome({
-      firstName: '',
-      sunSign,
-      lunarPhase,
-      meteorShower,
-      hour: hourSnapshot,
-    })
-  }, [chart?.birth_date, lunarPhase, meteorShower, hourSnapshot])
+  // element flavor × optional meteor note. welcome.greeting is consumed by
+  // the greeting block (item 1.1) for the time-of-day prefix.
+  const welcome = useMemo(
+    () =>
+      composeWelcome({
+        firstName,
+        sunSign,
+        lunarPhase,
+        meteorShower,
+        hour: hourSnapshot,
+      }),
+    [firstName, sunSign, lunarPhase, meteorShower, hourSnapshot],
+  )
 
   // Refetch on focus so post-wizard-submit returning to Днес reflects
   // the newly created chart even if the screen wasn't unmounted by the
@@ -138,12 +166,36 @@ export default function DnesScreen() {
           </Text>
         </View>
 
+        {/* Greeting (item 1.1) — time-aware «{TOD}, {firstName}.» mirrors
+            web's DashboardContent.tsx:163-170. firstName uses RN textShadow*
+            style props for the warm halo instead of NativeWind's drop-shadow
+            class — RN's text-shadow is the native equivalent for text glow,
+            and the Tailwind drop-shadow utility maps to CSS `filter` which
+            doesn't apply to Text. Option C per P.1-b ratification 2026-05-11
+            (no gradient; faux halo via solid amber + text-shadow). */}
+        <View className="mb-8">
+          <Text className="text-[32px] leading-[1.2] tracking-tight">
+            <Text className="font-light text-slate-300">
+              {welcome.greeting.split(',')[0]},{' '}
+            </Text>
+            <Text
+              className="font-semibold text-amber-200/95"
+              style={{
+                textShadowColor: 'rgba(251,191,36,0.22)',
+                textShadowOffset: { width: 0, height: 0 },
+                textShadowRadius: 28,
+              }}
+            >
+              {firstName}.
+            </Text>
+          </Text>
+        </View>
+
         {/* Hero reading area — Layer B. Branches on chart resolution state:
             - undefined (loading birth-data): blank space (D-4.7-3)
-            - chart loaded: «Небесен ритъм» welcome.summary paragraph followed
-              by «Дневен хороскоп» eyebrow + LLM-generated horoscope content.
-              Mirrors web's DashboardContent.tsx blocks #2 and #4. Block #1
-              (greeting h1) and #3 (sign quip) deferred per mid-scope ratification.
+            - chart loaded: «Небесен ритъм» summary + sign quip + «Дневен
+              хороскоп» eyebrow + LLM-generated horoscope content. Mirrors
+              web's DashboardContent.tsx Layer B.
             - null (no chart): empty-state CTA mirroring web's DashboardContent. */}
         {chart && (
           <View className="mb-10">
@@ -153,6 +205,20 @@ export default function DnesScreen() {
             <Text className="text-[16.5px] font-light leading-[1.8] text-slate-200">
               {welcome.summary}
             </Text>
+
+            {/* Sign quip (item 1.2) — eyebrow with user's sun sign + one-liner
+                from SIGN_QUIPS. Fallback string mirrors web's at
+                DashboardContent.tsx:192. */}
+            {sunSign && (
+              <View className="mt-8">
+                <Text className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-300">
+                  {sunSign}
+                </Text>
+                <Text className="text-[17px] font-light leading-[1.85] text-slate-200/95">
+                  {SIGN_QUIPS[sunSign] ?? 'Звездите са в движение. Вселената е написала нещо за теб.'}
+                </Text>
+              </View>
+            )}
 
             {/* Daily horoscope title block — three-line stack mirrors web's
                 DailyHoroscope.tsx (Oraculum Diei eyebrow → Дневен хороскоп
