@@ -100,6 +100,11 @@ export default function DnesScreen() {
   // so the greeting block never renders «Добро утро, .» during Clerk hydration
   // or when a Clerk account has no firstName set.
   const firstName = user?.firstName?.trim() || 'Потребител'
+
+  // P.1-d stub. Tier-fetch hook + ambient-header restructure (flex-row
+  // justify-between) land at P.9; visual shape below mirrors web
+  // DashboardContent.tsx:140-146 (amber hairline + diamond + «Premium»).
+  const isPremium = false
   // undefined = still resolving, null = no chart, ChartSummary = chart loaded.
   // Tracks both id (for the horoscope query) and birth_date (for sun-sign
   // computation in composeWelcome) so a single GET /api/birth-data response
@@ -188,6 +193,13 @@ export default function DnesScreen() {
           <Text className="mt-2 font-cinzel text-[11px] uppercase tracking-[0.32em] text-amber-200/90">
             ☾  {lunarPhase.name}
           </Text>
+          {isPremium && (
+            <View className="mt-3 flex-row items-center" style={{ gap: 10 }}>
+              <View className="h-px w-8 bg-amber-300/40" />
+              <View className="h-1 w-1 rotate-45 bg-amber-300/90" />
+              <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-amber-200/90">Premium</Text>
+            </View>
+          )}
         </View>
 
         {/* Greeting (item 1.1) — time-aware «{TOD}, {firstName}.» mirrors
