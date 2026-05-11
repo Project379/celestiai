@@ -1,8 +1,18 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { useUser } from '@clerk/expo'
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedProps,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated'
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg'
 import { getLunarPhase } from '@stellaeum/core/moon-phase'
 import {
   composeWelcome,
@@ -39,6 +49,15 @@ const BG_HOROSCOPE_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   year: 'numeric',
   timeZone: 'Europe/Sofia',
 })
+
+// Sun sigil dimensions (item 1.4, P.1-e). Ring matches web's 58×58 disc at
+// DailyHoroscope.tsx:56; bloom SVG canvas is larger so the radial gradient
+// extends visibly beyond the ring (mimics web's blur-xl/blur-md outer halo
+// without expo-blur dep, per Conservative SDK defaults posture).
+const SIGIL_RING_SIZE = 58
+const SIGIL_BLOOM_SIZE = 96
+const SIGIL_PULSE_MS = 2000 // half-cycle; full breath = 4s mirrors web
+const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
 // 12 hand-written Bulgarian one-liners per sun sign. Lifted verbatim from
 // apps/web/components/dashboard/DashboardContent.tsx:59-72 (D2 mirror
@@ -256,13 +275,12 @@ export default function DnesScreen() {
               </View>
             )}
 
-            {/* Daily horoscope title block — three-line stack mirrors web's
-                DailyHoroscope.tsx (Oraculum Diei eyebrow → Дневен хороскоп
-                h2 → reading's date). Web also surrounds this with an
-                animated sun sigil and a decorative northNode divider; mobile
-                renders text-only for now (visual richness is a future
-                polish round). */}
+            {/* Daily horoscope title block — animated sun sigil (item 1.4,
+                P.1-e) → Oraculum Diei eyebrow → Дневен хороскоп h2 →
+                reading's date. Decorative northNode divider lands at P.1-f
+                (motion-polish ratification). */}
             <View className="mt-10 mb-6 items-center">
+              <SunSigil />
               <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-200/85">
                 Oraculum Diei
               </Text>
@@ -385,6 +403,119 @@ export default function DnesScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
+  )
+}
+
+// Animated sun sigil — item 1.4, P.1-e. Two-bloom + ring + glyph composition
+// mirrors web DailyHoroscope.tsx:55-80. Animation: opacity oscillation on
+// the two SVG RadialGradient blooms (outer violet, inner amber) at opposing
+// phases over a 4s cycle. Cross-platform clean — no boxShadow animation
+// (Android requires elevation, doesn't interpolate smoothly), no Gaussian
+// blur (react-native-svg filter support is patchy on Android), no
+// expo-linear-gradient dep (Conservative SDK defaults).
+function SunSigil() {
+  const outerOpacity = useSharedValue(0.6)
+  const innerOpacity = useSharedValue(0.4)
+
+  useEffect(() => {
+    outerOpacity.value = withRepeat(
+      withSequence(
+        withTiming(1.0, { duration: SIGIL_PULSE_MS, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.6, { duration: SIGIL_PULSE_MS, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    )
+    innerOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.7, { duration: SIGIL_PULSE_MS, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.4, { duration: SIGIL_PULSE_MS, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    )
+    // Cleanup on unmount — Reanimated 4.x holds the animation reference
+    // internally on the shared value; cancelAnimation drops it so a
+    // navigate-away/back doesn't leak the prior cycle.
+    return () => {
+      cancelAnimation(outerOpacity)
+      cancelAnimation(innerOpacity)
+    }
+  }, [innerOpacity, outerOpacity])
+
+  const outerProps = useAnimatedProps(() => ({ opacity: outerOpacity.value }))
+  const innerProps = useAnimatedProps(() => ({ opacity: innerOpacity.value }))
+
+  return (
+    <View
+      style={{
+        width: SIGIL_BLOOM_SIZE,
+        height: SIGIL_BLOOM_SIZE,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
+      }}
+    >
+      <Svg
+        width={SIGIL_BLOOM_SIZE}
+        height={SIGIL_BLOOM_SIZE}
+        style={{ position: 'absolute' }}
+      >
+        <Defs>
+          <RadialGradient id="sigil-violet" cx="50%" cy="50%" rx="50%" ry="50%">
+            <Stop offset="0%" stopColor="rgb(139, 92, 246)" stopOpacity="0.30" />
+            <Stop offset="100%" stopColor="rgb(139, 92, 246)" stopOpacity="0" />
+          </RadialGradient>
+          <RadialGradient id="sigil-amber" cx="50%" cy="50%" rx="50%" ry="50%">
+            <Stop offset="0%" stopColor="rgb(251, 191, 36)" stopOpacity="0.20" />
+            <Stop offset="60%" stopColor="rgb(251, 191, 36)" stopOpacity="0.06" />
+            <Stop offset="100%" stopColor="rgb(251, 191, 36)" stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
+        <AnimatedCircle
+          cx={SIGIL_BLOOM_SIZE / 2}
+          cy={SIGIL_BLOOM_SIZE / 2}
+          r={SIGIL_BLOOM_SIZE / 2}
+          fill="url(#sigil-violet)"
+          animatedProps={outerProps}
+        />
+        <AnimatedCircle
+          cx={SIGIL_BLOOM_SIZE / 2}
+          cy={SIGIL_BLOOM_SIZE / 2}
+          r={SIGIL_BLOOM_SIZE / 2.5}
+          fill="url(#sigil-amber)"
+          animatedProps={innerProps}
+        />
+      </Svg>
+      <View
+        style={{
+          width: SIGIL_RING_SIZE,
+          height: SIGIL_RING_SIZE,
+          borderRadius: SIGIL_RING_SIZE / 2,
+          borderWidth: 1,
+          borderColor: 'rgba(226, 232, 240, 0.20)', // slate-200/20
+          backgroundColor: 'rgba(139, 92, 246, 0.08)', // flat violet tint, no gradient
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {/* Sun glyph — two concentric circles mirror SunIcon at
+            apps/web/components/icons/CelestialIcons.tsx:67-75. */}
+        <Svg width={26} height={26} viewBox="0 0 24 24">
+          <Circle
+            cx={12}
+            cy={12}
+            r={6}
+            fill="none"
+            stroke="rgb(254, 243, 199)" // amber-100
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Circle cx={12} cy={12} r={1.2} fill="rgb(254, 243, 199)" />
+        </Svg>
+      </View>
+    </View>
   )
 }
 
