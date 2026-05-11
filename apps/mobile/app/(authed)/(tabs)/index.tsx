@@ -11,9 +11,11 @@ import {
   getSunSign,
 } from '@stellaeum/core/welcome'
 
+import { parseSentinels } from '@stellaeum/core/oracle/planet-parser'
+
 import { CrystalCard } from '@/components/CrystalCard'
 import { useApiClient } from '@/lib/api/client'
-import { useDailyHoroscope, stripPlanetSentinels } from '@/hooks/useDailyHoroscope'
+import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 
 interface ChartSummary {
   id: string
@@ -55,6 +57,28 @@ const SIGN_QUIPS: Record<string, string> = {
   'Водолей':   'Уран прави нещата интересни. Ти правиш нещата странни. Разбирате се по начин, трудно обясним.',
   'Риби':      'Нептун замъглява. Ти мечтаеш. Понякога е трудно да се каже кое е кое - и не е задължително.',
 }
+
+// Planet key → hex color for the sentinel-color rendering on mobile
+// (item 1.5). Mirrors web's PLANET_COLORS Tailwind class map in
+// apps/web/components/horoscope/HoroscopeStream.tsx — each hex matches the
+// Tailwind class's resolved color (e.g. text-amber-300 → #fcd34d).
+// Hex-not-class is required because NativeWind v4 scans className strings
+// statically at build time, so dynamic className from a Record lookup
+// (e.g. PLANET_COLORS[chunk.planet]) doesn't survive the scan.
+const PLANET_HEX_COLORS: Record<string, string> = {
+  sun: '#fcd34d',        // text-amber-300
+  moon: '#cbd5e1',       // text-slate-300
+  mercury: '#67e8f9',    // text-cyan-300
+  venus: '#f9a8d4',      // text-pink-300
+  mars: '#f87171',       // text-red-400
+  jupiter: '#fdba74',    // text-orange-300
+  saturn: '#facc15',     // text-yellow-400
+  uranus: '#5eead4',     // text-teal-300
+  neptune: '#60a5fa',    // text-blue-400
+  pluto: '#c084fc',      // text-purple-400
+  northNode: '#a78bfa',  // text-violet-400
+}
+const PLANET_HEX_FALLBACK = '#c4b5fd' // text-violet-300
 
 // Лунна фаза tile countdown text — mirrors web's LunarTile.formatCountdown
 // (apps/web/components/dashboard/tiles/LunarTile.tsx). Returns Bulgarian
@@ -353,23 +377,39 @@ export default function DnesScreen() {
 }
 
 function HoroscopeBody({ content }: { content: string }) {
+  // Split paragraphs first (raw \n\n+ on content with sentinels intact),
+  // then parse each paragraph's chunks for coloring. Mirrors web's
+  // HoroscopeStream order: paragraph-then-parse keeps sentinel boundaries
+  // paragraph-local. Planet mentions render as nested <Text> with inline
+  // style.color (item 1.5, P.1-c).
   const paragraphs = useMemo(
     () =>
-      stripPlanetSentinels(content)
+      content
         .split(/\n\n+/)
         .map((p) => p.trim())
-        .filter(Boolean),
+        .filter(Boolean)
+        .map((p) => parseSentinels(p)),
     [content],
   )
   return (
     <View>
-      {paragraphs.map((paragraph, i) => (
+      {paragraphs.map((chunks, i) => (
         <Text
           key={i}
           className="text-[16.5px] font-light leading-[1.8] text-slate-200"
           style={{ marginTop: i === 0 ? 0 : 14 }}
         >
-          {paragraph}
+          {chunks.map((chunk, j) => {
+            if (chunk.planet) {
+              const color = PLANET_HEX_COLORS[chunk.planet] ?? PLANET_HEX_FALLBACK
+              return (
+                <Text key={j} style={{ color, fontWeight: '500' }}>
+                  {chunk.text}
+                </Text>
+              )
+            }
+            return chunk.text
+          })}
         </Text>
       ))}
     </View>

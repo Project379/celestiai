@@ -1,7 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
-
 import { useApiClient } from '@/lib/api/client'
 import { useFeatureFlag } from '@/hooks/useFeatureFlag'
 
@@ -65,10 +63,3 @@ export function useDailyHoroscope(chartId: string | null | undefined) {
   })
 }
 
-/**
- * Re-export of the shared sentinel stripper. Source of truth lives at
- * @stellaeum/core/oracle/planet-parser (lifted in SR 7.0a). Web parses
- * sentinels into colored spans via PLANET_COLORS; mobile renders plain
- * text — colored sentinels are REVISIT-TRIGGERS item 22.
- */
-export const stripPlanetSentinels = stripSentinels
