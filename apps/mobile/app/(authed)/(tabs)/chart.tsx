@@ -23,6 +23,7 @@ import { NatalWheel } from '@/components/chart/NatalWheel'
 import { NatalWheelLegend } from '@/components/chart/NatalWheelLegend'
 import { PlanetDetail } from '@/components/chart/PlanetDetail'
 import { PlanetsList } from '@/components/chart/PlanetsList'
+import { WheelArrivalContainer } from '@/components/chart/WheelArrivalContainer'
 import { useChart } from '@/hooks/useChart'
 import { useFirstChart } from '@/hooks/useFirstChart'
 
@@ -221,16 +222,21 @@ export default function ChartScreen() {
 
             <View className="relative items-center">
               <NatalWheelLegend />
-              <NatalWheel
-                chart={chart.data}
-                size={wheelSize}
-                onPlanetSelect={handlePlanetSelect}
-                selectedPlanet={
-                  selection && 'planet' in selection.data
-                    ? selection.data.planet
-                    : null
-                }
-              />
+              <WheelArrivalContainer
+                wheelSize={wheelSize}
+                triggerKey={firstChart.data.id}
+              >
+                <NatalWheel
+                  chart={chart.data}
+                  size={wheelSize}
+                  onPlanetSelect={handlePlanetSelect}
+                  selectedPlanet={
+                    selection && 'planet' in selection.data
+                      ? selection.data.planet
+                      : null
+                  }
+                />
+              </WheelArrivalContainer>
             </View>
           </>
         )}
