@@ -1291,6 +1291,24 @@ Decision criteria at P.16 investigation:
 
 **Why documented:** the entire mobile codebase has been built and validated on iOS as the canonical fidelity surface (per the EOD handoff guidance + the `Expo Go on iPhone` canonical-fidelity-check note). Filing this REVISIT makes the Android-gap explicit so it doesn't surface as a surprise during Android TestFlight prep. Discipline-pattern codifications that read "default mobile overlay pattern" actually mean "default iOS-validated mobile overlay pattern" until this sweep closes — naming honesty matters for future readers and the next Claude session.
 
+## 49. Engineering vocabulary in user-facing strings — chart.tsx «скоро в Phase B»
+
+**Status:** Filed during P.5 close 2026-05-12. P.5 ratified a new discipline pattern (codified in HANDOFF) that user-facing copy must not contain engineering-internal vocabulary — Phase names, sub-round identifiers, stream labels, etc. P.5's five new stub destinations ship per-destination calibrated copy («Кристалите ти идват скоро.», etc.).
+
+**Concern:** the existing chart.tsx placeholder for the Details / Aspects / Houses chips (pre-P.2-c era, replaced for those chips but the surrounding pattern survived) contains the string «скоро в Phase B». This is engineering-internal vocabulary surfaced to users.
+
+Exact location: `apps/mobile/app/(authed)/(tabs)/chart.tsx` — the «скоро в Phase B» placeholder block triggered when `chart.data && activeChip !== 'essence'` was active in the pre-P.2-c era. Verify whether this is still reachable post-P.2-c (P.2-c replaced placeholders with PlanetsList / AspectsList / HousesList for those chips; the surrounding string may now be unreachable. If unreachable, REVISIT-49 closes as a dead-code cleanup; if reachable in any edge case, it needs harmonization).
+
+**Trigger:** opportunistically during any sub-round touching chart.tsx OR **PRE-LAUNCH-POLISH-BATCH-INTENT batch** (P.6-P.12 window, since the pattern is now codified and a sweep makes sense).
+
+**Sub-round when ready:** ~<5 LOC string edit (or full removal if unreachable). Quick bulgarian-skill calibration on the replacement string if reachable. Steps:
+
+1. Read chart.tsx to confirm reachability of the «скоро в Phase B» string post-P.2-c.
+2. If unreachable: delete the dead block.
+3. If reachable: replace with calibrated user-facing copy («Скоро.» or context-specific equivalent). Calibrate via bulgarian-skill if the new string introduces grammar/register questions.
+
+**Why documented:** the discipline pattern was codified at P.5 close; this REVISIT captures the one known existing-codebase violation so the discipline isn't silently inconsistent. Without this REVISIT, the pattern reads "applies to new code only" — REVISIT-49 closes that gap.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
