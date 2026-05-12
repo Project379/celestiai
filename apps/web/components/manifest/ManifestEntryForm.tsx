@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { LunarPhase } from '@/lib/moon-phase'
-import type { ManifestEntry } from '@/lib/manifest/types'
-import { getManifestPrompt } from '@/lib/manifest/prompts'
+import type { ManifestEntry } from '@stellaeum/core/diary/types'
+import { getManifestPrompt } from '@stellaeum/core/diary/prompts'
 
 interface ManifestEntryFormProps {
   phase: LunarPhase

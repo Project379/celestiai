@@ -1,4 +1,4 @@
-import type { LunarPhaseId } from '@/lib/moon-phase'
+import type { LunarPhaseId } from '../lib/moon-phase'
 
 // Structured 3-field diary exercise for the /rhythm/journal writing surface.
 // Distinct from `phase.journalPrompt` in packages/core/src/lib/moon-phase.ts

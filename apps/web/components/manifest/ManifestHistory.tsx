@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { ManifestEntry } from '@/lib/manifest/types'
+import type { ManifestEntry } from '@stellaeum/core/diary/types'
 
 interface ManifestHistoryProps {
   entries: ManifestEntry[]

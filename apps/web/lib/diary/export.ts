@@ -1,4 +1,4 @@
-import type { ManifestEntry } from '@/lib/manifest/types'
+import type { ManifestEntry } from '@stellaeum/core/diary/types'
 
 /**
  * Diary markdown export — client-side generation from the entries

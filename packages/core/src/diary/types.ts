@@ -1,4 +1,4 @@
-import type { LunarPhaseId } from '@/lib/moon-phase'
+import type { LunarPhaseId } from '../lib/moon-phase'
 
 /**
  * One diary session — 3 intentions written on a specific date, tied to
