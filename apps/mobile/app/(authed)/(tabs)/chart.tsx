@@ -15,11 +15,19 @@ import type {
   PointData,
 } from '@stellaeum/astrology/client'
 
+import { AstrologyReference } from '@/components/chart/AstrologyReference'
 import { BigThreeCards } from '@/components/chart/BigThreeCards'
 import { NatalWheel } from '@/components/chart/NatalWheel'
 import { PlanetDetail } from '@/components/chart/PlanetDetail'
 import { useChart } from '@/hooks/useChart'
 import { useFirstChart } from '@/hooks/useFirstChart'
+
+type TopView = 'chart' | 'reference'
+
+const TOP_TABS: readonly { id: TopView; label: string }[] = [
+  { id: 'chart',     label: 'Карта'  },
+  { id: 'reference', label: 'Речник' },
+]
 
 const CHIPS = [
   { id: 'essence' as const, label: 'Същност' },
@@ -43,6 +51,7 @@ export default function ChartScreen() {
   const router = useRouter()
   const firstChart = useFirstChart()
   const chart = useChart(firstChart.data?.id)
+  const [activeView, setActiveView] = useState<TopView>('chart')
   const [activeChip, setActiveChip] = useState<ChipId>('essence')
   const [selection, setSelection] = useState<PlanetSelection | null>(null)
 
@@ -88,6 +97,41 @@ export default function ChartScreen() {
           paddingBottom: 120,
         }}
       >
+        {/* Top-level Карта / Речник switch (item 2.1). Mirrors web
+            ChartView.tsx:136-167 tab pair; uses a static underline below
+            the active label (no Reanimated slider — Conservative SDK
+            defaults posture, can revisit if motion polish requested). */}
+        <View className="mb-8 flex-row" style={{ gap: 28 }}>
+          {TOP_TABS.map((tab) => {
+            const isActive = activeView === tab.id
+            return (
+              <Pressable
+                key={tab.id}
+                onPress={() => setActiveView(tab.id)}
+                className="relative pb-2"
+              >
+                <Text
+                  className={`font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.38em] ${
+                    isActive ? 'text-amber-200' : 'text-slate-400'
+                  }`}
+                >
+                  {tab.label}
+                </Text>
+                {isActive && (
+                  <View
+                    className="absolute inset-x-0 h-px bg-amber-400/75"
+                    style={{ bottom: 0 }}
+                  />
+                )}
+              </Pressable>
+            )
+          })}
+        </View>
+
+        {activeView === 'reference' && <AstrologyReference />}
+
+        {activeView === 'chart' && (
+          <>
         <Text className="mb-6 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
           Натална карта · Твоята небесна подпис
         </Text>
@@ -187,13 +231,17 @@ export default function ChartScreen() {
         )}
 
         {/* Other chips — Phase B placeholder. Per SR 6 decision 5,
-            details/aspects/houses lists deferred to keep SR 6 bounded. */}
+            details/aspects/houses lists deferred to keep SR 6 bounded.
+            P.2-c will replace this with PlanetsList / AspectsList /
+            HousesList ports. */}
         {chart.data && activeChip !== 'essence' && (
           <View className="mt-4 items-center py-12">
             <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-500">
               скоро в Phase B
             </Text>
           </View>
+        )}
+          </>
         )}
       </ScrollView>
 
