@@ -15,10 +15,13 @@ import type {
   PointData,
 } from '@stellaeum/astrology/client'
 
+import { AspectsList } from '@/components/chart/AspectsList'
 import { AstrologyReference } from '@/components/chart/AstrologyReference'
 import { BigThreeCards } from '@/components/chart/BigThreeCards'
+import { HousesList } from '@/components/chart/HousesList'
 import { NatalWheel } from '@/components/chart/NatalWheel'
 import { PlanetDetail } from '@/components/chart/PlanetDetail'
+import { PlanetsList } from '@/components/chart/PlanetsList'
 import { useChart } from '@/hooks/useChart'
 import { useFirstChart } from '@/hooks/useFirstChart'
 
@@ -230,15 +233,36 @@ export default function ChartScreen() {
           </>
         )}
 
-        {/* Other chips — Phase B placeholder. Per SR 6 decision 5,
-            details/aspects/houses lists deferred to keep SR 6 bounded.
-            P.2-c will replace this with PlanetsList / AspectsList /
-            HousesList ports. */}
-        {chart.data && activeChip !== 'essence' && (
-          <View className="mt-4 items-center py-12">
-            <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-500">
-              скоро в Phase B
-            </Text>
+        {/* Details / Aspects / Houses chips — list content lands at P.2-c
+            (items 2.3, 2.4, 2.5). Each list consumes chart.data directly
+            and shares the existing handlePlanetSelect → PlanetDetail
+            modal path. */}
+        {chart.data && firstChart.data && activeChip === 'details' && (
+          <View className="mt-2">
+            <PlanetsList
+              planets={chart.data.planets}
+              onSelect={handlePlanetSelect}
+              selectedPlanet={
+                selection && 'planet' in selection.data
+                  ? selection.data.planet
+                  : null
+              }
+            />
+          </View>
+        )}
+
+        {chart.data && activeChip === 'aspects' && (
+          <View className="mt-2">
+            <AspectsList aspects={chart.data.aspects} />
+          </View>
+        )}
+
+        {chart.data && firstChart.data && activeChip === 'houses' && (
+          <View className="mt-2">
+            <HousesList
+              houses={chart.data.houses}
+              birthTimeKnown={firstChart.data.birth_time_known}
+            />
           </View>
         )}
           </>
