@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 
 import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
+import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
 import { useFirstChart } from '@/hooks/useFirstChart'
 
 /**
@@ -64,11 +65,10 @@ export default function RhythmScreen() {
           </View>
         </Pressable>
 
-        {/* Transit content — chart-aware. P.3-b adds LunarPhaseCard above
-            this block; P.3-c fills the chart-present branch with the
-            TransitOverviewCard. Until then both branches show their
-            respective scaffolds. */}
+        {/* Transit overview — gated on chart presence. EmptyTransitsState
+            for chart-less users mirrors the chart.tsx pattern inline. */}
         {firstChart.data === null && <EmptyTransitsState />}
+        {firstChart.data && <TransitOverviewCard chartId={firstChart.data.id} />}
       </ScrollView>
     </SafeAreaView>
   )
