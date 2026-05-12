@@ -1,4 +1,4 @@
-import type { LunarPhaseId } from '@/lib/moon-phase'
+import type { LunarPhaseId } from '../lib/moon-phase'
 import type { MonthlyArc, Recommendation } from './types'
 
 /**

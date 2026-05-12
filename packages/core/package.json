@@ -29,7 +29,9 @@
     "./diary/export": "./src/diary/export.ts",
     "./diary/prompts": "./src/diary/prompts.ts",
     "./diary/types": "./src/diary/types.ts",
-    "./oracle/planet-parser": "./src/oracle/planet-parser.ts"
+    "./oracle/planet-parser": "./src/oracle/planet-parser.ts",
+    "./stories/catalog": "./src/stories/catalog.ts",
+    "./stories/types": "./src/stories/types.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
