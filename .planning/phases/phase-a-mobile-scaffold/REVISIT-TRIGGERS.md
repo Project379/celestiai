@@ -1249,6 +1249,48 @@ Decision criteria at P.16 investigation:
 
 **Why documented:** push-notification work has a hard dependency on this decision. Filing here surfaces it as a P.16 prerequisite rather than letting it surface during push-payload design (which would force a back-and-forth).
 
+## 48. Android verification sweep — iOS-only-validated patterns
+
+**Status:** Filed during/after P.3 close 2026-05-12 per founder direction. Every discipline pattern, overlay primitive, and runtime behavior codified across Phase A and Stream P so far has been validated on **iOS Expo Go** (the canonical fidelity check per the EOD handoff). Android has received zero deliberate verification.
+
+**Patterns / behaviors specifically needing Android validation:**
+
+(a) **Absolute View + Pressable backdrop + BackHandler overlay pattern.** Precedents: P.2-d NatalWheelLegend, P.3-c EventModal, B.0g-3 forced-wizard alert dialog (uses native `Alert.alert` instead; verify it too). Codified at P.3 close as the default mobile overlay. **Android hardware-back semantics + tap-out-to-dismiss + z-stacking against the tab bar** all need real-device verification.
+
+(b) **Per-launch dismiss state via module-level `let` (B.0g-3 `lib/onboarding/dismissState.ts`).** Hot-reload semantics differ between iOS Metro + Android Metro; the `let` variable lifetime against Android's bundler reload behavior is unverified. Specifically: does an Android Expo Go reload preserve the module-level state when the JS context is rebuilt? Behavior should match iOS (state clears on cold start).
+
+(c) **NativeWind static class scanner edge cases on Android.** P.1-c `PLANET_HEX_COLORS` hex-not-class pattern was the original workaround; any later code that used dynamic class lookups should be re-checked on Android specifically, since Android RN class-resolution paths can differ from iOS subtly (particularly around `borderColor` Tailwind variants and rgba opacity modifiers).
+
+(d) **Reanimated worklet performance.** P.1-e sun sigil + P.2-e wheel arrival animation both ship Reanimated 4 sequences. Performance characteristic on mid-tier Android devices (Pixel 5a / mid-range Samsung) needs verification — iOS gets the worklet performance benefit consistently, Android has historically had higher GC pressure and frame-drop risk on the JS thread during withSequence chains.
+
+(e) **react-native-svg rendering fidelity on Android.** P.2-e arrival flash, P.4-c1 ambient atmosphere overlays, P.3-b LunarPhaseCard MoonDisc + ambient overlays. RadialGradient with multiple Stops + alpha channel renders differently on Android (uses SkiaCanvasView fallback path in some configurations) vs iOS (uses CoreGraphics). Specific concerns: gradient banding, edge-case rendering on the MoonDisc terminator ellipse, possible color-space mismatches.
+
+(f) **Any patterns added P.5–P.18.** This sweep should fire AFTER the Stream P chain is mostly complete, not mid-stream. New overlay patterns, hooks, animations, or render primitives shipping in P.5+ should land first; then the sweep audits the cumulative surface.
+
+(g) **Android Share API truncation** (cross-ref REVISIT-43). The P.4-d Share.share({ message }) export is Android-specific risk surface; the sweep should include a >90-entry diary export test on real Android.
+
+(h) **expo-secure-store + Clerk token cache behavior on Android.** Sign-in/sign-out/relaunch cycle through Clerk's mobile SDK. Verify token persistence across app cold-launches.
+
+(i) **Native Alert.alert() — destructive-style button behavior** (B.0g-3 forced-wizard dismiss). iOS shows red-tinted text; Android may use system theme. Visual consistency check.
+
+(j) **Stack.Screen header behavior + Android system gestures.** P.4-c1 wizard «Пропусни» button in headerRight; P.2 chart screen header; oracle screen header. Android system-back integration with the headerLeft + Stack push/pop semantics.
+
+**Sizing:** **sub-round-scale (~4-8 hours methodical verification + likely some fix commits)**, NOT a half-hour smoke test. Founder direction. The sweep should produce:
+1. A test matrix per surface × pattern: PASS / FAIL / N/A annotations on a real Android device.
+2. Per-FAIL: instrumentation pass (per the 2-fail-attempts rule) → fix commit OR REVISIT filing for deferred patterns.
+3. A close commit documenting the sweep outcome + any cross-platform divergence accepted (or fixed).
+
+**Trigger:** **Android testing device access.** Hard-blocks Android TestFlight (no TestFlight equivalent on Android — Google Play internal testing track per HANDOFF strategic items). If founder uses an Android device personally OR acquires a test device, this sweep fires.
+
+**Cross-references:**
+- HANDOFF strategic item 3 (Apple Developer Program enrollment — iOS-only, doesn't unblock Android verification).
+- REVISIT-1 (Biometric + EAS Dev Client + TestFlight bundled) — also iOS-centric; Google Play internal track is the Android equivalent and has lighter enrollment overhead than Apple Developer.
+- REVISIT-43 (Android Intent.EXTRA_TEXT truncation) — a specific Android risk surface; this sweep is the natural moment to confirm-or-refute the truncation hypothesis.
+
+**Sub-round when ready:** dedicated standalone sub-round. Should NOT fold into another sub-round — the audit-then-fix flow needs its own commit chain. Likely 2-5 commits depending on FAILs surfaced.
+
+**Why documented:** the entire mobile codebase has been built and validated on iOS as the canonical fidelity surface (per the EOD handoff guidance + the `Expo Go on iPhone` canonical-fidelity-check note). Filing this REVISIT makes the Android-gap explicit so it doesn't surface as a surprise during Android TestFlight prep. Discipline-pattern codifications that read "default mobile overlay pattern" actually mean "default iOS-validated mobile overlay pattern" until this sweep closes — naming honesty matters for future readers and the next Claude session.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
