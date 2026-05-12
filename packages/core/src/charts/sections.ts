@@ -1,7 +1,13 @@
 /**
- * Карта section identifiers (§2.2 scroll chips).
- * Shared so chip row and content router agree on the active key.
+ * Карта section identifiers + Bulgarian sign/aspect labels + degree
+ * formatter. Shared by web `apps/web/components/chart/*` and mobile
+ * `apps/mobile/components/chart/*`.
+ *
+ * Lifted from apps/web/components/chart/chart-sections.ts at P.2-a per
+ * the D1 mirror discipline — universal-first, lift data + Bulgarian
+ * editorial copy. Both surfaces consume from here.
  */
+
 export type ChartSection = 'essence' | 'details' | 'aspects' | 'houses'
 
 export const SIGN_BG: Record<string, string> = {

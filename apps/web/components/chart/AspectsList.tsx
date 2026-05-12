@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { AspectData, AspectType, Planet } from '@stellaeum/astrology/client'
 import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
-import { ASPECT_BG, ASPECT_GLYPH } from './chart-sections'
+import { ASPECT_BG, ASPECT_GLYPH } from '@stellaeum/core/charts/sections'
 
 interface AspectsListProps {
   aspects: readonly AspectData[]

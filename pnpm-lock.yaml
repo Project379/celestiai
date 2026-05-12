@@ -53,9 +53,6 @@ importers:
       '@stellaeum/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@supabase/supabase-js':
-        specifier: ^2.49.1
-        version: 2.91.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@tanstack/react-query':
         specifier: ^5.100.9
         version: 5.100.9(react@19.1.0)

@@ -11,7 +11,7 @@ import { ChartSectionChips } from './ChartSectionChips'
 import { PlanetsList } from './PlanetsList'
 import { AspectsList } from './AspectsList'
 import { HousesList } from './HousesList'
-import type { ChartSection } from './chart-sections'
+import type { ChartSection } from '@stellaeum/core/charts/sections'
 import type { PlanetPosition, PointData } from '@stellaeum/astrology/client'
 
 const NatalWheel = dynamic(

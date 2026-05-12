@@ -2,7 +2,7 @@
 
 import type { Planet, PlanetPosition } from '@stellaeum/astrology/client'
 import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
-import { formatDegreeInSign } from './chart-sections'
+import { formatDegreeInSign } from '@stellaeum/core/charts/sections'
 
 interface PlanetsListProps {
   planets: readonly PlanetPosition[]

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import type { ChartSection } from './chart-sections'
+import type { ChartSection } from '@stellaeum/core/charts/sections'
 
 interface ChartSectionChipsProps {
   active: ChartSection
