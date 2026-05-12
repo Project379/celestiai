@@ -1144,6 +1144,47 @@ Pre-existing parity gap with mobile, which has both buttons.
 
 **Why documented:** the B.0g audit pass surfaced 11 OPEN-NO-TRIGGER items (~33% of all OPEN REVISITs). Three burned down at B.0g. The remaining 8 are formally claimed here so the next REVISIT audit pass shows them as triggered (Phase B middle weeks) rather than orphaned. Compounds the close-discipline pattern: every audit pass should reduce the OPEN-NO-TRIGGER count toward zero.
 
+## 43. Diary export truncation check at scale — Android Intent.EXTRA_TEXT limit
+
+**Status:** Filed during P.4 close 2026-05-12. P.4-d shipped mobile diary markdown export via React Native's built-in `Share.share({ message: markdown })` API (HT 5 Option A ratification, no new dep). Android historically truncates `Intent.EXTRA_TEXT` payloads above ~50-100KB depending on receiving-app implementation; the truncation is silent (no error, just a truncated `message` body delivered to the share target). iOS doesn't have the same hard limit but very large payloads degrade share-sheet UX.
+
+**Concern:** soft-launch users with >3 months of diary entries (typical entry ~200-400 bytes for 3 intentions; ~90 entries = ~35-50KB markdown; ~6 months = ~70-100KB) may hit the truncation threshold. Mail / Notes / Files apps each handle the truncation differently — some show truncated text without warning, some refuse to receive. **Data-loss risk** if a user exports the diary as their GDPR portability extract and silently receives partial content.
+
+**Trigger:** **post-soft-launch when first user has >3 months of diary entries OR support ticket reports truncated export.** Verify behavior with a >90-entry corpus on real Android device + iOS device before declaring the issue actionable.
+
+**Sub-round when ready:** post-soft-launch fix sub-round. Two mitigation paths:
+
+1. **Base64 data URL path.** Encode markdown as `data:text/markdown;base64,<...>` and pass via Share's `url` field instead of `message`. Larger payloads survive in iOS share sheets via URL; Android handling varies but improves over EXTRA_TEXT.
+2. **Adopt `expo-sharing` + `expo-file-system`.** Write markdown to a temp file, share via `Sharing.shareAsync(uri, { mimeType: 'text/markdown', UTI: 'public.plain-text' })`. Closest to web's "download a file" semantic. Conservative SDK defaults exception justified by data-loss risk if Path 1 also fails.
+
+**Confirmation evidence needed:** before mitigation, smoke-test a 100-entry corpus on Android device, measure actual truncation threshold across Gmail / Drive / Files / Notes share targets. Without confirmed evidence, mitigation is speculative.
+
+**Why documented:** GDPR portability is a soft-launch concern (50–100 Bulgarian users), and the failure mode is silent. Filing here surfaces it to the post-soft-launch retro instead of relying on chance discovery.
+
+## 44. Auth-pattern harmonization sweep — `auth()` vs `requireAppUser()` across web API routes
+
+**Status:** Filed during P.4 close 2026-05-12. P.4 investigation surfaced that the diary API routes use raw `auth()` from `@clerk/nextjs/server` + `createServiceSupabaseClient()` + manual `.eq('user_id', userId)` filter — NOT the `requireAppUser()` wrapper from `apps/web/lib/auth/guards.ts`. Both patterns are valid post-B.0c, but the HANDOFF / SECURITY-MODEL.md description of `requireAppUser` as "Standard guard at the top of every protected route" overstates standardization.
+
+**Concern:** documentation drift between code reality (mixed auth patterns) and planning docs (claim of a single canonical pattern). A future Claude session reading SECURITY-MODEL.md as the source of truth may try to refactor routes onto `requireAppUser` without context on why some routes use the simpler raw `auth()` form — and vice versa.
+
+The two patterns differ functionally:
+- **`requireAppUser()`** — calls `auth()` + `ensureUserRecord(userId)` to upsert the `users` row if missing. Use when the route assumes a `users` row exists and may write related rows. Returns `{ userId, user }` shape.
+- **Raw `auth()` + service-role + filter** — assumes Clerk gives a `userId`; doesn't guarantee a `users` row. Routes that defensively handle missing-user (like diary's `readUserCreatedAt` returning null) don't need `requireAppUser`. Returns `{ userId }` shape.
+
+Diary uses the latter because its lower-bound check (`entry_date >= users.created_at`) is null-tolerant.
+
+**Trigger:** pre-launch doc-debt sweep (likely batched with REVISIT-31 periodic execution) **OR** Phase C security review. NOT urgent — both patterns are correct under B.0d RLS lockdown; this is documentation discipline, not security drift.
+
+**Sub-round when ready:** standalone audit + doc update sub-round. Scope:
+
+1. Grep `apps/web/app/api/` for both `requireAppUser` and `auth()` callers; categorize each route.
+2. Per route: confirm the choice is appropriate (does it need `ensureUserRecord`? is the route safe with missing-user?).
+3. **Decide:** either harmonize all routes to one pattern (likely `requireAppUser` for safety) OR document both patterns explicitly with usage criteria in SECURITY-MODEL.md and the HANDOFF security-model summary.
+4. If harmonizing: refactor the divergent routes (likely 3-8 routes). LOC scope ~50-100 depending on count.
+5. If documenting both: ~30 LOC doc edit, no code change.
+
+**Why documented:** the divergence was previously absorbed silently. Filing now ensures the next reader sees the divergence as a known state, not an oversight.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
