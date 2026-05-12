@@ -65,6 +65,26 @@ export default function AuthedLayout() {
           headerBackTitle: 'Назад',
         }}
       />
+      <Stack.Screen
+        name="you/crystals"
+        options={{ title: 'Кристали', headerBackTitle: 'Назад' }}
+      />
+      <Stack.Screen
+        name="you/recommendations"
+        options={{ title: 'Препоръки', headerBackTitle: 'Назад' }}
+      />
+      <Stack.Screen
+        name="you/guide"
+        options={{ title: 'Ръководство', headerBackTitle: 'Назад' }}
+      />
+      <Stack.Screen
+        name="you/premium"
+        options={{ title: 'Премиум', headerBackTitle: 'Назад' }}
+      />
+      <Stack.Screen
+        name="you/settings"
+        options={{ title: 'Настройки', headerBackTitle: 'Назад' }}
+      />
     </Stack>
   )
 }
