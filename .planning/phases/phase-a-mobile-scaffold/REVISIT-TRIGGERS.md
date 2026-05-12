@@ -1185,6 +1185,70 @@ Diary uses the latter because its lower-bound check (`entry_date >= users.create
 
 **Why documented:** the divergence was previously absorbed silently. Filing now ensures the next reader sees the divergence as a known state, not an oversight.
 
+## 45. Production LLM model selection — post-Phase-A Llama 3.3 70B swap
+
+**Status:** Filed during P.3 close 2026-05-12 per founder direction. Phase A shipped on OpenRouter's Llama 3.3 70B (provider abstraction in `apps/web/lib/llm/*`); the model selection has not been formally re-evaluated since launch and was chosen for cost/latency at Phase A scale.
+
+**Concern:** as Phase B ships more LLM-driven surfaces (Oracle generations, daily horoscopes, potential post-P.13 telemetric model-quality metrics), the model needs re-evaluation against:
+- Cost per generation at projected soft-launch scale (50–100 users × Oracle cap + daily horoscope throughput)
+- Bulgarian register quality (subjective founder review; future user feedback)
+- Generation speed for streaming surfaces (daily horoscope stream)
+- Fallback strategy if primary provider degrades (REVISIT cross-ref: HANDOFF strategic item 1)
+
+Candidate replacements depend on the cost/quality envelope at evaluation time — Claude Sonnet 4.6, GPT-5-class, Llama 3.3 70B variants, Mistral Large, Gemini 2.0 Pro all viable. Decision is empirical, not theoretical.
+
+**Trigger:** **before P.13 telemetry wiring (PostHog) OR before soft-launch cost-monitoring activation, whichever first.** P.13 introduces the first observability surface to measure generation quality + cost at production; the model swap should land before that measurement window opens so the baseline measured is the production target.
+
+**Sub-round when ready:** standalone evaluation + swap sub-round. Likely scope:
+
+1. Cost projection over 7-day soft-launch simulation across each candidate model. Account for Oracle cap, daily horoscope throughput, regenerate-exempt path.
+2. Quality review: founder runs 10 sample prompts per candidate model, scores on Bulgarian register + astrological accuracy + voice consistency (cross-ref `apps/web/lib/manifest/PROMPT_VOICE.md`).
+3. Latency baseline: time-to-first-token for streaming surfaces; full-completion time for non-streaming.
+4. Swap landing: OpenRouter provider config change in `apps/web/lib/llm/*` + spend alert threshold update.
+
+**Cross-references:** PRE_LAUNCH_PREREQS.md item 5 (cost envelope check), HANDOFF strategic item 1 (OpenRouter cost), HANDOFF strategic item 5 (AI provider fallback strategy).
+
+**Why documented:** the Phase A model choice is stable enough to ship parity work on but is not the soft-launch production model. Filing here ensures the swap evaluation happens before telemetry locks in a baseline against the wrong model.
+
+## 46. Ритъм tab time-scale navigation restoration
+
+**Status:** Filed during P.3 close 2026-05-12. The pre-P.3 mobile Ритъм shell had four time-scale chips (Днес/Седмица/Месец/Година) representing a multi-scale transit/forecast view that web does not currently implement. P.3-a deleted the chips per HT 2 ratification because parity scope had no backing surfaces for Седмица/Месец/Година.
+
+**Concern:** the chip design encoded a real product idea — a transit/forecast view across multiple time scales (today's transits / weekly outlook / monthly arcs / yearly forecast). Phase C is the natural home for yearly forecasting per the parity-gap doc note at MOBILE-WEB-PARITY-GAP.md:95. Without this REVISIT, the design intent could be lost.
+
+**Trigger:** **Phase C kickoff OR first user request for multi-scale forecasting OR explicit founder decision to implement extended-range transit views.**
+
+**Sub-round when ready:** dedicated multi-scale forecast sub-round. Decision criteria:
+
+1. **Restore the chips on Ритъм?** Pros: existing user-mental-model continuity. Cons: requires four content surfaces, not one.
+2. **Move multi-scale to a different surface?** E.g., separate «Прогнози» tab, OR subroutes under `/rhythm/week`, `/rhythm/month`, `/rhythm/year`. Decouples the day-view from the multi-scale browse.
+3. **Kill the concept entirely?** If user research at Phase C shows demand is concentrated on the day-view, multi-scale could be deferred indefinitely or abandoned.
+
+Web has no multi-scale precedent — the decision is mobile-led product design, not parity work.
+
+**Why documented:** the design intent is preserved here so a future Claude session or founder iteration on Phase C doesn't accidentally re-invent the multi-scale concept from scratch. The chips were a real artifact, not a placeholder; the deletion was a parity-scope-only decision.
+
+## 47. Transit event deep-link target architecture (P.16 prerequisite)
+
+**Status:** Filed during P.3 close 2026-05-12. P.3-c shipped EventModal for transit detail (absolute View + Pressable backdrop + BackHandler per HT 4 ratification). The standalone `/rhythm/[eventId]` route on web (consumed by `TransitEventDetail.tsx`) was deferred per HT 3 — mobile ships modal only.
+
+**Concern:** P.16 will wire push notifications. Some push notifications (e.g., «Транзитът Марс квадрат Венера е активен сега») naturally want to deep-link into a specific transit event detail. The current mobile state has no per-event URL — modal-only means the push tap target cannot be a transit-event URL directly.
+
+**Trigger:** **P.16 investigation pass — decision MUST precede push-payload design.** Push payloads encode the URL/route to navigate on tap; choosing the wrong shape forces a rework if the deep-link target doesn't exist yet.
+
+**Sub-round when ready:** P.16 investigation phase. Three architectural options to choose from:
+
+1. **Scroll-to-event on /rhythm.** Push payload includes `?event=<id>`; mobile pushes /rhythm and the rhythm screen scrolls to + auto-opens the EventModal for that id. Pros: no new route, minimal mobile delta. Cons: deep-link is fragile if the event has aged out of the current overview window (the `?event=<id>` could resolve to "event no longer in feed").
+2. **Standalone route /rhythm/[eventId].** Mobile adds `(authed)/rhythm/[eventId].tsx` + Stack.Screen registration. Mirror web's TransitEventDetail. Pros: stable deep-link URL, survives feed-aging via TanStack cache hit (or refetch by id, if the API supports per-event GET). Cons: requires API endpoint for per-event fetch OR fallback to refetching the full overview + filter client-side.
+3. **Modal-as-route via param on /rhythm?eventId=X.** Hybrid — single route, param drives EventModal open. Pros: smaller mobile delta than (2); URL stability is encoded in the param. Cons: param-driven modal opens are stylistically odd; harder to deep-link from outside the app reliably.
+
+Decision criteria at P.16 investigation:
+- Does `/api/transits/overview` support a per-event GET, or only the full overview? If only full overview, options (1) and (3) win; option (2) requires API expansion.
+- How long do transit events stay valid in the overview window? If a push fires at 9am for a transit that ages out by 5pm, the deep-link should still render the event detail. Option (2) handles this best with a per-event fetch.
+- What's the push-payload size budget? Per-event fetch URL is smallest; param-driven approaches push more state into the URL.
+
+**Why documented:** push-notification work has a hard dependency on this decision. Filing here surfaces it as a P.16 prerequisite rather than letting it surface during push-payload design (which would force a back-and-forth).
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
