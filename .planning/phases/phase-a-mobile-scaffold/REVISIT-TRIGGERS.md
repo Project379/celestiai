@@ -1309,6 +1309,32 @@ Exact location: `apps/mobile/app/(authed)/(tabs)/chart.tsx` — the «скоро
 
 **Why documented:** the discipline pattern was codified at P.5 close; this REVISIT captures the one known existing-codebase violation so the discipline isn't silently inconsistent. Without this REVISIT, the pattern reads "applies to new code only" — REVISIT-49 closes that gap.
 
+## 50. AsyncStorage key naming convention harmonization
+
+**Status:** Filed during P.7 close 2026-05-12. P.7-b pre-flight verification of HT 3 (AsyncStorage key naming) surfaced that existing mobile AsyncStorage consumers use mixed key conventions:
+
+- `apps/mobile/hooks/useDailyHoroscope.ts` → `daily-horoscope:${chartId}:${date}` (bare kebab-case + colon, no prefix)
+- `apps/mobile/lib/notifications/maybePromptPushPermission.ts` → `@stellaeum/notif_prompted` and `@stellaeum/push_token` (both @-prefixed)
+
+No documented "convention" exists in HANDOFF or in-code comments. The @-prefix pattern appears to come from the SR 8.3 era (per comment context) but was never formalized as a project convention.
+
+P.7-b added a fourth consumer (`useStoryList`) with key `stellaeum.stories.state.v1` — unprefixed, matching web's localStorage convention (`stellaeum.stories.state.v1` verbatim) per HT 3 default ratification.
+
+**Concern:** mixed conventions complicate the REVISIT-28 cross-device sync migration to Supabase at Phase C/D. A future Claude session designing the localStorage/AsyncStorage → Supabase migration table cannot rely on key shape patterns; each consumer needs to be mapped individually. Harmonization simplifies the migration and reduces the cognitive load for future readers grepping AsyncStorage usage.
+
+**Recommended canonical:** unprefixed `stellaeum.<surface>.<artifact>` (matches web's localStorage convention used in P.4-era diary `stellaeum.manifest.entries.v1` + P.7 stories `stellaeum.stories.state.v1`).
+
+**Trigger:** during REVISIT-28 (cross-device sync) work OR opportunistically during any sub-round touching `useDailyHoroscope.ts` or `maybePromptPushPermission.ts`. **NOT urgent** — mixed conventions are working correctly; this is documentation discipline + future-migration ergonomics.
+
+**Sub-round when ready:** ~30-minute harmonization sweep. Scope:
+
+1. Rename `@stellaeum/notif_prompted` → `stellaeum.notifications.prompted.v1` (or similar). On rename, migration logic: read old key, write new key, delete old key on first run.
+2. Rename `@stellaeum/push_token` → `stellaeum.notifications.push_token.v1`. Same migration.
+3. Rename `daily-horoscope:${chartId}:${date}` → `stellaeum.horoscope.daily.${chartId}.${date}.v1`. Migration may not be needed since the cache is regenerable on miss.
+4. Document the canonical convention in HANDOFF discipline-patterns section.
+
+**Why documented:** the discipline pattern was implicit until P.7-b's pre-flight surfaced the inconsistency. Filing here ensures the harmonization sweep happens before the cross-device sync migration locks in any particular key shape.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
