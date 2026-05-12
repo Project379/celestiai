@@ -295,7 +295,26 @@ that reference the old repo path (`secrets.GITHUB_TOKEN` is automatic;
 custom secrets may be repo-pathed). Update any external references
 (third-party docs, badges, README links from forks).
 
-## 12. Web account deletion confirmation copy mismatch
+## 12. Web account deletion confirmation copy mismatch — CLOSED 2026-05-12
+
+**Resolution (B.0g-1 close 2026-05-12, commit `64e616d`):** Investigation
+discovered the four mismatched touchpoints are all rendered by Clerk's
+hosted `UserProfile` component via the vendored `@clerk/localizations`
+bg-BG bundle — the strings live in `node_modules/@clerk/localizations/dist/bg-BG.js`,
+not our codebase. The `userProfile.deletePage` section ships
+title/actionDescription/confirm button as «Изтриване на акаунта»
+(verbal-noun) but the input placeholder as «Изтрий акаунта»
+(imperative), so users typing the placeholder ghost text fail the match
+check. Fix path: override the single Clerk localization key in
+`apps/web/app/layout.tsx`'s ClerkProvider via `{ ...bgBG,
+formFieldInputPlaceholder__confirmDeletionUserAccount: 'Изтриване на
+акаунта' }` spread pattern. Vendor-string override, not codebase copy
+edit. Founder smoke-tested 2026-05-12: all four touchpoints unify on the
+verbal-noun form, type-to-confirm now accepts the placeholder text the
+user reads. Original investigation context retained below for historical
+reference.
+
+---
 
 **Status:** The account-deletion confirmation flow on web has a copy
 mismatch between the type-to-confirm prompt and the button label. The
@@ -380,7 +399,20 @@ walkthrough. User-visible at the very first impression of the brand
 but out-of-scope for mobile birth-wizard work. Logged for a dedicated
 landing-page polish pass.
 
-## 15. Clerk application display name still references «celestia»
+## 15. Clerk application display name still references «celestia» — CLOSED 2026-05-12
+
+**Resolution (out-of-band founder operational task 2026-05-12, no commit
+hash):** Founder updated the Clerk Dashboard Application settings →
+display name field from «celestia» to «Stellaeum». No code change
+required — the display name is a Clerk-side configuration value read at
+runtime by Clerk-hosted UI surfaces (password re-entry modal, hosted
+account pages). Founder smoke-tested 2026-05-12 alongside the B.0g chain:
+the password re-entry modal and other Clerk-hosted surfaces now display
+«Stellaeum». Closed-by-operational-action; closure logged here during
+B.0g close to keep the REVISIT lifecycle on a single timeline. Original
+investigation context retained below for historical reference.
+
+---
 
 **Status:** During sub-round 4.3 founder verification of mobile sign-up
 + sign-in flows, the Clerk-managed password re-entry modal displayed
@@ -401,7 +433,25 @@ application/display name to «Stellaeum». No code change.
 brand rename. Easy fix but easy to lose track of without a logged
 item.
 
-## 16. Mobile sign-up form missing firstName + lastName
+## 16. Mobile sign-up form missing firstName + lastName — CLOSED 2026-05-12
+
+**Resolution (B.0g-2 close 2026-05-12, commit `a75f873`):** Added «Име»
+and «Фамилия» TextInputs to `apps/mobile/app/(public)/sign-up.tsx`
+custom signup form (mobile uses custom UI, not Clerk's prebuilt
+`<SignUp>` like web — only mobile-side fix needed). Labels mirror Clerk
+bgBG `formFieldLabel__firstName` / `formFieldLabel__lastName` verbatim
+per D2 mirror discipline (no net-new strings). Both fields client-side
+required via `canSubmit` gate; passed to `signUp.create({ firstName,
+lastName, emailAddress, password })`. Founder concurrently toggled
+Clerk Dashboard "Require first and last name" to ON 2026-05-12 — names
+are now server-side required, so the client-side requirement enforces
+matching state. Founder smoke-tested 2026-05-12: fresh signup collects
+both names, Clerk accepts the payload, Днес greeting block renders the
+real firstName instead of the «Потребител» fallback, «Ти» tab name
+displays correctly without the email-prefix fallback. Original
+investigation context retained below for historical reference.
+
+---
 
 **Status:** Web sign-up form requires `firstName` and `lastName`
 fields at signup; mobile sign-up (`apps/mobile/app/(public)/sign-up.tsx`,
@@ -1061,6 +1111,34 @@ Pre-existing parity gap with mobile, which has both buttons.
 5. Re-evaluate the greeting block in `apps/mobile/app/(authed)/(tabs)/index.tsx:177` (currently no font class for Cinzel-incompatibility reasons).
 
 **Why documented:** the Cinzel limitation is invisible until you try to render mixed-case Bulgarian text in it (which P.1-b did — initial attempt had `font-cinzel` on the greeting, fell back to system sans because of glyph absence). Without filing, future contributors may repeat the mistake. Filing this also captures the broader "mobile typography is system-default sans-serif everywhere except eyebrows" state that may be worth a holistic review post-soft-launch.
+
+## PRE-LAUNCH-POLISH-BATCH-INTENT — consolidated burn-down for OPEN-NO-TRIGGER items
+
+**Status:** Filed during B.0g close 2026-05-12 per founder ratification. The B.0g audit pass surfaced that ~33% of all OPEN REVISITs have no natural sub-round fire condition (discipline-risk pile). B.0g itself burned down the top three (REVISIT-12 launch-blocker, REVISIT-15 brand drift, REVISIT-16 auth divergence). The remaining 8 OPEN-NO-TRIGGER items cluster naturally as pre-soft-launch polish work and are formally batched here to a defined future window rather than left as orphans.
+
+**Items in scope:**
+
+- **REVISIT-7** — color contrast audit (accessibility-vs-brand decision)
+- **REVISIT-8** — hardcoded mobile streak footer drift from web vocabulary
+- **REVISIT-9** — Sentry org slug rename (Phase D plan-tier decision)
+- **REVISIT-10** — test email domain `@celestia-ai.dev` rename
+- **REVISIT-11** — GitHub repository rename `Project379/celestiai` → TBD
+- **REVISIT-13** — birth date validation error references internal schema format
+- **REVISIT-14** — web landing splash heading overflow at default viewport
+- **REVISIT-17** — web TIME_RANGES hour string formatting asymmetry
+
+**Trigger:** Phase B middle weeks — concretely **between P.6 and P.12** when soft-launch UX completeness becomes the active concern (P.6 ships Crystal collection; P.12 ships Oracle parity polish). The window is wide on purpose: the batch lands when other Stream P work creates natural touchpoints with these surfaces (e.g., REVISIT-14 landing splash can fold into any landing-page touch; REVISIT-13 birth-date error can fold into any wizard touch). **Hard deadline: before SR 9 if not absorbed earlier.** SR 9 is the soft-launch readiness check; shipping to 50–100 Bulgarian users with these 8 orphans still open is the kind of thing the readiness check should flag.
+
+**Estimated scope:** ~150–200 LOC consolidated sweep. Most items are mechanical (REVISIT-13 single-line schema error edit, REVISIT-17 single-string normalization, REVISIT-14 CSS audit + container fix). Two require founder decisions, not code (REVISIT-7 brand-vs-AA tension; REVISIT-9 Sentry plan upgrade cost-benefit). Two require external action (REVISIT-10 domain registration; REVISIT-11 GitHub rename cascade through external references).
+
+**Sub-round when ready:** dedicated "pre-soft-launch polish" sub-round, scoped narrow. Likely two-commit shape:
+
+1. **Mechanical fixes commit** (~80–120 LOC): REVISIT-8, REVISIT-13, REVISIT-14, REVISIT-17 — straight code edits, TS green check, founder smoke test each surface.
+2. **Founder-decision commit** (~40–80 LOC): REVISIT-7 (color contrast — needs brand-vs-AA ratification), REVISIT-9 (Sentry plan — needs cost-benefit decision), REVISIT-10/REVISIT-11 (external actions — may land as out-of-band founder tasks tracked here).
+
+**Discipline note:** without this batch intent, the 8 items risk sitting indefinitely as orphans. The B.0g pattern (REVISIT-12/15/16 burned down together once locked to a sub-round) demonstrates that batched closure is more efficient than item-by-item triggers. Filing the intent now closes the discipline-risk loop: when Stream P reaches the P.6–P.12 window, the batch fires; if soft-launch readiness check arrives without it firing, SR 9 absorbs it.
+
+**Why documented:** the B.0g audit pass surfaced 11 OPEN-NO-TRIGGER items (~33% of all OPEN REVISITs). Three burned down at B.0g. The remaining 8 are formally claimed here so the next REVISIT audit pass shows them as triggered (Phase B middle weeks) rather than orphaned. Compounds the close-discipline pattern: every audit pass should reduce the OPEN-NO-TRIGGER count toward zero.
 
 ## Appendix — Pre-existing peer warnings (not action items)
 
