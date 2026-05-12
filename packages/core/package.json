@@ -26,6 +26,7 @@
     "./charts/glyphs": "./src/charts/glyphs.ts",
     "./charts/sections": "./src/charts/sections.ts",
     "./diary/entries": "./src/diary/entries.ts",
+    "./diary/export": "./src/diary/export.ts",
     "./diary/prompts": "./src/diary/prompts.ts",
     "./diary/types": "./src/diary/types.ts",
     "./oracle/planet-parser": "./src/oracle/planet-parser.ts"

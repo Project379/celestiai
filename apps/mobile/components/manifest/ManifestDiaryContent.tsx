@@ -7,6 +7,7 @@ import { getLunarPhase, type LunarPhase } from '@stellaeum/core/moon-phase'
 import { ManifestEntryForm } from './ManifestEntryForm'
 import { ManifestHistory } from './ManifestHistory'
 import { useManifestEntries } from '@/hooks/useManifestEntries'
+import { shareDiaryMarkdown } from '@/lib/diary/export'
 
 const BG_DATE = new Intl.DateTimeFormat('bg-BG', {
   weekday: 'long',
@@ -63,6 +64,10 @@ export function ManifestDiaryContent() {
       phaseName: phase.name,
       intentions,
     })
+  }
+
+  const handleShare = () => {
+    void shareDiaryMarkdown(entries, now)
   }
 
   return (
@@ -177,6 +182,14 @@ export function ManifestDiaryContent() {
           <Text className="font-cinzel text-[9.5px] text-slate-500">
             {entries.length} {entries.length === 1 ? 'запис' : 'записа'}
           </Text>
+          {entries.length > 0 && (
+            <Pressable onPress={handleShare} hitSlop={8}>
+              <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <Text className="mr-1 text-slate-400">↗</Text>
+                Сподели дневника
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         {isLoaded && (
