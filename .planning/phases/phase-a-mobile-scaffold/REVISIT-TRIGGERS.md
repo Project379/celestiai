@@ -941,7 +941,11 @@ The pattern is **plan-doc claims diverging from codebase reality** as execution 
 
 **Why documented:** the cost of stale planning docs compounds — by the time someone (Claude or human) cites a months-old "RESOLVED" note as load-bearing, the cost of the unverified claim can be hours of investigation or, in the worst case, a B.0d-class incident built on a foundation nobody re-checked.
 
-## 32. Audit `apps/mobile/*` for direct Supabase-anon usage drift
+## 32. Audit `apps/mobile/*` for direct Supabase-anon usage drift — CLOSED 2026-05-12
+
+**Resolution (P.2-a close 2026-05-12, commit `0c651a5`):** Pre-flight audit in P.2's investigation pass scanned `apps/mobile/` for `from('`, `createClient`, and `useSupabaseClient` — zero callers anywhere. The lone `useSupabaseClient` hook at `apps/mobile/lib/supabase/client.ts` had no consumers (declared, never used). All mobile data fetching routes through `apps/mobile/lib/api/client.ts`'s `apiFetch` via Clerk Bearer to web API routes; mobile is structurally incapable of hitting Supabase directly. **No silent-break risk under B.0d RLS lockdown.** Pattern exactly mirrors the web `createServerSupabaseClient` situation pre-B.0e. Path B cleanup applied at P.2-a: dead `apps/mobile/lib/supabase/client.ts` + empty parent directory deleted; `@supabase/supabase-js` dropped from `apps/mobile/package.json` (~200KB+ off the mobile bundle); `pnpm-lock.yaml` updated. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** Filed during B.0e close 2026-05-09. B.0e was scoped to web (`apps/web/lib/supabase/`) per the locked sub-round chain. The parallel mobile inventory hasn't been audited under post-B.0d conditions.
 
