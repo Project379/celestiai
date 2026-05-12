@@ -1,23 +1,31 @@
-import { ScrollView, Text, View } from 'react-native'
+import { ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { getSunSign } from '@stellaeum/core/welcome'
+
+import { StoriesContent } from '@/components/stories/StoriesContent'
+import { useFirstChart } from '@/hooks/useFirstChart'
+
 /**
- * /you/recommendations — P.5 stub destination. Replaced by P.7 (stories
- * catalog: 8 daily picks per lunar phase + 12 monthly arcs per sun sign,
- * ~500 LOC per HANDOFF table line 153).
+ * /you/recommendations route — replaces P.5 stub with the full stories
+ * catalog surface (P.7-c2). Derives the user's sun sign from chart data
+ * client-side (mirrors web's server-side derivation in page.tsx; mobile
+ * doesn't have server components so the chart fetch + sign derivation
+ * happen in the route component).
  */
-export default function RecommendationsStubScreen() {
+export default function RecommendationsScreen() {
+  const firstChart = useFirstChart()
+  const sunSign = firstChart.data?.birth_date
+    ? getSunSign(firstChart.data.birth_date)
+    : null
+
   return (
     <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 80 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 80 }}
       >
-        <View className="items-center py-12">
-          <Text className="text-[16px] font-light leading-[1.7] text-slate-300">
-            Препоръките ти идват скоро.
-          </Text>
-        </View>
+        <StoriesContent sunSign={sunSign} />
       </ScrollView>
     </SafeAreaView>
   )
