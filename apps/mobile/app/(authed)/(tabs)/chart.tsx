@@ -20,6 +20,7 @@ import { AstrologyReference } from '@/components/chart/AstrologyReference'
 import { BigThreeCards } from '@/components/chart/BigThreeCards'
 import { HousesList } from '@/components/chart/HousesList'
 import { NatalWheel } from '@/components/chart/NatalWheel'
+import { NatalWheelLegend } from '@/components/chart/NatalWheelLegend'
 import { PlanetDetail } from '@/components/chart/PlanetDetail'
 import { PlanetsList } from '@/components/chart/PlanetsList'
 import { useChart } from '@/hooks/useChart'
@@ -218,7 +219,8 @@ export default function ChartScreen() {
               />
             </View>
 
-            <View className="items-center">
+            <View className="relative items-center">
+              <NatalWheelLegend />
               <NatalWheel
                 chart={chart.data}
                 size={wheelSize}
