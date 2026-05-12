@@ -2,6 +2,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 
+import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
 import { useFirstChart } from '@/hooks/useFirstChart'
 
 /**
@@ -40,6 +41,9 @@ export default function RhythmScreen() {
             Активните транзити към картата ти — как планетите говорят с теб точно днес.
           </Text>
         </View>
+
+        {/* Лунна фаза · Манифестация — live phase + disclosure + info expanders */}
+        <LunarPhaseCard />
 
         {/* Лунен дневник CTA card — full-Pressable target per HT 6 */}
         <Pressable
