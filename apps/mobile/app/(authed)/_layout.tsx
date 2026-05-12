@@ -58,6 +58,13 @@ export default function AuthedLayout() {
           headerBackTitle: 'Назад',
         }}
       />
+      <Stack.Screen
+        name="rhythm/journal"
+        options={{
+          title: 'Лунен дневник',
+          headerBackTitle: 'Назад',
+        }}
+      />
     </Stack>
   )
 }
