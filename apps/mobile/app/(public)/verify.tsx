@@ -66,7 +66,11 @@ export default function VerifyScreen() {
         return
       }
 
-      router.replace('/')
+      // B.0g-3 forced-wizard: route new signups directly to the wizard instead
+      // of landing on Днес's empty-state. (authed)/_layout.tsx's chart-existence
+      // useEffect also fires the same redirect for non-signup launches; this
+      // direct route avoids a Днес-flicker for the fresh-signup path.
+      router.replace('/wizard/date')
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {

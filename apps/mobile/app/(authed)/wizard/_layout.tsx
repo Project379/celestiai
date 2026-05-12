@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 
 import { birthDataSchema, type BirthData } from '@stellaeum/core/charts/schemas'
 import { useApiClient } from '@/lib/api/client'
+import { SkipWizardButton } from '@/components/onboarding/SkipWizardButton'
 
 /**
  * Birth-data wizard Stack layout.
@@ -68,6 +69,10 @@ export default function WizardLayout() {
           headerTintColor: '#fcd34d',
           headerBackTitle: '',
           contentStyle: { backgroundColor: '#08060f' },
+          // B.0g-3 forced-wizard Path 2: persistent skip affordance on every
+          // step. Tap opens native Alert with ratified copy; on confirm,
+          // sets per-launch dismiss flag and bounces to Днес.
+          headerRight: () => <SkipWizardButton />,
         }}
       >
         <Stack.Screen name="date" options={{ title: 'Дата' }} />
