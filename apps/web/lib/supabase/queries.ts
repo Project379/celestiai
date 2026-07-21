@@ -30,3 +30,14 @@ export const getCachedLatestChart = cache(async (userId: string) => {
   if (error || !data) return null
   return data
 })
+
+export const getCachedDeletionStatus = cache(async (userId: string) => {
+  const supabase = createServiceSupabaseClient()
+  const { data, error } = await supabase
+    .from('users')
+    .select('deletion_scheduled_at')
+    .eq('clerk_id', userId)
+    .single()
+  if (error) return null
+  return (data?.deletion_scheduled_at as string | null) ?? null
+})

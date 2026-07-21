@@ -6,9 +6,10 @@ import { NavigationTransition } from '@/components/NavigationTransition'
 import { ProtectedNav } from '@/components/layout/ProtectedNav'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
+import { DeletionPendingBanner } from '@/components/auth/DeletionPendingBanner'
 import { OraclePanelGlobal } from '@/components/oracle/OraclePanelGlobal'
 import { OracleFab } from '@/components/oracle/OracleFab'
-import { getCachedLatestChart, getCachedUserTier } from '@/lib/supabase/queries'
+import { getCachedLatestChart, getCachedUserTier, getCachedDeletionStatus } from '@/lib/supabase/queries'
 
 export default async function ProtectedLayout({
   children,
@@ -30,13 +31,16 @@ export default async function ProtectedLayout({
   // Uses React.cache() - deduped with any page-level fetches in the same render pass
   let chartId: string | null = null
   let subscriptionTier: 'free' | 'premium' = 'free'
+  let deletionScheduledAt: string | null = null
   try {
-    const [chart, tier] = await Promise.all([
+    const [chart, tier, deletionStatus] = await Promise.all([
       getCachedLatestChart(userId),
       getCachedUserTier(userId),
+      getCachedDeletionStatus(userId),
     ])
     chartId = chart?.id ?? null
     subscriptionTier = tier
+    deletionScheduledAt = deletionStatus
   } catch {
     // Defaults stay null / 'free' on DB hiccups — chrome still renders
   }
@@ -50,6 +54,8 @@ export default async function ProtectedLayout({
 
       {/* Content layer */}
       <div className="relative z-10">
+        <DeletionPendingBanner deletionScheduledAt={deletionScheduledAt} />
+
         <header className="sticky top-0 z-50 border-b border-slate-200/[0.05] bg-[#08060f]/50 backdrop-blur-md">
           {/* Top ivory accent hairline */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200/20 to-transparent" />

@@ -3,6 +3,7 @@
 import { UserButton, ClerkLoaded, ClerkLoading } from '@clerk/nextjs'
 import { useCallback, useEffect, useState } from 'react'
 import { AccountSubscriptionPage } from './AccountSubscriptionPage'
+import { DataAccountPage } from './DataAccountPage'
 import { LogoutConfirmDialog } from './LogoutConfirmDialog'
 
 export function UserMenu() {
@@ -157,6 +158,27 @@ export function UserMenu() {
             <AccountSubscriptionPage />
           </UserButton.UserProfilePage>
           <UserButton.UserProfilePage label="security" />
+          <UserButton.UserProfilePage
+            label="Данни и акаунт"
+            url="data-account"
+            labelIcon={
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 7v10c0 2 3 4 8 4s8-2 8-4V7M4 7c0 2 3 4 8 4s8-2 8-4M4 7c0-2 3-4 8-4s8 2 8 4"
+                />
+              </svg>
+            }
+          >
+            <DataAccountPage />
+          </UserButton.UserProfilePage>
           <UserButton.MenuItems>
             <UserButton.Action label="manageAccount" />
             <UserButton.Action
