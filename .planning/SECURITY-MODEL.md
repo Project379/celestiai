@@ -175,7 +175,31 @@ const { data } = await supabase
   .eq('user_id', userId)                          // manual ownership filter
 ```
 
-This is the pattern documented under INTERNAL and used for USER_DATA tables above. **There is no second server-side path.** The B.0d Task 2 audit confirmed every API route, every `(protected)/page.tsx` server-side fetch, every cron handler, every Stripe webhook, and every GDPR / oracle / horoscope / diary / push route uses `createServiceSupabaseClient()` + `.eq('user_id', …)`. RLS is the second line of defense — service role bypasses it; ownership is enforced by the manual `user_id` filter.
+This is the pattern documented under INTERNAL and used for USER_DATA tables above. **There is no second server-side data-access path.** The B.0d Task 2 audit confirmed every API route, every `(protected)/page.tsx` server-side fetch, every cron handler, every Stripe webhook, and every GDPR / oracle / horoscope / diary / push route uses `createServiceSupabaseClient()` + `.eq('user_id', …)`. RLS is the second line of defense — service role bypasses it; ownership is enforced by the manual `user_id` filter.
+
+### Two valid auth-entry patterns (REVISIT-44 clarification, 2026-07-21)
+
+Every API route starts by getting the Clerk `userId` before it does the service-role query above, and there are **two correct ways to do that** — not one "standard" with a violation, despite older docs implying a single canonical guard:
+
+```ts
+// Pattern 1 — requireAppUser() from apps/web/lib/auth/guards.ts
+const { userId, user } = await requireAppUser()
+// calls auth() + ensureUserRecord(userId): upserts the `users` row if
+// missing, returns the full AppUser row alongside the id.
+```
+
+```ts
+// Pattern 2 — raw auth() + service-role + manual filter
+const { userId } = await auth()
+if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+// no ensureUserRecord call — the route doesn't assume a `users` row exists.
+```
+
+**When to use which:**
+- **`requireAppUser()`** — the route needs the `users` row itself (subscription tier, GDPR deletion-pending flag, etc.) via `requirePremium()`/`requireAccountActive()`, or writes a row that has a `users` foreign key and needs the upsert guarantee first.
+- **Raw `auth()` + manual filter** — the route is null-tolerant on a missing `users` row (e.g. diary's `entry_date >= users.created_at` lower-bound check treats a missing `created_at` as "no lower bound") and doesn't need `ensureUserRecord`'s upsert side effect.
+
+Both patterns are correct under the B.0d RLS lockdown — the divergence is a deliberate per-route choice (diary routes use Pattern 2 because their lower-bound check is null-tolerant), not an inconsistency to refactor away. See REVISIT-44 in `REVISIT-TRIGGERS.md` for the audit that surfaced this and closed it as a documentation fix rather than a code harmonization.
 
 ### Deleted in B.0e: `apps/web/lib/supabase/server.ts` (`createServerSupabaseClient`)
 

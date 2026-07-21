@@ -157,7 +157,11 @@ into the verification commit.
 - Remove the `(public)` group's two-factor screen entry from
   `app/_layout.tsx` if explicitly declared
 
-## 7. Color contrast audit — pre-launch accessibility-vs-brand decision
+## 7. Color contrast audit — pre-launch accessibility-vs-brand decision — CLOSED-BY-DECISION 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH close 2026-07-21):** Founder ratified keeping the muted brand palette as-is — no tone bumps now. The vague "Phase D" trigger below is what let this item orphan for 8+ sub-rounds without a concrete re-fire condition, so this REVISIT closes by decision and is superseded by **REVISIT-52** (filed this close), which carries a concrete trigger: before public App Store submission (not TestFlight), OR first accessibility complaint, OR any external accessibility requirement surfacing (EU Accessibility Act applicability check). See REVISIT-52 below for the full replacement filing. Original investigation context retained below for historical reference.
+
+---
 
 **Deferred:** Comprehensive color-contrast audit against WCAG AA / AAA
 across the mobile UI palette.
@@ -192,7 +196,11 @@ bumping all muted colors would override the brand language without
 founder input. Surfacing here so the decision is made before launch
 rather than discovered at App Store review.
 
-## 8. Hardcoded mobile streak footer drift from web vocabulary
+## 8. Hardcoded mobile streak footer drift from web vocabulary — CLOSED-BY-PRIOR-WORK 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH investigation 2026-07-21):** Verified via grep — the hardcoded «· серия 12 ·» placeholder no longer exists anywhere in `apps/mobile/app/(authed)/(tabs)/index.tsx`. P.6-b's crystal streak surfaces (`CrystalOfTheDayCard.tsx`, `DailyStreakPanel.tsx`) already ship the correct web vocabulary verbatim: `'1 ден'` for day 1, `` `${streak.current} поредни дни` `` for N>1. This was fixed incidentally as a side effect of P.6's crystal collection work, not a dedicated fix — closing here since no further action is needed. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** `apps/mobile/app/(authed)/(tabs)/index.tsx` contains a hardcoded
 streak footer reading «· серия 12 ·». Web's actual streak rendering on
@@ -227,7 +235,11 @@ sub-round 2.5): for shared mobile/web data surfaces, mobile mirrors web's
 existing Bulgarian vocabulary; mobile-specific surfaces get
 bulgarian-skill calibration.
 
-## 9. Sentry org slug rename — blocked on plan tier
+## 9. Sentry org slug rename — blocked on plan tier — CLOSED-BY-DECISION 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH close 2026-07-21):** Founder ratified keeping the celestia-prefixed Sentry org slug permanently. It's cosmetic-only (internal dashboard identifier, zero user-facing impact) and not worth a plan upgrade or org-migration risk. If a future business reason makes the internal slug matter (e.g. a compliance audit citing brand names), that's a new REVISIT filed at that time, not a reopening of this one. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** During sub-round 3 (Stellaeum rename) Layer 2 dashboard work,
 founder attempted to rename the Sentry org slug from the celestia-prefixed
@@ -248,7 +260,11 @@ slug, update SENTRY_ORG and SENTRY_PROJECT env vars in deployment
 secrets, swap DSNs (org-bound), confirm error events flow into the new
 org, retire the old org.
 
-## 10. Test email domain `@celestia-ai.dev` — kept as historical
+## 10. Test email domain `@celestia-ai.dev` — kept as historical — CLOSED-BY-DECISION 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH close 2026-07-21):** Founder ratified keeping `@celestia-ai.dev` as a stable test fixture indefinitely. Paying to register and maintain a Stellaeum-branded domain just to rename an arbitrary, never-user-facing test identifier is waste. Verified unchanged at investigation — `apps/web/scripts/m3-uat-harness.mjs:37,1405` still reference the domain. If a future need for owning `@stellaeum.dev` emerges (e.g. transactional email sending), that's a new REVISIT, not a reopening of this one. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** UAT harness (`apps/web/scripts/m3-uat-harness.mjs:37,1405`)
 test email domains kept as `m3uat@celestia-ai.dev` and
@@ -269,7 +285,11 @@ update Clerk dashboard email-allowlist for the new domain, change the
 two harness lines + any associated test-user ensure helpers, retire the
 old domain.
 
-## 11. GitHub repository rename `Project379/celestiai` → TBD
+## 11. GitHub repository rename `Project379/celestiai` → TBD — CLOSED-BY-DECISION 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH close 2026-07-21):** Founder ratified keeping `Project379/celestiai`. It's internal-only with zero user-facing impact, and the rename cascade (GitHub Actions secrets, README badges, external issue/PR links) is a real cost for a purely cosmetic gain. Verified unchanged at investigation via `git remote -v`. **If the repo ever goes public or is shown externally, that triggers a new REVISIT filed at that time** — this item does not stay standing-OPEN waiting for that. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** GitHub repo at `github.com/Project379/celestiai` retains
 the original `celestiai` slug. The single tracked code reference at
@@ -340,7 +360,11 @@ walkthrough preparing for the mobile birth-wizard ground-truth
 gathering. Out-of-scope for sub-round 4 but is a launch-blocker if
 not addressed before public release.
 
-## 13. Birth date validation error references internal schema format
+## 13. Birth date validation error references internal schema format — CLOSED-BY-FIX 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH close 2026-07-21, mechanical commit):** Both `birthDataSchema` occurrences of the regex error in `packages/core/src/charts/schemas.ts` (lines 51 and 158) now emit «Моля, изберете дата на раждане» — matching the existing required-field message — instead of leaking the internal `YYYY-MM-DD` storage format. Fix propagates to both web and mobile automatically via the shared schema. TS-green verified. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** The `birthDate` field's regex validation in
 `packages/core/src/charts/schemas.ts` (lifted from
@@ -367,7 +391,11 @@ on both surfaces cannot produce a malformed string), but the message
 is incorrect if/when it surfaces. Single-line fix corrects both web
 and mobile via the shared schema — concrete benefit of the 4.1 lift.
 
-## 14. Web landing splash heading overflow at default viewport
+## 14. Web landing splash heading overflow at default viewport — STILL OPEN, structural finding pending visual confirmation (2026-07-21)
+
+**Investigation note (PRE-LAUNCH-POLISH-BATCH 2026-07-21):** The exact heading string described below («Звездите имат какво да ти кажат.» as a single clippable line) no longer exists in that form. `apps/web/components/landing/LandingPage.tsx:41-46` now renders the heading as two separate `<span className="block">` lines ("Звездите имат" / "какво да ти кажат.") inside a `max-w-3xl` centered container with no `overflow-hidden` ancestor found — structurally this doesn't have the single-line-clip failure mode originally described, and looks like it was already fixed by an unrelated landing-page redesign. **However, no browser tool was available this session to actually render and confirm this at any viewport — per the explicit instruction not to close on structural inference alone, this item stays OPEN.** Whoever next has browser access should do a 30-second check (resize to common desktop widths, confirm the two-line heading isn't clipped) and close this with a CLOSED-BY-PRIOR-WORK note if confirmed, or reopen investigation if the clipping persists in the new structure. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** The landing-page splash heading «Звездите имат какво да
 ти кажат.» renders with the trailing «кажат.» portion clipped on the
@@ -477,7 +505,11 @@ while creating fresh test accounts. Web/mobile parity ought to be
 tighter; missing fields create downstream profile-display issues
 (e.g., the `Ти` tab's name display falls back to email-prefix).
 
-## 17. Web TIME_RANGES hour string formatting asymmetry
+## 17. Web TIME_RANGES hour string formatting asymmetry — CLOSED-BY-FIX 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH close 2026-07-21, mechanical commit):** Normalized the evening range's hour string from `'18:00–23:59'` to `'18 - 24'` in both `apps/web/components/birth-data/TimeStep.tsx` and mobile's mirrored `apps/mobile/app/(authed)/wizard/time.tsx` `TIME_RANGES` array — now all four ranges use the consistent hyphen+HH format. (A separate, already-internally-consistent `TIME_RANGE_LABELS` map in `apps/mobile/app/(authed)/wizard/confirm.tsx` uses full `HH:MM–HH:MM` for all four ranges including evening's `23:59` boundary — that one was not touched; it isn't the asymmetry this REVISIT described.) TS-green verified. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** The shared `TIME_RANGES` data source on web uses inconsistent
 hour-string formatting across the four ranges:
@@ -595,7 +627,11 @@ but is a soft-launch UX completeness item.
   for parity until paywall surfaces are unified.
 - Delete the dead `lockedTopicShown` state if option B.
 
-## 24. iOS edge-swipe and Android hardware back bypass Oracle reading-view back handler
+## 24. iOS edge-swipe and Android hardware back bypass Oracle reading-view back handler — CLOSED-BY-FIX 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH close 2026-07-21, mechanical commit):** Implemented Option A from the filed fix path — `apps/mobile/app/(authed)/oracle.tsx`'s `OracleScreenInner` now wires `navigation.addListener('beforeRemove', ...)` (via `useNavigation()` from `expo-router`) in a `useEffect`. When `activeTopic` is set, the listener calls `e.preventDefault()` and `clearActiveTopic()` instead of letting the pop proceed — catching iOS edge-swipe-back and Android hardware back through the same code path the existing `headerLeft` tap uses. TS-green verified; device-level gesture verification still owed (see close smoke-test checklist). Original investigation context retained below for historical reference.
+
+---
 
 **Status:** SR 7.8 added a custom `headerLeft` to the Oracle screen that
 branches on `activeTopic` — when a reading is open, the header back
@@ -1014,13 +1050,15 @@ The pattern is **plan-doc claims diverging from codebase reality** as execution 
 
 **Why documented:** the fail-fast throw is a stopgap, not a resolution. Without this REVISIT, the harness rots in place indefinitely. Decision tied to REVISIT-36 outcome.
 
-## 36. API integration test layer evaluation
+## 36. API integration test layer evaluation — RE-CLASSIFIED 2026-07-21 (still OPEN, needs dedicated sub-round)
 
-**Status:** Filed during B.0f-3 close 2026-05-10. Investigation during B.0f-1 confirmed `apps/web/` has no API integration test layer — no `*.test.*` or `*.spec.*` files anywhere, no `test` script in `apps/web/package.json`, no test runner deps (vitest/jest/playwright/supertest), no `__tests__/`/`tests/`/`e2e/` directories. Root `package.json`'s `"test": "turbo run test"` is effectively a no-op (no app defines a test script). `CLAUDE.md` references `npm test` and `npm run test:e2e` aspirationally — neither is wired up.
+**Re-classification note (PRE-LAUNCH-POLISH-BATCH investigation 2026-07-21):** The trigger below ("Phase B middle weeks") has technically fired — Stream P is 8 sub-rounds in (P.1 through P.8 closed) — but this item's shape (pick a test stack + implement ~50-100 LOC of pilot tests + wire CI) is real infrastructure work, not a mechanical polish-batch fix. **Explicitly NOT folded into PRE-LAUNCH-POLISH-BATCH** — filing this note so the next reader sees "trigger fired, but needs its own sub-round" rather than assuming it was either forgotten or already handled. Stays OPEN with REVISIT-35 gated on its outcome as before.
+
+**Status:** Filed during B.0f-3 close 2026-05-10. Investigation during B.0f-1 confirmed `apps/web/` has no API integration test layer — no `*.test.*` or `*.spec.*` files anywhere, no `test` script in `apps/web/package.json`, no test runner deps (vitest/jest/playwright/supertest), no `__tests__/`/`tests/`/`e2e/` directories. Root `package.json`'s `"test": "turbo run test"` is effectively a no-op (no app defines a test script). `CLAUDE.md` references `npm test` and `npm run test:e2e` aspirationally — neither is wired up. **Re-verified unchanged at 2026-07-21 investigation** — still zero test files, still no test script.
 
 **Concern:** all B.0c, B.0f, and Stream P API correctness is verified via manual smoke tests against a running dev server. This worked for the B.0 chain but doesn't scale: every new API route is a fresh manual smoke surface, every refactor risks silent regression on routes nobody re-smokes. Approach B vs C ratification debates would have been faster with regression tests; race-condition assertions on quota helpers (Pattern B) currently rely on production observation.
 
-**Trigger:** Phase B middle weeks (~weeks 3-4 of Stream P) **OR** before SR 9 / Phase B soft launch closes — whichever first. SR 9 is the soft-launch readiness check; shipping to 50–100 Bulgarian users with no API regression coverage is the kind of thing the readiness check should flag.
+**Trigger:** ~~Phase B middle weeks (~weeks 3-4 of Stream P)~~ **FIRED 2026-07-21 — needs a dedicated evaluation sub-round (stack selection + pilot tests + CI wiring), not a polish-batch fold-in.** OR before SR 9 / Phase B soft launch closes — whichever first. SR 9 is the soft-launch readiness check; shipping to 50–100 Bulgarian users with no API regression coverage is the kind of thing the readiness check should flag.
 
 **Sub-round when ready:** standalone evaluation sub-round. Scope:
 1. **Pick a stack.** Three credible options: (a) **vitest + MSW** for unit + integration coverage of API routes — fast, in-process, Next.js server-action friendly; (b) **Playwright API tests** — already a partial dep candidate per CLAUDE.md, runs against a live dev server, slower but closer to real user; (c) **continue manual-smoke-only** — punt to Phase C, accept regression risk through soft launch.
@@ -1042,7 +1080,11 @@ The B.0f-2-fix-1 refactor (replacing `useCompletion` with manual fetch + Readabl
 
 **Why documented:** the bug is reproducible (generate A, navigate to B with a saved reading) and visible to soft-launch users who use multiple topics. Without filing, it stays invisible in code review since the buggy state is across-component coordination not single-file logic.
 
-## 38. Dead `LockedTopicTeaser.tsx` file + orphan `lockedTopicShown` state cleanup
+## 38. Dead `LockedTopicTeaser.tsx` file + orphan `lockedTopicShown` state cleanup — CLOSED-BY-FIX 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH close 2026-07-21, mechanical commit):** Deleted `apps/web/components/oracle/LockedTopicTeaser.tsx` (confirmed zero importers via grep). Removed `lockedTopicShown`/`teaserContent`/`loadingTeaser` state and `handleRequestTeaser` from `OraclePanelGlobal.tsx`, simplified the four always-false `lockedTopicShown` conditionals (topic-picker visibility, empty-state, footer, `modalTitle`). Investigation also found `handleRequestTeaser` was the only caller of `/api/oracle/teaser` — deleting it orphaned that route too (confirmed zero other callers on web or mobile), so it was deleted in the same commit as an in-scope extension of the same cleanup. TS-green verified. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** Filed during B.0f-3 close 2026-05-10. B.0f-2-fix-1 dropped the `LockedTopicTeaser` import + JSX render block from `OraclePanelGlobal.tsx` per founder's "~3-line removal" scope. The component file itself (`apps/web/components/oracle/LockedTopicTeaser.tsx`) remains but is now unimported from anywhere — confirmed orphan via grep. Adjacent dead state in `OraclePanelGlobal.tsx`: `lockedTopicShown` useState, `teaserContent`/`loadingTeaser` state, `handleRequestTeaser` callback. References to `lockedTopicShown` survive in conditionals (handleClose, handleTopicSelect, modalTitle, footer back-button) — always-falsy dead branches but TypeScript doesn't error.
 
@@ -1116,7 +1158,11 @@ Pre-existing parity gap with mobile, which has both buttons.
 
 **Why documented:** the Cinzel limitation is invisible until you try to render mixed-case Bulgarian text in it (which P.1-b did — initial attempt had `font-cinzel` on the greeting, fell back to system sans because of glyph absence). Without filing, future contributors may repeat the mistake. Filing this also captures the broader "mobile typography is system-default sans-serif everywhere except eyebrows" state that may be worth a holistic review post-soft-launch.
 
-## PRE-LAUNCH-POLISH-BATCH-INTENT — consolidated burn-down for OPEN-NO-TRIGGER items
+## PRE-LAUNCH-POLISH-BATCH-INTENT — consolidated burn-down for OPEN-NO-TRIGGER items — FIRED AND CLOSED 2026-07-21
+
+**Batch closure (2026-07-21):** Fired between P.8 and P.10 per its own trigger window. All 8 named items resolved: REVISIT-8 and REVISIT-13/14(partial)/17 closed by fix or prior-work; REVISIT-9/10/11 closed by explicit founder decision (keep as-is, record why); REVISIT-7 closed by decision and replaced with REVISIT-52 (concrete trigger). **REVISIT-14 is the one exception — structurally looks already fixed by an unrelated landing redesign, but no browser tool was available to visually confirm this session, so it stays OPEN pending a 30-second visual check** rather than being closed on inference. The batch also picked up two items outside its original named list (REVISIT-38, REVISIT-24 — cheap and mechanical, surfaced opportunistically during the same investigation pass) plus a doc-only fix for REVISIT-44 and a prior-work closure for REVISIT-49. Full accounting in HANDOFF's PRE-LAUNCH-POLISH-BATCH close section.
+
+---
 
 **Status:** Filed during B.0g close 2026-05-12 per founder ratification. The B.0g audit pass surfaced that ~33% of all OPEN REVISITs have no natural sub-round fire condition (discipline-risk pile). B.0g itself burned down the top three (REVISIT-12 launch-blocker, REVISIT-15 brand drift, REVISIT-16 auth divergence). The remaining 8 OPEN-NO-TRIGGER items cluster naturally as pre-soft-launch polish work and are formally batched here to a defined future window rather than left as orphans.
 
@@ -1161,7 +1207,11 @@ Pre-existing parity gap with mobile, which has both buttons.
 
 **Why documented:** GDPR portability is a soft-launch concern (50–100 Bulgarian users), and the failure mode is silent. Filing here surfaces it to the post-soft-launch retro instead of relying on chance discovery.
 
-## 44. Auth-pattern harmonization sweep — `auth()` vs `requireAppUser()` across web API routes
+## 44. Auth-pattern harmonization sweep — `auth()` vs `requireAppUser()` across web API routes — CLOSED-BY-FIX (doc-only) 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH close 2026-07-21, doc-only commit):** Founder ratified the doc-only path — no code refactor. Added a "Two valid auth-entry patterns" subsection to `.planning/SECURITY-MODEL.md` (under "Server-side access pattern") documenting both `requireAppUser()` and raw `auth()` + manual filter as correct, with explicit usage criteria (needs the `users` row / upsert guarantee → `requireAppUser()`; null-tolerant on missing `users` row → raw `auth()`). The divergence was never a bug — diary routes correctly use Pattern 2 because their lower-bound check tolerates a missing `users.created_at`. Closing the documentation-drift gap this REVISIT was actually about. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** Filed during P.4 close 2026-05-12. P.4 investigation surfaced that the diary API routes use raw `auth()` from `@clerk/nextjs/server` + `createServiceSupabaseClient()` + manual `.eq('user_id', userId)` filter — NOT the `requireAppUser()` wrapper from `apps/web/lib/auth/guards.ts`. Both patterns are valid post-B.0c, but the HANDOFF / SECURITY-MODEL.md description of `requireAppUser` as "Standard guard at the top of every protected route" overstates standardization.
 
@@ -1291,7 +1341,11 @@ Decision criteria at P.16 investigation:
 
 **Why documented:** the entire mobile codebase has been built and validated on iOS as the canonical fidelity surface (per the EOD handoff guidance + the `Expo Go on iPhone` canonical-fidelity-check note). Filing this REVISIT makes the Android-gap explicit so it doesn't surface as a surprise during Android TestFlight prep. Discipline-pattern codifications that read "default mobile overlay pattern" actually mean "default iOS-validated mobile overlay pattern" until this sweep closes — naming honesty matters for future readers and the next Claude session.
 
-## 49. Engineering vocabulary in user-facing strings — chart.tsx «скоро в Phase B»
+## 49. Engineering vocabulary in user-facing strings — chart.tsx «скоро в Phase B» — CLOSED-BY-PRIOR-WORK 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH investigation 2026-07-21):** Verified via grep — «скоро в Phase B» and any mention of "Phase" (case-insensitive) are entirely absent from `apps/mobile/app/(authed)/(tabs)/chart.tsx` today. The placeholder block was already removed as dead code, most likely incidentally during P.2-c's chip replacement (PlanetsList/AspectsList/HousesList superseded the pre-P.2-c placeholders). No code change needed this close — closing as prior-work. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** Filed during P.5 close 2026-05-12. P.5 ratified a new discipline pattern (codified in HANDOFF) that user-facing copy must not contain engineering-internal vocabulary — Phase names, sub-round identifiers, stream labels, etc. P.5's five new stub destinations ship per-destination calibrated copy («Кристалите ти идват скоро.», etc.).
 
@@ -1309,7 +1363,11 @@ Exact location: `apps/mobile/app/(authed)/(tabs)/chart.tsx` — the «скоро
 
 **Why documented:** the discipline pattern was codified at P.5 close; this REVISIT captures the one known existing-codebase violation so the discipline isn't silently inconsistent. Without this REVISIT, the pattern reads "applies to new code only" — REVISIT-49 closes that gap.
 
-## 50. AsyncStorage key naming convention harmonization
+## 50. AsyncStorage key naming convention harmonization — CLOSED-BY-FIX 2026-07-21
+
+**Resolution (PRE-LAUNCH-POLISH-BATCH close 2026-07-21, mechanical commit):** All three mixed-convention consumers now use the unprefixed `stellaeum.*` convention matching web's localStorage keys and the P.7-b `useStoryList` precedent: `@stellaeum/notif_prompted` → `stellaeum.notifications.prompted.v1`, `@stellaeum/push_token` → `stellaeum.notifications.push_token.v1` (both with a one-shot `migrateKey()` helper in `maybePromptPushPermission.ts` that copies the old value forward and deletes the old key on first read, so no in-flight device state is lost), and `` `daily-horoscope:${chartId}:${date}` `` → `` `stellaeum.horoscope.daily.${chartId}.${date}.v1` `` (no migration — a cache miss on the old key just refetches, per the REVISIT's own note). Canonical convention (`stellaeum.<surface>.<artifact>.v1`) is now consistently in place across all AsyncStorage consumers. TS-green verified. Original investigation context retained below for historical reference.
+
+---
 
 **Status:** Filed during P.7 close 2026-05-12. P.7-b pre-flight verification of HT 3 (AsyncStorage key naming) surfaced that existing mobile AsyncStorage consumers use mixed key conventions:
 
@@ -1334,6 +1392,21 @@ P.7-b added a fourth consumer (`useStoryList`) with key `stellaeum.stories.state
 4. Document the canonical convention in HANDOFF discipline-patterns section.
 
 **Why documented:** the discipline pattern was implicit until P.7-b's pre-flight surfaced the inconsistency. Filing here ensures the harmonization sweep happens before the cross-device sync migration locks in any particular key shape.
+
+## 52. Accessibility audit — WCAG AA contrast pass across mobile + web
+
+**Status:** Filed at PRE-LAUNCH-POLISH-BATCH close 2026-07-21, replacing REVISIT-7 (closed-by-decision same day). REVISIT-7's own trigger ("Phase D") was vague enough that the item sat OPEN-NO-TRIGGER for 8+ sub-rounds before being batch-closed — this replacement exists specifically to carry a concrete, checkable trigger so the same orphaning doesn't recur.
+
+**Concern (carried forward from REVISIT-7):** slate-500 and similar muted tones used for eyebrows, helper text, hints, and the sign-out button label on the `#08060f` mobile background (and web's equivalent dark palette) likely fail WCAG AA contrast for normal-sized text. The muted, low-contrast aesthetic is a deliberate brand choice (warm-poetic, candle-lit feel) that has never been evaluated against an accessibility lens. Founder ratified keeping the palette as-is for now (2026-07-21) — this is not a decision to bump tones, it's a decision to defer the audit to a concrete future trigger.
+
+**Trigger (concrete, replaces "Phase D"):**
+- Before public App Store / Google Play submission (NOT the TestFlight / internal-track soft-launch cut — this is the public-listing gate), OR
+- First accessibility complaint from a beta or soft-launch user, OR
+- Any external accessibility requirement surfaces (e.g. an EU Accessibility Act applicability check for a Bulgarian consumer-facing app — founder to verify with legal review whether/when this applies)
+
+**Sub-round when ready:** dedicated accessibility pass. Audit each muted color usage and decide per-context: keep brand aesthetic with mitigation (system-level "Increase Contrast" settings honored automatically by NativeWind/Tailwind tokens), bump specific tones to AA-compliant equivalents (e.g. slate-500 → slate-400 for body text, slate-300 for helpers), or split into a brand-mode vs. accessibility-mode toggle.
+
+**Why documented:** REVISIT-7 demonstrated that a real accessibility-vs-brand tension filed with a vague trigger becomes permanent orphan risk. This replacement makes the re-fire condition externally checkable (App Store submission is a calendar-adjacent milestone, a complaint is an event, a legal requirement is a fact-check) rather than a phase label that drifts as planning documents get reorganized.
 
 ## Appendix — Pre-existing peer warnings (not action items)
 
