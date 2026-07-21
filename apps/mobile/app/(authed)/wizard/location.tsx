@@ -15,6 +15,7 @@ import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import type { BirthData } from '@stellaeum/core/charts/schemas'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { CitySearch, type City } from '@/components/wizard/CitySearch'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 /**
  * Coordinate input with controlled local string state. Display text is
@@ -61,6 +62,7 @@ function CoordinateField({
 
 export default function WizardLocationScreen() {
   const router = useRouter()
+  const { push } = useGuardedNavigation()
   const {
     control,
     setValue,
@@ -89,7 +91,7 @@ export default function WizardLocationScreen() {
 
   const handleNext = async () => {
     const ok = await trigger(['cityName', 'latitude', 'longitude'])
-    if (ok) router.push('/wizard/confirm')
+    if (ok) push('/wizard/confirm')
   }
 
   return (

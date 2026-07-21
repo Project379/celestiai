@@ -1,10 +1,10 @@
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
 
 import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
 import { useFirstChart } from '@/hooks/useFirstChart'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 /**
  * Ритъм tab — current-sky reading. Mobile port of
@@ -20,7 +20,7 @@ import { useFirstChart } from '@/hooks/useFirstChart'
  * request.
  */
 export default function RhythmScreen() {
-  const router = useRouter()
+  const { push } = useGuardedNavigation()
   const firstChart = useFirstChart()
 
   return (
@@ -48,7 +48,7 @@ export default function RhythmScreen() {
 
         {/* Лунен дневник CTA card — full-Pressable target per HT 6 */}
         <Pressable
-          onPress={() => router.push('/rhythm/journal')}
+          onPress={() => push('/rhythm/journal')}
           className="mb-16 rounded-3xl border border-slate-200/10 bg-white/[0.02] px-6 py-8"
         >
           <Text className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-400">
@@ -79,14 +79,14 @@ export default function RhythmScreen() {
  * (rule of three; refactor when a third surface needs the abstraction).
  */
 function EmptyTransitsState() {
-  const router = useRouter()
+  const { push } = useGuardedNavigation()
   return (
     <View>
       <Text className="mb-5 text-[16px] font-light leading-[1.85] text-slate-200/90">
         За да видиш транзитите си, първо трябва да имаш натална карта. Въведи рождените си данни.
       </Text>
       <Pressable
-        onPress={() => router.push('/wizard/date')}
+        onPress={() => push('/wizard/date')}
         className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
         style={{ gap: 10 }}
       >

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useFocusEffect, useRouter } from 'expo-router'
+import { useFocusEffect } from 'expo-router'
 import { useUser } from '@clerk/expo'
 import Animated, {
   cancelAnimation,
@@ -26,6 +26,7 @@ import { parseSentinels } from '@stellaeum/core/oracle/planet-parser'
 import { CrystalCard } from '@/components/CrystalCard'
 import { useApiClient } from '@/lib/api/client'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 interface ChartSummary {
   id: string
@@ -112,7 +113,7 @@ function formatCountdown(daysAway: number): string {
 }
 
 export default function DnesScreen() {
-  const router = useRouter()
+  const { push } = useGuardedNavigation()
   const { apiFetch } = useApiClient()
   const { user } = useUser()
   // Fallback mirrors apps/web/app/(protected)/dashboard/page.tsx:20 ('Потребител')
@@ -368,7 +369,7 @@ export default function DnesScreen() {
               Картата ти още не е настроена. Въведи рождените си данни, за да видиш хороскопа, наталната карта и транзитите.
             </Text>
             <Pressable
-              onPress={() => router.push('/wizard/date')}
+              onPress={() => push('/wizard/date')}
               className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
               style={{ gap: 10 }}
             >

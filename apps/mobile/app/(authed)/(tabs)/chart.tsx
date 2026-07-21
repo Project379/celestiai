@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
+
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 import type {
   PlanetPosition,
@@ -53,7 +54,7 @@ const SCREEN_PADDING_X = 24
 const WHEEL_MARGIN = SCREEN_PADDING_X * 2
 
 export default function ChartScreen() {
-  const router = useRouter()
+  const { push } = useGuardedNavigation()
   const firstChart = useFirstChart()
   const chart = useChart(firstChart.data?.id)
   const [activeView, setActiveView] = useState<TopView>('chart')
@@ -185,7 +186,7 @@ export default function ChartScreen() {
               Картата ти още не е настроена. Въведи рождените си данни, за да видиш наталната си карта.
             </Text>
             <Pressable
-              onPress={() => router.push('/wizard/date')}
+              onPress={() => push('/wizard/date')}
               className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
               style={{ gap: 10 }}
             >

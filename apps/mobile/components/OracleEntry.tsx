@@ -1,27 +1,27 @@
-import { useRouter } from 'expo-router'
 import { Pressable, Text, View } from 'react-native'
 
 import { useFirstChart } from '@/hooks/useFirstChart'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 /**
  * Oracle persistent entry. Platform-specific expression per
  * MOBILE_UX_RESEARCH §2.6: Android/web = FAB, iOS = nav-bar glyph
  * (deferred; FAB used as placeholder).
  *
- * Sub-round 7.6 wires `handlePress` to `router.push('/oracle')` and
+ * Sub-round 7.6 wires `handlePress` to a guarded push to `/oracle` and
  * hides the FAB until the user has a chart — same gating web's
  * `OracleFab` applies (`if (!hasChart) return null`). Without a chart
  * the Oracle screen has nothing to do, so showing the entry would be
  * a footgun.
  */
 export function OracleEntry() {
-  const router = useRouter()
+  const { push } = useGuardedNavigation()
   const { data: firstChart } = useFirstChart()
 
   if (!firstChart) return null
 
   const handlePress = () => {
-    router.push('/oracle')
+    push('/oracle')
   }
 
   return (

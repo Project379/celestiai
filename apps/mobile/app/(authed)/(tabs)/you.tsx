@@ -1,12 +1,12 @@
 import { useClerk, useUser } from '@clerk/expo'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
 
 import { ZODIAC_SIGNS_BG } from '@stellaeum/astrology/client'
 
 import { useChart } from '@/hooks/useChart'
 import { useFirstChart } from '@/hooks/useFirstChart'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 // First four hints mirror apps/web/components/you/YouHub.tsx verbatim.
 // Premium and Settings are mobile-only entries (web hosts them in the
@@ -60,7 +60,7 @@ function getBigThreeLabel(
 }
 
 export default function YouScreen() {
-  const router = useRouter()
+  const { push } = useGuardedNavigation()
   const { user } = useUser()
   const { signOut } = useClerk()
   const firstChart = useFirstChart()
@@ -96,7 +96,7 @@ export default function YouScreen() {
           {SECTIONS.map((section, i) => (
             <Pressable
               key={section.label}
-              onPress={() => router.push(section.route)}
+              onPress={() => push(section.route)}
               accessibilityRole="button"
               className={`flex-row items-baseline justify-between py-5 ${
                 i > 0 ? 'border-t border-slate-800/60' : ''

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
-import { useRouter } from 'expo-router'
 
 import { getLunarPhase, type LunarPhase } from '@stellaeum/core/moon-phase'
 import {
@@ -11,6 +10,7 @@ import {
 
 import { RecommendationCard } from './RecommendationCard'
 import { useStoryList } from '@/hooks/useStoryList'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 const KIND_SECTION_LABEL: Record<'book' | 'film' | 'series' | 'episode' | 'story', string> = {
   book: 'Книга за месеца',
@@ -53,7 +53,7 @@ interface StoriesContentProps {
  * rather than running a sample-preview conversion loop.
  */
 export function StoriesContent({ sunSign }: StoriesContentProps) {
-  const router = useRouter()
+  const { push } = useGuardedNavigation()
   const [phase, setPhase] = useState<LunarPhase>(() => getLunarPhase())
   const [now, setNow] = useState(() => new Date())
 
@@ -222,7 +222,7 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
               За да виждаш препоръките си, първо трябва да имаш натална карта.
             </Text>
             <Pressable
-              onPress={() => router.push('/wizard/date')}
+              onPress={() => push('/wizard/date')}
               className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
               style={{ gap: 10 }}
             >

@@ -10,7 +10,6 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
 import { Controller, useFormContext } from 'react-hook-form'
 import DateTimePicker, {
   DateTimePickerAndroid,
@@ -18,6 +17,7 @@ import DateTimePicker, {
 
 import type { BirthData } from '@stellaeum/core/charts/schemas'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 /**
  * Bulgarian month-name display: «11 ноември 2002 г.»
@@ -44,7 +44,7 @@ function toIsoDate(d: Date): string {
 }
 
 export default function WizardDateScreen() {
-  const router = useRouter()
+  const { push } = useGuardedNavigation()
   const {
     control,
     setValue,
@@ -80,7 +80,7 @@ export default function WizardDateScreen() {
 
   const handleNext = async () => {
     const ok = await trigger(['name', 'birthDate'])
-    if (ok) router.push('/wizard/time')
+    if (ok) push('/wizard/time')
   }
 
   return (

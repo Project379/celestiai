@@ -17,6 +17,7 @@ import type {
 } from '@stellaeum/core/charts/schemas'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { TimePicker } from '@/components/wizard/TimePicker'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 const TIME_RANGES: {
   value: ApproximateTimeRange
@@ -51,6 +52,7 @@ function parseHHMM(time: string | null | undefined): Date {
 
 export default function WizardTimeScreen() {
   const router = useRouter()
+  const { push } = useGuardedNavigation()
   const {
     control,
     setValue,
@@ -105,7 +107,7 @@ export default function WizardTimeScreen() {
       'birthTime',
       'approximateTimeRange',
     ])
-    if (ok) router.push('/wizard/location')
+    if (ok) push('/wizard/location')
   }
 
   return (
