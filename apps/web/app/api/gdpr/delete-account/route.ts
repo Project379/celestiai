@@ -6,6 +6,18 @@ import { requireAppUser } from '@/lib/auth/guards'
 import { isDeletionPending } from '@/lib/users/ensure-user'
 
 /**
+ * GET /api/gdpr/delete-account
+ * Returns the current deletion-pending state. Web reads deletion_scheduled_at
+ * directly in the protected layout Server Component (no direct Supabase
+ * access needed); mobile has no such path, so this GET exists for mobile's
+ * pending-deletion banner (P.10-b) to poll via apiFetch.
+ */
+export async function GET() {
+  const { user } = await requireAppUser()
+  return Response.json({ deletionScheduledAt: user.deletion_scheduled_at })
+}
+
+/**
  * POST /api/gdpr/delete-account
  * Request account deletion with 30-day grace period.
  * Sets deleted_at and deletion_scheduled_at on users table.

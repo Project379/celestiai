@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
 import { useAuth } from '@clerk/expo'
 import { Redirect, Stack, usePathname, useRouter } from 'expo-router'
+import { View } from 'react-native'
 
+import { DeletionPendingBanner } from '@/components/settings/DeletionPendingBanner'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { isWizardDismissedThisLaunch } from '@/lib/onboarding/dismissState'
 
@@ -40,51 +42,57 @@ export default function AuthedLayout() {
   if (!isSignedIn) return <Redirect href="/sign-in" />
 
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: '#08060f' },
-        headerTitleStyle: { color: '#e2e8f0', fontSize: 14 },
-        headerTintColor: '#fcd34d',
-        headerBackTitle: '',
-        contentStyle: { backgroundColor: '#08060f' },
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="wizard" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="oracle"
-        options={{
-          title: 'Оракул',
-          headerBackTitle: 'Назад',
+    <View style={{ flex: 1 }}>
+      {/* B.0h/P.10: persistent grace-period banner, covers every authed
+         screen (not just settings) since deletion is a full-access undo
+         window the user must never lose sight of. */}
+      <DeletionPendingBanner />
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: '#08060f' },
+          headerTitleStyle: { color: '#e2e8f0', fontSize: 14 },
+          headerTintColor: '#fcd34d',
+          headerBackTitle: '',
+          contentStyle: { backgroundColor: '#08060f' },
         }}
-      />
-      <Stack.Screen
-        name="rhythm/journal"
-        options={{
-          title: 'Лунен дневник',
-          headerBackTitle: 'Назад',
-        }}
-      />
-      <Stack.Screen
-        name="you/crystals"
-        options={{ title: 'Кристали', headerBackTitle: 'Назад' }}
-      />
-      <Stack.Screen
-        name="you/recommendations"
-        options={{ title: 'Препоръки', headerBackTitle: 'Назад' }}
-      />
-      <Stack.Screen
-        name="you/guide"
-        options={{ title: 'Ръководство', headerBackTitle: 'Назад' }}
-      />
-      <Stack.Screen
-        name="you/premium"
-        options={{ title: 'Премиум', headerBackTitle: 'Назад' }}
-      />
-      <Stack.Screen
-        name="you/settings"
-        options={{ title: 'Настройки', headerBackTitle: 'Назад' }}
-      />
-    </Stack>
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="wizard" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="oracle"
+          options={{
+            title: 'Оракул',
+            headerBackTitle: 'Назад',
+          }}
+        />
+        <Stack.Screen
+          name="rhythm/journal"
+          options={{
+            title: 'Лунен дневник',
+            headerBackTitle: 'Назад',
+          }}
+        />
+        <Stack.Screen
+          name="you/crystals"
+          options={{ title: 'Кристали', headerBackTitle: 'Назад' }}
+        />
+        <Stack.Screen
+          name="you/recommendations"
+          options={{ title: 'Препоръки', headerBackTitle: 'Назад' }}
+        />
+        <Stack.Screen
+          name="you/guide"
+          options={{ title: 'Ръководство', headerBackTitle: 'Назад' }}
+        />
+        <Stack.Screen
+          name="you/premium"
+          options={{ title: 'Премиум', headerBackTitle: 'Назад' }}
+        />
+        <Stack.Screen
+          name="you/settings"
+          options={{ title: 'Настройки', headerBackTitle: 'Назад' }}
+        />
+      </Stack>
+    </View>
   )
 }
