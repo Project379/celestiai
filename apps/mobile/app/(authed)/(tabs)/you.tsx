@@ -18,7 +18,7 @@ const SECTIONS = [
   { label: 'Кристали',    hint: 'месечни прозорци + дневна серия', route: '/you/crystals' as const        },
   { label: 'Дневник',     hint: 'лунен дневник — по три реда',     route: '/rhythm/journal' as const       },
   { label: 'Препоръки',   hint: 'месечни книги и филми',           route: '/you/recommendations' as const  },
-  { label: 'Ръководство', hint: 'планети, знаци, къщи, аспекти',   route: '/you/guide' as const            },
+  { label: 'Ръководство', hint: 'история, планети, аспекти, лунни фази', route: '/you/guide' as const     },
   { label: 'Премиум',     hint: 'абонамент и плащане',             route: '/you/premium' as const          },
   { label: 'Настройки',   hint: 'акаунт, поверителност, известия', route: '/you/settings' as const         },
 ] as const

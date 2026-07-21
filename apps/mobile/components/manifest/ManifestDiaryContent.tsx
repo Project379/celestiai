@@ -8,6 +8,7 @@ import { ManifestEntryForm } from './ManifestEntryForm'
 import { ManifestHistory } from './ManifestHistory'
 import { useManifestEntries } from '@/hooks/useManifestEntries'
 import { shareDiaryMarkdown } from '@/lib/diary/export'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 const BG_DATE = new Intl.DateTimeFormat('bg-BG', {
   weekday: 'long',
@@ -34,6 +35,7 @@ function isoDate(d: Date): string {
  * animations per HT 8 (data-display screen).
  */
 export function ManifestDiaryContent() {
+  const { push } = useGuardedNavigation()
   const [phase, setPhase] = useState<LunarPhase>(() => getLunarPhase())
   const [now, setNow] = useState(() => new Date())
 
@@ -199,8 +201,13 @@ export function ManifestDiaryContent() {
 
       <View className="mt-16 border-t border-slate-300/[0.07] pt-8">
         <Text className="text-[14px] font-light leading-[1.85] text-slate-500">
-          За повече за лунните фази и ритуалите към тях виж{' '}
-          <Text className="font-medium text-amber-300">Ръководството</Text>
+          За повече за лунните фази — задача и облик за всяка — виж{' '}
+          <Text
+            onPress={() => push('/you/guide')}
+            className="font-medium text-amber-300 underline"
+          >
+            Ръководството
+          </Text>
           .
         </Text>
       </View>

@@ -11,6 +11,7 @@ import {
 } from '@stellaeum/core/welcome'
 
 import { MoonDisc } from './MoonDisc'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 const BG_MONTHS = [
   'януари', 'февруари', 'март', 'април', 'май', 'юни',
@@ -48,6 +49,7 @@ function formatDaysHours(daysFrac: number): string {
  * (data-display screen discipline pattern). Conditional render only.
  */
 export function LunarPhaseCard() {
+  const { push } = useGuardedNavigation()
   const [phase, setPhase] = useState<LunarPhase>(() => getLunarPhase())
   const [shower, setShower] = useState<MeteorShower | null>(() => getActiveMeteorShower())
   const [upcoming, setUpcoming] = useState(() => getNextMeteorShower())
@@ -229,7 +231,12 @@ export function LunarPhaseCard() {
 
           <Text className="text-[14px] leading-[1.8] text-slate-300/90">
             Научи повече за манифестирането с луната в{' '}
-            <Text className="font-medium text-amber-300">Ръководството</Text>
+            <Text
+              onPress={() => push('/you/guide')}
+              className="font-medium text-amber-300 underline"
+            >
+              Ръководството
+            </Text>
             .
           </Text>
         </View>
@@ -285,8 +292,13 @@ export function LunarPhaseCard() {
           </View>
 
           <Text className="mt-4 text-[13px] leading-[1.7] text-slate-300/90">
-            Цялата глава за лунните фази с ритуали и астрономическо описание намираш в{' '}
-            <Text className="font-medium text-amber-300">Ръководството</Text>
+            Цялата глава за лунните фази — задача и облик за всяка от осемте — намираш в{' '}
+            <Text
+              onPress={() => push('/you/guide')}
+              className="font-medium text-amber-300 underline"
+            >
+              Ръководството
+            </Text>
             .
           </Text>
         </View>
