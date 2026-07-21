@@ -48,7 +48,7 @@ export const birthDataSchema = z
     birthDate: z
       .string({ error: 'Моля, изберете дата на раждане' })
       .regex(/^\d{4}-\d{2}-\d{2}$/, {
-        error: 'Датата трябва да е във формат YYYY-MM-DD',
+        error: 'Моля, изберете дата на раждане',
       })
       .refine(
         (val) => {
@@ -155,7 +155,7 @@ export const updateBirthDataSchema = z
     birthDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, {
-        error: 'Датата трябва да е във формат YYYY-MM-DD',
+        error: 'Моля, изберете дата на раждане',
       })
       .refine(
         (val) => {

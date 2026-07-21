@@ -1,4 +1,5 @@
-import { Redirect, Stack, useRouter } from 'expo-router'
+import { Redirect, Stack, useNavigation, useRouter } from 'expo-router'
+import { useEffect } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -43,6 +44,7 @@ export default function OracleScreen() {
 
 function OracleScreenInner({ chartId }: { chartId: string }) {
   const router = useRouter()
+  const navigation = useNavigation()
   const {
     savedReadings,
     activeTopic,
@@ -54,7 +56,7 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
   } = useOracleReading(chartId, {
     // SR 8.3: ask for push permission after the first successful Oracle
     // reading completes. Idempotency is enforced inside
-    // maybePromptPushPermission via the @stellaeum/notif_prompted
+    // maybePromptPushPermission via the stellaeum.notifications.prompted.v1
     // AsyncStorage flag, so this fires across multiple fresh generations
     // until the user has been prompted once.
     onFreshGeneration: () => {
@@ -70,6 +72,20 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
     if (activeTopic) clearActiveTopic()
     else router.back()
   }
+
+  // REVISIT-24 fix: the headerLeft button above only catches an explicit
+  // tap. iOS edge-swipe-back and Android hardware back both bypass it and
+  // pop straight to Днес through react-native-screens, skipping the topic
+  // grid. Intercepting the navigation removal event itself catches all
+  // three dismiss paths through one code path.
+  useEffect(() => {
+    return navigation.addListener('beforeRemove', (e) => {
+      if (activeTopic) {
+        e.preventDefault()
+        clearActiveTopic()
+      }
+    })
+  }, [navigation, activeTopic, clearActiveTopic])
 
   return (
     <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">

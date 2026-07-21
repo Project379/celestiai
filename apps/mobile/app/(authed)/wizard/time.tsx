@@ -26,7 +26,7 @@ const TIME_RANGES: {
 }[] = [
   { value: 'morning', label: 'Сутрин', hours: '06 - 12' },
   { value: 'afternoon', label: 'Следобед', hours: '12 - 18' },
-  { value: 'evening', label: 'Вечер', hours: '18:00–23:59' },
+  { value: 'evening', label: 'Вечер', hours: '18 - 24' },
   { value: 'night', label: 'Нощ', hours: '00 - 06' },
 ]
 

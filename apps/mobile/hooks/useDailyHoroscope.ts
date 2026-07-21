@@ -36,7 +36,9 @@ function getYesterdayString(): string {
 }
 
 function getCacheKey(chartId: string, date: string): string {
-  return `daily-horoscope:${chartId}:${date}`
+  // REVISIT-50 harmonization — unprefixed stellaeum.* convention. No
+  // migration needed: a cache miss on the old key just refetches.
+  return `stellaeum.horoscope.daily.${chartId}.${date}.v1`
 }
 
 /**

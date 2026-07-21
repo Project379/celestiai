@@ -24,17 +24,20 @@ import { logError } from '@/lib/monitoring/logError'
  * cache-hit before the mutation can run). This call site receives
  * exactly the "fresh successful generation" signal we want.
  *
- * Idempotency: AsyncStorage flag `@stellaeum/notif_prompted` ensures
- * the prompt fires at most once across the app's lifetime per device.
- * The flag is set on every terminal outcome (decline, deny, grant) per
- * D6 — "set regardless of grant/deny outcome (never re-prompt within
- * app)."
+ * Idempotency: AsyncStorage flag `stellaeum.notifications.prompted.v1`
+ * ensures the prompt fires at most once across the app's lifetime per
+ * device. The flag is set on every terminal outcome (decline, deny,
+ * grant) per D6 — "set regardless of grant/deny outcome (never
+ * re-prompt within app)." (REVISIT-50: renamed from the @-prefixed
+ * `@stellaeum/notif_prompted`; migrateKey() below carries forward any
+ * existing device state on first read.)
  *
  * Token registration: on iOS/Android system grant, retrieve Expo push
  * token via getExpoPushTokenAsync, stash in AsyncStorage as
- * `@stellaeum/push_token`, log via Sentry breadcrumb. Backend
- * integration deferred to Phase B push-delivery work — REVISIT-26
- * tracks the push_tokens table + RLS + registration endpoint design.
+ * `stellaeum.notifications.push_token.v1`, log via Sentry breadcrumb.
+ * Backend integration deferred to Phase B push-delivery work —
+ * REVISIT-26 tracks the push_tokens table + RLS + registration endpoint
+ * design.
  *
  * Expo Go caveat: getExpoPushTokenAsync rejects on Expo Go SDK 49+ —
  * the call needs a Dev Client / standalone build. Permission prompt
@@ -42,15 +45,33 @@ import { logError } from '@/lib/monitoring/logError'
  * failure logs through logError (caught, not rethrown) and the flag
  * still gets set, so re-running the trigger after Dev Client lands
  * (REVISIT-1 unblocks this) won't auto-retry the token fetch — the
- * founder will need a manual reset of @stellaeum/notif_prompted to
- * verify token retrieval. Document this in SR 8 close.
+ * founder will need a manual reset of stellaeum.notifications.prompted.v1
+ * to verify token retrieval. Document this in SR 8 close.
  *
  * Feature-flag gate: respects EXPO_PUBLIC_FF_PUSH per useFeatureFlag
  * scope (D4). Off → entire flow no-ops.
  */
 
-const PROMPTED_FLAG_KEY = '@stellaeum/notif_prompted'
-const PUSH_TOKEN_KEY = '@stellaeum/push_token'
+const PROMPTED_FLAG_KEY = 'stellaeum.notifications.prompted.v1'
+const PUSH_TOKEN_KEY = 'stellaeum.notifications.push_token.v1'
+// REVISIT-50 harmonization — old @-prefixed keys, migrated on first read below.
+const OLD_PROMPTED_FLAG_KEY = '@stellaeum/notif_prompted'
+const OLD_PUSH_TOKEN_KEY = '@stellaeum/push_token'
+
+/** One-shot migration: copy an old-convention key to its new name, then drop the old one. */
+async function migrateKey(oldKey: string, newKey: string): Promise<void> {
+  try {
+    const [oldValue, newValue] = await Promise.all([
+      AsyncStorage.getItem(oldKey),
+      AsyncStorage.getItem(newKey),
+    ])
+    if (oldValue === null) return
+    if (newValue === null) await AsyncStorage.setItem(newKey, oldValue)
+    await AsyncStorage.removeItem(oldKey)
+  } catch {
+    // best-effort — a missed migration just means one extra re-prompt/refetch
+  }
+}
 
 // Bulgarian rationale strings — bulgarian-skill calibrated, founder
 // native-speaker reviewed. The «Да, разказвай ми» accept label echoes
@@ -65,6 +86,9 @@ const DECLINE_LABEL = 'Не сега'
 
 export async function maybePromptPushPermission(): Promise<void> {
   if (process.env.EXPO_PUBLIC_FF_PUSH === 'false') return
+
+  await migrateKey(OLD_PROMPTED_FLAG_KEY, PROMPTED_FLAG_KEY)
+  await migrateKey(OLD_PUSH_TOKEN_KEY, PUSH_TOKEN_KEY)
 
   let alreadyPrompted: string | null = null
   try {
