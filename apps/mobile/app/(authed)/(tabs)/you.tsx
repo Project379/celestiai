@@ -1,4 +1,4 @@
-import { useClerk, useUser } from '@clerk/expo'
+import { useUser } from '@clerk/expo'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -20,7 +20,7 @@ const SECTIONS = [
   { label: 'Препоръки',   hint: 'месечни книги и филми',           route: '/you/recommendations' as const  },
   { label: 'Ръководство', hint: 'история, планети, аспекти, лунни фази', route: '/you/guide' as const     },
   { label: 'Премиум',     hint: 'абонамент и плащане',             route: '/you/premium' as const          },
-  { label: 'Настройки',   hint: 'акаунт, поверителност, известия', route: '/you/settings' as const         },
+  { label: 'Настройки',   hint: 'акаунт, поверителност, данни',    route: '/you/settings' as const         },
 ] as const
 
 function getDisplayName(user: ReturnType<typeof useUser>['user']): string {
@@ -62,17 +62,8 @@ function getBigThreeLabel(
 export default function YouScreen() {
   const { push } = useGuardedNavigation()
   const { user } = useUser()
-  const { signOut } = useClerk()
   const firstChart = useFirstChart()
   const chart = useChart(firstChart.data?.id)
-
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-    } catch (err) {
-      if (__DEV__) console.warn('[YouScreen] signOut failed:', err)
-    }
-  }
 
   const displayName = getDisplayName(user)
   const bigThree = getBigThreeLabel(firstChart.data, chart.data)
@@ -109,17 +100,6 @@ export default function YouScreen() {
             </Pressable>
           ))}
         </View>
-
-        <Pressable
-          onPress={handleSignOut}
-          accessibilityRole="button"
-          accessibilityLabel="Излез"
-          className="mt-16 self-center rounded-2xl border border-slate-700/60 px-8 py-3"
-        >
-          <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-200">
-            Излез
-          </Text>
-        </Pressable>
       </ScrollView>
     </SafeAreaView>
   )
