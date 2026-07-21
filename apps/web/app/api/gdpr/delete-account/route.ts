@@ -2,16 +2,26 @@ import { after } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
+import { requireAppUser } from '@/lib/auth/guards'
+import { isDeletionPending } from '@/lib/users/ensure-user'
 
 /**
  * POST /api/gdpr/delete-account
  * Request account deletion with 30-day grace period.
  * Sets deleted_at and deletion_scheduled_at on users table.
+ *
+ * Narrow requireAccountActive-class guard (B.0h-1): rejects a second
+ * request while one is already pending, rather than silently resetting
+ * the 30-day clock or double-logging the audit event.
  */
 export async function POST() {
-  const { userId } = await auth()
-  if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+  const { userId, user } = await requireAppUser()
+
+  if (isDeletionPending(user)) {
+    return Response.json(
+      { error: 'Вече има чакаща заявка за изтриване', code: 'DELETION_ALREADY_PENDING' },
+      { status: 409 }
+    )
   }
 
   const supabase = createServiceSupabaseClient()

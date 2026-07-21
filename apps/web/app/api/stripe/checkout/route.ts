@@ -1,6 +1,5 @@
-import { auth } from '@clerk/nextjs/server'
 import { stripe } from '@/lib/stripe/client'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { requireAppUser, requireAccountActive, toErrorResponse } from '@/lib/auth/guards'
 
 /**
  * POST /api/stripe/checkout
@@ -9,11 +8,22 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  * Auth: Required (Clerk)
  * Body: { priceId: string }
  * Returns: { url: string } - redirect user to this URL
+ *
+ * Narrow requireAccountActive guard (B.0h-1): a user with a pending
+ * account deletion cannot start a new subscription purchase — buying
+ * premium days before the 30-day grace period hard-deletes the account
+ * is a refund incident waiting to happen.
  */
 export async function POST(req: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+  let userId: string
+  let stripeCustomerId: string | null
+  try {
+    const { userId: id, user } = await requireAppUser()
+    requireAccountActive(user)
+    userId = id
+    stripeCustomerId = user.stripe_customer_id
+  } catch (error) {
+    return toErrorResponse(error, 'Неоторизиран достъп')
   }
 
   let priceId: string
@@ -35,21 +45,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    const supabase = createServiceSupabaseClient()
-
-    // Look up the user's existing Stripe customer ID
-    const { data: user } = await supabase
-      .from('users')
-      .select('stripe_customer_id')
-      .eq('clerk_id', userId)
-      .single()
-
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      customer: user?.stripe_customer_id ?? undefined,
+      customer: stripeCustomerId ?? undefined,
       metadata: {
         clerkUserId: userId,
       },
