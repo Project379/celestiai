@@ -39,10 +39,14 @@ Untracked, not in scope:
 No pending Supabase migrations, no pending SQL Editor pastes, no pending env-var cleanups from this session.
 
 **Open operational dependencies from prior sub-rounds** (referenced from `.planning/phases/phase-b-mobile-parity/HANDOFF-2026-05-09.md` strategic items section, not B.0g scope):
-- Apple Developer Program enrollment — begin by 2026-05-23, complete before SR 9. Founder owns.
 - OpenRouter cost envelope check — complete before SR 9. Founder owns.
-- Bulgarian Privacy Policy + ToS — required before external TestFlight opens. Founder + legal review.
 - RevenueCat dashboard config (products, entitlements, offerings) + Apple App Store product config — lead-time work; founder track during Phase B open.
+
+**App Store submission blockers (grouped 2026-07-21 at B.0h + P.10 close):** four non-coding items, each with lead time and no code dependency, that gate App Store submission specifically (not soft-launch/TestFlight-internal). They can proceed in parallel with remaining Stream P sub-rounds:
+1. **Apple Developer Program enrollment** — begin ASAP, complete before SR 9 (D12: gates P.17, and gates EAS Dev Client which also gates P.16 push notifications, since Expo Go cannot load remote push). Founder owns.
+2. **Terms of Service authoring** — no `/terms` route exists on web at all (Privacy Policy exists and is live content at `apps/web/app/privacy/page.tsx`, correcting an earlier assumption that both were pending — only ToS is). Required before external TestFlight. Founder + legal review.
+3. **Production deployment to stellaeum.com** (REVISIT-56) — the domain is founder-owned and final; mobile's settings screen already links to `https://stellaeum.com/privacy`, but the Next.js app isn't deployed there yet, so the link currently 404s (expected, not a bug — see P.10 smoke-test checklist). Blocks TestFlight, since Apple requires a live privacy policy URL in App Store Connect.
+4. **Account deletion completion notification** (REVISIT-55) — Apple Guideline 5.1.1(v)'s implementation doc requires user-facing confirmation when account deletion completes; `/api/cron/cleanup-deleted-accounts` currently only console-logs. Needs a transactional email service (none in the stack today) plus founder decision on provider.
 
 ---
 

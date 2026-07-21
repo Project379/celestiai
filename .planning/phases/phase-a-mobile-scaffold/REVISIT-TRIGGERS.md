@@ -1408,6 +1408,55 @@ P.7-b added a fourth consumer (`useStoryList`) with key `stellaeum.stories.state
 
 **Why documented:** REVISIT-7 demonstrated that a real accessibility-vs-brand tension filed with a vague trigger becomes permanent orphan risk. This replacement makes the re-fire condition externally checkable (App Store submission is a calendar-adjacent milestone, a complaint is an event, a legal requirement is a fact-check) rather than a phase label that drifts as planning documents get reorganized.
 
+## 53. Custom profile-field editing (name/email/password) for mobile
+
+**Status:** Filed at P.10 close 2026-07-21. D5's original premise ("Clerk RN `<UserProfile>` + custom app-specific section") was investigated and found unworkable: `@clerk/expo/native`'s `UserProfileView`/`useUserProfileModal` are backed by a native TurboModule (`NativeClerkModule`, confirmed via its codegen spec), unloadable in the app's current Expo Go runtime (the hook's own `isAvailable: boolean` flag exists specifically for this case), and unstyleable even once EAS Dev Client lands (no `appearance`/`elements` API, just a plain `style` prop and `isDismissable`). P.10 shipped only the custom app-specific section (sign-out, GDPR export/deletion, legal link, app version); profile-field editing (changing name, email, password) is NOT available anywhere on mobile.
+
+**Trigger:** before soft-launch — users need a way to fix a typo'd name or change their password without deleting and recreating their account. OR opportunistically once EAS Dev Client lands (SR9), if the founder decides the native `UserProfileView` is worth adopting for this specific narrow surface despite the styling/localization gap.
+
+**Sub-round when ready:** mirror the sign-in/sign-up custom-build precedent — hand-built RN screens against Clerk's JS-level hooks (`useUser()`, `user.update()`, Clerk's password-change API), not any prebuilt Clerk UI. Estimate: similar shape/scope to the existing custom sign-up form.
+
+**Why documented:** without profile editing anywhere, a user who fat-fingers their name at signup or wants to rotate their password has no in-app path — they'd need to contact support or delete/recreate the account. This is a real pre-launch gap, not a nice-to-have.
+
+## 54. Clerk `user.deleted` webhook as defense-in-depth
+
+**Status:** Filed at B.0h close 2026-07-21. The Clerk Dashboard "Allow users to delete their accounts" toggle (disabled per B.0h-0 founder action) removes the user-self-delete orphaning path entirely — that was the actual user-facing risk, and it's closed. An admin manually deleting a user from the Clerk Dashboard itself would still orphan Supabase rows (`users`, `charts`, `ai_readings`, `diary_entries`), since no webhook exists to catch that path.
+
+**Verified 2026-07-21:** webhooks are included on Clerk's free Hobby plan ("Webhooks for data sync" — [clerk.com/pricing](https://clerk.com/pricing)), unlike MFA which requires Pro+. No plan-tier blocker, unlike REVISIT-6.
+
+**Trigger:** before soft-launch if admin-side user management becomes routine (e.g. support handling a user-requested manual removal), OR opportunistically.
+
+**Sub-round when ready:** ~60-80 LOC webhook handler at `/api/webhooks/clerk`, verifying the svix signature, listening for `user.deleted`, calling the existing cascade logic already proven in `/api/cron/cleanup-deleted-accounts` (extract to a shared helper if not already).
+
+**Why documented:** belt-and-braces, not urgent — the Dashboard toggle already closes the path that mattered (user self-service). Filing so the admin-deletion edge case doesn't get forgotten.
+
+## 55. Account deletion completion notification — BLOCKS App Store submission
+
+**Status:** Filed at B.0h close 2026-07-21. Apple's App Store Review Guideline 5.1.1(v) implementation doc ([developer.apple.com/support/offering-account-deletion-in-your-app](https://developer.apple.com/support/offering-account-deletion-in-your-app/)) states: "If your process for account deletion is manual or otherwise takes time to complete, this is acceptable. Inform the user how long it will take to delete the account and **provide a confirmation when the deletion has been completed**." `/api/cron/cleanup-deleted-accounts` today only `console.log`s on completion — no user-facing confirmation of any kind.
+
+**Requires:**
+- (a) Transactional email service selection — none exists in the stack today (no `SENDGRID`/`RESEND`/`POSTMARK`-class env vars or package anywhere).
+- (b) Capturing the user's email address before the Clerk identity is destroyed — the email is the notification's destination but also the thing about to be deleted.
+- (c) Sequencing: the confirmation email must send BEFORE `clerkClient().users.deleteUser()` runs in the cron, since the Clerk record is the source of that email address.
+
+**Estimated scope:** ~40-60 LOC in the cron route + founder decision on email provider + service setup (API key, sender domain verification).
+
+**Trigger:** before App Store submission (this is a genuine submission blocker per Apple's own documented requirement, not a nice-to-have) — group with the other App Store submission blockers (REVISIT-1 Apple enrollment, ToS authoring, REVISIT-56 production deployment) tracked in HANDOFF's founder-track section.
+
+**Why documented:** discovered during B.0h investigation while verifying Apple's actual guideline text (not assumed from memory) — the completion-confirmation requirement is easy to miss since the deletion flow otherwise looks complete (grace period, cron, cascade all work). Filing separately from the rest of B.0h since it needs new infrastructure (email) rather than wiring existing pieces.
+
+## 56. Production deployment to stellaeum.com — BLOCKS TestFlight
+
+**Status:** Filed at P.10 close 2026-07-21. Mobile's settings screen links to `https://stellaeum.com/privacy` (founder-confirmed as the correct, permanent domain) — but the Next.js web app is not yet deployed there, so the link currently 404s. This is expected, not a code bug — flagged explicitly in the P.10 smoke-test checklist so a future pass doesn't misdiagnose it.
+
+**Why this blocks TestFlight:** Apple requires a live, reachable privacy policy URL in App Store Connect for external TestFlight testing (and for the eventual App Store listing).
+
+**Trigger:** before TestFlight submission.
+
+**Sub-round when ready:** deployment task, not a code change to this repo per se — provision hosting (Vercel is the implied target given the Next.js stack), point `stellaeum.com` DNS at it, verify `/privacy` (and any other founder-facing routes) resolve.
+
+**Why documented:** groups with REVISIT-1 (Apple enrollment), ToS authoring, and REVISIT-55 (deletion completion email) as one of the founder-track items that gate App Store submission — see HANDOFF's "App Store submission blockers" section for the consolidated list.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
