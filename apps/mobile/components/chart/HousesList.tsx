@@ -65,8 +65,14 @@ export function HousesList({ houses, birthTimeKnown }: HousesListProps) {
             style={{ gap: 16 }}
           >
             <View className="flex-row items-center" style={{ gap: 16 }}>
-              <Text className="w-8 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.22em] text-amber-300/70">
-                H{house.number}
+              {/* Same fix as PlanetsList's "H7": a bare Latin-letter
+                  abbreviation doesn't belong in an otherwise fully
+                  Bulgarian editorial interface. Ordinal only (no "дом"
+                  suffix) to fit the fixed index column — the section
+                  heading above ("12 къщи") already establishes that
+                  every row here is a house. */}
+              <Text className="w-10 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.22em] text-amber-300/70">
+                {house.number}-и
               </Text>
               <Text className="text-[12.5px] font-light text-slate-300">
                 {formatDegreeInSign(house.signDegree, house.sign)}

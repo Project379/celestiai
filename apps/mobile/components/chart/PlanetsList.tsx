@@ -4,6 +4,16 @@ import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
 import type { Planet, PlanetPosition } from '@stellaeum/astrology/client'
 import { formatDegreeInSign } from '@stellaeum/core/charts/sections'
 
+// Bulgarian ordinal, not a bare "H7" abbreviation — the rest of this
+// screen is fully Bulgarian editorial prose, and a Latin-letter shorthand
+// reads as a leftover placeholder in that context. Arabic ordinal, not a
+// Roman numeral: R5 in the redesign doc explicitly scopes Roman numerals
+// to the Astrology Guide only, to keep Карта free of the per-section
+// numeral overuse v1 shipped — this fix stays inside that boundary.
+function houseOrdinal(house: number): string {
+  return `${house}-и дом`
+}
+
 interface PlanetsListProps {
   planets: readonly PlanetPosition[]
   onSelect?: (planet: PlanetPosition) => void
@@ -57,7 +67,7 @@ export function PlanetsList({ planets, onSelect, selectedPlanet }: PlanetsListPr
             <View className="flex-row items-baseline" style={{ gap: 12 }}>
               <Text className="text-[12.5px] font-light text-slate-400">{position}</Text>
               <Text className="text-slate-600">·</Text>
-              <Text className="text-[12.5px] font-light text-slate-400">H{planet.house}</Text>
+              <Text className="text-[12.5px] font-light text-slate-400">{houseOrdinal(planet.house)}</Text>
               {retrograde && (
                 <Text
                   accessibilityLabel="Ретроград"
