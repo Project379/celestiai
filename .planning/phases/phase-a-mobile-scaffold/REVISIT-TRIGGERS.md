@@ -56,6 +56,8 @@ Bundling = single closure event when enrollment completes.
 - `eas init` + EAS build configuration
 - TestFlight provisioning
 
+**Status addendum (2026-07-22, MOBILE-ALPHA-REDESIGN sequencing pass):** this REVISIT's own founder-action deadline ("begin enrollment within 2 weeks of Phase A close, by 2026-05-23 at the latest") has passed — enrollment is confirmed still not started as of this addendum, roughly two months past that internal target. Re-confirmed as the critical-path blocker for P.15 (RevenueCat sandbox testing), P.17/SR9 (this item — EAS/TestFlight/biometric), and by dependency P.18 (soft-launch readiness gate). Zero code dependency, unknown external duration once started. Highest-priority founder-track item in the current sequencing plan — see `.planning/research/MOBILE_ALPHA_REDESIGN.md` §7 for the full P-chain interleaving this blocks.
+
 ## 2. Sign in with Apple — runtime feature deferred (peer installed for bundle compat)
 
 **Status:** `expo-apple-authentication ~7.2.4` installed in the commit-1.3-prep
@@ -1476,6 +1478,22 @@ P.7-b added a fourth consumer (`useStoryList`) with key `stellaeum.stories.state
 **Cross-references:** REVISIT-45 (production LLM model selection).
 
 **Why documented:** the exact numbers in `prompts.ts` were tuned against one specific model's behavior; a model swap without re-verification risks silently drifting back to over-length readings the founder explicitly rejected.
+
+## 58. Yesterday view disposition on Днес
+
+**Status:** Filed during MOBILE-ALPHA-REDESIGN v3 Round A cutover 2026-07-22. The old `(tabs)/index.tsx` had a Today/Yesterday switcher (shipped at P.1 as web parity) — a disabled "Неналично" tab state when yesterday's reading is unavailable, plus a specific "Вчерашното послание вече е отминало" message. `preview/today.tsx` (now the live Днес screen post-cutover) does not have this switcher. Round A cut over without it — a founder decision, not an oversight discovered too late to act on.
+
+**Concern:** `useDailyHoroscope` (`apps/mobile/hooks/useDailyHoroscope.ts`) still exposes `selectedDate`, `setSelectedDate`, and `yesterdayUnavailable` — none of which the new Днес screen reads. These are dead fields, not dead code paths (the hook still runs the lazy yesterday query when asked) — flagging so a future reader doesn't mistake unused-but-present fields for live state, or assume their presence means the feature still works end-to-end on mobile.
+
+**Decide:** (a) restore a Yesterday affordance in a form that fits the new screen's "today, right now" premise, or (b) retire it permanently and clean up the dead hook fields.
+
+**Evidence needed before deciding:** PostHog data on whether anyone used the Yesterday tab on web, since mobile has no telemetry until P.13 lands.
+
+**Trigger:** after P.13 telemetry lands, OR before soft-launch if no usage data is available by then.
+
+**Cross-references:** REVISIT 57 (daily-reading length), P.13 (telemetry wiring).
+
+**Why documented:** without this, a future pass could either "helpfully" restore the switcher without evidence it's used, or delete the hook fields without realizing they were a deliberate, tracked hold rather than leftover cruft.
 
 ## Appendix — Pre-existing peer warnings (not action items)
 

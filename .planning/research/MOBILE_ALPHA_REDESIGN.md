@@ -1,6 +1,6 @@
 # MOBILE-ALPHA-REDESIGN — platform-native mobile design system
 
-Status: **HALT FOR FOUNDER REVIEW — v3, STOPPED AT STEP 2 PROSE**. v1 (primitive gallery, no hierarchy) and v2 (measured hierarchy but still too distinctive/unfamiliar) were both rejected and neither was committed — both discarded, only the font pipeline survives (`useFonts` wiring, commit `a1bed76`), ratified as correct independent of design direction. v3's brief inverts the prior direction entirely: the goal is FAMILIARITY (Co-Star: "feels like I've used it before"), achieved through the continuity layer alone (palette, type faces, ambient gradients, voice) while layout uses maximally conventional structure. §0 below is v3's Step 1 research + Step 2 prose; discipline requires halting here for review before any layout/code. §1 onward is v1/v2's research, largely still valid as reference (see §0.0 for what changed).
+Status: **v3 RATIFIED, ROUND A LIVE (2026-07-22)**. v1 (primitive gallery, no hierarchy) and v2 (measured hierarchy but still too distinctive/unfamiliar) were both rejected and neither was committed — both discarded, only the font pipeline survives (`useFonts` wiring, commit `a1bed76`), ratified as correct independent of design direction. v3's brief inverts the prior direction entirely: the goal is FAMILIARITY (Co-Star: "feels like I've used it before"), achieved through the continuity layer alone (palette, type faces, ambient gradients, voice) while layout uses maximally conventional structure. §0's prose is ratified; Днес and Карта are live (§14). Reading-length (§0.3), the Ритъм R3/R5 conflict (held for Round C, scope corrected in §10), and P-chain sequencing (§7) are all decided. Round B is a separate ratification, not yet fired. §1 onward is v1/v2's research, largely still valid as reference (see §0.0 for what changed).
 
 Strategic basis unchanged: web and mobile are sibling surfaces, not port-and-original. Backend, features, data, and Bulgarian copy content remain verbatim shared. This is presentation-only.
 
@@ -259,9 +259,25 @@ No third screen — two real, complete, contrasting screens (long-form reading v
 - **Not verified on-device.** `tsc`, lint, LOC counts, and a full `expo export` bundle all pass clean, and the Cinzel/Cyrillic audit was re-run against every new file — but none of that confirms the screens actually *render* with the intended hierarchy on a physical device. A clean compile is not a clean render. Founder review on device is still the verification step that matters here, not this document.
 - **v1 no longer exists for a live side-by-side.** The rejected `today-redesign.tsx` and its primitive library were never committed (per instruction) and were deleted once the redo started, so they are not recoverable from git history either — only this document's now-rewritten description of v1 remains. The table above is a written comparison from that description, not a live A/B on two running preview routes. If an actual on-device side-by-side is wanted, v1 would need to be rebuilt from scratch against its original (rejected) spec — flag if that's worth doing before deciding, since it would just be reproducing the screen the founder already rejected.
 
-## 7. Impact on the remaining chain — unchanged recommendation
+## 7. Impact on the remaining chain — ratified sequencing (2026-07-22)
 
-Phases **P.9, P.15, P.11, P.12, P.16, P.13, P.17, P.18**: still HOLD until ratification (see v1 reasoning, unaffected by the redo — if anything, this reinforces holding, since the system itself changed once already).
+Superseded: the original "still HOLD until ratification" note. The chain sequencing is now decided. Two corrections surfaced during this pass to the eight-item list previously in circulation: **P.17 and "SR 9" are the same sub-round**, not two (EAS Dev Client + TestFlight + biometric auth, bundled per REVISIT-1/27) — so the remaining work is eight sub-rounds, not nine. And **Apple Developer enrollment blocks three sub-rounds, not one** — P.15 ("Halt risk: sandbox testing needs Apple Developer enrollment"), P.17/SR9 ("fires only after enrollment confirmed"), and by dependency P.18 (soft-launch readiness gate) — not just P.16 (which is backend-only, gated on REVISIT-47 instead).
+
+**Ratified order:**
+
+1. **Round A (cutover)** + start Apple Developer enrollment in parallel — zero-cost, unblocks the most, done same day (see §14 below).
+2. **Round B** (Ти + `/you/premium`) — before P.9/P.11 build premium/pricing UI there, so they build on the new system once instead of old-then-rework.
+3. **P.9** (read-only subscription view) ships once Round B lands.
+4. **P.15** (RevenueCat) — non-sandbox work proceeds anytime; sandbox testing resumes once Apple enrollment clears.
+5. **P.11** (pricing surface) — after both Round B and P.15.
+6. **Round C** (Ритъм, revised scope — see §10) and **Round D/E** (Кръг; oracle/journal/you-subroutes) in parallel where possible — design rounds need iterative founder-review calendar time; front-loading D/E alongside C avoids a schedule crunch before P.18.
+7. **P.12** (Oracle polish) — folded into whichever of Round D/E rebuilds `oracle.tsx`.
+8. **P.16** (push infra) — anytime once REVISIT-47 resolves; not gated on any design round.
+9. **P.13** (telemetry) — after Round B/C/D/E surfaces exist, per its own doc note.
+10. **P.17/SR9** (EAS/TestFlight/biometric) — once Apple enrollment is confirmed.
+11. **P.18** (soft-launch readiness, docs-only) — final gate.
+
+**Founder-track note — highest-priority item:** Apple Developer enrollment is the confirmed critical-path blocker for P.15, P.17/SR9, and by dependency P.18. It has zero code dependency and unknown external duration once started — pure calendar time, not engineering effort. REVISIT-1's own founder-action deadline (begin within 2 weeks of Phase A close, by 2026-05-23) has already passed; as of this note enrollment is confirmed still not started, roughly two months past that internal target. Recorded in the App Store submission blockers group alongside REVISIT-55 (deletion completion email) and REVISIT-56 (stellaeum.com deployment) — see REVISIT-1's 2026-07-22 status addendum in `REVISIT-TRIGGERS.md`.
 
 ## 8. Explicit continuity-layer changes requiring ratification — unchanged from v1
 
@@ -271,19 +287,23 @@ Restated: canonical near-black `#08060f`, canonical violet `#8b5cf6`, cyan exclu
 
 See v1's filed item: `globals.css` background/violet values, `tailwind.config.ts` violet token, `layout.tsx` `--font-display` → Playfair Display. Not implemented in this pass.
 
-## 10. Rollout estimate (revised)
+## 10. Rollout estimate (revised 2026-07-22 — Round A live, Round C scope corrected)
 
 | Screen | Status | Est. LOC |
 |---|---|---|
-| Днес (preview) | Built this pass | ~180–220 (screen) |
-| Карта (preview) | Built this pass | ~200–250 (screen, wraps existing `NatalWheel`/chip components rather than rebuilding them) |
-| Shared primitives (`Hero`, revised `Card`/`Button`/`TabSwitcher`, states) | Built this pass | ~250–320 (smaller than v1's 346 — `SectionHeader` dropped as a general primitive per R5) |
-| `(tabs)/circle.tsx` (Кръг) | Not built | ~150–220 |
-| `(tabs)/rhythm.tsx` (Ритъм) | Not built | ~120–180 |
-| `(tabs)/you.tsx` (Ти) | Not built | ~100–150 |
-| `oracle.tsx`, `rhythm/journal.tsx`, `you/*` (6 screens) | Not built | ~80–150 each, ~600–900 total |
+| Днес | **Live — Round A cutover 2026-07-22** | ~180–220 (screen), landed |
+| Карта | **Live — Round A cutover 2026-07-22** | ~200–250 (screen, wraps existing `NatalWheel`/chip components rather than rebuilding them), landed |
+| Shared primitives (`Hero`, revised `Card`/`Button`/`TabSwitcher`, states) | Built | ~250–320 (smaller than v1's 346 — `SectionHeader` dropped as a general primitive per R5), landed |
+| `(tabs)/circle.tsx` (Кръг) — Round D or E | Not built | ~150–220 |
+| `(tabs)/rhythm.tsx` (Ритъм) — Round C | Not built | **~120–180 for `rhythm.tsx`'s own skeleton, PLUS R3/R5 rework of `LunarPhaseCard.tsx` (321 lines, ~12 tracked-caps elements to collapse) and `TransitOverviewCard.tsx` (415 lines, 3 Roman numerals + ~8 tracked-caps elements to collapse) — neither counted in the original estimate.** Step 3 of this pass found the whole Ритъм screen carries ~16 tracked-caps elements once every component is counted, not just `rhythm.tsx` itself; Round C's real scope is closer to **~350–500 LOC** including those two components, not ~120–180. |
+| `(tabs)/you.tsx` (Ти) — Round B | Not built | ~100–150 |
+| `oracle.tsx`, `rhythm/journal.tsx`, `you/*` (6 screens) — Round D/E | Not built | ~80–150 each, ~600–900 total |
 
-**Revised total estimate: ~1,600–2,240 LOC** across the full rollout — lower than v1's ~2,850–3,650 estimate, mainly because dropping Roman-numeral `SectionHeader` as a general primitive and defaulting to full-width cards removes complexity that v1 had budgeted for.
+**Revised total estimate: ~1,850–2,560 LOC** across the full rollout (up from the prior ~1,600–2,240, entirely due to Round C's corrected scope) — still lower than v1's ~2,850–3,650 estimate.
+
+## 14. Round A — cutover, landed 2026-07-22
+
+`preview/today.tsx` and `preview/chart.tsx` promoted to the live `(tabs)/index.tsx` and `(tabs)/chart.tsx` routes; the old 643-line Днес and 301-line Карта screens retired. Zero new design work — everything here was already built and approved in this pass. Pre-cutover verification (no other file imported the old screens by path; `(authed)/_layout.tsx`'s chart-less redirect doesn't reference either route by path, so it's unaffected; state-branch parity checked directly against the old screens rather than assumed) found one real gap: the old Днес had a Today/Yesterday switcher that `preview/today.tsx` doesn't. Founder decision: cut over anyway, filed as **REVISIT 58** rather than silently dropped or silently restored — `useDailyHoroscope`'s `selectedDate`/`setSelectedDate`/`yesterdayUnavailable` fields are now dead (present, unused) until that REVISIT resolves one way or the other. Карта's state-branch check found no equivalent gap. The dev-only `__DEV__` preview nav rows in `(tabs)/you.tsx` are removed as part of this cutover, since the routes they pointed at no longer exist as preview routes.
 
 ## 11. Risk list (updated)
 
