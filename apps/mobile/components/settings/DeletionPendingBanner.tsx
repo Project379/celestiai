@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native'
+import { Pressable, Text } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { useAccountDeletion } from '@/hooks/useAccountDeletion'
 
@@ -23,7 +24,10 @@ export function DeletionPendingBanner() {
   if (!deletionScheduledAt) return null
 
   return (
-    <View className="border-b border-rose-400/30 bg-rose-500/[0.08] px-4 py-2.5">
+    <SafeAreaView
+      edges={['top']}
+      className="border-b border-rose-400/30 bg-rose-500/[0.08] px-4 py-2.5"
+    >
       <Text className="text-center text-[13px] text-rose-200/95">
         Акаунтът ти ще бъде изтрит на{' '}
         <Text className="font-medium text-rose-100">
@@ -37,6 +41,6 @@ export function DeletionPendingBanner() {
           {cancelDeletion.isPending ? 'Отменяме...' : 'Отмени изтриването'}
         </Text>
       </Text>
-    </View>
+    </SafeAreaView>
   )
 }
