@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Text, View } from 'react-native'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { Pressable, Text, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { useUser } from '@clerk/expo'
 import Animated, {
@@ -399,12 +399,26 @@ function firstPlanetOf(chunks: SentinelChunk[]): Planet | null {
 // Big Three's `hairline={idx > 0}`) → payoff (weight-up, no anchor — it's
 // the takeaway, not another influence, so it stays visually distinct from
 // the influence segments rather than reading as one more of them).
+// MOBILE-ALPHA-REDESIGN v3, Step 2 (reading length): the daily-horoscope
+// prompt now targets 400-550 characters, 2 paragraphs (apps/web/lib/
+// horoscope/prompts.ts) — a genuine "text from a friend" reading fits
+// on-screen with no scroll needed. This threshold is a variance safety
+// net, not a routine control: it sits well above the new target so it
+// only fires on outliers (a model that ignores the length instruction,
+// or a legacy reading generated under the old 4-6 paragraph prompt still
+// cached for today). See REVISIT: daily-reading length re-verification
+// against production model.
+const EXPAND_THRESHOLD_CHARS = 900
+
 function HoroscopeBody({ content }: { content: string }) {
+  const [expanded, setExpanded] = useState(false)
   const paragraphs = useMemo(
     () => content.split(/\n\n+/).map((p) => p.trim()).filter(Boolean).map((p) => parseSentinels(p)),
     [content],
   )
   const last = lastIndex(paragraphs)
+  const isOutlier = content.length > EXPAND_THRESHOLD_CHARS && last > 1
+  const collapsed = isOutlier && !expanded
   let devIndex = -1
 
   return (
@@ -412,47 +426,58 @@ function HoroscopeBody({ content }: { content: string }) {
       {paragraphs.map((chunks, i) => {
         const role = i === 0 ? 'opener' : i === last && last > 0 ? 'payoff' : 'development'
         if (role === 'development') devIndex += 1
+        if (collapsed && role === 'development') return null
         const anchor = role === 'development' ? firstPlanetOf(chunks) : null
         const hairline = role === 'development' && devIndex > 0
 
         return (
-          <View
-            key={i}
-            style={{
-              marginTop: role === 'opener' ? 0 : role === 'payoff' ? rhythm.group : rhythm.paragraph,
-              borderTopWidth: hairline ? 1 : 0,
-              borderTopColor: 'rgba(148,163,184,0.08)',
-              paddingTop: hairline ? rhythm.tight : 0,
-            }}
-          >
-            {anchor && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: rhythm.micro }}>
-                <Text style={{ fontFamily: font.cinzel, fontSize: 14, color: color.amber }}>{PLANET_GLYPHS[anchor]}</Text>
-                <Text style={{ ...type.caption, color: color.muted }}>{PLANETS_BG[anchor]}</Text>
-              </View>
+          <Fragment key={i}>
+            {collapsed && role === 'payoff' && (
+              <Pressable
+                onPress={() => setExpanded(true)}
+                accessibilityRole="button"
+                style={{ marginTop: rhythm.paragraph, marginBottom: rhythm.paragraph }}
+              >
+                <Text style={{ ...type.caption, color: color.amber }}>Прочети повече</Text>
+              </Pressable>
             )}
-            <Text
+            <View
               style={{
-                ...type.body,
-                fontFamily: role === 'opener' ? font.bodyItalic : role === 'payoff' ? font.bodyMedium : font.body,
-                color: '#dde3ee',
+                marginTop: role === 'opener' ? 0 : role === 'payoff' ? rhythm.group : rhythm.paragraph,
+                borderTopWidth: hairline ? 1 : 0,
+                borderTopColor: 'rgba(148,163,184,0.08)',
+                paddingTop: hairline ? rhythm.tight : 0,
               }}
             >
-              {chunks.map((chunk, j) =>
-                chunk.planet ? (
-                  // Always Medium, never italic — including inside the
-                  // italic opener paragraph, where an italic amber word
-                  // would read as emphasis-on-emphasis and fight the
-                  // opener's own register shift instead of standing out.
-                  <Text key={j} style={{ color: '#fcd34d', fontFamily: font.bodyMedium }}>
-                    {chunk.text}
-                  </Text>
-                ) : (
-                  chunk.text
-                ),
+              {anchor && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: rhythm.micro }}>
+                  <Text style={{ fontFamily: font.cinzel, fontSize: 14, color: color.amber }}>{PLANET_GLYPHS[anchor]}</Text>
+                  <Text style={{ ...type.caption, color: color.muted }}>{PLANETS_BG[anchor]}</Text>
+                </View>
               )}
-            </Text>
-          </View>
+              <Text
+                style={{
+                  ...type.body,
+                  fontFamily: role === 'opener' ? font.bodyItalic : role === 'payoff' ? font.bodyMedium : font.body,
+                  color: '#dde3ee',
+                }}
+              >
+                {chunks.map((chunk, j) =>
+                  chunk.planet ? (
+                    // Always Medium, never italic — including inside the
+                    // italic opener paragraph, where an italic amber word
+                    // would read as emphasis-on-emphasis and fight the
+                    // opener's own register shift instead of standing out.
+                    <Text key={j} style={{ color: '#fcd34d', fontFamily: font.bodyMedium }}>
+                      {chunk.text}
+                    </Text>
+                  ) : (
+                    chunk.text
+                  ),
+                )}
+              </Text>
+            </View>
+          </Fragment>
         )
       })}
     </ReadingFrame>
