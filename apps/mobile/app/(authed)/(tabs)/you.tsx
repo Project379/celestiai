@@ -7,6 +7,7 @@ import { ZODIAC_SIGNS_BG } from '@stellaeum/astrology/client'
 import { useChart } from '@/hooks/useChart'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
+import { getDisplayName } from '@/lib/clerk/displayName'
 
 // First four hints mirror apps/web/components/you/YouHub.tsx verbatim.
 // Premium and Settings are mobile-only entries (web hosts them in the
@@ -22,17 +23,6 @@ const SECTIONS = [
   { label: 'Премиум',     hint: 'абонамент и плащане',             route: '/you/premium' as const          },
   { label: 'Настройки',   hint: 'акаунт, поверителност, данни',    route: '/you/settings' as const         },
 ] as const
-
-function getDisplayName(user: ReturnType<typeof useUser>['user']): string {
-  if (!user) return 'Ти'
-  const first = user.firstName?.trim() ?? ''
-  const last = user.lastName?.trim() ?? ''
-  const full = [first, last].filter(Boolean).join(' ')
-  if (full) return full
-  const email = user.primaryEmailAddress?.emailAddress ?? ''
-  const username = email.split('@')[0]
-  return username || 'Ти'
-}
 
 /**
  * Dynamic Big-Three subtitle (item 5.8). Resolves the user's sun + moon +

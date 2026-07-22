@@ -24,6 +24,7 @@ import { ScreenShell } from '@/components/design-system/ScreenShell'
 import { color, font, rhythm, type } from '@/components/design-system/tokens'
 import { EmptyState, ErrorState, LoadingState } from '@/components/design-system/States'
 import { useApiClient } from '@/lib/api/client'
+import { getDisplayName } from '@/lib/clerk/displayName'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
@@ -68,7 +69,14 @@ export default function DnesScreen() {
   const { push } = useGuardedNavigation()
   const { apiFetch } = useApiClient()
   const { user } = useUser()
-  const firstName = user?.firstName?.trim() || 'Потребител'
+  // Shared with (tabs)/you.tsx's account row — firstName+lastName, then
+  // email username, then a generic placeholder. Several accounts predate
+  // B.0g-2's required-name-fields signup change; an email username reads
+  // warmer than a hardcoded placeholder for those. Note this can surface a
+  // full name ("Николай Тонев"), not just a first name, when both fields
+  // are set — see the greeting-size rebalance discussion in
+  // MOBILE_ALPHA_REDESIGN.md for the type-scale implication.
+  const firstName = getDisplayName(user, 'Потребител')
 
   const [chart, setChart] = useState<ChartSummary | null | undefined>(undefined)
   const horoscope = useDailyHoroscope(chart?.id)
