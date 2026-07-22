@@ -1457,6 +1457,26 @@ P.7-b added a fourth consumer (`useStoryList`) with key `stellaeum.stories.state
 
 **Why documented:** groups with REVISIT-1 (Apple enrollment), ToS authoring, and REVISIT-55 (deletion completion email) as one of the founder-track items that gate App Store submission — see HANDOFF's "App Store submission blockers" section for the consolidated list.
 
+## 57. Daily-horoscope reading length — re-verify prompt tuning if the production model changes
+
+**Status:** Filed during MOBILE-ALPHA-REDESIGN v3 Step 2 close 2026-07-22. The daily-horoscope FORMAT spec (`apps/web/lib/horoscope/prompts.ts:18-23`) was cut from "4 to 6 paragraphs" to "exactly 2 short paragraphs, 400 to 550 characters... do not exceed 550 characters" per founder ratification, to match the Днес screen's "text from a friend" design intent rather than a briefing. Tuning was measured directly against 8 real generations pulled from the live `daily_horoscopes` Supabase table under the OLD prompt (avg 2,135 chars / 5 paragraphs across 8 samples, range 1,803-2,439), then verified with fresh test generations against the REVISED prompt.
+
+**Verification note, corrected from initial plan:** the tuning pass was NOT a gpt-4o-mini proxy as originally scoped (`OPENROUTER_API_KEY` is absent from `apps/web/.env.local` under that name) — the value stored under `OPENAI_API_KEY` in that file is actually an OpenRouter credential (`sk-or-v1-` prefix, mislabeled env var name), which let the test run directly against the real production model (`meta-llama/llama-3.3-70b-instruct`). First pass at "400 to 600 characters" overshot to 597-671 chars in most runs; tightened to "400 to 550... do not exceed 550... when unsure, write shorter" landed 6 of 7 coherent runs at 394-520 chars. Treat this as real production-model verification, not a proxy estimate — but re-verify if REVISIT-45's model swap lands, since a different model may follow length instructions differently than Llama 3.3 70B did here.
+
+**Separate quality risk surfaced during testing, not part of this REVISIT's scope:** 1-2 of every 8 test generations (both before and after the length change) came back garbled — mixed Bulgarian/English tokens, broken words (e.g. "Слънери", "GlobalKey", "ppl[/planet:KEY]BulgarianName"). This appears to be pre-existing Llama 3.3 70B flakiness at `temperature: 0.85`, unrelated to paragraph count, and not something this pass fixed. Worth its own investigation (lower temperature? retry-on-malformed-sentinel? stricter validation before caching to `daily_horoscopes`?) — flagging here since it surfaced during this work, not filing a full plan for it.
+
+**Env var finding, also out of scope here:** `apps/web/app/api/horoscope/generate/route.ts:15-18` reads `process.env.OPENROUTER_API_KEY`, but the local `.env.local` has no variable by that name — only `OPENAI_API_KEY`, which happens to hold an OpenRouter-format key. Worth confirming whether the deployed (Vercel) environment has the correctly-named `OPENROUTER_API_KEY` set, or whether this local mislabeling reflects a real gap that makes local dev generation silently broken until someone notices `undefined` apiKey.
+
+**Product tradeoff to flag to the founder, not hidden as a side effect:** cutting to "1, at most 2" influences per reading (from "2 to 4") reduces astrological coverage per day — fewer transits mentioned, by design, in exchange for a shorter, warmer, single-focus message. This is the intended tradeoff per the founder's own framing ("one thing that matters today ... not a survey"), not an unintended regression, but should stay visible as a product decision rather than read as a downgrade if raised later.
+
+**Cache behavior confirmed (not a stale-content risk):** `daily_horoscopes` is keyed uniquely on `(chart_id, date)` with no TTL/regeneration — but the `generate` route (`route.ts:43-60`) only permits `date` to be today or yesterday, so a reading generated under the old long-form prompt is naturally bounded to the single day it was cached for. No user will see an old 5-paragraph reading resurface once that day passes; the next day's generation uses the new prompt automatically. The mobile client (`preview/today.tsx`'s `HoroscopeBody`) also carries a collapse/expand safety net (`EXPAND_THRESHOLD_CHARS = 900`) for the one remaining case — today's reading already cached long before this prompt change deployed.
+
+**Trigger:** next time REVISIT-45's production model swap lands — re-generate 5-8 real readings against the new model and re-tune the character/paragraph targets in `prompts.ts` if they land outside 400-550. Also worth a look whenever the garbled-output rate is investigated, since a stricter length budget gives a flaky generation less room to recover mid-paragraph.
+
+**Cross-references:** REVISIT-45 (production LLM model selection).
+
+**Why documented:** the exact numbers in `prompts.ts` were tuned against one specific model's behavior; a model swap without re-verification risks silently drifting back to over-length readings the founder explicitly rejected.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have

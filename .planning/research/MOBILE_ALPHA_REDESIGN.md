@@ -54,6 +54,18 @@ The real finding is a size problem, not a feasibility problem. At a 390px-wide s
 
 What they're not here for: a dashboard of every possible chart view competing for attention before they've located the actual chart. The chip switcher and Big Three cards are useful, but they are not what someone opened this screen to see first — they should appear as clearly-secondary, or below the wheel, not stacked above it as gatekeeping chrome (v2's specific failure, per the founder's Step 3 correction #1).
 
+### 0.3 Daily-reading length — ratified 2026-07-22, landed
+
+Real generated readings measured directly from the live `daily_horoscopes` table (8 samples, old prompt): **1,803–2,439 characters, avg 2,135, 5 paragraphs** — article-length, not the "text from a friend" the Днес prose above describes. That gap was real, not a taste call: at ~39 chars/line on a 390px EB Garamond render, 2,135 chars is ~55 lines of body text, ~1,540px of pure reading before spacing.
+
+**Decision:** cut the prompt FORMAT spec (`apps/web/lib/horoscope/prompts.ts:18-23`) from "4 to 6 paragraphs, 2 to 4 influences" to "exactly 2 short paragraphs, 400 to 550 characters, do not exceed 550, 1 influence (2 only if truly load-bearing)." VOICE AND TONE (lines 4-8) untouched — this is a length/coverage cut, not a voice change. Paired with a client-side expand safety net (`preview/today.tsx`'s `EXPAND_THRESHOLD_CHARS = 900`) for variance and for today's-already-cached long readings, so an outlier never breaks the screen.
+
+**Verified against the actual production model** (`meta-llama/llama-3.3-70b-instruct` via OpenRouter — not a proxy; see REVISIT 57 for how that access was found). First pass at "400-600 chars" overshot to 597-671 in most runs; tightened wording ("do not exceed 550... when unsure, write shorter") landed 6 of 7 coherent test runs at 394-520 chars.
+
+**Product tradeoff, stated plainly:** fewer influences per reading (1, occasionally 2, down from 2-4) means less astrological coverage per day — an intentional exchange for a shorter, single-focus, warmer message, not a silent regression. Re-verification needed if REVISIT-45's model swap lands, since paragraph/length adherence is model-specific — filed as REVISIT 57 (`.planning/phases/phase-a-mobile-scaffold/REVISIT-TRIGGERS.md`), which also carries a separate, out-of-scope flag: 1-2 of every 8 test generations came back garbled regardless of length (pre-existing model flakiness at `temperature: 0.85`, not something this pass caused or fixed).
+
+**(b) — lead-carries-the-message — confirmed rejected.** As written, the reading's first paragraph opens into one transit rather than summarizing the whole day, and restructuring it that way wouldn't have shrunk anything — the same ~2,100 chars would still exist below the lead, just visually deprioritized. (c)+(a) address the actual disease (length) rather than re-skinning it.
+
 ---
 
 **HALT.** No layout or code follows until this prose is reviewed.
