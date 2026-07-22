@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { Pressable, View } from 'react-native'
+import { useMemo, useState } from 'react'
+import { Pressable, Text, View } from 'react-native'
 import Svg, {
   Circle,
   G,
@@ -10,6 +10,7 @@ import Svg, {
 
 import {
   PLANET_GLYPHS,
+  PLANETS_BG,
   ZODIAC_SIGNS_ORDER,
 } from '@stellaeum/astrology/client'
 import type {
@@ -92,6 +93,20 @@ const SIGN_ELEMENTS: Record<ZodiacSign, keyof typeof ELEMENT_FILLS> = {
 }
 
 const MIN_SEPARATION_DEG = 8
+
+/**
+ * Hit-testing note (MOBILE-ALPHA-REDESIGN v3, gap 2): the de-clumping pass
+ * above only guarantees MIN_SEPARATION_DEG (8°) between adjacent planets —
+ * a real stellium still clusters several planets that tightly. At a
+ * typical 390px-wide-screen wheel, 8° of separation is ~15.6px of arc
+ * length, so independent per-planet 44pt hit regions would overlap by
+ * ~64% of their diameter for exactly the charts most likely to need
+ * disambiguation. Fixed by removing per-planet Pressables in favor of one
+ * tap surface that finds every planet within HIT_RADIUS_MIN of the tap
+ * point and opens a disambiguation list when more than one qualifies,
+ * rather than silently guessing via z-order.
+ */
+const HIT_RADIUS_MIN = 22 // px — 44pt HIG minimum tap target, as a radius
 
 /**
  * Convert ecliptic longitude to a screen-coordinate trigonometric angle.
@@ -182,8 +197,32 @@ export function NatalWheel({
   const labelRadius = (zodiacInnerRadius + zodiacOuterRadius) / 2
   const houseNumberRadius = houseInnerRadius * 1.15
 
+  const [ambiguous, setAmbiguous] = useState<PlanetPosition[] | null>(null)
+
+  const hitRadius = Math.max(HIT_RADIUS_MIN, size * 0.063)
+
   const handlePlanetPress = (planet: PlanetPosition) => {
     onPlanetSelect?.(planet)
+  }
+
+  const handleWheelPress = (locationX: number, locationY: number) => {
+    const candidates = planetPositions
+      .map((planet) => ({
+        planet,
+        distance: Math.hypot(locationX - planet.x, locationY - planet.y),
+      }))
+      .filter((c) => c.distance <= hitRadius)
+      .sort((a, b) => a.distance - b.distance)
+      .map((c) => c.planet)
+
+    if (candidates.length === 0) return
+    if (candidates.length === 1) {
+      handlePlanetPress(candidates[0])
+      return
+    }
+    // Stellium case — multiple planets within the same tap's catch
+    // radius. Ask rather than guess (see HIT_RADIUS_MIN note above).
+    setAmbiguous(candidates)
   }
 
   return (
@@ -423,27 +462,70 @@ export function NatalWheel({
         })}
       </Svg>
 
-      {/* Tap hit-area overlay — Pressables sized to each planet glyph
-          for tap-to-interpret. Sits above the SVG. Per SR 6 decision 6,
-          tap fires the bottom-sheet PlanetDetail in the parent. */}
-      {planetPositions.map((planet) => {
-        const hitSize = size * 0.09
-        return (
+      {/* Single tap surface — per SR 6 decision 6, tap fires the
+          bottom-sheet PlanetDetail in the parent. Replaces the old
+          per-planet independent Pressable array (each undersized at
+          size*0.09 and prone to overlapping at stellium separations) with
+          one nearest-planet-within-radius lookup; see HIT_RADIUS_MIN. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Натисни планета за тълкуване"
+        style={{ position: 'absolute', left: 0, top: 0, width: size, height: size }}
+        onPress={(e) => handleWheelPress(e.nativeEvent.locationX, e.nativeEvent.locationY)}
+      />
+
+      {/* Disambiguation list — shown only when a tap lands within
+          HIT_RADIUS_MIN of more than one planet (a stellium). Centered
+          rather than tap-anchored so it never clips off-screen. */}
+      {ambiguous && (
+        <>
           <Pressable
-            key={`hit-${planet.planet}`}
-            onPress={() => handlePlanetPress(planet)}
-            accessibilityRole="button"
-            accessibilityLabel={`${planet.planet} — натисни за тълкуване`}
+            accessibilityLabel="Затвори"
+            style={{ position: 'absolute', left: 0, top: 0, width: size, height: size, zIndex: 10 }}
+            onPress={() => setAmbiguous(null)}
+          />
+          <View
             style={{
               position: 'absolute',
-              left: planet.x - hitSize / 2,
-              top: planet.y - hitSize / 2,
-              width: hitSize,
-              height: hitSize,
+              left: '50%',
+              top: '50%',
+              transform: [{ translateX: -90 }, { translateY: -(ambiguous.length * 22) }],
+              width: 180,
+              zIndex: 11,
+              backgroundColor: '#161029',
+              borderWidth: 1,
+              borderColor: 'rgba(139,92,246,0.35)',
+              borderRadius: 14,
+              paddingVertical: 6,
             }}
-          />
-        )
-      })}
+          >
+            {ambiguous.map((planet) => (
+              <Pressable
+                key={planet.planet}
+                onPress={() => {
+                  handlePlanetPress(planet)
+                  setAmbiguous(null)
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  minHeight: 44,
+                }}
+              >
+                <Text style={{ color: PLANET_COLORS[planet.planet], fontSize: 16 }}>
+                  {PLANET_GLYPHS[planet.planet as Planet] ?? '?'}
+                </Text>
+                <Text style={{ color: '#e2e8f0', fontSize: 14 }}>
+                  {PLANETS_BG[planet.planet as Planet] ?? planet.planet}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </>
+      )}
     </View>
   )
 }
