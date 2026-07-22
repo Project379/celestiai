@@ -1495,6 +1495,31 @@ P.7-b added a fourth consumer (`useStoryList`) with key `stellaeum.stories.state
 
 **Why documented:** without this, a future pass could either "helpfully" restore the switcher without evidence it's used, or delete the hook fields without realizing they were a deliberate, tracked hold rather than leftover cruft.
 
+## 59. Карта's remaining child components — R3/R5/Cinzel-on-Cyrillic debt beyond PlanetDetail
+
+**Status:** Filed 2026-07-22 during the tab bar fix's "recount" verification (`.planning/research/MOBILE_ALPHA_REDESIGN.md` §14 methodology fix). `PlanetDetail.tsx` was fixed as an authorized, scoped item this pass. Checking the REST of Карта's rendered tree the same way found it is NOT compliant — a much larger, previously invisible debt across the other child components the already-shipped `chart.tsx` renders or can open:
+
+| File | Tracked-caps/Cinzel-on-Cyrillic code sites |
+|---|---|
+| `AstrologyReference.tsx` (Речник disclosure row) | 9 |
+| `NatalWheelLegend.tsx` (wheel-overlay legend popover) | 2 real violations ("Легенда" eyebrow, footnote) — 5 other `font-cinzel` sites are Latin/symbol glyphs, compliant |
+| `AspectsList.tsx` (Аспекти disclosure row) | 7 |
+| `HousesList.tsx` (Къщи disclosure row) | 4 |
+| `BigThreeCards.tsx` (always-visible on Карта) | 2 code sites, 4 rendered instances ("Големите три" eyebrow + 3 per-card labels) |
+| `PlanetsList.tsx` (Детайли disclosure row) | 3 |
+
+None of this was caught by Round A's own audit because it checked the route file (`chart.tsx`) and the primitives it directly imports, not these nested children — the exact blind spot this pass exists to close. `BigThreeCards` renders unconditionally on Карта (always visible); the rest render behind a disclosure-row tap or the legend popover, but per the newly-codified rule (every modal/sheet a screen can open counts), that doesn't exempt them.
+
+**Concern:** Карта is still not R3/R5/font-compliant as experienced, even after this pass's fixes. The founder's "is Карта now actually compliant" question can't be answered yes until this is addressed.
+
+**Decide:** whether this becomes its own dedicated fix pass (similar scope/shape to the PlanetDetail fix, likely 150-250 LOC across 6 files) or gets folded into whichever round eventually revisits Карта's design.
+
+**Trigger:** before claiming Карта is R3/R5-compliant in any founder-facing status update; otherwise, next natural touch of any of these 6 files.
+
+**Cross-references:** the tab bar fix and PlanetDetail fix landed 2026-07-22 in the same commit batch that surfaced this.
+
+**Why documented:** the same blind spot already hit twice (LunarPhaseCard, PlanetDetail) — filing immediately rather than letting a third instance surface by accident.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have

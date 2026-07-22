@@ -1,6 +1,6 @@
 # MOBILE-ALPHA-REDESIGN — platform-native mobile design system
 
-Status: **v3 RATIFIED, ROUND A LIVE (2026-07-22)**. v1 (primitive gallery, no hierarchy) and v2 (measured hierarchy but still too distinctive/unfamiliar) were both rejected and neither was committed — both discarded, only the font pipeline survives (`useFonts` wiring, commit `a1bed76`), ratified as correct independent of design direction. v3's brief inverts the prior direction entirely: the goal is FAMILIARITY (Co-Star: "feels like I've used it before"), achieved through the continuity layer alone (palette, type faces, ambient gradients, voice) while layout uses maximally conventional structure. §0's prose is ratified; Днес and Карта are live (§14). Reading-length (§0.3), the Ритъм R3/R5 conflict (held for Round C, scope corrected in §10), and P-chain sequencing (§7) are all decided. Round B is a separate ratification, not yet fired. §1 onward is v1/v2's research, largely still valid as reference (see §0.0 for what changed).
+Status: **v3 RATIFIED, ROUND A LIVE, TAB BAR + PLANETDETAIL FIXED (2026-07-22)**. v1 (primitive gallery, no hierarchy) and v2 (measured hierarchy but still too distinctive/unfamiliar) were both rejected and neither was committed — both discarded, only the font pipeline survives (`useFonts` wiring, commit `a1bed76`), ratified as correct independent of design direction. v3's brief inverts the prior direction entirely: the goal is FAMILIARITY (Co-Star: "feels like I've used it before"), achieved through the continuity layer alone (palette, type faces, ambient gradients, voice) while layout uses maximally conventional structure. §0's prose is ratified; Днес and Карта are live (§14); the tab bar, `PlanetDetail.tsx`, and the greeting size are fixed (§16), though **Карта is not yet fully compliant — REVISIT 59 is open** on 5 remaining child components. Reading-length (§0.3), the Ритъм R3/R5 conflict (held for Round C, scope corrected in §10), P-chain sequencing (§7), the rendered-tree audit methodology (§15), and the tiered B-K rollout plan (§17-18) are all decided/recorded. Round B is a separate ratification, not yet fired. §1 onward is v1/v2's research, largely still valid as reference (see §0.0 for what changed).
 
 Strategic basis unchanged: web and mobile are sibling surfaces, not port-and-original. Backend, features, data, and Bulgarian copy content remain verbatim shared. This is presentation-only.
 
@@ -326,3 +326,80 @@ See v1's filed item: `globals.css` background/violet values, `tailwind.config.ts
 Delivered: font pipeline (commit `a1bed76`, unaffected by the redo), this research/spec rewrite, revised primitives, two real preview screens (Днес, Карта).
 
 Remaining: founder review on device. Halt.
+
+## 15. Methodology fix — R3/R5 compliance is measured on the full rendered tree, not the route file
+
+**Codified 2026-07-22, after the blind spot hit twice.** `LunarPhaseCard.tsx` (Ритъм, §10) and `PlanetDetail.tsx` (Карта, §14 follow-up below) were both missed by earlier audits because those audits checked the route file's own line count and element count, not what the route file actually renders once every child, modal, and sheet is opened. A route file can look small and compliant while a component it renders 300+ lines into its own file, opened by a tap, carries a real R3/R5 violation.
+
+**Rule, going forward**: a screen's R3/R5 compliance is measured on **the full rendered tree** — the route file, every child component it imports (recursively), every modal/sheet/bottom-sheet it can open (even if conditionally rendered), plus any persistent chrome layered over it (the tab bar, for tab-group screens). Route-file line counts and route-file element counts are not evidence of compliance on their own; they're a starting point that still requires opening every child.
+
+**Applied retroactively**: re-checking Карта's full tree (this pass) found `PlanetDetail.tsx` (fixed, see below) and five more files — `AstrologyReference.tsx`, `NatalWheelLegend.tsx`, `AspectsList.tsx`, `HousesList.tsx`, `BigThreeCards.tsx`, `PlanetsList.tsx` — still carrying tracked-caps/Cinzel-on-Cyrillic violations, filed as **REVISIT 59** rather than fixed silently in this pass (out of this batch's authorized scope). Every remaining B-K sub-round in §16 below must be audited against this rule before it fires, not just at its own route file.
+
+## 16. Tab bar + PlanetDetail fix — landed 2026-07-22
+
+Fired standalone ahead of Round B, per founder direction: persistent chrome inflates every tab screen's decorated-element count, so it had to land before any other round's R3 compliance claim could mean anything.
+
+**Tab bar** (`(authed)/(tabs)/_layout.tsx`): `useSafeAreaInsets()` replaces the hardcoded `height:72`/`paddingBottom:18` (mirrors commit `6025f58`'s top-inset treatment); `tabBarActiveTintColor` now reads `color.amber` from `tokens.ts` instead of a drifted `#fcd34d`; labels off Cinzel (Cyrillic text — REVISIT-42's exact bug, noted there that this surface was outside its original reach); 5 tracked-caps labels collapsed to plain sentence case; 5 custom-SVG icons added (`components/design-system/TabIcons.tsx`) — founder-reviewed at real 20/24/28px scale before wiring in, icon+label retained per iOS convention.
+
+**PlanetDetail.tsx** (Карта's planet-tap bottom sheet): dropped the `ROMAN` numeral section markers entirely (R5 scopes those to the Guide only) and collapsed 6 tracked-caps sites to one reserved eyebrow ("Планета"/"Асцендент"), de-tracking the rest to plain sentence-case text distinguished by color/weight. Also removed Cinzel from Cyrillic text throughout (same REVISIT-42 bug).
+
+**Greeting size**: rebalanced from a one-off 15px override to the existing `sub` tier (17px, Playfair Display) — no new type-scale tier (R2 intact). Measured against real font advance widths (opentype.js against `PlayfairDisplay-Regular.ttf`), not estimated — see `tokens.ts`'s type-scale comment for the full worst-case-string measurement.
+
+**Recount, honestly reported, not assumed**: Днес's full rendered tree (route file + `NavRow`/`ScreenShell`/`States`/`MoonGlyph`/`HoroscopeBody` + `OracleEntry` + the now-fixed tab bar) is genuinely R3/R5-compliant — checked directly, zero remaining violations. **Карта is not yet fully compliant** — `PlanetDetail.tsx` and the tab bar are fixed, but §15's retroactive check found 5 more child components still carrying real violations. Filed as REVISIT 59, not fixed in this pass (outside its authorized scope) — Карта's "compliant as experienced" claim can't be made yet.
+
+## 17. Tiered rollout plan — B-K re-scoped by how often a user sees the surface
+
+**Why tiered**: ~3,900-4,000 LOC across sub-rounds B-K, plus Round A's delivered ~650 and Round C's ~745, is roughly **~5,400 LOC of redesign against eight remaining Stream P sub-rounds** — doubling everything Stream P has shipped, before any real user exists. Tiering separates "must convert before soft-launch" from "can ship in the old system without it reading as broken."
+
+### Tier 1 — surfaces a user sees daily or near-daily. Must convert before soft-launch.
+
+| Surface | Sub-round | LOC (midpoint) | Status |
+|---|---|---|---|
+| Tab bar chrome | — | ~65 | **Landed 2026-07-22** |
+| Днес | Round A | ~200 | **Landed** |
+| Карта | Round A | ~225 | **Landed, but REVISIT 59 open** (5 child components still non-compliant) |
+| Ритъм | Round C1/C2 | ~745 | Scoped, not built |
+| Оракул | Round F | ~375 | Scoped, not built |
+
+**Tier 1 total remaining: ~1,120 LOC** (Ритъм + Оракул; tab bar/Днес/Карта already landed, Карта needs its REVISIT-59 follow-up on top).
+
+**Cost of shipping unconverted, concretely**: Ритъм and Оракул sit directly between Днес and Карта in the tab order — a user moving through the app hits old-tracked-caps-heavy screens (Ритъм: ~16 elements once LunarPhaseCard/TransitOverviewCard are counted; Оракул: 6 code sites, likely more rendered) one tap away from screens now deliberately quiet. This is the most visible, most-jarring possible sequencing failure — not a peripheral inconsistency but the exact adjacency a daily user experiences every session. Recommend: **ship before soft-launch.**
+
+### Tier 2 — surfaces seen occasionally. Ти, settings, premium, Кръг, crystals, recommendations, lunar diary.
+
+| Surface | Sub-round | LOC (midpoint) | Confidence |
+|---|---|---|---|
+| Ти + `/you/premium` | Round B | ~215 | medium-high |
+| Settings | Round D | ~115 | medium-high |
+| Кръг | Round D | ~80 | medium-high |
+| Crystals | Round I1/I2 | ~650 | **low** — needs founder decision (§18) |
+| Recommendations | Round H | ~375 | low-medium |
+| Lunar diary | Round G | ~315 | medium — includes retiring the `romanize()` R5 violation |
+
+**Tier 2 total: ~1,750 LOC.**
+
+**Cost of shipping unconverted**: real, but lower-severity than Tier 1 — these aren't adjacent in the tab flow to the new screens the way Ритъм/Оракул are (Ти is a tab, but its own content isn't reached by scrolling from a new screen the way Ритъм is). A user who opens Кръг or Crystals occasionally sees an older visual language, but not in the same jarring one-tap-away sequence. **Recommend: Ти + premium ship before soft-launch** (P.9/P.11 already build there per the ratified sequencing, so the work happens regardless of tiering) — the rest can defer to a fast-follow post-launch pass without reading as broken, since they're not adjacent to freshly-converted screens in normal navigation.
+
+### Tier 3 — surfaces seen once or rarely. Auth, wizard, guide.
+
+| Surface | Sub-round | LOC (midpoint) | Confidence |
+|---|---|---|---|
+| Auth (4 screens) | Round K | ~425 | medium |
+| Wizard (4 screens + `StepIndicator`) | Round J1/J2 | ~850 | **low** — needs founder decision (§18) |
+| Astrology Guide | Round E | ~260 | medium |
+
+**Tier 3 total: ~1,535 LOC.**
+
+**Cost of shipping unconverted**: lowest of the three tiers. Auth and wizard are seen once (sign-up, onboarding) or rarely (sign-in on a new device) — a brand-new user has no "new design system" expectation yet to be jarred against, since it's the FIRST thing they see, not a jump from something already converted. Guide is opened deliberately from Ти, not encountered in passing. **Recommend: defer full conversion past soft-launch** for all three — but see the cheap-isolated-fix note below, since two of these have real rule violations independent of the full conversion question.
+
+**Cheap isolated R5 fixes worth doing even if full conversion defers**: the **wizard's doubled Roman numerals** (`StepIndicator.tsx`'s hardcoded I-IV, plus every wizard screen independently repeating its own numeral as a second eyebrow) is the worst R5 violation found anywhere in the app — and unlike the wizard's broader design-hierarchy questions (§18), retiring the numerals specifically (plain step dots/numbers) doesn't require resolving those first. This is a small, contained, high-value fix worth doing on its own even if the wizard's full conversion waits. The Guide's Roman numerals are correct and exempt (R5's intended home) — no fix needed there.
+
+## 18. Low-confidence decisions — surfaced as a batch, not when each round fires
+
+Three sub-rounds carry genuinely low-confidence LOC estimates because they depend on founder decisions that haven't been made yet. Surfacing all three now rather than one at a time when each round is about to start:
+
+1. **Crystals (Round I1/I2) — what's the R1 hero?** The gem-rendering visual component (`CrystalGem.tsx`, 231 LOC) is the natural "one dominant element" candidate per R1, but the gamified streak panel (`DailyStreakPanel.tsx`, 183 LOC) is arguably the thing that drives daily-return behavior and may deserve equal or greater visual weight — these compete for the same R1 slot and R2's 3-4 type-size budget. Needs a call before either wave (I1: gem + streak; I2: grid/collection) can be sized precisely.
+
+2. **Wizard (Round J1/J2) — how does progress render without Roman numerals?** R5 requires dropping `StepIndicator.tsx`'s I-IV and the per-screen repeated eyebrow numerals. The replacement (plain numbers, dots, a progress bar, or something else) needs deciding once, since it has flow-wide blast radius across all 4 screens and the shared component — not a per-screen decision made 4 times.
+
+3. **Recommendations (Round H) — R6 card-shape calls.** Book/film titles and blurbs are genuinely variable-length (unlike Кръг's short relationship labels or Карта's fixed astrological vocabulary) — needs the same "measure real string lengths, don't assume" treatment Днес/Карта got before committing to a card layout (2-up vs. full-width, per R6).
