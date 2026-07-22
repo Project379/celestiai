@@ -84,28 +84,30 @@ const ELEMENT_LABEL: Record<'fire' | 'earth' | 'air' | 'water', string> = {
   water: 'Вода',
 }
 
-const ROMAN = ['I', 'II', 'III', 'IV', 'V'] as const
-
 interface SectionProps {
-  numeral: string
   title: string
   textTint: string
   dotTint: string
   children: React.ReactNode
 }
 
-function Section({ numeral, title, textTint, dotTint, children }: SectionProps) {
+// R5/R3 fix (found as a live regression on Round A's shipped Карта screen —
+// nested in the tap-to-open modal, not the route file, exactly the blind
+// spot .planning/research/MOBILE_ALPHA_REDESIGN.md §14 now codifies
+// against). Dropped the Roman-numeral section markers entirely (R5 scopes
+// those to the Astrology Guide only) and de-tracked the section title —
+// the modal's header eyebrow ("Планета"/"Асцендент") is this surface's one
+// reserved R3 slot; everything else renders as plain sentence-case text
+// distinguished by color/weight instead.
+function Section({ title, textTint, dotTint, children }: SectionProps) {
   return (
     <View className="border-t border-white/[0.05] pt-5">
       <View className="mb-3 flex-row items-center" style={{ gap: 12 }}>
-        <Text className={`font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] ${textTint}`}>
-          {numeral}
-        </Text>
         <View
           className={`h-1 w-1 ${dotTint}`}
           style={{ transform: [{ rotate: '45deg' }] }}
         />
-        <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.34em] text-slate-400">
+        <Text className={`text-[13.5px] font-medium ${textTint}`}>
           {title}
         </Text>
       </View>
@@ -199,15 +201,6 @@ export function PlanetDetail({
   const hasAspectInsights = interpretation.aspectInsights.length > 0
   const hasGrowth = Boolean(interpretation.growth.trim())
 
-  // Compute Roman numerals for the sections that exist (skip empty ones)
-  const sectionNumerals: string[] = []
-  if (hasOverview) sectionNumerals.push(ROMAN[sectionNumerals.length])
-  if (hasStrengths) sectionNumerals.push(ROMAN[sectionNumerals.length])
-  if (hasChallenges) sectionNumerals.push(ROMAN[sectionNumerals.length])
-  if (hasAspectInsights) sectionNumerals.push(ROMAN[sectionNumerals.length])
-  if (hasGrowth) sectionNumerals.push(ROMAN[sectionNumerals.length])
-  let romanIdx = 0
-
   return (
     <Modal
       visible={visible}
@@ -231,7 +224,11 @@ export function PlanetDetail({
                       className="h-1 w-1 bg-amber-300/90"
                       style={{ transform: [{ rotate: '45deg' }] }}
                     />
-                    <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+                    {/* This screen's one reserved R3 eyebrow — everything
+                        else in this modal is plain sentence-case. Cinzel
+                        dropped: it has zero Cyrillic glyphs and this text
+                        is Cyrillic (REVISIT-42's bug, present here too). */}
+                    <Text className="text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
                       {isRising ? 'Асцендент' : 'Планета'}
                     </Text>
                   </View>
@@ -249,7 +246,7 @@ export function PlanetDetail({
                         className={`h-1 w-1 ${dotTint}`}
                         style={{ transform: [{ rotate: '45deg' }] }}
                       />
-                      <Text className={`font-cinzel text-[9px] font-semibold uppercase tracking-[0.3em] ${textTint}`}>
+                      <Text className={`text-[12.5px] font-medium ${textTint}`}>
                         {ELEMENT_LABEL[element]}
                       </Text>
                     </View>
@@ -259,7 +256,7 @@ export function PlanetDetail({
                           className="h-1 w-1 bg-slate-500/70"
                           style={{ transform: [{ rotate: '45deg' }] }}
                         />
-                        <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                        <Text className="text-[12.5px] font-medium text-slate-500">
                           Дом {house}
                         </Text>
                       </View>
@@ -289,7 +286,6 @@ export function PlanetDetail({
               <View style={{ gap: 28 }}>
                 {hasOverview && (
                   <Section
-                    numeral={sectionNumerals[romanIdx++]}
                     title="Общ поглед"
                     textTint={textTint}
                     dotTint={dotTint}
@@ -301,7 +297,6 @@ export function PlanetDetail({
                 )}
                 {hasStrengths && (
                   <Section
-                    numeral={sectionNumerals[romanIdx++]}
                     title="Силни страни"
                     textTint={textTint}
                     dotTint={dotTint}
@@ -311,7 +306,6 @@ export function PlanetDetail({
                 )}
                 {hasChallenges && (
                   <Section
-                    numeral={sectionNumerals[romanIdx++]}
                     title="Предизвикателства"
                     textTint={textTint}
                     dotTint={dotTint}
@@ -321,7 +315,6 @@ export function PlanetDetail({
                 )}
                 {hasAspectInsights && (
                   <Section
-                    numeral={sectionNumerals[romanIdx++]}
                     title="Аспекти"
                     textTint={textTint}
                     dotTint={dotTint}
@@ -331,7 +324,6 @@ export function PlanetDetail({
                 )}
                 {hasGrowth && (
                   <Section
-                    numeral={sectionNumerals[romanIdx++]}
                     title="Насока за развитие"
                     textTint={textTint}
                     dotTint={dotTint}
@@ -343,7 +335,7 @@ export function PlanetDetail({
                 )}
                 {isRising && !birthTimeKnown && (
                   <View className="border-l border-amber-300/50 bg-amber-300/[0.05] px-5 py-3">
-                    <Text className="mb-1 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-amber-300/80">
+                    <Text className="mb-1 text-[12.5px] font-medium text-amber-300/80">
                       Забележка
                     </Text>
                     <Text className="text-[12.5px] font-light leading-relaxed text-amber-100/85">
