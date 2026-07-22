@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import type { ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { Pressable, Text, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { useUser } from '@clerk/expo'
 import Animated, {
@@ -12,21 +12,45 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated'
-import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg'
+import Svg, { Circle, ClipPath, Defs, G, RadialGradient, Stop } from 'react-native-svg'
 import { getLunarPhase } from '@stellaeum/core/moon-phase'
-import {
-  composeWelcome,
-  daysUntilPeak,
-  getActiveMeteorShower,
-  getSunSign,
-} from '@stellaeum/core/welcome'
-
+import { composeWelcome, getSunSign } from '@stellaeum/core/welcome'
 import { parseSentinels } from '@stellaeum/core/oracle/planet-parser'
+import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
+import type { Planet } from '@stellaeum/astrology/client'
 
-import { CrystalCard } from '@/components/CrystalCard'
+import { NavRow } from '@/components/design-system/NavRow'
+import { ScreenShell } from '@/components/design-system/ScreenShell'
+import { color, font, rhythm, type } from '@/components/design-system/tokens'
+import { EmptyState, ErrorState, LoadingState } from '@/components/design-system/States'
 import { useApiClient } from '@/lib/api/client'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
+
+/**
+ * Днес — MOBILE-ALPHA-REDESIGN v3, live since Round A cutover (2026-07-22).
+ * v1/v2 chased distinctiveness; the founder's actual target is familiarity
+ * (Co-Star: "feels used before"). See .planning/research/MOBILE_ALPHA_REDESIGN.md
+ * §0 for the full brief, §14 for the cutover record.
+ *
+ * First half-second: date, greeting, one glyph (the moon) clearly larger
+ * than everything around it. No reading required to know this is about
+ * today and the sky right now — the Weather-app pattern.
+ *
+ * The reading is paced into short paragraphs (not a wall) and ends in
+ * exactly one exit: "Питай Оракула" — chosen over an inline tappable
+ * transit mention because the horoscope's colored planet mentions are
+ * freeform AI prose with no reliable mapping to a structured transit
+ * record to open (checked before committing to this, not assumed).
+ *
+ * No Today/Yesterday switcher — the old (pre-cutover) Днес had one; this
+ * screen doesn't. That's a tracked decision, not an oversight: see
+ * REVISIT 58. `useDailyHoroscope`'s `selectedDate`/`setSelectedDate`/
+ * `yesterdayUnavailable` are currently unused by this screen.
+ *
+ * Requires an account with a birth chart — see the reachability-trap
+ * note in (authed)/_layout.tsx.
+ */
 
 interface ChartSummary {
   id: string
@@ -40,157 +64,44 @@ const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   timeZone: 'Europe/Sofia',
 })
 
-// Daily horoscope title-block subtitle format mirrors web's
-// DailyHoroscope.tsx BG_DATE_FORMAT: day numeric + month long + year numeric,
-// no weekday. Web uses this to anchor the «Дневен хороскоп» card with the
-// reading's date.
-const BG_HOROSCOPE_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'Europe/Sofia',
-})
-
-// Sun sigil dimensions (item 1.4, P.1-e). Ring matches web's 58×58 disc at
-// DailyHoroscope.tsx:56; bloom SVG canvas is larger so the radial gradient
-// extends visibly beyond the ring (mimics web's blur-xl/blur-md outer halo
-// without expo-blur dep, per Conservative SDK defaults posture).
-const SIGIL_RING_SIZE = 58
-const SIGIL_BLOOM_SIZE = 96
-const SIGIL_PULSE_MS = 2000 // half-cycle; full breath = 4s mirrors web
-const AnimatedCircle = Animated.createAnimatedComponent(Circle)
-
-// 12 hand-written Bulgarian one-liners per sun sign. Lifted verbatim from
-// apps/web/components/dashboard/DashboardContent.tsx:59-72 (D2 mirror
-// discipline — no calibration, zero net-new strings).
-const SIGN_QUIPS: Record<string, string> = {
-  'Овен':      'Марс пак те тласка напред - независимо дали имаш план или не. Поне изглежда убедено.',
-  'Телец':     'Венера обещава удоволствие. Сатурн напомня за задълженията. Ти вероятно знаеш кое печели.',
-  'Близнаци':  'Два гласа в главата ти не са проблем. Проблемът е, когато и двата са прави едновременно.',
-  'Рак':       'Луната е в твоя ъгъл. Усещаш всичко - включително нещата, за които другите нямат думи.',
-  'Лъв':       'Слънцето не е само за показ - но трябва да признаем, малко драма никога не е навредила.',
-  'Дева':      'Меркурий анализира. Ти анализираш. Разликата е, че Меркурий спира в края на краищата.',
-  'Везни':     'Везните са в баланс. За колко дълго - зависи от теб и от онзи имейл, на който все още не отговаряш.',
-  'Скорпион':  'Плутон вижда всичко. Ти виждаш всичко. Фактически няма смисъл да крием нищо от никого.',
-  'Стрелец':   'Юпитер е щедър. Ти - с добри намерения, непоследователни резултати и неоправдан оптимизъм. Работи.',
-  'Козирог':   'Сатурн одобрява усилията ти. Малък, тих знак за одобрение - продължавай без суетене.',
-  'Водолей':   'Уран прави нещата интересни. Ти правиш нещата странни. Разбирате се по начин, трудно обясним.',
-  'Риби':      'Нептун замъглява. Ти мечтаеш. Понякога е трудно да се каже кое е кое - и не е задължително.',
-}
-
-// Planet key → hex color for the sentinel-color rendering on mobile
-// (item 1.5). Mirrors web's PLANET_COLORS Tailwind class map in
-// apps/web/components/horoscope/HoroscopeStream.tsx — each hex matches the
-// Tailwind class's resolved color (e.g. text-amber-300 → #fcd34d).
-// Hex-not-class is required because NativeWind v4 scans className strings
-// statically at build time, so dynamic className from a Record lookup
-// (e.g. PLANET_COLORS[chunk.planet]) doesn't survive the scan.
-const PLANET_HEX_COLORS: Record<string, string> = {
-  sun: '#fcd34d',        // text-amber-300
-  moon: '#cbd5e1',       // text-slate-300
-  mercury: '#67e8f9',    // text-cyan-300
-  venus: '#f9a8d4',      // text-pink-300
-  mars: '#f87171',       // text-red-400
-  jupiter: '#fdba74',    // text-orange-300
-  saturn: '#facc15',     // text-yellow-400
-  uranus: '#5eead4',     // text-teal-300
-  neptune: '#60a5fa',    // text-blue-400
-  pluto: '#c084fc',      // text-purple-400
-  northNode: '#a78bfa',  // text-violet-400
-}
-const PLANET_HEX_FALLBACK = '#c4b5fd' // text-violet-300
-
-// Лунна фаза tile countdown text — mirrors web's LunarTile.formatCountdown
-// (apps/web/components/dashboard/tiles/LunarTile.tsx). Returns Bulgarian
-// strings for time-until the next major lunar event.
-function formatCountdown(daysAway: number): string {
-  if (daysAway < 1 / 24) return 'съвсем скоро'
-  const days = Math.floor(daysAway)
-  const hours = Math.floor((daysAway - days) * 24)
-  if (days === 0) return `${hours} ч`
-  if (hours === 0) return `${days} д`
-  return `${days} д ${hours} ч`
-}
-
 export default function DnesScreen() {
   const { push } = useGuardedNavigation()
   const { apiFetch } = useApiClient()
   const { user } = useUser()
-  // Fallback mirrors apps/web/app/(protected)/dashboard/page.tsx:20 ('Потребител')
-  // so the greeting block never renders «Добро утро, .» during Clerk hydration
-  // or when a Clerk account has no firstName set.
   const firstName = user?.firstName?.trim() || 'Потребител'
 
-  // P.1-d stub. Tier-fetch hook + ambient-header restructure (flex-row
-  // justify-between) land at P.9; visual shape below mirrors web
-  // DashboardContent.tsx:140-146 (amber hairline + diamond + «Premium»).
-  const isPremium = false
-  // undefined = still resolving, null = no chart, ChartSummary = chart loaded.
-  // Tracks both id (for the horoscope query) and birth_date (for sun-sign
-  // computation in composeWelcome) so a single GET /api/birth-data response
-  // serves both purposes.
   const [chart, setChart] = useState<ChartSummary | null | undefined>(undefined)
   const horoscope = useDailyHoroscope(chart?.id)
 
-  // Single `now` snapshot per mount — date, lunar phase, meteor shower, and
-  // hour-of-day all derive from the same moment so welcome composition stays
-  // internally consistent. A re-mount past midnight Sofia produces a new
-  // snapshot; intra-session midnight ticks aren't covered (acceptable for
-  // launch — web does setInterval here, mobile defers that polish).
-  const { todayFormatted, horoscopeDateFormatted, lunarPhase, hourSnapshot, meteorShower, meteorPeakDays } = useMemo(() => {
+  const { todayFormatted, lunarPhase, hourSnapshot } = useMemo(() => {
     const now = new Date()
-    const shower = getActiveMeteorShower(now)
     return {
       todayFormatted: BG_DATE_FORMAT.format(now),
-      horoscopeDateFormatted: BG_HOROSCOPE_DATE_FORMAT.format(now),
       lunarPhase: getLunarPhase(now),
       hourSnapshot: now.getHours(),
-      meteorShower: shower,
-      meteorPeakDays: shower ? daysUntilPeak(shower) : null,
     }
   }, [])
 
-  // sunSign at render scope so the sign-quip block (item 1.2) and the
-  // welcome composer both consume the same derivation.
   const sunSign = chart?.birth_date ? getSunSign(chart.birth_date) : null
-
-  // welcome.summary is the «Небесен ритъм» paragraph — phase opener × sign-
-  // element flavor × optional meteor note. welcome.greeting is consumed by
-  // the greeting block (item 1.1) for the time-of-day prefix.
   const welcome = useMemo(
-    () =>
-      composeWelcome({
-        firstName,
-        sunSign,
-        lunarPhase,
-        meteorShower,
-        hour: hourSnapshot,
-      }),
-    [firstName, sunSign, lunarPhase, meteorShower, hourSnapshot],
+    () => composeWelcome({ firstName, sunSign, lunarPhase, meteorShower: null, hour: hourSnapshot }),
+    [firstName, sunSign, lunarPhase, hourSnapshot],
   )
 
-  // Refetch on focus so post-wizard-submit returning to Днес reflects
-  // the newly created chart even if the screen wasn't unmounted by the
-  // expo-router replace from /wizard/confirm.
   useFocusEffect(
     useCallback(() => {
       let cancelled = false
       apiFetch('/api/birth-data')
         .then((data) => {
           if (cancelled) return
-          if (Array.isArray(data) && data.length > 0) {
-            const first = data[0] as { id?: unknown; birth_date?: unknown }
-            if (typeof first.id === 'string' && typeof first.birth_date === 'string') {
-              setChart({ id: first.id, birth_date: first.birth_date })
-            } else {
-              setChart(null)
-            }
+          const first = Array.isArray(data) ? (data[0] as { id?: unknown; birth_date?: unknown }) : undefined
+          if (first && typeof first.id === 'string' && typeof first.birth_date === 'string') {
+            setChart({ id: first.id, birth_date: first.birth_date })
           } else {
             setChart(null)
           }
         })
         .catch(() => {
-          // D-4.7-4: assume no chart on fetch failure.
           if (!cancelled) setChart(null)
         })
       return () => {
@@ -200,444 +111,380 @@ export default function DnesScreen() {
   )
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-bg">
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 120 }}
-      >
-        {/* Ambient header — scan in 2s (MOBILE_UX_RESEARCH §2.1 Layer A) */}
-        <View className="mb-10">
-          <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
-            {todayFormatted}
-          </Text>
-          <Text className="mt-2 font-cinzel text-[11px] uppercase tracking-[0.32em] text-amber-200/90">
-            ☾  {lunarPhase.name}
-          </Text>
-          {isPremium && (
-            <View className="mt-3 flex-row items-center" style={{ gap: 10 }}>
-              <View className="h-px w-8 bg-amber-300/40" />
-              <View className="h-1 w-1 rotate-45 bg-amber-300/90" />
-              <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-amber-200/90">Premium</Text>
-            </View>
+    <ScreenShell>
+      <Text style={{ ...type.caption, color: color.faint }}>{todayFormatted}</Text>
+      <Text style={{ ...type.body, fontSize: 15, color: color.muted, marginTop: rhythm.micro, marginBottom: rhythm.group }}>
+        {welcome.greeting}
+      </Text>
+
+      {/* HERO — the glyph carries the size contrast (150px vs. the 12px
+          caption above, ~12.5x), not the text label. The label is
+          validated at 32px against the longest real lunar-phase name
+          ("Изгряващ полумесец" / "Залязващ полумесец", 19 chars) — see
+          tokens.ts for the measured widths behind this number. v2 shipped
+          this at 40px and it would have wrapped; this doesn't.
+          Glyph→name uses `tight` (12px), not `micro` — the glyph is large
+          enough that a 4px gap would read as a layout mistake rather than
+          "these belong together." Name→sub stays `micro`: a caption
+          directly explaining the name above it is a tighter unit than
+          glyph→name. No marginBottom here — the section below supplies
+          the `group` gap, so the boundary is stated once, not twice. */}
+      <View style={{ alignItems: 'center' }}>
+        <MoonGlyph illumination={lunarPhase.illumination} isWaxing={lunarPhase.isWaxing} />
+        <Text style={{ ...type.hero, color: color.text, marginTop: rhythm.tight, textAlign: 'center' }}>
+          {lunarPhase.name}
+        </Text>
+        <Text style={{ ...type.sub, color: color.muted, marginTop: rhythm.micro }}>
+          {lunarPhase.illumination}% осветена · до {lunarPhase.nextMajor.name.toLowerCase()}: {lunarPhase.nextMajor.daysAway}д
+        </Text>
+      </View>
+
+      {chart && (
+        <View style={{ marginTop: rhythm.group }}>
+          {horoscope.isLoading && <LoadingState status="консултира звездите…" />}
+          {horoscope.isError && !horoscope.data?.content && (
+            <ErrorState message="Звездите мълчат - опитай отново след миг." />
           )}
-        </View>
+          {!horoscope.isLoading && !horoscope.data?.content && !horoscope.isError && (
+            <ReadingParagraphs text={welcome.summary} />
+          )}
+          {horoscope.data?.content && <HoroscopeBody content={horoscope.data.content} />}
 
-        {/* Greeting (item 1.1) — time-aware «{TOD}, {firstName}.» mirrors
-            web's DashboardContent.tsx:163-170. firstName uses RN textShadow*
-            style props for the warm halo instead of NativeWind's drop-shadow
-            class — RN's text-shadow is the native equivalent for text glow,
-            and the Tailwind drop-shadow utility maps to CSS `filter` which
-            doesn't apply to Text. Option C per P.1-b ratification 2026-05-11
-            (no gradient; faux halo via solid amber + text-shadow). */}
-        <View className="mb-8">
-          <Text className="text-[32px] leading-[1.2] tracking-tight">
-            <Text className="font-light text-slate-300">
-              {welcome.greeting.split(',')[0]},{' '}
-            </Text>
-            <Text
-              className="font-semibold text-amber-200/95"
-              style={{
-                textShadowColor: 'rgba(251,191,36,0.22)',
-                textShadowOffset: { width: 0, height: 0 },
-                textShadowRadius: 28,
-              }}
-            >
-              {firstName}.
-            </Text>
-          </Text>
-        </View>
-
-        {/* Hero reading area — Layer B. Branches on chart resolution state:
-            - undefined (loading birth-data): blank space (D-4.7-3)
-            - chart loaded: «Небесен ритъм» summary + sign quip + «Дневен
-              хороскоп» eyebrow + LLM-generated horoscope content. Mirrors
-              web's DashboardContent.tsx Layer B.
-            - null (no chart): empty-state CTA mirroring web's DashboardContent. */}
-        {chart && (
-          <View className="mb-10">
-            <Text className="mb-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
-              Небесен ритъм
-            </Text>
-            <Text className="text-[16.5px] font-light leading-[1.8] text-slate-200">
-              {welcome.summary}
-            </Text>
-
-            {/* Sign quip (item 1.2) — eyebrow with user's sun sign + one-liner
-                from SIGN_QUIPS. Fallback string mirrors web's at
-                DashboardContent.tsx:192. */}
-            {sunSign && (
-              <View className="mt-8">
-                <Text className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-slate-300">
-                  {sunSign}
-                </Text>
-                <Text className="text-[17px] font-light leading-[1.85] text-slate-200/95">
-                  {SIGN_QUIPS[sunSign] ?? 'Звездите са в движение. Вселената е написала нещо за теб.'}
-                </Text>
-              </View>
-            )}
-
-            {/* Daily horoscope title block — animated sun sigil (item 1.4,
-                P.1-e) → Oraculum Diei eyebrow → Дневен хороскоп h2 →
-                reading's date. Decorative northNode divider lands at P.1-f
-                (motion-polish ratification). */}
-            <View className="mt-10 mb-6 items-center">
-              <SunSigil />
-              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-200/85">
-                Oraculum Diei
-              </Text>
-              <Text className="mt-2 text-[22px] font-semibold tracking-tight text-white">
-                Дневен хороскоп
-              </Text>
-              <Text className="mt-1.5 text-[12.5px] font-light text-slate-400">
-                {horoscopeDateFormatted}
-              </Text>
-            </View>
-
-            {/* Decorative divider (P.1-f Part 2). Mirrors web DailyHoroscope.tsx:101-110 —
-                hairline + ✦ + ornament + ✦ + hairline. NorthNode celestial icon
-                substituted with a rotated amber diamond (no mobile celestial-icon
-                system; substitution per ratification). */}
-            <View className="mb-6 flex-row items-center" style={{ gap: 16 }}>
-              <View className="h-px flex-1 bg-slate-300/20" />
-              <View className="flex-row items-center" style={{ gap: 10 }}>
-                <Text className="text-[8px] text-slate-300/55">✦</Text>
-                <View className="h-1.5 w-1.5 rotate-45 bg-amber-300/70" />
-                <Text className="text-[8px] text-slate-300/55">✦</Text>
-              </View>
-              <View className="h-px flex-1 bg-slate-300/20" />
-            </View>
-
-            {/* Date tab switcher (P.1-f Part 1, item 1.11). Today/Yesterday lazy-
-                fetch; Yesterday tab disabled with «Неналично» label when the
-                yesterdayQuery returns unavailable. Mirrors web tab UI at
-                DailyHoroscope.tsx:113-125. */}
-            <View className="mb-7 flex-row justify-center" style={{ gap: 40 }}>
-              <DateTab
-                active={horoscope.selectedDate === 'today'}
-                onPress={() => horoscope.setSelectedDate('today')}
-                label="Днес"
-              />
-              <DateTab
-                active={horoscope.selectedDate === 'yesterday' && !horoscope.yesterdayUnavailable}
-                disabled={horoscope.yesterdayUnavailable}
-                onPress={() => horoscope.setSelectedDate('yesterday')}
-                label={horoscope.yesterdayUnavailable ? 'Неналично' : 'Вчера'}
-              />
-            </View>
-
-            <View>
-              {horoscope.isLoading && (
-                <View className="items-center py-6">
-                  <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
-                    Stellaeum
-                  </Text>
-                  <Text className="mt-2 text-[14px] font-light leading-relaxed text-slate-300">
-                    консултира звездите…
-                  </Text>
-                </View>
-              )}
-              {horoscope.isError && !horoscope.data?.content && (
-                <View className="rounded-xl border border-rose-400/15 bg-rose-500/[0.04] px-4 py-3">
-                  <Text className="text-[14px] font-light leading-[1.6] text-rose-300/85">
-                    Звездите мълчат - опитай отново след миг.
-                  </Text>
-                </View>
-              )}
-              {horoscope.data?.unavailable && !horoscope.data?.content && (
-                <Text className="text-[15px] font-light leading-[1.8] text-slate-400 italic">
-                  Вчерашното послание вече е отминало.
-                </Text>
-              )}
-              {horoscope.data?.content && (
-                <View>
-                  {/* Drop-cap quote ornament (P.1-f Part 3) — large amber «"» behind
-                      the start of the horoscope body. Mirrors web DailyHoroscope.tsx:130-137. */}
-                  <Text pointerEvents="none" style={{ position: 'absolute', left: -4, top: -16, fontFamily: 'Cinzel', fontSize: 56, lineHeight: 56, color: 'rgba(251,191,36,0.15)' }}>{'“'}</Text>
-                  <HoroscopeBody content={horoscope.data.content} />
-                </View>
-              )}
-            </View>
-          </View>
-        )}
-
-        {chart === null && (
-          <View className="mb-10">
-            <Text className="mb-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
-              Небесен ритъм
-            </Text>
-            <Text className="mb-5 text-[16px] font-light leading-[1.8] text-slate-200/90">
-              Картата ти още не е настроена. Въведи рождените си данни, за да видиш хороскопа, наталната карта и транзитите.
-            </Text>
-            <Pressable
-              onPress={() => push('/wizard/date')}
-              className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
-              style={{ gap: 10 }}
-            >
-              <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-200">
-                Въведи рождени данни
-              </Text>
-              <Text className="font-cinzel text-[10.5px] text-amber-300">›</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* Bento launchpad — Layer C (2×2 grid). P.1-a parity port:
-            - CrystalCard: data-driven via /api/crystals/today (item 1.10
-              accepted divergence — mobile shows brief loading shimmer where
-              web pre-fetches via Server Component; Expo Router server
-              components don't exist in this codebase).
-            - LunarTile: data-driven from lunarPhase + meteorShower (item 1.7).
-            - TransitTile: static placeholder copy matching web's current
-              state (item 1.8 — web's TransitTile.tsx is also a static link
-              card; data-driven top-transit deferred for both surfaces).
-            - CircleTile: empty-state CTA with subtitle (item 1.9 — Friends
-              groups deferred per founder ratification 2026-05-09).
-            Tile-tap navigation unenumerated, deferred until destinations
-            exist on mobile (P.6 /you/crystals, P.3 /rhythm, etc.). */}
-        <View className="mb-10 flex-row flex-wrap gap-3">
-          <CrystalCard />
-          <View className="flex-1 min-w-[46%] rounded-2xl border border-violet-400/25 px-4 py-5">
-            <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-violet-300/90">
-              Лунна фаза
-            </Text>
-            <Text className="mt-3 text-[15px] font-light text-slate-100">
-              {lunarPhase.name}
-            </Text>
-            <Text className="mt-1 font-cinzel text-[9.5px] uppercase tracking-[0.26em] text-slate-500">
-              {lunarPhase.illumination}% осветление
-            </Text>
-            <Text className="mt-4 text-[12px] font-light text-slate-400">
-              <Text className="text-amber-300/80">☾ </Text>
-              до {lunarPhase.nextMajor.name.toLowerCase()} · <Text className="text-slate-200">{formatCountdown(lunarPhase.nextMajor.daysAway)}</Text>
-            </Text>
-            {meteorShower && (
-              <Text className="mt-2 text-[12px] font-light text-amber-300/80">
-                ☄ {meteorShower.name}
-                {meteorPeakDays !== null && meteorPeakDays > 0 && ` · пик след ${meteorPeakDays} д`}
-                {meteorPeakDays === 0 && ' · пик тази нощ'}
-              </Text>
-            )}
-          </View>
-          <View className="flex-1 min-w-[46%] rounded-2xl border border-slate-700/60 px-4 py-5">
-            <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-slate-400">
-              Транзити
-            </Text>
-            <Text className="mt-3 text-[15px] font-light text-slate-100">Небесно време</Text>
-            <Text className="mt-1 text-[12px] font-light text-slate-500">активните аспекти към картата ти</Text>
-            <Text className="mt-4 font-cinzel text-[9px] uppercase tracking-[0.28em] text-slate-600">виж всички</Text>
-          </View>
-          <View className="flex-1 min-w-[46%] rounded-2xl border border-rose-400/20 px-4 py-5">
-            <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-rose-300/90">
-              Кръг
-            </Text>
-            <Text className="mt-3 text-[15px] font-light text-slate-100">Добави човек</Text>
-            <Text className="mt-1 text-[12px] font-light text-slate-500">партньор · приятел · crush</Text>
+          {/* THE single exit from this screen's content (gap 1). Same
+              `group` gap as every other section boundary on this screen —
+              a consistent large-tier gap, not another ad hoc value. */}
+          <View style={{ marginTop: rhythm.group, borderTopWidth: 1, borderTopColor: 'rgba(148,163,184,0.1)' }}>
+            <NavRow label="Питай Оракула" onPress={() => push('/oracle')} tone="accent" />
           </View>
         </View>
+      )}
 
-        {/* Streak footer — Layer D. Hidden in empty state (mirrors web). */}
-        {chart && (
-          <Text className="text-center font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-500">
-            · небесен ритъм ·
-          </Text>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+      {chart === null && (
+        <View style={{ marginTop: rhythm.group }}>
+          <EmptyState
+            body="Картата ти още не е настроена. Въведи рождените си данни, за да видиш хороскопа, наталната карта и транзитите."
+            ctaLabel="Въведи рождени данни"
+            onPressCta={() => push('/wizard/date')}
+          />
+        </View>
+      )}
+
+      {/* Secondary nav — one plain row, same NavRow chevron mechanism as
+          everything else, no separate card chrome competing with it. */}
+      <View style={{ marginTop: rhythm.group, borderTopWidth: 1, borderTopColor: 'rgba(148,163,184,0.1)' }}>
+        <NavRow label="Кръг" hint="добави партньор, приятел или crush" onPress={() => push('/circle')} />
+      </View>
+    </ScreenShell>
   )
 }
 
-// Animated sun sigil — item 1.4, P.1-e. Two-bloom + ring + glyph composition
-// mirrors web DailyHoroscope.tsx:55-80. Animation: opacity oscillation on
-// the two SVG RadialGradient blooms (outer violet, inner amber) at opposing
-// phases over a 4s cycle. Cross-platform clean — no boxShadow animation
-// (Android requires elevation, doesn't interpolate smoothly), no Gaussian
-// blur (react-native-svg filter support is patchy on Android), no
-// expo-linear-gradient dep (Conservative SDK defaults).
-function SunSigil() {
-  const outerOpacity = useSharedValue(0.6)
-  const innerOpacity = useSharedValue(0.4)
+// The one anchoring device for reading content (Step 5, gap 4 — "unanchored
+// text"): a thin left rule, the dominant real-world convention for framing
+// editorial prose on mobile (researched: Substack's blockquote treatment,
+// general editorial-typography convention — rules + whitespace, not boxes,
+// in serif reading contexts). Used consistently everywhere a reading
+// appears; nothing else in this screen gets a frame, so it stays a
+// deliberate, singular signal ("this is the article") rather than default
+// chrome repeated on every block.
+function ReadingFrame({ children }: { children: ReactNode }) {
+  return (
+    <View style={{ borderLeftWidth: 2, borderLeftColor: 'rgba(139,92,246,0.35)', paddingLeft: 16 }}>
+      {children}
+    </View>
+  )
+}
+
+// Both real horoscope content and this composeWelcome fallback share the
+// same editorial structure the AI prompt itself specifies
+// (apps/web/lib/horoscope/prompts.ts) — three beats, not two: an
+// atmospheric opener, one or more developing paragraphs, then a payoff.
+// The first pass here only gave type a way to express the payoff
+// (weight-up on the last paragraph); the opener still rendered identically
+// to the developing paragraphs in between, so the structure only
+// half-showed. Now all three beats read distinctly, each via ONE lever,
+// not stacked ornament:
+//   - opener (first paragraph): ITALIC, same weight/size/color as body.
+//     Marks it as the atmospheric beat — a register shift, not a
+//     hierarchy jump — matching how compose.ts's own PHASE_OPENERS read
+//     (a short image-sentence before the elaboration starts).
+//   - development (middle paragraphs): plain body, unchanged.
+//   - payoff (last paragraph): WEIGHT steps up to Medium — no bold cut
+//     of EB Garamond is subsetted, deliberately, since faux-bold via OS
+//     synthesis is worse than no bold — and sits a full `group` gap
+//     below, not `paragraph`, so the gap itself signals "new beat," not
+//     just the text.
+// A single-paragraph reading (opener with no development, or a payoff
+// with nothing before it) skips both treatments — there's no second beat
+// to contrast against, so italicizing or weighting the only paragraph on
+// screen would be decoration, not structure.
+function lastIndex<T>(arr: T[]): number {
+  return arr.length - 1
+}
+
+function beatStyle(index: number, last: number): { fontFamily: string; marginTop: number } {
+  if (last === 0) return { fontFamily: font.body, marginTop: 0 }
+  if (index === 0) return { fontFamily: font.bodyItalic, marginTop: 0 }
+  if (index === last) return { fontFamily: font.bodyMedium, marginTop: rhythm.group }
+  return { fontFamily: font.body, marginTop: rhythm.paragraph }
+}
+
+// Rhythm break for the composeWelcome summary (used only when the real
+// daily-horoscope content hasn't loaded/isn't available) — splits on
+// sentence boundaries so even a short summary reads as short paragraphs,
+// not one dense block. Every PHASE_OPENERS entry in compose.ts opens by
+// restating the phase name as its own sentence (e.g. "Залязващ
+// полумесец. Време за почивка…") — which the hero above already shows,
+// so that first sentence is dropped here to avoid showing the same
+// phase name twice on one screen (caught in advisor review).
+function ReadingParagraphs({ text }: { text: string }) {
+  const sentences = useMemo(() => {
+    const all = text.split(/(?<=[.!?])\s+/).filter(Boolean)
+    return all.length > 1 ? all.slice(1) : all
+  }, [text])
+  const last = lastIndex(sentences)
+  return (
+    <ReadingFrame>
+      {sentences.map((s, i) => (
+        <Text key={i} style={{ ...type.body, ...beatStyle(i, last), color: '#dde3ee' }}>
+          {s}
+        </Text>
+      ))}
+    </ReadingFrame>
+  )
+}
+
+const RING_SIZE = 92
+const BLOOM_SIZE = 150
+const PULSE_MS = 2400
+const AnimatedCircle = Animated.createAnimatedComponent(Circle)
+
+// Two-circle mask technique: a light disk and a dark disk of the same
+// radius, the dark one offset horizontally by `dx`, both clipped to the
+// moon's circular silhouette so the outline never changes — only the
+// terminator curve does. `isWaxing` flips which side the light grows from.
+//
+// BUG FIX: `dx` used to be set linearly (`2R * illuminationFraction`), on
+// the assumption that offsetting two circles by a fraction of their max
+// separation reveals that same fraction of area. It doesn't — the
+// intersection area of two equal circles is a highly non-linear function
+// of their center distance (front-loaded: two circles overlap by nearly
+// their full area until the offset gets close to the fully-separated
+// 2R). Verified numerically: at 22% illumination the linear version
+// rendered ~28% visible light, and the gap widens toward mid-phase (50%
+// illumination rendered as ~61% light, 70% as ~81%) — an increasingly
+// "too full" moon exactly where a first-quarter/last-quarter reading
+// would need a real half-moon. `darkAreaFraction` is the closed-form lens
+// (circular segment) area for two equal circles offset by `d`;
+// `solveOffsetForIllumination` inverts it via bisection so the RENDERED
+// light area, not the offset distance, is linear in illumination — the
+// property the UI actually promises ("22% осветена" should show 22%
+// visible light). Bisection runs once per illumination/size change inside
+// useMemo, not per frame.
+function darkAreaFraction(d: number, r: number): number {
+  if (d <= 0) return 1
+  if (d >= 2 * r) return 0
+  const term = 2 * r * r * Math.acos(d / (2 * r)) - (d / 2) * Math.sqrt(4 * r * r - d * d)
+  return term / (Math.PI * r * r)
+}
+
+function solveOffsetForIllumination(fraction: number, r: number): number {
+  let lo = 0
+  let hi = 2 * r
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2
+    const light = 1 - darkAreaFraction(mid, r)
+    if (light < fraction) lo = mid
+    else hi = mid
+  }
+  return (lo + hi) / 2
+}
+
+// Real curved terminator, not a straight-edged fill bar (the previous
+// version — a rect clipped to a percentage width inside a circle — reads
+// as a battery/progress indicator, not a moon; caught in advisor review
+// before this reached the founder). This is an approximation (a real
+// terminator is an ellipse arc, not a circle arc) but is the standard
+// technique used by most moon-phase icon sets and reads unambiguously as
+// a moon — the fidelity gap that mattered was the calibration bug above,
+// not circle-vs-ellipse.
+function MoonGlyph({ illumination, isWaxing }: { illumination: number; isWaxing: boolean }) {
+  const glow = useSharedValue(0.5)
 
   useEffect(() => {
-    outerOpacity.value = withRepeat(
+    glow.value = withRepeat(
       withSequence(
-        withTiming(1.0, { duration: SIGIL_PULSE_MS, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.6, { duration: SIGIL_PULSE_MS, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.85, { duration: PULSE_MS, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.5, { duration: PULSE_MS, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
       false,
     )
-    innerOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.7, { duration: SIGIL_PULSE_MS, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.4, { duration: SIGIL_PULSE_MS, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      false,
-    )
-    // Cleanup on unmount — Reanimated 4.x holds the animation reference
-    // internally on the shared value; cancelAnimation drops it so a
-    // navigate-away/back doesn't leak the prior cycle.
-    return () => {
-      cancelAnimation(outerOpacity)
-      cancelAnimation(innerOpacity)
-    }
-  }, [innerOpacity, outerOpacity])
+    return () => cancelAnimation(glow)
+  }, [glow])
 
-  const outerProps = useAnimatedProps(() => ({ opacity: outerOpacity.value }))
-  const innerProps = useAnimatedProps(() => ({ opacity: innerOpacity.value }))
+  const glowProps = useAnimatedProps(() => ({ opacity: glow.value }))
+  const fraction = Math.max(0.03, Math.min(0.97, illumination / 100))
+  const cx = RING_SIZE / 2
+  const cy = RING_SIZE / 2
+  const r = RING_SIZE / 2 - 1
+  const offset = useMemo(() => solveOffsetForIllumination(fraction, r), [fraction, r])
+  // Direction, checked against this app's own copy, not assumed: the dark
+  // disk is drawn on TOP of the light disk, offset by `dx`, so the
+  // uncovered (visibly light) sliver ends up on the side OPPOSITE the dark
+  // disk's shift — shifting the dark disk right leaves light on the left,
+  // and vice versa. packages/core/src/lib/moon-phase.ts's own
+  // `physicalAppearance` text says waxing crescent lights up "от дясната
+  // страна" (from the right) and waning crescent "от лявата страна" (from
+  // the left). To land the light crescent on the right for waxing, the
+  // dark disk must shift LEFT — i.e. `isWaxing` needs a negative dx, the
+  // opposite of what this previously read.
+  const dx = (isWaxing ? -1 : 1) * offset
 
   return (
-    <View
-      style={{
-        width: SIGIL_BLOOM_SIZE,
-        height: SIGIL_BLOOM_SIZE,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 20,
-      }}
-    >
-      <Svg
-        width={SIGIL_BLOOM_SIZE}
-        height={SIGIL_BLOOM_SIZE}
-        style={{ position: 'absolute' }}
-      >
+    <View style={{ width: BLOOM_SIZE, height: BLOOM_SIZE, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={BLOOM_SIZE} height={BLOOM_SIZE} style={{ position: 'absolute' }}>
         <Defs>
-          <RadialGradient id="sigil-violet" cx="50%" cy="50%" rx="50%" ry="50%">
-            <Stop offset="0%" stopColor="rgb(139, 92, 246)" stopOpacity="0.30" />
-            <Stop offset="100%" stopColor="rgb(139, 92, 246)" stopOpacity="0" />
-          </RadialGradient>
-          <RadialGradient id="sigil-amber" cx="50%" cy="50%" rx="50%" ry="50%">
-            <Stop offset="0%" stopColor="rgb(251, 191, 36)" stopOpacity="0.20" />
-            <Stop offset="60%" stopColor="rgb(251, 191, 36)" stopOpacity="0.06" />
-            <Stop offset="100%" stopColor="rgb(251, 191, 36)" stopOpacity="0" />
+          <RadialGradient id="moon-glow" cx="50%" cy="50%" rx="50%" ry="50%">
+            <Stop offset="0%" stopColor="rgb(226,232,240)" stopOpacity="0.22" />
+            <Stop offset="100%" stopColor="rgb(226,232,240)" stopOpacity="0" />
           </RadialGradient>
         </Defs>
         <AnimatedCircle
-          cx={SIGIL_BLOOM_SIZE / 2}
-          cy={SIGIL_BLOOM_SIZE / 2}
-          r={SIGIL_BLOOM_SIZE / 2}
-          fill="url(#sigil-violet)"
-          animatedProps={outerProps}
-        />
-        <AnimatedCircle
-          cx={SIGIL_BLOOM_SIZE / 2}
-          cy={SIGIL_BLOOM_SIZE / 2}
-          r={SIGIL_BLOOM_SIZE / 2.5}
-          fill="url(#sigil-amber)"
-          animatedProps={innerProps}
+          cx={BLOOM_SIZE / 2}
+          cy={BLOOM_SIZE / 2}
+          r={BLOOM_SIZE / 2}
+          fill="url(#moon-glow)"
+          animatedProps={glowProps}
         />
       </Svg>
-      <View
-        style={{
-          width: SIGIL_RING_SIZE,
-          height: SIGIL_RING_SIZE,
-          borderRadius: SIGIL_RING_SIZE / 2,
-          borderWidth: 1,
-          borderColor: 'rgba(226, 232, 240, 0.20)', // slate-200/20
-          backgroundColor: 'rgba(139, 92, 246, 0.08)', // flat violet tint, no gradient
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {/* Sun glyph — two concentric circles mirror SunIcon at
-            apps/web/components/icons/CelestialIcons.tsx:67-75. */}
-        <Svg width={26} height={26} viewBox="0 0 24 24">
-          <Circle
-            cx={12}
-            cy={12}
-            r={6}
-            fill="none"
-            stroke="rgb(254, 243, 199)" // amber-100
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <Circle cx={12} cy={12} r={1.2} fill="rgb(254, 243, 199)" />
-        </Svg>
-      </View>
+      <Svg width={RING_SIZE} height={RING_SIZE}>
+        <Defs>
+          <ClipPath id="moon-disk-clip">
+            <Circle cx={cx} cy={cy} r={r} />
+          </ClipPath>
+        </Defs>
+        <G clipPath="url(#moon-disk-clip)">
+          <Circle cx={cx} cy={cy} r={r} fill="rgba(139,92,246,0.06)" />
+          <Circle cx={cx} cy={cy} r={r} fill="rgba(226,232,240,0.92)" />
+          <Circle cx={cx + dx} cy={cy} r={r} fill="#08060f" />
+        </G>
+        <Circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(226,232,240,0.25)" strokeWidth={1} />
+      </Svg>
     </View>
   )
 }
 
-// Date tab — typographic underline-active button mirroring web's
-// TabButton at apps/web/components/horoscope/DailyHoroscope.tsx:189-227.
-// Active = amber underline + amber label. Disabled = slate-700 unclickable.
-function DateTab({
-  active,
-  disabled,
-  onPress,
-  label,
-}: {
-  active: boolean
-  disabled?: boolean
-  onPress: () => void
-  label: string
-}) {
-  return (
-    <Pressable
-      onPress={disabled ? undefined : onPress}
-      disabled={disabled}
-      style={{ paddingBottom: 8 }}
-    >
-      <Text
-        className={`font-cinzel text-[11px] font-semibold uppercase tracking-[0.28em] ${
-          active ? 'text-amber-200' : disabled ? 'text-slate-700' : 'text-slate-400'
-        }`}
-      >
-        {label}
-      </Text>
-      {active && (
-        <View
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: 1,
-            backgroundColor: 'rgba(251,191,36,0.7)', // amber-400/70
-          }}
-        />
-      )}
-    </Pressable>
-  )
+type SentinelChunk = ReturnType<typeof parseSentinels>[number]
+
+// The founder's diagnosis, checked against compose.ts/prompts.ts rather
+// than assumed: the reading isn't actually one undifferentiated block —
+// the AI prompt spec (apps/web/lib/horoscope/prompts.ts) asks for a small
+// number of the most important active or building influences, one per
+// paragraph, each wrapped with a [planet:KEY] sentinel
+// (packages/core/src/oracle/planet-parser.ts). That's real per-segment
+// metadata already flowing through `parseSentinels` — the first planet
+// mentioned in a development paragraph names what that paragraph is
+// ABOUT, the same way Big Three's glyph+eyebrow names what its row is
+// about. This function surfaces it as an anchor instead of leaving it
+// buried in running prose.
+function firstPlanetOf(chunks: SentinelChunk[]): Planet | null {
+  const found = chunks.find((c) => c.planet)
+  return (found?.planet as Planet | undefined) ?? null
 }
+
+// Segmentation, not decoration: Карта's Big Three works because each row
+// is a bounded unit with a fixed anchor (glyph, eyebrow, degree) — three
+// units, scannable in seconds. Днес's reading previously rendered its
+// paragraphs as one continuous flow with nothing to land on past the
+// italic opener. The fix mirrors Big Three's actual mechanism, not just
+// its look: opener (atmospheric, no anchor — it isn't about one
+// influence) → development paragraphs, each anchored by the planet it's
+// actually about, with a hairline above every one but the first (exactly
+// Big Three's `hairline={idx > 0}`) → payoff (weight-up, no anchor — it's
+// the takeaway, not another influence, so it stays visually distinct from
+// the influence segments rather than reading as one more of them).
+//
+// MOBILE-ALPHA-REDESIGN v3, Step 2 (reading length): the daily-horoscope
+// prompt now targets 400-550 characters, 2 paragraphs (apps/web/lib/
+// horoscope/prompts.ts) — a genuine "text from a friend" reading fits
+// on-screen with no scroll needed. This threshold is a variance safety
+// net, not a routine control: it sits well above the new target so it
+// only fires on outliers (a model that ignores the length instruction,
+// or a legacy reading generated under the old 4-6 paragraph prompt still
+// cached for today). See REVISIT 57 (daily-reading length re-verification
+// against production model).
+const EXPAND_THRESHOLD_CHARS = 900
 
 function HoroscopeBody({ content }: { content: string }) {
-  // Split paragraphs first (raw \n\n+ on content with sentinels intact),
-  // then parse each paragraph's chunks for coloring. Mirrors web's
-  // HoroscopeStream order: paragraph-then-parse keeps sentinel boundaries
-  // paragraph-local. Planet mentions render as nested <Text> with inline
-  // style.color (item 1.5, P.1-c).
+  const [expanded, setExpanded] = useState(false)
   const paragraphs = useMemo(
-    () =>
-      content
-        .split(/\n\n+/)
-        .map((p) => p.trim())
-        .filter(Boolean)
-        .map((p) => parseSentinels(p)),
+    () => content.split(/\n\n+/).map((p) => p.trim()).filter(Boolean).map((p) => parseSentinels(p)),
     [content],
   )
+  const last = lastIndex(paragraphs)
+  const isOutlier = content.length > EXPAND_THRESHOLD_CHARS && last > 1
+  const collapsed = isOutlier && !expanded
+  let devIndex = -1
+
   return (
-    <View>
-      {paragraphs.map((chunks, i) => (
-        <Text
-          key={i}
-          className="text-[16.5px] font-light leading-[1.8] text-slate-200"
-          style={{ marginTop: i === 0 ? 0 : 14 }}
-        >
-          {chunks.map((chunk, j) => {
-            if (chunk.planet) {
-              const color = PLANET_HEX_COLORS[chunk.planet] ?? PLANET_HEX_FALLBACK
-              return (
-                <Text key={j} style={{ color, fontWeight: '500' }}>
-                  {chunk.text}
-                </Text>
-              )
-            }
-            return chunk.text
-          })}
-        </Text>
-      ))}
-    </View>
+    <ReadingFrame>
+      {paragraphs.map((chunks, i) => {
+        const role = i === 0 ? 'opener' : i === last && last > 0 ? 'payoff' : 'development'
+        if (role === 'development') devIndex += 1
+        if (collapsed && role === 'development') return null
+        const anchor = role === 'development' ? firstPlanetOf(chunks) : null
+        const hairline = role === 'development' && devIndex > 0
+
+        return (
+          <Fragment key={i}>
+            {collapsed && role === 'payoff' && (
+              <Pressable
+                onPress={() => setExpanded(true)}
+                accessibilityRole="button"
+                style={{ marginTop: rhythm.paragraph, marginBottom: rhythm.paragraph }}
+              >
+                <Text style={{ ...type.caption, color: color.amber }}>Прочети повече</Text>
+              </Pressable>
+            )}
+            <View
+              style={{
+                marginTop: role === 'opener' ? 0 : role === 'payoff' ? rhythm.group : rhythm.paragraph,
+                borderTopWidth: hairline ? 1 : 0,
+                borderTopColor: 'rgba(148,163,184,0.08)',
+                paddingTop: hairline ? rhythm.tight : 0,
+              }}
+            >
+              {anchor && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: rhythm.micro }}>
+                  <Text style={{ fontFamily: font.cinzel, fontSize: 14, color: color.amber }}>{PLANET_GLYPHS[anchor]}</Text>
+                  <Text style={{ ...type.caption, color: color.muted }}>{PLANETS_BG[anchor]}</Text>
+                </View>
+              )}
+              <Text
+                style={{
+                  ...type.body,
+                  fontFamily: role === 'opener' ? font.bodyItalic : role === 'payoff' ? font.bodyMedium : font.body,
+                  color: '#dde3ee',
+                }}
+              >
+                {chunks.map((chunk, j) =>
+                  chunk.planet ? (
+                    // Always Medium, never italic — including inside the
+                    // italic opener paragraph, where an italic amber word
+                    // would read as emphasis-on-emphasis and fight the
+                    // opener's own register shift instead of standing out.
+                    <Text key={j} style={{ color: '#fcd34d', fontFamily: font.bodyMedium }}>
+                      {chunk.text}
+                    </Text>
+                  ) : (
+                    chunk.text
+                  ),
+                )}
+              </Text>
+            </View>
+          </Fragment>
+        )
+      })}
+    </ReadingFrame>
   )
 }

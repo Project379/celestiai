@@ -101,37 +101,6 @@ export default function YouScreen() {
           ))}
         </View>
 
-        {/* Dev-only scaffolding for MOBILE-ALPHA-REDESIGN founder review —
-            never ships (guarded by __DEV__). Remove this block once the
-            redesign is ratified and either adopted (preview routes get
-            promoted to the real screens) or abandoned. */}
-        {__DEV__ && (
-          <View className="mt-10">
-            <Text className="mb-2 font-cinzel text-[10px] uppercase tracking-[0.32em] text-rose-400/70">
-              Preview (dev only)
-            </Text>
-            <Pressable
-              onPress={() => push('/preview/today')}
-              accessibilityRole="button"
-              className="flex-row items-baseline justify-between border-t border-slate-800/60 py-5"
-            >
-              <Text className="font-cinzel text-[11px] uppercase tracking-[0.32em] text-slate-200">
-                Preview: Днес
-              </Text>
-              <Text className="text-[12px] text-slate-500">/preview/today</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => push('/preview/chart')}
-              accessibilityRole="button"
-              className="flex-row items-baseline justify-between border-t border-slate-800/60 py-5"
-            >
-              <Text className="font-cinzel text-[11px] uppercase tracking-[0.32em] text-slate-200">
-                Preview: Карта
-              </Text>
-              <Text className="text-[12px] text-slate-500">/preview/chart</Text>
-            </Pressable>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   )
