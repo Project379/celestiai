@@ -85,6 +85,21 @@ export const font = {
 //     Оракула" fit comfortably up to 44-48px — not size-constrained,
 //     but kept small/quiet by design (R1: the hero is the glyph, not a
 //     second competing headline).
+//   - The FULL greeting line ("{TOD}, {displayName}.") is a different
+//     validation, measured directly against PlayfairDisplay-Regular.ttf's
+//     real glyph advance widths (opentype.js, not estimated) after
+//     getDisplayName made the name slot able to hold a full name, not
+//     just a first name. Worst case — "Благословена нощ" (longest TOD)
+//     + "Александър Константинов" (a realistic long full name) — measures
+//     377px at 17px against the 350px usable width: it DOES wrap to a
+//     second line (~108% of budget). This is accepted, not overlooked:
+//     the greeting Text has no numberOfLines constraint, wraps gracefully,
+//     and doesn't anchor the hero's single-line layout the way the lunar-
+//     phase name does — an occasional 2-line wrap for the rare
+//     long-name+night-greeting combination is a real but low-severity
+//     tradeoff, not a broken layout. Most real combinations (see
+//     tokens.ts's own measurement script in the MOBILE_ALPHA_REDESIGN.md
+//     §14 record) fit on one line comfortably below 330px.
 export const type = {
   hero: { fontFamily: font.displaySemibold, fontSize: 32, lineHeight: 38 },
   sub: { fontFamily: font.displayRegular, fontSize: 17, lineHeight: 23 },

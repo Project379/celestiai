@@ -121,7 +121,16 @@ export default function DnesScreen() {
   return (
     <ScreenShell>
       <Text style={{ ...type.caption, color: color.faint }}>{todayFormatted}</Text>
-      <Text style={{ ...type.body, fontSize: 15, color: color.muted, marginTop: rhythm.micro, marginBottom: rhythm.group }}>
+      {/* Rebalanced from a one-off 15px override (read as a caption) to
+          the existing `sub` tier — no new type-scale tier added (R2).
+          Playfair Display over EB Garamond distinguishes it from reading-
+          body text. Validated against a real measured worst case, not
+          assumed — see tokens.ts's type-scale comment: the longest TOD
+          phrase + longest realistic full name wraps to 2 lines at this
+          size, accepted as a low-severity tradeoff since this Text has
+          no numberOfLines constraint and doesn't anchor a single-line
+          hero the way the lunar-phase name does. */}
+      <Text style={{ ...type.sub, color: color.muted, marginTop: rhythm.micro, marginBottom: rhythm.group }}>
         {welcome.greeting}
       </Text>
 
