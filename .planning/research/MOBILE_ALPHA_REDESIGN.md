@@ -183,6 +183,24 @@ Cites §3.2 (ADA winners concentrate decoration in one focal surface, not repeat
 
 Cites §2.4 (founder's finding) and the actual longest Bulgarian strings pulled from the codebase: lunar-phase names run to 19 characters (`Изгряващ полумесец`, `Залязващ полумесец`); `you.tsx` card subtitles run to 37 characters (`история, планети, аспекти, лунни фази`). Rule: a 2-up card grid is only used for content guaranteed short (single words or phrases ≤12–14 characters). Anything that must hold a full phrase or a variable-length data string (lunar phase name, sign-quip lead-in) gets a full-width single-column card instead of fighting a 2-up grid's width budget. This directly resolves v1's card-wrap failure without needing pixel-level device testing to confirm — it avoids the risk category by construction.
 
+### R7 — Long-form/interpretive text must be segmented with a scannable entry point (RATIFIED 2026-07-23)
+
+Drafted during the PlanetDetail styling pass, generalizing the fix already shipped on Днес (§14/§16: the founder's "leads the eye" note, solved there with hairline-separated paragraphs anchored by the planet each one is about, an italic opener, and a weight-up payoff). Ratified as a standing principle for the whole rollout, not a PlanetDetail-only fix — see founder decision below.
+
+**The principle** (this is what's ratified — apply it, don't skip it): any surface rendering more than ~2 paragraphs of interpretive or long-form text must (a) mark distinct beats with anchors suited to *that surface's own content shape* — a hairline plus a label or glyph the eye can land on before committing to read — and (b) distinguish the entry point (what the user came to learn first) and the payoff/takeaway from the supporting middle via exactly one type lever (weight, italic, or color), not decorative boxes.
+
+**The devices are per-surface adaptations, not a fixed template** (this is what's NOT ratified as a template — each surface designs its own): Днес anchors by planet mention because its reading genuinely covers several influences, with an italic opener and weight-up payoff. PlanetDetail has one planet with several *facets* (strengths/challenges/aspects/growth), so it anchors by section role instead — same italic-lead and weight-up-payoff levers (confirmed by the founder as generic typographic devices, not a Днес signature), but its own segmentation shape. Reusing the *levers* (italic, weight, hairline) across surfaces is adaptation; reusing Днес's *specific structure* (planet-glyph-per-paragraph) on content that isn't shaped that way would be copying, which is what the founder's original PlanetDetail brief explicitly ruled out. Оракул, crystals, recommendations, the guide, and the diary will each need this same judgment call applied to their own content shape — none of them should just inherit Днес's or PlanetDetail's mechanism wholesale.
+
+**Applies to (Tier list from §17, text-bearing surfaces) — LOC estimates in §17 must account for this as design work, not mechanical conversion:**
+- PlanetDetail — done, this pass.
+- Оракул replies (AI chat responses — long-form, no existing segmentation).
+- Crystal detail copy (`CrystalDetailPanel.tsx`).
+- Recommendations copy.
+- Astrology Guide (`GuideXSection.tsx` components) — likely partial compliance already via its Roman-numeral sections; audit before assuming compliant, and don't extend R5's numerals as the R7 mechanism here — the Guide's numerals mark progress through one document (R5's own justification), not lead/payoff distinction within a section.
+- Lunar diary entries/insights.
+
+Apply per-surface as each round fires; this rule is the standing citation, not a one-off justification re-derived each time.
+
 ### 4.1 Type scale (revised)
 
 | Token | Face | Size/Line-height | Use | Ratio to caption |
@@ -359,9 +377,9 @@ Fired standalone ahead of Round B, per founder direction: persistent chrome infl
 | Днес | Round A | ~200 | **Landed** |
 | Карта | Round A | ~225 | **Landed, but REVISIT 59 open** (5 child components still non-compliant) |
 | Ритъм | Round C1/C2 | ~745 | Scoped, not built |
-| Оракул | Round F | ~375 | Scoped, not built |
+| Оракул | Round F | ~375 | Scoped, not built — **R7 applies** (AI reply text needs its own lead/payoff segmentation design, not just token conversion; ~375 LOC estimate predates R7 and may be light) |
 
-**Tier 1 total remaining: ~1,120 LOC** (Ритъм + Оракул; tab bar/Днес/Карта already landed, Карта needs its REVISIT-59 follow-up on top).
+**Tier 1 total remaining: ~1,120 LOC** (Ритъм + Оракул; tab bar/Днес/Карта already landed, Карта needs its REVISIT-59 follow-up on top). **Оракул's estimate does not yet include R7 design time** — see note above.
 
 **Cost of shipping unconverted, concretely**: Ритъм and Оракул sit directly between Днес and Карта in the tab order — a user moving through the app hits old-tracked-caps-heavy screens (Ритъм: ~16 elements once LunarPhaseCard/TransitOverviewCard are counted; Оракул: 6 code sites, likely more rendered) one tap away from screens now deliberately quiet. This is the most visible, most-jarring possible sequencing failure — not a peripheral inconsistency but the exact adjacency a daily user experiences every session. Recommend: **ship before soft-launch.**
 
@@ -372,11 +390,11 @@ Fired standalone ahead of Round B, per founder direction: persistent chrome infl
 | Ти + `/you/premium` | Round B | ~215 | medium-high |
 | Settings | Round D | ~115 | medium-high |
 | Кръг | Round D | ~80 | medium-high |
-| Crystals | Round I1/I2 | ~650 | **low** — needs founder decision (§18) |
-| Recommendations | Round H | ~375 | low-medium |
-| Lunar diary | Round G | ~315 | medium — includes retiring the `romanize()` R5 violation |
+| Crystals | Round I1/I2 | ~650 | **low** — needs founder decision (§18); **R7 applies** to crystal detail copy |
+| Recommendations | Round H | ~375 | low-medium; **R7 applies** to recommendation blurbs |
+| Lunar diary | Round G | ~315 | medium — includes retiring the `romanize()` R5 violation; **R7 applies** to diary entries/insights |
 
-**Tier 2 total: ~1,750 LOC.**
+**Tier 2 total: ~1,750 LOC.** None of the four R7-flagged rows above (Оракул in Tier 1, Crystals/Recommendations/Lunar diary here) have their LOC estimates adjusted for R7 yet — those estimates predate R7's ratification and were sized as mechanical token conversion. Each round's planning pass must re-scope for the added design-judgment work (segmentation shape, lead/payoff levers) before committing to the existing midpoint.
 
 **Cost of shipping unconverted**: real, but lower-severity than Tier 1 — these aren't adjacent in the tab flow to the new screens the way Ритъм/Оракул are (Ти is a tab, but its own content isn't reached by scrolling from a new screen the way Ритъм is). A user who opens Кръг or Crystals occasionally sees an older visual language, but not in the same jarring one-tap-away sequence. **Recommend: Ти + premium ship before soft-launch** (P.9/P.11 already build there per the ratified sequencing, so the work happens regardless of tiering) — the rest can defer to a fast-follow post-launch pass without reading as broken, since they're not adjacent to freshly-converted screens in normal navigation.
 
@@ -386,9 +404,9 @@ Fired standalone ahead of Round B, per founder direction: persistent chrome infl
 |---|---|---|---|
 | Auth (4 screens) | Round K | ~425 | medium |
 | Wizard (4 screens + `StepIndicator`) | Round J1/J2 | ~850 | **low** — needs founder decision (§18) |
-| Astrology Guide | Round E | ~260 | medium |
+| Astrology Guide | Round E | ~260 | medium; **R7 applies** to guide-section body text — audit existing Roman-numeral sections for lead/payoff compliance before assuming R5's numerals already satisfy R7 (they don't — numerals mark document progress, not within-section emphasis) |
 
-**Tier 3 total: ~1,535 LOC.**
+**Tier 3 total: ~1,535 LOC.** The Guide's ~260 LOC estimate also predates R7 and does not yet account for the segmentation audit/design work noted above.
 
 **Cost of shipping unconverted**: lowest of the three tiers. Auth and wizard are seen once (sign-up, onboarding) or rarely (sign-in on a new device) — a brand-new user has no "new design system" expectation yet to be jarred against, since it's the FIRST thing they see, not a jump from something already converted. Guide is opened deliberately from Ти, not encountered in passing. **Recommend: defer full conversion past soft-launch** for all three — but see the cheap-isolated-fix note below, since two of these have real rule violations independent of the full conversion question.
 
@@ -493,11 +511,12 @@ Founder correction: the MoonDisc-as-hero conflict isn't just "two elements compe
 
 **Follow-up pass to close C1 + C2's font gaps — scoped, not yet built.** Mechanical work: for each of the ~76 unconverted Text sites across `rhythm.tsx` (15), `LunarPhaseCard.tsx` (42), and `TransitOverviewCard.tsx` (19), map the existing font-size to the nearest already-established scale tier (`body` 17, `row` 16, `caption` 12 — the same mapping already used to consolidate LunarPhaseCard's 9 sizes to 4 in Round C1) and either add `fontFamily: font.body`/`font.bodyMedium` or spread the matching `type.*` token, replacing raw `text-[Npx]` Tailwind sizing where it now maps onto a token. No new type-scale work, no R2/R3/R5 rework — purely adding the typeface dimension to already-compliant spacing/structure. Estimated **~150-220 LOC** (rhythm.tsx ~20-30, LunarPhaseCard ~90-130, TransitOverviewCard ~40-60) — well under the 500 ceiling; can ship as two commits mirroring the original C1/C2 split, or one if reviewed together. `PlanetDetail.tsx`'s 16-site gap is a separate finding from a different round (§16) — flagged here, not included in this estimate; needs its own scoping call.
 
-**Per-round completion checklist — added to prevent recurrence.** Before marking any round "landed"/"converted," verify all four:
+**Per-round completion checklist — added to prevent recurrence.** Before marking any round "landed"/"converted," verify all five:
 - [ ] R2/R3/R5 measured on the **full rendered tree** (§15), not the route file alone.
 - [ ] **`fontFamily` resolves on every `<Text>` site** — grep `<Text` count vs. (`fontFamily:` + `type.*` spread) count must match. A mismatch is an open gap, not a rounding error.
 - [ ] R6 card/layout shape checked against real string lengths, not assumed.
 - [ ] Type sizes collapsed to the 3-4-tier budget.
+- [ ] **R7 — any surface with more than ~2 paragraphs of interpretive/long-form text is segmented, has one marked lead, and one marked payoff** (ratified 2026-07-23, below). This is a design judgment call per surface, not a mechanical grep check like the fontFamily item above — budget round time for it accordingly.
 
 **REVISIT-42 — REOPENED (2026-07-23), fifth sighting.** Previously logged as "closed-by-decision at the token level" (§1.5) with individual surfaces found and fixed one at a time — tab bar + `PlanetDetail.tsx` (2026-07-22), the wizard (2026-07-23, §19) — each time treated as though the remaining surface count was now zero. It keeps reappearing because it keeps being closed on a per-surface basis instead of a total-surface basis. Fifth sighting, found during this audit: the Astrology Guide — R5's own designated legitimate home for `font-cinzel` (Roman numerals + the Latin "Stellaeum" brand eyebrow) — also wraps substantial **Cyrillic** body content in `font-cinzel` across its section components (e.g. `GuideLunarPhasesSection.tsx`: "Нарастваща половина", "Осемте фази", "Около 14 дни и 16 часа" — tracked-caps, Cyrillic, `font-cinzel`), inside the one surface previously assumed fully exempt.
 

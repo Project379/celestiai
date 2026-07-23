@@ -26,14 +26,30 @@ import {
   getRisingInterpretation,
 } from '@stellaeum/core/charts/interpretations'
 
-import { font } from '@/components/design-system/tokens'
+import { color, font, rhythm, space, type as typeScale } from '@/components/design-system/tokens'
 
 /**
  * Mobile port of apps/web/components/chart/PlanetDetail.tsx — bottom-
- * sheet modal pattern (per SR 6 decision 6) instead of web's inline
- * panel. Same five editorial sections (Общ поглед / Силни страни /
- * Предизвикателства / Аспекти / Насока за развитие), same Bulgarian
- * copy via @stellaeum/core/charts/interpretations (lifted in 6.1).
+ * sheet modal pattern (per SR 6 decision 6, reaffirmed as the ratified
+ * sheet-class exception to the popover-class overlay rule at
+ * MOBILE_ALPHA_REDESIGN.md's "Discipline patterns" §, 2026-07-23) instead
+ * of web's inline panel. Same five editorial sections (Общ поглед /
+ * Силни страни / Предизвикателства / Аспекти / Насока за развитие), same
+ * Bulgarian copy via @stellaeum/core/charts/interpretations (lifted in 6.1).
+ *
+ * Design-system pass, 2026-07-23 — content-lead treatment PROPOSED, not yet
+ * founder-approved (see R7 draft in MOBILE_ALPHA_REDESIGN.md): the brief
+ * sentence is rendered as the lead (italic register-shift, Днес's opener
+ * lever) instead of reading like another body paragraph; position/element/
+ * house metadata is demoted to one quiet inline caption row so it stops
+ * competing with the title; Strengths/Challenges get distinct directional
+ * glyphs instead of an identical dot; Growth (the forward-looking close)
+ * gets the payoff weight-up. These three levers are deliberately borrowed
+ * from Днес's mechanism even though the founder said not to copy Днес's
+ * *treatment* — flag this explicitly for founder review rather than
+ * assuming it's within bounds. Tokens (`rhythm`/`space`/`type`) replace the
+ * ad hoc pixel values the font-only pass left behind (this part is a
+ * mechanical tokens-only change, not in question).
  *
  * Skipped vs web: ambient blur backgrounds, framer-motion staggered
  * fades, custom celestial icons (Unicode glyphs from PLANET_GLYPHS /
@@ -90,6 +106,13 @@ interface SectionProps {
   title: string
   textTint: string
   dotTint: string
+  // R7 (MOBILE_ALPHA_REDESIGN.md): PlanetDetail has one planet, not several
+  // influences to anchor by (that's Днес's device) — so its segments
+  // differentiate by ROLE instead. Strengths/Challenges get an opposing
+  // glyph pair so the eye can tell "supportive" from "friction" before
+  // reading either; every other section keeps the plain rotated-dot marker
+  // (still exactly one shared shape, not a proliferation of iconography).
+  marker?: string
   children: React.ReactNode
 }
 
@@ -101,14 +124,20 @@ interface SectionProps {
 // the modal's header eyebrow ("Планета"/"Асцендент") is this surface's one
 // reserved R3 slot; everything else renders as plain sentence-case text
 // distinguished by color/weight instead.
-function Section({ title, textTint, dotTint, children }: SectionProps) {
+function Section({ title, textTint, dotTint, marker, children }: SectionProps) {
   return (
-    <View className="border-t border-white/[0.05] pt-5">
-      <View className="mb-3 flex-row items-center" style={{ gap: 12 }}>
-        <View
-          className={`h-1 w-1 ${dotTint}`}
-          style={{ transform: [{ rotate: '45deg' }] }}
-        />
+    <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: rhythm.tight }}>
+      <View className="mb-3 flex-row items-center" style={{ gap: space.md }}>
+        {marker ? (
+          <Text className={textTint} style={{ fontFamily: font.bodyMedium, fontSize: 12, lineHeight: 12 }}>
+            {marker}
+          </Text>
+        ) : (
+          <View
+            className={`h-1 w-1 ${dotTint}`}
+            style={{ transform: [{ rotate: '45deg' }] }}
+          />
+        )}
         <Text style={{ fontFamily: font.bodyMedium }} className={`text-[13.5px] font-medium ${textTint}`}>
           {title}
         </Text>
@@ -125,9 +154,9 @@ interface BulletListProps {
 
 function BulletList({ items, dotTint }: BulletListProps) {
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: space.sm }}>
       {items.map((item, idx) => (
-        <View key={idx} className="flex-row" style={{ gap: 12 }}>
+        <View key={idx} className="flex-row" style={{ gap: space.md }}>
           <View
             className={`h-1 w-1 ${dotTint}`}
             style={{ transform: [{ rotate: '45deg' }], marginTop: 10 }}
@@ -217,11 +246,14 @@ export function PlanetDetail({
           style={{ maxHeight: '88%' }}
         >
           <SafeAreaView edges={['bottom']}>
-            <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}>
-              {/* Header */}
-              <View className="mb-5 flex-row items-start justify-between" style={{ gap: 16 }}>
+            <ScrollView contentContainerStyle={{ paddingHorizontal: space.xl, paddingTop: space.xl, paddingBottom: space['3xl'] }}>
+              {/* Header — identity only. Position/element/house used to sit
+                  at near-title weight (R7 finding: loud but shouldn't be);
+                  now one quiet caption row below the sub-line, demoted to
+                  reference detail so it stops competing with the title. */}
+              <View className="flex-row items-start justify-between" style={{ gap: space.lg, marginBottom: rhythm.paragraph }}>
                 <View style={{ flex: 1 }}>
-                  <View className="mb-3 flex-row items-center" style={{ gap: 12 }}>
+                  <View className="flex-row items-center" style={{ gap: space.md, marginBottom: rhythm.tight }}>
                     <View
                       className="h-1 w-1 bg-amber-300/90"
                       style={{ transform: [{ rotate: '45deg' }] }}
@@ -239,31 +271,11 @@ export function PlanetDetail({
                     <Text> в </Text>
                     <Text>{signLabel} {signGlyph}</Text>
                   </Text>
-                  <Text style={{ fontFamily: font.body }} className="mt-3 text-[13px] font-light text-slate-400">
-                    {interpretation.position}
+                  <Text style={{ ...typeScale.caption, fontFamily: font.body, color: color.faint, marginTop: rhythm.micro }}>
+                    {[interpretation.position, ELEMENT_LABEL[element], house !== undefined ? `Дом ${house}` : null]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </Text>
-                  <View className="mt-4 flex-row items-center flex-wrap" style={{ gap: 16 }}>
-                    <View className="flex-row items-center" style={{ gap: 8 }}>
-                      <View
-                        className={`h-1 w-1 ${dotTint}`}
-                        style={{ transform: [{ rotate: '45deg' }] }}
-                      />
-                      <Text style={{ fontFamily: font.bodyMedium }} className={`text-[12.5px] font-medium ${textTint}`}>
-                        {ELEMENT_LABEL[element]}
-                      </Text>
-                    </View>
-                    {house !== undefined && (
-                      <View className="flex-row items-center" style={{ gap: 8 }}>
-                        <View
-                          className="h-1 w-1 bg-slate-500/70"
-                          style={{ transform: [{ rotate: '45deg' }] }}
-                        />
-                        <Text style={{ fontFamily: font.bodyMedium }} className="text-[12.5px] font-medium text-slate-500">
-                          Дом {house}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
                 </View>
                 <Pressable
                   onPress={onClose}
@@ -275,17 +287,23 @@ export function PlanetDetail({
                 </Pressable>
               </View>
 
-              {/* Brief lede */}
+              {/* Brief — the lead, not another paragraph (R7). Днес's
+                  opener lever (italic, same size/weight as body — a
+                  register shift, not a size jump) marks this as "read this
+                  first," since it's the one-sentence answer to "what does
+                  this mean for me." No left-border box anymore — that
+                  chrome made it read as a call-out aside rather than the
+                  entry point. */}
               {interpretation.brief && (
-                <View className="mb-6 border-l border-amber-300/40 pl-5">
-                  <Text style={{ fontFamily: font.body }} className="text-[16px] font-light leading-[1.85] text-slate-300/95">
-                    {interpretation.brief.charAt(0).toUpperCase() + interpretation.brief.slice(1)}
-                  </Text>
-                </View>
+                <Text
+                  style={{ ...typeScale.body, fontFamily: font.bodyItalic, color: '#dde3ee', marginBottom: rhythm.group }}
+                >
+                  {interpretation.brief.charAt(0).toUpperCase() + interpretation.brief.slice(1)}
+                </Text>
               )}
 
               {/* Body sections */}
-              <View style={{ gap: 28 }}>
+              <View style={{ gap: rhythm.group }}>
                 {hasOverview && (
                   <Section
                     title="Общ поглед"
@@ -302,6 +320,7 @@ export function PlanetDetail({
                     title="Силни страни"
                     textTint={textTint}
                     dotTint={dotTint}
+                    marker="+"
                   >
                     <BulletList items={interpretation.strengths} dotTint={dotTint} />
                   </Section>
@@ -311,6 +330,7 @@ export function PlanetDetail({
                     title="Предизвикателства"
                     textTint={textTint}
                     dotTint={dotTint}
+                    marker="-"
                   >
                     <BulletList items={interpretation.challenges} dotTint={dotTint} />
                   </Section>
@@ -325,12 +345,16 @@ export function PlanetDetail({
                   </Section>
                 )}
                 {hasGrowth && (
+                  // Payoff (R7) — same lever Днес uses for its closing beat:
+                  // weight steps up to Medium, no new box or color. This is
+                  // the forward-looking "what do I do with this," not more
+                  // description, so it reads distinct from Overview above.
                   <Section
                     title="Насока за развитие"
                     textTint={textTint}
                     dotTint={dotTint}
                   >
-                    <Text style={{ fontFamily: font.body }} className="text-[14px] leading-[1.85] text-slate-300/95">
+                    <Text style={{ fontFamily: font.bodyMedium }} className="text-[14px] leading-[1.85] text-slate-200">
                       {interpretation.growth}
                     </Text>
                   </Section>
