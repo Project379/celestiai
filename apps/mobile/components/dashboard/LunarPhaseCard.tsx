@@ -10,7 +10,7 @@ import {
   type MeteorShower,
 } from '@stellaeum/core/welcome'
 
-import { MoonDisc } from './MoonDisc'
+import { MoonGlyph } from './MoonGlyph'
 import { font } from '@/components/design-system/tokens'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
@@ -116,10 +116,15 @@ export function LunarPhaseCard() {
         Лунна фаза · Манифестация
       </Text>
 
-      {/* Main row: moon disc + phase info */}
+      {/* Main row: moon glyph + phase info. Deliberately smaller than
+          Днес's 92px hero (was 108px pre-C2, i.e. larger than the hero it
+          was porting away from) and non-animated — Ритъм's hero is the
+          active-transit numeral (rhythm.tsx), and a bigger, pulsing moon
+          here would re-open the two-elements-competing-for-R1 problem
+          C1 was meant to close. */}
       <View className="flex-row items-start" style={{ gap: 20 }}>
         <Pressable onPress={() => setExpanded((v) => !v)} accessibilityRole="button">
-          <MoonDisc phaseFraction={phase.phaseFraction} size={108} />
+          <MoonGlyph illumination={phase.illumination} isWaxing={phase.isWaxing} size={64} animated={false} />
         </Pressable>
 
         <View className="flex-1 pt-1">
