@@ -3,8 +3,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
+import { font } from '@/components/design-system/tokens'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
+import { useTransitOverview } from '@/hooks/useTransitOverview'
 
 /**
  * Ритъм tab — current-sky reading. Mobile port of
@@ -18,10 +20,40 @@ import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
  * P.3-a per HT 2 ratification; design intent preserved as REVISIT-46
  * for restoration decision at Phase C or first multi-scale forecast
  * request.
+ *
+ * Hero (Round C1, MOBILE_ALPHA_REDESIGN.md §21, ratified 2026-07-23):
+ * the active-transit count, not the MoonDisc — repeating Днес's glyph one
+ * tab over would dilute the one thing Днес's whole design rests on. 72px
+ * is a one-off outside the named type scale, same treatment as Днес's
+ * MoonGlyph (§4.1) — a bare numeral needs to break past the `hero` token
+ * (32px) to read as a Weather-style dominant number, not a headline.
+ * On a quiet day (pacing.emphasis === 'quiet', exactly equivalent to
+ * activeTransits.length === 0 — see transit-analysis.ts:510-518) the
+ * hero swaps to «Тих ден» at the same size instead of showing a bare "0":
+ * same underlying `pacing` field, word instead of number, not a fallback
+ * to a different visual language. While chart-less or before the query
+ * resolves, the hero falls back to plain descriptive text — no count to
+ * show yet.
  */
+const PACING_WORD: Record<'fast' | 'slow' | 'mixed' | 'quiet', string> = {
+  fast: 'Бърз ритъм',
+  slow: 'Бавен ритъм',
+  mixed: 'Смесен ритъм',
+  quiet: 'Тих ден',
+}
+
+// Bulgarian count-form agreement (бройна форма): "1 активен транзит" is
+// the only singular case — every other count, including 21/31/101, takes
+// the plural adjective + count-form noun ("21 активни транзита"), unlike
+// Russian's genitive-singular-after-21 rule. See bulgarian-skill/grammar.md §1, §4.
+function transitCountLabel(count: number): string {
+  return count === 1 ? '1 активен транзит' : `${count} активни транзита`
+}
+
 export default function RhythmScreen() {
   const { push } = useGuardedNavigation()
   const firstChart = useFirstChart()
+  const overview = useTransitOverview(firstChart.data?.id)
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-bg">
@@ -29,18 +61,52 @@ export default function RhythmScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 120 }}
       >
-        {/* Editorial hero — mirrors web rhythm/page.tsx:39-52 */}
+        {/* Hero — active-transit count, or «Тих ден» on a quiet day */}
         <View className="mb-10">
           <Text className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-500">
             Текущо небе
           </Text>
-          <Text className="text-[28px] leading-[1.15] tracking-tight">
-            <Text className="font-light text-slate-400">Какво ти </Text>
-            <Text className="font-semibold text-amber-200/95">влияе сега</Text>
-          </Text>
-          <Text className="mt-3 max-w-xl text-[15px] font-light leading-relaxed text-slate-500">
-            Активните транзити към картата ти — как планетите говорят с теб точно днес.
-          </Text>
+
+          {overview.data ? (
+            overview.data.pacing.emphasis === 'quiet' ? (
+              <>
+                <Text
+                  style={{ fontFamily: font.displaySemibold, fontSize: 72, lineHeight: 78 }}
+                  className="tracking-tight text-amber-200/95"
+                >
+                  Тих ден
+                </Text>
+                <Text className="mt-3 max-w-xl text-[15px] font-light leading-relaxed text-slate-500">
+                  Няма силни аспекти към наталната карта точно сега.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text
+                  style={{ fontFamily: font.displaySemibold, fontSize: 72, lineHeight: 78 }}
+                  className="tracking-tight text-amber-200/95"
+                >
+                  {overview.data.activeTransits.length}
+                </Text>
+                <Text className="mt-1 text-[15px] font-light text-slate-400">
+                  {transitCountLabel(overview.data.activeTransits.length)}
+                </Text>
+                <Text className="mt-1 text-[13px] font-light text-slate-500">
+                  {PACING_WORD[overview.data.pacing.emphasis]}
+                </Text>
+              </>
+            )
+          ) : (
+            <>
+              <Text className="text-[28px] leading-[1.15] tracking-tight">
+                <Text className="font-light text-slate-400">Какво ти </Text>
+                <Text className="font-semibold text-amber-200/95">влияе сега</Text>
+              </Text>
+              <Text className="mt-3 max-w-xl text-[15px] font-light leading-relaxed text-slate-500">
+                Активните транзити към картата ти — как планетите говорят с теб точно днес.
+              </Text>
+            </>
+          )}
         </View>
 
         {/* Лунна фаза · Манифестация — live phase + disclosure + info expanders */}
@@ -51,14 +117,14 @@ export default function RhythmScreen() {
           onPress={() => push('/rhythm/journal')}
           className="mb-16 rounded-3xl border border-slate-200/10 bg-white/[0.02] px-6 py-8"
         >
-          <Text className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-400">
+          <Text className="mb-3 text-[13px] font-medium text-slate-400">
             Лунен дневник
           </Text>
           <Text className="mb-5 text-[15px] font-light leading-[1.85] text-slate-300">
             Три реда на ден, водени от лунната фаза — манифестация, благодарност, освобождаване.
           </Text>
           <View className="flex-row items-center" style={{ gap: 8 }}>
-            <Text className="font-cinzel text-[12px] font-medium uppercase tracking-[0.28em] text-slate-200">
+            <Text className="text-[15px] font-medium text-slate-200">
               Отвори дневника
             </Text>
             <Text className="text-[14px] text-slate-300">→</Text>
@@ -90,10 +156,10 @@ function EmptyTransitsState() {
         className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
         style={{ gap: 10 }}
       >
-        <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-200">
+        <Text className="text-[15px] font-medium text-amber-200">
           Въведи рождени данни
         </Text>
-        <Text className="font-cinzel text-[10.5px] text-amber-300">›</Text>
+        <Text className="text-[15px] text-amber-300">›</Text>
       </Pressable>
     </View>
   )
