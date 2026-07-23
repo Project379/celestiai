@@ -84,10 +84,7 @@ function PacingMark({ emphasis }: { emphasis: 'fast' | 'slow' | 'mixed' | 'quiet
   return (
     <View className="flex-row items-center" style={{ gap: 8 }}>
       <View className="h-1 w-1 rotate-45" style={{ backgroundColor: color }} />
-      <Text
-        className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em]"
-        style={{ color }}
-      >
+      <Text className="text-[12px] font-medium" style={{ color }}>
         {PACING_LABEL[emphasis]}
       </Text>
     </View>
@@ -106,10 +103,7 @@ function EventStateMark({ label, tone }: { label: string; tone: keyof typeof STA
   return (
     <View className="flex-row items-center" style={{ gap: 6 }}>
       <View className="h-[3px] w-[3px] rotate-45" style={{ backgroundColor: color }} />
-      <Text
-        className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em]"
-        style={{ color }}
-      >
+      <Text className="text-[12px] font-medium" style={{ color }}>
         {label}
       </Text>
     </View>
@@ -149,29 +143,30 @@ function EventRow({ title, summary, meta, badge, onPress, isLast }: EventRowProp
       className={`py-5 ${isLast ? '' : 'border-b border-white/[0.05]'}`}
     >
       <View className="flex-row flex-wrap items-baseline justify-between" style={{ gap: 12 }}>
-        <Text className="flex-1 text-[15.5px] font-semibold text-slate-100">{title}</Text>
+        <Text className="flex-1 text-[16px] font-semibold text-slate-100">{title}</Text>
         {badge}
       </View>
-      <Text className="mt-1.5 text-[13.5px] font-light leading-[1.75] text-slate-300/90">
+      <Text className="mt-1.5 text-[14px] font-light leading-[1.75] text-slate-300/90">
         {summary}
       </Text>
-      <Text className="mt-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+      <Text className="mt-2 text-[12px] font-medium text-slate-500">
         {meta}
       </Text>
     </Pressable>
   )
 }
 
-function SectionMark({ numeral, title }: { numeral: string; title: string }) {
+// Plain label + hairline rule — no Roman numeral (R5 scopes those to the
+// Astrology Guide only, MOBILE_ALPHA_REDESIGN.md §21) — reuses the exact
+// pattern LunarPhaseCard's own disclosure section labels already
+// established ("Следваща повратна точка" etc.), not a new primitive.
+function SectionMark({ title }: { title: string }) {
   return (
-    <View className="mb-4 flex-row items-center" style={{ gap: 12 }}>
-      <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
-        {numeral}
-      </Text>
-      <View className="h-px w-8 bg-amber-300/60" />
-      <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.34em] text-slate-300">
+    <View className="mb-4 flex-row items-baseline" style={{ gap: 12 }}>
+      <Text className="text-[12px] font-medium text-amber-300/85">
         {title}
       </Text>
+      <View className="h-px flex-1 bg-slate-400/25" />
     </View>
   )
 }
@@ -211,14 +206,14 @@ function EventModal({ event, onClose }: { event: TransitEvent; onClose: () => vo
             <View className="flex-1">
               <View className="mb-2 flex-row items-center" style={{ gap: 10 }}>
                 <View className="h-1 w-1 rotate-45 bg-amber-300/90" />
-                <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+                <Text className="text-[12px] font-medium text-amber-300/85">
                   Значение на събитието
                 </Text>
               </View>
-              <Text className="text-[22px] font-semibold leading-[1.15] tracking-tight text-slate-100">
+              <Text className="text-[19px] font-semibold leading-[1.15] tracking-tight text-slate-100">
                 {event.title}
               </Text>
-              <Text className="mt-3 text-[15px] font-light leading-[1.8] text-slate-300">
+              <Text className="mt-3 text-[14px] font-light leading-[1.8] text-slate-300">
                 {event.summary}
               </Text>
             </View>
@@ -228,10 +223,10 @@ function EventModal({ event, onClose }: { event: TransitEvent; onClose: () => vo
           </View>
 
           <View className="border-l border-amber-300/40" style={{ paddingLeft: 20 }}>
-            <Text className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.36em] text-amber-300/80">
+            <Text className="mb-2 text-[12px] font-medium text-amber-300/85">
               Тълкувание
             </Text>
-            <Text className="text-[15px] leading-[1.85] text-slate-300/95">
+            <Text className="text-[14px] leading-[1.85] text-slate-300/95">
               {event.detail}
             </Text>
           </View>
@@ -288,7 +283,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
               className="relative pb-2"
             >
               <Text
-                className={`font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.38em] ${
+                className={`text-[16px] font-medium ${
                   isActive ? 'text-amber-200' : 'text-slate-400'
                 }`}
               >
@@ -307,7 +302,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
       {activeView === 'transits' && isLoading && (
         <View className="items-center py-12">
           <ActivityIndicator color="rgb(252, 211, 77)" size="small" />
-          <Text className="mt-4 font-cinzel text-[10px] uppercase tracking-[0.42em] text-slate-400">
+          <Text className="mt-4 text-[12px] text-slate-400">
             Четем небето…
           </Text>
         </View>
@@ -315,7 +310,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
 
       {activeView === 'transits' && error && !isLoading && (
         <View className="border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
-          <Text className="text-[13px] text-rose-300/90">
+          <Text className="text-[14px] text-rose-300/90">
             Грешка при зареждане на транзитите.
           </Text>
         </View>
@@ -324,7 +319,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
       {activeView === 'transits' && overview && !isLoading && !error && (
         <View style={{ gap: 56 }}>
           <View>
-            <SectionMark numeral="I" title="Активни транзити" />
+            <SectionMark title="Активни транзити" />
             <View className="border-t border-white/[0.05]">
               {overview.activeTransits.length > 0 ? (
                 overview.activeTransits.slice(0, 6).map((item, i, arr) => {
@@ -352,7 +347,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
           </View>
 
           <View>
-            <SectionMark numeral="II" title="Следващи пикове" />
+            <SectionMark title="Следващи пикове" />
             <View className="border-t border-white/[0.05]">
               {overview.upcomingExacts.length > 0 ? (
                 overview.upcomingExacts.map((item, i, arr) => {
@@ -378,7 +373,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
           </View>
 
           <View>
-            <SectionMark numeral="III" title="Лунни събития" />
+            <SectionMark title="Лунни събития" />
             <View className="border-t border-white/[0.05]">
               {overview.lunarEvents.length > 0 ? (
                 overview.lunarEvents.map((item, i, arr) => {
