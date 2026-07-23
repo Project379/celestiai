@@ -112,7 +112,7 @@ export function LunarPhaseCard() {
 
       {/* Eyebrow — plain, not tracked caps: rhythm.tsx already spends the
           screen's one reserved eyebrow role (R3, MOBILE_ALPHA_REDESIGN.md §21) */}
-      <Text className="mb-5 text-[12px] font-medium text-slate-400">
+      <Text style={{ fontFamily: font.bodyMedium }} className="mb-5 text-[12px] font-medium text-slate-400">
         Лунна фаза · Манифестация
       </Text>
 
@@ -131,10 +131,10 @@ export function LunarPhaseCard() {
           <Text style={{ fontFamily: font.displayRegular, fontSize: 19, lineHeight: 25 }} className="text-amber-200/95">
             {phase.name}
           </Text>
-          <Text className="mt-1.5 text-[12px] text-slate-400">
+          <Text style={{ fontFamily: font.body }} className="mt-1.5 text-[12px] text-slate-400">
             {phase.latin} · {phase.illumination}% осветление
           </Text>
-          <Text className="mt-4 text-[16px] font-light leading-[1.8] text-slate-200/95">
+          <Text style={{ fontFamily: font.body }} className="mt-4 text-[16px] font-light leading-[1.8] text-slate-200/95">
             {phase.intention}.
           </Text>
 
@@ -146,7 +146,7 @@ export function LunarPhaseCard() {
             style={{ gap: 8 }}
           >
             <View className="h-px w-6 bg-slate-300/80" />
-            <Text className="text-[14px] font-medium text-slate-200">
+            <Text style={{ fontFamily: font.bodyMedium }} className="text-[14px] font-medium text-slate-200">
               {expanded ? 'Скрий манифеста' : 'Разкрий как да манифестираш'}
             </Text>
           </Pressable>
@@ -157,18 +157,18 @@ export function LunarPhaseCard() {
       {shower && (
         <View className="mt-7 rounded-xl border border-amber-300/15 bg-amber-400/[0.05] px-5 py-4">
           <View className="flex-row flex-wrap items-center" style={{ gap: 10 }}>
-            <Text className="text-[12px] font-medium text-amber-300/90">
+            <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-medium text-amber-300/90">
               Активен метеорен поток
             </Text>
             <View className="h-px w-8 bg-amber-300/60" />
-            <Text className="text-[12px] font-medium text-slate-300/90">
+            <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-medium text-slate-300/90">
               {shower.name} · {shower.latin}
             </Text>
           </View>
-          <Text className="mt-2 text-[14px] leading-[1.8] text-slate-200/95">
+          <Text style={{ fontFamily: font.body }} className="mt-2 text-[14px] leading-[1.8] text-slate-200/95">
             {shower.description}
           </Text>
-          <Text className="mt-2 text-[12px] text-slate-300/85">
+          <Text style={{ fontFamily: font.body }} className="mt-2 text-[12px] text-slate-300/85">
             Върхова нощ: {formatMonthDay(shower.peakMonth, shower.peakDay)}
             {showerPeakDays !== null && (
               <Text className="text-slate-500">
@@ -204,12 +204,12 @@ export function LunarPhaseCard() {
 
           <View>
             <View className="mb-2 flex-row items-baseline" style={{ gap: 12 }}>
-              <Text className="text-[12px] font-medium text-amber-300/85">
+              <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-medium text-amber-300/85">
                 Следваща повратна точка
               </Text>
               <View className="h-px flex-1 bg-slate-400/25" />
             </View>
-            <Text className="text-[14px] text-slate-200/95">
+            <Text style={{ fontFamily: font.body }} className="text-[14px] text-slate-200/95">
               <Text className="mr-2 text-amber-300/70">☾ </Text>
               <Text className="text-slate-100">{next.name}</Text>
               <Text className="text-slate-500">{'  ·  '}</Text>
@@ -220,12 +220,12 @@ export function LunarPhaseCard() {
           {!shower && upcoming && upcoming.daysAway <= 60 && (
             <View>
               <View className="mb-2 flex-row items-baseline" style={{ gap: 12 }}>
-                <Text className="text-[12px] font-medium text-amber-300/85">
+                <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-medium text-amber-300/85">
                   Следващ метеорен поток
                 </Text>
                 <View className="h-px flex-1 bg-slate-400/25" />
               </View>
-              <Text className="text-[14px] text-slate-200/95">
+              <Text style={{ fontFamily: font.body }} className="text-[14px] text-slate-200/95">
                 <Text className="text-slate-100">{upcoming.shower.name}</Text>
                 <Text className="text-slate-500">{'  ·  '}</Text>
                 <Text>
@@ -236,7 +236,7 @@ export function LunarPhaseCard() {
             </View>
           )}
 
-          <Text className="text-[14px] leading-[1.8] text-slate-300/90">
+          <Text style={{ fontFamily: font.body }} className="text-[14px] leading-[1.8] text-slate-300/90">
             Научи повече за манифестирането с луната в{' '}
             <Text
               onPress={() => push('/you/guide')}
@@ -259,9 +259,9 @@ export function LunarPhaseCard() {
           style={{ gap: 8 }}
         >
           <View className="h-[18px] w-[18px] items-center justify-center rounded-full border border-slate-300/40">
-            <Text className="text-[11px] text-slate-200">i</Text>
+            <Text style={{ fontFamily: font.body }} className="text-[11px] text-slate-200">i</Text>
           </View>
-          <Text className="text-[14px] font-medium text-slate-300">
+          <Text style={{ fontFamily: font.bodyMedium }} className="text-[14px] font-medium text-slate-300">
             За лунните фази
           </Text>
         </Pressable>
@@ -269,36 +269,36 @@ export function LunarPhaseCard() {
 
       {infoOpen && (
         <View className="mt-4 rounded-xl border border-slate-300/[0.08] bg-slate-900/30 px-5 py-4">
-          <Text className="text-[14px] leading-[1.85] text-slate-200/95">
+          <Text style={{ fontFamily: font.body }} className="text-[14px] leading-[1.85] text-slate-200/95">
             Лунните фази са осемте етапа от цикъла на Луната, който продължава около 29 дни и 12 часа. Нарастващата половина (от новолуние до пълнолуние) подкрепя изграждането; намаляващата половина (от пълнолуние до следващото новолуние) освобождаването.
           </Text>
 
           <View className="mt-4 flex-row" style={{ gap: 32 }}>
             <View className="flex-1">
-              <Text className="mb-2 text-[12px] font-medium text-amber-300/85">
+              <Text style={{ fontFamily: font.bodyMedium }} className="mb-2 text-[12px] font-medium text-amber-300/85">
                 Нарастваща
               </Text>
               <View style={{ gap: 4 }}>
-                <Text className="text-[12px] text-slate-200/90">Новолуние</Text>
-                <Text className="text-[12px] text-slate-200/90">Изгряващ полумесец</Text>
-                <Text className="text-[12px] text-slate-200/90">Първа четвърт</Text>
-                <Text className="text-[12px] text-slate-200/90">Растяща луна</Text>
+                <Text style={{ fontFamily: font.body }} className="text-[12px] text-slate-200/90">Новолуние</Text>
+                <Text style={{ fontFamily: font.body }} className="text-[12px] text-slate-200/90">Изгряващ полумесец</Text>
+                <Text style={{ fontFamily: font.body }} className="text-[12px] text-slate-200/90">Първа четвърт</Text>
+                <Text style={{ fontFamily: font.body }} className="text-[12px] text-slate-200/90">Растяща луна</Text>
               </View>
             </View>
             <View className="flex-1">
-              <Text className="mb-2 text-[12px] font-medium text-indigo-300/85">
+              <Text style={{ fontFamily: font.bodyMedium }} className="mb-2 text-[12px] font-medium text-indigo-300/85">
                 Намаляваща
               </Text>
               <View style={{ gap: 4 }}>
-                <Text className="text-[12px] text-slate-200/90">Пълнолуние</Text>
-                <Text className="text-[12px] text-slate-200/90">Намаляваща луна</Text>
-                <Text className="text-[12px] text-slate-200/90">Последна четвърт</Text>
-                <Text className="text-[12px] text-slate-200/90">Залязващ полумесец</Text>
+                <Text style={{ fontFamily: font.body }} className="text-[12px] text-slate-200/90">Пълнолуние</Text>
+                <Text style={{ fontFamily: font.body }} className="text-[12px] text-slate-200/90">Намаляваща луна</Text>
+                <Text style={{ fontFamily: font.body }} className="text-[12px] text-slate-200/90">Последна четвърт</Text>
+                <Text style={{ fontFamily: font.body }} className="text-[12px] text-slate-200/90">Залязващ полумесец</Text>
               </View>
             </View>
           </View>
 
-          <Text className="mt-4 text-[14px] leading-[1.7] text-slate-300/90">
+          <Text style={{ fontFamily: font.body }} className="mt-4 text-[14px] leading-[1.7] text-slate-300/90">
             Цялата глава за лунните фази — задача и облик за всяка от осемте — намираш в{' '}
             <Text
               onPress={() => push('/you/guide')}
@@ -317,10 +317,10 @@ export function LunarPhaseCard() {
 function ManifestField({ label, body }: { label: string; body: string }) {
   return (
     <View>
-      <Text className="mb-1.5 text-[12px] font-medium text-amber-300/85">
+      <Text style={{ fontFamily: font.bodyMedium }} className="mb-1.5 text-[12px] font-medium text-amber-300/85">
         {label}
       </Text>
-      <Text className="text-[14px] font-light leading-[1.85] text-slate-200/95">
+      <Text style={{ fontFamily: font.body }} className="text-[14px] font-light leading-[1.85] text-slate-200/95">
         {body}
       </Text>
     </View>

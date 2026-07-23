@@ -26,6 +26,8 @@ import {
   getRisingInterpretation,
 } from '@stellaeum/core/charts/interpretations'
 
+import { font } from '@/components/design-system/tokens'
+
 /**
  * Mobile port of apps/web/components/chart/PlanetDetail.tsx — bottom-
  * sheet modal pattern (per SR 6 decision 6) instead of web's inline
@@ -107,7 +109,7 @@ function Section({ title, textTint, dotTint, children }: SectionProps) {
           className={`h-1 w-1 ${dotTint}`}
           style={{ transform: [{ rotate: '45deg' }] }}
         />
-        <Text className={`text-[13.5px] font-medium ${textTint}`}>
+        <Text style={{ fontFamily: font.bodyMedium }} className={`text-[13.5px] font-medium ${textTint}`}>
           {title}
         </Text>
       </View>
@@ -130,7 +132,7 @@ function BulletList({ items, dotTint }: BulletListProps) {
             className={`h-1 w-1 ${dotTint}`}
             style={{ transform: [{ rotate: '45deg' }], marginTop: 10 }}
           />
-          <Text className="flex-1 text-[14px] leading-[1.85] text-slate-300/95">
+          <Text style={{ fontFamily: font.body }} className="flex-1 text-[14px] leading-[1.85] text-slate-300/95">
             {item}
           </Text>
         </View>
@@ -228,16 +230,16 @@ export function PlanetDetail({
                         else in this modal is plain sentence-case. Cinzel
                         dropped: it has zero Cyrillic glyphs and this text
                         is Cyrillic (REVISIT-42's bug, present here too). */}
-                    <Text className="text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+                    <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
                       {isRising ? 'Асцендент' : 'Планета'}
                     </Text>
                   </View>
-                  <Text className="text-[24px] font-semibold leading-tight tracking-tight text-slate-100">
+                  <Text style={{ fontFamily: font.bodyMedium }} className="text-[24px] font-semibold leading-tight tracking-tight text-slate-100">
                     <Text className="text-slate-400">{planetGlyph}  {displayTitle}</Text>
                     <Text> в </Text>
                     <Text>{signLabel} {signGlyph}</Text>
                   </Text>
-                  <Text className="mt-3 text-[13px] font-light text-slate-400">
+                  <Text style={{ fontFamily: font.body }} className="mt-3 text-[13px] font-light text-slate-400">
                     {interpretation.position}
                   </Text>
                   <View className="mt-4 flex-row items-center flex-wrap" style={{ gap: 16 }}>
@@ -246,7 +248,7 @@ export function PlanetDetail({
                         className={`h-1 w-1 ${dotTint}`}
                         style={{ transform: [{ rotate: '45deg' }] }}
                       />
-                      <Text className={`text-[12.5px] font-medium ${textTint}`}>
+                      <Text style={{ fontFamily: font.bodyMedium }} className={`text-[12.5px] font-medium ${textTint}`}>
                         {ELEMENT_LABEL[element]}
                       </Text>
                     </View>
@@ -256,7 +258,7 @@ export function PlanetDetail({
                           className="h-1 w-1 bg-slate-500/70"
                           style={{ transform: [{ rotate: '45deg' }] }}
                         />
-                        <Text className="text-[12.5px] font-medium text-slate-500">
+                        <Text style={{ fontFamily: font.bodyMedium }} className="text-[12.5px] font-medium text-slate-500">
                           Дом {house}
                         </Text>
                       </View>
@@ -269,14 +271,14 @@ export function PlanetDetail({
                   accessibilityRole="button"
                   accessibilityLabel="Затвори"
                 >
-                  <Text className="text-[18px] text-slate-500">✕</Text>
+                  <Text style={{ fontFamily: font.body }} className="text-[18px] text-slate-500">✕</Text>
                 </Pressable>
               </View>
 
               {/* Brief lede */}
               {interpretation.brief && (
                 <View className="mb-6 border-l border-amber-300/40 pl-5">
-                  <Text className="text-[16px] font-light leading-[1.85] text-slate-300/95">
+                  <Text style={{ fontFamily: font.body }} className="text-[16px] font-light leading-[1.85] text-slate-300/95">
                     {interpretation.brief.charAt(0).toUpperCase() + interpretation.brief.slice(1)}
                   </Text>
                 </View>
@@ -290,7 +292,7 @@ export function PlanetDetail({
                     textTint={textTint}
                     dotTint={dotTint}
                   >
-                    <Text className="text-[14px] leading-[1.85] text-slate-300/95">
+                    <Text style={{ fontFamily: font.body }} className="text-[14px] leading-[1.85] text-slate-300/95">
                       {interpretation.overview}
                     </Text>
                   </Section>
@@ -328,17 +330,17 @@ export function PlanetDetail({
                     textTint={textTint}
                     dotTint={dotTint}
                   >
-                    <Text className="text-[14px] leading-[1.85] text-slate-300/95">
+                    <Text style={{ fontFamily: font.body }} className="text-[14px] leading-[1.85] text-slate-300/95">
                       {interpretation.growth}
                     </Text>
                   </Section>
                 )}
                 {isRising && !birthTimeKnown && (
                   <View className="border-l border-amber-300/50 bg-amber-300/[0.05] px-5 py-3">
-                    <Text className="mb-1 text-[12.5px] font-medium text-amber-300/80">
+                    <Text style={{ fontFamily: font.bodyMedium }} className="mb-1 text-[12.5px] font-medium text-amber-300/80">
                       Забележка
                     </Text>
-                    <Text className="text-[12.5px] font-light leading-relaxed text-amber-100/85">
+                    <Text style={{ fontFamily: font.body }} className="text-[12.5px] font-light leading-relaxed text-amber-100/85">
                       Часът на раждане е приблизителен, затова тълкуването на асцендента е ориентировъчно.
                     </Text>
                   </View>

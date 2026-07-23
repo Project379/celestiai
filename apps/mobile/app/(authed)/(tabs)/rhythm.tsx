@@ -21,10 +21,14 @@ import { useTransitOverview } from '@/hooks/useTransitOverview'
  * for restoration decision at Phase C or first multi-scale forecast
  * request.
  *
- * Hero (Round C1, MOBILE_ALPHA_REDESIGN.md §21, ratified 2026-07-23):
+ * Hero (Round C1, MOBILE_ALPHA_REDESIGN.md §21, ratified 2026-07-23;
+ * SUPERSEDED §22 2026-07-23 — MoonDisc is Ритъм's actual R1 hero, this
+ * numeral is a secondary lead element, sized down from 72px to 56px so
+ * it clearly cedes the eye to LunarPhaseCard's moon while still reading
+ * well past the `hero` token (32px), not caption-scale):
  * the active-transit count, not the MoonDisc — repeating Днес's glyph one
- * tab over would dilute the one thing Днес's whole design rests on. 72px
- * is a one-off outside the named type scale, same treatment as Днес's
+ * tab over would dilute the one thing Днес's whole design rests on. 56px
+ * is a one-off outside the named type scale, secondary to Днес's
  * MoonGlyph (§4.1) — a bare numeral needs to break past the `hero` token
  * (32px) to read as a Weather-style dominant number, not a headline.
  * On a quiet day (pacing.emphasis === 'quiet', exactly equivalent to
@@ -63,7 +67,14 @@ export default function RhythmScreen() {
       >
         {/* Hero — active-transit count, or «Тих ден» on a quiet day */}
         <View className="mb-10">
-          <Text className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-500">
+          {/* R3-reserved eyebrow — was font-cinzel on Cyrillic (REVISIT-42's
+              bug, unloaded, silently rendering in system font); swapped to
+              the loaded EB Garamond token as part of closing this file's
+              font gap (§23), not a new R3 decision. */}
+          <Text
+            style={{ fontFamily: font.bodyMedium }}
+            className="mb-3 text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-500"
+          >
             Текущо небе
           </Text>
 
@@ -71,38 +82,38 @@ export default function RhythmScreen() {
             overview.data.pacing.emphasis === 'quiet' ? (
               <>
                 <Text
-                  style={{ fontFamily: font.displaySemibold, fontSize: 72, lineHeight: 78 }}
+                  style={{ fontFamily: font.displaySemibold, fontSize: 56, lineHeight: 62 }}
                   className="tracking-tight text-amber-200/95"
                 >
                   Тих ден
                 </Text>
-                <Text className="mt-3 max-w-xl text-[15px] font-light leading-relaxed text-slate-500">
+                <Text style={{ fontFamily: font.body }} className="mt-3 max-w-xl text-[15px] font-light leading-relaxed text-slate-500">
                   Няма силни аспекти към наталната карта точно сега.
                 </Text>
               </>
             ) : (
               <>
                 <Text
-                  style={{ fontFamily: font.displaySemibold, fontSize: 72, lineHeight: 78 }}
+                  style={{ fontFamily: font.displaySemibold, fontSize: 56, lineHeight: 62 }}
                   className="tracking-tight text-amber-200/95"
                 >
                   {overview.data.activeTransits.length}
                 </Text>
-                <Text className="mt-1 text-[15px] font-light text-slate-400">
+                <Text style={{ fontFamily: font.body }} className="mt-1 text-[15px] font-light text-slate-400">
                   {transitCountLabel(overview.data.activeTransits.length)}
                 </Text>
-                <Text className="mt-1 text-[13px] font-light text-slate-500">
+                <Text style={{ fontFamily: font.body }} className="mt-1 text-[13px] font-light text-slate-500">
                   {PACING_WORD[overview.data.pacing.emphasis]}
                 </Text>
               </>
             )
           ) : (
             <>
-              <Text className="text-[28px] leading-[1.15] tracking-tight">
+              <Text style={{ fontFamily: font.body }} className="text-[28px] leading-[1.15] tracking-tight">
                 <Text className="font-light text-slate-400">Какво ти </Text>
                 <Text className="font-semibold text-amber-200/95">влияе сега</Text>
               </Text>
-              <Text className="mt-3 max-w-xl text-[15px] font-light leading-relaxed text-slate-500">
+              <Text style={{ fontFamily: font.body }} className="mt-3 max-w-xl text-[15px] font-light leading-relaxed text-slate-500">
                 Активните транзити към картата ти — как планетите говорят с теб точно днес.
               </Text>
             </>
@@ -117,17 +128,17 @@ export default function RhythmScreen() {
           onPress={() => push('/rhythm/journal')}
           className="mb-16 rounded-3xl border border-slate-200/10 bg-white/[0.02] px-6 py-8"
         >
-          <Text className="mb-3 text-[13px] font-medium text-slate-400">
+          <Text style={{ fontFamily: font.bodyMedium }} className="mb-3 text-[13px] font-medium text-slate-400">
             Лунен дневник
           </Text>
-          <Text className="mb-5 text-[15px] font-light leading-[1.85] text-slate-300">
+          <Text style={{ fontFamily: font.body }} className="mb-5 text-[15px] font-light leading-[1.85] text-slate-300">
             Три реда на ден, водени от лунната фаза — манифестация, благодарност, освобождаване.
           </Text>
           <View className="flex-row items-center" style={{ gap: 8 }}>
-            <Text className="text-[15px] font-medium text-slate-200">
+            <Text style={{ fontFamily: font.bodyMedium }} className="text-[15px] font-medium text-slate-200">
               Отвори дневника
             </Text>
-            <Text className="text-[14px] text-slate-300">→</Text>
+            <Text style={{ fontFamily: font.body }} className="text-[14px] text-slate-300">→</Text>
           </View>
         </Pressable>
 
@@ -148,7 +159,7 @@ function EmptyTransitsState() {
   const { push } = useGuardedNavigation()
   return (
     <View>
-      <Text className="mb-5 text-[16px] font-light leading-[1.85] text-slate-200/90">
+      <Text style={{ fontFamily: font.body }} className="mb-5 text-[16px] font-light leading-[1.85] text-slate-200/90">
         За да видиш транзитите си, първо трябва да имаш натална карта. Въведи рождените си данни.
       </Text>
       <Pressable
@@ -156,10 +167,10 @@ function EmptyTransitsState() {
         className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
         style={{ gap: 10 }}
       >
-        <Text className="text-[15px] font-medium text-amber-200">
+        <Text style={{ fontFamily: font.bodyMedium }} className="text-[15px] font-medium text-amber-200">
           Въведи рождени данни
         </Text>
-        <Text className="text-[15px] text-amber-300">›</Text>
+        <Text style={{ fontFamily: font.body }} className="text-[15px] text-amber-300">›</Text>
       </Pressable>
     </View>
   )

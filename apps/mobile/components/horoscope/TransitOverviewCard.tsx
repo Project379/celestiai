@@ -22,6 +22,7 @@ import type {
 } from '@stellaeum/core/horoscope/transit-analysis'
 
 import { AstrologyReference } from '@/components/chart/AstrologyReference'
+import { font } from '@/components/design-system/tokens'
 import { useTransitOverview } from '@/hooks/useTransitOverview'
 
 interface TransitOverviewCardProps {
@@ -84,7 +85,7 @@ function PacingMark({ emphasis }: { emphasis: 'fast' | 'slow' | 'mixed' | 'quiet
   return (
     <View className="flex-row items-center" style={{ gap: 8 }}>
       <View className="h-1 w-1 rotate-45" style={{ backgroundColor: color }} />
-      <Text className="text-[12px] font-medium" style={{ color }}>
+      <Text className="text-[12px] font-medium" style={{ color, fontFamily: font.bodyMedium }}>
         {PACING_LABEL[emphasis]}
       </Text>
     </View>
@@ -103,7 +104,7 @@ function EventStateMark({ label, tone }: { label: string; tone: keyof typeof STA
   return (
     <View className="flex-row items-center" style={{ gap: 6 }}>
       <View className="h-[3px] w-[3px] rotate-45" style={{ backgroundColor: color }} />
-      <Text className="text-[12px] font-medium" style={{ color }}>
+      <Text className="text-[12px] font-medium" style={{ color, fontFamily: font.bodyMedium }}>
         {label}
       </Text>
     </View>
@@ -143,13 +144,13 @@ function EventRow({ title, summary, meta, badge, onPress, isLast }: EventRowProp
       className={`py-5 ${isLast ? '' : 'border-b border-white/[0.05]'}`}
     >
       <View className="flex-row flex-wrap items-baseline justify-between" style={{ gap: 12 }}>
-        <Text className="flex-1 text-[16px] font-semibold text-slate-100">{title}</Text>
+        <Text style={{ fontFamily: font.bodyMedium }} className="flex-1 text-[16px] font-semibold text-slate-100">{title}</Text>
         {badge}
       </View>
-      <Text className="mt-1.5 text-[14px] font-light leading-[1.75] text-slate-300/90">
+      <Text style={{ fontFamily: font.body }} className="mt-1.5 text-[14px] font-light leading-[1.75] text-slate-300/90">
         {summary}
       </Text>
-      <Text className="mt-2 text-[12px] font-medium text-slate-500">
+      <Text style={{ fontFamily: font.bodyMedium }} className="mt-2 text-[12px] font-medium text-slate-500">
         {meta}
       </Text>
     </Pressable>
@@ -163,7 +164,7 @@ function EventRow({ title, summary, meta, badge, onPress, isLast }: EventRowProp
 function SectionMark({ title }: { title: string }) {
   return (
     <View className="mb-4 flex-row items-baseline" style={{ gap: 12 }}>
-      <Text className="text-[12px] font-medium text-amber-300/85">
+      <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-medium text-amber-300/85">
         {title}
       </Text>
       <View className="h-px flex-1 bg-slate-400/25" />
@@ -206,27 +207,27 @@ function EventModal({ event, onClose }: { event: TransitEvent; onClose: () => vo
             <View className="flex-1">
               <View className="mb-2 flex-row items-center" style={{ gap: 10 }}>
                 <View className="h-1 w-1 rotate-45 bg-amber-300/90" />
-                <Text className="text-[12px] font-medium text-amber-300/85">
+                <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-medium text-amber-300/85">
                   Значение на събитието
                 </Text>
               </View>
-              <Text className="text-[19px] font-semibold leading-[1.15] tracking-tight text-slate-100">
+              <Text style={{ fontFamily: font.bodyMedium }} className="text-[19px] font-semibold leading-[1.15] tracking-tight text-slate-100">
                 {event.title}
               </Text>
-              <Text className="mt-3 text-[14px] font-light leading-[1.8] text-slate-300">
+              <Text style={{ fontFamily: font.body }} className="mt-3 text-[14px] font-light leading-[1.8] text-slate-300">
                 {event.summary}
               </Text>
             </View>
             <Pressable onPress={onClose} hitSlop={12} className="rounded-full p-2">
-              <Text className="text-[18px] text-slate-400">✕</Text>
+              <Text style={{ fontFamily: font.body }} className="text-[18px] text-slate-400">✕</Text>
             </Pressable>
           </View>
 
           <View className="border-l border-amber-300/40" style={{ paddingLeft: 20 }}>
-            <Text className="mb-2 text-[12px] font-medium text-amber-300/85">
+            <Text style={{ fontFamily: font.bodyMedium }} className="mb-2 text-[12px] font-medium text-amber-300/85">
               Тълкувание
             </Text>
-            <Text className="text-[14px] leading-[1.85] text-slate-300/95">
+            <Text style={{ fontFamily: font.body }} className="text-[14px] leading-[1.85] text-slate-300/95">
               {event.detail}
             </Text>
           </View>
@@ -264,7 +265,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
         className="mb-8 flex-row flex-wrap items-center justify-between border-b border-white/[0.05] pb-5"
         style={{ gap: 12 }}
       >
-        <Text className="text-[14px] font-light text-slate-300">
+        <Text style={{ fontFamily: font.body }} className="text-[14px] font-light text-slate-300">
           Натисни събитие, за да видиш значението му.
         </Text>
         {overview && <PacingMark emphasis={overview.pacing.emphasis} />}
@@ -283,6 +284,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
               className="relative pb-2"
             >
               <Text
+                style={{ fontFamily: font.bodyMedium }}
                 className={`text-[16px] font-medium ${
                   isActive ? 'text-amber-200' : 'text-slate-400'
                 }`}
@@ -302,7 +304,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
       {activeView === 'transits' && isLoading && (
         <View className="items-center py-12">
           <ActivityIndicator color="rgb(252, 211, 77)" size="small" />
-          <Text className="mt-4 text-[12px] text-slate-400">
+          <Text style={{ fontFamily: font.body }} className="mt-4 text-[12px] text-slate-400">
             Четем небето…
           </Text>
         </View>
@@ -310,7 +312,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
 
       {activeView === 'transits' && error && !isLoading && (
         <View className="border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
-          <Text className="text-[14px] text-rose-300/90">
+          <Text style={{ fontFamily: font.body }} className="text-[14px] text-rose-300/90">
             Грешка при зареждане на транзитите.
           </Text>
         </View>
@@ -339,7 +341,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   )
                 })
               ) : (
-                <Text className="py-5 text-[14px] font-light text-slate-400">
+                <Text style={{ fontFamily: font.body }} className="py-5 text-[14px] font-light text-slate-400">
                   Няма силни аспекти към наталната карта точно сега.
                 </Text>
               )}
@@ -365,7 +367,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   )
                 })
               ) : (
-                <Text className="py-5 text-[14px] font-light text-slate-400">
+                <Text style={{ fontFamily: font.body }} className="py-5 text-[14px] font-light text-slate-400">
                   Няма близки точни аспекти през следващите 7 дни.
                 </Text>
               )}
@@ -393,7 +395,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   )
                 })
               ) : (
-                <Text className="py-5 text-[14px] font-light text-slate-400">
+                <Text style={{ fontFamily: font.body }} className="py-5 text-[14px] font-light text-slate-400">
                   Няма открити близки новолуния или пълнолуния.
                 </Text>
               )}
