@@ -13,6 +13,8 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { pressFeedback } from '@/components/design-system/tokens'
+
 // Bulgarian error mapping — first-pass draft, calibrated in commit 1.4d via bulgarian-skill
 const ERROR_MESSAGES: Record<string, string> = {
   form_code_incorrect: 'Грешен код',
@@ -236,6 +238,7 @@ export default function TwoFactorScreen() {
                 ? 'border-amber-300/40 bg-amber-300/5'
                 : 'border-slate-800/60 bg-slate-900/40'
             }`}
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <View className="flex-row items-center justify-center gap-3">
               {submitting && <ActivityIndicator color="#fcd34d" size="small" />}
@@ -254,6 +257,7 @@ export default function TwoFactorScreen() {
               onPress={handleResend}
               disabled={resending || submitting}
               className="mt-8"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <View className="flex-row items-center justify-center gap-3">
                 {resending && <ActivityIndicator color="#94a3b8" size="small" />}
@@ -269,6 +273,7 @@ export default function TwoFactorScreen() {
               onPress={() => switchStrategy('backup_code')}
               disabled={submitting}
               className="mt-8"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="text-center font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-400">
                 Използвай резервен код
@@ -281,6 +286,7 @@ export default function TwoFactorScreen() {
               onPress={() => switchStrategy('totp')}
               disabled={submitting}
               className="mt-8"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="text-center font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-400">
                 Използвай код от приложение
@@ -293,6 +299,7 @@ export default function TwoFactorScreen() {
               onPress={() => switchStrategy('phone_code')}
               disabled={submitting}
               className="mt-8"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="text-center font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-400">
                 Използвай SMS код

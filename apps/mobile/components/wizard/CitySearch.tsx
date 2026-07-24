@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native'
 
+import { pressFeedback } from '@/components/design-system/tokens'
 import { useApiClient } from '@/lib/api/client'
 
 export interface City {
@@ -106,7 +107,7 @@ export function CitySearch({ value, onSelect, error }: CitySearchProps) {
             {value}
           </Text>
         </View>
-        <Pressable onPress={handleClearChip} hitSlop={8}>
+        <Pressable onPress={handleClearChip} hitSlop={8} style={({ pressed }) => pressFeedback(pressed)}>
           <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-500">
             Смени
           </Text>
@@ -179,7 +180,7 @@ export function CitySearch({ value, onSelect, error }: CitySearchProps) {
                 <Pressable
                   onPress={() => handleSelect(item)}
                   className="flex-row items-center justify-between border-b border-white/[0.04] px-5 py-3"
-                  style={{ gap: 12 }}
+                  style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 12 })}
                 >
                   <View className="flex-1">
                     <Text className="text-[14.5px] font-medium text-slate-100">

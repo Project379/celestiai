@@ -4,6 +4,7 @@ import { BackHandler, Pressable, ScrollView, Text, View } from 'react-native'
 import type { CatalogRow } from '@stellaeum/core/crystals/queries'
 
 import { CrystalGem, type GemVariant } from './CrystalGem'
+import { pressFeedback } from '@/components/design-system/tokens'
 
 interface CrystalDetailPanelProps {
   crystal: CatalogRow | null
@@ -87,6 +88,7 @@ export function CrystalDetailPanel({
           accessibilityRole="button"
           accessibilityLabel="Затвори"
           className="absolute right-4 top-4 z-10 h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]"
+          style={({ pressed }) => pressFeedback(pressed)}
         >
           <Text className="text-[14px] text-slate-400">✕</Text>
         </Pressable>
@@ -166,7 +168,10 @@ export function CrystalDetailPanel({
                 onPress={onCollect}
                 disabled={collecting}
                 className="mt-6 w-full items-center rounded-full border border-amber-300/50 bg-amber-400/15 px-6 py-4"
-                style={{ opacity: collecting ? 0.6 : 1 }}
+                style={({ pressed }) => ({
+                  ...pressFeedback(pressed),
+                  opacity: pressed || collecting ? 0.6 : 1,
+                })}
               >
                 <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-100">
                   {collecting ? 'Събира се...' : 'Събери в колекцията'}

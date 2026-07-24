@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { BackHandler, Pressable, Text, View } from 'react-native'
 
 import { PLANET_GLYPHS, ZODIAC_GLYPHS } from '@stellaeum/astrology/client'
+import { pressFeedback } from '@/components/design-system/tokens'
 
 const LEGEND_ZODIAC_KEYS = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo'] as const
 const LEGEND_PLANET_KEYS = ['sun', 'moon', 'mercury', 'venus', 'mars'] as const
@@ -41,6 +42,7 @@ export function NatalWheelLegend() {
         accessibilityLabel="Легенда на наталната карта"
         accessibilityRole="button"
         className="absolute right-3 top-3 z-50 h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#08060f]/85"
+        style={({ pressed }) => pressFeedback(pressed)}
       >
         <Text className="font-cinzel text-[11px] font-semibold text-slate-300">i</Text>
       </Pressable>

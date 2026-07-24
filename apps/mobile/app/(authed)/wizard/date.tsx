@@ -16,6 +16,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker'
 
 import type { BirthData } from '@stellaeum/core/charts/schemas'
+import { pressFeedback } from '@/components/design-system/tokens'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
@@ -152,6 +153,7 @@ export default function WizardDateScreen() {
                 <Pressable
                   onPress={handleDatePress}
                   className="border-b border-white/[0.08] px-1 py-3"
+                  style={({ pressed }) => pressFeedback(pressed)}
                 >
                   <Text
                     className={`text-[16px] ${
@@ -175,6 +177,7 @@ export default function WizardDateScreen() {
             <Pressable
               onPress={handleNext}
               className="rounded-full border border-amber-300/40 px-6 py-2.5"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
                 Напред ›
@@ -195,10 +198,12 @@ export default function WizardDateScreen() {
           <Pressable
             className="flex-1 justify-end bg-black/50"
             onPress={() => setShowIosPicker(false)}
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <Pressable
               onPress={(e) => e.stopPropagation()}
               className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <DateTimePicker
                 value={
@@ -222,6 +227,7 @@ export default function WizardDateScreen() {
               <Pressable
                 onPress={() => setShowIosPicker(false)}
                 className="mt-2 self-center rounded-full border border-amber-300/40 px-6 py-2.5"
+                style={({ pressed }) => pressFeedback(pressed)}
               >
                 <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
                   Готово

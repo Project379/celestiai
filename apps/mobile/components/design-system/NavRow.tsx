@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
-import { color, type } from './tokens'
+import { color, pressFeedback, type } from './tokens'
 
 // THE one tappability mechanism for this redesign (Step 3 point 4): a
 // trailing chevron. It's the existing iOS disclosure-indicator
@@ -26,7 +26,7 @@ export function NavRow({
       onPress={onPress}
       accessibilityRole="button"
       style={({ pressed }) => ({
-        opacity: pressed ? 0.6 : 1,
+        ...pressFeedback(pressed),
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -73,7 +73,7 @@ export function DisclosureRow({
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         style={({ pressed }) => ({
-          opacity: pressed ? 0.6 : 1,
+          ...pressFeedback(pressed),
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',

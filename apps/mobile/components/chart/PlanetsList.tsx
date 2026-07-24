@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
 import type { Planet, PlanetPosition } from '@stellaeum/astrology/client'
 import { formatDegreeInSign } from '@stellaeum/core/charts/sections'
+import { pressFeedback } from '@/components/design-system/tokens'
 
 // Bulgarian ordinal, not a bare "H7" abbreviation — the rest of this
 // screen is fully Bulgarian editorial prose, and a Latin-letter shorthand
@@ -45,7 +46,7 @@ export function PlanetsList({ planets, onSelect, selectedPlanet }: PlanetsListPr
             className={`flex-row items-center justify-between py-4 ${
               idx === 0 ? '' : 'border-t border-slate-800/60'
             }`}
-            style={{ gap: 16 }}
+            style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 16 })}
           >
             <View className="flex-row items-center" style={{ gap: 16 }}>
               <Text

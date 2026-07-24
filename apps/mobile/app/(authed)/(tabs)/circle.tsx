@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { pressFeedback } from '@/components/design-system/tokens'
 
 /**
  * Кръг empty state (MOBILE_UX_RESEARCH §12.2 — highest-leverage screen).
@@ -37,6 +38,7 @@ export default function CircleScreen() {
             <Pressable
               key={kind.key}
               className={`rounded-2xl border ${kind.border} ${kind.tint} px-5 py-6`}
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="font-cinzel text-[12px] font-semibold uppercase tracking-[0.3em] text-slate-100">
                 {kind.label}

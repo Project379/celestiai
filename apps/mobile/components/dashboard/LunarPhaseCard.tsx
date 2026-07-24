@@ -11,7 +11,7 @@ import {
 } from '@stellaeum/core/welcome'
 
 import { MoonGlyph } from './MoonGlyph'
-import { font } from '@/components/design-system/tokens'
+import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 const BG_MONTHS = [
@@ -123,7 +123,11 @@ export function LunarPhaseCard() {
           here would re-open the two-elements-competing-for-R1 problem
           C1 was meant to close. */}
       <View className="flex-row items-start" style={{ gap: 20 }}>
-        <Pressable onPress={() => setExpanded((v) => !v)} accessibilityRole="button">
+        <Pressable
+          onPress={() => setExpanded((v) => !v)}
+          accessibilityRole="button"
+          style={({ pressed }) => pressFeedback(pressed)}
+        >
           <MoonGlyph illumination={phase.illumination} isWaxing={phase.isWaxing} size={64} animated={false} />
         </Pressable>
 
@@ -143,7 +147,7 @@ export function LunarPhaseCard() {
             accessibilityRole="button"
             accessibilityState={{ expanded }}
             className="mt-4 flex-row items-center"
-            style={{ gap: 8 }}
+            style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 8 })}
           >
             <View className="h-px w-6 bg-slate-300/80" />
             <Text style={{ fontFamily: font.bodyMedium }} className="text-[14px] font-medium text-slate-200">
@@ -256,7 +260,7 @@ export function LunarPhaseCard() {
           accessibilityRole="button"
           accessibilityState={{ expanded: infoOpen }}
           className="flex-row items-center"
-          style={{ gap: 8 }}
+          style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 8 })}
         >
           <View className="h-[18px] w-[18px] items-center justify-center rounded-full border border-slate-300/40">
             <Text style={{ fontFamily: font.body }} className="text-[11px] text-slate-200">i</Text>

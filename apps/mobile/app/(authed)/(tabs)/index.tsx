@@ -12,7 +12,7 @@ import type { Planet } from '@stellaeum/astrology/client'
 import { MoonGlyph } from '@/components/dashboard/MoonGlyph'
 import { NavRow } from '@/components/design-system/NavRow'
 import { ScreenShell } from '@/components/design-system/ScreenShell'
-import { color, font, rhythm, type } from '@/components/design-system/tokens'
+import { color, font, pressFeedback, rhythm, type } from '@/components/design-system/tokens'
 import { EmptyState, ErrorState, LoadingState } from '@/components/design-system/States'
 import { useApiClient } from '@/lib/api/client'
 import { getDisplayName } from '@/lib/clerk/displayName'
@@ -328,7 +328,7 @@ function HoroscopeBody({ content }: { content: string }) {
               <Pressable
                 onPress={() => setExpanded(true)}
                 accessibilityRole="button"
-                style={{ marginTop: rhythm.paragraph, marginBottom: rhythm.paragraph }}
+                style={({ pressed }) => ({ ...pressFeedback(pressed), marginTop: rhythm.paragraph, marginBottom: rhythm.paragraph })}
               >
                 <Text style={{ ...type.caption, color: color.amber }}>Прочети повече</Text>
               </Pressable>

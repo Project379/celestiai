@@ -8,6 +8,7 @@ import { ReadingBody } from '@/components/oracle/ReadingBody'
 import { TopicCards } from '@/components/oracle/TopicCards'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useOracleReading } from '@/hooks/useOracleReading'
+import { pressFeedback } from '@/components/design-system/tokens'
 import { maybePromptPushPermission } from '@/lib/notifications/maybePromptPushPermission'
 
 /**
@@ -97,7 +98,7 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
               accessibilityRole="button"
               accessibilityLabel={activeTopic ? 'Назад към темите' : 'Назад'}
               hitSlop={12}
-              style={{ paddingLeft: 16 }}
+              style={({ pressed }) => ({ ...pressFeedback(pressed), paddingLeft: 16 })}
             >
               <Text style={{ color: '#fcd34d', fontSize: 28, lineHeight: 28 }}>
                 ‹
@@ -155,7 +156,7 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
               onPress={clearActiveTopic}
               accessibilityRole="button"
               className="mb-5 flex-row items-center"
-              style={{ gap: 8 }}
+              style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 8 })}
             >
               <Text className="font-cinzel text-[16px] text-slate-500">‹</Text>
               <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">

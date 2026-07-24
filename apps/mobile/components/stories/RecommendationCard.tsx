@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import * as Haptics from 'expo-haptics'
 
 import type {
   Recommendation,
   RecommendationStatus,
 } from '@stellaeum/core/stories/types'
+
+import { pressFeedback } from '@/components/design-system/tokens'
 
 const KIND_LABEL: Record<Recommendation['kind'], string> = {
   story: 'Разказ',
@@ -126,7 +129,7 @@ export function RecommendationCard({
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         className="mt-5 flex-row items-center"
-        style={{ gap: 8 }}
+        style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 8 })}
       >
         <View className="h-px w-6 bg-slate-300/80" />
         <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-slate-200">
@@ -155,7 +158,11 @@ export function RecommendationCard({
 
         <StatusButton
           active={status === 'saved'}
-          onPress={() => onStatusChange(status === 'saved' ? 'new' : 'saved')}
+          onPress={() => {
+            // Low-consequence binary toggle — lightest impact tier.
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            onStatusChange(status === 'saved' ? 'new' : 'saved')
+          }}
           label={status === 'saved' ? 'Извади от списъка' : 'Запази за по-късно'}
           tone="muted"
         />
@@ -200,6 +207,7 @@ function StatusButton({ active, onPress, label, tone }: StatusButtonProps) {
             ? 'border-amber-300/70 bg-amber-400/15'
             : 'border-amber-300/30 bg-amber-400/[0.04]'
         }`}
+        style={({ pressed }) => pressFeedback(pressed)}
       >
         <Text
           className={`font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] ${
@@ -212,7 +220,7 @@ function StatusButton({ active, onPress, label, tone }: StatusButtonProps) {
     )
   }
   return (
-    <Pressable onPress={onPress}>
+    <Pressable onPress={onPress} style={({ pressed }) => pressFeedback(pressed)}>
       <Text
         className={`font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] ${
           active ? 'text-amber-200' : 'text-slate-400'

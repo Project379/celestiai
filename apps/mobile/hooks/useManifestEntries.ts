@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import * as Haptics from 'expo-haptics'
 
 import type { LunarPhaseId } from '@stellaeum/core/moon-phase'
 import type { ManifestEntry } from '@stellaeum/core/diary/types'
@@ -173,6 +174,7 @@ export function useManifestEntries() {
       if (context) {
         queryClient.setQueryData(ENTRIES_KEY, context.previousEntries)
       }
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
     },
     onSuccess: (serverEntry) => {
       // Reconcile by date — matches the server's (user_id, entry_date) unique
@@ -219,6 +221,7 @@ export function useManifestEntries() {
       if (context) {
         queryClient.setQueryData(ENTRIES_KEY, context.previousEntries)
       }
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
     },
   })
 

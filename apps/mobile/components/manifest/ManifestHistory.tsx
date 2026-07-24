@@ -3,6 +3,8 @@ import { Pressable, Text, View } from 'react-native'
 
 import type { ManifestEntry } from '@stellaeum/core/diary/types'
 
+import { pressFeedback } from '@/components/design-system/tokens'
+
 interface ManifestHistoryProps {
   entries: ManifestEntry[]
   currentDate: string
@@ -59,7 +61,7 @@ function HistoryItem({ entry, isFirst }: HistoryItemProps) {
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         className="flex-row items-start justify-between"
-        style={{ gap: 16 }}
+        style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 16 })}
       >
         <View className="flex-1">
           <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-amber-300/80">

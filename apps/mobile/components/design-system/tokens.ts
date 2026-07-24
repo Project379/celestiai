@@ -107,3 +107,22 @@ export const type = {
   row: { fontFamily: font.bodyMedium, fontSize: 16, lineHeight: 21 },
   caption: { fontFamily: font.body, fontSize: 12, lineHeight: 17 },
 } as const
+
+// Premium pass, item #1 (2026-07-24) — shared press-feedback primitive.
+// Precision audit found exactly one component (NavRow) gave any visual
+// confirmation of a tap; everywhere else a Pressable went silent until
+// the screen changed. Two axes (opacity + a slight scale) so the signal
+// clears the R7 calibration bar (>=2 dimensions) rather than repeating
+// the single-degree-step mistake PlanetDetail's first R7 pass made.
+// Deliberately does NOT fire haptics — see "Haptics policy" in
+// MOBILE_ALPHA_REDESIGN.md: the press primitive is purely visual, and
+// haptic calls are wired per meaningful interaction site (see the
+// premium-pass haptic map), not auto-fired on every tap in the app —
+// auto-firing here is exactly the overuse failure the haptics research
+// warned against.
+export function pressFeedback(pressed: boolean) {
+  return {
+    opacity: pressed ? 0.6 : 1,
+    transform: [{ scale: pressed ? 0.97 : 1 }],
+  }
+}

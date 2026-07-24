@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
-import { font } from '@/components/design-system/tokens'
+import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { useTransitOverview } from '@/hooks/useTransitOverview'
@@ -127,6 +127,7 @@ export default function RhythmScreen() {
         <Pressable
           onPress={() => push('/rhythm/journal')}
           className="mb-16 rounded-3xl border border-slate-200/10 bg-white/[0.02] px-6 py-8"
+          style={({ pressed }) => pressFeedback(pressed)}
         >
           <Text style={{ fontFamily: font.bodyMedium }} className="mb-3 text-[13px] font-medium text-slate-400">
             Лунен дневник
@@ -165,7 +166,7 @@ function EmptyTransitsState() {
       <Pressable
         onPress={() => push('/wizard/date')}
         className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
-        style={{ gap: 10 }}
+        style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 10 })}
       >
         <Text style={{ fontFamily: font.bodyMedium }} className="text-[15px] font-medium text-amber-200">
           Въведи рождени данни

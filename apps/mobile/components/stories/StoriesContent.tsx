@@ -9,6 +9,7 @@ import {
 } from '@stellaeum/core/stories/catalog'
 
 import { RecommendationCard } from './RecommendationCard'
+import { pressFeedback } from '@/components/design-system/tokens'
 import { useStoryList } from '@/hooks/useStoryList'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
@@ -224,7 +225,7 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
             <Pressable
               onPress={() => push('/wizard/date')}
               className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
-              style={{ gap: 10 }}
+              style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 10 })}
             >
               <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-200">
                 Въведи рождени данни

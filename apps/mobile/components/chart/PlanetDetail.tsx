@@ -26,7 +26,7 @@ import {
   getRisingInterpretation,
 } from '@stellaeum/core/charts/interpretations'
 
-import { color, font, rhythm, space, type as typeScale } from '@/components/design-system/tokens'
+import { color, font, pressFeedback, rhythm, space, type as typeScale } from '@/components/design-system/tokens'
 
 /**
  * Mobile port of apps/web/components/chart/PlanetDetail.tsx — bottom-
@@ -306,6 +306,7 @@ export function PlanetDetail({
                   hitSlop={12}
                   accessibilityRole="button"
                   accessibilityLabel="Затвори"
+                  style={({ pressed }) => pressFeedback(pressed)}
                 >
                   <Text style={{ fontFamily: font.body }} className="text-[18px] text-slate-500">✕</Text>
                 </Pressable>

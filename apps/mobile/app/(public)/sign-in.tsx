@@ -13,6 +13,8 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { pressFeedback } from '@/components/design-system/tokens'
+
 // Bulgarian error mapping — first-pass draft, calibrated in commit 1.4d via bulgarian-skill
 const ERROR_MESSAGES: Record<string, string> = {
   form_identifier_not_found: 'Няма профил с този имейл',
@@ -164,6 +166,7 @@ export default function SignInScreen() {
                 ? 'border-amber-300/40 bg-amber-300/5'
                 : 'border-slate-800/60 bg-slate-900/40'
             }`}
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <View className="flex-row items-center justify-center gap-3">
               {submitting && <ActivityIndicator color="#fcd34d" size="small" />}
@@ -180,7 +183,7 @@ export default function SignInScreen() {
           <View className="mt-10 flex-row items-center justify-center gap-2">
             <Text className="text-[13px] text-slate-500">Нямаш профил?</Text>
             <Link href={'/sign-up' as never} asChild>
-              <Pressable>
+              <Pressable style={({ pressed }) => pressFeedback(pressed)}>
                 <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-amber-300">
                   Създай
                 </Text>

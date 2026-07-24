@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { ZODIAC_SIGNS_BG } from '@stellaeum/astrology/client'
 
+import { pressFeedback } from '@/components/design-system/tokens'
 import { useChart } from '@/hooks/useChart'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
@@ -82,6 +83,7 @@ export default function YouScreen() {
               className={`flex-row items-baseline justify-between py-5 ${
                 i > 0 ? 'border-t border-slate-800/60' : ''
               }`}
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="font-cinzel text-[11px] uppercase tracking-[0.32em] text-slate-200">
                 {section.label}

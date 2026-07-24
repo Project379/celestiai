@@ -5,6 +5,8 @@ import type { LunarPhase } from '@stellaeum/core/moon-phase'
 import { getManifestPrompt } from '@stellaeum/core/diary/prompts'
 import type { ManifestEntry } from '@stellaeum/core/diary/types'
 
+import { pressFeedback } from '@/components/design-system/tokens'
+
 interface ManifestEntryFormProps {
   phase: LunarPhase
   today: string
@@ -105,7 +107,7 @@ export function ManifestEntryForm({
               ? 'border-amber-300/40 bg-amber-300/[0.06]'
               : 'border-slate-700/60 bg-slate-900/40'
           }`}
-          style={{ gap: 10 }}
+          style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 10 })}
         >
           <Text
             className={`font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.3em] ${

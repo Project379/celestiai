@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import * as Haptics from 'expo-haptics'
 
 import {
   ASPECTS_BG,
@@ -22,7 +23,7 @@ import type {
 } from '@stellaeum/core/horoscope/transit-analysis'
 
 import { AstrologyReference } from '@/components/chart/AstrologyReference'
-import { font } from '@/components/design-system/tokens'
+import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useTransitOverview } from '@/hooks/useTransitOverview'
 
 interface TransitOverviewCardProps {
@@ -142,6 +143,7 @@ function EventRow({ title, summary, meta, badge, onPress, isLast }: EventRowProp
     <Pressable
       onPress={onPress}
       className={`py-5 ${isLast ? '' : 'border-b border-white/[0.05]'}`}
+      style={({ pressed }) => pressFeedback(pressed)}
     >
       <View className="flex-row flex-wrap items-baseline justify-between" style={{ gap: 12 }}>
         <Text style={{ fontFamily: font.bodyMedium }} className="flex-1 text-[16px] font-semibold text-slate-100">{title}</Text>
@@ -218,7 +220,12 @@ function EventModal({ event, onClose }: { event: TransitEvent; onClose: () => vo
                 {event.summary}
               </Text>
             </View>
-            <Pressable onPress={onClose} hitSlop={12} className="rounded-full p-2">
+            <Pressable
+              onPress={onClose}
+              hitSlop={12}
+              className="rounded-full p-2"
+              style={({ pressed }) => pressFeedback(pressed)}
+            >
               <Text style={{ fontFamily: font.body }} className="text-[18px] text-slate-400">✕</Text>
             </Pressable>
           </View>
@@ -249,6 +256,14 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
   const { data: overview, isLoading, error } = useTransitOverview(chartId)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<'transits' | 'reference'>('transits')
+
+  const openEvent = (id: string) => {
+    // A row tap directly opens the sheet in this architecture (no
+    // separate select-then-open step) — Soft impact reads as the sheet
+    // settling into place, per Apple's semantic taxonomy.
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)
+    setSelectedId(id)
+  }
 
   const selectedEvent = useMemo(() => {
     if (!overview || !selectedId) return null
@@ -282,6 +297,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
               key={tab.id}
               onPress={() => setActiveView(tab.id)}
               className="relative pb-2"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text
                 style={{ fontFamily: font.bodyMedium }}
@@ -329,7 +345,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   return (
                     <EventRow
                       key={item.id}
-                      onPress={() => setSelectedId(item.id)}
+                      onPress={() => openEvent(item.id)}
                       title={formatActiveTransit(item)}
                       summary={item.summary}
                       meta={`Дом ${item.house} · орб ${item.orb.toFixed(1)}° · ${
@@ -357,7 +373,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   return (
                     <EventRow
                       key={item.id}
-                      onPress={() => setSelectedId(item.id)}
+                      onPress={() => openEvent(item.id)}
                       title={formatUpcoming(item)}
                       summary={item.summary}
                       meta={`${formatDateTime(item.exactAt)} · дом ${item.house} · след около ${item.hoursUntil} ч.`}
@@ -383,7 +399,7 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
                   return (
                     <EventRow
                       key={item.id}
-                      onPress={() => setSelectedId(item.id)}
+                      onPress={() => openEvent(item.id)}
                       title={formatLunarEvent(item)}
                       summary={item.summary}
                       meta={`${formatDateTime(item.exactAt)} · дом ${item.house}${

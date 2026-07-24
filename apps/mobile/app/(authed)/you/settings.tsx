@@ -3,6 +3,7 @@ import Constants from 'expo-constants'
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { pressFeedback } from '@/components/design-system/tokens'
 import { useAccountDeletion } from '@/hooks/useAccountDeletion'
 import { useApiClient } from '@/lib/api/client'
 import { shareAccountExport } from '@/lib/gdpr/export'
@@ -94,6 +95,7 @@ export default function SettingsScreen() {
           <Pressable
             onPress={handleExport}
             className="flex-row items-center justify-between border-b border-slate-800/60 py-4"
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <Text className="text-[14px] text-slate-200">Изтегли данните си</Text>
             <Text className="text-[14px] text-slate-500">›</Text>
@@ -102,6 +104,7 @@ export default function SettingsScreen() {
             onPress={handleDeleteAccount}
             disabled={deletionPending}
             className="flex-row items-center justify-between py-4"
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <Text className={`text-[14px] ${deletionPending ? 'text-slate-600' : 'text-rose-300/90'}`}>
               {deletionPending ? 'Изтриването е заявено' : 'Изтрий акаунта'}
@@ -117,6 +120,7 @@ export default function SettingsScreen() {
           <Pressable
             onPress={() => Linking.openURL(PRIVACY_URL)}
             className="flex-row items-center justify-between border-b border-slate-800/60 py-4"
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <Text className="text-[14px] text-slate-200">Политика за поверителност</Text>
             <Text className="text-[14px] text-slate-500">›</Text>
@@ -128,6 +132,7 @@ export default function SettingsScreen() {
           accessibilityRole="button"
           accessibilityLabel="Излез"
           className="mt-16 self-center rounded-2xl border border-slate-700/60 px-8 py-3"
+          style={({ pressed }) => pressFeedback(pressed)}
         >
           <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-200">
             Излез

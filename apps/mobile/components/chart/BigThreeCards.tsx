@@ -12,6 +12,7 @@ import type {
   ZodiacSign,
 } from '@stellaeum/astrology/client'
 import { ZODIAC_GLYPH_PATHS } from '@stellaeum/core/charts/glyphs'
+import { pressFeedback } from '@/components/design-system/tokens'
 
 /**
  * Mobile port of apps/web/components/chart/BigThreeCards.tsx. Same
@@ -95,6 +96,7 @@ function BigThreeRow({
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected }}
       className={`relative py-5 ${hairline ? 'border-t border-slate-300/[0.06]' : ''}`}
+      style={({ pressed }) => pressFeedback(pressed)}
     >
       <View className="mb-3 flex-row items-center" style={{ gap: 10 }}>
         <View

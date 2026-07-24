@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 
+import { pressFeedback } from '@/components/design-system/tokens'
 import type { OracleTopic, SavedReading } from '@/hooks/useOracleReading'
 
 /**
@@ -78,7 +79,8 @@ function TopicCard({ topic, isActive, hasSavedReading, onPress }: TopicCardProps
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}
       accessibilityLabel={`${meta.label}${hasSavedReading ? ' (записано)' : ''}`}
-      style={{
+      style={({ pressed }) => ({
+        ...pressFeedback(pressed),
         flex: 1,
         ...(isActive && {
           shadowColor: 'rgb(167, 139, 250)',
@@ -87,7 +89,7 @@ function TopicCard({ topic, isActive, hasSavedReading, onPress }: TopicCardProps
           shadowRadius: 14,
           elevation: 6,
         }),
-      }}
+      })}
       className={`relative items-center justify-center rounded-2xl border px-4 py-5 ${
         isActive
           ? 'border-amber-300/45 bg-violet-stellaeum/[0.08]'

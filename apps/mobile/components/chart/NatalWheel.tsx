@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import * as Haptics from 'expo-haptics'
 import Svg, {
   Circle,
   G,
@@ -21,6 +22,7 @@ import type {
   ZodiacSign,
 } from '@stellaeum/astrology/client'
 import { ZODIAC_GLYPH_PATHS } from '@stellaeum/core/charts/glyphs'
+import { pressFeedback } from '@/components/design-system/tokens'
 
 /**
  * Mobile natal-wheel render via react-native-svg. Direct port of
@@ -202,6 +204,10 @@ export function NatalWheel({
   const hitRadius = Math.max(HIT_RADIUS_MIN, size * 0.063)
 
   const handlePlanetPress = (planet: PlanetPosition) => {
+    // A definite, discrete selection on a small/precise tap target —
+    // Medium impact per Apple's own semantic taxonomy (a "collision"
+    // between the tap and the UI element, not a continuous scrub).
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     onPlanetSelect?.(planet)
   }
 
@@ -506,14 +512,15 @@ export function NatalWheel({
                   handlePlanetPress(planet)
                   setAmbiguous(null)
                 }}
-                style={{
+                style={({ pressed }) => ({
+                  ...pressFeedback(pressed),
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 10,
                   paddingHorizontal: 14,
                   paddingVertical: 10,
                   minHeight: 44,
-                }}
+                })}
               >
                 <Text style={{ color: PLANET_COLORS[planet.planet], fontSize: 16 }}>
                   {PLANET_GLYPHS[planet.planet as Planet] ?? '?'}

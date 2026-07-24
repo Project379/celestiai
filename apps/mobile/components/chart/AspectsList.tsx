@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native'
 import type { AspectData, AspectType, Planet } from '@stellaeum/astrology/client'
 import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
 import { ASPECT_BG, ASPECT_GLYPH } from '@stellaeum/core/charts/sections'
+import { pressFeedback } from '@/components/design-system/tokens'
 
 interface AspectsListProps {
   aspects: readonly AspectData[]
@@ -138,7 +139,11 @@ function AspectSection({ type, aspects, expanded, onToggle }: AspectSectionProps
       </View>
 
       {hasMore && (
-        <Pressable onPress={onToggle} className="mt-3">
+        <Pressable
+          onPress={onToggle}
+          className="mt-3"
+          style={({ pressed }) => pressFeedback(pressed)}
+        >
           <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-500">
             {expanded ? 'Скрий допълнителните' : `Покажи всички (${aspects.length})`}
           </Text>

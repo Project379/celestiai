@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native'
 import type { CatalogRow } from '@stellaeum/core/crystals/queries'
 
 import { useCrystalsOverview } from '@/hooks/useCrystalsOverview'
+import { pressFeedback } from '@/components/design-system/tokens'
 import { CrystalGridTile } from './CrystalGridTile'
 import { DailyStreakPanel } from './DailyStreakPanel'
 import type { GemVariant } from './CrystalGem'
@@ -86,7 +87,12 @@ export function CrystalCollectionContent({ chartId, onSelectCrystal }: CrystalCo
         {tabs.map((t) => {
           const isActive = tab === t.id
           return (
-            <Pressable key={t.id} onPress={() => setTab(t.id)} className="relative pb-2">
+            <Pressable
+              key={t.id}
+              onPress={() => setTab(t.id)}
+              className="relative pb-2"
+              style={({ pressed }) => pressFeedback(pressed)}
+            >
               <Text
                 className={`font-cinzel text-[11px] font-semibold uppercase tracking-[0.28em] ${
                   isActive ? 'text-amber-200' : 'text-slate-400'

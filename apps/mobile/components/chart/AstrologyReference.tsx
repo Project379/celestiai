@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import { PLANET_GLYPHS, ZODIAC_GLYPHS } from '@stellaeum/astrology/client'
+import { pressFeedback } from '@/components/design-system/tokens'
 
 type InnerTab = 'legend' | 'planets' | 'aspects' | 'transits'
 
@@ -73,7 +74,11 @@ interface ReferenceTabProps {
 
 function ReferenceTab({ active, onPress, label }: ReferenceTabProps) {
   return (
-    <Pressable onPress={onPress} className="relative pb-2">
+    <Pressable
+      onPress={onPress}
+      className="relative pb-2"
+      style={({ pressed }) => pressFeedback(pressed)}
+    >
       <Text
         className={`font-cinzel text-[11px] font-semibold uppercase tracking-[0.28em] ${
           active ? 'text-amber-200' : 'text-slate-400'

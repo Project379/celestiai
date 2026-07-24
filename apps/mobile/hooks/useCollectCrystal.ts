@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import * as Haptics from 'expo-haptics'
 
 import type { CrystalRecommendationRow, UserCrystalRow } from '@stellaeum/core/crystals/queries'
 
@@ -30,6 +31,10 @@ export function useCollectCrystal(chartId: string | null | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crystals-overview', chartId] })
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    },
+    onError: () => {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
     },
   })
 }

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import * as Haptics from 'expo-haptics'
 
 import { ApiError, useApiClient } from '@/lib/api/client'
 import { useFeatureFlag } from '@/hooks/useFeatureFlag'
@@ -113,6 +114,16 @@ export function useOracleReading(
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: savedReadingsKey })
       options?.onFreshGeneration?.()
+    },
+    onError: (err) => {
+      // Cap-reached is an expected, informational state (a soft limit,
+      // not a failure) — reserve the error haptic for genuine generation
+      // failures so it stays meaningful (Apple HIG: notification haptics
+      // signal a completed/failed task, not routine limits).
+      const isCapReached = err instanceof ApiError && err.status === 429
+      if (!isCapReached) {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      }
     },
   })
 

@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 
+import { pressFeedback } from '@/components/design-system/tokens'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
@@ -34,13 +35,14 @@ export function OracleEntry() {
         accessibilityLabel="Отвори Оракула"
         onPress={handlePress}
         className="h-14 w-14 items-center justify-center rounded-full border border-amber-300/40 bg-violet-stellaeum/20"
-        style={{
+        style={({ pressed }) => ({
+          ...pressFeedback(pressed),
           shadowColor: '#fbbf24',
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.35,
           shadowRadius: 16,
           elevation: 8,
-        }}
+        })}
       >
         <Text className="font-cinzel text-[14px] text-amber-200">✦</Text>
       </Pressable>

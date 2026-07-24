@@ -6,6 +6,7 @@ import { getLunarPhase, type LunarPhase } from '@stellaeum/core/moon-phase'
 
 import { ManifestEntryForm } from './ManifestEntryForm'
 import { ManifestHistory } from './ManifestHistory'
+import { pressFeedback } from '@/components/design-system/tokens'
 import { useManifestEntries } from '@/hooks/useManifestEntries'
 import { shareDiaryMarkdown } from '@/lib/diary/export'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
@@ -155,6 +156,7 @@ export function ManifestDiaryContent() {
             accessibilityLabel="Затвори"
             hitSlop={12}
             className="rounded-full px-2 py-1"
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <Text className="font-cinzel text-[11px] text-rose-300/70">✕</Text>
           </Pressable>
@@ -185,7 +187,7 @@ export function ManifestDiaryContent() {
             {entries.length} {entries.length === 1 ? 'запис' : 'записа'}
           </Text>
           {entries.length > 0 && (
-            <Pressable onPress={handleShare} hitSlop={8}>
+            <Pressable onPress={handleShare} hitSlop={8} style={({ pressed }) => pressFeedback(pressed)}>
               <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-slate-500">
                 <Text className="mr-1 text-slate-400">↗</Text>
                 Сподели дневника

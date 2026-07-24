@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import * as Haptics from 'expo-haptics'
 
 import { CrystalCollectionContent } from '@/components/crystals/CrystalCollectionContent'
+import { pressFeedback } from '@/components/design-system/tokens'
 import { CrystalDetailPanel } from '@/components/crystals/CrystalDetailPanel'
 import { CrystalOfTheDayCard } from '@/components/crystals/CrystalOfTheDayCard'
 import { useCollectCrystal } from '@/hooks/useCollectCrystal'
@@ -60,7 +62,15 @@ export default function CrystalsScreen() {
           <MissingChartState onPress={() => push('/wizard/date')} />
         )}
         {isPremium && chartId && (
-          <CrystalCollectionContent chartId={chartId} onSelectCrystal={setSelectedSlug} />
+          <CrystalCollectionContent
+            chartId={chartId}
+            onSelectCrystal={(slug) => {
+              // Tile tap directly opens the detail sheet — Soft impact for
+              // the sheet settling into place (same pattern as TransitOverviewCard).
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)
+              setSelectedSlug(slug)
+            }}
+          />
         )}
       </ScrollView>
 
@@ -88,6 +98,7 @@ function PremiumGate({ onPress }: { onPress: () => void }) {
       <Pressable
         onPress={onPress}
         className="mt-6 rounded-full border border-amber-300/40 bg-amber-400/15 px-7 py-3"
+        style={({ pressed }) => pressFeedback(pressed)}
       >
         <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-200">
           Научи повече
@@ -106,7 +117,7 @@ function MissingChartState({ onPress }: { onPress: () => void }) {
       <Pressable
         onPress={onPress}
         className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
-        style={{ gap: 10 }}
+        style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 10 })}
       >
         <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-200">
           Добави натална карта

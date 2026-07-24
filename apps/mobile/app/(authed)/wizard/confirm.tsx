@@ -9,11 +9,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useFormContext, useWatch } from 'react-hook-form'
+import * as Haptics from 'expo-haptics'
 
 import type {
   ApproximateTimeRange,
   BirthData,
 } from '@stellaeum/core/charts/schemas'
+import { pressFeedback } from '@/components/design-system/tokens'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { ApiError, useApiClient } from '@/lib/api/client'
 
@@ -100,6 +102,7 @@ export default function WizardConfirmScreen() {
             'Грешка при запазване')
           : 'Неизвестна грешка'
       setSubmitError(msg)
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
     } finally {
       setIsSubmitting(false)
     }
@@ -177,7 +180,7 @@ export default function WizardConfirmScreen() {
             onPress={() => router.back()}
             disabled={isSubmitting}
             className="px-2 py-2"
-            style={isSubmitting ? { opacity: 0.45 } : undefined}
+            style={({ pressed }) => (isSubmitting ? { opacity: 0.45 } : pressFeedback(pressed))}
           >
             <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">
               ‹ Назад
@@ -187,8 +190,8 @@ export default function WizardConfirmScreen() {
             onPress={handleSubmit(onSubmit)}
             disabled={isSubmitting || hasErrors}
             className="rounded-full border border-amber-300/50 bg-amber-300/[0.04] px-7 py-3"
-            style={
-              isSubmitting || hasErrors ? { opacity: 0.45 } : undefined
+            style={({ pressed }) =>
+              isSubmitting || hasErrors ? { opacity: 0.45 } : pressFeedback(pressed)
             }
           >
             {isSubmitting ? (
