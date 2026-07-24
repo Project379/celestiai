@@ -239,10 +239,22 @@ export function PlanetDetail({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <Pressable className="flex-1 bg-black/85" onPress={onClose}>
+      <View className="flex-1 justify-end">
+        {/* Backdrop and sheet are siblings, not parent/child (matches
+            TransitOverviewCard's EventModal pattern) — a Pressable
+            wrapping a ScrollView nests two responder negotiations ahead
+            of the ScrollView's native pan responder, which was
+            swallowing drags started over the sheet's content instead of
+            letting the ScrollView scroll; only the platform scrollbar
+            thumb (an OS-level drag, not JS touch dispatch) still worked. */}
         <Pressable
-          onPress={(e) => e.stopPropagation()}
-          className="mt-auto rounded-t-2xl border-t border-white/10 bg-bg"
+          onPress={onClose}
+          accessibilityLabel="Затвори"
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          className="bg-black/85"
+        />
+        <View
+          className="rounded-t-2xl border-t border-white/10 bg-bg"
           style={{ maxHeight: '88%' }}
         >
           <SafeAreaView edges={['bottom']}>
@@ -372,8 +384,8 @@ export function PlanetDetail({
               </View>
             </ScrollView>
           </SafeAreaView>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   )
 }
