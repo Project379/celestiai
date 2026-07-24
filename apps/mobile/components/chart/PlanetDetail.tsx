@@ -37,19 +37,26 @@ import { color, font, rhythm, space, type as typeScale } from '@/components/desi
  * Силни страни / Предизвикателства / Аспекти / Насока за развитие), same
  * Bulgarian copy via @stellaeum/core/charts/interpretations (lifted in 6.1).
  *
- * Design-system pass, 2026-07-23 — content-lead treatment PROPOSED, not yet
- * founder-approved (see R7 draft in MOBILE_ALPHA_REDESIGN.md): the brief
- * sentence is rendered as the lead (italic register-shift, Днес's opener
- * lever) instead of reading like another body paragraph; position/element/
- * house metadata is demoted to one quiet inline caption row so it stops
- * competing with the title; Strengths/Challenges get distinct directional
- * glyphs instead of an identical dot; Growth (the forward-looking close)
- * gets the payoff weight-up. These three levers are deliberately borrowed
- * from Днес's mechanism even though the founder said not to copy Днес's
- * *treatment* — flag this explicitly for founder review rather than
- * assuming it's within bounds. Tokens (`rhythm`/`space`/`type`) replace the
- * ad hoc pixel values the font-only pass left behind (this part is a
- * mechanical tokens-only change, not in question).
+ * Design-system pass, 2026-07-23, founder-approved 2026-07-24 after an R7
+ * CALIBRATION correction (see MOBILE_ALPHA_REDESIGN.md, "R7 calibration
+ * amendment"): the brief is the lead (italic register-shift, Днес's opener
+ * lever); position/element/house metadata is demoted to one quiet inline
+ * caption row (not an R7 lever — pure de-emphasis, doesn't need to
+ * register as a change). The first landing of Strengths/Challenges
+ * markers and Growth's payoff treatment shipped 2026-07-23 and were found
+ * imperceptible on device (verified via a before/after side-by-side
+ * render at 390px, not device testing alone) — three of four levers had
+ * moved only one property one step within the same register they were
+ * meant to escape. Recalibrated 2026-07-24: Strengths/Challenges now use
+ * a fixed emerald/rose pair (reusing ELEMENT_DOT_CLASS.earth/.fire
+ * verbatim, decoupled from the tapped planet's actual element) plus a
+ * 12px→16px marker-glyph size bump; Growth is a Surface2 tonal panel
+ * (§4.2's "nested card" tier + §1.3's hairline-border Card recipe, not a
+ * new decorated element) instead of another hairline-separated list row.
+ * Every lever now differs from its surroundings on ≥2 dimensions with
+ * ≥1 categorical (hue family, containment), not a single degree step.
+ * Tokens (`rhythm`/`space`/`type`) replace the ad hoc pixel values the
+ * font-only pass left behind.
  *
  * Skipped vs web: ambient blur backgrounds, framer-motion staggered
  * fades, custom celestial icons (Unicode glyphs from PLANET_GLYPHS /
@@ -129,7 +136,12 @@ function Section({ title, textTint, dotTint, marker, children }: SectionProps) {
     <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: rhythm.tight }}>
       <View className="mb-3 flex-row items-center" style={{ gap: space.md }}>
         {marker ? (
-          <Text className={textTint} style={{ fontFamily: font.bodyMedium, fontSize: 12, lineHeight: 12 }}>
+          // R7 recalibration (2026-07-24): 12px→16px, bigger than its own
+          // 13.5px label — a degree axis paired with the categorical hue
+          // swap the caller passes in via textTint (see Strengths/
+          // Challenges call sites, which now pass a fixed emerald/rose
+          // pair instead of the planet's element tint).
+          <Text className={textTint} style={{ fontFamily: font.bodyMedium, fontSize: 16, lineHeight: 16 }}>
             {marker}
           </Text>
         ) : (
@@ -328,23 +340,36 @@ export function PlanetDetail({
                   </Section>
                 )}
                 {hasStrengths && (
+                  // R7 recalibration (2026-07-24): fixed emerald, not the
+                  // planet's own element tint — Strengths/Challenges are
+                  // semantic opposites and need a consistent colour pair
+                  // to read as such across every planet, not just
+                  // whichever ones happen to land on rose/emerald
+                  // elements. Reuses ELEMENT_DOT_CLASS.earth /
+                  // ELEMENT_TEXT_CLASS.earth verbatim — no new palette
+                  // value. Breaks the "one element colour runs the whole
+                  // sheet" continuity for these two sections only, on
+                  // purpose (ratified: semantic colour beats decorative
+                  // consistency — ties the eye to meaning, not to a
+                  // design system's internal bookkeeping).
                   <Section
                     title="Силни страни"
-                    textTint={textTint}
-                    dotTint={dotTint}
+                    textTint={ELEMENT_TEXT_CLASS.earth}
+                    dotTint={ELEMENT_DOT_CLASS.earth}
                     marker="+"
                   >
-                    <BulletList items={interpretation.strengths} dotTint={dotTint} />
+                    <BulletList items={interpretation.strengths} dotTint={ELEMENT_DOT_CLASS.earth} />
                   </Section>
                 )}
                 {hasChallenges && (
+                  // R7 recalibration — fixed rose, mirroring Strengths above.
                   <Section
                     title="Предизвикателства"
-                    textTint={textTint}
-                    dotTint={dotTint}
+                    textTint={ELEMENT_TEXT_CLASS.fire}
+                    dotTint={ELEMENT_DOT_CLASS.fire}
                     marker="-"
                   >
-                    <BulletList items={interpretation.challenges} dotTint={dotTint} />
+                    <BulletList items={interpretation.challenges} dotTint={ELEMENT_DOT_CLASS.fire} />
                   </Section>
                 )}
                 {hasAspectInsights && (
@@ -357,19 +382,49 @@ export function PlanetDetail({
                   </Section>
                 )}
                 {hasGrowth && (
-                  // Payoff (R7) — same lever Днес uses for its closing beat:
-                  // weight steps up to Medium, no new box or color. This is
-                  // the forward-looking "what do I do with this," not more
-                  // description, so it reads distinct from Overview above.
-                  <Section
-                    title="Насока за развитие"
-                    textTint={textTint}
-                    dotTint={dotTint}
+                  // Payoff (R7 recalibration, 2026-07-24) — containment,
+                  // not the shared hairline+dot list-row every other
+                  // section uses. A prior version tried reusing the
+                  // brief's italic register unlabelled; rejected —
+                  // removing the "Насока за развитие" label to create
+                  // emphasis was a categorical move in the wrong
+                  // direction (the label does real semantic work; italic
+                  // already means "brief" at the top of the sheet, so
+                  // reusing it unlabelled at the bottom made opening and
+                  // conclusion read as the same kind of element instead
+                  // of as bookends). Surface2 (`color.surface2`, the
+                  // "nested card" elevation tier, §4.2) + a low-opacity
+                  // hairline border is the app's own existing tonal-card
+                  // recipe (§1.3), not a new decorated element — Surface1
+                  // was tried first and rejected as too close to base to
+                  // register (a ~10-value RGB shift, the same magnitude
+                  // as the original invisible weight-step). The panel's
+                  // own edge is the section break, so the shared top
+                  // hairline is dropped here rather than doubled against
+                  // it. Weight-up (400→600) kept as a supporting third
+                  // axis, not the primary carrier.
+                  <View
+                    style={{
+                      backgroundColor: color.surface2,
+                      borderRadius: 14,
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.06)',
+                      padding: space.lg,
+                    }}
                   >
+                    <View className="mb-3 flex-row items-center" style={{ gap: space.md }}>
+                      <View
+                        className={`h-1 w-1 ${dotTint}`}
+                        style={{ transform: [{ rotate: '45deg' }] }}
+                      />
+                      <Text style={{ fontFamily: font.bodyMedium }} className={`text-[13.5px] font-medium ${textTint}`}>
+                        Насока за развитие
+                      </Text>
+                    </View>
                     <Text style={{ fontFamily: font.bodyMedium }} className="text-[14px] leading-[1.85] text-slate-200">
                       {interpretation.growth}
                     </Text>
-                  </Section>
+                  </View>
                 )}
                 {isRising && !birthTimeKnown && (
                   <View className="border-l border-amber-300/50 bg-amber-300/[0.05] px-5 py-3">
