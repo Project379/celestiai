@@ -42,5 +42,9 @@ export function usePressLift() {
     elevation: interpolate(progress.value, [0, 1], [3, 8]),
   }))
 
-  return { liftStyle, onPressIn, onPressOut }
+  // Exposed for callers that need a secondary element (e.g. a glyph
+  // inside the card) to animate off the same press state — the proof
+  // surface's gem lift-and-rotate derives from this rather than
+  // tracking its own separate press state.
+  return { liftStyle, onPressIn, onPressOut, progress }
 }
