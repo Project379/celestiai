@@ -4,9 +4,12 @@ import * as Haptics from 'expo-haptics'
 import Animated, { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated'
 import Svg, {
   Circle,
+  Defs,
   G,
   Line,
+  LinearGradient,
   Path,
+  Stop,
   Text as SvgText,
 } from 'react-native-svg'
 
@@ -253,14 +256,29 @@ export function NatalWheel({
   return (
     <View style={{ width: size, height: size }}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* Outer ring border */}
+        <Defs>
+          {/* Warm/cool amendment — the recovered-instrument bevel rim
+              (the fitting a hand would touch), ported from the approved
+              mockup's diagonal border-color bevel. A gradient stroke is
+              the SVG-portable equivalent of CSS's per-side border-color
+              trick. Bronze, and ONLY the rim — the face/ticks/data stay
+              cool, per the ratified "cold instrument, warm fittings"
+              reading (WARM_COOL_AMENDMENT.md, corrected pass). */}
+          <LinearGradient id="rim-bevel" x1="15%" y1="8%" x2="85%" y2="92%">
+            <Stop offset="0%" stopColor="#d9a06a" />
+            <Stop offset="50%" stopColor="#8a6339" />
+            <Stop offset="100%" stopColor="#5c3f22" />
+          </LinearGradient>
+        </Defs>
+        {/* Outer ring border — the instrument's rim */}
         <Circle
           cx={center}
           cy={center}
           r={outerRadius}
           fill="none"
-          stroke="rgba(226, 232, 240, 0.22)"
-          strokeWidth={1}
+          stroke="url(#rim-bevel)"
+          strokeWidth={size * 0.012}
+          opacity={0.85}
         />
 
         {/* Instrument graticule — the wheel's own measurement scale, cool-

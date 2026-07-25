@@ -144,15 +144,40 @@ export function MoonGlyph({
           <ClipPath id="moon-disk-clip">
             <Circle cx={cx} cy={cy} r={r} />
           </ClipPath>
+          {/* Warm/cool amendment — asymmetric near/far light, ported from
+              the approved mockup's off-center radial washes (the
+              "material, not a flat fill" correction). Biased by the same
+              `dx` that drives the terminator, so the warm tint always
+              falls on the lit side and the cool tint near the dark edge,
+              regardless of phase — this is more correct than the mockup's
+              fixed corners, which didn't track phase at all. */}
+          <RadialGradient id="moon-warm-tint" cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor="#d9a06a" stopOpacity={0.4} />
+            <Stop offset="100%" stopColor="#d9a06a" stopOpacity={0} />
+          </RadialGradient>
+          <RadialGradient id="moon-cool-tint" cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
+            <Stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+          </RadialGradient>
         </Defs>
         <G clipPath="url(#moon-disk-clip)">
           <Circle cx={cx} cy={cy} r={r} fill="rgba(139,92,246,0.06)" />
           <Circle cx={cx} cy={cy} r={r} fill="rgba(226,232,240,0.92)" />
           <Circle cx={cx + dx} cy={cy} r={r} fill="#08060f" />
+          <Circle cx={cx - dx * 0.5} cy={cy - r * 0.15} r={r * 0.85} fill="url(#moon-warm-tint)" />
+          <Circle cx={cx + dx * 0.5} cy={cy + r * 0.2} r={r * 0.7} fill="url(#moon-cool-tint)" />
         </G>
         {/* Hairline outline — thin stroke, not a heavy ring */}
         <Circle cx={cx} cy={cy} r={r} fill="none" stroke={outlineColor} strokeWidth={1} />
       </Svg>
+      {/* NOT PORTED — flagged, not silently dropped: the mockup's
+          feTurbulence grain has no equivalent here. react-native-svg
+          15.x exposes Filter/FeTurbulence, but its cross-platform
+          (iOS/Android) rendering reliability is unverified in this
+          codebase — adding it blind risks the exact "looked fine in the
+          browser, did something different on device" gap this whole
+          plan exists to catch early. Needs a standalone device spike
+          before it's added here, not a guess. */}
     </View>
   )
 }
