@@ -9,8 +9,28 @@ export const color = {
   surface2: '#161029',
   violet: '#8b5cf6',
   violetBorder: 'rgba(139,92,246,0.25)',
+  // PROOF ONLY — continuity-layer amendment (2026-07-25), not yet rolled
+  // out. amber/amberText remain live and in use across ~60 files; nothing
+  // consumes bronze/cool/starlight yet. See
+  // .planning/design/WARM_COOL_AMENDMENT.md for the audit, the R4
+  // re-amendment, and why amber is not simply deleted here.
   amber: '#fbbf24',
   amberText: '#fde68a',
+  // Bronze — retires amber once migration fires. Candidate value, refine
+  // against the proof render before treating as final.
+  bronze: '#b8763e',
+  bronzeText: '#e0b587',
+  // Cool instrument accent — scoped to celestial/historic surfaces only
+  // (Карта, Astrology Guide), never warm surfaces. Deliberately desaturated
+  // steel-blue, NOT the existing Ascendant-line cyan (#22d3ee,
+  // NatalWheel.tsx:355) — that cyan is data-viz (air-element/Ascendant
+  // semantics per §1.5's own cyan exclusion) and must stay visually
+  // distinct from this new brand-accent blue on the same wheel.
+  cool: '#5b8fc7',
+  coolText: '#bcd6ef',
+  // Starlight white — cool-surface "light" role, distinct from the warm
+  // neutral `text` below (used everywhere as body/label color).
+  starlight: '#f5f7fc',
   rose: '#fb7185',
   text: '#e2e8f0',
   muted: '#94a3b8',

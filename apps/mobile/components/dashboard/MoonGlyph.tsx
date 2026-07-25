@@ -77,11 +77,17 @@ export function MoonGlyph({
   isWaxing,
   size = 92,
   animated = true,
+  outlineColor = 'rgba(251,191,36,0.4)',
 }: {
   illumination: number
   isWaxing: boolean
   size?: number
   animated?: boolean
+  // Warm/cool amendment, Stage 1 (2026-07-25): defaults to the original
+  // amber hairline so Ритъм's LunarPhaseCard call site is unchanged.
+  // Днес's hero passes the bronze equivalent explicitly — this keeps the
+  // bronze migration scoped to Днес only, not both call sites at once.
+  outlineColor?: string
 }) {
   const bloomSize = Math.round(size * BLOOM_RATIO)
   const glow = useSharedValue(0.5)
@@ -144,8 +150,8 @@ export function MoonGlyph({
           <Circle cx={cx} cy={cy} r={r} fill="rgba(226,232,240,0.92)" />
           <Circle cx={cx + dx} cy={cy} r={r} fill="#08060f" />
         </G>
-        {/* Hairline gold outline — thin stroke, not a heavy ring */}
-        <Circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(251,191,36,0.4)" strokeWidth={1} />
+        {/* Hairline outline — thin stroke, not a heavy ring */}
+        <Circle cx={cx} cy={cy} r={r} fill="none" stroke={outlineColor} strokeWidth={1} />
       </Svg>
     </View>
   )

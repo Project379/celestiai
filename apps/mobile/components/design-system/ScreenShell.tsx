@@ -11,7 +11,7 @@ import { color, space } from './tokens'
 // deliberately plain: a standard scrollable screen, nothing novel.
 export function ScreenShell({ children }: { children: ReactNode }) {
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.base }}>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Svg
         width="100%"
         height={220}

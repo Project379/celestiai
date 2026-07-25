@@ -4,6 +4,7 @@ import { BlurView } from 'expo-blur'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { OracleEntry } from '@/components/OracleEntry'
+import { AmbientBackground } from '@/components/design-system/AmbientBackground'
 import { color, font } from '@/components/design-system/tokens'
 import {
   CircleTabIcon,
@@ -50,10 +51,12 @@ export default function TabsLayout() {
 
   return (
     <View className="flex-1 bg-bg">
+      <AmbientBackground />
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: true,
+          sceneStyle: { backgroundColor: 'transparent' },
           tabBarStyle: {
             position: 'absolute',
             borderTopWidth: 0,

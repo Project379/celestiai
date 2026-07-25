@@ -55,6 +55,16 @@ export function NavRow({
 // used here instead of a segmented control specifically because a
 // segmented control implies exactly-one-always-selected, mutually
 // exclusive state, and this needs independent, collapsible-to-none rows.
+//
+// Warm/cool amendment, Stage 1 (2026-07-25): this component's only
+// consumer is Карта (verified — grep for DisclosureRow before touching
+// it), so it carries the cool instrument treatment directly rather than
+// via a prop: the caret shifts to the cool token on expand (color-family
+// change, categorical) and the opened content gets a cool hairline top
+// border instead of none (containment appearing, categorical) — the
+// "instrument lights up when engaged" cue, adapted from the proof's
+// bracket-switcher concept to the real component Карта actually uses (it
+// has no segmented switcher).
 export function DisclosureRow({
   label,
   expanded,
@@ -82,9 +92,22 @@ export function DisclosureRow({
         })}
       >
         <Text style={{ ...type.row, color: color.text }}>{label}</Text>
-        <Text style={{ fontSize: 14, color: color.faint }}>{expanded ? '⌃' : '⌄'}</Text>
+        <Text style={{ fontSize: 14, color: expanded ? color.cool : color.faint }}>
+          {expanded ? '⌃' : '⌄'}
+        </Text>
       </Pressable>
-      {expanded && <View style={{ paddingBottom: 12 }}>{children}</View>}
+      {expanded && (
+        <View
+          style={{
+            paddingTop: 10,
+            paddingBottom: 12,
+            borderTopWidth: 1,
+            borderTopColor: 'rgba(91,143,199,0.25)',
+          }}
+        >
+          {children}
+        </View>
+      )}
     </View>
   )
 }

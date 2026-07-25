@@ -9,7 +9,10 @@ import { parseSentinels } from '@stellaeum/core/oracle/planet-parser'
 import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
 import type { Planet } from '@stellaeum/astrology/client'
 
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
+
 import { MoonGlyph } from '@/components/dashboard/MoonGlyph'
+import { CtaPanel } from '@/components/design-system/CtaPanel'
 import { NavRow } from '@/components/design-system/NavRow'
 import { ScreenShell } from '@/components/design-system/ScreenShell'
 import { color, font, pressFeedback, rhythm, type } from '@/components/design-system/tokens'
@@ -138,7 +141,11 @@ export default function DnesScreen() {
           glyph→name. No marginBottom here — the section below supplies
           the `group` gap, so the boundary is stated once, not twice. */}
       <View style={{ alignItems: 'center' }}>
-        <MoonGlyph illumination={lunarPhase.illumination} isWaxing={lunarPhase.isWaxing} />
+        <MoonGlyph
+          illumination={lunarPhase.illumination}
+          isWaxing={lunarPhase.isWaxing}
+          outlineColor="rgba(184,118,62,0.45)"
+        />
         <Text style={{ ...type.hero, color: color.text, marginTop: rhythm.tight, textAlign: 'center' }}>
           {lunarPhase.name}
         </Text>
@@ -158,11 +165,28 @@ export default function DnesScreen() {
           )}
           {horoscope.data?.content && <HoroscopeBody content={horoscope.data.content} />}
 
-          {/* THE single exit from this screen's content (gap 1). Same
-              `group` gap as every other section boundary on this screen —
-              a consistent large-tier gap, not another ad hoc value. */}
-          <View style={{ marginTop: rhythm.group, borderTopWidth: 1, borderTopColor: 'rgba(148,163,184,0.1)' }}>
-            <NavRow label="Питай Оракула" onPress={() => push('/oracle')} tone="accent" />
+          {/* THE single exit from this screen's content (gap 1). Warm/cool
+              amendment Stage 1: the plain amber NavRow is replaced by the
+              bronze CtaPanel primitive — same `group` gap as every other
+              section boundary, plus a low, bottom-anchored bronze glow
+              that grows toward this panel rather than the payoff needing
+              a label to announce itself (the eye-leading composition
+              item; the panel's own containment shift carries the
+              obvious-but-quiet signal, the glow is atmosphere only — see
+              WARM_COOL_AMENDMENT.md §6 self-critique). */}
+          <View style={{ marginTop: rhythm.group, position: 'relative' }}>
+            <Svg width="100%" height={110} style={{ position: 'absolute', bottom: 0, left: 0 }} pointerEvents="none">
+              <Defs>
+                <RadialGradient id="cta-warm-glow" cx="50%" cy="100%" r="80%">
+                  <Stop offset="0%" stopColor={color.bronze} stopOpacity={0.09} />
+                  <Stop offset="100%" stopColor={color.bronze} stopOpacity={0} />
+                </RadialGradient>
+              </Defs>
+              <Rect width="100%" height="100%" fill="url(#cta-warm-glow)" />
+            </Svg>
+            <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(148,163,184,0.1)' }}>
+              <CtaPanel label="Питай Оракула" onPress={() => push('/oracle')} />
+            </View>
           </View>
         </View>
       )}

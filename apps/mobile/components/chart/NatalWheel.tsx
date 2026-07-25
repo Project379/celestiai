@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import * as Haptics from 'expo-haptics'
+import Animated, { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated'
 import Svg, {
   Circle,
   G,
@@ -22,7 +23,16 @@ import type {
   ZodiacSign,
 } from '@stellaeum/astrology/client'
 import { ZODIAC_GLYPH_PATHS } from '@stellaeum/core/charts/glyphs'
-import { pressFeedback } from '@/components/design-system/tokens'
+import { color, pressFeedback } from '@/components/design-system/tokens'
+
+const AnimatedG = Animated.createAnimatedComponent(G)
+// Warm/cool amendment, Stage 1 (2026-07-25): the "instrument resolving
+// into focus" moment (source: Animus, motion only — no HUD chrome). Ticks
+// are a plain fixed-angle scale (NOT rotationDeg-dependent like the zodiac
+// ring) — this is the instrument's own measurement, distinct from the sky
+// data it's reading.
+const GRATICULE_TICK_DEGREES = Array.from({ length: 24 }, (_, i) => i * 15)
+const GRATICULE_RESOLVE_MS = 500
 
 /**
  * Mobile natal-wheel render via react-native-svg. Direct port of
@@ -203,6 +213,15 @@ export function NatalWheel({
 
   const hitRadius = Math.max(HIT_RADIUS_MIN, size * 0.063)
 
+  // One-shot resolve on mount — not a continuous loop, so it costs nothing
+  // ongoing once settled. See WARM_COOL_AMENDMENT.md §8 for the frame
+  // budget this was checked against.
+  const graticule = useSharedValue(0)
+  useEffect(() => {
+    graticule.value = withTiming(1, { duration: GRATICULE_RESOLVE_MS })
+  }, [graticule])
+  const graticuleProps = useAnimatedProps(() => ({ opacity: graticule.value }))
+
   const handlePlanetPress = (planet: PlanetPosition) => {
     // A definite, discrete selection on a small/precise tap target —
     // Medium impact per Apple's own semantic taxonomy (a "collision"
@@ -243,6 +262,30 @@ export function NatalWheel({
           stroke="rgba(226, 232, 240, 0.22)"
           strokeWidth={1}
         />
+
+        {/* Instrument graticule — the wheel's own measurement scale, cool-
+            toned, fixed to the frame (not the rotating zodiac data below).
+            Resolves in once on mount; see the shared-value comment above. */}
+        <AnimatedG animatedProps={graticuleProps}>
+          {GRATICULE_TICK_DEGREES.map((deg, i) => {
+            const major = i % 6 === 0
+            const rad = ((deg - 90) * Math.PI) / 180
+            const r1 = outerRadius + size * 0.003
+            const r2 = outerRadius + size * (major ? 0.018 : 0.011)
+            return (
+              <Line
+                key={`grat-${i}`}
+                x1={center + Math.cos(rad) * r1}
+                y1={center + Math.sin(rad) * r1}
+                x2={center + Math.cos(rad) * r2}
+                y2={center + Math.sin(rad) * r2}
+                stroke={color.cool}
+                strokeWidth={major ? 1.2 : 0.8}
+                opacity={major ? 0.55 : 0.3}
+              />
+            )
+          })}
+        </AnimatedG>
 
         {/* Zodiac segments */}
         {ZODIAC_SIGNS_ORDER.map((sign, index) => {
