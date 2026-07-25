@@ -81,7 +81,7 @@ export default function ChartScreen() {
   }
 
   return (
-    <ScreenShell>
+    <ScreenShell temperature="cool">
       {(firstChart.isLoading || (firstChart.data && chart.isLoading && !chart.data)) && (
         <LoadingState status="изчисляваме картата" />
       )}

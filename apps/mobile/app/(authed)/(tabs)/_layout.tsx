@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { OracleEntry } from '@/components/OracleEntry'
 import { AmbientBackground } from '@/components/design-system/AmbientBackground'
+import { NavIcon } from '@/components/design-system/NavIcon'
 import { color, font } from '@/components/design-system/tokens'
 import {
   CircleTabIcon,
@@ -32,13 +33,19 @@ import {
 //   5. No icons at all (tabBarIcon: () => null on every tab) — diverges
 //      from the doc's own Instagram research (§0.1) naming icon+label as
 //      the stable, familiar 5-tab shape.
+//
+// Warm/cool amendment, Phase 0 (2026-07-25): recolored from amber to
+// starlight/violet — this chrome is temperature-neutral connective
+// tissue shared by warm and cool screens alike, so it can carry neither
+// accent (see WARM_COOL_AMENDMENT.md's R4 re-amendment). Active state is
+// now a small violet dot (NavIcon) beneath the glyph, not a tint color.
 function TabLabel({ label, focused }: { label: string; focused: boolean }) {
   return (
     <Text
       style={{
         fontFamily: font.bodyMedium,
         fontSize: 10.5,
-        color: focused ? color.amber : color.faint,
+        color: focused ? color.starlight : color.faint,
       }}
     >
       {label}
@@ -59,7 +66,8 @@ export default function TabsLayout() {
           sceneStyle: { backgroundColor: 'transparent' },
           tabBarStyle: {
             position: 'absolute',
-            borderTopWidth: 0,
+            borderTopWidth: 1,
+            borderTopColor: color.violetBorder,
             backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(8,6,15,0.92)',
             height: 56 + insets.bottom,
             paddingTop: 8,
@@ -76,7 +84,7 @@ export default function TabsLayout() {
                   />
                 )
               : undefined,
-          tabBarActiveTintColor: color.amber,
+          tabBarActiveTintColor: color.starlight,
           tabBarInactiveTintColor: color.faint,
         }}
       >
@@ -84,7 +92,11 @@ export default function TabsLayout() {
           name="index"
           options={{
             title: 'Днес',
-            tabBarIcon: ({ color: c }) => <SunTabIcon color={c} />,
+            tabBarIcon: ({ color: c, focused }) => (
+              <NavIcon focused={focused}>
+                <SunTabIcon color={c} />
+              </NavIcon>
+            ),
             tabBarLabel: ({ focused }) => <TabLabel label="Днес" focused={focused} />,
           }}
         />
@@ -92,7 +104,11 @@ export default function TabsLayout() {
           name="chart"
           options={{
             title: 'Карта',
-            tabBarIcon: ({ color: c }) => <WheelTabIcon color={c} />,
+            tabBarIcon: ({ color: c, focused }) => (
+              <NavIcon focused={focused}>
+                <WheelTabIcon color={c} />
+              </NavIcon>
+            ),
             tabBarLabel: ({ focused }) => <TabLabel label="Карта" focused={focused} />,
           }}
         />
@@ -100,7 +116,11 @@ export default function TabsLayout() {
           name="circle"
           options={{
             title: 'Кръг',
-            tabBarIcon: ({ color: c }) => <CircleTabIcon color={c} />,
+            tabBarIcon: ({ color: c, focused }) => (
+              <NavIcon focused={focused}>
+                <CircleTabIcon color={c} />
+              </NavIcon>
+            ),
             tabBarLabel: ({ focused }) => <TabLabel label="Кръг" focused={focused} />,
           }}
         />
@@ -108,7 +128,11 @@ export default function TabsLayout() {
           name="rhythm"
           options={{
             title: 'Ритъм',
-            tabBarIcon: ({ color: c }) => <PulseTabIcon color={c} />,
+            tabBarIcon: ({ color: c, focused }) => (
+              <NavIcon focused={focused}>
+                <PulseTabIcon color={c} />
+              </NavIcon>
+            ),
             tabBarLabel: ({ focused }) => <TabLabel label="Ритъм" focused={focused} />,
           }}
         />
@@ -116,7 +140,11 @@ export default function TabsLayout() {
           name="you"
           options={{
             title: 'Ти',
-            tabBarIcon: ({ color: c }) => <PersonTabIcon color={c} />,
+            tabBarIcon: ({ color: c, focused }) => (
+              <NavIcon focused={focused}>
+                <PersonTabIcon color={c} />
+              </NavIcon>
+            ),
             tabBarLabel: ({ focused }) => <TabLabel label="Ти" focused={focused} />,
           }}
         />

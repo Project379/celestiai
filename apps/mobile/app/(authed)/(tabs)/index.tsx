@@ -13,6 +13,7 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 
 import { MoonGlyph } from '@/components/dashboard/MoonGlyph'
 import { CtaPanel } from '@/components/design-system/CtaPanel'
+import { LeadLine } from '@/components/design-system/LeadLine'
 import { NavRow } from '@/components/design-system/NavRow'
 import { ScreenShell } from '@/components/design-system/ScreenShell'
 import { color, font, pressFeedback, rhythm, type } from '@/components/design-system/tokens'
@@ -113,7 +114,7 @@ export default function DnesScreen() {
   )
 
   return (
-    <ScreenShell>
+    <ScreenShell temperature="warm">
       <Text style={{ ...type.caption, color: color.faint }}>{todayFormatted}</Text>
       {/* Rebalanced from a one-off 15px override (read as a caption) to
           the existing `sub` tier — no new type-scale tier added (R2).
@@ -268,20 +269,48 @@ function beatStyle(index: number, last: number): { fontFamily: string; marginTop
 // полумесец. Време за почивка…") — which the hero above already shows,
 // so that first sentence is dropped here to avoid showing the same
 // phase name twice on one screen (caught in advisor review).
+// Phase 0 foundation — this fallback path (real horoscope content still
+// uses HoroscopeBody/ReadingFrame below, untouched; retrofitting its
+// sentinel-anchored beats onto LeadLine is separate, larger work, not
+// done here) demonstrates the shared LeadLine primitive: the bronze spine
+// is bounded to everything but the payoff, which renders entirely outside
+// it — the Днес spine/text overlap bug (BUILD_VERIFICATION_GUARDS.md
+// guard 1) is structurally impossible here, not just visually avoided.
 function ReadingParagraphs({ text }: { text: string }) {
   const sentences = useMemo(() => {
     const all = text.split(/(?<=[.!?])\s+/).filter(Boolean)
     return all.length > 1 ? all.slice(1) : all
   }, [text])
   const last = lastIndex(sentences)
+
+  // Single-sentence reading: no second beat to lead into, so the spine
+  // would be decoration, not structure — same "skip both treatments"
+  // rule the original ReadingFrame version followed.
+  if (last === 0) {
+    return (
+      <ReadingFrame>
+        <Text style={{ ...type.body, color: '#dde3ee' }}>{sentences[0]}</Text>
+      </ReadingFrame>
+    )
+  }
+
+  const led = sentences.slice(0, last)
+  const payoffText = sentences[last]
+
   return (
-    <ReadingFrame>
-      {sentences.map((s, i) => (
+    <LeadLine
+      payoff={
+        <Text style={{ ...type.body, fontFamily: font.bodyMedium, color: color.starlight }}>
+          {payoffText}
+        </Text>
+      }
+    >
+      {led.map((s, i) => (
         <Text key={i} style={{ ...type.body, ...beatStyle(i, last), color: '#dde3ee' }}>
           {s}
         </Text>
       ))}
-    </ReadingFrame>
+    </LeadLine>
   )
 }
 
