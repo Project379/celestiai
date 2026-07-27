@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-04-26T13:53:14.276Z",
-  "baseUrl": "http://localhost:3000",
+  "timestamp": "2026-04-27T18:27:10.029Z",
+  "baseUrl": "http://localhost:3344",
   "clerkUserId": "user_3CbyCbEF4mvNgdKfSXyMlstgxix",
   "pass": 101,
   "fail": 0,
@@ -193,7 +193,7 @@
     {
       "name": "POST /api/birth-data → 201 + chart row",
       "status": "pass",
-      "detail": "status=201 id=9cadcede-1523-4d34-8bf5-8cb76999fef1"
+      "detail": "status=201 id=3b9390aa-d3a6-419f-bb6d-e50ab0e3b006"
     },
     {
       "name": "POST /api/birth-data (bad input) → 400 + details{}",
@@ -203,10 +203,10 @@
     {
       "name": "GET /api/birth-data → 200 + array containing chartId",
       "status": "pass",
-      "detail": "status=200 len=1"
+      "detail": "status=200 len=2"
     },
     {
-      "name": "GET /api/birth-data/9cadcede-1523-4d34-8bf5-8cb76999fef1 → 200",
+      "name": "GET /api/birth-data/3b9390aa-d3a6-419f-bb6d-e50ab0e3b006 → 200",
       "status": "pass",
       "detail": "status=200"
     },
@@ -298,12 +298,12 @@
     {
       "name": "daily collect picks match crystal id across two calls",
       "status": "pass",
-      "detail": "1st=81fcf9ba-bbcb-47fe-9a3a-6b2f502e9429 2nd=81fcf9ba-bbcb-47fe-9a3a-6b2f502e9429"
+      "detail": "1st=e41cc256-314b-4ff9-b9c6-74b6c48a4c48 2nd=e41cc256-314b-4ff9-b9c6-74b6c48a4c48"
     },
     {
       "name": "crystals/today and daily/collect pick same stone (picker unification)",
       "status": "pass",
-      "detail": "today=81fcf9ba-bbcb-47fe-9a3a-6b2f502e9429 collect=81fcf9ba-bbcb-47fe-9a3a-6b2f502e9429"
+      "detail": "today=e41cc256-314b-4ff9-b9c6-74b6c48a4c48 collect=e41cc256-314b-4ff9-b9c6-74b6c48a4c48"
     },
     {
       "name": "GET /api/crystals/daily-streak (premium) → 200 + streak + days[]",
@@ -353,7 +353,7 @@
     {
       "name": "POST /api/diary/entries → 200 + {created:true} + user_id matches clerkId",
       "status": "pass",
-      "detail": "status=200 id=06348669-6f28-4918-a7c3-3979474df508 user_id=user_3CbyCbEF4mvNgdKfSXyMlstgxix created=true"
+      "detail": "status=200 id=5b7a7cee-6d44-48d2-8642-5a711a0b127a user_id=user_3CbyCbEF4mvNgdKfSXyMlstgxix created=true"
     },
     {
       "name": "POST /api/diary/entries (bad input) → 400 + details{}",
@@ -366,7 +366,7 @@
       "detail": "status=200 len=1"
     },
     {
-      "name": "GET /api/diary/entries/06348669-6f28-4918-a7c3-3979474df508 → 200 + row",
+      "name": "GET /api/diary/entries/5b7a7cee-6d44-48d2-8642-5a711a0b127a → 200 + row",
       "status": "pass",
       "detail": "status=200"
     },
@@ -378,12 +378,12 @@
     {
       "name": "POST /api/diary/entries (same day) → 200 + {created:false} + same id",
       "status": "pass",
-      "detail": "status=200 id=06348669-6f28-4918-a7c3-3979474df508 created=false"
+      "detail": "status=200 id=5b7a7cee-6d44-48d2-8642-5a711a0b127a created=false"
     },
     {
       "name": "diary_entries UNIQUE(user_id, entry_date) holds — single row for (user, today)",
       "status": "pass",
-      "detail": "rows=1 ids=[06348669-6f28-4918-a7c3-3979474df508]"
+      "detail": "rows=1 ids=[5b7a7cee-6d44-48d2-8642-5a711a0b127a]"
     },
     {
       "name": "PATCH /api/diary/entries/<id> → 200 + intentions updated",
@@ -478,7 +478,7 @@
     {
       "name": "GDPR export.diaryEntries contains the just-created entry id",
       "status": "pass",
-      "detail": "entries=1 probe_id=925e19e7-67da-485b-b423-69a6c9eed3f6"
+      "detail": "entries=1 probe_id=c9411adf-3758-4352-a094-1e10826bc51a"
     },
     {
       "name": "GDPR export shape — exportedAt + user + charts + aiReadings + dailyHoroscopes + diaryEntries",
@@ -513,7 +513,7 @@
     {
       "name": "cascade verified: Clerk user deleted by cron",
       "status": "pass",
-      "detail": "clerk_user_user_3Ctj7WRyBvmCe42CVRcswhqKl8h_still_exists=false"
+      "detail": "clerk_user_user_3Cx5YUyTcP0JzSpAfHdg4GsPxYv_still_exists=false"
     }
   ],
   "multiMatch": [
@@ -521,65 +521,65 @@
       "phase": "new",
       "matches": 6,
       "preM3_pick_today": "aquamarine",
-      "postM3_pick_today": "clear-quartz",
+      "postM3_pick_today": "green-aventurine",
       "diverges_today": true,
-      "postM3_idx_today": 1
+      "postM3_idx_today": 2
     },
     {
       "phase": "waxing_crescent",
       "matches": 7,
       "preM3_pick_today": "aquamarine",
-      "postM3_pick_today": "peridot",
+      "postM3_pick_today": "tanzanite",
       "diverges_today": true,
-      "postM3_idx_today": 3
+      "postM3_idx_today": 4
     },
     {
       "phase": "first_quarter",
       "matches": 7,
       "preM3_pick_today": "carnelian",
-      "postM3_pick_today": "fluorite",
+      "postM3_pick_today": "peridot",
       "diverges_today": true,
-      "postM3_idx_today": 3
+      "postM3_idx_today": 4
     },
     {
       "phase": "waxing_gibbous",
       "matches": 7,
       "preM3_pick_today": "citrine",
-      "postM3_pick_today": "lapis-lazuli",
+      "postM3_pick_today": "malachite",
       "diverges_today": true,
-      "postM3_idx_today": 3
+      "postM3_idx_today": 4
     },
     {
       "phase": "full",
       "matches": 7,
       "preM3_pick_today": "amethyst",
-      "postM3_pick_today": "opal",
+      "postM3_pick_today": "pearl",
       "diverges_today": true,
-      "postM3_idx_today": 3
+      "postM3_idx_today": 4
     },
     {
       "phase": "waning_gibbous",
       "matches": 7,
       "preM3_pick_today": "amethyst",
-      "postM3_pick_today": "opal",
+      "postM3_pick_today": "pearl",
       "diverges_today": true,
-      "postM3_idx_today": 3
+      "postM3_idx_today": 4
     },
     {
       "phase": "last_quarter",
       "matches": 6,
       "preM3_pick_today": "black-tourmaline",
-      "postM3_pick_today": "clear-quartz",
+      "postM3_pick_today": "garnet",
       "diverges_today": true,
-      "postM3_idx_today": 1
+      "postM3_idx_today": 2
     },
     {
       "phase": "waning_crescent",
       "matches": 4,
       "preM3_pick_today": "black-tourmaline",
-      "postM3_pick_today": "hematite",
+      "postM3_pick_today": "labradorite",
       "diverges_today": true,
-      "postM3_idx_today": 1
+      "postM3_idx_today": 2
     }
   ]
 }

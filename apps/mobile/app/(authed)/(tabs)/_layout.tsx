@@ -1,9 +1,10 @@
 import { Tabs } from 'expo-router'
-import { Platform, Text, View } from 'react-native'
-import { BlurView } from 'expo-blur'
+import { Text, View } from 'react-native'
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { OracleEntry } from '@/components/OracleEntry'
+import { PERF_DEBUG } from '@/lib/perfDebug'
 import { AmbientBackground } from '@/components/design-system/AmbientBackground'
 import { NavIcon } from '@/components/design-system/NavIcon'
 import { color, font } from '@/components/design-system/tokens'
@@ -39,6 +40,43 @@ import {
 // tissue shared by warm and cool screens alike, so it can carry neither
 // accent (see WARM_COOL_AMENDMENT.md's R4 re-amendment). Active state is
 // now a small violet dot (NavIcon) beneath the glyph, not a tint color.
+//
+// Founder correction (2026-07-27, device pass): the tab bar carried a
+// real fill/panel on both platforms — `BlurView` + `rgba(8,6,15,.72)` on
+// iOS, a flat `rgba(8,6,15,.92)` on Android — directly contradicting the
+// ratified spec ("no fill, no panel") independent of the perf question.
+// BlurView was also the single most expensive thing in the perf
+// bisection's suspect list. Both removed; replaced with the mockup's
+// actual `.nav-fade` — a soft upward gradient fade, sheer, no solid
+// backdrop anywhere — via `NavFade` below.
+//
+// Founder correction (2026-07-27, second pass — systemic rule): the
+// mockup's own ceiling (rgba(8,6,15,.6)) never lets scrolled content
+// fully dissolve — up to 40% of the underlying color always shows
+// through, so text stayed legible under the bar instead of reading as
+// "revealed," not "clipped." A static mockup screenshot never exercised
+// this against live scrolled text, so its own value was never tested
+// against the case it exists to solve. Raised to .92 (near-opaque, still
+// a gradient, not a flat panel — the "no fill" spec survives) ramping to
+// transparent over 85% of the band. Deliberate departure, logged in
+// MOBILE_ALPHA_REDESIGN.md same as the other departures today. Same
+// numbers reused for ScreenShell's pinned-block fade (design-system/
+// ScreenShell.tsx) — one systemic rule, one recipe, everywhere content
+// scrolls toward persistent chrome.
+function NavFade() {
+  return (
+    <Svg width="100%" height="100%" style={{ position: 'absolute' }} pointerEvents="none">
+      <Defs>
+        <LinearGradient id="nav-fade" x1="0%" y1="100%" x2="0%" y2="0%">
+          <Stop offset="0%" stopColor="#08060f" stopOpacity={0.92} />
+          <Stop offset="85%" stopColor="#08060f" stopOpacity={0} />
+        </LinearGradient>
+      </Defs>
+      <Rect width="100%" height="100%" fill="url(#nav-fade)" />
+    </Svg>
+  )
+}
+
 function TabLabel({ label, focused }: { label: string; focused: boolean }) {
   return (
     <Text
@@ -58,7 +96,7 @@ export default function TabsLayout() {
 
   return (
     <View className="flex-1 bg-bg">
-      <AmbientBackground />
+      {PERF_DEBUG.ambientStarfield && <AmbientBackground />}
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -68,22 +106,13 @@ export default function TabsLayout() {
             position: 'absolute',
             borderTopWidth: 1,
             borderTopColor: color.violetBorder,
-            backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(8,6,15,0.92)',
+            backgroundColor: 'transparent',
             height: 56 + insets.bottom,
             paddingTop: 8,
             paddingBottom: insets.bottom || 8,
             elevation: 0,
           },
-          tabBarBackground:
-            Platform.OS === 'ios'
-              ? () => (
-                  <BlurView
-                    intensity={40}
-                    tint="dark"
-                    style={{ flex: 1, backgroundColor: 'rgba(8,6,15,0.72)' }}
-                  />
-                )
-              : undefined,
+          tabBarBackground: () => <NavFade />,
           tabBarActiveTintColor: color.starlight,
           tabBarInactiveTintColor: color.faint,
         }}

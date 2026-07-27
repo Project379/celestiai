@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import Animated, {
   Easing,
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -15,6 +16,20 @@ interface WheelArrivalContainerProps {
   /** Re-fire the arrival on a new key (e.g. chart.id change). */
   triggerKey: string | number
   children: React.ReactNode
+  /**
+   * Fires once the LAST of the three animated layers (halo, at 1600ms
+   * total: 800ms delay + 800ms fade) has settled — not a fixed timeout,
+   * so it can't drift out of sync with the actual sequence. Scroll-perf
+   * fix (2026-07-27): the caller uses this to defer rasterizing the wheel
+   * (shouldRasterizeIOS/renderToHardwareTextureAndroid) until AFTER
+   * arrival completes. Rasterizing while the wrapping scale transform is
+   * still animating caches the layer's bitmap at whatever (possibly tiny)
+   * intermediate scale it happened to be at, then stretches that
+   * low-resolution cache for the rest of the animation and beyond —
+   * visible as a soft/blurry wheel. Caching only the settled, full-scale
+   * result avoids that entirely.
+   */
+  onSettled?: () => void
 }
 
 /**
@@ -44,6 +59,7 @@ export function WheelArrivalContainer({
   wheelSize,
   triggerKey,
   children,
+  onSettled,
 }: WheelArrivalContainerProps) {
   const wheelScale = useSharedValue(0.08)
   const wheelOpacity = useSharedValue(0)
@@ -84,9 +100,13 @@ export function WheelArrivalContainer({
     )
 
     // Halo: opacity stays at 0 for first half then fades to 0.4 over remaining 800ms
+    // — the last of the three layers to settle, so its completion is the
+    // signal onSettled fires on.
     haloOpacity.value = withDelay(
       800,
-      withTiming(0.4, { duration: 800, easing: Easing.out(Easing.ease) }),
+      withTiming(0.4, { duration: 800, easing: Easing.out(Easing.ease) }, (finished) => {
+        if (finished && onSettled) runOnJS(onSettled)()
+      }),
     )
     // triggerKey intentionally listed to re-run the sequence when chart changes
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import Animated, {
   cancelAnimation,
   Easing,
-  useAnimatedProps,
+  useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withSequence,
@@ -11,8 +11,9 @@ import Animated, {
 } from 'react-native-reanimated'
 import Svg, { Circle, ClipPath, Defs, G, RadialGradient, Stop } from 'react-native-svg'
 
+import { PERF_DEBUG } from '@/lib/perfDebug'
+
 const PULSE_MS = 2400
-const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 // Bloom halo is 150px around a 92px disk at hero scale — preserved as a
 // ratio so smaller instances (e.g. Ритъм's card usage) keep the same
 // proportional glow instead of drifting per call site.
@@ -78,6 +79,24 @@ export function MoonGlyph({
   size = 92,
   animated = true,
   outlineColor = 'rgba(251,191,36,0.4)',
+  // Stage 2 (2026-07-27) — Днес's hero passes 1.83 (mockup `.moon-halo`
+  // inset -70px around the 202px depth-circle = 370/202 = 1.831×) and
+  // 'bronzeViolet' explicitly. Defaults preserve Ритъм's LunarPhaseCard
+  // call site unchanged — that screen isn't in Stage 2's scope.
+  haloRatio = BLOOM_RATIO,
+  haloGradient = 'neutral',
+  // mockup `.moon-dark{opacity:.88}` — Днес's hero passes 0.88 explicitly.
+  // Defaults to 1 (today's fully-opaque dark side) so Ритъм is unchanged.
+  darkOpacity = 1,
+  outlineWidth = 1,
+  // mockup `.moon-depth`: a blurred, scaled (1.12x), low-opacity (.55)
+  // depth-double behind the disk. PLATFORM APPROXIMATION: RN has no
+  // filter:blur() equivalent for an arbitrary SVG shape, so this is a
+  // second unblurred gradient circle at the same scale/opacity rather
+  // than a blurred copy — the platform note's explicit instruction, not
+  // a silent skip. Off by default (Ритъм unaffected); Днес's hero passes
+  // true.
+  depthDouble = false,
 }: {
   illumination: number
   isWaxing: boolean
@@ -88,12 +107,17 @@ export function MoonGlyph({
   // Днес's hero passes the bronze equivalent explicitly — this keeps the
   // bronze migration scoped to Днес only, not both call sites at once.
   outlineColor?: string
+  outlineWidth?: number
+  haloRatio?: number
+  haloGradient?: 'neutral' | 'bronzeViolet'
+  darkOpacity?: number
+  depthDouble?: boolean
 }) {
-  const bloomSize = Math.round(size * BLOOM_RATIO)
+  const bloomSize = Math.round(size * haloRatio)
   const glow = useSharedValue(0.5)
 
   useEffect(() => {
-    if (!animated) return
+    if (!animated || PERF_DEBUG.freezeMoonGlowPulse) return // frozen: stay at 0.5 (rest), skip withRepeat entirely
     glow.value = withRepeat(
       withSequence(
         withTiming(0.85, { duration: PULSE_MS, easing: Easing.inOut(Easing.ease) }),
@@ -105,7 +129,12 @@ export function MoonGlyph({
     return () => cancelAnimation(glow)
   }, [glow, animated])
 
-  const glowProps = useAnimatedProps(() => ({ opacity: animated ? glow.value : 0.5 }))
+  // PERF (2026-07-27): was an AnimatedCircle with animatedProps opacity —
+  // an SVG-prop change inside the halo Svg, forcing that Svg's canvas to
+  // re-rasterize every frame even though it's already small/isolated. Now
+  // opacity lives on the wrapping Animated.View (composited, free) and the
+  // Circle below is a static full-opacity fill.
+  const glowStyle = useAnimatedStyle(() => ({ opacity: animated ? glow.value : 0.5 }))
   const fraction = Math.max(0.03, Math.min(0.97, illumination / 100))
   const cx = size / 2
   const cy = size / 2
@@ -124,21 +153,30 @@ export function MoonGlyph({
 
   return (
     <View style={{ width: bloomSize, height: bloomSize, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={bloomSize} height={bloomSize} style={{ position: 'absolute' }}>
-        <Defs>
-          <RadialGradient id="moon-glow" cx="50%" cy="50%" rx="50%" ry="50%">
-            <Stop offset="0%" stopColor="rgb(226,232,240)" stopOpacity="0.22" />
-            <Stop offset="100%" stopColor="rgb(226,232,240)" stopOpacity="0" />
-          </RadialGradient>
-        </Defs>
-        <AnimatedCircle
-          cx={bloomSize / 2}
-          cy={bloomSize / 2}
-          r={bloomSize / 2}
-          fill="url(#moon-glow)"
-          animatedProps={glowProps}
-        />
-      </Svg>
+      {PERF_DEBUG.moonHalo && (
+      <Animated.View style={[{ position: 'absolute' }, glowStyle]}>
+        <Svg width={bloomSize} height={bloomSize}>
+          <Defs>
+            {haloGradient === 'bronzeViolet' ? (
+              // mockup `.moon-halo`: radial-gradient(circle, bronze .16,
+              // violet .05 at 55%, transparent 72%) — a two-hue halo, not
+              // the neutral glow used elsewhere.
+              <RadialGradient id="moon-glow" cx="50%" cy="50%" rx="50%" ry="50%">
+                <Stop offset="0%" stopColor="#b8763e" stopOpacity="0.16" />
+                <Stop offset="55%" stopColor="#8b5cf6" stopOpacity="0.05" />
+                <Stop offset="72%" stopColor="#8b5cf6" stopOpacity="0" />
+              </RadialGradient>
+            ) : (
+              <RadialGradient id="moon-glow" cx="50%" cy="50%" rx="50%" ry="50%">
+                <Stop offset="0%" stopColor="rgb(226,232,240)" stopOpacity="0.22" />
+                <Stop offset="100%" stopColor="rgb(226,232,240)" stopOpacity="0" />
+              </RadialGradient>
+            )}
+          </Defs>
+          <Circle cx={bloomSize / 2} cy={bloomSize / 2} r={bloomSize / 2} fill="url(#moon-glow)" />
+        </Svg>
+      </Animated.View>
+      )}
       <Svg width={size} height={size}>
         <Defs>
           <ClipPath id="moon-disk-clip">
@@ -159,16 +197,61 @@ export function MoonGlyph({
             <Stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
             <Stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
           </RadialGradient>
+          {depthDouble && (
+            <RadialGradient id="moon-depth" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor="#08060f" stopOpacity={0} />
+              <Stop offset="85%" stopColor="#08060f" stopOpacity={0} />
+              <Stop offset="100%" stopColor="#14101e" stopOpacity={0.85} />
+            </RadialGradient>
+          )}
         </Defs>
+        {/* BUG FIX (founder device-pass, 2026-07-27): this circle is
+            unclipped and its radius (1.12r) exceeds the visible disk (r),
+            so it's only ever visible in the thin exposed ring between the
+            two — everywhere else it's fully hidden behind the opaque disk
+            drawn on top. The original gradient was off-center (cx:32%,
+            cy:30%, mirroring the mockup's own off-center blur circle),
+            which put its BRIGHT stop inside that thin exposed ring on one
+            side only — an uneven, hard-edged bright patch (screenshot-
+            confirmed, upper-left), not the soft ambient depth cue
+            intended. Made concentric and transparent-to-dark only (no
+            bright stop can ever reach the exposed ring now), so the
+            visible sliver is a uniform, soft dark edge from every angle —
+            still an approximation (see the platform note below), but one
+            that can't produce a directional artifact by construction. */}
+        {PERF_DEBUG.moonDepthTwin && depthDouble && <Circle cx={cx} cy={cy} r={r * 1.12} fill="url(#moon-depth)" opacity={0.55} />}
+        {/* PLATFORM APPROXIMATION — mockup `.moon-object` composites its
+            bronze/violet tint layers with `background-blend-mode:screen`
+            (lightens rather than covers). react-native-svg has no blend-mode
+            support, so these are plain alpha-composited circles instead —
+            additive light stops, not a `feBlend` port. Accepted per the
+            platform note: a dull flat wash would read worse than this. */}
         <G clipPath="url(#moon-disk-clip)">
           <Circle cx={cx} cy={cy} r={r} fill="rgba(139,92,246,0.06)" />
           <Circle cx={cx} cy={cy} r={r} fill="rgba(226,232,240,0.92)" />
-          <Circle cx={cx + dx} cy={cy} r={r} fill="#08060f" />
-          <Circle cx={cx - dx * 0.5} cy={cy - r * 0.15} r={r * 0.85} fill="url(#moon-warm-tint)" />
-          <Circle cx={cx + dx * 0.5} cy={cy + r * 0.2} r={r * 0.7} fill="url(#moon-cool-tint)" />
+          <Circle cx={cx + dx} cy={cy} r={r} fill="#08060f" opacity={darkOpacity} />
+          {PERF_DEBUG.moonTintCircles && (
+            <>
+              <Circle cx={cx - dx * 0.5} cy={cy - r * 0.15} r={r * 0.85} fill="url(#moon-warm-tint)" />
+              <Circle cx={cx + dx * 0.5} cy={cy + r * 0.2} r={r * 0.7} fill="url(#moon-cool-tint)" />
+            </>
+          )}
         </G>
-        {/* Hairline outline — thin stroke, not a heavy ring */}
-        <Circle cx={cx} cy={cy} r={r} fill="none" stroke={outlineColor} strokeWidth={1} />
+        {/* Hairline outline — thin stroke, not a heavy ring. FOUNDER
+            DEVICE-PASS FIX (2026-07-27): mockup `.moon-object` has NO
+            border/stroke at all — the disc's edge softness comes entirely
+            from the halo + depth-double behind it, not a drawn line. A
+            full-circle stroke (including across the DARK hemisphere,
+            where nothing else is happening) read as a hard, slightly
+            "glitchy" edge against a starfield background — visible on an
+            actual screenshot, not caught from source. Zero-width by
+            default now; Днес's hero (MoonHero.tsx) doesn't pass
+            outlineWidth. Ритъм's smaller LunarPhaseCard glyph keeps its
+            hairline (outlineWidth defaults... see prop below) since that
+            usage is out of Stage 2's scope and unverified either way. */}
+        {outlineWidth > 0 && (
+          <Circle cx={cx} cy={cy} r={r} fill="none" stroke={outlineColor} strokeWidth={outlineWidth} />
+        )}
       </Svg>
       {/* NOT PORTED — flagged, not silently dropped: the mockup's
           feTurbulence grain has no equivalent here. react-native-svg

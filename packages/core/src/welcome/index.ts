@@ -1,4 +1,4 @@
-export { composeWelcome } from './compose'
+export { composeWelcome, meteorNote } from './compose'
 export type { WelcomeContext, WelcomeLines } from './compose'
 
 export {
@@ -10,3 +10,5 @@ export {
 export type { MeteorShower } from './meteor-showers'
 
 export { getSunSign } from './sun-sign'
+
+export { SIGN_QUIPS } from './sign-quips'

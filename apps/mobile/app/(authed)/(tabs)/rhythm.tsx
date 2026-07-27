@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
@@ -7,6 +7,16 @@ import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { useTransitOverview } from '@/hooks/useTransitOverview'
+
+// Systemic navbar-clearance rule (2026-07-27, audit): this screen doesn't
+// use ScreenShell (its own SafeAreaView+ScrollView instead), so it never
+// got that component's tab-bar-clearance fix — flat `paddingBottom: 120`
+// gave only ~30px real clearance above the tab bar (120 - (56+~34
+// inset)), short of the ~52px target Днес/Карта now use. Same formula
+// applied here: keep in sync with (tabs)/_layout.tsx's tab-bar-height
+// calculation and ScreenShell.tsx's TAB_BAR_CLEARANCE if either changes.
+const TAB_BAR_BASE_HEIGHT = 56
+const TAB_BAR_CLEARANCE = 52
 
 /**
  * Ритъм tab — current-sky reading. Mobile port of
@@ -58,12 +68,17 @@ export default function RhythmScreen() {
   const { push } = useGuardedNavigation()
   const firstChart = useFirstChart()
   const overview = useTransitOverview(firstChart.data?.id)
+  const insets = useSafeAreaInsets()
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-bg">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 120 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: TAB_BAR_BASE_HEIGHT + insets.bottom + TAB_BAR_CLEARANCE,
+        }}
       >
         {/* Hero — active-transit count, or «Тих ден» on a quiet day */}
         <View className="mb-10">

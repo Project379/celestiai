@@ -1,6 +1,11 @@
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { pressFeedback } from '@/components/design-system/tokens'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { font, pressFeedback } from '@/components/design-system/tokens'
+
+// Systemic navbar-clearance rule (2026-07-27, audit) — see rhythm.tsx's
+// matching comment; same flat-120 gap found and fixed here.
+const TAB_BAR_BASE_HEIGHT = 56
+const TAB_BAR_CLEARANCE = 52
 
 /**
  * Кръг empty state (MOBILE_UX_RESEARCH §12.2 — highest-leverage screen).
@@ -17,13 +22,22 @@ const KINDS: RelationKind[] = [
 ]
 
 export default function CircleScreen() {
+  const insets = useSafeAreaInsets()
+
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-bg">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 120 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: TAB_BAR_BASE_HEIGHT + insets.bottom + TAB_BAR_CLEARANCE,
+        }}
       >
-        <Text className="mb-6 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
+        {/* REVISIT-42 fix (2026-07-27): font-cinzel on Cyrillic text —
+            Cinzel has zero Cyrillic glyphs. Swapped to font.bodyMedium,
+            same fix already applied to rhythm.tsx's matching eyebrow. */}
+        <Text style={{ fontFamily: font.bodyMedium }} className="mb-6 text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
           Твоят кръг
         </Text>
 
@@ -40,7 +54,7 @@ export default function CircleScreen() {
               className={`rounded-2xl border ${kind.border} ${kind.tint} px-5 py-6`}
               style={({ pressed }) => pressFeedback(pressed)}
             >
-              <Text className="font-cinzel text-[12px] font-semibold uppercase tracking-[0.3em] text-slate-100">
+              <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-semibold uppercase tracking-[0.3em] text-slate-100">
                 {kind.label}
               </Text>
             </Pressable>

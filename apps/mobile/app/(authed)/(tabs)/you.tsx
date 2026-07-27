@@ -1,14 +1,19 @@
 import { useUser } from '@clerk/expo'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ZODIAC_SIGNS_BG } from '@stellaeum/astrology/client'
 
-import { pressFeedback } from '@/components/design-system/tokens'
+import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useChart } from '@/hooks/useChart'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { getDisplayName } from '@/lib/clerk/displayName'
+
+// Systemic navbar-clearance rule (2026-07-27, audit) — see rhythm.tsx's
+// matching comment; same flat-120 gap found and fixed here.
+const TAB_BAR_BASE_HEIGHT = 56
+const TAB_BAR_CLEARANCE = 52
 
 // First four hints mirror apps/web/components/you/YouHub.tsx verbatim.
 // Premium and Settings are mobile-only entries (web hosts them in the
@@ -55,6 +60,7 @@ export default function YouScreen() {
   const { user } = useUser()
   const firstChart = useFirstChart()
   const chart = useChart(firstChart.data?.id)
+  const insets = useSafeAreaInsets()
 
   const displayName = getDisplayName(user)
   const bigThree = getBigThreeLabel(firstChart.data, chart.data)
@@ -63,9 +69,15 @@ export default function YouScreen() {
     <SafeAreaView edges={['top']} className="flex-1 bg-bg">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 120 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: TAB_BAR_BASE_HEIGHT + insets.bottom + TAB_BAR_CLEARANCE,
+        }}
       >
-        <Text className="mb-10 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
+        {/* REVISIT-42 fix (2026-07-27): font-cinzel on Cyrillic text —
+            same fix as rhythm.tsx/circle.tsx. */}
+        <Text style={{ fontFamily: font.bodyMedium }} className="mb-10 text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
           Ти
         </Text>
 
@@ -85,7 +97,7 @@ export default function YouScreen() {
               }`}
               style={({ pressed }) => pressFeedback(pressed)}
             >
-              <Text className="font-cinzel text-[11px] uppercase tracking-[0.32em] text-slate-200">
+              <Text style={{ fontFamily: font.bodyMedium }} className="text-[11px] uppercase tracking-[0.32em] text-slate-200">
                 {section.label}
               </Text>
               <Text className="text-[12px] text-slate-500">{section.hint}</Text>

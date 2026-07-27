@@ -13,6 +13,7 @@ import {
 import { MoonGlyph } from './MoonGlyph'
 import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
+import { formatDaysHours } from '@/lib/formatDaysHours'
 
 const BG_MONTHS = [
   'януари', 'февруари', 'март', 'април', 'май', 'юни',
@@ -21,18 +22,6 @@ const BG_MONTHS = [
 
 function formatMonthDay(month: number, day: number): string {
   return `${day} ${BG_MONTHS[month - 1]}`
-}
-
-function formatDaysHours(daysFrac: number): string {
-  const totalHours = Math.max(0, Math.round(daysFrac * 24))
-  const days = Math.floor(totalHours / 24)
-  const hours = totalHours % 24
-  const dayStr = days === 0 ? '' : days === 1 ? '1 ден' : `${days} дни`
-  const hourStr = hours === 0 ? '' : hours === 1 ? '1 час' : `${hours} часа`
-  if (dayStr && hourStr) return `${dayStr} и ${hourStr}`
-  if (dayStr) return dayStr
-  if (hourStr) return hourStr
-  return 'по-малко от час'
 }
 
 /**

@@ -1,13 +1,18 @@
 import { useEffect } from 'react'
 import { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated'
 
+import { PERF_DEBUG } from '@/lib/perfDebug'
+
 // Phase 0 foundation — generalizes the one-shot "resolve into focus" motion
 // already proven on NatalWheel's graticule, so new heroes (Guide's tablet,
 // the wizard's star) don't each hand-roll a useSharedValue/withTiming pair.
 export function useResolveIn(durationMs = 500) {
-  const progress = useSharedValue(0)
+  // Starts already-resolved (1, not 0) when frozen — the frozen state should
+  // look like "finished," not "stuck invisible."
+  const progress = useSharedValue(PERF_DEBUG.freezeResolveIn ? 1 : 0)
 
   useEffect(() => {
+    if (PERF_DEBUG.freezeResolveIn) return // frozen: stay at rest value, skip the animation entirely
     progress.value = withTiming(1, { duration: durationMs })
   }, [progress, durationMs])
 
@@ -26,6 +31,7 @@ export function useBreathe(durationMs = 2600, range: [number, number] = [0.5, 1]
   const phase = useSharedValue(range[1])
 
   useEffect(() => {
+    if (PERF_DEBUG.freezeBreathe) return // frozen: stay at range[1] (rest), skip withRepeat entirely
     phase.value = withRepeat(
       withSequence(
         withTiming(range[0], { duration: durationMs }),

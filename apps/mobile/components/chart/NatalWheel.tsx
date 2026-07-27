@@ -1,23 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import * as Haptics from 'expo-haptics'
-import Animated, { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated'
-import Svg, {
-  Circle,
-  Defs,
-  G,
-  Line,
-  LinearGradient,
-  Path,
-  Stop,
-  Text as SvgText,
-} from 'react-native-svg'
+import { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated'
+import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg'
 
-import {
-  PLANET_GLYPHS,
-  PLANETS_BG,
-  ZODIAC_SIGNS_ORDER,
-} from '@stellaeum/astrology/client'
+import { PLANET_GLYPHS, ZODIAC_SIGNS_ORDER } from '@stellaeum/astrology/client'
 import type {
   AspectType,
   ChartData,
@@ -26,28 +13,32 @@ import type {
   ZodiacSign,
 } from '@stellaeum/astrology/client'
 import { ZODIAC_GLYPH_PATHS } from '@stellaeum/core/charts/glyphs'
-import { color, pressFeedback } from '@/components/design-system/tokens'
+import { color } from '@/components/design-system/tokens'
+import { PlanetDisambiguation, PLANET_COLORS } from '@/components/chart/PlanetDisambiguation'
+import { NatalWheelFrame } from '@/components/chart/NatalWheelFrame'
+import { PERF_DEBUG } from '@/lib/perfDebug'
 
-const AnimatedG = Animated.createAnimatedComponent(G)
-// Warm/cool amendment, Stage 1 (2026-07-25): the "instrument resolving
-// into focus" moment (source: Animus, motion only — no HUD chrome). Ticks
-// are a plain fixed-angle scale (NOT rotationDeg-dependent like the zodiac
-// ring) — this is the instrument's own measurement, distinct from the sky
-// data it's reading.
-const GRATICULE_TICK_DEGREES = Array.from({ length: 24 }, (_, i) => i * 15)
+// The instrument's static furniture (rim/bezel/face/graticule, including
+// the graticule's tick-degree constants) lives in NatalWheelFrame.tsx —
+// Stage 2 LOC split, see that file's header.
 const GRATICULE_RESOLVE_MS = 500
 
 /**
  * Mobile natal-wheel render via react-native-svg. Direct port of
  * apps/web/components/chart/NatalWheel.tsx — same layout primitives
  * (zodiac segments → houses → ASC/MC → aspects → planets), same
- * de-clumping math (4-pass, 8° minimum separation), same planet color
- * palette and aspect color scheme.
+ * de-clumping math (4-pass, 8° minimum separation), same aspect color
+ * scheme and per-planet PLANET_COLORS. Stage 2 (2026-07-27, Decision (a))
+ * briefly made the wheel's gems uniform/glyphless per the ratified
+ * mockup; the founder's 2026-07-27 device pass INVERTED that decision —
+ * per-planet color and the Unicode glyph are both back on the gems,
+ * a deliberate departure from the mockup. PLANET_COLORS is imported from
+ * PlanetDisambiguation.tsx (single source, not duplicated).
  *
  * Scope-bounded vs web (per SR 6 ratifications):
- *  - Unicode glyphs from PLANET_GLYPHS / ZODIAC_GLYPHS instead of web's
- *    custom SVG line-art via <GlyphDefs />. Defer custom-paths port if
- *    Android rendering looks bad.
+ *  - Zodiac ring glyphs: Unicode/custom SVG line-art (ZODIAC_GLYPH_PATHS)
+ *    instead of web's <GlyphDefs />. Planet glyphs: Unicode from
+ *    PLANET_GLYPHS, same as web's fallback path.
  *  - No orbiting-orb selection FX canvas (decorative, defer to polish).
  *  - No pinch-to-zoom (screen-fit fixed size).
  *  - No hover tooltip (mobile-untestable; tap behavior owns interaction).
@@ -63,27 +54,25 @@ interface NatalWheelProps {
   selectedPlanet?: string | null
 }
 
-const PLANET_COLORS: Record<string, string> = {
-  sun: '#fcd34d',
-  moon: '#e2e8f0',
-  mercury: '#c4b5fd',
-  venus: '#fbcfe8',
-  mars: '#fda4af',
-  jupiter: '#fde68a',
-  saturn: '#94a3b8',
-  uranus: '#67e8f9',
-  neptune: '#a78bfa',
-  pluto: '#8b5cf6',
-  northNode: '#c4b5fd',
-}
-
-const ASPECT_COLORS: Record<AspectType, string> = {
+// PLANET_COLORS moved to PlanetDisambiguation.tsx — Decision (a) removed
+// per-planet color from the wheel's own gems, so this file no longer
+// needs the palette itself, only PLANET_GLYPHS (still used for the
+// Unicode placeholder glyph).
+// Exported so NatalWheelLegend can read the wheel's REAL aspect colors
+// directly instead of hand-copying its own guess — a hand-copied legend
+// drifted to only 2 colors (harmony/tension) against these actual 5,
+// stating something false about the app's own data (founder-flagged,
+// 2026-07-27). Same reasoning for the Ascendant/Midheaven line colors
+// below (also exported, also legend-consumed).
+export const ASPECT_COLORS: Record<AspectType, string> = {
   conjunction: '#fcd34d',
   sextile: '#6ee7b7',
   square: '#fda4af',
   trine: '#7dd3fc',
   opposition: '#f0abfc',
 }
+export const ASCENDANT_LINE_COLOR = '#22d3ee'
+export const MIDHEAVEN_LINE_COLOR = '#fcd34d'
 
 const ELEMENT_FILLS = {
   fire: 'rgba(253, 164, 175, 0.06)',
@@ -219,8 +208,9 @@ export function NatalWheel({
   // One-shot resolve on mount — not a continuous loop, so it costs nothing
   // ongoing once settled. See WARM_COOL_AMENDMENT.md §8 for the frame
   // budget this was checked against.
-  const graticule = useSharedValue(0)
+  const graticule = useSharedValue(PERF_DEBUG.freezeResolveIn ? 1 : 0)
   useEffect(() => {
+    if (PERF_DEBUG.freezeResolveIn) return // frozen: stay resolved (1), skip the one-shot animation
     graticule.value = withTiming(1, { duration: GRATICULE_RESOLVE_MS })
   }, [graticule])
   const graticuleProps = useAnimatedProps(() => ({ opacity: graticule.value }))
@@ -256,54 +246,14 @@ export function NatalWheel({
   return (
     <View style={{ width: size, height: size }}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <Defs>
-          {/* Warm/cool amendment — the recovered-instrument bevel rim
-              (the fitting a hand would touch), ported from the approved
-              mockup's diagonal border-color bevel. A gradient stroke is
-              the SVG-portable equivalent of CSS's per-side border-color
-              trick. Bronze, and ONLY the rim — the face/ticks/data stay
-              cool, per the ratified "cold instrument, warm fittings"
-              reading (WARM_COOL_AMENDMENT.md, corrected pass). */}
-          <LinearGradient id="rim-bevel" x1="15%" y1="8%" x2="85%" y2="92%">
-            <Stop offset="0%" stopColor="#d9a06a" />
-            <Stop offset="50%" stopColor="#8a6339" />
-            <Stop offset="100%" stopColor="#5c3f22" />
-          </LinearGradient>
-        </Defs>
-        {/* Outer ring border — the instrument's rim */}
-        <Circle
-          cx={center}
-          cy={center}
-          r={outerRadius}
-          fill="none"
-          stroke="url(#rim-bevel)"
-          strokeWidth={size * 0.012}
-          opacity={0.85}
+        <NatalWheelFrame
+          center={center}
+          size={size}
+          outerRadius={outerRadius}
+          zodiacInnerRadius={zodiacInnerRadius}
+          houseInnerRadius={houseInnerRadius}
+          graticuleProps={graticuleProps}
         />
-
-        {/* Instrument graticule — the wheel's own measurement scale, cool-
-            toned, fixed to the frame (not the rotating zodiac data below).
-            Resolves in once on mount; see the shared-value comment above. */}
-        <AnimatedG animatedProps={graticuleProps}>
-          {GRATICULE_TICK_DEGREES.map((deg, i) => {
-            const major = i % 6 === 0
-            const rad = ((deg - 90) * Math.PI) / 180
-            const r1 = outerRadius + size * 0.003
-            const r2 = outerRadius + size * (major ? 0.018 : 0.011)
-            return (
-              <Line
-                key={`grat-${i}`}
-                x1={center + Math.cos(rad) * r1}
-                y1={center + Math.sin(rad) * r1}
-                x2={center + Math.cos(rad) * r2}
-                y2={center + Math.sin(rad) * r2}
-                stroke={color.cool}
-                strokeWidth={major ? 1.2 : 0.8}
-                opacity={major ? 0.55 : 0.3}
-              />
-            )
-          })}
-        </AnimatedG>
 
         {/* Zodiac segments */}
         {ZODIAC_SIGNS_ORDER.map((sign, index) => {
@@ -413,7 +363,7 @@ export function NatalWheel({
           y1={center + Math.sin(ascAngle) * (houseInnerRadius * 0.5)}
           x2={center + Math.cos(ascAngle) * zodiacOuterRadius}
           y2={center + Math.sin(ascAngle) * zodiacOuterRadius}
-          stroke="#22d3ee"
+          stroke={ASCENDANT_LINE_COLOR}
           strokeWidth={2}
         />
 
@@ -423,7 +373,7 @@ export function NatalWheel({
           y1={center + Math.sin(mcAngle) * (houseInnerRadius * 0.5)}
           x2={center + Math.cos(mcAngle) * zodiacOuterRadius}
           y2={center + Math.sin(mcAngle) * zodiacOuterRadius}
-          stroke="#fcd34d"
+          stroke={MIDHEAVEN_LINE_COLOR}
           strokeWidth={2}
         />
 
@@ -472,10 +422,21 @@ export function NatalWheel({
           strokeWidth={1}
         />
 
-        {/* Planets */}
+        {/* Planets — Decision (a), Stage 2 (2026-07-27): uniform starlight/
+            cool gems.
+            FOUNDER CORRECTION (2026-07-27, device pass): Decision (a) —
+            uniform glyphless gems — is INVERTED here, deliberately, a
+            departure from the ratified mockup. Per-planet PLANET_COLORS
+            is back on the wheel's own gems (imported from
+            PlanetDisambiguation.tsx, not duplicated), and the Unicode
+            glyph renders on the gem again as a placeholder for the
+            designer asset. Selection stays categorical — solid fill +
+            an outer ring — never a hue swap; the base color IS per-planet
+            hue again, but selected-vs-not is still shown by brightness/
+            containment, not by changing which hue is shown. */}
         {planetPositions.map((planet) => {
           const isSelected = selectedPlanet === planet.planet
-          const color = PLANET_COLORS[planet.planet]
+          const planetColor = PLANET_COLORS[planet.planet]
           const anchorX = center + Math.cos(planet.angle) * aspectAnchorRadius
           const anchorY = center + Math.sin(planet.angle) * aspectAnchorRadius
           const planetGlyph = PLANET_GLYPHS[planet.planet as Planet] ?? '?'
@@ -486,32 +447,57 @@ export function NatalWheel({
                 cx={anchorX}
                 cy={anchorY}
                 r={size * 0.0085}
-                fill={color}
+                fill={planetColor}
                 stroke="rgba(8, 6, 15, 0.92)"
                 strokeWidth={1}
                 opacity={isSelected ? 1 : 0.78}
               />
-              {/* Planet circle background */}
+              {/* Selection ring — a categorical signal separate from the
+                  gem's own fill, drawn just outside it. Absent when not
+                  selected, not a dimmer version of itself. */}
+              {isSelected && (
+                <Circle
+                  cx={planet.x}
+                  cy={planet.y}
+                  r={size * 0.048}
+                  fill="none"
+                  stroke={color.starlight}
+                  strokeWidth={1}
+                  opacity={0.7}
+                />
+              )}
+              {/* Planet gem — per-planet color again (see inversion note
+                  above). Selected = solid fill; unselected = outline only
+                  on a near-black disc — same categorical (fill vs. no
+                  fill) signal as the pre-Stage-2 original, plus the ring
+                  above. */}
               <Circle
                 cx={planet.x}
                 cy={planet.y}
                 r={size * 0.035}
-                fill={isSelected ? color : 'rgba(8, 6, 15, 0.92)'}
-                stroke={color}
+                fill={isSelected ? planetColor : 'rgba(8, 6, 15, 0.92)'}
+                stroke={planetColor}
                 strokeWidth={isSelected ? 2.5 : 1.5}
               />
-              {/* Planet glyph */}
+              <Circle
+                cx={planet.x - size * 0.012}
+                cy={planet.y - size * 0.012}
+                r={size * 0.014}
+                fill="url(#gem-sheen)"
+              />
+              {/* Planet glyph — Unicode placeholder for the designer
+                  glyph asset (not yet landed). */}
               <SvgText
                 x={planet.x}
                 y={planet.y}
-                fill={isSelected ? '#08060f' : color}
+                fill={isSelected ? '#08060f' : planetColor}
                 fontSize={size * 0.04}
                 textAnchor="middle"
                 alignmentBaseline="central"
               >
                 {planetGlyph}
               </SvgText>
-              {/* Retrograde marker */}
+              {/* Retrograde marker — a status flag, not planet identity. */}
               {planet.speed < 0 && (
                 <SvgText
                   x={planet.x + size * 0.035}
@@ -542,57 +528,19 @@ export function NatalWheel({
       />
 
       {/* Disambiguation list — shown only when a tap lands within
-          HIT_RADIUS_MIN of more than one planet (a stellium). Centered
-          rather than tap-anchored so it never clips off-screen. */}
+          HIT_RADIUS_MIN of more than one planet (a stellium). Extracted
+          to PlanetDisambiguation.tsx (Stage 2 LOC split, see that file's
+          header). */}
       {ambiguous && (
-        <>
-          <Pressable
-            accessibilityLabel="Затвори"
-            style={{ position: 'absolute', left: 0, top: 0, width: size, height: size, zIndex: 10 }}
-            onPress={() => setAmbiguous(null)}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              transform: [{ translateX: -90 }, { translateY: -(ambiguous.length * 22) }],
-              width: 180,
-              zIndex: 11,
-              backgroundColor: '#161029',
-              borderWidth: 1,
-              borderColor: 'rgba(139,92,246,0.35)',
-              borderRadius: 14,
-              paddingVertical: 6,
-            }}
-          >
-            {ambiguous.map((planet) => (
-              <Pressable
-                key={planet.planet}
-                onPress={() => {
-                  handlePlanetPress(planet)
-                  setAmbiguous(null)
-                }}
-                style={({ pressed }) => ({
-                  ...pressFeedback(pressed),
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                  minHeight: 44,
-                })}
-              >
-                <Text style={{ color: PLANET_COLORS[planet.planet], fontSize: 16 }}>
-                  {PLANET_GLYPHS[planet.planet as Planet] ?? '?'}
-                </Text>
-                <Text style={{ color: '#e2e8f0', fontSize: 14 }}>
-                  {PLANETS_BG[planet.planet as Planet] ?? planet.planet}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </>
+        <PlanetDisambiguation
+          planets={ambiguous}
+          wheelSize={size}
+          onDismiss={() => setAmbiguous(null)}
+          onSelect={(planet) => {
+            handlePlanetPress(planet)
+            setAmbiguous(null)
+          }}
+        />
       )}
     </View>
   )

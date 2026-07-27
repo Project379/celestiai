@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { BackHandler, Pressable, Text, View } from 'react-native'
 
-import { PLANET_GLYPHS, ZODIAC_GLYPHS } from '@stellaeum/astrology/client'
-import { pressFeedback } from '@/components/design-system/tokens'
+import { ASPECTS_BG, PLANET_GLYPHS, ZODIAC_GLYPHS } from '@stellaeum/astrology/client'
+import type { AspectType } from '@stellaeum/astrology/client'
+import { ASCENDANT_LINE_COLOR, ASPECT_COLORS, MIDHEAVEN_LINE_COLOR } from '@/components/chart/NatalWheel'
+import { font, pressFeedback } from '@/components/design-system/tokens'
 
 const LEGEND_ZODIAC_KEYS = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo'] as const
 const LEGEND_PLANET_KEYS = ['sun', 'moon', 'mercury', 'venus', 'mars'] as const
+// Display order for the aspect-color key — major aspects first, matches
+// ASPECTS_BG/ASPECT_COLORS's own key order (NatalWheel.tsx, the single
+// source of truth this row must stay accurate against).
+const LEGEND_ASPECT_KEYS: AspectType[] = ['conjunction', 'sextile', 'square', 'trine', 'opposition']
 
 /**
  * Карта · Легенда — wheel-overlay tooltip explaining wheel elements (zodiac,
@@ -60,7 +66,13 @@ export function NatalWheelLegend() {
             <View className="px-5 py-5">
               <View className="mb-4 flex-row items-center" style={{ gap: 10 }}>
                 <View className="h-1 w-1 rotate-45 bg-amber-300/90" />
-                <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/80">
+                {/* REVISIT-42 fix (2026-07-27): was font-cinzel on Cyrillic
+                    text — Cinzel has zero Cyrillic glyphs. Switched to
+                    font.mono (inline style; NativeWind's own font-cinzel/
+                    font-display classes point at unloaded family names per
+                    tailwind.config.js's own tracked-issue comment, so this
+                    file can't rely on className for font family at all). */}
+                <Text style={{ fontFamily: font.mono }} className="text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/80">
                   Легенда
                 </Text>
               </View>
@@ -109,22 +121,34 @@ export function NatalWheelLegend() {
                 description="Всяка носи жизнен принцип. Натисни за тълкуване."
               />
 
+              {/* Accuracy fix (2026-07-27, founder-flagged, fixed ahead of
+                  the visual redesign): this row showed only 2 colors
+                  (emerald/rose, "harmony/tension") while the wheel itself
+                  draws 5 distinct aspect colors (NatalWheel.tsx's
+                  ASPECT_COLORS) — the legend was stating something false
+                  about the app's own data. Now reads the real colors and
+                  names directly from NatalWheel.tsx/ASPECTS_BG so the two
+                  can't drift apart again. */}
               <LegendRow
                 renderIcon={() => (
-                  <View style={{ gap: 4 }} className="py-1">
-                    <View className="h-px w-6 bg-emerald-400/80" />
-                    <View className="h-px w-6 bg-rose-400/80" />
+                  <View style={{ gap: 3 }} className="py-1">
+                    {LEGEND_ASPECT_KEYS.map((key) => (
+                      <View key={key} style={{ height: 1, width: 24, backgroundColor: ASPECT_COLORS[key], opacity: 0.85 }} />
+                    ))}
                   </View>
                 )}
                 term="Аспекти"
-                description="Линиите в центъра — зелено е хармония, розово е напрежение."
+                description={`Линиите в центъра — всеки цвят е различен тип: ${LEGEND_ASPECT_KEYS.map((key) => ASPECTS_BG[key]).join(', ')}.`}
               />
 
+              {/* Accuracy fix (2026-07-27) — was cyan+pink; the wheel's
+                  real lines are cyan (Ascendant) + amber (Midheaven,
+                  NatalWheel.tsx's MIDHEAVEN_LINE_COLOR), never pink. */}
               <LegendRow
                 renderIcon={() => (
                   <View style={{ gap: 4 }} className="py-1">
-                    <View className="h-px w-6 bg-cyan-400/80" />
-                    <View className="h-px w-6 bg-pink-400/80" />
+                    <View style={{ height: 1, width: 24, backgroundColor: ASCENDANT_LINE_COLOR, opacity: 0.85 }} />
+                    <View style={{ height: 1, width: 24, backgroundColor: MIDHEAVEN_LINE_COLOR, opacity: 0.85 }} />
                   </View>
                 )}
                 term="Ъгли"
@@ -147,7 +171,8 @@ export function NatalWheelLegend() {
               />
 
               <View className="mt-4 border-t border-white/[0.05] pt-3">
-                <Text className="font-cinzel text-[8.5px] font-semibold uppercase tracking-[0.28em] text-slate-600">
+                {/* REVISIT-42 fix — see the header caption above. */}
+                <Text style={{ fontFamily: font.mono }} className="text-[8.5px] font-semibold uppercase tracking-[0.28em] text-slate-600">
                   За детайли → раздел Речник
                 </Text>
               </View>

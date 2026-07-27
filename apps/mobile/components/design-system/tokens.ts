@@ -2,6 +2,7 @@
 // See .planning/research/MOBILE_ALPHA_REDESIGN.md §0 for the familiarity
 // brief and §0.3 (type scale) for the measured-width validation behind
 // every size below — none of these are guesses.
+import { Platform } from 'react-native'
 
 export const color = {
   base: '#08060f',
@@ -31,6 +32,11 @@ export const color = {
   // Starlight white — cool-surface "light" role, distinct from the warm
   // neutral `text` below (used everywhere as body/label color).
   starlight: '#f5f7fc',
+  // Карта's engraved-plaque line only (mockup `.plaque`, _source-v4.html
+  // §КАРТА) — distinct from `coolText` (#bcd6ef), do not merge: the
+  // mockup uses this exact value for the Big Three plaque and nothing
+  // else, `coolText` is the general cool-surface text role.
+  plaqueCool: '#c9def2',
   rose: '#fb7185',
   text: '#e2e8f0',
   muted: '#94a3b8',
@@ -86,6 +92,14 @@ export const font = {
   // Roman numerals + Latin-only text ONLY (Cinzel has no Cyrillic glyphs)
   // — scoped to the Astrology Guide surface, not used here.
   cinzel: 'Cinzel-Regular',
+  // mockup `--mono: "SFMono-Regular", Consolas, Menlo, monospace` — the
+  // date/specimen-label family (`.label-mark`, `.karta-label`). No custom
+  // mono font is embedded in this app (only the 8 files in assets/fonts/);
+  // this is the system monospace stack, same category of choice the
+  // mockup itself made (a system font stack, not a custom face). Platform-
+  // specific because RN's generic 'monospace' family name only resolves
+  // reliably on Android — iOS needs an explicit named font.
+  mono: Platform.select({ ios: 'Menlo', default: 'monospace' }) as string,
   body: 'EBGaramond-Regular',
   bodyMedium: 'EBGaramond-Medium',
   bodyItalic: 'EBGaramond-Italic',
@@ -94,10 +108,15 @@ export const font = {
 // Type scale, each size validated against the longest real Bulgarian
 // string for that slot at 390px width (usable width 350px after 20px
 // margins), measured via actual font advance widths, not assumed:
-//   - "Изгряващ полумесец" / "Залязващ полумесец" (19 chars, longest
-//     lunar-phase name): fits one line at 32px (~324-329px), WRAPS at
-//     36px+ (364-371px) — this is the exact failure v2 shipped at 40px
-//     (405-412px). 32px is the validated ceiling for this slot.
+//   - STALE, kept for the record: this comment previously validated a
+//     32px `hero` tier for the lunar-phase name at Днес's hero position.
+//     Stage 2 doc reconciliation (2026-07-27) corrected that reading
+//     against the ratified mockup (_source-v4.html `.phase-mark`): the
+//     phase name is a 9.5px tracked eyebrow under the 202px moon, not a
+//     second hero competing with the glyph — the moon is the only hero
+//     on this screen. `hero` is removed; see `eyebrow` below. The
+//     32px-wraps-at-36px measurement itself stays true, it just no
+//     longer describes this screen.
 //   - "Слънце · Луна · Асцендент" (25 chars, longest combined sign
 //     summary): fits at 32px (346px), wraps at 36px+ — same ceiling
 //     applies if this string is ever shown as one line.
@@ -121,11 +140,17 @@ export const font = {
 //     tokens.ts's own measurement script in the MOBILE_ALPHA_REDESIGN.md
 //     §14 record) fit on one line comfortably below 330px.
 export const type = {
-  hero: { fontFamily: font.displaySemibold, fontSize: 32, lineHeight: 38 },
   sub: { fontFamily: font.displayRegular, fontSize: 17, lineHeight: 23 },
   body: { fontFamily: font.body, fontSize: 17, lineHeight: 27 },
   row: { fontFamily: font.bodyMedium, fontSize: 16, lineHeight: 21 },
   caption: { fontFamily: font.body, fontSize: 12, lineHeight: 17 },
+  // Tracked-caps eyebrow — mockup `.phase-mark` (Днес) and the sibling
+  // `.plaque`/`.pedestal span` treatment (Карта). RN has no CSS `em`
+  // tracking unit: letterSpacing is absolute px, so `.28em` at 9.5px is
+  // computed here (9.5 * 0.28 = 2.66), not eyeballed — flagged per the
+  // "flag every unit conversion" rule. R3-reserved on Днес per the doc
+  // reconciliation: the one tracked-caps eyebrow use on that screen.
+  eyebrow: { fontFamily: font.displayRegular, fontSize: 9.5, letterSpacing: 2.66, lineHeight: 13 },
 } as const
 
 // Premium pass, item #1 (2026-07-24) — shared press-feedback primitive.

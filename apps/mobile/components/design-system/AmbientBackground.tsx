@@ -1,9 +1,10 @@
 import { useEffect, useMemo } from 'react'
-import { useWindowDimensions } from 'react-native'
-import Svg, { Circle, Defs, G, RadialGradient, Rect, Stop } from 'react-native-svg'
-import Animated, { useAnimatedProps, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated'
+import { StyleSheet, useWindowDimensions } from 'react-native'
+import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
+import Animated, { useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated'
 
 import { color } from './tokens'
+import { PERF_DEBUG } from '@/lib/perfDebug'
 
 // Proof surface for the starfield-port pass — borrows the RECIPE from web's
 // CelestialCanvas.tsx (star temperature spread, centerFade falloff, corner
@@ -18,7 +19,22 @@ import { color } from './tokens'
 // density, but only 4 shared values total (one twinkle phase per group) to
 // stay inside a real mobile animation budget — 48 independent Reanimated
 // values would be the wrong kind of "40-60 animated elements."
-const AnimatedG = Animated.createAnimatedComponent(G)
+//
+// PERF (2026-07-27): each group used to be an AnimatedG with animatedProps
+// opacity, nested inside ONE shared full-viewport Svg alongside the other 3
+// groups and the wash Rects. react-native-svg re-rasterizes the entire Svg
+// subtree on any child prop change, so that one opacity change repainted
+// the whole viewport at 60Hz — confirmed via perfDebug.freezeStarTwinkle
+// (UI FPS 10-15 -> 60 with everything else unchanged). Each group is now
+// its OWN transparent full-viewport Svg with STATIC circles (no animated
+// props inside), wrapped in a plain Animated.View that carries the opacity.
+// That moves the twinkle from an SVG-internal redraw to a composited View
+// opacity — free on the UI thread. Trade: 1 Svg became 4 static Svgs plus
+// the wash Svg (4 full-viewport composite passes instead of 1). Overdraw
+// was already measured as nearly free in this investigation (screenShellWash
+// + ambientStarfield + tab bar backdrop stacked cost ~nothing) — but that
+// was 3 layers, not 5, so re-verify UI FPS on device rather than assuming
+// this generalizes for free.
 
 const STAR_COUNT = 48
 const GROUP_COUNT = 4
@@ -65,10 +81,13 @@ function useStarfield(width: number, height: number): Star[] {
   }, [width, height])
 }
 
-function TwinkleGroup({ stars, phaseMs }: { stars: Star[]; phaseMs: number }) {
+// Own transparent full-viewport Svg per group (static circles, no animated
+// SVG props) wrapped in an Animated.View — see the PERF note above.
+function TwinkleGroup({ stars, phaseMs, width, height }: { stars: Star[]; phaseMs: number; width: number; height: number }) {
   const twinkle = useSharedValue(1)
 
   useEffect(() => {
+    if (PERF_DEBUG.freezeStarTwinkle) return // frozen: stay at 1 (rest), skip withRepeat entirely
     twinkle.value = withDelay(
       phaseMs,
       withRepeat(withSequence(withTiming(0.5, { duration: TWINKLE_MS }), withTiming(1, { duration: TWINKLE_MS })), -1, true),
@@ -76,14 +95,16 @@ function TwinkleGroup({ stars, phaseMs }: { stars: Star[]; phaseMs: number }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const animatedProps = useAnimatedProps(() => ({ opacity: twinkle.value }))
+  const style = useAnimatedStyle(() => ({ opacity: twinkle.value }))
 
   return (
-    <AnimatedG animatedProps={animatedProps}>
-      {stars.map((s, i) => (
-        <Circle key={i} cx={s.x} cy={s.y} r={s.r} fill={color.text} opacity={s.opacity} />
-      ))}
-    </AnimatedG>
+    <Animated.View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
+      <Svg width={width} height={height}>
+        {stars.map((s, i) => (
+          <Circle key={i} cx={s.x} cy={s.y} r={s.r} fill={color.text} opacity={s.opacity} />
+        ))}
+      </Svg>
+    </Animated.View>
   )
 }
 
@@ -96,30 +117,32 @@ export function AmbientBackground() {
   )
 
   return (
-    <Svg
-      width={width}
-      height={height}
-      style={{ position: 'absolute', top: 0, left: 0 }}
-      pointerEvents="none"
-    >
-      <Defs>
-        {/* Violet/amber corner wash — R4-neutral per the ratified reading:
-            this is atmosphere, same category as ScreenShell's existing
-            violet glow, not a functional accent spend. */}
-        <RadialGradient id="ambient-violet" cx="8%" cy="4%" r="55%">
-          <Stop offset="0%" stopColor={color.violet} stopOpacity={0.08} />
-          <Stop offset="100%" stopColor={color.violet} stopOpacity={0} />
-        </RadialGradient>
-        <RadialGradient id="ambient-amber" cx="95%" cy="88%" r="45%">
-          <Stop offset="0%" stopColor={color.amber} stopOpacity={0.05} />
-          <Stop offset="100%" stopColor={color.amber} stopOpacity={0} />
-        </RadialGradient>
-      </Defs>
-      <Rect width="100%" height="100%" fill="url(#ambient-violet)" />
-      <Rect width="100%" height="100%" fill="url(#ambient-amber)" />
+    <>
+      <Svg
+        width={width}
+        height={height}
+        style={{ position: 'absolute', top: 0, left: 0 }}
+        pointerEvents="none"
+      >
+        <Defs>
+          {/* Violet/amber corner wash — R4-neutral per the ratified reading:
+              this is atmosphere, same category as ScreenShell's existing
+              violet glow, not a functional accent spend. */}
+          <RadialGradient id="ambient-violet" cx="8%" cy="4%" r="55%">
+            <Stop offset="0%" stopColor={color.violet} stopOpacity={0.08} />
+            <Stop offset="100%" stopColor={color.violet} stopOpacity={0} />
+          </RadialGradient>
+          <RadialGradient id="ambient-amber" cx="95%" cy="88%" r="45%">
+            <Stop offset="0%" stopColor={color.amber} stopOpacity={0.05} />
+            <Stop offset="100%" stopColor={color.amber} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#ambient-violet)" />
+        <Rect width="100%" height="100%" fill="url(#ambient-amber)" />
+      </Svg>
       {groups.map((g, i) => (
-        <TwinkleGroup key={i} stars={g} phaseMs={i * (TWINKLE_MS / GROUP_COUNT)} />
+        <TwinkleGroup key={i} stars={g} phaseMs={i * (TWINKLE_MS / GROUP_COUNT)} width={width} height={height} />
       ))}
-    </Svg>
+    </>
   )
 }
