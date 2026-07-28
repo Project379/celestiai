@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticInvite, hapticSelect } from '@/lib/haptics'
 
 // Bulgarian error mapping — first-pass draft, calibrated in commit 1.4d via bulgarian-skill
 const ERROR_MESSAGES: Record<string, string> = {
@@ -231,7 +232,10 @@ export default function TwoFactorScreen() {
           )}
 
           <Pressable
-            onPress={handleVerify}
+            onPress={() => {
+              hapticInvite()
+              handleVerify()
+            }}
             disabled={!canSubmit}
             className={`rounded-2xl border py-4 ${
               canSubmit
@@ -254,7 +258,10 @@ export default function TwoFactorScreen() {
 
           {strategy === 'phone_code' && (
             <Pressable
-              onPress={handleResend}
+              onPress={() => {
+                hapticSelect()
+                handleResend()
+              }}
               disabled={resending || submitting}
               className="mt-8"
               style={({ pressed }) => pressFeedback(pressed)}
@@ -270,7 +277,10 @@ export default function TwoFactorScreen() {
 
           {showBackupSwitch && (
             <Pressable
-              onPress={() => switchStrategy('backup_code')}
+              onPress={() => {
+                hapticSelect()
+                switchStrategy('backup_code')
+              }}
               disabled={submitting}
               className="mt-8"
               style={({ pressed }) => pressFeedback(pressed)}
@@ -283,7 +293,10 @@ export default function TwoFactorScreen() {
 
           {showTotpSwitch && (
             <Pressable
-              onPress={() => switchStrategy('totp')}
+              onPress={() => {
+                hapticSelect()
+                switchStrategy('totp')
+              }}
               disabled={submitting}
               className="mt-8"
               style={({ pressed }) => pressFeedback(pressed)}
@@ -296,7 +309,10 @@ export default function TwoFactorScreen() {
 
           {showSmsSwitch && (
             <Pressable
-              onPress={() => switchStrategy('phone_code')}
+              onPress={() => {
+                hapticSelect()
+                switchStrategy('phone_code')
+              }}
               disabled={submitting}
               className="mt-8"
               style={({ pressed }) => pressFeedback(pressed)}

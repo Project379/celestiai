@@ -1,13 +1,11 @@
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { LunarPhaseCard } from '@/components/dashboard/LunarPhaseCard'
 import { TransitOverviewCard } from '@/components/horoscope/TransitOverviewCard'
 import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { useTransitOverview } from '@/hooks/useTransitOverview'
-import { hapticInvite } from '@/lib/haptics'
 
 // Systemic navbar-clearance rule (2026-07-27, audit): this screen doesn't
 // use ScreenShell (its own SafeAreaView+ScrollView instead), so it never
@@ -66,7 +64,6 @@ function transitCountLabel(count: number): string {
 }
 
 export default function RhythmScreen() {
-  const { push } = useGuardedNavigation()
   const firstChart = useFirstChart()
   const overview = useTransitOverview(firstChart.data?.id)
   const insets = useSafeAreaInsets()
@@ -136,31 +133,14 @@ export default function RhythmScreen() {
           )}
         </View>
 
-        {/* Лунна фаза · Манифестация — live phase + disclosure + info expanders */}
-        <LunarPhaseCard />
-
-        {/* Лунен дневник CTA card — full-Pressable target per HT 6 */}
-        <Pressable
-          onPress={() => {
-            hapticInvite()
-            push('/rhythm/journal')
-          }}
-          className="mb-16 rounded-3xl border border-slate-200/10 bg-white/[0.02] px-6 py-8"
-          style={({ pressed }) => pressFeedback(pressed)}
-        >
-          <Text style={{ fontFamily: font.bodyMedium }} className="mb-3 text-[13px] font-medium text-slate-400">
-            Лунен дневник
-          </Text>
-          <Text style={{ fontFamily: font.body }} className="mb-5 text-[15px] font-light leading-[1.85] text-slate-300">
-            Три реда на ден, водени от лунната фаза — манифестация, благодарност, освобождаване.
-          </Text>
-          <View className="flex-row items-center" style={{ gap: 8 }}>
-            <Text style={{ fontFamily: font.bodyMedium }} className="text-[15px] font-medium text-slate-200">
-              Отвори дневника
-            </Text>
-            <Text style={{ fontFamily: font.body }} className="text-[14px] text-slate-300">→</Text>
-          </View>
-        </Pressable>
+        {/* IA move (this batch) — LunarPhaseCard and the journal CTA moved
+            off Ритъм onto Днес's «повече детайли» → moon-detail.tsx.
+            Ритъм keeps ONLY the hero above and the transits/dictionary
+            below (ratified: "the transit count, driven by the same hook
+            as the transit list — that is the transit section's own
+            header, not lunar context"). Structured so a later move of
+            this whole tab into Ти is a clean removal — nothing here
+            depends on lunar content that used to sit in this file. */}
 
         {/* Transit overview — gated on chart presence. EmptyTransitsState
             for chart-less users mirrors the chart.tsx pattern inline. */}

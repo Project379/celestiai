@@ -17,6 +17,7 @@ import DateTimePicker, {
 
 import type { BirthData } from '@stellaeum/core/charts/schemas'
 import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticInvite, hapticSelect } from '@/lib/haptics'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
@@ -151,7 +152,10 @@ export default function WizardDateScreen() {
               name="birthDate"
               render={({ field: { value } }) => (
                 <Pressable
-                  onPress={handleDatePress}
+                  onPress={() => {
+                    hapticSelect()
+                    handleDatePress()
+                  }}
                   className="border-b border-white/[0.08] px-1 py-3"
                   style={({ pressed }) => pressFeedback(pressed)}
                 >
@@ -175,7 +179,10 @@ export default function WizardDateScreen() {
           {/* Forward button */}
           <View className="flex-row justify-end">
             <Pressable
-              onPress={handleNext}
+              onPress={() => {
+                hapticInvite()
+                handleNext()
+              }}
               className="rounded-full border border-amber-300/40 px-6 py-2.5"
               style={({ pressed }) => pressFeedback(pressed)}
             >
@@ -197,7 +204,10 @@ export default function WizardDateScreen() {
         >
           <Pressable
             className="flex-1 justify-end bg-black/50"
-            onPress={() => setShowIosPicker(false)}
+            onPress={() => {
+              hapticSelect()
+              setShowIosPicker(false)
+            }}
             style={({ pressed }) => pressFeedback(pressed)}
           >
             <Pressable
@@ -225,7 +235,10 @@ export default function WizardDateScreen() {
                 }}
               />
               <Pressable
-                onPress={() => setShowIosPicker(false)}
+                onPress={() => {
+                  hapticSelect()
+                  setShowIosPicker(false)
+                }}
                 className="mt-2 self-center rounded-full border border-amber-300/40 px-6 py-2.5"
                 style={({ pressed }) => pressFeedback(pressed)}
               >

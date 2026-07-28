@@ -1,8 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { generateText, streamText } from 'ai'
-import { createOpenAI } from '@ai-sdk/openai'
 import type { TransitAspect } from '@stellaeum/astrology'
 import type { PlanetPosition } from '@stellaeum/astrology/client'
+import { AI_MODEL, openrouter } from '@/lib/ai/client'
 import { logAuditEvent } from '@/lib/audit'
 import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
@@ -10,12 +10,6 @@ import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 
 export const maxDuration = 60
-const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
-
-const openrouter = createOpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-})
 
 export async function POST(req: Request) {
   const { userId } = await auth()
@@ -191,7 +185,7 @@ export async function POST(req: Request) {
 
     if (jsonOnly) {
       const result = await generateText({
-        model: openrouter(LLAMA_MODEL),
+        model: openrouter(AI_MODEL),
         system: systemPrompt,
         prompt: promptText,
         temperature: 0.85,
@@ -205,7 +199,7 @@ export async function POST(req: Request) {
             user_id: userId,
             date: requestedDate,
             content: result.text,
-            model_version: LLAMA_MODEL,
+            model_version: AI_MODEL,
           },
           { onConflict: 'chart_id,date' }
         )
@@ -221,7 +215,7 @@ export async function POST(req: Request) {
     }
 
     const result = streamText({
-      model: openrouter(LLAMA_MODEL),
+      model: openrouter(AI_MODEL),
       system: systemPrompt,
       prompt: promptText,
       temperature: 0.85,
@@ -234,7 +228,7 @@ export async function POST(req: Request) {
               user_id: userId,
               date: requestedDate,
               content: text,
-              model_version: LLAMA_MODEL,
+              model_version: AI_MODEL,
             },
             { onConflict: 'chart_id,date' }
           )

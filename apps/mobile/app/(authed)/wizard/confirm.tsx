@@ -18,6 +18,7 @@ import type {
 import { pressFeedback } from '@/components/design-system/tokens'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { ApiError, useApiClient } from '@/lib/api/client'
+import { hapticInvite, hapticSelect } from '@/lib/haptics'
 
 const TIME_RANGE_LABELS: Record<ApproximateTimeRange, string> = {
   morning: 'Сутрин (06:00–12:00)',
@@ -177,7 +178,10 @@ export default function WizardConfirmScreen() {
 
         <View className="mt-2 flex-row items-center justify-between">
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => {
+              hapticSelect()
+              router.back()
+            }}
             disabled={isSubmitting}
             className="px-2 py-2"
             style={({ pressed }) => (isSubmitting ? { opacity: 0.45 } : pressFeedback(pressed))}
@@ -187,7 +191,10 @@ export default function WizardConfirmScreen() {
             </Text>
           </Pressable>
           <Pressable
-            onPress={handleSubmit(onSubmit)}
+            onPress={() => {
+              hapticInvite()
+              handleSubmit(onSubmit)()
+            }}
             disabled={isSubmitting || hasErrors}
             className="rounded-full border border-amber-300/50 bg-amber-300/[0.04] px-7 py-3"
             style={({ pressed }) =>

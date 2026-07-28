@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { generateText, streamText } from 'ai'
-import { createOpenAI } from '@ai-sdk/openai'
+import { AI_MODEL, openrouter } from '@/lib/ai/client'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
@@ -39,12 +39,6 @@ import {
  * 12. On any failure in 10–11: decrementQuotaUsage refund (free tier only)
  */
 export const maxDuration = 60
-const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
-
-const openrouter = createOpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-})
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
 
@@ -220,7 +214,7 @@ export async function POST(req: Request) {
     if (jsonOnly) {
       try {
         const result = await generateText({
-          model: openrouter(LLAMA_MODEL),
+          model: openrouter(AI_MODEL),
           system: systemPrompt,
           prompt: chartPromptText,
           temperature: 0.85,
@@ -241,7 +235,7 @@ export async function POST(req: Request) {
             generated_at: generatedAt.toISOString(),
             expires_at: expiresAt.toISOString(),
             last_regenerated_at: regenerate ? generatedAt.toISOString() : null,
-            model_version: LLAMA_MODEL,
+            model_version: AI_MODEL,
           },
           { onConflict: 'chart_id,topic' }
         )
@@ -269,7 +263,7 @@ export async function POST(req: Request) {
     //      racing further mutation).
     const refundPeriodStart = claimedPeriodStart
     const result = streamText({
-      model: openrouter(LLAMA_MODEL),
+      model: openrouter(AI_MODEL),
       system: systemPrompt,
       prompt: chartPromptText,
       temperature: 0.85,
@@ -294,7 +288,7 @@ export async function POST(req: Request) {
               last_regenerated_at: regenerate
                 ? generatedAt.toISOString()
                 : null,
-              model_version: LLAMA_MODEL,
+              model_version: AI_MODEL,
             },
             {
               onConflict: 'chart_id,topic',

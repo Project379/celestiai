@@ -14,6 +14,7 @@ import { Controller, useFormContext, useWatch } from 'react-hook-form'
 
 import type { BirthData } from '@stellaeum/core/charts/schemas'
 import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticInvite, hapticSelect } from '@/lib/haptics'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { CitySearch, type City } from '@/components/wizard/CitySearch'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
@@ -126,7 +127,10 @@ export default function WizardLocationScreen() {
 
           {/* Manual-coords toggle — same Pressable rail+diamond pattern as time.tsx */}
           <Pressable
-            onPress={() => handleManualToggle(!manualCoordinates)}
+            onPress={() => {
+              hapticSelect()
+              handleManualToggle(!manualCoordinates)
+            }}
             className={`mb-7 flex-row items-center justify-between border-y px-1 py-4 ${
               manualCoordinates
                 ? 'border-amber-300/25'
@@ -264,7 +268,10 @@ export default function WizardLocationScreen() {
 
           <View className="flex-row items-center justify-between">
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => {
+                hapticSelect()
+                router.back()
+              }}
               className="px-2 py-2"
               style={({ pressed }) => pressFeedback(pressed)}
             >
@@ -273,7 +280,10 @@ export default function WizardLocationScreen() {
               </Text>
             </Pressable>
             <Pressable
-              onPress={handleNext}
+              onPress={() => {
+                hapticInvite()
+                handleNext()
+              }}
               className="rounded-full border border-amber-300/40 px-6 py-2.5"
               style={({ pressed }) => pressFeedback(pressed)}
             >

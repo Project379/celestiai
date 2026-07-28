@@ -2,6 +2,7 @@ import { Alert, Pressable, Text } from 'react-native'
 import { useRouter } from 'expo-router'
 
 import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticSelect } from '@/lib/haptics'
 import { markWizardDismissedThisLaunch } from '@/lib/onboarding/dismissState'
 
 /**
@@ -37,7 +38,14 @@ export function SkipWizardButton() {
   }
 
   return (
-    <Pressable onPress={handlePress} hitSlop={12} style={({ pressed }) => pressFeedback(pressed)}>
+    <Pressable
+      onPress={() => {
+        hapticSelect()
+        handlePress()
+      }}
+      hitSlop={12}
+      style={({ pressed }) => pressFeedback(pressed)}
+    >
       <Text className="font-cinzel text-[10.5px] uppercase tracking-[0.32em] text-slate-400">
         Пропусни
       </Text>

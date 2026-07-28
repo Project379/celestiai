@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticInvite, hapticSelect } from '@/lib/haptics'
 
 // Bulgarian error mapping — first-pass draft, calibrated in commit 1.4d via bulgarian-skill
 const ERROR_MESSAGES: Record<string, string> = {
@@ -159,7 +160,10 @@ export default function SignInScreen() {
           )}
 
           <Pressable
-            onPress={handleSignIn}
+            onPress={() => {
+              hapticInvite()
+              handleSignIn()
+            }}
             disabled={!canSubmit}
             className={`rounded-2xl border py-4 ${
               canSubmit
@@ -183,7 +187,7 @@ export default function SignInScreen() {
           <View className="mt-10 flex-row items-center justify-center gap-2">
             <Text className="text-[13px] text-slate-500">Нямаш профил?</Text>
             <Link href={'/sign-up' as never} asChild>
-              <Pressable style={({ pressed }) => pressFeedback(pressed)}>
+              <Pressable onPress={() => hapticSelect()} style={({ pressed }) => pressFeedback(pressed)}>
                 <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-amber-300">
                   Създай
                 </Text>
