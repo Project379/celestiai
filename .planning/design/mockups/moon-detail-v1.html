@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ЛУНЕН ДЕТАЙЛ</title>
+<style>
+
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+
+  :root{
+    --base:#08060f; --violet:#8b5cf6; --starlight:#f5f7fc; --bronze:#b8763e; --bronze-hi:#d9a06a; --cool:#5b8fc7;
+    --text:#e2e8f0; --muted:#94a3b8; --faint:#5d6a82;
+    --page-bg:#0c0a12; --page-surface:#141019; --page-text:#e9e6f0; --page-muted:#948fa3; --page-border:#241f30;
+    --serif-d: 'PF-Semi', Georgia, serif;
+    --serif-d-r: 'PF-Reg', Georgia, serif;
+    --numeral: 'Cinzel', Georgia, serif;
+    --body: 'EBG-Reg', Palatino, serif;
+    --body-i: 'EBG-Ital', Palatino, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: "SFMono-Regular", Consolas, Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--page-bg); color:var(--page-text); font-family:var(--sans); line-height:1.55; padding:0 0 100px; }
+  .wrap{max-width:1160px; margin:0 auto; padding:48px 24px 0;}
+  header.doc{margin-bottom:8px;}
+  .eyebrow{ font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--bronze-hi); margin:0 0 12px; }
+  h1{ font-family:var(--serif-d); font-weight:600; font-size:clamp(28px,4.4vw,44px); margin:0 0 16px; text-wrap:balance; letter-spacing:-.01em; }
+  .dek{font-size:15.5px; color:var(--page-muted); max-width:720px; margin:0 0 8px;}
+
+  section.screen{ padding:40px 0 12px; }
+  section.screen .stitle{ display:flex; align-items:baseline; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  section.screen h2{ font-family:var(--serif-d-r); font-weight:400; font-size:23px; margin:0; }
+  .temp{ font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; padding:3px 9px; border-radius:2px; }
+  .temp.warm{ background:rgba(184,118,62,.16); color:var(--bronze-hi); }
+
+  .stage{ display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
+  .phone-frame{ flex:0 0 auto; width:390px; height:780px; border-radius:44px; background:#000; padding:10px; box-shadow:0 30px 70px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04); }
+  .phone-screen{ width:100%; height:100%; border-radius:36px; overflow:hidden; position:relative; background:var(--base); }
+  .notes{ flex:1 1 280px; min-width:260px; padding-top:6px; }
+  .notes h3{ font-family:var(--serif-d-r); font-weight:400; font-size:16px; margin:0 0 10px; color:#e9e6f0; }
+  .notes p{ font-size:13.5px; color:#b8b3c6; margin:0 0 10px; }
+  .notes p:last-child{ margin-bottom:0; }
+  .notes .tag{ display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:#8f8aa0; background:rgba(255,255,255,.04); padding:2px 6px; border-radius:2px; margin:0 4px 4px 0; }
+
+  .stars{ position:absolute; inset:0; }
+  .star{ position:absolute; border-radius:50%; background:var(--starlight); animation:tw 4.5s ease-in-out infinite; }
+  @keyframes tw{ 0%,100%{opacity:.25;} 50%{opacity:.85;} }
+
+  .warm-wash{ position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 320px 280px at 50% 4%, rgba(184,118,62,.16), transparent 60%),
+      radial-gradient(ellipse 260px 220px at 90% 92%, rgba(139,92,246,.08), transparent 60%); }
+
+  .detail-content{ position:relative; height:100%; padding:44px 26px 0; display:flex; flex-direction:column; overflow-y:auto; }
+
+  .section-caption{ font-family:var(--serif-d-r); font-size:12px; letter-spacing:.29em; color:var(--bronze-hi); text-transform:uppercase; opacity:.9; text-align:center; }
+
+  .moon-title{ text-align:center; font-family:var(--serif-d); font-weight:600; font-size:26px; color:var(--starlight); margin-top:10px; letter-spacing:-.005em; }
+  .moon-sub{ text-align:center; font-family:var(--body-i); font-style:italic; font-size:14px; color:var(--muted); margin-top:5px; }
+
+  .moon-stage{ position:relative; margin:24px auto 0; width:172px; height:172px; }
+  .moon-halo{ position:absolute; inset:-52px; border-radius:50%; background:radial-gradient(circle, rgba(184,118,62,.16), rgba(139,92,246,.05) 55%, transparent 72%); filter:blur(2px); }
+  .moon-depth{ position:absolute; inset:10px; border-radius:50%; background:radial-gradient(circle at 32% 30%, rgba(226,232,240,.5), rgba(20,16,30,.85) 60%, #08060f 78%); filter:blur(14px); opacity:.55; transform:scale(1.12); }
+  .moon-object{ position:absolute; inset:0; border-radius:50%; overflow:hidden;
+    background:
+      radial-gradient(ellipse 58% 52% at 29% 26%, #fbfcff 0%, #e7ebf3 30%, #aab3c6 52%, #362f45 71%, #0c0913 85%),
+      radial-gradient(ellipse 46% 38% at 80% 85%, rgba(184,118,62,.9), transparent 50%),
+      radial-gradient(ellipse 40% 32% at 15% 12%, rgba(139,92,246,.52), transparent 42%);
+    background-blend-mode: normal, screen, screen;
+    box-shadow: inset -10px -8px 26px rgba(0,0,0,.4), inset 8px 6px 20px rgba(255,255,255,.08);
+  }
+  .grain-overlay{ position:absolute; inset:0; border-radius:50%; filter:url(#grain); opacity:.32; mix-blend-mode:overlay; pointer-events:none; }
+  .moon-dark{ position:absolute; width:100%; height:100%; border-radius:50%; background:#08060f; opacity:.88; left:-46%; top:0; }
+
+  .appearance{ margin-top:24px; font-family:var(--body); font-size:14px; color:#c7c2d6; line-height:1.68; text-align:center; padding:0 6px; }
+
+  .fields{ margin-top:30px; padding-top:22px; border-top:1px solid rgba(226,232,240,.08); }
+  .field{ padding:16px 0; border-top:1px solid rgba(226,232,240,.06); }
+  .field:first-child{ border-top:none; padding-top:0; }
+  .field-cap{ font-family:var(--serif-d-r); font-size:10.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--bronze-hi); opacity:.85; }
+  .field-body{ font-family:var(--body); font-size:13.5px; color:#cfcbdb; line-height:1.6; margin-top:7px; }
+  .field-body.affirm{ font-family:var(--body-i); font-style:italic; color:#e6e2f0; }
+
+  /* Closing invitation — this screen's own single exit, into the journal.
+     Reuses the Оракул ask-line device (question above, lit line below):
+     the journalPrompt is the enticement, «лунен дневник» (the diary's own
+     established name, from lunar-diary-v4) is the lit action. Still no
+     box/pill/border — a line, not a button. */
+  .journal-invite{ margin-top:auto; padding:28px 4px 30px; }
+  .journal-prompt{ font-family:var(--body-i); font-style:italic; font-size:13.5px; color:var(--muted); text-align:center; margin-bottom:16px; }
+  .ask-line{ position:relative; border-bottom:1px solid rgba(184,118,62,.5); padding-bottom:10px; display:flex; justify-content:center; align-items:baseline; gap:8px; }
+  .ask-line::after{ content:""; position:absolute; left:0; right:0; bottom:-6px; height:14px; background:linear-gradient(to right, transparent, rgba(184,118,62,.22), transparent); filter:blur(3px); pointer-events:none; }
+  .ask-line .lbl{ font-family:var(--serif-d-r); font-size:15px; color:var(--bronze-hi); letter-spacing:.01em; }
+  .ember{ display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--bronze-hi); box-shadow:0 0 8px 2px rgba(217,160,106,.7); animation:breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe{ 0%,100%{opacity:.5; transform:scale(.8);} 50%{opacity:1; transform:scale(1.15);} }
+
+  footer.doc{ margin-top:52px; padding:24px 0 40px; border-top:1px solid var(--page-border); font-size:12.5px; color:var(--page-muted); }
+  @media (prefers-reduced-motion: reduce){ .star, .ember{ animation:none !important; } }
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute;">
+  <filter id="grain">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="noise"/>
+    <feColorMatrix in="noise" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0"/>
+  </filter>
+</svg>
+<div class="wrap">
+<header class="doc">
+  <div class="eyebrow">Stellaeum — mockup, ratification pending</div>
+  <h1>Лунен детайл, designed from scratch</h1>
+  <div class="dek">Not LunarPhaseCard moved in — a complete object in dnes-v4's own warm language. Every string below is real: pulled from packages/core/src/lib/moon-phase.ts (waxing_gibbous), not invented.</div>
+</header>
+
+<section class="screen">
+  <div class="stitle"><h2>Лунен детайл — warm, expanded</h2><span class="temp warm">Warm</span></div>
+  <div class="stage">
+    <div class="phone-frame"><div class="phone-screen">
+      <div class="stars"></div>
+      <div class="warm-wash"></div>
+      <div class="detail-content">
+        <div class="section-caption">небесен ритъм</div>
+        <div class="moon-title">Растяща луна</div>
+        <div class="moon-sub">62% осветена · до пълнолуние: 5 дни</div>
+
+        <div class="moon-stage">
+          <div class="moon-halo"></div>
+          <div class="moon-depth"></div>
+          <div class="moon-object">
+            <div class="moon-dark"></div>
+            <div class="grain-overlay"></div>
+          </div>
+        </div>
+
+        <div class="appearance">Повече от половината лунна повърхност е осветена, но Луната още не е пълна. Осветената част продължава да расте и покрива все по-голяма част от диска. Нарича се още „млада луна", защото наближава пълнолунието.</div>
+
+        <div class="fields">
+          <div class="field">
+            <div class="field-cap">Най-добра за</div>
+            <div class="field-body">Усъвършенстване, настройка на детайлите, търпение преди върха.</div>
+          </div>
+          <div class="field">
+            <div class="field-cap">Афирмация</div>
+            <div class="field-body affirm">Постоянно се подобрявам и се движа към истинското си аз.</div>
+          </div>
+          <div class="field">
+            <div class="field-cap">Кристал</div>
+            <div class="field-body">Планинският кристал изяснява мислите и подготвя ума за успех.</div>
+          </div>
+          <div class="field">
+            <div class="field-cap">Ритуал</div>
+            <div class="field-body">Прегледай прогреса си, направи нужните корекции и запиши какво още трябва да се настрои.</div>
+          </div>
+        </div>
+
+        <div class="journal-invite">
+          <div class="journal-prompt">Какъв прогрес съм направил/а и какво още трябва да се настрои?</div>
+          <div class="ask-line"><span class="lbl">лунен дневник</span><span class="ember"></span></div>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="notes">
+      <h3>Read as an object, not a moved card</h3>
+      <p><span class="tag">hero</span> Same moon-object build as Днес (three layered gradients + depth-twin + grain), sized for a detail screen (172px, between Днес's top hero and небесен ритъм's mini). No pill card wrapping it — the moon sits in open space the way it does everywhere else in this system.</p>
+      <p><span class="tag">title</span> «Растяща луна» in the display face at 26px, starlight — this screen's own hero fact (the sky), same role dnes-v4's phase-mark plays, just larger since it IS the screen's subject here rather than a caption under a bigger hero.</p>
+      <p><span class="tag">fields</span> Best-for / Affirmation / Crystal / Ritual are typographic fields, not cards — a small tracked bronze caption (matches the app's own SECTION_CAPTION_STYLE) directly above each body line, separated by a single hairline (the same device Ритъм's upcoming-row list already uses), never a bordered box.</p>
+      <p><span class="tag">exit</span> journalPrompt + a lit «лунен дневник» line closes the screen — this screen's one exit, built from the Оракул ask-line device rather than a generic button, and it leads directly into artifact (c).</p>
+      <p style="color:#8f8aa0; font-size:12.5px;"><strong>Old-direction fix:</strong> no pill boxes, no small cramped type, no stray rules — everything here traces to a real design-language device already ratified elsewhere in this system (moon build, section captions, hairline field separators, ask-line exit), not a port of LunarPhaseCard.tsx.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="doc">Content source: packages/core/src/lib/moon-phase.ts, PHASE_META.waxing_gibbous (name, physicalAppearance, bestFor, affirmation, crystal, ritual, journalPrompt). Caption source: index.tsx's «небесен ритъм» section caption, reused. «лунен дневник» from lunar-diary-v4.html's own label-mark.</footer>
+</div>
+</body>
+</html>

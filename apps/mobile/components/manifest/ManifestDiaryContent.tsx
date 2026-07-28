@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 
 import { getLunarPhase, type LunarPhase } from '@stellaeum/core/moon-phase'
 
 import { ManifestEntryForm } from './ManifestEntryForm'
 import { ManifestHistory } from './ManifestHistory'
-import { pressFeedback } from '@/components/design-system/tokens'
+import { MoonGlyph } from '@/components/dashboard/MoonGlyph'
+import { color, font, pressFeedback, rhythm } from '@/components/design-system/tokens'
 import { useManifestEntries } from '@/hooks/useManifestEntries'
 import { shareDiaryMarkdown } from '@/lib/diary/export'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
@@ -75,70 +75,44 @@ export function ManifestDiaryContent() {
 
   return (
     <View>
-      {/* Editorial hero with ambient SVG atmosphere (HT 7 — radial-gradient
-          overlays mirror P.2-e WheelArrivalContainer pattern; static opacity
-          rather than animated). */}
-      <View className="relative mb-12">
-        <View
-          pointerEvents="none"
-          className="absolute"
-          style={{ left: -120, top: -120, width: 360, height: 360, opacity: 0.7 }}
+      {/* Hero rebuilt from scratch against journal-v1.html (ratified) —
+          extends lunar-diary-v4.html's own read-mode language (mini-moon +
+          dateline, warm-with-one-cool-touch) rather than the SVG-gradient
+          hero + static "Три реда, един цикъл" tagline this screen carried
+          before. The per-phase heading/lead (ManifestEntryForm, below) now
+          carry the role that static tagline used to — no duplicate
+          headline. rhythm.tsx was not open while designing this. */}
+      <View style={{ marginBottom: rhythm.group, alignItems: 'center' }}>
+        {/* Founder correction (this batch, round 6): matched to chart.tsx's
+            «натална карта» specimen label — same 13px/0.32 letterSpacing
+            treatment, the app's actual dominant heading convention.
+            Founder correction (this batch, round 7): color corrected to
+            bronze (color.bronzeText). «натална карта» itself stays faint
+            deliberately — chart.tsx documents Карта as a COOL-temperature
+            screen where bronze is reserved for the invite/pedestal
+            fittings only. This screen (Лунен дневник) is warm, same as
+            Днес, where bronze IS the caption/heading color — matching
+            faint here would've copied a cool-screen rule onto a warm
+            screen. Still centered (round 3) — the floating BackButton
+            sits top-left of every pushed screen and would otherwise
+            overlap a left-aligned label. */}
+        <Text
+          style={{
+            fontFamily: font.displayRegular,
+            fontSize: 13,
+            letterSpacing: 0.32,
+            color: color.bronzeText,
+            textTransform: 'uppercase',
+            textAlign: 'center',
+          }}
         >
-          <Svg width={360} height={360}>
-            <Defs>
-              <RadialGradient id="diaryHeroViolet" cx="50%" cy="50%" r="50%">
-                <Stop offset="0%"  stopColor="rgba(167,139,250,1)" stopOpacity="0.10" />
-                <Stop offset="55%" stopColor="rgba(167,139,250,1)" stopOpacity="0.04" />
-                <Stop offset="85%" stopColor="rgba(0,0,0,0)"        stopOpacity="0" />
-              </RadialGradient>
-            </Defs>
-            <Rect x="0" y="0" width="360" height="360" fill="url(#diaryHeroViolet)" />
-          </Svg>
-        </View>
-        <View
-          pointerEvents="none"
-          className="absolute"
-          style={{ right: -80, top: 40, width: 220, height: 220, opacity: 0.6 }}
-        >
-          <Svg width={220} height={220}>
-            <Defs>
-              <RadialGradient id="diaryHeroAmber" cx="50%" cy="50%" r="50%">
-                <Stop offset="0%"  stopColor="rgba(251,191,36,1)" stopOpacity="0.07" />
-                <Stop offset="55%" stopColor="rgba(251,191,36,1)" stopOpacity="0.025" />
-                <Stop offset="85%" stopColor="rgba(0,0,0,0)"       stopOpacity="0" />
-              </RadialGradient>
-            </Defs>
-            <Rect x="0" y="0" width="220" height="220" fill="url(#diaryHeroAmber)" />
-          </Svg>
-        </View>
-
-        <View className="flex-row items-center" style={{ gap: 12 }}>
-          <View className="h-px w-5 bg-slate-300/40" />
-          <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
-            Лунен дневник · Манифестация
-          </Text>
-        </View>
-
-        <Text className="mt-5 text-[28px] leading-[1.2] tracking-tight">
-          <Text className="font-light text-slate-300">Три реда, </Text>
-          <Text className="font-semibold text-amber-200/95">един цикъл.</Text>
+          лунен дневник
         </Text>
-
-        <Text className="mt-5 text-[15.5px] font-light leading-[1.85] text-slate-300">
-          Стара практика, пренаписана за този цикъл: ден след ден, по три реда, водени от луната. Нарастващата половина сее намерения; намаляващата освобождава и благодари.
-        </Text>
-
-        <View className="mt-6 flex-row flex-wrap items-center" style={{ gap: 10 }}>
-          <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-slate-300">
-            {todayFormatted}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 }}>
+          <MoonGlyph illumination={phase.illumination} isWaxing={phase.isWaxing} size={20} animated={false} outlineWidth={0} darkOpacity={0.85} />
+          <Text style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 0.4, color: color.cool }}>
+            {todayFormatted} · {phase.name.toLowerCase()}
           </Text>
-          <View className="h-[3px] w-[3px] rotate-45 bg-slate-400/80" />
-          <View className="flex-row items-center" style={{ gap: 6 }}>
-            <Text className="text-[12px] leading-none text-amber-200/90">☾</Text>
-            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-200/90">
-              {phase.name} · {phase.illumination}%
-            </Text>
-          </View>
         </View>
       </View>
 
@@ -169,7 +143,6 @@ export function ManifestDiaryContent() {
         ) : (
           <ManifestEntryForm
             phase={phase}
-            today={todayFormatted}
             existing={existingToday}
             entryCountForPhase={entryCountForPhase}
             onSave={handleSave}
@@ -177,20 +150,27 @@ export function ManifestDiaryContent() {
         )}
       </View>
 
+      {/* Founder correction (this batch): both blocks below still carried
+          font-cinzel on Bulgarian text — Cinzel has no Cyrillic glyphs
+          (see tokens.ts's own warning), so "Предишни страници"/"Сподели
+          дневника"/the guide sentence were silently rendering in a
+          fallback font, not a style choice. Rebuilt in the same token
+          family as the rest of this redesign (font.displayRegular for
+          tracked caps, font.body for reading text, color.bronzeText for
+          the one live link) instead of nativewind's slate/amber classes. */}
       <View>
-        <View className="mb-6 flex-row items-baseline" style={{ gap: 16 }}>
-          <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 16, marginBottom: rhythm.paragraph }}>
+          <Text style={{ fontFamily: font.displayRegular, fontSize: 12, letterSpacing: 1.68, textTransform: 'uppercase', color: color.bronzeText }}>
             Предишни страници
           </Text>
-          <View className="h-px flex-1 bg-slate-300/15" />
-          <Text className="font-cinzel text-[9.5px] text-slate-500">
+          <View style={{ height: 1, flex: 1, backgroundColor: 'rgba(226,232,240,0.1)' }} />
+          <Text style={{ fontFamily: font.mono, fontSize: 10, color: color.faint }}>
             {entries.length} {entries.length === 1 ? 'запис' : 'записа'}
           </Text>
           {entries.length > 0 && (
             <Pressable onPress={handleShare} hitSlop={8} style={({ pressed }) => pressFeedback(pressed)}>
-              <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-slate-500">
-                <Text className="mr-1 text-slate-400">↗</Text>
-                Сподели дневника
+              <Text style={{ fontFamily: font.displayRegular, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: color.faint }}>
+                ↗ Сподели дневника
               </Text>
             </Pressable>
           )}
@@ -201,13 +181,10 @@ export function ManifestDiaryContent() {
         )}
       </View>
 
-      <View className="mt-16 border-t border-slate-300/[0.07] pt-8">
-        <Text className="text-[14px] font-light leading-[1.85] text-slate-500">
+      <View style={{ marginTop: rhythm.group + 24, borderTopWidth: 1, borderTopColor: 'rgba(226,232,240,0.08)', paddingTop: rhythm.paragraph }}>
+        <Text style={{ fontFamily: font.body, fontSize: 14, lineHeight: 23.8, color: color.faint }}>
           За повече за лунните фази — задача и облик за всяка — виж{' '}
-          <Text
-            onPress={() => push('/you/guide')}
-            className="font-medium text-amber-300 underline"
-          >
+          <Text onPress={() => push('/you/guide')} style={{ fontFamily: font.bodyMedium, color: color.bronzeText }}>
             Ръководството
           </Text>
           .

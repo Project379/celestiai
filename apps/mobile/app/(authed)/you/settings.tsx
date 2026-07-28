@@ -2,11 +2,15 @@ import { useClerk } from '@clerk/expo'
 import Constants from 'expo-constants'
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Animated from 'react-native-reanimated'
 
+import { BackButton } from '@/components/design-system/BackButton'
 import { pressFeedback } from '@/components/design-system/tokens'
+import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
 import { useAccountDeletion } from '@/hooks/useAccountDeletion'
 import { useApiClient } from '@/lib/api/client'
 import { shareAccountExport } from '@/lib/gdpr/export'
+import { hapticSelect } from '@/lib/haptics'
 
 const PRIVACY_URL = 'https://stellaeum.com/privacy'
 
@@ -82,18 +86,31 @@ export default function SettingsScreen() {
   const deletionPending = Boolean(status.data?.deletionScheduledAt)
   const appVersion = Constants.expoConfig?.version ?? '—'
 
+  const backVisibility = useBackButtonVisibility()
+
   return (
-    <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
+    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
+      <Animated.View
+        style={[{ position: 'absolute', top: 0, left: 0, zIndex: 10 }, backVisibility.style]}
+        pointerEvents={backVisibility.pointerEvents}
+      >
+        <BackButton />
+      </Animated.View>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 80 }}
+        onScroll={backVisibility.onScroll}
+        scrollEventThrottle={100}
       >
         <View className="mb-10">
           <Text className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-400">
             Данни и акаунт
           </Text>
           <Pressable
-            onPress={handleExport}
+            onPress={() => {
+              hapticSelect()
+              handleExport()
+            }}
             className="flex-row items-center justify-between border-b border-slate-800/60 py-4"
             style={({ pressed }) => pressFeedback(pressed)}
           >
@@ -101,7 +118,10 @@ export default function SettingsScreen() {
             <Text className="text-[14px] text-slate-500">›</Text>
           </Pressable>
           <Pressable
-            onPress={handleDeleteAccount}
+            onPress={() => {
+              hapticSelect()
+              handleDeleteAccount()
+            }}
             disabled={deletionPending}
             className="flex-row items-center justify-between py-4"
             style={({ pressed }) => pressFeedback(pressed)}
@@ -118,7 +138,10 @@ export default function SettingsScreen() {
             Правно
           </Text>
           <Pressable
-            onPress={() => Linking.openURL(PRIVACY_URL)}
+            onPress={() => {
+              hapticSelect()
+              Linking.openURL(PRIVACY_URL)
+            }}
             className="flex-row items-center justify-between border-b border-slate-800/60 py-4"
             style={({ pressed }) => pressFeedback(pressed)}
           >
@@ -128,7 +151,10 @@ export default function SettingsScreen() {
         </View>
 
         <Pressable
-          onPress={handleSignOut}
+          onPress={() => {
+            hapticSelect()
+            handleSignOut()
+          }}
           accessibilityRole="button"
           accessibilityLabel="Излез"
           className="mt-16 self-center rounded-2xl border border-slate-700/60 px-8 py-3"

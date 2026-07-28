@@ -1,10 +1,14 @@
 import type { ComponentProps, ReactNode } from 'react'
 import { useState } from 'react'
-import { ScrollView, View, type LayoutChangeEvent } from 'react-native'
+import { ScrollView, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import Animated from 'react-native-reanimated'
 import Svg, { Defs, Ellipse, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg'
 
+import { AmbientBackground } from './AmbientBackground'
+import { BackButton } from './BackButton'
 import { color, space } from './tokens'
+import { useBackButtonVisibility } from './useBackButtonVisibility'
 import { PERF_DEBUG } from '@/lib/perfDebug'
 
 type Temperature = 'warm' | 'cool' | 'neutral'
@@ -83,6 +87,18 @@ export function ScreenShell({
   children,
   temperature = 'neutral',
   pinnedBottom,
+  // Founder correction (this batch) — the Stack header (box + back
+  // button + shadow line) is gone on every pushed screen; opt-in here
+  // rather than always-on because ScreenShell also backs the three TAB
+  // roots (Днес/Карта/Ритъм), which have no "back" to offer.
+  back = false,
+  // Founder correction (this batch) — moon-detail is the one ScreenShell
+  // consumer that lives outside the (tabs) group, so it never got the
+  // AmbientBackground the three tab roots already share (mounted once at
+  // (tabs)/_layout.tsx, above all of them). Opt-in for the same reason
+  // `back` is: mounting it unconditionally here would double-render stars
+  // behind Днес/Карта/Ритъм.
+  stars = false,
   // TEMPORARY (2026-07-27) — item 1 investigation only, lets a call site
   // re-measure content position on demand while scrolled (onLayout alone
   // only fires on mount/relayout, not on scroll). Delete once that
@@ -92,6 +108,8 @@ export function ScreenShell({
   children: ReactNode
   temperature?: Temperature
   pinnedBottom?: ReactNode
+  back?: boolean
+  stars?: boolean
   onScroll?: ComponentProps<typeof ScrollView>['onScroll']
 }) {
   const insets = useSafeAreaInsets()
@@ -99,6 +117,7 @@ export function ScreenShell({
   const [pinnedHeight, setPinnedHeight] = useState(0)
   const washLayers = WASH_SPEC[temperature]
   const tabBarClearance = TAB_BAR_BASE_HEIGHT + insets.bottom + TAB_BAR_CLEARANCE
+  const backVisibility = useBackButtonVisibility()
 
   const onShellLayout = (e: LayoutChangeEvent) =>
     setShellSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })
@@ -116,6 +135,15 @@ export function ScreenShell({
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'transparent' }} onLayout={onShellLayout}>
+      {stars && PERF_DEBUG.ambientStarfield && <AmbientBackground />}
+      {back && (
+        <Animated.View
+          style={[{ position: 'absolute', top: 0, left: 0, zIndex: 10 }, backVisibility.style]}
+          pointerEvents={backVisibility.pointerEvents}
+        >
+          <BackButton />
+        </Animated.View>
+      )}
       {/* BUG FIX (founder device-pass, 2026-07-27): this was capped at a
           fixed 220px tall, inherited unchanged from the pre-Stage-2 shell
           that only ever drew a top-corner glow. The mockup's `.warm-wash`/
@@ -167,8 +195,11 @@ export function ScreenShell({
           // either.
           paddingBottom: tabBarClearance + (pinnedBottom ? pinnedHeight : 0),
         }}
-        onScroll={onScroll}
-        scrollEventThrottle={onScroll ? 100 : undefined}
+        onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+          onScroll?.(e)
+          if (back) backVisibility.onScroll(e)
+        }}
+        scrollEventThrottle={onScroll || back ? 100 : undefined}
       >
         {children}
       </ScrollView>

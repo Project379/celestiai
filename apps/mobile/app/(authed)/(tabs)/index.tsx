@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import Animated, { Easing, useAnimatedStyle } from 'react-native-reanimated'
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
+import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import { useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useUser } from '@clerk/expo'
@@ -15,6 +15,7 @@ import type { Planet } from '@stellaeum/astrology/client'
 import { MoonHero } from '@/components/dashboard/MoonHero'
 import { CtaPanel } from '@/components/design-system/CtaPanel'
 import { LeadLine } from '@/components/design-system/LeadLine'
+import { useBreathe } from '@/components/design-system/motion'
 import { ScreenShell } from '@/components/design-system/ScreenShell'
 import { color, font, pressFeedback, rhythm, type } from '@/components/design-system/tokens'
 import { EmptyState, ErrorState, LoadingState } from '@/components/design-system/States'
@@ -150,6 +151,15 @@ export default function DnesScreen() {
   const { apiFetch } = useApiClient()
   const { user } = useUser()
   const insets = useSafeAreaInsets()
+  // «Повече детайли» ember (this batch) — user feedback: it didn't read
+  // as tappable at all next to CtaPanel's own invitations. Breathing dot,
+  // same primitive CtaPanel/Pedestal/BackButton already use — pressed
+  // state tracked via onPressIn/onPressOut on a STATIC style object, not
+  // Pressable's function-style `style` prop, per the standing "function-
+  // style silently drops layout props on some platforms" note documented
+  // on CtaPanel.tsx/Pedestal.tsx.
+  const detailLinkBreathe = useBreathe(2600, [0.5, 1])
+  const [detailLinkPressed, setDetailLinkPressed] = useState(false)
   // Founder correction (2026-07-28, FOURTH pass on this element): pinning
   // is gone again — reported as "another layer added on top," a hard edge
   // above the phrase, and reading as boxed rather than floating. Back to
@@ -164,49 +174,29 @@ export default function DnesScreen() {
   // statically present. Implemented as a fade+rise driven by the invite's
   // own position (tracked via measureInWindow, which already reflects
   // live scroll position) relative to the visible viewport. Extracted into
-  // `useScrollReveal` (this batch) so небесен ритъм's own fragments (the
-  // caption, the moon, the meteor note) can each reveal independently the
-  // same way, not just this one invite.
+  // `useScrollReveal` so небесен ритъм's own fragments (the caption, the
+  // moon, the meteor note) can each reveal independently the same way.
+  //
+  // Founder correction, round 7 (this batch) — небесен ритъм must wait
+  // for дневен хороскоп to be ready WITHOUT repeating round 3's mistake.
+  // Round 3 gated the whole block behind a JSX condition
+  // (`{chart && !horoscope.isLoading && (...)}`), which conditionally
+  // MOUNTED it — delaying the moon's first onLayout past the point where
+  // measureInWindow reliably returns a settled position, so it got stuck
+  // permanently invisible with no automatic retry. Fixed this round as a
+  // pure opacity GATE instead of a mount condition (see `horoscopeReady`
+  // and the reveal styles below, defined after `chart`/`horoscope` exist):
+  // the block stays unconditionally mounted, exactly like the last
+  // known-working version, so its onLayout/measureInWindow pipeline is
+  // completely untouched — the gate is multiplied INTO the existing
+  // reveal styles, not a replacement for them.
   const ctaReveal = useScrollReveal(TAB_BAR_BASE_HEIGHT, insets.bottom)
-  // небесен ритъм fragments (this batch) — "treat each part like the Ask-
-  // the-Oracle invite": each gets its OWN reveal target, so the moon and
-  // the meteor note (when present) fade/rise into view as the user scrolls
-  // to each, instead of the whole block appearing at once. The moon gets a
-  // bespoke overshoot-scale reveal (see moonRevealStyle below) rather than
-  // the plain fade+rise the text fragments use — it's the screen's one
-  // hero glyph, so its entrance gets its own "pretty" treatment, not the
-  // generic text animation.
   const moonReveal = useScrollReveal(TAB_BAR_BASE_HEIGHT, insets.bottom, {
     duration: 650,
     revealEasing: Easing.out(Easing.back(1.6)),
     hideEasing: Easing.in(Easing.cubic),
   })
   const meteorReveal = useScrollReveal(TAB_BAR_BASE_HEIGHT, insets.bottom)
-  // Moon-specific animated style — founder device-pass fix (this batch):
-  // reported as reading identically to the plain text fade+rise. Root
-  // cause was scale magnitude: 0.82→1.0 is only an 18% swing, so even with
-  // the back-easing overshoot the pop was ~2-3% of scale — invisible.
-  // Widened to 0.5→1.0 (a real "coming into focus" swing) and added a
-  // slight rotate-in (-14°→0°) so the difference from the text fragments'
-  // opacity+translateY-only style is unmistakable even at a glance, not
-  // just technically present. translateY dropped — scale+rotate alone
-  // already read as a distinct, bespoke entrance.
-  const moonRevealStyle = useAnimatedStyle(() => {
-    const p = moonReveal.progress.value
-    return {
-      opacity: Math.min(p, 1),
-      transform: [{ scale: 0.5 + 0.5 * p }, { rotate: `${(1 - Math.min(p, 1)) * -14}deg` }],
-    }
-  })
-  // Founder device-pass fix (this batch): the "небесен ритъм" caption had
-  // its own independent scroll-reveal target — asked to instead fade
-  // in/out driven BY the moon, not on its own separate visibility check.
-  // No separate ref/check needed: it just reads moonReveal's own progress
-  // value, so the two are always in lockstep by construction, not two
-  // similar-but-separately-timed animations.
-  const rhythmHeadingRevealStyle = useAnimatedStyle(() => ({
-    opacity: Math.min(moonReveal.progress.value, 1),
-  }))
   const checkAllReveals = useCallback(() => {
     ctaReveal.check()
     moonReveal.check()
@@ -223,6 +213,53 @@ export default function DnesScreen() {
 
   const [chart, setChart] = useState<ChartSummary | null | undefined>(undefined)
   const horoscope = useDailyHoroscope(chart?.id)
+
+  // небесен ритъм's readiness gate (round 7) — see the header comment
+  // above `ctaReveal`. Plain JS boolean, not a shared value: read directly
+  // inside each worklet below, Reanimated's babel plugin picks it up as a
+  // captured dependency automatically (same as it already does for
+  // `moonReveal.progress`), so these styles recompute whenever it flips.
+  const horoscopeReady = !!chart && !horoscope.isLoading
+  // Moon-specific animated style: scale+rotate overshoot ("landing into
+  // place"), since it's the screen's one hero glyph and deserves its own
+  // entrance, not the generic text fade+rise. Gated on `horoscopeReady`:
+  // forced to 0 while horoscope is still loading, regardless of how far
+  // the user has already scrolled — the moment it flips ready, this reads
+  // whatever scroll progress was already computed (the block was mounted
+  // and measuring the whole time), no re-scroll needed.
+  const moonRevealStyle = useAnimatedStyle(() => {
+    const p = Math.min(moonReveal.progress.value, 1) * (horoscopeReady ? 1 : 0)
+    return {
+      opacity: p,
+      transform: [{ scale: 0.5 + 0.5 * p }, { rotate: `${(1 - p) * -14}deg` }],
+    }
+  })
+  // The "небесен ритъм" caption fades in/out driven BY the moon's own
+  // reveal progress, not its own separate scroll check — the two are
+  // meant to appear together. Shape unchanged from the last known-working
+  // version (opacity only) — only the gate is new.
+  const rhythmHeadingRevealStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(moonReveal.progress.value, 1) * (horoscopeReady ? 1 : 0),
+  }))
+  // «Повече детайли» + its thread (this batch) — asked to animate/render
+  // together with небесен ритъм rather than appear as a static, unrevealed
+  // Pressable. Reads the SAME moon progress + gate as the caption above
+  // (not its own independent scroll target), so all three — moon, caption,
+  // this link — move in lockstep. Fade+rise, same shape the meteor note
+  // and every other text-fragment reveal in this system already uses.
+  const detailLinkRevealStyle = useAnimatedStyle(() => {
+    const p = Math.min(moonReveal.progress.value, 1) * (horoscopeReady ? 1 : 0)
+    return { opacity: p, transform: [{ translateY: (1 - p) * 12 }] }
+  })
+  // Meteor note keeps its own independent scroll target (unchanged), just
+  // gated the same way so the whole небесен ритъм block waits together.
+  const meteorRevealStyle = useAnimatedStyle(() => {
+    const gate = horoscopeReady ? 1 : 0
+    return {
+      opacity: meteorReveal.progress.value * gate,
+      transform: [{ translateY: (1 - meteorReveal.progress.value) * 20 }],
+    }
+  })
 
   // Content addition (2026-07-28) — web's Небесен ритъм block is prose:
   // lunar phase, meteor shower, sky note; mobile previously showed only
@@ -409,21 +446,19 @@ export default function DnesScreen() {
           block (DashboardContent.tsx), not invented copy. Now context
           underneath the horoscope+sign (IA reorder, this batch) — the
           section divider (SectionDivider) renders as its own element
-          before this, not a border on the Animated.View itself, so the
-          scroll-reveal fade doesn't also animate the divider line. The
-          caption fades in/out driven by the MOON's own reveal progress
-          (rhythmHeadingRevealStyle), not its own separate scroll check —
-          the two are meant to appear together, not as two independently-
-          timed animations that happen to look similar. */}
+          before this.
+          Round 5: reverted round 3's mount-gate (it broke reveal — see
+          history in git blame if needed) back to unconditional mounting.
+          Round 7 (this batch): небесен ритъм now DOES wait for дневен
+          хороскоп again, but as a pure opacity gate multiplied into these
+          same reveal styles (`horoscopeReady`, defined above with
+          moonRevealStyle/rhythmHeadingRevealStyle) — NOT a mount
+          condition. The block below is still unconditionally mounted,
+          exactly as round 5 left it; only the animated styles changed. */}
       <SectionDivider />
       <Animated.View style={rhythmHeadingRevealStyle}>
         <Text style={SECTION_CAPTION_STYLE}>небесен ритъм</Text>
       </Animated.View>
-      {/* The moon gets a bespoke reveal (moonRevealStyle) instead of the
-          plain fade+rise the text fragments use — a gentle overshoot
-          scale-in ("landing into place"), since it's the screen's one
-          hero glyph and deserves its own entrance, not the generic text
-          animation. */}
       <Animated.View ref={moonReveal.ref} onLayout={moonReveal.check} style={moonRevealStyle}>
         <MoonHero
           illumination={lunarPhase.illumination}
@@ -432,15 +467,16 @@ export default function DnesScreen() {
           subLabel={`${lunarPhase.illumination}% осветена · до ${lunarPhase.nextMajor.name.toLowerCase()}: ${formatDaysHours(lunarPhase.nextMajor.daysAway)}`}
         />
       </Animated.View>
-      {/* Content addition (2026-07-28) — the rest of web's Небесен ритъм
-          prose (meteorNote only; the lunar sentence is NOT ported here,
-          it would duplicate the data line above). Only renders on days
-          with an active shower, same as web — most days this is null. */}
+      {/* Content addition (2026-07-28) — the rest of web's Небесен
+          ритъм prose (meteorNote only; the lunar sentence is NOT
+          ported here, it would duplicate the data line above). Only
+          renders on days with an active shower, same as web — most
+          days this is null. */}
       {meteorText && (
         <Animated.View
           ref={meteorReveal.ref}
           onLayout={meteorReveal.check}
-          style={[{ marginTop: rhythm.tight }, meteorReveal.style]}
+          style={[{ marginTop: rhythm.tight }, meteorRevealStyle]}
         >
           <Text
             style={{
@@ -453,6 +489,135 @@ export default function DnesScreen() {
           >
             {meteorText}
           </Text>
+        </Animated.View>
+      )}
+
+      {/* «Повече детайли» — founder correction (this batch): CtaPanel made
+          it render as a peer of «Питай Оракула» (same glow/ember/scale),
+          which destroys the hierarchy — «Питай Оракула» is the screen's
+          one exit, «Повече детайли» is a subordinate link belonging to
+          the небесен ритъм block above it, not a second invitation.
+          Rebuilt as its own small device, deliberately UNDER-signaled
+          relative to CtaPanel at the time.
+          Founder correction (this batch, round 8 — real user feedback,
+          not a device-pass guess): that under-signaling went too far —
+          it didn't read as tappable AT ALL next to «Питай Оракула».
+          Added the two things that actually say "alive, tap here"
+          elsewhere in this system: a small breathing bronze ember (left
+          of the label, same EmberGlow-style radial-gradient technique
+          CtaPanel/Pedestal use, sized down) and a soft bronze glow behind
+          the whole row. Font size is UNCHANGED (still 13px, per explicit
+          instruction) — the differentiation from CtaPanel is now purely
+          weight/scale (13px vs CtaPanel's 20px, a smaller ember, a
+          tighter glow, no scale-on-press, no display-SEMIbold), not
+          "does it look tappable at all." The bronze thread-above device
+          is gone — replaced by the ember, which already carries the
+          "this is lit" signal on its own.
+          Reverted (round 5): the `!horoscope.isLoading` MOUNT gate from
+          round 3 is gone — back to `chart` only.
+          Round 7: animates in together with небесен ритъм via
+          `detailLinkRevealStyle` (reads the same moon progress +
+          horoscope gate as the caption) — unchanged this round.
+          Ratified base layout: .planning/design/mockups/
+          dnes-povece-detaili-v1.html — this round's ember/glow addition
+          is a founder correction on top of that mockup, not a
+          re-ratified design.
+          Founder correction (this batch, round 9 — user feedback: two
+          buttons sitting right next to each other with nothing tying the
+          top one to небесен ритъм specifically): added a hint line, same
+          italic/muted/centered device this same screen already uses for
+          «Плъзни надолу, за да попиташ Оракула» — that precedent points
+          at ITS destination by naming it; this one does the same, naming
+          «Повече детайли» directly since the button sits right below it.
+          Spacing is the other half of the fix: the hint gets
+          rhythm.paragraph off the meteor/moon content above (same gap the
+          old thread-less button used to get), and the button itself now
+          gets only rhythm.tight off the hint — visually binding hint+
+          button into one attached unit, while «Питай Оракула» below
+          keeps its own separate rhythm.group gap. Two different gap
+          sizes between three elements is itself part of the signal: tight
+          = belongs together, group = new section. */}
+      {chart && (
+        <Animated.View style={detailLinkRevealStyle}>
+          <Text
+            style={{
+              fontFamily: 'EBGaramond-Italic',
+              fontStyle: 'italic',
+              fontSize: 14,
+              lineHeight: 20,
+              color: color.faint,
+              textAlign: 'left',
+              marginTop: rhythm.paragraph,
+            }}
+          >
+            За целия лунен профил — докосни «Повече детайли» по-долу.
+          </Text>
+          <Pressable
+            onPress={() => {
+              hapticSelect()
+              push('/moon-detail')
+            }}
+            onPressIn={() => setDetailLinkPressed(true)}
+            onPressOut={() => setDetailLinkPressed(false)}
+            accessibilityRole="button"
+            style={{
+              ...pressFeedback(detailLinkPressed),
+              marginTop: rhythm.tight,
+              flexDirection: 'row',
+              alignItems: 'center',
+              alignSelf: 'flex-start',
+              gap: 8,
+              paddingVertical: 14,
+              position: 'relative',
+            }}
+          >
+            {/* Founder correction (this batch, round 10): the ambient
+                glow behind the whole row is gone — it made this read too
+                close to a 1:1 miniature of CtaPanel. The ember keeps its
+                own small point-glow (that's what makes it read as lit at
+                all, not a dead flat dot) but there's no longer a second,
+                bigger glow bleeding into the row around it — one glow
+                layer here, CtaPanel gets two (row glow + ember glow). */}
+            <View style={{ width: 14, height: 14, alignItems: 'center', justifyContent: 'center' }}>
+              <Svg width={14} height={14} style={{ position: 'absolute' }} pointerEvents="none">
+                <Defs>
+                  <RadialGradient id="detail-link-ember-glow" cx="50%" cy="50%" r="50%">
+                    <Stop offset="0%" stopColor={color.bronze} stopOpacity={0.85} />
+                    <Stop offset="35%" stopColor={color.bronze} stopOpacity={0.4} />
+                    <Stop offset="100%" stopColor={color.bronze} stopOpacity={0} />
+                  </RadialGradient>
+                </Defs>
+                <Circle cx={7} cy={7} r={7} fill="url(#detail-link-ember-glow)" />
+              </Svg>
+              <Animated.View
+                style={[
+                  {
+                    width: 4,
+                    height: 4,
+                    borderRadius: 2,
+                    backgroundColor: color.bronze,
+                    shadowColor: color.bronze,
+                    shadowOpacity: 0.9,
+                    shadowRadius: 5,
+                    shadowOffset: { width: 0, height: 0 },
+                  },
+                  detailLinkBreathe,
+                ]}
+              />
+            </View>
+            <Text
+              style={{
+                fontFamily: font.displayRegular,
+                fontSize: 13,
+                letterSpacing: 2.08,
+                textTransform: 'uppercase',
+                color: color.bronzeText,
+                opacity: 0.85,
+              }}
+            >
+              Повече детайли
+            </Text>
+          </Pressable>
         </Animated.View>
       )}
 

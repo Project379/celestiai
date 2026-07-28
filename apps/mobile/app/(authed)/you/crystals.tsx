@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Animated from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
 
 import { CrystalCollectionContent } from '@/components/crystals/CrystalCollectionContent'
+import { BackButton } from '@/components/design-system/BackButton'
 import { pressFeedback } from '@/components/design-system/tokens'
+import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
 import { CrystalDetailPanel } from '@/components/crystals/CrystalDetailPanel'
 import { CrystalOfTheDayCard } from '@/components/crystals/CrystalOfTheDayCard'
 import { useCollectCrystal } from '@/hooks/useCollectCrystal'
@@ -43,11 +46,21 @@ export default function CrystalsScreen() {
     ? (overview?.collection.some((c) => c.crystal_id === selected.id) ?? false)
     : false
 
+  const backVisibility = useBackButtonVisibility()
+
   return (
-    <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
+    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
+      <Animated.View
+        style={[{ position: 'absolute', top: 0, left: 0, zIndex: 10 }, backVisibility.style]}
+        pointerEvents={backVisibility.pointerEvents}
+      >
+        <BackButton />
+      </Animated.View>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 80 }}
+        onScroll={backVisibility.onScroll}
+        scrollEventThrottle={100}
       >
         <Text className="mb-8 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-300">
           Кристали · Лунна колекция

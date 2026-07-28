@@ -1,20 +1,27 @@
-import { Redirect, Stack, useNavigation, useRouter } from 'expo-router'
+import { Redirect, useNavigation, useRouter } from 'expo-router'
 import { useEffect } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Animated from 'react-native-reanimated'
 
 import { CapReachedNotice } from '@/components/oracle/CapReachedNotice'
 import { ReadingBody } from '@/components/oracle/ReadingBody'
 import { TopicCards } from '@/components/oracle/TopicCards'
+import { BackButton } from '@/components/design-system/BackButton'
+import { pressFeedback } from '@/components/design-system/tokens'
+import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useOracleReading } from '@/hooks/useOracleReading'
-import { pressFeedback } from '@/components/design-system/tokens'
 import { maybePromptPushPermission } from '@/lib/notifications/maybePromptPushPermission'
 
 /**
- * Mobile Oracle screen — full-screen route under (authed) with the
- * Stack header from the parent layout providing the «Оракул» title +
- * native back button. Mirrors apps/web/components/oracle/OraclePanelGlobal.tsx
+ * Mobile Oracle screen — full-screen route under (authed). Founder
+ * correction (this batch): the Stack header (title + native back button)
+ * is gone — apps/mobile/app/(authed)/_layout.tsx renders no header at
+ * all now. BackButton (design-system/BackButton.tsx) replaces it, wired
+ * to `handleHeaderBack` below so the "clear active reading, don't pop the
+ * screen" behavior this screen already depended on keeps working exactly
+ * as before. Mirrors apps/web/components/oracle/OraclePanelGlobal.tsx
  * composition (TopicCards → ReadingBody / CapReachedNotice / loading)
  * minus web's modal overlay, streaming cursor, and dead
  * LockedTopicTeaser path (REVISIT-23 logs the web parity gap).
@@ -30,7 +37,11 @@ export default function OracleScreen() {
   // While useFirstChart resolves, render an empty surface so the
   // header animates in cleanly without a flash of fallback content.
   if (firstChart.isLoading) {
-    return <SafeAreaView edges={['bottom']} className="flex-1 bg-bg" />
+    return (
+      <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
+        <BackButton />
+      </SafeAreaView>
+    )
   }
 
   // No chart → user shouldn't be here. The OracleEntry FAB hides
@@ -88,27 +99,20 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
     })
   }, [navigation, activeTopic, clearActiveTopic])
 
+  const backVisibility = useBackButtonVisibility()
+
   return (
-    <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
-      <Stack.Screen
-        options={{
-          headerLeft: () => (
-            <Pressable
-              onPress={handleHeaderBack}
-              accessibilityRole="button"
-              accessibilityLabel={activeTopic ? 'Назад към темите' : 'Назад'}
-              hitSlop={12}
-              style={({ pressed }) => ({ ...pressFeedback(pressed), paddingLeft: 16 })}
-            >
-              <Text style={{ color: '#fcd34d', fontSize: 28, lineHeight: 28 }}>
-                ‹
-              </Text>
-            </Pressable>
-          ),
-        }}
-      />
+    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
+      <Animated.View
+        style={[{ position: 'absolute', top: 0, left: 0, zIndex: 10 }, backVisibility.style]}
+        pointerEvents={backVisibility.pointerEvents}
+      >
+        <BackButton onPress={handleHeaderBack} />
+      </Animated.View>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48 }}
+        onScroll={backVisibility.onScroll}
+        scrollEventThrottle={100}
       >
         <View className="mb-5">
           <View

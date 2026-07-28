@@ -1,5 +1,9 @@
 import { ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Animated from 'react-native-reanimated'
+
+import { BackButton } from '@/components/design-system/BackButton'
+import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
 
 /**
  * /you/premium — P.5 stub destination. Replaced by P.11 (DUAL pricing:
@@ -14,11 +18,21 @@ import { SafeAreaView } from 'react-native-safe-area-context'
  * + custom app section.
  */
 export default function PremiumStubScreen() {
+  const backVisibility = useBackButtonVisibility()
+
   return (
-    <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
+    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
+      <Animated.View
+        style={[{ position: 'absolute', top: 0, left: 0, zIndex: 10 }, backVisibility.style]}
+        pointerEvents={backVisibility.pointerEvents}
+      >
+        <BackButton />
+      </Animated.View>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 80 }}
+        onScroll={backVisibility.onScroll}
+        scrollEventThrottle={100}
       >
         <View className="items-center py-12">
           <Text className="text-[16px] font-light leading-[1.7] text-slate-300">

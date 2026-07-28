@@ -3,6 +3,7 @@ import { useAuth } from '@clerk/expo'
 import { Redirect, Stack, usePathname, useRouter } from 'expo-router'
 import { View } from 'react-native'
 
+import { AppLoadingScreen } from '@/components/design-system/AppLoadingScreen'
 import { DeletionPendingBanner } from '@/components/settings/DeletionPendingBanner'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { isWizardDismissedThisLaunch } from '@/lib/onboarding/dismissState'
@@ -38,7 +39,15 @@ export default function AuthedLayout() {
     router.replace('/wizard/date')
   }, [isLoaded, isSignedIn, firstChart.isLoading, firstChart.data, pathname, router])
 
-  if (!isLoaded) return null
+  // Founder correction (this batch): this used to be a bare `return null`
+  // — a hard blank flash between the native splash screen handing off
+  // (app/_layout.tsx already hid it once fonts loaded) and Clerk's auth
+  // state resolving. Root layout's own font-loading `return null` is a
+  // different gap — the native splash is still covering THAT one and the
+  // custom fonts this loading screen needs aren't loaded yet either, so
+  // it's left alone; this is the one place a blank frame was actually
+  // visible to the user.
+  if (!isLoaded) return <AppLoadingScreen />
   if (!isSignedIn) return <Redirect href="/sign-in" />
 
   return (
@@ -47,51 +56,30 @@ export default function AuthedLayout() {
          screen (not just settings) since deletion is a full-access undo
          window the user must never lose sight of. */}
       <DeletionPendingBanner />
+      {/* Founder correction (this batch): the native Stack header — the
+          whole bar/box, not just its title text or shadow line — is gone
+          on every pushed screen now, not only rhythm/journal and
+          moon-detail. Each of those screens renders its own BackButton
+          (design-system/BackButton.tsx: no box, no circle, starlight
+          chevron + violet glow, self-positioned top-left) instead —
+          either via ScreenShell's `back` prop or, for the screens not on
+          ScreenShell yet, dropped directly into their own SafeAreaView. */}
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: '#08060f' },
-          headerTitleStyle: { color: '#e2e8f0', fontSize: 14 },
-          headerTintColor: '#fcd34d',
-          headerBackTitle: '',
+          headerShown: false,
           contentStyle: { backgroundColor: '#08060f' },
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="wizard" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="oracle"
-          options={{
-            title: 'Оракул',
-            headerBackTitle: 'Назад',
-          }}
-        />
-        <Stack.Screen
-          name="rhythm/journal"
-          options={{
-            title: 'Лунен дневник',
-            headerBackTitle: 'Назад',
-          }}
-        />
-        <Stack.Screen
-          name="you/crystals"
-          options={{ title: 'Кристали', headerBackTitle: 'Назад' }}
-        />
-        <Stack.Screen
-          name="you/recommendations"
-          options={{ title: 'Препоръки', headerBackTitle: 'Назад' }}
-        />
-        <Stack.Screen
-          name="you/guide"
-          options={{ title: 'Ръководство', headerBackTitle: 'Назад' }}
-        />
-        <Stack.Screen
-          name="you/premium"
-          options={{ title: 'Премиум', headerBackTitle: 'Назад' }}
-        />
-        <Stack.Screen
-          name="you/settings"
-          options={{ title: 'Настройки', headerBackTitle: 'Назад' }}
-        />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="wizard" />
+        <Stack.Screen name="oracle" />
+        <Stack.Screen name="rhythm/journal" />
+        <Stack.Screen name="moon-detail" />
+        <Stack.Screen name="you/crystals" />
+        <Stack.Screen name="you/recommendations" />
+        <Stack.Screen name="you/guide" />
+        <Stack.Screen name="you/premium" />
+        <Stack.Screen name="you/settings" />
       </Stack>
     </View>
   )

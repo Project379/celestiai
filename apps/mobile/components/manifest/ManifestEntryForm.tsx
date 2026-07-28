@@ -5,11 +5,10 @@ import type { LunarPhase } from '@stellaeum/core/moon-phase'
 import { getManifestPrompt } from '@stellaeum/core/diary/prompts'
 import type { ManifestEntry } from '@stellaeum/core/diary/types'
 
-import { pressFeedback } from '@/components/design-system/tokens'
+import { color, font, pressFeedback, rhythm, type } from '@/components/design-system/tokens'
 
 interface ManifestEntryFormProps {
   phase: LunarPhase
-  today: string
   existing: ManifestEntry | null
   entryCountForPhase: number
   onSave: (intentions: [string, string, string]) => void
@@ -17,16 +16,27 @@ interface ManifestEntryFormProps {
 
 /**
  * Лунен дневник — three-field intention form, phase-driven prompt.
- * Mirrors apps/web/components/manifest/ManifestEntryForm.tsx (P.4-c1).
+ * Rebuilt (this batch) against journal-v1.html (ratified): each field is
+ * Оракул's own ask-line device (bronze underline + italic placeholder),
+ * not a bordered/filled box — same "no cards, bronze is a fitting not a
+ * container" rule as the rest of this design system. Heading/lead now
+ * render in font.displaySemibold/font.bodyItalic (was font-cinzel, which
+ * has no Cyrillic glyphs at all — heading/lead are Bulgarian text, so
+ * that was a silent fallback-font bug, not a style choice).
  *
  * Prompt heading/lead/fieldLabels/placeholders come from
- * @stellaeum/core/diary/prompts via getManifestPrompt() — 24 variants
+ * @stellaeum/core/diary/prompts via getManifestPrompt() — variants
  * cycle by per-phase entry count (entryCountForPhase % variants.length).
  * Mobile and web pull from the same module after the P.4-a lift.
+ *
+ * `today` prop dropped (this batch): the phase-name + date caption that
+ * used to render under prompt.heading/lead duplicated
+ * ManifestDiaryContent's own dateline (the one directly under «лунен
+ * дневник») — same two facts, shown twice on one screen. Kept the one
+ * under the heading, removed this one.
  */
 export function ManifestEntryForm({
   phase,
-  today,
   existing,
   entryCountForPhase,
   onSave,
@@ -61,26 +71,36 @@ export function ManifestEntryForm({
   }
 
   return (
-    <View style={{ gap: 28 }}>
+    <View style={{ gap: rhythm.group }}>
       <View>
-        <Text className="mb-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
+        <Text style={{ fontFamily: font.displaySemibold, fontSize: 23, color: color.starlight, letterSpacing: -0.11 }}>
           {prompt.heading}
         </Text>
-        <Text className="text-[15.5px] font-light leading-[1.8] text-slate-300">
+        {/* Founder correction (this batch, round 6): this screen missed
+            the font-size uniformity pass moon-detail.tsx got — sized to
+            `type.body` (17px/27 lineHeight) here now, same as
+            physicalAppearance/field bodies there and the sign block's
+            own quip text. */}
+        <Text
+          style={{
+            fontFamily: font.bodyItalic,
+            fontStyle: 'italic',
+            fontSize: type.body.fontSize,
+            lineHeight: type.body.lineHeight,
+            color: color.muted,
+            marginTop: rhythm.tight,
+          }}
+        >
           {prompt.lead}
-        </Text>
-        <Text className="mt-3 font-cinzel text-[9.5px] uppercase tracking-[0.3em] text-slate-500">
-          {phase.name} · {today}
         </Text>
       </View>
 
-      <View style={{ gap: 24 }}>
+      <View style={{ gap: 26 }}>
         {[0, 1, 2].map((i) => {
           const idx = i as 0 | 1 | 2
           return (
             <Field
               key={i}
-              index={idx}
               label={prompt.fieldLabels[idx]}
               placeholder={prompt.placeholders[idx]}
               value={values[idx]}
@@ -91,10 +111,17 @@ export function ManifestEntryForm({
       </View>
 
       <View
-        className="flex-row items-center justify-between border-t border-slate-300/[0.08] pt-6"
-        style={{ gap: 16 }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(226,232,240,0.08)',
+          paddingTop: rhythm.paragraph,
+        }}
       >
-        <Text className="flex-1 text-[12.5px] font-light leading-[1.75] text-slate-500">
+        <Text style={{ flex: 1, ...type.body, color: color.faint }}>
           {existing
             ? 'Вече писа днес — можеш да поправяш, докато цикълът не се смени.'
             : 'Запази, когато и трите са готови.'}
@@ -102,33 +129,31 @@ export function ManifestEntryForm({
         <Pressable
           onPress={handleSubmit}
           disabled={!allFilled}
-          className={`flex-row items-center rounded-full border px-5 py-2.5 ${
-            allFilled
-              ? 'border-amber-300/40 bg-amber-300/[0.06]'
-              : 'border-slate-700/60 bg-slate-900/40'
-          }`}
-          style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 10 })}
+          style={({ pressed }) => ({ ...pressFeedback(pressed), opacity: allFilled ? (pressed ? 0.6 : 1) : 0.4 })}
         >
           <Text
-            className={`font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.3em] ${
-              allFilled ? 'text-amber-200' : 'text-slate-600'
-            }`}
+            style={{
+              fontFamily: font.displaySemibold,
+              fontSize: 14,
+              letterSpacing: 0.1,
+              color: color.bronzeText,
+              // Founder correction (this batch): gets the glow «Повече
+              // детайли» explicitly does NOT — this is a live, tappable
+              // commit action (same "lit phrase" language as CtaPanel's
+              // invitations), only when actually enabled.
+              ...(allFilled
+                ? { textShadowColor: 'rgba(184,118,62,0.6)', textShadowRadius: 10, textShadowOffset: { width: 0, height: 0 } }
+                : null),
+            }}
           >
             {existing ? 'Обнови' : 'Запази в дневника'}
-          </Text>
-          <Text
-            className={`font-cinzel text-[10.5px] ${
-              allFilled ? 'text-amber-300' : 'text-slate-700'
-            }`}
-          >
-            →
           </Text>
         </Pressable>
       </View>
 
       {savedFlash && (
-        <Text className="text-right font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-300/90">
-          ✦ Записано в дневника
+        <Text style={{ textAlign: 'right', fontFamily: font.displayRegular, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: color.bronzeText }}>
+          Записано в дневника
         </Text>
       )}
     </View>
@@ -136,38 +161,56 @@ export function ManifestEntryForm({
 }
 
 interface FieldProps {
-  index: 0 | 1 | 2
   label: string
   placeholder: string
   value: string
   onChangeText: (text: string) => void
 }
 
-function Field({ index, label, placeholder, value, onChangeText }: FieldProps) {
+// Оракул's own ask-line device (ratified journal-v1.html): a tracked
+// bronze caption above a single bottom-border line, italic placeholder —
+// no box, no fill, no border on three sides. Replaces the prior
+// rounded-lg bordered-box TextInput.
+function Field({ label, placeholder, value, onChangeText }: FieldProps) {
   return (
     <View>
-      <View className="mb-2 flex-row items-baseline" style={{ gap: 12 }}>
-        <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.34em] text-amber-300/85">
-          {romanize(index + 1)} · {label}
-        </Text>
-        <View className="h-px flex-1 bg-slate-400/15" />
-      </View>
+      {/* Founder correction (this batch, round 6): matched to
+          moon-detail.tsx's own Field-label caption (12px/0.29
+          letterSpacing) instead of a one-off 11px/1.54 — same nested
+          "small caption above a value" role on both screens. */}
+      <Text
+        style={{
+          fontFamily: font.displayRegular,
+          fontSize: 12,
+          letterSpacing: 0.29,
+          textTransform: 'uppercase',
+          color: color.bronzeText,
+          marginBottom: 8,
+        }}
+      >
+        {label}
+      </Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="rgba(100,116,139,0.5)"
+        placeholderTextColor="rgba(93,106,130,0.7)"
         multiline
         numberOfLines={2}
         maxLength={500}
         textAlignVertical="top"
-        className="rounded-lg border border-slate-300/[0.08] bg-slate-900/30 px-4 py-3 text-[15px] font-light leading-[1.75] text-slate-100"
-        style={{ minHeight: 70 }}
+        style={{
+          fontFamily: font.bodyItalic,
+          fontStyle: 'italic',
+          fontSize: type.body.fontSize,
+          lineHeight: type.body.lineHeight,
+          color: color.text,
+          borderBottomWidth: 1,
+          borderBottomColor: 'rgba(184,118,62,0.5)',
+          paddingBottom: 9,
+          minHeight: 44,
+        }}
       />
     </View>
   )
-}
-
-function romanize(n: number): string {
-  return ['I', 'II', 'III'][n - 1] ?? String(n)
 }
