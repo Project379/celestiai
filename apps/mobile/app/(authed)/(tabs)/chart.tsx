@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Text, useWindowDimensions, View } from 'react-native'
 import { useUser } from '@clerk/expo'
 
@@ -77,13 +77,18 @@ export default function ChartScreen() {
 
   const wheelSize = Math.min(width * WHEEL_FRAME_RATIO, 600)
 
-  const handlePlanetSelect = (planet: PlanetPosition) => {
+  // useCallback so this stays referentially stable across re-renders —
+  // NatalWheel is memoized (see its own header note) and this is one of
+  // its props, so an inline function here would defeat that memo on
+  // every ChartScreen re-render (e.g. opening DetailsSheet), forcing the
+  // whole ~500-node wheel SVG to re-render for no visual reason.
+  const handlePlanetSelect = useCallback((planet: PlanetPosition) => {
     setSelection((prev) => {
       if (prev && 'planet' in prev.data && prev.data.planet === planet.planet) return null
       const type = planet.planet === 'sun' || planet.planet === 'moon' ? planet.planet : null
       return { data: planet, type, house: planet.house }
     })
-  }
+  }, [])
 
   const handleBigThreeSelect = (kind: 'sun' | 'moon' | 'rising') => {
     if (!chart.data) return
@@ -122,18 +127,31 @@ export default function ChartScreen() {
         <>
           {/* mockup `.karta-label`/`.karta-name` — a real content gap, not
               a style nit: this screen previously rendered no specimen
-              label at all above the wheel. Same mono/italic-serif
-              treatment as Днес's date/greeting pair (see index.tsx's
-              Stage 2 device-pass fix).
-              Founder device-pass fix (2026-07-28): matched to Днес's
-              section-caption heading size/case (SECTION_CAPTION_STYLE,
-              index.tsx) — 9.5 → 12, uppercase. Color stays faint (not
-              bronze) — this is a cool-temperature screen; bronze is
-              reserved for the invite/pedestal fittings specifically. */}
-          <Text style={{ fontFamily: font.mono, fontSize: 12, letterSpacing: 0.29, color: color.faint, textTransform: 'uppercase' }}>
+              label at all above the wheel. Same treatment as Днес's
+              date/greeting pair (see index.tsx), and kept in exact sync
+              with it — not just "the same idea," the literal same
+              font/size, so the two screens' top specimen line reads as
+              one shared piece of chrome, not two similar-but-different
+              ones.
+              Founder device-pass fix (this batch, uniformity): was still
+              font.mono (12px) — index.tsx's own caption already moved off
+              mono for reading "too rigid" against this app's warm serif
+              type system; matched here too (font.displayRegular, 13px,
+              same letterSpacing ratio). Color stays faint (not bronze) —
+              this is a cool-temperature screen; bronze is reserved for
+              the invite/pedestal fittings specifically. */}
+          <Text style={{ fontFamily: font.displayRegular, fontSize: 13, letterSpacing: 0.32, color: color.faint, textTransform: 'uppercase' }}>
             натална карта
           </Text>
-          <Text style={{ fontFamily: font.displayRegular, fontSize: 13.5, color: color.muted, marginTop: 3 }}>
+          {/* Founder device-pass fix (this batch, uniformity): size
+              matched to Днес's greeting (13.5 → 19, same lineHeight/
+              paddingLeft italic-clipping guard as index.tsx's greeting —
+              displayName can start with any letter depending on the
+              account, so the same preventive fix applies here too, not
+              just where it's been observed). Italic stays EBGaramond —
+              PlayfairDisplay has no italic face loaded (see
+              app/_layout.tsx's font map). */}
+          <Text style={{ fontFamily: font.bodyItalic, fontStyle: 'italic', fontSize: 19, lineHeight: 26, paddingLeft: 3, color: color.muted, marginTop: 3 }}>
             {displayName}
           </Text>
           <View style={{ alignItems: 'center' }}>
@@ -168,13 +186,21 @@ export default function ChartScreen() {
             {/* Founder device-pass fix (2026-07-28, legibility): 11.5 → 15,
                 same "italic text bigger everywhere" pass as Днес's
                 greeting/subLabel/meteor note. */}
+            {/* Founder device-pass fix (this batch): leading "Д"'s italic
+                left stroke was getting clipped — same root cause and fix
+                as Днес's greeting (index.tsx): lineHeight for vertical
+                room, symmetric paddingHorizontal (not paddingLeft alone,
+                since this text is centered) for horizontal room without
+                shifting the centered line off-axis. */}
             <Text
               style={{
                 fontFamily: 'EBGaramond-Italic',
                 fontStyle: 'italic',
                 fontSize: 15,
+                lineHeight: 21,
                 color: color.faint,
                 textAlign: 'center',
+                paddingHorizontal: 4,
                 marginTop: 10,
               }}
             >

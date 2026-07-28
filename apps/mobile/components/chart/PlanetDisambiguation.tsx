@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
 import type { Planet, PlanetPosition } from '@stellaeum/astrology/client'
 import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticSelect } from '@/lib/haptics'
 
 // Stage 2 (2026-07-27) LOC split — extracted out of NatalWheel.tsx, which
 // had grown past the 500-line ceiling (proposed at investigation, not
@@ -66,7 +67,10 @@ export function PlanetDisambiguation({
         {planets.map((planet) => (
           <Pressable
             key={planet.planet}
-            onPress={() => onSelect(planet)}
+            onPress={() => {
+              hapticSelect()
+              onSelect(planet)
+            }}
             style={({ pressed }) => ({
               ...pressFeedback(pressed),
               flexDirection: 'row',

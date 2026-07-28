@@ -5,6 +5,7 @@ import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 
 import { useBreathe } from './motion'
 import { color, font, pressFeedback, type } from './tokens'
+import { hapticInvite } from '@/lib/haptics'
 
 // Warm/cool amendment — the invitation primitive. CORRECTED (2026-07-25):
 // the first version of this component had a Surface2 background + border
@@ -143,7 +144,10 @@ export function CtaPanel({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        hapticInvite()
+        onPress()
+      }}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       accessibilityRole="button"

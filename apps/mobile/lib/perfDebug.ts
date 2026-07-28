@@ -25,16 +25,16 @@
 export const PERF_DEBUG = {
   // AmbientBackground.tsx — TwinkleGroup (4 animated star groups inside
   // the full-viewport starfield Svg).
-  freezeStarTwinkle: false,
+  freezeStarTwinkle: true,
   // MoonGlyph.tsx — the glow pulse behind the moon disk.
-  freezeMoonGlowPulse: false,
+  freezeMoonGlowPulse: true,
   // motion.ts useBreathe — shared breathing-ember hook.
-  freezeBreathe: false,
+  freezeBreathe: true,
   // motion.ts useResolveIn + NatalWheel.tsx's graticule — one-shot
   // "resolve into focus" fades. Grouped together: both are one-shot
   // (fire once on mount, then idle), not continuous loops. See the
   // prediction above — expected to read as a null result.
-  freezeResolveIn: false,
+  freezeResolveIn: true,
   screenShellWash: true, // ScreenShell.tsx — full-screen warm/cool gradient wash
   ambientStarfield: true, // (tabs)/_layout.tsx — AmbientBackground starfield
   // navbarBlur removed (2026-07-27) — BlurView + solid fill deleted

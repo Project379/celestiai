@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { useCallback, useMemo, useRef, useState } from 'react'
-import { Dimensions, Pressable, Text, View } from 'react-native'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import { useCallback, useMemo, useState } from 'react'
+import { Pressable, Text, View } from 'react-native'
+import Animated, { Easing, useAnimatedStyle } from 'react-native-reanimated'
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import { useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -21,8 +21,12 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/design-system
 import { useApiClient } from '@/lib/api/client'
 import { getDisplayName } from '@/lib/clerk/displayName'
 import { formatDaysHours } from '@/lib/formatDaysHours'
+import { hapticSelect } from '@/lib/haptics'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
+
+const TAB_BAR_BASE_HEIGHT = 56
 
 /**
  * Днес — MOBILE-ALPHA-REDESIGN v3, live since Round A cutover (2026-07-22).
@@ -64,31 +68,87 @@ const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
 // Section-provenance captions (item 3, 2026-07-27) — every distinct
 // content source on this screen gets its own label, mirroring the web
 // dashboard's per-block headings (DashboardContent.tsx's "Небесен ритъм",
-// DailyHoroscope.tsx's "Дневен хороскоп"). Reuses the mono caption
-// primitive already on this screen (the date row) rather than a second
-// tracked-caps eyebrow — tokens.ts's R3 reservation covers ONE eyebrow
-// use on Днес, already spent on the moon's phase name; mono is a
-// different, unreserved primitive, so it spends no budget. Bronze, not
-// faint grey (founder correction, 2026-07-27): this is the app speaking,
-// same warm family as the invitation, not a neutral system label.
+// DailyHoroscope.tsx's "Дневен хороскоп"). Bronze, not faint grey (founder
+// correction, 2026-07-27): this is the app speaking, same warm family as
+// the invitation, not a neutral system label.
 // Founder device-pass fix (2026-07-28): headings set to large caps —
 // best-effort interpretation of a cut-off instruction ("each heading must
 // be large caps and…"); flagging explicitly since the rest of that
 // sentence never arrived. Revert/adjust if this wasn't the intent.
 // Founder device-pass fix (2026-07-28, legibility): 9.5 → 12.
+// Founder device-pass fix (this batch, font choice): these read "too
+// rigid" on device — font.mono resolves to Menlo/system-monospace, a
+// technical/code typeface with none of the warmth the rest of this
+// atmospheric screen carries. Switched to font.displayRegular (Playfair
+// Display), the SAME typeface type.eyebrow already uses for the moon's
+// tracked-caps phase name — reuses an existing warm tracked-caps
+// primitive already proven on this screen, not a new font introduced for
+// this one spot.
 const SECTION_CAPTION_STYLE = {
-  fontFamily: font.mono,
+  fontFamily: font.displayRegular,
   fontSize: 12,
   letterSpacing: 0.29,
   color: color.bronzeText,
   textTransform: 'uppercase' as const,
 } as const
 
+// Section-boundary divider (this batch) — reported the three subsections
+// (дневен хороскоп/sign/небесен ритъм) as "mixing with each other" despite
+// scrolling as one continuous column. Same hairline technique
+// HoroscopeParagraph already uses between its own development paragraphs
+// (a barely-there rule, not a border/card), reused here at the SCREEN
+// level to mark where one subsection ends and the next begins — subtle
+// enough to keep the "flows continuously" feel, present enough to give
+// each block its own understandable start/end.
+// Founder device-pass fix (this batch, second pass): a full-width
+// borderTop (stretched to the screen's own content width) read as too
+// assertive a line for how subtle it's meant to be — reported "something
+// half the length would work better." Rebuilt as its own centered,
+// half-width rule instead of a border modifier on the section's full
+// wrapping View.
+function SectionDivider() {
+  return (
+    <View
+      style={{
+        height: 1,
+        width: '50%',
+        alignSelf: 'center',
+        backgroundColor: 'rgba(148,163,184,0.08)',
+        marginTop: rhythm.paragraph,
+        marginBottom: rhythm.paragraph,
+      }}
+    />
+  )
+}
+
+// IA reorder + hierarchy (this batch): дневен хороскоп is now the reason
+// someone opens the app, moved above небесен ритъм (context). First pass
+// also bumped the CAPTION itself (12→16) to signal primacy — founder
+// device-pass correction: a bigger bronze tracked-caps mono label read as
+// loud/harsh, snagging the eye in a way nothing else on this atmospheric
+// screen does — the wrong lever. Caption reverts to the shared
+// SECTION_CAPTION_STYLE size; primacy is carried by BODY size + being the
+// first block instead, which is categorical (position + a real reading-
+// size jump) without making a UI label shout.
+const HOROSCOPE_CAPTION_STYLE = SECTION_CAPTION_STYLE
+// Founder device-pass fix (this batch, art choice): the reading's actual
+// text color was a hardcoded '#dde3ee' (body/opener/development) and
+// color.starlight (payoff) — neither is a token this screen otherwise
+// uses, and starlight is explicitly the COOL-surface role per the app's
+// own rule ("warm bronze where the app speaks to the user; cool starlight
+// where the sky is being read"). The horoscope reading is the app
+// speaking, not the sky being read, so every reading-text color below is
+// now color.text (body) or color.bronzeText (payoff, planet-mention
+// highlights) — the same warm palette the rest of Днес already uses.
+const HOROSCOPE_BODY_STYLE = {
+  fontSize: 20,
+  lineHeight: 31,
+} as const
+
 export default function DnesScreen() {
   const { push } = useGuardedNavigation()
   const { apiFetch } = useApiClient()
   const { user } = useUser()
-  const ctaRef = useRef<View>(null)
   const insets = useSafeAreaInsets()
   // Founder correction (2026-07-28, FOURTH pass on this element): pinning
   // is gone again — reported as "another layer added on top," a hard edge
@@ -103,41 +163,55 @@ export default function DnesScreen() {
   // star" and reveal itself as the user scrolls down to it, not just be
   // statically present. Implemented as a fade+rise driven by the invite's
   // own position (tracked via measureInWindow, which already reflects
-  // live scroll position) relative to the visible viewport.
-  //
-  // Founder device-pass fix (2026-07-28, second pass): the reveal
-  // condition only checked against raw `windowHeight`, so it fired as
-  // soon as ANY part of the invite was on screen — including while its
-  // bottom portion was still occluded by the tab bar. Fixed to check
-  // against the tab bar's own top edge instead (same `56 + insets.bottom`
-  // formula used everywhere else), and require the invite's BOTTOM edge
-  // to have cleared it, not just the top.
-  //
-  // Founder device-pass fix (2026-07-28, third pass): this was a
-  // fire-once effect (`hasRevealedRef`) — visible only the FIRST time it
-  // crossed into view, staying visible forever after even if scrolled
-  // back out of range. Changed to a continuous toggle: every scroll/
-  // layout check compares current visibility against `isVisibleRef` and
-  // animates toward whichever state is currently true, every time, not
-  // just on first load.
-  const isVisibleRef = useRef(false)
-  const revealProgress = useSharedValue(0)
-  const revealStyle = useAnimatedStyle(() => ({
-    opacity: revealProgress.value,
-    transform: [{ translateY: (1 - revealProgress.value) * 20 }],
+  // live scroll position) relative to the visible viewport. Extracted into
+  // `useScrollReveal` (this batch) so небесен ритъм's own fragments (the
+  // caption, the moon, the meteor note) can each reveal independently the
+  // same way, not just this one invite.
+  const ctaReveal = useScrollReveal(TAB_BAR_BASE_HEIGHT, insets.bottom)
+  // небесен ритъм fragments (this batch) — "treat each part like the Ask-
+  // the-Oracle invite": each gets its OWN reveal target, so the moon and
+  // the meteor note (when present) fade/rise into view as the user scrolls
+  // to each, instead of the whole block appearing at once. The moon gets a
+  // bespoke overshoot-scale reveal (see moonRevealStyle below) rather than
+  // the plain fade+rise the text fragments use — it's the screen's one
+  // hero glyph, so its entrance gets its own "pretty" treatment, not the
+  // generic text animation.
+  const moonReveal = useScrollReveal(TAB_BAR_BASE_HEIGHT, insets.bottom, {
+    duration: 650,
+    revealEasing: Easing.out(Easing.back(1.6)),
+    hideEasing: Easing.in(Easing.cubic),
+  })
+  const meteorReveal = useScrollReveal(TAB_BAR_BASE_HEIGHT, insets.bottom)
+  // Moon-specific animated style — founder device-pass fix (this batch):
+  // reported as reading identically to the plain text fade+rise. Root
+  // cause was scale magnitude: 0.82→1.0 is only an 18% swing, so even with
+  // the back-easing overshoot the pop was ~2-3% of scale — invisible.
+  // Widened to 0.5→1.0 (a real "coming into focus" swing) and added a
+  // slight rotate-in (-14°→0°) so the difference from the text fragments'
+  // opacity+translateY-only style is unmistakable even at a glance, not
+  // just technically present. translateY dropped — scale+rotate alone
+  // already read as a distinct, bespoke entrance.
+  const moonRevealStyle = useAnimatedStyle(() => {
+    const p = moonReveal.progress.value
+    return {
+      opacity: Math.min(p, 1),
+      transform: [{ scale: 0.5 + 0.5 * p }, { rotate: `${(1 - Math.min(p, 1)) * -14}deg` }],
+    }
+  })
+  // Founder device-pass fix (this batch): the "небесен ритъм" caption had
+  // its own independent scroll-reveal target — asked to instead fade
+  // in/out driven BY the moon, not on its own separate visibility check.
+  // No separate ref/check needed: it just reads moonReveal's own progress
+  // value, so the two are always in lockstep by construction, not two
+  // similar-but-separately-timed animations.
+  const rhythmHeadingRevealStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(moonReveal.progress.value, 1),
   }))
-  const checkCtaReveal = useCallback(() => {
-    ctaRef.current?.measureInWindow((_x, y, _width, height) => {
-      const windowHeight = Dimensions.get('window').height
-      const tabBarTop = windowHeight - (56 + insets.bottom)
-      // Visible only once the invite's BOTTOM edge has cleared the tab
-      // bar's top edge — never while still behind/under it.
-      const shouldBeVisible = y > 0 && y + height <= tabBarTop
-      if (shouldBeVisible === isVisibleRef.current) return
-      isVisibleRef.current = shouldBeVisible
-      revealProgress.value = withTiming(shouldBeVisible ? 1 : 0, { duration: 400 })
-    })
-  }, [revealProgress, insets.bottom])
+  const checkAllReveals = useCallback(() => {
+    ctaReveal.check()
+    moonReveal.check()
+    meteorReveal.check()
+  }, [ctaReveal, moonReveal, meteorReveal])
   // Shared with (tabs)/you.tsx's account row — firstName+lastName, then
   // email username, then a generic placeholder. Several accounts predate
   // B.0g-2's required-name-fields signup change; an email username reads
@@ -213,7 +287,7 @@ export default function DnesScreen() {
   )
 
   return (
-    <ScreenShell temperature="warm" onScroll={checkCtaReveal}>
+    <ScreenShell temperature="warm" onScroll={checkAllReveals}>
       {/* Founder device-pass fix (2026-07-27), two parts:
           1. Top clearance — mockup `.dnes-content{padding:44px 26px 0}`
              specifies 44px top padding for THIS screen; ScreenShell's
@@ -228,7 +302,16 @@ export default function DnesScreen() {
              in-flow, not pinned, for that reason.
           2. Size — bumped ~8% (within the founder's 5-10% band) for
              legibility at 390px: 9.5→10.5, 13→14. */}
-      <Text style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 0.29, color: color.faint, marginTop: 24 }}>
+      {/* Font choice fix (this batch): matches SECTION_CAPTION_STYLE's own
+          fix below — font.mono read as rigid/technical against this
+          screen's otherwise warm serif type system. Same font.displayRegular
+          swap for consistency; this is the same visual family as every
+          other caption on the screen now, not a second treatment. */}
+      {/* Founder device-pass fix (this batch, legibility): 10.5 → 13 — the
+          whole date line read small against the rest of the screen's
+          type after the font-choice fix above; bumped as one line, not
+          a per-word tweak. */}
+      <Text style={{ fontFamily: font.displayRegular, fontSize: 13, letterSpacing: 0.32, color: color.faint, marginTop: 24 }}>
         {todayFormatted}
       </Text>
       {/* marginBottom removed: MoonHero already supplies its own top gap
@@ -240,15 +323,81 @@ export default function DnesScreen() {
           sites. Time-of-day phrase now bronze (color.bronzeText, the
           same token every other bronze text on the app uses — audited,
           no drift) so it reads first; the name stays muted. */}
-      <Text style={{ fontFamily: font.bodyItalic, fontStyle: 'italic', fontSize: 19, color: color.muted, marginTop: 3 }}>
+      {/* Founder device-pass fix (this batch): the leading glyph of an
+          italic word (here almost always "Добро"/"Добър"/"Благословена" —
+          all Д) was getting its left stroke clipped — italic slant makes
+          the FIRST character's ink lean left of the string's own logical
+          start, with nothing before it to absorb the overhang. lineHeight
+          gives it vertical room, paddingLeft gives it horizontal room; same
+          fix applied to chart.tsx's «Докосни» hint, same root cause. */}
+      <Text style={{ fontFamily: font.bodyItalic, fontStyle: 'italic', fontSize: 19, lineHeight: 26, paddingLeft: 3, color: color.muted, marginTop: 3 }}>
         <Text style={{ color: color.bronzeText }}>{greetingPhrase}</Text>
         {`,${greetingNamePart}`}
       </Text>
 
-      {/* Founder device-pass fix (2026-07-27, vertical compression):
-          greeting→caption was `rhythm.group` (40) — tightened to
-          `rhythm.paragraph` (20), part of pulling the whole column up so
-          more content sits above the fold. */}
+      {/* IA reorder (this batch): дневен хороскоп is the reason someone
+          opens the app, moved above небесен ритъм — небесен ритъм is now
+          context underneath it, not the reverse. Caption + body both use
+          the categorically larger HOROSCOPE_* styles (see their header
+          comment above) so primacy is unambiguous, not a size nudge. */}
+      {chart && (
+        <>
+          <SectionDivider />
+          <View>
+            {/* Source-provenance label (item 3, 2026-07-27) — see
+                SECTION_CAPTION_STYLE's header comment. This block was the
+                actual gap the founder flagged: nothing marked where the
+                moon block ended and the reading began. "Дневен хороскоп"
+                mirrors web's own heading for this exact content
+                (DailyHoroscope.tsx), not invented copy. */}
+            <Text style={HOROSCOPE_CAPTION_STYLE}>дневен хороскоп</Text>
+            <View style={{ marginTop: rhythm.tight }}>
+              {horoscope.isLoading && <LoadingState status="консултира звездите…" />}
+              {horoscope.isError && !horoscope.data?.content && (
+                <ErrorState message="Звездите мълчат - опитай отново след миг." />
+              )}
+              {!horoscope.isLoading && !horoscope.data?.content && !horoscope.isError && (
+                <ReadingParagraphs text={welcome.summary} />
+              )}
+              {horoscope.data?.content && <HoroscopeBody content={horoscope.data.content} />}
+            </View>
+            {/* Scroll hint (this batch) — «Питай Оракула» is now well below
+                the fold (after both the horoscope and небесен ритъм blocks),
+                so the reading's own end needs to point at it. Same italic
+                hint device chart.tsx's «Докосни» already uses, not a new
+                primitive. */}
+            <Text
+              style={{
+                fontFamily: 'EBGaramond-Italic',
+                fontStyle: 'italic',
+                fontSize: 14,
+                lineHeight: 20,
+                color: color.faint,
+                textAlign: 'center',
+                paddingHorizontal: 4,
+                marginTop: rhythm.paragraph,
+              }}
+            >
+              Плъзни надолу, за да попиташ Оракула
+            </Text>
+          </View>
+        </>
+      )}
+
+      {/* Content addition (2026-07-28) — sign block. Moved (this batch) to
+          sit between дневен хороскоп and небесен ритъм, rather than after
+          небесен ритъм — the sign quip is a short beat naturally paired
+          with the reading above it, not with the moon/sky data below. */}
+      {sunSign && signQuip && (
+        <>
+          <SectionDivider />
+          <View>
+            <Text style={SECTION_CAPTION_STYLE}>{sunSign}</Text>
+            <Text style={{ ...type.body, color: color.text, marginTop: rhythm.tight }}>{signQuip}</Text>
+          </View>
+        </>
+      )}
+
       {/* Founder device-pass fix (2026-07-27, caption ownership): this
           caption used to sit directly above the MOON GLYPH, with its
           actual data (phase name, illumination, countdown) rendering
@@ -256,83 +405,69 @@ export default function DnesScreen() {
           visibly own the content it labels. MoonHero now renders its
           text data (phaseName eyebrow + subLabel) FIRST, immediately
           under this caption, with the glyph as the illustration below
-          that pairing — mirrors "дневен хороскоп" immediately preceding
-          reading TEXT, not a glyph. "Небесен ритъм" is web's own heading
-          for this block (DashboardContent.tsx), not invented copy. */}
-      <Text style={{ ...SECTION_CAPTION_STYLE, marginTop: rhythm.paragraph }}>небесен ритъм</Text>
-      <MoonHero
-        illumination={lunarPhase.illumination}
-        isWaxing={lunarPhase.isWaxing}
-        phaseName={lunarPhase.name}
-        subLabel={`${lunarPhase.illumination}% осветена · до ${lunarPhase.nextMajor.name.toLowerCase()}: ${formatDaysHours(lunarPhase.nextMajor.daysAway)}`}
-      />
+          that pairing. "Небесен ритъм" is web's own heading for this
+          block (DashboardContent.tsx), not invented copy. Now context
+          underneath the horoscope+sign (IA reorder, this batch) — the
+          section divider (SectionDivider) renders as its own element
+          before this, not a border on the Animated.View itself, so the
+          scroll-reveal fade doesn't also animate the divider line. The
+          caption fades in/out driven by the MOON's own reveal progress
+          (rhythmHeadingRevealStyle), not its own separate scroll check —
+          the two are meant to appear together, not as two independently-
+          timed animations that happen to look similar. */}
+      <SectionDivider />
+      <Animated.View style={rhythmHeadingRevealStyle}>
+        <Text style={SECTION_CAPTION_STYLE}>небесен ритъм</Text>
+      </Animated.View>
+      {/* The moon gets a bespoke reveal (moonRevealStyle) instead of the
+          plain fade+rise the text fragments use — a gentle overshoot
+          scale-in ("landing into place"), since it's the screen's one
+          hero glyph and deserves its own entrance, not the generic text
+          animation. */}
+      <Animated.View ref={moonReveal.ref} onLayout={moonReveal.check} style={moonRevealStyle}>
+        <MoonHero
+          illumination={lunarPhase.illumination}
+          isWaxing={lunarPhase.isWaxing}
+          phaseName={lunarPhase.name}
+          subLabel={`${lunarPhase.illumination}% осветена · до ${lunarPhase.nextMajor.name.toLowerCase()}: ${formatDaysHours(lunarPhase.nextMajor.daysAway)}`}
+        />
+      </Animated.View>
       {/* Content addition (2026-07-28) — the rest of web's Небесен ритъм
           prose (meteorNote only; the lunar sentence is NOT ported here,
           it would duplicate the data line above). Only renders on days
           with an active shower, same as web — most days this is null. */}
       {meteorText && (
-        <Text
-          style={{
-            fontFamily: 'EBGaramond-Italic',
-            fontStyle: 'italic',
-            fontSize: 16,
-            color: color.muted,
-            marginTop: rhythm.tight,
-            textAlign: 'center',
-          }}
+        <Animated.View
+          ref={meteorReveal.ref}
+          onLayout={meteorReveal.check}
+          style={[{ marginTop: rhythm.tight }, meteorReveal.style]}
         >
-          {meteorText}
-        </Text>
-      )}
-
-      {/* Content addition (2026-07-28) — sign block, didn't exist on
-          mobile at all. Mirrors web's Layer B order exactly: greeting →
-          Небесен ритъм → sign quip → daily stream. Sign name as its own
-          caption in the same style as the other two, per instruction. */}
-      {sunSign && signQuip && (
-        <>
-          <Text style={{ ...SECTION_CAPTION_STYLE, marginTop: rhythm.paragraph }}>{sunSign}</Text>
-          <Text style={{ ...type.body, color: '#dde3ee', marginTop: rhythm.tight }}>{signQuip}</Text>
-        </>
-      )}
-
-      {chart && (
-        <View style={{ marginTop: rhythm.paragraph }}>
-          {/* Source-provenance label (item 3, 2026-07-27) — see
-              SECTION_CAPTION_STYLE's header comment. This block was the
-              actual gap the founder flagged: nothing marked where the
-              moon block ended and the reading began. "Дневен хороскоп"
-              mirrors web's own heading for this exact content
-              (DailyHoroscope.tsx), not invented copy. */}
-          <Text style={SECTION_CAPTION_STYLE}>дневен хороскоп</Text>
-          <View style={{ marginTop: rhythm.tight }}>
-            {horoscope.isLoading && <LoadingState status="консултира звездите…" />}
-            {horoscope.isError && !horoscope.data?.content && (
-              <ErrorState message="Звездите мълчат - опитай отново след миг." />
-            )}
-            {!horoscope.isLoading && !horoscope.data?.content && !horoscope.isError && (
-              <ReadingParagraphs text={welcome.summary} />
-            )}
-            {horoscope.data?.content && <HoroscopeBody content={horoscope.data.content} />}
-          </View>
-
-          {/* In-flow again (fourth pass on this element) — see the
-              header comment above for why pinning was dropped. Fades and
-              rises into place the first time it scrolls into view
-              (revealStyle/checkCtaReveal), rather than being either
-              statically pinned or just silently present when scrolled to. */}
-          <Animated.View
-            ref={ctaRef}
-            // onLayout covers the short-reading case: if the invite is
-            // already inside the viewport at mount, no scroll event will
-            // ever fire to trigger checkCtaReveal otherwise, and it would
-            // stay at opacity 0 forever.
-            onLayout={checkCtaReveal}
-            style={[{ marginTop: rhythm.group }, revealStyle]}
+          <Text
+            style={{
+              fontFamily: 'EBGaramond-Italic',
+              fontStyle: 'italic',
+              fontSize: 16,
+              color: color.muted,
+              textAlign: 'center',
+            }}
           >
-            <CtaPanel label="Питай Оракула" onPress={() => push('/oracle')} />
-          </Animated.View>
-        </View>
+            {meteorText}
+          </Text>
+        </Animated.View>
+      )}
+
+      {/* «Питай Оракула» stays the screen's single exit — now after ALL
+          content blocks (IA reorder, this batch) rather than glued to the
+          horoscope block specifically. "Ends in exactly one exit" still
+          holds regardless of which block reads first. */}
+      {chart && (
+        <Animated.View
+          ref={ctaReveal.ref}
+          onLayout={ctaReveal.check}
+          style={[{ marginTop: rhythm.group }, ctaReveal.style]}
+        >
+          <CtaPanel label="Питай Оракула" onPress={() => push('/oracle')} />
+        </Animated.View>
       )}
 
       {chart === null && (
@@ -391,15 +526,22 @@ function lastIndex<T>(arr: T[]): number {
   return arr.length - 1
 }
 
-// mockup `.payoff-block`: font-family serif-d-r (Playfair Regular), color
-// starlight, plus a small bronze glow (`.payoff-glow`: 80×60 ellipse,
-// offset left:-16 top:-8, .14 opacity). Device-pass fix (2026-07-27):
-// textShadow alone read too weak against a real screenshot — see
-// CtaPanel.tsx's matching fix — replaced with a real glow blob behind the
-// text, offset up-left the same way the mockup's own glow div is, not
-// centered like the invite's (this payoff sits left-aligned in a reading
-// block, not standalone centered content).
-const PAYOFF_TEXT_STYLE = { fontFamily: font.displayRegular, color: color.starlight } as const
+// mockup `.payoff-block`: font-family serif-d-r (Playfair Regular), plus a
+// small bronze glow (`.payoff-glow`: 80×60 ellipse, offset left:-16 top:-8,
+// .14 opacity). Device-pass fix (2026-07-27): textShadow alone read too
+// weak against a real screenshot — see CtaPanel.tsx's matching fix —
+// replaced with a real glow blob behind the text, offset up-left the same
+// way the mockup's own glow div is, not centered like the invite's (this
+// payoff sits left-aligned in a reading block, not standalone centered
+// content).
+// Founder device-pass fix (this batch, art choice): color was
+// color.starlight (a cool near-white) glowing inside a BRONZE blob — a
+// hue mismatch, and off the app's stated rule ("warm bronze where the app
+// speaks to the user; cool starlight where the sky is being read"). The
+// horoscope reading is the app speaking to the user, not the sky being
+// read — recolored to color.bronzeText so the glow and the text it lights
+// are the same hue family.
+const PAYOFF_TEXT_STYLE = { fontFamily: font.displayRegular, color: color.bronzeText } as const
 
 // Pure glow wrapper — `children` supplies its own fully-styled <Text> (this
 // call site's plain-string payoffs and HoroscopeBody's mixed-chunk payoffs
@@ -461,7 +603,7 @@ export function ReadingParagraphs({ text }: { text: string }) {
   if (last === 0) {
     return (
       <ReadingFrame>
-        <Text style={{ ...type.body, color: '#dde3ee' }}>{sentences[0]}</Text>
+        <Text style={{ ...type.body, ...HOROSCOPE_BODY_STYLE, color: color.text }}>{sentences[0]}</Text>
       </ReadingFrame>
     )
   }
@@ -473,12 +615,12 @@ export function ReadingParagraphs({ text }: { text: string }) {
     <LeadLine
       payoff={
         <PayoffGlow>
-          <Text style={{ ...type.body, ...PAYOFF_TEXT_STYLE }}>{payoffText}</Text>
+          <Text style={{ ...type.body, ...HOROSCOPE_BODY_STYLE, ...PAYOFF_TEXT_STYLE }}>{payoffText}</Text>
         </PayoffGlow>
       }
     >
       {led.map((s, i) => (
-        <Text key={i} style={{ ...type.body, ...beatStyle(i, last), color: '#dde3ee' }}>
+        <Text key={i} style={{ ...type.body, ...HOROSCOPE_BODY_STYLE, ...beatStyle(i, last), color: color.text }}>
           {s}
         </Text>
       ))}
@@ -531,10 +673,15 @@ const EXPAND_THRESHOLD_CHARS = 900
 // never italic, including inside the italic opener paragraph, where an
 // italic amber word would read as emphasis-on-emphasis and fight the
 // opener's own register shift instead of standing out.
+// Founder device-pass fix (this batch, art choice): planet-mention color
+// was a hardcoded '#fcd34d' — off the token system entirely, not even the
+// amber being retired. Swapped to color.bronzeText, matching the reading's
+// other bronze accents (payoff, captions) instead of introducing a third
+// untokenized hue.
 function renderSentinelChunks(chunks: SentinelChunk[]) {
   return chunks.map((chunk, j) =>
     chunk.planet ? (
-      <Text key={j} style={{ color: '#fcd34d', fontFamily: font.bodyMedium }}>
+      <Text key={j} style={{ color: color.bronzeText, fontFamily: font.bodyMedium }}>
         {chunk.text}
       </Text>
     ) : (
@@ -569,14 +716,15 @@ function HoroscopeParagraph({
     >
       {anchor && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: rhythm.micro }}>
-          <Text style={{ fontFamily: font.cinzel, fontSize: 14, color: color.amber }}>{PLANET_GLYPHS[anchor]}</Text>
+          <Text style={{ fontFamily: font.cinzel, fontSize: 14, color: color.bronze }}>{PLANET_GLYPHS[anchor]}</Text>
           <Text style={{ ...type.caption, color: color.muted }}>{PLANETS_BG[anchor]}</Text>
         </View>
       )}
       <Text
         style={{
           ...type.body,
-          ...(role === 'opener' ? { fontFamily: font.bodyItalic, color: '#dde3ee' } : { fontFamily: font.body, color: '#dde3ee' }),
+          ...HOROSCOPE_BODY_STYLE,
+          ...(role === 'opener' ? { fontFamily: font.bodyItalic, color: color.text } : { fontFamily: font.body, color: color.text }),
         }}
       >
         {renderSentinelChunks(chunks)}
@@ -623,7 +771,7 @@ function HoroscopeBody({ content }: { content: string }) {
     <LeadLine
       payoff={
         <PayoffGlow>
-          <Text style={{ ...type.body, ...PAYOFF_TEXT_STYLE }}>{renderSentinelChunks(paragraphs[last])}</Text>
+          <Text style={{ ...type.body, ...HOROSCOPE_BODY_STYLE, ...PAYOFF_TEXT_STYLE }}>{renderSentinelChunks(paragraphs[last])}</Text>
         </PayoffGlow>
       }
     >
@@ -638,11 +786,14 @@ function HoroscopeBody({ content }: { content: string }) {
       })}
       {collapsed && (
         <Pressable
-          onPress={() => setExpanded(true)}
+          onPress={() => {
+            hapticSelect()
+            setExpanded(true)
+          }}
           accessibilityRole="button"
           style={({ pressed }) => ({ ...pressFeedback(pressed), marginTop: rhythm.paragraph })}
         >
-          <Text style={{ ...type.caption, color: color.amber }}>Прочети повече</Text>
+          <Text style={{ ...type.caption, color: color.bronzeText }}>Прочети повече</Text>
         </Pressable>
       )}
     </LeadLine>

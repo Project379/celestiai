@@ -7,6 +7,7 @@ import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { useTransitOverview } from '@/hooks/useTransitOverview'
+import { hapticInvite } from '@/lib/haptics'
 
 // Systemic navbar-clearance rule (2026-07-27, audit): this screen doesn't
 // use ScreenShell (its own SafeAreaView+ScrollView instead), so it never
@@ -140,7 +141,10 @@ export default function RhythmScreen() {
 
         {/* Лунен дневник CTA card — full-Pressable target per HT 6 */}
         <Pressable
-          onPress={() => push('/rhythm/journal')}
+          onPress={() => {
+            hapticInvite()
+            push('/rhythm/journal')
+          }}
           className="mb-16 rounded-3xl border border-slate-200/10 bg-white/[0.02] px-6 py-8"
           style={({ pressed }) => pressFeedback(pressed)}
         >

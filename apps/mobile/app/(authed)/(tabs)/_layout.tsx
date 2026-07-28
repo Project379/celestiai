@@ -15,6 +15,7 @@ import {
   SunTabIcon,
   WheelTabIcon,
 } from '@/components/design-system/TabIcons'
+import { hapticSelect } from '@/lib/haptics'
 
 // MOBILE-ALPHA-REDESIGN v3 — tab bar fix (Round A follow-up, fired
 // standalone ahead of Round B). Persistent chrome renders on all five
@@ -98,6 +99,9 @@ export default function TabsLayout() {
     <View className="flex-1 bg-bg">
       {PERF_DEBUG.ambientStarfield && <AmbientBackground />}
       <Tabs
+        screenListeners={{
+          tabPress: () => hapticSelect(),
+        }}
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: true,

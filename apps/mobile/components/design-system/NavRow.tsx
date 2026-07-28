@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native'
 
 import { color, pressFeedback, type } from './tokens'
+import { hapticSelect } from '@/lib/haptics'
 
 // THE one tappability mechanism for this redesign (Step 3 point 4): a
 // trailing chevron. It's the existing iOS disclosure-indicator
@@ -22,7 +23,10 @@ export function NavRow({
 }) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        hapticSelect()
+        onPress()
+      }}
       accessibilityRole="button"
       style={({ pressed }) => ({
         ...pressFeedback(pressed),

@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native'
 import * as Haptics from 'expo-haptics'
+import { hapticSelect } from '@/lib/haptics'
 
 import {
   ASPECTS_BG,
@@ -295,7 +296,10 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
           return (
             <Pressable
               key={tab.id}
-              onPress={() => setActiveView(tab.id)}
+              onPress={() => {
+                hapticSelect()
+                setActiveView(tab.id)
+              }}
               className="relative pb-2"
               style={({ pressed }) => pressFeedback(pressed)}
             >

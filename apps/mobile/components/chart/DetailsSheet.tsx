@@ -8,6 +8,7 @@ import { AspectsList } from '@/components/chart/AspectsList'
 import { AstrologyReference } from '@/components/chart/AstrologyReference'
 import { HousesList } from '@/components/chart/HousesList'
 import { color, font, pressFeedback, rhythm, space } from '@/components/design-system/tokens'
+import { hapticSelect } from '@/lib/haptics'
 
 /**
  * Карта's «Детайли» sheet — Stage 2 (2026-07-27), Decision (b). Replaces
@@ -85,7 +86,10 @@ export function DetailsSheet({
                 {TABS.map((t) => (
                   <Pressable
                     key={t.key}
-                    onPress={() => setTab(t.key)}
+                    onPress={() => {
+                      hapticSelect()
+                      setTab(t.key)
+                    }}
                     style={({ pressed }) => ({ ...pressFeedback(pressed), paddingBottom: rhythm.tight })}
                   >
                     <Text

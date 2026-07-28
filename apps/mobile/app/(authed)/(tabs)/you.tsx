@@ -9,6 +9,7 @@ import { useChart } from '@/hooks/useChart'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { getDisplayName } from '@/lib/clerk/displayName'
+import { hapticSelect } from '@/lib/haptics'
 
 // Systemic navbar-clearance rule (2026-07-27, audit) — see rhythm.tsx's
 // matching comment; same flat-120 gap found and fixed here.
@@ -90,7 +91,10 @@ export default function YouScreen() {
           {SECTIONS.map((section, i) => (
             <Pressable
               key={section.label}
-              onPress={() => push(section.route)}
+              onPress={() => {
+                hapticSelect()
+                push(section.route)
+              }}
               accessibilityRole="button"
               className={`flex-row items-baseline justify-between py-5 ${
                 i > 0 ? 'border-t border-slate-800/60' : ''

@@ -14,6 +14,7 @@ import { MoonGlyph } from './MoonGlyph'
 import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { formatDaysHours } from '@/lib/formatDaysHours'
+import { hapticSelect } from '@/lib/haptics'
 
 const BG_MONTHS = [
   'януари', 'февруари', 'март', 'април', 'май', 'юни',
@@ -113,7 +114,10 @@ export function LunarPhaseCard() {
           C1 was meant to close. */}
       <View className="flex-row items-start" style={{ gap: 20 }}>
         <Pressable
-          onPress={() => setExpanded((v) => !v)}
+          onPress={() => {
+            hapticSelect()
+            setExpanded((v) => !v)
+          }}
           accessibilityRole="button"
           style={({ pressed }) => pressFeedback(pressed)}
         >
@@ -132,7 +136,10 @@ export function LunarPhaseCard() {
           </Text>
 
           <Pressable
-            onPress={() => setExpanded((v) => !v)}
+            onPress={() => {
+            hapticSelect()
+            setExpanded((v) => !v)
+          }}
             accessibilityRole="button"
             accessibilityState={{ expanded }}
             className="mt-4 flex-row items-center"
@@ -245,7 +252,10 @@ export function LunarPhaseCard() {
       {/* Info expander toggle */}
       <View className="mt-6 flex-row justify-end">
         <Pressable
-          onPress={() => setInfoOpen((v) => !v)}
+          onPress={() => {
+            hapticSelect()
+            setInfoOpen((v) => !v)
+          }}
           accessibilityRole="button"
           accessibilityState={{ expanded: infoOpen }}
           className="flex-row items-center"

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated'
@@ -149,7 +149,15 @@ function arcPath(
   return `M ${x1} ${y1} A ${outerR} ${outerR} 0 0 0 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 0 1 ${x4} ${y4} Z`
 }
 
-export function NatalWheel({
+// Perf fix (chart-tab frame drops): this tree renders ~500 SVG nodes
+// (zodiac segments/glyphs, house lines, aspect lines, planet gems) that
+// don't depend on unrelated ChartScreen state (e.g. opening DetailsSheet).
+// Without memo, every ChartScreen re-render forced a full re-render of
+// this whole tree. Requires callers to pass a referentially-stable
+// onPlanetSelect (see chart.tsx's useCallback) — otherwise the memo is a
+// no-op since a new function identity every render still fails the
+// shallow prop comparison.
+export const NatalWheel = memo(function NatalWheel({
   chart,
   size,
   onPlanetSelect,
@@ -544,4 +552,4 @@ export function NatalWheel({
       )}
     </View>
   )
-}
+})

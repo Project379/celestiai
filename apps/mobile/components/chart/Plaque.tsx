@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 
 import { color, font, pressFeedback } from '@/components/design-system/tokens'
+import { hapticSelect } from '@/lib/haptics'
 
 /**
  * Карта's Big Three — Stage 2 (2026-07-27), Decision (b), restructured
@@ -99,13 +100,57 @@ import { color, font, pressFeedback } from '@/components/design-system/tokens'
  * behind EACH row — each luminary now reads as its own lit element, not
  * one wash behind three lines. Each row's glow sized to that row alone
  * (220×50), same full-bleed-wrapper-plus-Flexbox-centering technique.
+ *
+ * Founder device-pass fix (2026-07-28, glow scope): that per-row glow
+ * still covered the sign VALUE too (e.g. "Скорпион"), not just the
+ * luminary label — re-scoped to the label alone. REVERSED in a later pass
+ * (this batch): reported back as still wrong — the glow is meant to light
+ * the whole row ("Слънце Скорпион" as one unit), not just the three
+ * luminary words. Restored to covering label+value together, sized off
+ * the row's own rendered width (adaptive to total text length), same
+ * self-measuring discipline as labelMinWidth above.
+ *
+ * Founder device-pass fix (this batch — the actual root cause): still
+ * reported short and left-drifted after the reversal above, despite the
+ * rowWidth-minus-labelPadding arithmetic checking out on paper. Rebuilt to
+ * remove that derived subtraction entirely: label+value now share their
+ * OWN wrapper (separate from the labelMinWidth alignment spacer), measured
+ * directly via its own onLayout. The glow sizes off that direct
+ * measurement — nothing subtracted, nothing derived from a second
+ * element's measurement.
+ *
+ * Founder device-pass fix (REVERSED, this batch): a later pass made all
+ * three rows share ONE glow width (sized off the longest row, for visual
+ * uniformity) — reported back as "fucked up again": a short row's glow
+ * now bled way past its own text. Reverted to per-row sizing — each row's
+ * glow hugs its OWN measured content, "a bit before the first letter to a
+ * bit after the last," per exact instruction — with a small fixed padding
+ * rather than the wide uniform-halo padding from that pass.
  */
+// Founder device-pass fix (this batch, legibility): 9px read as muted to
+// the point of near-invisibility next to the value's 15px starlight text
+// — the luminary name (what row this even is) was losing to the sign
+// name's sheer size. Bumped to 12px, letterSpacing recalculated at the
+// same .16em ratio (0.16 × 12 = 1.92) rather than reusing the old 9px
+// ratio verbatim.
+// Founder device-pass fix (this batch, legibility): reported the words
+// themselves reading as faded/washed-out against the glow now that it's
+// brighter and directly behind them — a real contrast issue, not a z-order
+// bug (text already paints on top of the glow by JSX/paint order). A small
+// dark text-shadow keeps both label and value crisp against the glow
+// regardless of how bright the gradient underneath gets.
+const TEXT_CONTRAST_SHADOW = {
+  textShadowColor: 'rgba(8,6,15,0.55)',
+  textShadowRadius: 3,
+  textShadowOffset: { width: 0, height: 0 },
+} as const
 const LABEL_STYLE = {
   fontFamily: font.displayRegular,
-  fontSize: 9,
-  letterSpacing: 1.44, // .16em at 9px, same ratio as the mockup's own .plaque tracking
+  fontSize: 12,
+  letterSpacing: 1.92,
   textTransform: 'uppercase' as const,
   color: color.faint,
+  ...TEXT_CONTRAST_SHADOW,
 }
 const VALUE_STYLE = {
   fontFamily: font.displayRegular,
@@ -113,6 +158,7 @@ const VALUE_STYLE = {
   letterSpacing: 2.4, // .16em at 15px
   textTransform: 'uppercase' as const,
   color: color.starlight,
+  ...TEXT_CONTRAST_SHADOW,
 }
 // Founder device-pass fix (2026-07-27, spacing): row gap increased
 // (rhythm.tight=12 read as too tight for three independently tappable
@@ -138,25 +184,21 @@ function PlaqueRow({
   // header comment) — tracked as plain state, applied via a static
   // style object.
   const [pressed, setPressed] = useState(false)
-  // Founder device-pass fix (2026-07-28, adaptive glow): was a fixed
-  // 220px, which didn't reach the end of longer rows (e.g. "Асцендент
-  // Близнаци") and over-extended past shorter ones (e.g. "Луна Риби").
-  // Measured off the row's own rendered width instead — encapsulates
-  // whatever text actually renders, any character count, not a guess.
-  const [rowWidth, setRowWidth] = useState(0)
-  // Founder device-pass fix (2026-07-28, centering): the glow was
-  // centering on the ROW's full box, but the label sits in a
-  // shared-width column (labelMinWidth, right-aligned) so every row
-  // shorter than the longest label ("Асцендент") has invisible padding
-  // to the LEFT of its own visible text — centering on the full box
-  // centered on that padding too, reading as drifted left of the actual
-  // text for every row except the longest. Tracks this row's OWN label
-  // width (not just contributing to the shared max) so the glow can be
-  // offset past the padding and centered on what's actually visible.
+  // Founder device-pass fix (this batch — the real, final root cause):
+  // every prior attempt sized the glow off a JS-measured content width
+  // (onLayout + setState + re-render), and every one of them landed wrong
+  // on device in a different way (short, left-drifted, confined to just
+  // the label) despite each round's arithmetic checking out on paper —
+  // the common failure mode was relying on measured width AT ALL. Rebuilt
+  // to need no measurement whatsoever: the glow is a NEGATIVE-INSET
+  // absolute box (left/right/top/bottom all negative) around the
+  // label+value wrapper, so its size is resolved by Yoga's own layout
+  // math directly from the wrapper's real rendered bounds — "a bit before
+  // the first letter, a bit after the last" falls straight out of the
+  // fixed inset amount, for any label/value combination, with no
+  // intermediate JS state that could be stale or wrong.
   const [myLabelWidth, setMyLabelWidth] = useState(0)
   const labelPadding = Math.max(labelMinWidth - myLabelWidth, 0)
-  const visibleWidth = Math.max(rowWidth - labelPadding, 0)
-  const glowWidth = Math.max(visibleWidth + 85, 140)
   const rowStyle = {
     ...pressFeedback(pressed),
     flexDirection: 'row' as const,
@@ -164,7 +206,6 @@ function PlaqueRow({
     alignItems: 'baseline' as const,
   }
 
-  const onRowLayout = (e: { nativeEvent: { layout: { width: number } } }) => setRowWidth(e.nativeEvent.layout.width)
   const onLabelLayout = (e: { nativeEvent: { layout: { width: number } } }) => {
     setMyLabelWidth(e.nativeEvent.layout.width)
     onLabelMeasured(e.nativeEvent.layout.width)
@@ -172,32 +213,48 @@ function PlaqueRow({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        hapticSelect()
+        onPress()
+      }}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
-      onLayout={onRowLayout}
-      style={{ ...rowStyle, position: 'relative' as const }}
+      style={rowStyle}
     >
-      <View
-        style={{ position: 'absolute', left: labelPadding, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}
-        pointerEvents="none"
-      >
-        <Svg width={glowWidth} height={50}>
-          <Defs>
-            <RadialGradient id={`plaque-row-glow-${label}`} cx="50%" cy="50%" r="50%">
-              <Stop offset="0%" stopColor={color.cool} stopOpacity={0.16} />
-              <Stop offset="100%" stopColor={color.cool} stopOpacity={0} />
-            </RadialGradient>
-          </Defs>
-          <Rect width="100%" height="100%" fill={`url(#plaque-row-glow-${label})`} />
-        </Svg>
+      {/* Pure flex spacer — replaces the old minWidth+textAlign:'right'
+          trick on the label itself, so the label can live inside
+          contentWrapper below without fighting its shrink-wrap sizing.
+          Same visual effect: every row's value starts at the same x,
+          since spacer+label always sums to labelMinWidth. */}
+      <View style={{ width: labelPadding }} />
+      <View style={{ position: 'relative' as const, flexDirection: 'row' as const, alignItems: 'baseline' as const }}>
+        {/* Negative inset, not left:0/right:0 — this is what makes the
+            glow extend PAST the text on both sides rather than stopping
+            exactly at its edges. */}
+        <View style={{ position: 'absolute', left: -14, right: -14, top: -10, bottom: -10 }} pointerEvents="none">
+          <Svg width="100%" height="100%">
+            <Defs>
+              {/* Founder device-pass fix (prominence): center stop 0.16 →
+                  0.34 and a mid stop added at 45% (0.16) so the glow holds
+                  its brightness further out instead of falling off
+                  immediately past center — reads as an actual lit halo,
+                  not a faint tint. */}
+              <RadialGradient id={`plaque-row-glow-${label}`} cx="50%" cy="50%" r="50%">
+                <Stop offset="0%" stopColor={color.cool} stopOpacity={0.34} />
+                <Stop offset="45%" stopColor={color.cool} stopOpacity={0.16} />
+                <Stop offset="100%" stopColor={color.cool} stopOpacity={0} />
+              </RadialGradient>
+            </Defs>
+            <Rect width="100%" height="100%" fill={`url(#plaque-row-glow-${label})`} />
+          </Svg>
+        </View>
+        <Text onLayout={onLabelLayout} numberOfLines={1} style={LABEL_STYLE}>
+          {label}
+        </Text>
+        <Text numberOfLines={1} style={{ ...VALUE_STYLE, marginLeft: 8 }}>
+          {value}
+        </Text>
       </View>
-      <Text onLayout={onLabelLayout} numberOfLines={1} style={{ ...LABEL_STYLE, minWidth: labelMinWidth, textAlign: 'right' }}>
-        {label}
-      </Text>
-      <Text numberOfLines={1} style={{ ...VALUE_STYLE, marginLeft: 8 }}>
-        {value}
-      </Text>
     </Pressable>
   )
 }
@@ -224,10 +281,28 @@ export function Plaque({
   const onLabelMeasured = (width: number) => setLabelMinWidth((prev) => Math.max(prev, width))
 
   return (
-    <View style={{ marginTop: 24, alignItems: 'flex-start', gap: PLAQUE_ROW_GAP }}>
-      <PlaqueRow label="Слънце" value={sunSign} onPress={onSelectSun} labelMinWidth={labelMinWidth} onLabelMeasured={onLabelMeasured} />
-      <PlaqueRow label="Луна" value={moonSign} onPress={onSelectMoon} labelMinWidth={labelMinWidth} onLabelMeasured={onLabelMeasured} />
-      <PlaqueRow label="Асцендент" value={risingSign} onPress={onSelectRising} labelMinWidth={labelMinWidth} onLabelMeasured={onLabelMeasured} />
+    <View style={{ marginTop: 32, alignItems: 'flex-start', gap: PLAQUE_ROW_GAP }}>
+      <PlaqueRow
+        label="Слънце"
+        value={sunSign}
+        onPress={onSelectSun}
+        labelMinWidth={labelMinWidth}
+        onLabelMeasured={onLabelMeasured}
+      />
+      <PlaqueRow
+        label="Луна"
+        value={moonSign}
+        onPress={onSelectMoon}
+        labelMinWidth={labelMinWidth}
+        onLabelMeasured={onLabelMeasured}
+      />
+      <PlaqueRow
+        label="Асцендент"
+        value={risingSign}
+        onPress={onSelectRising}
+        labelMinWidth={labelMinWidth}
+        onLabelMeasured={onLabelMeasured}
+      />
     </View>
   )
 }

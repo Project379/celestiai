@@ -81,7 +81,12 @@ export function MoonHero({
       {/* Founder device-pass fix (2026-07-28, legibility): overrides
           type.eyebrow's shared 9.5px specifically here (not the shared
           token — other consumers weren't asked to change) — 9.5 → 13. */}
-      <Text style={{ ...type.eyebrow, fontSize: 13, color: color.starlight, opacity: 0.82, textTransform: 'uppercase', marginTop: 8, textAlign: 'center' }}>
+      {/* Founder device-pass fix (this batch, spacing consistency): 8 → 12
+          — this is the "небесен ритъм" caption's own content, same
+          caption-to-content relationship as дневен хороскоп's caption→
+          reading and the sign block's caption→quip, both of which already
+          use rhythm.tight (12). Was an untokenized 8, the one outlier. */}
+      <Text style={{ ...type.eyebrow, fontSize: 13, color: color.starlight, opacity: 0.82, textTransform: 'uppercase', marginTop: 12, textAlign: 'center' }}>
         {phaseName}
       </Text>
       {/* Founder device-pass fix (2026-07-28, legibility): 12 → 15 —

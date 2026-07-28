@@ -6,6 +6,7 @@ import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import { PLAQUE_ROW_GAP } from '@/components/chart/Plaque'
 import { useBreathe } from '@/components/design-system/motion'
 import { color, font, pressFeedback } from '@/components/design-system/tokens'
+import { hapticInvite } from '@/lib/haptics'
 
 /**
  * Карта's «Детайли» invitation — mockup `.pedestal` (_source-v4.html
@@ -57,7 +58,10 @@ export function Pedestal({ onPress }: { onPress: () => void }) {
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        hapticInvite()
+        onPress()
+      }}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       accessibilityRole="button"
