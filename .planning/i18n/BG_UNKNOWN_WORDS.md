@@ -10,6 +10,42 @@ HALT — awaiting your review. Mark each row A/B/C (or correct my bucket) before
 
 ---
 
+## Stage 1 ratification — resolved 2026-07-28
+
+**орб vs орбис**: `орб` is the more frequent term in the codebase (7 live occurrences: `AspectsList.tsx`×2 header logic aside, `TransitOverviewCard.tsx`×2, `transit-to-prompt.ts`, `chart-to-prompt.ts`×2, `transit-analysis.ts`×2) vs `орбис` (3 occurrences: `apps/mobile/components/chart/AspectsList.tsx:65`, `apps/web/components/chart/AspectsList.tsx:56`, `packages/core/src/charts/interpretations.ts:162`). Recommend standardizing on **орб** at the 3 `орбис` sites — not yet edited, pending your go-ahead since it touches live UI copy.
+
+**Неоторизиран (35 occurrences, all API 401/403 error bodies)** — verified via code trace, not log-only:
+- **Two confirmed live user-facing exposure paths.** Both routes' error string reaches the DOM verbatim on a stale/expired session:
+  - Chart view: `apps/web/app/api/chart/calculate/route.ts:16` → `apps/web/hooks/useChart.ts:24-26` throws `Error(data.error)` → `useChart.ts:49` surfaces it as `error` → rendered at `apps/web/components/chart/ChartView.tsx:118` (`<ChartError message={error} />`).
+  - Transit overview: `apps/web/app/api/transits/overview/route.ts:14` → `apps/web/hooks/useTransitOverview.ts:21,43` → rendered raw at `apps/web/components/horoscope/TransitOverviewCard.tsx:371` and `apps/web/components/horoscope/TransitEventDetail.tsx:37`.
+  - The remaining 33 occurrences follow the same `useSWR`-style `throw new Error(data.error ?? fallback)` → render-error-string pattern used by these two hooks; the other API routes weren't individually re-traced call-site-by-call-site since the pattern is shared, but nothing rules them out — treat all 35 as in-scope, not just the 2 confirmed.
+  - Contrast: `apps/web/hooks/useOracleReading.ts` captures `data.error` but the UI (`OraclePanelGlobal.tsx`) never renders the generic-error branch — dead value, not exposed.
+  - `apps/web/app/api/horoscope/generate/route.ts` uses English `'Unauthorized'`/`'Forbidden'`, not this string — outside the 35, not in scope here.
+- Since it's confirmed user-facing, "Неоторизиран достъп" is in scope for your native-speaker judgment, not allowlist-and-ignore.
+
+**навичен** — only 1 occurrence, `packages/core/src/charts/interpretations.ts:211`:
+> `'прекалено разчитане на навичен социален стил'` (Rising-sign challenge copy, Ascendant interpretation, array item alongside `'другите да ви възприемат само през външната маска'` and `'объркване между първична реакция и по-дълбока истина'`.)
+
+**страхова** — only 1 occurrence, `packages/core/src/charts/interpretations.ts:56`:
+> `saturn: ['самокритика', 'страхова сдържаност', 'усещане за тежест или забавяне']` (Saturn challenge-trait array, planet challenges table.)
+
+Both left untouched per your instruction — Bucket C, your call.
+
+---
+
+## Bucket A split — A1 (proper nouns) vs A2 (ordinary words)
+
+A2 (ordinary Bulgarian words / domain jargon / abbreviations the dictionary lacks) has been allowlisted now in `scripts/i18n/bg-allowlist.txt` (~140 entries added). This includes established-loanword nouns/adjectives/verbs, abbreviations (ч, мин, г, год, д, стр, мес, макс), the productive "-ост"-suffix and "най-/по-" superlative/comparative forms, and two epithet common-nouns wrongly filed as proper nouns in the original scan (`Астеризмът` = "the asterism", `Водоносецът` = "the Water Bearer" — both generic astronomy nouns, not names).
+
+A1 (proper nouns — NOT allowlisted, for your spot-check) splits into four clusters:
+
+1. **Author/director/character names** — all from `packages/core/src/stories/catalog.ts` (the stories recommendation catalog). ~90 names: Толстой, Аврелий (Marcus Aurelius), Ескивел (Laura Esquivel), Зюскинд (Süskind), Калвино (Italo Calvino), Керуак (Kerouac), Копола (Coppola), Мураками (Murakami), Одзу (Ozu), Айвъри (James Ivory), Бабет (Babette), Борхес (Borges), **Ботура (Massimo Bottura — Chef's Table subject, catalog.ts:35)**, Бърнет (Burnett), Бъртън (Burton), Гетсби (Gatsby, character), Гъруик (Gerwig), Дейвид (David Gelb), Зинсър, Зорбас (Zorba, character), Казандзакис (Kazantzakis), Калик, Кар-уай (Wong Kar-wai), Куросава (Kurosawa), Линклейтър (Linklater), Люмет (Lumet), Мичъл (Mitchell), Сияма, Танидзаки (Tanizaki), Уолър-Бридж (Waller-Bridge), Уонг (Wong), Форман (Forman), Франсис, Чеймбърс (Chambers), Шон (Sean), Акира (Akira Kurosawa), Аксел (Axel), Алексис, Гелб (Gelb), Джак (Jack), Джеймс (James), Джуничиро (Jun'ichirō Tanizaki), Итало (Italo Calvino), Каренина (Karenina, character), Марк (Marcus), Масимо (Massimo Bottura), Милош (Miloš Forman), Никос (Nikos Kazantzakis), Патрик (Patrick Süskind), **Поло (Marco Polo, catalog.ts:551)**, Селин (Céline), Уилям (William), Ходжсън (Hodgson), Хорхе (Jorge Borges), Фицджералд (Fitzgerald), Харуки (Haruki Murakami), Ясуджиро (Yasujirō Ozu).
+2. **Star/constellation proper nouns** — all from `apps/web/components/CelestialCanvas.tsx`: Алдебаран, Антарес, Полукс, Регул, Спика, Алиот, Дубхе, Каус, Ригел, Садалсууд, Хамал, Шедар, Алгеди, Астрея, Белатрикс, Бетелгейзе, Ганимед, Денеб, Денебола, Зубенешамали, Мицар, Плеядите, Сайф, Тарф, Тифон, Хиадите, Шератан, Волопас, Персей (also duplicated in `apps/mobile/app/_stage2-preview.tsx`), plus two abbreviation fragments of the same name: **Аустралис / Аустр.** (both = "Kaus Australis", `CelestialCanvas.tsx:94,96` — the second is the label truncated to fit the star-map dot, `Каус Аустр.`).
+3. **Meteor shower / comet proper nouns** — all from `packages/core/src/welcome/meteor-showers.ts`: Халей (Halley), Аквариди (Aquariids), Персеиди (Perseids), Геминиди (Geminids), Квадрантиди (Quadrantids), Леониди (Leonids), Лириди (Lyrids), Макхолц (Machholz), Ориониди (Orionids), Суифт-Тътъл (Swift-Tuttle), **Тачер (Comet C/1861 G1 Thatcher, meteor-showers.ts:44)**, Темпел-Тътъл (Tempel-Tuttle), Урсиди (Ursids), Фаетон (Phaethon), Тътъл (Tuttle), Ета (as in "Ета Аквариди" = Eta Aquariids, meteor-showers.ts:50).
+4. **Mineral/crystal names + 3 mislabeled entries** — all from `apps/web/lib/crystals/guide-content-bg.ts` / `packages/core/src/lib/moon-phase.ts`: авантюрин, Гранат, калцит, Карнеол, Лабрадорит(ът), Лазурит, Малахит, обсидиан, Перидот, Родонит, Селенит, Содалит, Танзанит, турмалин, Ултрамарин, флуорит, халцедон, Цитрин(ът). Three entries in the original scan were mis-bucketed under "mineral" reasoning but are actually different proper nouns in the same prose block — flagging since the original reasoning was wrong, not just the classification: **Микеланджело** (Michelangelo, `guide-content-bg.ts:97`, lapis lazuli copy), **Сикстинската** (definite adjective "Sistine" — Sistine Chapel, same line), **Ацтеките** ("the Aztecs" — ethnonym, `guide-content-bg.ts:141`, obsidian copy). `Прашно-розов` ("dusty-pink") from the same cluster is NOT a proper noun — it's a color adjective describing rhodonite — moved to A2 and allowlisted.
+
+None of A1 has been allowlisted or edited. Flag any transliteration that looks off and I'll re-verify against the source spelling convention.
+
 ## Bucket B — Likely wrong (misspelling / wrong-language / bug)
 
 | Word | Count | Example | Reasoning |
