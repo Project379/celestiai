@@ -1,9 +1,8 @@
 # Stage 5 — Prevention Mechanisms
 
 Purpose: once Stage 1-4 fixed the known problems, Stage 5 stops new ones
-from shipping. Four mechanisms: two fully implemented and gating, one
-built and verified but deliberately not gating yet (needs a founder
-decision on enforcement), one designed and not built.
+from shipping. Four mechanisms: three fully implemented and gating in
+`check:all`, one designed and not built.
 
 ## Scope note: machine-facing endpoints are NOT part of this workstream
 
@@ -52,46 +51,47 @@ text change was caught; a pure line-shift with no text change was
 correctly NOT flagged (confirming the file+text key works as designed,
 not file+line).
 
-## 3. Lint rule against Cyrillic literals outside content-home files — BUILT, VERIFIED, NOT GATING
+## 3. Lint rule against Cyrillic literals outside content-home files — IMPLEMENTED, GATING (ratchet baseline)
 
 `packages/config/eslint/no-new-bg-strings.cjs` — shared `no-restricted-syntax`
 rule (ESQuery selector matching any Cyrillic-containing `Literal`/
 `TemplateElement`), wired into all three ESLint configs (web/mobile/core)
 at `warn` severity, with an exemption glob list (`CONTENT_HOME_GLOBS`) for
 established long-form content files (`catalog.ts`, `interpretations.ts`,
-`guide-content-bg.ts`, `bg-grammar.ts`, `transit-analysis.ts`, etc.) plus
-`packages/i18n/strings/**` pre-emptively for the not-yet-built namespaced
-strings module.
+`guide-content-bg.ts`, `bg-grammar.ts`, `format-days-hours.ts`,
+`transit-analysis.ts`, etc.) plus `packages/i18n/strings/**` pre-emptively
+for the not-yet-built namespaced strings module.
 
-**Verified working**: confirmed the exemption mechanism correctly silences
-established content-home files (severity resolves to `0`/off via
-`eslint --print-config`) while still flagging genuine outside-content-home
-Cyrillic literals — caught two real gaps in the initial exemption list
-(`format-days-hours.ts`, a i18n-grammar sibling of `bg-grammar.ts`) during
-this verification, fixed before finalizing.
+A static ESLint rule has no concept of "new" vs. "pre-existing" — it flags
+every matching literal every time it runs, uniformly. "A lint rule against
+*new* Cyrillic literals" is actually implemented via a **ratcheting
+baseline**, not a blanket `eslint --max-warnings` on each workspace's full
+lint script (that would conflate this rule's count with unrelated
+pre-existing warnings — react-hooks/exhaustive-deps, a11y, etc. — making
+the ceiling meaningless). `scripts/i18n/check-bg-lint-baseline.mjs` runs
+ESLint with the JSON formatter across all three workspaces, counts only
+`no-restricted-syntax` violations, sums them, and fails if the total
+exceeds `BASELINE`. Existing debt is grandfathered; a new instance
+anywhere pushes the count over and fails the build.
 
-**Not wired into `pnpm lint`/`check:all` as blocking — this needs a founder
-decision, not a unilateral call.** Blast radius: 1338 warnings across the
-whole app (51 core, 754 web, 533 mobile) — because the namespaced
-strings-module architecture this rule assumes doesn't exist yet, nearly
-every component's hardcoded UI label (buttons, headings, aria-labels) has
-nowhere else to live. This is expected, not a sign anything is broken —
-matches the original i18n-architecture note ("halt when the module
-structure exists, before mass-migrating call sites").
+**BASELINE = 1336, recorded 2026-07-30** (51 `@stellaeum/core`, 752
+`@stellaeum/web`, 533 `@stellaeum/mobile`). Originally measured at 1338 the
+same day; the cron-endpoint fix (see "Scope note" above) removed 2
+Cyrillic literals before the baseline was locked in, so it already
+reflects that rather than starting 2 wider than strictly necessary. As
+the namespaced strings-module migration proceeds and literals move out of
+components into that module, lower `BASELINE` in the script to match —
+a future drop in the count is then visible as progress, not noise.
 
-**Also worth flagging explicitly**: "a lint rule against *new* Cyrillic
-literals" and what got built are two different things. A static ESLint
-rule has no concept of "new" vs. "pre-existing" — it flags every matching
-literal every time it runs, uniformly. True new-only enforcement needs
-either (a) a diff-aware check (compare only files/lines touched in a PR
-against a base branch — more tooling, not built), or (b) ESLint's
-`--max-warnings <N>` idiom: set N to the current baseline count, which
-fails the build only if the count *increases*, effectively blocking new
-violations while grandfathering existing ones without requiring an
-immediate mass fix. (b) is the standard, low-effort way to get the
-"prevent new" behavior the founder asked for without a bigger diff-tooling
-build — flagging as the likely next step, pending the founder's call on
-whether/when to wire it in and at what baseline.
+**Verified for real, both directions**: confirmed the exemption mechanism
+correctly silences established content-home files (severity resolves to
+`0`/off via `eslint --print-config`) while still flagging genuine
+outside-content-home Cyrillic literals — caught two real gaps in the
+initial exemption list (`format-days-hours.ts`) during this verification,
+fixed before finalizing. Then verified the ratchet itself: injected one
+new Cyrillic literal into a non-content-home file, ran the baseline check,
+confirmed it failed (1337 > 1336) with a clear message, reverted, confirmed
+clean pass (1336) again. Wired into `check:all` after `check:copy-lock`.
 
 ## 4. Assembled-output register/grammar check — DESIGNED, NOT BUILT
 
