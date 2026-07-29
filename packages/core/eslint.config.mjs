@@ -8,6 +8,9 @@
 
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
+import pkg from '../config/eslint/no-new-bg-strings.cjs'
+
+const { NO_NEW_BG_STRINGS_RULE, CONTENT_HOME_GLOBS } = pkg
 
 export default [
   js.configs.recommended,
@@ -63,6 +66,14 @@ export default [
       }],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    rules: NO_NEW_BG_STRINGS_RULE,
+  },
+  {
+    files: CONTENT_HOME_GLOBS,
+    rules: { 'no-restricted-syntax': 'off' },
   },
   {
     ignores: ['node_modules/**', 'dist/**'],

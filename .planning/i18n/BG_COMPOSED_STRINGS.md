@@ -5,6 +5,32 @@ Scope: every template/function found in `apps/web`, `apps/mobile`, `packages/cor
 (sign, planet, aspect, house, day-count, percentage, streak, shower name, etc.)
 into a sentence fragment. Static strings are out of scope (handled elsewhere).
 
+## Structural finding: fragments can be clean while the assembly is not (2026-07-30)
+
+During the ти/Вие register conversion, `packages/core/src/horoscope/transit-analysis.ts`'s
+`houseTheme()`/`aspectMeaning()` functions were left formal (out of scope for
+that pass) while `enrichActiveTransit`/`enrichUpcomingTransit` — which
+interpolate those functions' return values directly into the sentences they
+build — had already been converted to informal `твоя натален X` phrasing
+during an earlier, unrelated gender-agreement fix. Neither function was
+wrong in isolation: `houseTheme()` returned internally-consistent formal
+Bulgarian, the enrich functions produced internally-consistent informal
+Bulgarian. Only the **assembled** sentence was broken: "...с **твоя** натален
+Меркурий, което отваря възможност, която работи най-добре, ако я
+**използвате** съзнателно." — mixed register, live in production, on the
+transit cards users see every day.
+
+No per-file or per-fragment grep would ever catch this, because both
+fragments passed a fragment-level check independently. The defect only
+exists at the composition site, where two independently-clean strings are
+concatenated. This is the reason `check-bg-generated.mjs`-style validation
+(and any future prevention tooling) must run against **assembled output**,
+not just the fragments that feed it — see Stage 5 design note in
+`.planning/i18n/README.md` / prevention-mechanisms planning for how this
+should be operationalized: generate real composed outputs from every site
+in this document (not just transit-analysis.ts) and check the assembled
+text for register consistency as its own check, separate from spelling.
+
 No fixes proposed. Grammar-rule reference used throughout:
 
 - **Numeric agreement**: Bulgarian only distinguishes singular (count == 1) vs.

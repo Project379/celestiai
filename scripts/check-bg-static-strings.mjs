@@ -14,59 +14,29 @@
  * Exit 0 on pass (no misspellings), 1 on fail. Runnable via
  * `pnpm run check:bg-strings`.
  */
-import { readFileSync } from 'node:fs'
-import { resolve, dirname, relative } from 'node:path'
+import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import fg from 'fast-glob'
 import { loadSpeller, findMisspellings } from './i18n/bg-speller.mjs'
+import { extractAllLiterals } from './i18n/extract-literals.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
 
-const GLOBS = ['apps/mobile/**/*.{ts,tsx}', 'apps/web/**/*.{ts,tsx}', 'packages/**/*.{ts,tsx}']
-const IGNORE = ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/build/**', '**/.expo/**']
-
-const CYRILLIC_RE = /[Ѐ-ӿ]/
-const STRING_LITERAL_RE = /'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`/g
-
-function stripComments(source) {
-  // Best-effort: block comments, then line comments. Doesn't understand
-  // strings containing `//` or `/*` — acceptable for a first-pass tool,
-  // rare enough in this codebase's actual string content to not matter
-  // in practice (checked against the known inventory: no false negatives
-  // observed from this on the current tree).
-  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '')
-}
-
-function lineNumberAt(source, index) {
-  let line = 1
-  for (let i = 0; i < index; i++) if (source[i] === '\n') line++
-  return line
-}
-
 async function main() {
   const speller = await loadSpeller()
-  const files = await fg(GLOBS, { cwd: ROOT, ignore: IGNORE, absolute: true })
+  const literals = await extractAllLiterals(ROOT)
 
   const failures = []
 
-  for (const file of files) {
-    const raw = readFileSync(file, 'utf8')
-    const stripped = stripComments(raw)
-    let match
-    while ((match = STRING_LITERAL_RE.exec(stripped))) {
-      const literal = match[0]
-      if (!CYRILLIC_RE.test(literal)) continue
-      const misses = findMisspellings(speller, literal)
-      if (misses.length === 0) continue
-      const line = lineNumberAt(stripped, match.index)
-      failures.push({
-        file: relative(ROOT, file),
-        line,
-        words: misses,
-        snippet: literal.length > 90 ? literal.slice(0, 90) + '…' : literal,
-      })
-    }
+  for (const { file, line, text } of literals) {
+    const misses = findMisspellings(speller, text)
+    if (misses.length === 0) continue
+    failures.push({
+      file,
+      line,
+      words: misses,
+      snippet: text.length > 90 ? text.slice(0, 90) + '…' : text,
+    })
   }
 
   if (failures.length === 0) {

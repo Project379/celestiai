@@ -9,7 +9,9 @@
     "test": "turbo run test",
     "check:strictness": "node scripts/check-core-strictness.mjs",
     "check:bg-strings": "node scripts/check-bg-static-strings.mjs",
-    "check:all": "pnpm run check:strictness && pnpm run typecheck",
+    "check:copy-lock": "node scripts/i18n/check-copy-lock.mjs",
+    "i18n:update-copy-lock": "node scripts/i18n/generate-copy-lock.mjs",
+    "check:all": "pnpm run check:strictness && pnpm run check:bg-strings && pnpm run check:copy-lock && pnpm run typecheck",
     "supabase": "supabase"
   },
   "devDependencies": {
