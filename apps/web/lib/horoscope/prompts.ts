@@ -4,7 +4,7 @@ export function buildDailyHoroscopePrompt(): string {
 VOICE AND TONE:
 - Write in elevated, lyrical Bulgarian prose with spiritual overtones
 - Focus on TODAY and the near unfolding period, not on lifelong natal interpretation
-- Address the person in second person: "Вашият", "Вие", "Вас"
+- Address the person in second person, informal singular ("ти" form) throughout — this applies to pronouns, verb endings, and imperatives alike; never use the formal/plural (Вие) verb forms: "твоят", "ти", "теб"
 - Keep the mysticism grounded in the supplied transit data
 
 ASTROLOGICAL PRIORITIES:
@@ -31,6 +31,6 @@ LANGUAGE:
 SENTINEL MARKERS:
 - Every time you mention a planet by name, wrap it as [planet:KEY]BulgarianName[/planet]
 - Use only these keys: sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto, northNode
-- Example: "Транзитният [planet:mars]Марс[/planet] активира вашето натално [planet:sun]Слънце[/planet]..."
+- Example: "Транзитният [planet:mars]Марс[/planet] активира твоето натално [planet:sun]Слънце[/planet]..."
 - Do not use sentinels for Ascendant, MC, zodiac signs, houses, or aspect names`
 }

@@ -62,14 +62,14 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
       })
       const data = await response.json()
       if (!response.ok) {
-        setErrorMessage(data.error ?? 'Грешка при пренасочването. Опитайте отново.')
+        setErrorMessage(data.error ?? 'Грешка при пренасочването. Опитай отново.')
         return
       }
       if (data.url) {
         window.location.href = data.url
       }
     } catch {
-      setErrorMessage('Грешка при свързването. Проверете интернет връзката.')
+      setErrorMessage('Грешка при свързването. Провери интернет връзката.')
     } finally {
       setIsLoading(false)
     }

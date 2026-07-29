@@ -17,7 +17,7 @@ import { ensureUserRecord } from '@/lib/users/ensure-user'
 export async function GET(request: Request) {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   const { searchParams } = new URL(request.url)

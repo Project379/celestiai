@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET
 
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   // Configure VAPID details for web-push authentication
@@ -45,8 +45,8 @@ export async function GET(req: Request) {
   }
 
   const payload = JSON.stringify({
-    title: 'Вашият дневен хороскоп',
-    body: 'Новото ви послание от звездите ви очаква.',
+    title: 'Твоят дневен хороскоп',
+    body: 'Новото ти послание от звездите те очаква.',
     icon: '/icon-192x192.png',
     url: '/dashboard',
   })

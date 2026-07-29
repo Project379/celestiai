@@ -77,7 +77,7 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
             Изход от профила
           </h2>
           <p className="mt-2 text-slate-400">
-            Сигурни ли сте, че искате да излезете?
+            Сигурен/а ли си, че искаш да излезеш?
           </p>
         </div>
 

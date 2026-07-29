@@ -61,8 +61,8 @@ export const PLANETS_BG: Record<Planet, string> = {
 
 /**
  * Grammatical gender of each planet's Bulgarian name, for adjective/pronoun
- * agreement in composed sentences (e.g. "вашия натален" must become
- * "вашето натално Слънце" / "вашата натална Луна"). "Северен възел" agrees
+ * agreement in composed sentences (e.g. "твоя натален" must become
+ * "твоето натално Слънце" / "твоята натална Луна"). "Северен възел" agrees
  * as masculine — "възел" is the head noun.
  */
 export const PLANETS_BG_GENDER: Record<Planet, 'masc' | 'fem' | 'neut'> = {

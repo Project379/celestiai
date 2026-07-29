@@ -13,7 +13,7 @@ import { ensureUserRecord } from '@/lib/users/ensure-user'
 export async function GET() {
   const { userId, sessionId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   const appUser = await ensureUserRecord(userId)

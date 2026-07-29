@@ -72,7 +72,7 @@ export async function POST() {
 export async function DELETE() {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   const supabase = createServiceSupabaseClient()

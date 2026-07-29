@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   // Auth check
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     }
 
     if (chart.user_id !== userId) {
-      return Response.json({ error: 'Неоторизиран достъп' }, { status: 403 })
+      return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 403 })
     }
 
     // Fetch all non-expired readings for this chart

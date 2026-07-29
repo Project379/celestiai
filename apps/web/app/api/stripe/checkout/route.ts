@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     userId = id
     stripeCustomerId = user.stripe_customer_id
   } catch (error) {
-    return toErrorResponse(error, 'Неоторизиран достъп')
+    return toErrorResponse(error, 'Сесията ти изтече. Влез отново.')
   }
 
   let priceId: string

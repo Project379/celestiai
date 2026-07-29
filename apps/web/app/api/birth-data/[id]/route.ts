@@ -25,7 +25,7 @@ interface RouteParams {
 export async function GET(_request: Request, { params }: RouteParams) {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {
@@ -55,7 +55,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
 export async function PATCH(request: Request, { params }: RouteParams) {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {
@@ -105,7 +105,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 export async function DELETE(_request: Request, { params }: RouteParams) {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {

@@ -46,7 +46,7 @@ export function DeletionPendingBanner({ deletionScheduledAt }: DeletionPendingBa
   return (
     <div className="relative z-40 border-b border-rose-400/30 bg-rose-500/[0.08] px-4 py-2.5 text-center">
       <p className="font-display text-[13px] text-rose-200/95">
-        Акаунтът ви ще бъде изтрит на{' '}
+        Акаунтът ти ще бъде изтрит на{' '}
         <span className="font-medium text-rose-100">{formatBgDate(deletionScheduledAt)}</span>.{' '}
         <button
           type="button"
@@ -54,7 +54,7 @@ export function DeletionPendingBanner({ deletionScheduledAt }: DeletionPendingBa
           disabled={isPending}
           className="font-medium text-amber-300 underline decoration-amber-300/40 underline-offset-[3px] transition-colors hover:text-amber-200 disabled:opacity-50"
         >
-          {isPending ? 'Отменяме...' : 'Отменете изтриването'}
+          {isPending ? 'Отменяме...' : 'Отмени изтриването'}
         </button>
       </p>
     </div>

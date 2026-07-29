@@ -221,9 +221,11 @@ async function checkUnauthGates() {
     // Post 635f1a4 — every user-scoped 401 body is BG. The EN
     // "Unauthorized" fallback was removed; asserting the BG string
     // alone catches regressions that re-introduce the EN throw.
+    // Message updated 2026-07-30 (register-conversion workstream):
+    // "Неоторизиран достъп" -> "Сесията ти изтече. Влез отново."
     expect(
-      `${ep.method} ${ep.path} → 401 Неоторизиран достъп`,
-      status === 401 && json?.error?.includes('Неоторизиран'),
+      `${ep.method} ${ep.path} → 401 Сесията ти изтече. Влез отново.`,
+      status === 401 && json?.error?.includes('Сесията'),
       `status=${status} body=${JSON.stringify(json).slice(0, 80)}`,
     )
   }

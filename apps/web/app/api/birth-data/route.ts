@@ -19,7 +19,7 @@ import { logServerError } from '@/lib/monitoring/log-server-error'
 export async function GET() {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {
@@ -45,7 +45,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {

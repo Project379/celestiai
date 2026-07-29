@@ -59,11 +59,11 @@ export const TRANSITING_ADJ: BgAdjectiveForms = {
   neut: 'Транзитно',
 }
 
-/** "вашия"/"вашата"/"вашето" — postpositive possessive, e.g. "с вашия натален X". */
+/** "твоя"/"твоята"/"твоето" — postpositive possessive, e.g. "с твоя натален X". */
 export const YOUR_POSSESSIVE: BgAdjectiveForms = {
-  masc: 'вашия',
-  fem: 'вашата',
-  neut: 'вашето',
+  masc: 'твоя',
+  fem: 'твоята',
+  neut: 'твоето',
 }
 
 /**

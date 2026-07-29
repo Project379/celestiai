@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   // 1. Auth check
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   // Hoisted so refund paths in the outer catch + stream callbacks can see it.
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
     }
 
     if (chart.user_id !== userId) {
-      return Response.json({ error: 'Неоторизиран достъп' }, { status: 403 })
+      return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 403 })
     }
 
     // 5. Cache check — return cached reading without quota interaction
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
         (Date.now() - lastRegen.getTime()) / (1000 * 60 * 60)
       if (hoursElapsed < 24) {
         return Response.json(
-          { error: 'Можете да регенерирате веднъж на ден' },
+          { error: 'Можеш да регенерираш веднъж на ден' },
           { status: 429 }
         )
       }
@@ -187,7 +187,7 @@ export async function POST(req: Request) {
         await decrementQuotaUsage(userId, claimedPeriodStart)
       }
       return Response.json(
-        { error: 'Натална карта не е изчислена. Моля, изчислете картата първо.' },
+        { error: 'Натална карта не е изчислена. Изчисли картата първо.' },
         { status: 404 }
       )
     }

@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   const { userId } = await auth()
   if (!userId) {
     return Response.json(
-      { error: 'Неоторизиран достъп' },
+      { error: 'Сесията ти изтече. Влез отново.' },
       { status: 401 }
     )
   }
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   // Validate query
   if (!query || query.length < 1) {
     return Response.json(
-      { error: 'Моля, въведете поне 1 символ' },
+      { error: 'Въведи поне 1 символ' },
       { status: 400 }
     )
   }

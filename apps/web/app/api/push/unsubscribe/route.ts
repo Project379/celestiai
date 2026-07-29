@@ -8,7 +8,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 export async function POST(req: Request) {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {

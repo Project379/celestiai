@@ -65,10 +65,10 @@ export function SessionExpiryModal() {
             id="session-expiry-title"
             className="text-xl font-semibold text-slate-100"
           >
-            Сесията ви изтече
+            Сесията ти изтече
           </h2>
           <p className="mt-2 text-slate-400">
-            Влезте отново, за да продължите
+            Влез отново, за да продължиш
           </p>
         </div>
 

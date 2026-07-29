@@ -72,7 +72,7 @@ export function DataAccountPage() {
       if (!res.ok) throw new Error('delete request failed')
       dialogRef.current?.close()
       setSuccessMessage(
-        `Заявката е приета. Акаунтът ще бъде изтрит на ${formatBgDate(data.scheduledDeletion)}, освен ако не отмените заявката преди това.`
+        `Заявката е приета. Акаунтът ще бъде изтрит на ${formatBgDate(data.scheduledDeletion)}, освен ако не отмениш заявката преди това.`
       )
       router.refresh()
     } catch {
@@ -100,7 +100,7 @@ export function DataAccountPage() {
           Изтегляне на данни
         </p>
         <p className="mb-4 text-sm leading-relaxed text-slate-400">
-          Изтеглете копие на всички ваши данни — профил, натални карти, четения от Оракула, хороскопи и записи в дневника — като JSON файл.
+          Изтегли копие на данните си — профил, натални карти, четения от Оракула, хороскопи и записи в дневника — като JSON файл.
         </p>
         <button
           type="button"
@@ -108,11 +108,11 @@ export function DataAccountPage() {
           disabled={exportState === 'loading'}
           className="inline-flex items-center gap-2 rounded-lg border border-slate-200/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-200 transition-all hover:border-violet-300/30 hover:bg-violet-500/[0.07] hover:text-white disabled:opacity-50"
         >
-          {exportState === 'loading' ? 'Подготвяме файла...' : 'Изтеглете данните си'}
+          {exportState === 'loading' ? 'Подготвяме файла...' : 'Изтегли данните си'}
         </button>
         {exportState === 'error' && (
           <p className="mt-2 text-sm text-rose-300">
-            Не успяхме да подготвим данните ви. Опитайте отново.
+            Не успяхме да подготвим данните ти. Опитай отново.
           </p>
         )}
       </section>
@@ -122,14 +122,14 @@ export function DataAccountPage() {
           Изтриване на акаунта
         </p>
         <p className="mb-4 text-sm leading-relaxed text-slate-400">
-          Заявката за изтриване спира достъпа ви до Премиум функциите веднага, но данните се пазят за 30 дни — можете да отмените по всяко време през този период.
+          Заявката за изтриване спира достъпа ти до Премиум функциите веднага, но данните се пазят за 30 дни — можеш да отмениш по всяко време през този период.
         </p>
         <button
           type="button"
           onClick={handleOpenDialog}
           className="inline-flex items-center gap-2 rounded-lg border border-rose-400/20 bg-rose-500/[0.05] px-4 py-2 text-sm font-medium text-rose-300 transition-all hover:border-rose-400/40 hover:bg-rose-500/10 hover:text-rose-200"
         >
-          Заявете изтриване на акаунта
+          Заяви изтриване на акаунта
         </button>
       </section>
 
@@ -141,17 +141,17 @@ export function DataAccountPage() {
           Изтриване на акаунта
         </h3>
         <p className="mb-6 text-sm leading-relaxed text-slate-400">
-          Акаунтът ви и всички свързани с него данни ще бъдат изтрити безвъзвратно на{' '}
-          <span className="text-slate-200">{upcomingDeletionDate()}</span>. До тогава можете да отмените заявката по всяко време.
+          Акаунтът ти и всички свързани с него данни ще бъдат изтрити безвъзвратно на{' '}
+          <span className="text-slate-200">{upcomingDeletionDate()}</span>. До тогава можеш да отмениш заявката по всяко време.
         </p>
 
         {deleteState === 'already-pending' && (
           <p className="mb-4 text-sm text-amber-300">
-            Вече има чакаща заявка за изтриване — вижте лентата в горната част на страницата, за да я отмените.
+            Вече има чакаща заявка за изтриване — виж лентата в горната част на страницата, за да я отмениш.
           </p>
         )}
         {deleteState === 'error' && (
-          <p className="mb-4 text-sm text-rose-300">Заявката не се изпрати. Опитайте отново.</p>
+          <p className="mb-4 text-sm text-rose-300">Заявката не се изпрати. Опитай отново.</p>
         )}
 
         <div className="flex flex-col gap-2 sm:flex-row-reverse">
