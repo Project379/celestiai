@@ -28,13 +28,15 @@ function loadAllowlist() {
 }
 const ALLOWLIST = loadAllowlist()
 
-// "по-" + adjective/adverb (по-долу, по-силна, по-малко, по-вътрешна…) is a
-// productive Bulgarian comparative-degree construction, not a fixed
-// dictionary entry — a general-purpose dictionary will never have every
-// possible по-X form, so this is a structural exclusion (a grammatical
-// PATTERN is always valid), not a per-word judgment call about whether a
-// specific string is correct Bulgarian.
-const PO_COMPARATIVE_RE = /^по-[а-яА-Я]+$/
+// "по-" (comparative: по-долу, по-силна, по-малко) and "най-" (superlative:
+// най-добра, най-силен) + adjective/adverb are productive Bulgarian
+// degree constructions, not fixed dictionary entries — a general-purpose
+// dictionary will never have every possible по-X/най-X form, so this is a
+// structural exclusion (a grammatical PATTERN is always valid), not a
+// per-word judgment call about whether a specific string is correct
+// Bulgarian. Individually allowlisting each one is whack-a-mole; match the
+// pattern instead.
+const DEGREE_COMPARATIVE_RE = /^(по|По|най|Най)-[а-яА-Я]+$/
 
 // dictionary-bg v2 is ESM and exports `{aff, dic}` directly (no callback,
 // unlike the old v1-era dictionary packages some nspell examples still
@@ -74,7 +76,7 @@ export function findMisspellings(speller, text) {
     if (seen.has(word)) continue
     seen.add(word)
     if (ALLOWLIST.has(word)) continue
-    if (PO_COMPARATIVE_RE.test(word)) continue
+    if (DEGREE_COMPARATIVE_RE.test(word)) continue
     if (!speller.correct(word)) misses.push(word)
   }
   return misses

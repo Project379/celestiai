@@ -91,9 +91,9 @@ export const CONSTELLATIONS: ConstellationData[] = [
   {
     id: 'sagittarius', name: 'Стрелец', latin: 'Sagittarius', element: 'Огън',
     description: 'Астеризмът „Чайникът" е лесен за намиране. Стрелецът сочи право към центъра на Млечния път - най-гъстата звездна област.',
-    season: 'Лято–Есен (юли–октомври)', brightestStar: 'Каус Аустралис (ε Sagittarii)',
+    season: 'Лято–Есен (юли–октомври)', brightestStar: 'Каус Австралис (ε Sagittarii)',
     L0: 255, D0: 0.5,
-    stars: [{ dx: -15, dy: 15, mag: 2.8 }, { dx: -15, dy: -5, mag: 3.0 }, { dx: 0, dy: -15, mag: 2.7 }, { dx: 15, dy: -5, mag: 2.6, name: 'Каус Аустр.' }, { dx: 15, dy: 15, mag: 2.8 }, { dx: 0, dy: 20, mag: 3.2 }, { dx: 5, dy: -28, mag: 3.0 }, { dx: -8, dy: -25, mag: 3.4 }],
+    stars: [{ dx: -15, dy: 15, mag: 2.8 }, { dx: -15, dy: -5, mag: 3.0 }, { dx: 0, dy: -15, mag: 2.7 }, { dx: 15, dy: -5, mag: 2.6, name: 'Каус Австр.' }, { dx: 15, dy: 15, mag: 2.8 }, { dx: 0, dy: 20, mag: 3.2 }, { dx: 5, dy: -28, mag: 3.0 }, { dx: -8, dy: -25, mag: 3.4 }],
     lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [2, 6], [2, 7]],
   },
   {
