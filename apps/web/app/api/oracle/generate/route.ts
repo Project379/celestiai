@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { generateText, streamText } from 'ai'
 import { AI_MODEL, openrouter } from '@/lib/ai/client'
+import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
@@ -206,6 +207,18 @@ export async function POST(req: Request) {
 
     logAuditEvent(userId, 'data.ai_reading', { chartId, topic: validatedTopic })
 
+    // Astrological conditions only — no chartId/userId. Feeds the
+    // bg_generation_flags safety net (observes, never corrects).
+    const generationConditions = {
+      topic: validatedTopic,
+      sunSign: chartData.planets.find((p) => p.planet === 'sun')?.sign,
+      aspects: chartData.aspects.map((a) => ({
+        planet1: a.planet1,
+        planet2: a.planet2,
+        aspect: a.aspect,
+      })),
+    }
+
     // 10a. Mobile path — non-streaming JSON response. Mirrors the
     //      ?format=json branch in /api/horoscope/generate added in
     //      sub-round 5.3 (REVISIT-TRIGGERS item 20 logs the streaming
@@ -223,6 +236,14 @@ export async function POST(req: Request) {
         })
 
         const cleanContent = stripSentinels(result.text)
+
+        void checkAndLogGeneration({
+          source: 'oracle',
+          model: AI_MODEL,
+          text: cleanContent,
+          conditions: generationConditions,
+        })
+
         const generatedAt = new Date()
         const expiresAt = new Date(generatedAt)
         expiresAt.setDate(expiresAt.getDate() + 7)
@@ -274,6 +295,13 @@ export async function POST(req: Request) {
       onFinish: async ({ text }) => {
         try {
           const cleanContent = stripSentinels(text)
+
+          void checkAndLogGeneration({
+            source: 'oracle',
+            model: AI_MODEL,
+            text: cleanContent,
+            conditions: generationConditions,
+          })
           const generatedAt = new Date()
           const expiresAt = new Date(generatedAt)
           expiresAt.setDate(expiresAt.getDate() + 7)

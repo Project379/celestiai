@@ -75,6 +75,7 @@ Public reference data. Anyone can read; nobody writes via the API (only seed scr
 | `crystals` | CATALOG | Crystal display data. Public-read policy added in B.0d. |
 | `crystal_listings` | CATALOG | Phase B+ vendor display (currently empty). Public-read policy added in B.0d. |
 | `crystal_vendors` | CATALOG | Phase B+ vendor display (currently empty). Public-read policy added in B.0d. |
+| `bg_generation_flags` | INTERNAL | Runtime observation table for Bulgarian generation-quality safety net (2026-07-29). One row per horoscope/Oracle LLM generation; `generated_text` NULL unless flagged. `input_conditions` deliberately carries no chartId/userId — astrological conditions only. Written fire-and-forget from `apps/web/lib/ai/check-bg-output.ts`; read only via the offline `scripts/i18n/report-generation-flags.mjs` report script (service role). Migration `20260729120000_bg_generation_flags.sql`. |
 
 ### Footnote — `subscription_quotas` wiring (B.0f — CLOSED 2026-05-10)
 

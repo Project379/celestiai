@@ -3,6 +3,7 @@ import { generateText, streamText } from 'ai'
 import type { TransitAspect } from '@stellaeum/astrology'
 import type { PlanetPosition } from '@stellaeum/astrology/client'
 import { AI_MODEL, openrouter } from '@/lib/ai/client'
+import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { logAuditEvent } from '@/lib/audit'
 import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
@@ -183,6 +184,20 @@ export async function POST(req: Request) {
       date: requestedDate,
     })
 
+    // Astrological conditions only — no chartId/userId. Feeds the
+    // bg_generation_flags safety net (observes, never corrects).
+    const generationConditions = {
+      activeTransits: transitOverview.activeTransits.map((t) => ({
+        transitPlanet: t.transitPlanet,
+        aspect: t.aspect,
+        natalPlanet: t.natalPlanet,
+      })),
+      lunarEvents: transitOverview.lunarEvents.map((e) => ({
+        type: e.type,
+        sign: e.sign,
+      })),
+    }
+
     if (jsonOnly) {
       const result = await generateText({
         model: openrouter(AI_MODEL),
@@ -190,6 +205,13 @@ export async function POST(req: Request) {
         prompt: promptText,
         temperature: 0.85,
         maxOutputTokens: 1500,
+      })
+
+      void checkAndLogGeneration({
+        source: 'horoscope',
+        model: AI_MODEL,
+        text: result.text,
+        conditions: generationConditions,
       })
 
       try {
@@ -221,6 +243,13 @@ export async function POST(req: Request) {
       temperature: 0.85,
       maxOutputTokens: 1500,
       onFinish: async ({ text }) => {
+        void checkAndLogGeneration({
+          source: 'horoscope',
+          model: AI_MODEL,
+          text,
+          conditions: generationConditions,
+        })
+
         try {
           await supabase.from('daily_horoscopes').upsert(
             {

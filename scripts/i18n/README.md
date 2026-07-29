@@ -53,6 +53,24 @@ non-words found," nothing more.
   failures; they mean different things (baseline model noise vs. a real
   bug to fix now).
 
+## Runtime safety net (production)
+
+As of 2026-07-29, `check-bg-generated.mjs`'s checker (via `bg-speller.mjs`,
+reused directly rather than duplicated) also runs in production: every
+horoscope/Oracle generation is checked fire-and-forget after the response
+already returned, and one row is written to the `bg_generation_flags` table
+(INTERNAL, RLS-locked — see `.planning/SECURITY-MODEL.md`). This is purely
+observational — nothing corrects, retries, or rewrites output. It exists to
+measure the real per-day failure rate (not samples) and give an immediate
+before/after when the model swaps. See `apps/web/lib/ai/check-bg-output.ts`
+and `.planning/i18n/MODEL_CAPABILITY_LOG.md`.
+
+- `node scripts/i18n/report-generation-flags.mjs [--days N]` — reads that
+  table and prints a per-day, per-source failure-rate summary plus a
+  flagged-word frequency breakdown (are failures concentrated on specific
+  stems, e.g. съсредоточ-?). Read-only, service-role key, default 30-day
+  window.
+
 ## `bg-allowlist.txt`
 
 Starter list only, seeded from the highest-frequency/least-ambiguous flags
