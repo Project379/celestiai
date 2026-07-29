@@ -15,6 +15,7 @@ import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { formatDaysHours } from '@/lib/formatDaysHours'
 import { hapticSelect } from '@/lib/haptics'
+import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 
 const BG_MONTHS = [
   'януари', 'февруари', 'март', 'април', 'май', 'юни',
@@ -183,7 +184,7 @@ export function LunarPhaseCard() {
               </Text>
             )}
             <Text className="text-slate-500">{'  ·  '}</Text>
-            <Text className="text-slate-300/85">до {shower.zhr} метеора на час</Text>
+            <Text className="text-slate-300/85">до {shower.zhr} {pluralizeBg(shower.zhr, 'метеор', 'метеора')} на час</Text>
           </Text>
         </View>
       )}

@@ -10,6 +10,7 @@ import {
   daysUntilPeak,
   type MeteorShower,
 } from '@stellaeum/core/welcome'
+import { formatDaysHours, pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 
 /**
  * Free-tier dashboard card: current lunar phase + manifesting guidance.
@@ -122,13 +123,13 @@ export function LunarPhaseCard() {
                   {showerPeakDays === 0
                     ? 'тази нощ'
                     : showerPeakDays > 0
-                    ? `след ${showerPeakDays} ${showerPeakDays === 1 ? 'ден' : 'дни'}`
-                    : `${Math.abs(showerPeakDays)} ${Math.abs(showerPeakDays) === 1 ? 'ден' : 'дни'} след върха`}
+                    ? `след ${showerPeakDays} ${pluralizeBg(showerPeakDays, 'ден', 'дни')}`
+                    : `${Math.abs(showerPeakDays)} ${pluralizeBg(Math.abs(showerPeakDays), 'ден', 'дни')} след върха`}
                 </span>
               </>
             )}
             <span className="mx-2 text-slate-500">·</span>
-            <span>до {shower.zhr} метеора на час</span>
+            <span>до {shower.zhr} {pluralizeBg(shower.zhr, 'метеор', 'метеора')} на час</span>
           </p>
         </div>
       )}
@@ -197,7 +198,7 @@ export function LunarPhaseCard() {
                     <span className="mx-2 text-slate-500">·</span>
                     <span>
                       връх {formatMonthDay(upcoming.shower.peakMonth, upcoming.shower.peakDay)}, след {upcoming.daysAway}{' '}
-                      {upcoming.daysAway === 1 ? 'ден' : 'дни'}
+                      {pluralizeBg(upcoming.daysAway, 'ден', 'дни')}
                     </span>
                   </p>
                 </div>
@@ -307,18 +308,6 @@ function ManifestField({ label, body }: { label: string; body: string }) {
       </p>
     </div>
   )
-}
-
-function formatDaysHours(daysFrac: number): string {
-  const totalHours = Math.max(0, Math.round(daysFrac * 24))
-  const days = Math.floor(totalHours / 24)
-  const hours = totalHours % 24
-  const dayStr = days === 0 ? '' : days === 1 ? '1 ден' : `${days} дни`
-  const hourStr = hours === 0 ? '' : hours === 1 ? '1 час' : `${hours} часа`
-  if (dayStr && hourStr) return `${dayStr} и ${hourStr}`
-  if (dayStr) return dayStr
-  if (hourStr) return hourStr
-  return 'по-малко от час'
 }
 
 const BG_MONTHS = ['януари', 'февруари', 'март', 'април', 'май', 'юни', 'юли', 'август', 'септември', 'октомври', 'ноември', 'декември']

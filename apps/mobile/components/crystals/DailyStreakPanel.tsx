@@ -2,6 +2,7 @@ import { Text, View } from 'react-native'
 
 import { useCrystalDailyStreak } from '@/hooks/useCrystalDailyStreak'
 import { useCrystalOfTheDay } from '@/hooks/useCrystalOfTheDay'
+import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 import { CrystalGem, type GemVariant } from './CrystalGem'
 
 const DOTS_TO_SHOW = 30
@@ -96,7 +97,7 @@ export function DailyStreakPanel() {
                 {streak.current}
               </Text>
               <Text className="text-[13px] font-light text-slate-400">
-                {streak.current === 1 ? 'ден' : 'поредни дни'}
+                {pluralizeBg(streak.current, 'ден', 'поредни дни')}
               </Text>
             </View>
           </View>
