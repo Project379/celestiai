@@ -5,6 +5,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
 import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
+import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 import type { ChartData } from '@stellaeum/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
 import { logAuditEvent } from '@/lib/audit'
@@ -141,7 +142,7 @@ export async function POST(req: Request) {
       if (!quota.available) {
         return Response.json(
           {
-            error: `Достигна месечния лимит от ${quota.limit} четения. Премиум абонаментът премахва ограничението.`,
+            error: `Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`,
             code: 'CAP_REACHED',
             cap: quota.limit,
             tier: user.subscription_tier,
@@ -158,7 +159,7 @@ export async function POST(req: Request) {
         if (!claim.success) {
           return Response.json(
             {
-              error: `Достигна месечния лимит от ${quota.limit} четения. Премиум абонаментът премахва ограничението.`,
+              error: `Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`,
               code: 'CAP_REACHED',
               cap: quota.limit,
               tier: user.subscription_tier,

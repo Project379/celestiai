@@ -2,6 +2,7 @@ import { Text, View } from 'react-native'
 
 import type { HouseData } from '@stellaeum/astrology/client'
 import { formatDegreeInSign } from '@stellaeum/core/charts/sections'
+import { ordinalBg } from '@stellaeum/core/i18n/bg-grammar'
 
 interface HousesListProps {
   houses: readonly HouseData[]
@@ -72,7 +73,7 @@ export function HousesList({ houses, birthTimeKnown }: HousesListProps) {
                   heading above ("12 къщи") already establishes that
                   every row here is a house. */}
               <Text className="w-10 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.22em] text-amber-300/70">
-                {house.number}-и
+                {ordinalBg(house.number)}
               </Text>
               <Text className="text-[12.5px] font-light text-slate-300">
                 {formatDegreeInSign(house.signDegree, house.sign)}

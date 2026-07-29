@@ -22,6 +22,7 @@ import type {
   TransitOverview,
   UpcomingTransitDetail,
 } from '@stellaeum/core/horoscope/transit-analysis'
+import { bgPrep } from '@stellaeum/core/i18n/bg-grammar'
 
 import { AstrologyReference } from '@/components/chart/AstrologyReference'
 import { font, pressFeedback } from '@/components/design-system/tokens'
@@ -43,11 +44,6 @@ const BG_DATETIME_FORMAT = new Intl.DateTimeFormat('bg-BG', {
 
 function formatDateTime(value: string): string {
   return BG_DATETIME_FORMAT.format(new Date(value))
-}
-
-function bgPrep(prep: 'в' | 'с', nextWord: string): string {
-  if (prep === 'в') return /^[вВфФ]/.test(nextWord) ? 'във' : 'в'
-  return /^[сСзЗ]/.test(nextWord) ? 'със' : 'с'
 }
 
 function formatActiveTransit(item: ActiveTransitDetail): string {

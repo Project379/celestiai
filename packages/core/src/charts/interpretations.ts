@@ -1,5 +1,6 @@
 import type {AspectData, Planet, ZodiacSign} from '@stellaeum/astrology/client'
 import {PLANETS_BG, ZODIAC_SIGNS_BG} from '@stellaeum/astrology/client'
+import {bgPrep} from '../i18n/bg-grammar'
 
 export interface InterpretationData {
     title: string
@@ -10,12 +11,6 @@ export interface InterpretationData {
     challenges: string[]
     growth: string
     aspectInsights: string[]
-}
-
-/** "в" → "във" before в/ф; "с" → "със" before с/з */
-function bgPrep(prep: 'в' | 'с', nextWord: string): string {
-    if (prep === 'в') return /^[вВфФ]/.test(nextWord) ? 'във' : 'в'
-    return /^[сСзЗ]/.test(nextWord) ? 'със' : 'с'
 }
 
 const PLANET_OVERVIEW: Record<Planet, string> = {

@@ -14,6 +14,7 @@ import {
   ZODIAC_GLYPHS,
   ZODIAC_SIGNS_BG,
 } from '@stellaeum/astrology/client'
+import { bgPrep } from '@stellaeum/core/i18n/bg-grammar'
 import type {
   AspectData,
   Planet,
@@ -292,7 +293,7 @@ export function PlanetDetail({
                   </View>
                   <Text style={{ fontFamily: font.bodyMedium }} className="text-[24px] font-semibold leading-tight tracking-tight text-slate-100">
                     <Text className="text-slate-400">{planetGlyph}  {displayTitle}</Text>
-                    <Text> в </Text>
+                    <Text> {bgPrep('в', signLabel)} </Text>
                     <Text>{signLabel} {signGlyph}</Text>
                   </Text>
                   <Text style={{ ...typeScale.caption, fontFamily: font.body, color: color.faint, marginTop: rhythm.micro }}>
