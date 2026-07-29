@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET
 
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Configure VAPID details for web-push authentication

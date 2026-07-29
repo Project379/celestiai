@@ -5,6 +5,22 @@ from shipping. Four mechanisms: two fully implemented and gating, one
 built and verified but deliberately not gating yet (needs a founder
 decision on enforcement), one designed and not built.
 
+## Scope note: machine-facing endpoints are NOT part of this workstream
+
+`apps/web/app/api/cron/daily-horoscope/route.ts` and
+`apps/web/app/api/cron/cleanup-deleted-accounts/route.ts` guard on
+`CRON_SECRET`, not a user session. Their 401 response is never seen by a
+real user — only Vercel's cron infra or an attacker probing the endpoint.
+These briefly carried the Bulgarian "Сесията ти изтече. Влез отново."
+(picked up during the blanket "Неоторизиран достъп" conversion, which
+didn't distinguish user-auth routes from infra-auth routes) and were
+corrected to plain English `'Unauthorized'` on 2026-07-30. **Do not
+convert these back to Bulgarian** — they are machine-facing and out of
+this workstream's scope entirely, the same way a webhook signature check
+or a health-check endpoint would be. If a future change adds a genuinely
+user-facing auth failure to a cron-triggered code path, that new surface
+gets evaluated on its own, not by pattern-matching "it's in `api/cron/`."
+
 ## 1. `check:bg-strings` wired into `check:all` — IMPLEMENTED, GATING
 
 `scripts/check-bg-static-strings.mjs` scans every `.ts`/`.tsx` Cyrillic

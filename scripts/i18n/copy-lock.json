@@ -1,5 +1,5 @@
 {
-  "count": 2505,
+  "count": 2503,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -605,10 +605,8 @@
     "apps/web/app/api/cities/search/route.ts::'Заявката е твърде дълга'",
     "apps/web/app/api/cities/search/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/cron/cleanup-deleted-accounts/route.ts::'Грешка при зареждане'",
-    "apps/web/app/api/cron/cleanup-deleted-accounts/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/cron/daily-horoscope/route.ts::'Грешка при зареждане на абонаментите'",
     "apps/web/app/api/cron/daily-horoscope/route.ts::'Новото ти послание от звездите те очаква.'",
-    "apps/web/app/api/cron/daily-horoscope/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/cron/daily-horoscope/route.ts::'Твоят дневен хороскоп'",
     "apps/web/app/api/crystals/collect/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/crystals/daily-streak/route.ts::'Сесията ти изтече. Влез отново.'",
