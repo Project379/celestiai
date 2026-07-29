@@ -154,7 +154,7 @@ function getAspectInsights(planet: Planet, aspects: AspectData[]): string[] {
 
             const tonePrep = ASPECT_TONE_PREP[aspect.aspect]
             const toneSuffix = tonePrep ? ` ${bgPrep(tonePrep, otherPlanet.toLowerCase())}` : ''
-            return `${ASPECT_LABEL[aspect.aspect]} ${bgPrep('с', otherPlanet)} ${otherPlanet}. Тук това положение ${ASPECT_TONE[aspect.aspect]}${toneSuffix} ${otherPlanet.toLowerCase()}, с орбис ${aspect.orb.toFixed(1)}°. ${applyingText}`
+            return `${ASPECT_LABEL[aspect.aspect]} ${bgPrep('с', otherPlanet)} ${otherPlanet}. Тук това положение ${ASPECT_TONE[aspect.aspect]}${toneSuffix} ${otherPlanet.toLowerCase()}, с орб ${aspect.orb.toFixed(1)}°. ${applyingText}`
         })
         .slice(0, 3)
 }

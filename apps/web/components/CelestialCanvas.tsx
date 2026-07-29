@@ -115,7 +115,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   {
     id: 'pisces', name: 'Риби', latin: 'Pisces', element: 'Вода',
     description: 'Две риби, свързани с лента. Според мита Афродита и Ерос се превърнали в риби, за да избягат от чудовището Тифон.',
-    season: 'Есен–Зима (октомври–март)', brightestStar: 'Ал Ришa (α Piscium)',
+    season: 'Есен–Зима (октомври–март)', brightestStar: 'Ал Риша (α Piscium)',
     L0: 345, D0: -0.46,
     stars: [{ dx: -25, dy: -10, mag: 3.6 }, { dx: -15, dy: -18, mag: 4.0 }, { dx: 0, dy: -8, mag: 3.8 }, { dx: 0, dy: 8, mag: 4.0 }, { dx: 15, dy: 15, mag: 3.7 }, { dx: 25, dy: 8, mag: 3.9 }, { dx: 30, dy: -5, mag: 4.1 }],
     lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]],

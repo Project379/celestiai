@@ -62,7 +62,7 @@ export function AspectsList({ aspects }: AspectsListProps) {
   if (aspects.length === 0) {
     return (
       <Text className="text-[14px] font-light text-slate-500">
-        Няма аспекти в рамките на зададения орбис.
+        Няма аспекти в рамките на зададения орб.
       </Text>
     )
   }
