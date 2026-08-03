@@ -6,7 +6,6 @@ import { AmbientBackground } from '@/components/design-system/AmbientBackground'
 import { BackButton } from '@/components/design-system/BackButton'
 import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
 import { ManifestDiaryContent } from '@/components/manifest/ManifestDiaryContent'
-import { PERF_DEBUG } from '@/lib/perfDebug'
 
 /**
  * Лунен дневник route — mobile parity port of
@@ -31,7 +30,7 @@ export default function ManifestJournalScreen() {
 
   return (
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
-      {PERF_DEBUG.ambientStarfield && <AmbientBackground />}
+      <AmbientBackground />
       <Animated.View
         style={[{ position: 'absolute', top: 0, left: 0, zIndex: 10 }, backVisibility.style]}
         pointerEvents={backVisibility.pointerEvents}

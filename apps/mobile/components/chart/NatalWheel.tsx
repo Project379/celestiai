@@ -16,7 +16,6 @@ import { ZODIAC_GLYPH_PATHS } from '@stellaeum/core/charts/glyphs'
 import { color } from '@/components/design-system/tokens'
 import { PlanetDisambiguation, PLANET_COLORS } from '@/components/chart/PlanetDisambiguation'
 import { NatalWheelFrame } from '@/components/chart/NatalWheelFrame'
-import { PERF_DEBUG } from '@/lib/perfDebug'
 
 // The instrument's static furniture (rim/bezel/face/graticule, including
 // the graticule's tick-degree constants) lives in NatalWheelFrame.tsx —
@@ -216,9 +215,8 @@ export const NatalWheel = memo(function NatalWheel({
   // One-shot resolve on mount — not a continuous loop, so it costs nothing
   // ongoing once settled. See WARM_COOL_AMENDMENT.md §8 for the frame
   // budget this was checked against.
-  const graticule = useSharedValue(PERF_DEBUG.freezeResolveIn ? 1 : 0)
+  const graticule = useSharedValue(0)
   useEffect(() => {
-    if (PERF_DEBUG.freezeResolveIn) return // frozen: stay resolved (1), skip the one-shot animation
     graticule.value = withTiming(1, { duration: GRATICULE_RESOLVE_MS })
   }, [graticule])
   const graticuleProps = useAnimatedProps(() => ({ opacity: graticule.value }))

@@ -9,7 +9,6 @@ import { AmbientBackground } from './AmbientBackground'
 import { BackButton } from './BackButton'
 import { color, space } from './tokens'
 import { useBackButtonVisibility } from './useBackButtonVisibility'
-import { PERF_DEBUG } from '@/lib/perfDebug'
 
 type Temperature = 'warm' | 'cool' | 'neutral'
 
@@ -99,10 +98,12 @@ export function ScreenShell({
   // `back` is: mounting it unconditionally here would double-render stars
   // behind Днес/Карта/Ритъм.
   stars = false,
-  // TEMPORARY (2026-07-27) — item 1 investigation only, lets a call site
-  // re-measure content position on demand while scrolled (onLayout alone
-  // only fires on mount/relayout, not on scroll). Delete once that
-  // investigation has an answer.
+  // Forwarded to the consumer (e.g. index.tsx's `checkAllReveals`) so it can
+  // re-measure content position on demand while scrolled — onLayout alone
+  // only fires on mount/relayout, not on scroll. Load-bearing for
+  // useScrollReveal.ts's "float and glow, reveal as you scroll to it"
+  // behavior (the invite, moon, meteor fragments on Днес) — not debug-only,
+  // despite this prop's earlier life as a one-off investigation aid.
   onScroll,
 }: {
   children: ReactNode
@@ -127,15 +128,11 @@ export function ScreenShell({
   // why a glow that overflows its layout box breaks this measurement).
   const onPinnedLayout = (e: LayoutChangeEvent) => {
     setPinnedHeight(e.nativeEvent.layout.height)
-    // PIPELINE MARKER (2026-07-28) — top of the CtaPanel tree capture,
-    // one level above the Pressable.
-    // eslint-disable-next-line no-console
-    console.log('[PIPELINE-MARKER][tree] pinnedBottom wrapper View', e.nativeEvent.layout)
   }
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: 'transparent' }} onLayout={onShellLayout}>
-      {stars && PERF_DEBUG.ambientStarfield && <AmbientBackground />}
+      {stars && <AmbientBackground />}
       {back && (
         <Animated.View
           style={[{ position: 'absolute', top: 0, left: 0, zIndex: 10 }, backVisibility.style]}
@@ -156,7 +153,7 @@ export function ScreenShell({
           on an actual screenshot. Fixed by filling the whole shell instead
           of a fixed pixel height, and positioning is now measured (this
           layout's own width/height), not guessed. */}
-      {PERF_DEBUG.screenShellWash && shellSize.width > 0 && (
+      {shellSize.width > 0 && (
         <Svg
           width={shellSize.width}
           height={shellSize.height}

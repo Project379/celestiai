@@ -4,7 +4,6 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { OracleEntry } from '@/components/OracleEntry'
-import { PERF_DEBUG } from '@/lib/perfDebug'
 import { AmbientBackground } from '@/components/design-system/AmbientBackground'
 import { NavIcon } from '@/components/design-system/NavIcon'
 import { color, font } from '@/components/design-system/tokens'
@@ -97,7 +96,7 @@ export default function TabsLayout() {
 
   return (
     <View className="flex-1 bg-bg">
-      {PERF_DEBUG.ambientStarfield && <AmbientBackground />}
+      <AmbientBackground />
       <Tabs
         screenListeners={{
           tabPress: () => hapticSelect(),

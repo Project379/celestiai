@@ -5,7 +5,6 @@ import Svg, { Circle, Defs, G, Line, RadialGradient, Stop } from 'react-native-s
 
 import { AmbientBackground } from './AmbientBackground'
 import { color, font } from './tokens'
-import { PERF_DEBUG } from '@/lib/perfDebug'
 
 /**
  * Founder correction (this batch): «Повече детайли» was the trigger, but
@@ -45,7 +44,7 @@ export function AppLoadingScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.base, alignItems: 'center', justifyContent: 'center' }}>
-      {PERF_DEBUG.ambientStarfield && <AmbientBackground />}
+      <AmbientBackground />
 
       <View style={{ width: WHEEL_STAGE, height: WHEEL_STAGE, alignItems: 'center', justifyContent: 'center' }}>
         <Svg width={WHEEL_STAGE} height={WHEEL_STAGE} style={{ position: 'absolute' }} pointerEvents="none">

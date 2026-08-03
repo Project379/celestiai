@@ -2,7 +2,6 @@ import Animated from 'react-native-reanimated'
 import { Circle, Defs, G, Line, LinearGradient, RadialGradient, Stop } from 'react-native-svg'
 
 import { color } from '@/components/design-system/tokens'
-import { PERF_DEBUG } from '@/lib/perfDebug'
 
 const AnimatedG = Animated.createAnimatedComponent(G)
 
@@ -85,7 +84,7 @@ export function NatalWheelFrame({
         </RadialGradient>
       </Defs>
       {/* Outer ring border — the instrument's rim (solid bronze body) */}
-      <Circle cx={center} cy={center} r={outerRadius} fill="none" stroke={PERF_DEBUG.wheelFrameGradients ? 'url(#rim-bevel)' : '#8a6339'} strokeWidth={size * 0.012} opacity={0.85} />
+      <Circle cx={center} cy={center} r={outerRadius} fill="none" stroke="url(#rim-bevel)" strokeWidth={size * 0.012} opacity={0.85} />
       {/* Inset highlight — #d9a06a, reserved for this only (mockup's inset
           box-shadow), not part of the rim body above. */}
       <Circle cx={center} cy={center} r={outerRadius - size * 0.008} fill="none" stroke="#d9a06a" strokeWidth={1} opacity={0.22} />
@@ -94,13 +93,9 @@ export function NatalWheelFrame({
           distinct fitting from the rim, not a duplicate of it. */}
       <Circle cx={center} cy={center} r={outerRadius - size * 0.018} fill="none" stroke="rgba(180,200,230,0.22)" strokeWidth={1} />
 
-      <Circle cx={center} cy={center} r={zodiacInnerRadius} fill={PERF_DEBUG.wheelFrameGradients ? 'url(#wheel-face)' : '#0f0b1c'} />
-      {PERF_DEBUG.wheelFrameGradients && (
-        <>
-          <Circle cx={center} cy={center} r={zodiacInnerRadius} fill="url(#wheel-face-patch-1)" />
-          <Circle cx={center} cy={center} r={zodiacInnerRadius} fill="url(#wheel-face-patch-2)" />
-        </>
-      )}
+      <Circle cx={center} cy={center} r={zodiacInnerRadius} fill="url(#wheel-face)" />
+      <Circle cx={center} cy={center} r={zodiacInnerRadius} fill="url(#wheel-face-patch-1)" />
+      <Circle cx={center} cy={center} r={zodiacInnerRadius} fill="url(#wheel-face-patch-2)" />
       {/* Two faint machining rings — material texture cheaply, no
           feTurbulence (grain stays deferred, see MoonGlyph.tsx). */}
       <Circle cx={center} cy={center} r={houseInnerRadius * 1.45} fill="none" stroke="rgba(91,143,199,0.12)" strokeWidth={1} />

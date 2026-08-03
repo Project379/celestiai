@@ -11,8 +11,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import Svg, { Circle, ClipPath, Defs, G, RadialGradient, Stop } from 'react-native-svg'
 
-import { PERF_DEBUG } from '@/lib/perfDebug'
-
 const PULSE_MS = 2400
 // Bloom halo is 150px around a 92px disk at hero scale — preserved as a
 // ratio so smaller instances (e.g. Ритъм's card usage) keep the same
@@ -117,7 +115,7 @@ export function MoonGlyph({
   const glow = useSharedValue(0.5)
 
   useEffect(() => {
-    if (!animated || PERF_DEBUG.freezeMoonGlowPulse) return // frozen: stay at 0.5 (rest), skip withRepeat entirely
+    if (!animated) return
     glow.value = withRepeat(
       withSequence(
         withTiming(0.85, { duration: PULSE_MS, easing: Easing.inOut(Easing.ease) }),
@@ -153,7 +151,6 @@ export function MoonGlyph({
 
   return (
     <View style={{ width: bloomSize, height: bloomSize, alignItems: 'center', justifyContent: 'center' }}>
-      {PERF_DEBUG.moonHalo && (
       <Animated.View style={[{ position: 'absolute' }, glowStyle]}>
         <Svg width={bloomSize} height={bloomSize}>
           <Defs>
@@ -176,7 +173,6 @@ export function MoonGlyph({
           <Circle cx={bloomSize / 2} cy={bloomSize / 2} r={bloomSize / 2} fill="url(#moon-glow)" />
         </Svg>
       </Animated.View>
-      )}
       <Svg width={size} height={size}>
         <Defs>
           <ClipPath id="moon-disk-clip">
@@ -219,7 +215,7 @@ export function MoonGlyph({
             visible sliver is a uniform, soft dark edge from every angle —
             still an approximation (see the platform note below), but one
             that can't produce a directional artifact by construction. */}
-        {PERF_DEBUG.moonDepthTwin && depthDouble && <Circle cx={cx} cy={cy} r={r * 1.12} fill="url(#moon-depth)" opacity={0.55} />}
+        {depthDouble && <Circle cx={cx} cy={cy} r={r * 1.12} fill="url(#moon-depth)" opacity={0.55} />}
         {/* PLATFORM APPROXIMATION — mockup `.moon-object` composites its
             bronze/violet tint layers with `background-blend-mode:screen`
             (lightens rather than covers). react-native-svg has no blend-mode
@@ -230,12 +226,8 @@ export function MoonGlyph({
           <Circle cx={cx} cy={cy} r={r} fill="rgba(139,92,246,0.06)" />
           <Circle cx={cx} cy={cy} r={r} fill="rgba(226,232,240,0.92)" />
           <Circle cx={cx + dx} cy={cy} r={r} fill="#08060f" opacity={darkOpacity} />
-          {PERF_DEBUG.moonTintCircles && (
-            <>
-              <Circle cx={cx - dx * 0.5} cy={cy - r * 0.15} r={r * 0.85} fill="url(#moon-warm-tint)" />
-              <Circle cx={cx + dx * 0.5} cy={cy + r * 0.2} r={r * 0.7} fill="url(#moon-cool-tint)" />
-            </>
-          )}
+          <Circle cx={cx - dx * 0.5} cy={cy - r * 0.15} r={r * 0.85} fill="url(#moon-warm-tint)" />
+          <Circle cx={cx + dx * 0.5} cy={cy + r * 0.2} r={r * 0.7} fill="url(#moon-cool-tint)" />
         </G>
         {/* Hairline outline — thin stroke, not a heavy ring. FOUNDER
             DEVICE-PASS FIX (2026-07-27): mockup `.moon-object` has NO

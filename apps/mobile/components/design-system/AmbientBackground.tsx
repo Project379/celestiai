@@ -4,7 +4,6 @@ import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated'
 
 import { color } from './tokens'
-import { PERF_DEBUG } from '@/lib/perfDebug'
 
 // Proof surface for the starfield-port pass — borrows the RECIPE from web's
 // CelestialCanvas.tsx (star temperature spread, centerFade falloff, corner
@@ -87,7 +86,6 @@ function TwinkleGroup({ stars, phaseMs, width, height }: { stars: Star[]; phaseM
   const twinkle = useSharedValue(1)
 
   useEffect(() => {
-    if (PERF_DEBUG.freezeStarTwinkle) return // frozen: stay at 1 (rest), skip withRepeat entirely
     twinkle.value = withDelay(
       phaseMs,
       withRepeat(withSequence(withTiming(0.5, { duration: TWINKLE_MS }), withTiming(1, { duration: TWINKLE_MS })), -1, true),
