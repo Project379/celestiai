@@ -1550,6 +1550,18 @@ None of this was caught by Round A's own audit because it checked the route file
 
 **Why documented:** discovered by tracing what P.15's scaffold does and doesn't cover, specifically to avoid the failure mode where P.9/P.11 get built assuming server-side sync already exists because "RevenueCat is installed."
 
+## 63. getRequestIp trusts x-forwarded-for — holds only as long as Vercel is the sole edge in front of the app
+
+**Status:** Filed 2026-08-03 while building table-backed rate limiting (`apps/web/lib/rate-limit.ts`, `20260803130000_rate_limit_buckets.sql`) for `cities/search`, `horoscope/generate`, `oracle/generate` — replacing the CA-0002 in-memory limiter, which gave no real protection on serverless.
+
+**Why this is trustworthy today, verified not assumed:** searched for Vercel's actual header guarantees rather than trusting the CA-0002 code's own assumption. Vercel's edge overwrites `x-forwarded-for` before a request reaches a deployed function — a client-supplied value in that header does not survive to application code on non-Enterprise plans, which is what prevents naive spoofing. `getRequestIp`'s `.split(',')[0].trim()` (falling back to `x-real-ip`) reads the leftmost entry, which is the client IP Vercel itself observed at its edge.
+
+**The condition that breaks this:** the guarantee is Vercel-specific — it holds only because Vercel is the sole hop between the internet and the app today. If a CDN or WAF is ever placed in front of Vercel (Cloudflare, a corporate proxy, anything else that terminates the connection first), `x-forwarded-for` reaching Vercel's edge would already contain that layer's forwarded value, and Vercel would append its own hop after it rather than replacing it — `getRequestIp` would then need to read a different position in the chain, or a different header entirely, to stay correct. Getting this wrong doesn't fail loudly: `cities-search`'s rate-limit key partly keyed on this IP would silently degrade to one shared bucket (or one-per-CDN-edge-IP) for all real clients behind it, which either over-blocks everyone or under-blocks an attacker — either way, exactly the kind of gap that surfaces after an incident, not before one.
+
+**Trigger:** before adding any CDN, WAF, or reverse proxy in front of the Vercel deployment — re-verify `getRequestIp` against whatever that layer's actual header behavior is (Vercel's paid "Verified Proxy Advanced" feature is the documented way to keep this trustworthy with a fronting proxy, per Vercel's own docs — not available on the current plan).
+
+**Why documented:** this is exactly the class of assumption that's correct until infrastructure changes silently invalidate it, filed at build time rather than left to be rediscovered mid-incident.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have

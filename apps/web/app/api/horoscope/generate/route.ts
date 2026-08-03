@@ -9,6 +9,8 @@ import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
 import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { toErrorResponse } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 export const maxDuration = 60
 
@@ -19,6 +21,12 @@ export async function POST(req: Request) {
   }
 
   try {
+    await assertRateLimit({
+      key: `horoscope-generate:${userId}`,
+      limit: 5,
+      windowMs: 60_000,
+    })
+
     const body = await req.json()
     const { chartId } = body as { chartId?: string }
 
@@ -269,10 +277,6 @@ export async function POST(req: Request) {
 
     return result.toTextStreamResponse()
   } catch (error) {
-    console.error('[Horoscope Generate] Unhandled error:', error)
-    return Response.json(
-      { error: 'Failed to generate horoscope.' },
-      { status: 500 }
-    )
+    return toErrorResponse(error, 'Failed to generate horoscope.')
   }
 }

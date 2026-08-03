@@ -129,5 +129,22 @@ export async function GET(req: Request) {
     `[Cron Cleanup] Completed: ${deleted}/${usersToDelete.length} accounts deleted`
   )
 
+  // Prune expired rate_limit_buckets rows (20260803130000_rate_limit_buckets.sql).
+  // Keys are route:userId(:ip), so cardinality is bounded by active users —
+  // a daily sweep is enough, no need for hot-path cleanup on every request.
+  const { error: rateLimitCleanupError, count: rateLimitRowsDeleted } = await supabase
+    .from('rate_limit_buckets')
+    .delete({ count: 'exact' })
+    .lt('reset_at', now)
+
+  if (rateLimitCleanupError) {
+    console.error(
+      '[Cron Cleanup] Failed to prune rate_limit_buckets:',
+      rateLimitCleanupError
+    )
+  } else {
+    console.log(`[Cron Cleanup] Pruned ${rateLimitRowsDeleted ?? 0} expired rate_limit_buckets rows`)
+  }
+
   return Response.json({ deleted })
 }

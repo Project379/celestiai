@@ -16,6 +16,8 @@ import {
   decrementQuotaUsage,
   incrementQuotaUsage,
 } from '@/lib/subscriptions/quota'
+import { toErrorResponse } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * POST /api/oracle/generate
@@ -56,6 +58,15 @@ export async function POST(req: Request) {
   let claimedPeriodStart: Date | null = null
 
   try {
+    // Burst guard, defense-in-depth alongside the monthly quota cap and the
+    // 24h regen cooldown below — neither of those blocks a rapid-fire burst
+    // within a single window the way this does.
+    await assertRateLimit({
+      key: `oracle-generate:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
     // 2. Parse and validate body
     const body = await req.json()
     const { chartId, topic, regenerate } = body as {
@@ -360,10 +371,6 @@ export async function POST(req: Request) {
     if (claimedPeriodStart) {
       await decrementQuotaUsage(userId, claimedPeriodStart)
     }
-    console.error('[Oracle Generate] Unhandled error:', error)
-    return Response.json(
-      { error: 'Грешка при генериране на четенето' },
-      { status: 500 }
-    )
+    return toErrorResponse(error, 'Грешка при генериране на четенето')
   }
 }

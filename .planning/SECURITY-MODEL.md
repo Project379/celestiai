@@ -92,6 +92,7 @@ Public reference data. Anyone can read; nobody writes via the API (only seed scr
 | `saved_people_profiles` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
 | `saved_people_reports` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
 | `processed_revenuecat_events` | INTERNAL | Idempotency table for the RevenueCat webhook (REVISIT-62, sub-commit A). Mirrors `processed_webhook_events`' shape but kept as its own table rather than reusing Stripe's `stripe_event_id`-named column. Written only by the RevenueCat webhook route (service role). RLS from `20260803122000_revenuecat_provider_column.sql`. |
+| `rate_limit_buckets` | INTERNAL | Rate-limit counters for `cities/search`, `horoscope/generate`, `oracle/generate` (`apps/web/lib/rate-limit.ts`). Only touched by the service-role client via the `check_and_increment_rate_limit` RPC; no anon/browser-direct path. Created by `20260803130000_rate_limit_buckets.sql`; RLS was briefly disabled by accident via the SQL Editor's auto-prompt (`20260803131500_rate_limit_buckets_disable_rls.sql`) and corrected back to the standard INTERNAL posture (enabled, no policies) by `20260803133000_rate_limit_buckets_enable_rls.sql`. |
 
 ### Footnote — `subscription_quotas` wiring (B.0f — CLOSED 2026-05-10)
 
