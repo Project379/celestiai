@@ -54,29 +54,43 @@ Public reference data. Anyone can read; nobody writes via the API (only seed scr
   ```
 - **Read pattern:** Browser or anon directly via publishable key. Server-side via service role for seeding.
 
-## Per-table classification (all 17 tables in public schema, as of 2026-05-09)
+## Per-table classification (28 tables in public schema, as of 2026-08-03)
+
+**Migration-history note (2026-08-03):** the eight B.0d-remediated rows below (`bulgarian_cities`, `crystals`, `crystal_listings`, `crystal_vendors`, `user_crystals`, `user_daily_crystals`, `daily_transits`, `processed_webhook_events`) were hand-applied via the Supabase SQL Editor on 2026-05-09 and had **zero migration-file record** until an audit found the gap — a fresh environment built from `supabase/migrations/` alone would have shipped these eight with RLS **off**. Closed via `20260803102000_b0d_rls_lockdown_capture.sql` (verified against live production state via direct `pg_catalog` query before writing, then dry-run-verified in a rolled-back transaction — not assumed). `charts` had four additional hand-applied policies with the same gap, closed via `20260803102500_charts_split_policies_capture.sql`. See `apps/web/scripts/diagnostics/audit-hand-applied-schema.mjs` (`pnpm --filter @stellaeum/web run diag:hand-applied-schema`) — a live heuristic check, not a substitute for replaying migrations into a genuinely empty database (that requires the Supabase CLI + Docker, not set up on this machine as of this writing).
+
+**Known gap still open:** `crystal_recommendations` (USER_DATA, has `user_id`) had RLS **disabled** in production as of this audit — not merely undocumented, actually off. Not currently exploitable (every access goes through `createCoreSupabaseClient()`, service role, with explicit `user_id` filtering in application code — no anon/browser-direct path touches it), but the RLS backstop was missing. Fix migration `20260803100000_crystal_recommendations_rls.sql` is written and dry-run-verified but **has not yet been applied to production** — run it before treating this table as closed.
 
 | Table | Posture | Reasoning |
 |---|---|---|
 | `users` | INTERNAL | Server reads tier via service role (`getCachedUserTier`); browser never queries directly. AppUser data is hydrated via the new `/api/user` endpoint (CA-0002 work, B.0c). |
 | `audit_logs` | INTERNAL | `logAuditEvent` writes via service role; browser never reads. |
 | `chart_calculations` | INTERNAL | Chart-calc API writes via service role; chart-id-keyed (no user_id column on this table). Browser receives chart data via `/api/chart/calculate` API JSON, not directly. |
-| `processed_webhook_events` | INTERNAL | Stripe webhook handler (idempotency check); only the webhook route touches this. |
-| `daily_transits` | INTERNAL | Date-keyed shared cache; horoscope generation API reads/writes via service role. Browser reads `daily_horoscopes` (per-user-computed result), not transits directly. |
-| `charts` | USER_DATA | Birth-data PII per user; browser reads/writes via Clerk session. RLS from `20260413141504_schema_hardening.sql`. |
+| `processed_webhook_events` | INTERNAL | Stripe webhook handler (idempotency check); only the webhook route touches this. RLS from `20260803102000_b0d_rls_lockdown_capture.sql` (hand-applied 2026-05-09, migration-captured 2026-08-03). |
+| `daily_transits` | INTERNAL | Date-keyed shared cache; horoscope generation API reads/writes via service role. Browser reads `daily_horoscopes` (per-user-computed result), not transits directly. RLS from `20260803102000_b0d_rls_lockdown_capture.sql` (hand-applied 2026-05-09, migration-captured 2026-08-03). |
+| `charts` | USER_DATA | Birth-data PII per user; browser reads/writes via Clerk session. RLS from `20260413141504_schema_hardening.sql`; four additional hand-applied split policies (`charts_select_own`/`_insert_own`/`_update_own`/`_delete_own`, redundant with `charts_owner_all`, not a security issue) captured in `20260803102500_charts_split_policies_capture.sql`. |
 | `ai_readings` | USER_DATA | Cached Oracle readings per user/chart/topic; browser reads via Clerk session. RLS from `20260413141504_schema_hardening.sql`. |
 | `daily_horoscopes` | USER_DATA | Cached daily horoscope per user/chart/date; browser reads via Clerk session. RLS from `20260413141504_schema_hardening.sql`. |
 | `push_subscriptions` | USER_DATA | Per-user push endpoints; browser writes (subscribe/unsubscribe) via Clerk session. RLS from `20260413141504_schema_hardening.sql`. |
 | `subscription_quotas` | USER_DATA | Cap-gate accounting per user. RLS from `20260413141504_schema_hardening.sql` (SELECT-only owner policy; writes via service role). See B.0f footnote below — wiring deferred to its own sub-round. |
 | `diary_entries` | USER_DATA | Лунен дневник per user. RLS from `20260421150801_create_diary_entries.sql`. |
-| `user_crystals` | USER_DATA | Per-user crystal collection; browser reads via Clerk session. RLS added in B.0d remediation. |
-| `user_daily_crystals` | USER_DATA | Per-user daily crystal visits. RLS added in B.0d remediation. |
-| `bulgarian_cities` | CATALOG | Wizard autocomplete (~5,500 rows of public reference data). Public-read policy added in B.0d. |
-| `crystals` | CATALOG | Crystal display data. Public-read policy added in B.0d. |
-| `crystal_listings` | CATALOG | Phase B+ vendor display (currently empty). Public-read policy added in B.0d. |
-| `crystal_vendors` | CATALOG | Phase B+ vendor display (currently empty). Public-read policy added in B.0d. |
+| `user_crystals` | USER_DATA | Per-user crystal collection; browser reads via Clerk session. RLS from `20260803102000_b0d_rls_lockdown_capture.sql` (hand-applied 2026-05-09, migration-captured 2026-08-03). |
+| `user_daily_crystals` | USER_DATA | Per-user daily crystal visits. RLS from `20260803102000_b0d_rls_lockdown_capture.sql` (hand-applied 2026-05-09, migration-captured 2026-08-03). |
+| `bulgarian_cities` | CATALOG | Wizard autocomplete (~5,500 rows of public reference data). RLS from `20260803102000_b0d_rls_lockdown_capture.sql` (hand-applied 2026-05-09, migration-captured 2026-08-03). |
+| `crystals` | CATALOG | Crystal display data. RLS from `20260803102000_b0d_rls_lockdown_capture.sql` (hand-applied 2026-05-09, migration-captured 2026-08-03). |
+| `crystal_listings` | CATALOG | Phase B+ vendor display (currently empty). RLS from `20260803102000_b0d_rls_lockdown_capture.sql` (hand-applied 2026-05-09, migration-captured 2026-08-03). |
+| `crystal_vendors` | CATALOG | Phase B+ vendor display (currently empty). RLS from `20260803102000_b0d_rls_lockdown_capture.sql` (hand-applied 2026-05-09, migration-captured 2026-08-03). |
+| `crystal_recommendations` | USER_DATA | Per-user crystal-recommendation reasons (`packages/core/src/crystals/overview.ts`/`queries.ts`, served via `GET /api/crystals`). **RLS currently disabled in production** — found 2026-08-03, not previously classified in this doc at all. Not currently exploitable (service-role-only access path with explicit `user_id` filtering, no anon/browser-direct reads). Fix migration `20260803100000_crystal_recommendations_rls.sql` written, dry-run-verified, **not yet applied to production**. |
 | `bg_generation_flags` | INTERNAL | Runtime observation table for Bulgarian generation-quality safety net (2026-07-29). One row per horoscope/Oracle LLM generation; `generated_text` NULL unless flagged. `input_conditions` deliberately carries no chartId/userId — astrological conditions only. Written fire-and-forget from `apps/web/lib/ai/check-bg-output.ts`; read only via the offline `scripts/i18n/report-generation-flags.mjs` report script (service role). Migration `20260729120000_bg_generation_flags.sql`. |
 | `push_tokens` | USER_DATA | Per-user Expo push token registry (mobile native transport; sibling to `push_subscriptions`, not a replacement — different shape/transport). Mobile writes via Clerk session (`/api/push/register`); daily-horoscope delivery cron and cleanup-deleted-accounts cascade read/write via service role. RLS from `20260803070000_push_tokens.sql`. |
+| `connection_spaces` | USER_DATA | Stream K (Кръг) — dormant, zero references in current app code (confirmed by repo-wide grep). Pre-provisioned schema for future synastry/friends-group features; RLS + owner-scoped policies already correct in production, found hand-applied with zero migration record 2026-08-03, captured in `20260803101500_capture_stream_k_relationship_schema.sql`. Do not build against without re-verifying the schema still matches product intent — it predates any current spec. |
+| `connection_members` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
+| `connection_invites` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
+| `connection_reports` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
+| `relationship_profiles` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
+| `relationship_invites` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
+| `compatibility_reports` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
+| `saved_people_profiles` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
+| `saved_people_reports` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
 
 ### Footnote — `subscription_quotas` wiring (B.0f — CLOSED 2026-05-10)
 
@@ -103,6 +117,8 @@ The table exists in production from migration `20260413141504_schema_hardening.s
 **REVISIT-34** filed for cap magnitude re-evaluation post Кръг soft-launch close (Path Z framing — 3/month is experimental, not permanent).
 
 ## The B.0d remediation migration
+
+**Correction 2026-08-03:** this section records the SQL as originally drafted/intended, not what ended up live — direct production query found `bulgarian_cities` actually carries two role-specific policies (`cities_select_anon` for `anon`, `cities_select_authenticated` for `authenticated`), not the single `bulgarian_cities_public_read` shown below. The now-current, production-matching migration is `supabase/migrations/20260803102000_b0d_rls_lockdown_capture.sql` — treat that file as the accurate record for all eight tables; the prose block below is historical intent, kept for context, not verified against what actually shipped.
 
 Statement-by-statement form that worked. Apply via Supabase SQL Editor as **individual statements**, not wrapped in `BEGIN; … COMMIT;` (see SQL Editor quirk note below).
 
