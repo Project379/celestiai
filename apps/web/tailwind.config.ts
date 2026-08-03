@@ -16,6 +16,7 @@ const config: Config = {
       fontFamily: {
         display: ['var(--font-display)', 'system-ui', 'sans-serif'],
         body: ['var(--font-body)', 'var(--font-display)', 'system-ui', 'sans-serif'],
+        cinzel: ['var(--font-cinzel)', 'Georgia', 'serif'],
       },
       colors: {
         // Cosmic theme colors using CSS variables

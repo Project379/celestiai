@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    // STRICTNESS_DEFERRED: https://github.com/Project379/celestiai/issues/8
+    //
+    // noUncheckedIndexedAccess is intentionally off in this package.
+    // Enabling it cascades ~25 errors across astrology and core's own
+    // horoscope/transit-analysis.ts — categorized as bounded-loop noise
+    // that TS cannot narrow (e.g. `for (let i = 0; i < 12; i++) houses[i]`
+    // where sweph's contract guarantees 12 cusps). The one site with real
+    // fragility (utils/julian-day.ts `time.split(':')`) has been given
+    // an explicit runtime guard — see commit on branch mobile-parallel-test.
+    //
+    // Owner: nobody. Target date: none — this is a permanent exception,
+    // not a deferred migration. The linked issue exists as a landing page
+    // for future visitors who want to re-open the decision. The marker
+    // above is enforced by scripts/check-core-strictness.mjs, which fails
+    // CI if this flag is neither `true` nor paired with a valid issue URL.
+    //
+    // Helpers in src/lib/invariant.ts (first, last, at) remain available
+    // for new code that wants bounded-access throws.
+    "noUncheckedIndexedAccess": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": false
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

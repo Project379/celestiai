@@ -1,23 +1,31 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/api/webhooks(.*)',
-])
-
+/**
+ * Auth model: deny-by-exception via an explicit protected-route matcher.
+ *
+ * Any page route that requires a signed-in user must be covered by the
+ * matcher below. Pricing (/pricing) stays public as marketing. Webhooks
+ * (/api/webhooks) use provider signature verification, not Clerk.
+ *
+ * Backup defense lives in apps/web/app/(protected)/layout.tsx — if the
+ * matcher ever drifts, the route-group layout redirects anonymous users
+ * to /sign-in before any authenticated chrome renders.
+ */
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
-  '/settings(.*)',
   '/chart(.*)',
   '/birth-data(.*)',
+  '/you(.*)',
+  '/rhythm(.*)',
+  '/rhythm/journal(.*)',
+  '/circle(.*)',
+  '/subscription(.*)',
+  '/subscription/success(.*)',
 ])
 
 export default clerkMiddleware(
   async (auth, request) => {
-    // Protect routes that require authentication
     if (isProtectedRoute(request)) {
       await auth.protect()
     }

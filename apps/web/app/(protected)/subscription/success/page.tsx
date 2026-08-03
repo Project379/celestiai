@@ -6,14 +6,14 @@ import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 export const metadata: Metadata = {
   title: 'Абонаментът е активен',
-  description: 'Добре дошъл в Celestia Premium',
+  description: 'Добре дошъл в Stellaeum Premium',
   robots: { index: false, follow: false },
 }
 
 /**
  * /subscription/success
  *
- * Server component wrapper — fetches initial subscription tier,
+ * Server component wrapper - fetches initial subscription tier,
  * then delegates to SuccessContent for the polling UI.
  *
  * This page is reached after Stripe redirects from checkout.

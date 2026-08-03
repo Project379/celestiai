@@ -1,0 +1,11 @@
+# Auth testing — dev HMR cache footgun
+
+**Why this doc exists:** A UAT repro on 2026-04-20 reported that `/dashboard` rendered for an anonymous user after sign-out and a full cookie clear. The middleware was in fact correctly configured (Clerk `auth.protect()` was firing and producing the expected 307 to `/sign-in` with `X-Clerk-Auth-Reason: session-token-and-uat-missing`). The apparent leak was the Next.js dev server **serving stale SSR HTML** from the prior authenticated session across the auth-state transition, not a middleware bug. Investigating it as a middleware bug cost a round of diagnosis before someone ran a cleaner repro.
+
+**The rule — manual auth UAT:** any time you are verifying an auth gate on a page (sign-in redirect, tier gate, premium gate, sign-out), use **incognito / private browsing + DevTools Network tab's "Disable cache" toggle on + Preserve log on**. Never trust a tab that has seen the authenticated version of the page in its lifetime. Next.js dev caches the previous SSR response aggressively and reuses it across cookie clears until HMR reloads the route. A working middleware looks broken if you skip this.
+
+**Corollary — programmatic UAT:** the harness at `apps/web/scripts/m3-uat-harness.mjs` does not have this problem because Node `fetch` doesn't run a browser cache. But the harness also does not exercise page routes — only API. Adding page-level redirect assertions there (planned for M3 UAT §6) verifies middleware behavior the way incognito does, minus rendering fidelity. Both layers of UAT remain required.
+
+**What the Clerk cookies mean when you do clear them:** `__clerk_db_jwt` cookies persist through a normal cookie clear because they are non-session metadata (device id, database id). Clerk correctly ignores them for auth when `__client_uat=0` (user-auth-token sentinel absent). Their presence after a sign-out is not a sign that the session survived. The session signal is `__session` / `__clerk_session` plus the Clerk backend's view of the session — and those are what `auth.protect()` checks.
+
+**Release gate:** before declaring an auth-related fix shipped, run the browser side of UAT in incognito with cache disabled, and record the observed status code + redirect target in the PR or commit message. "Tested locally" without those two toggles is not a test.

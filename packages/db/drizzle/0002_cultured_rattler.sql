@@ -1,1 +1,0 @@
-CREATE POLICY "cities_select_anon" ON "bulgarian_cities" AS PERMISSIVE FOR SELECT TO "anon" USING (true);

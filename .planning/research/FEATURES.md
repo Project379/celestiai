@@ -37,7 +37,7 @@ Features that set the product apart. Not required, but valuable.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **AI-Powered Personalized Readings** | Unique, deeply personal content not possible with templated text | HIGH | Celestia's core differentiator. GPT/Gemini integration for truly personalized interpretations. Competitors either use templated text or basic AI |
+| **AI-Powered Personalized Readings** | Unique, deeply personal content not possible with templated text | HIGH | Stellaeum's core differentiator. GPT/Gemini integration for truly personalized interpretations. Competitors either use templated text or basic AI |
 | **Swiss Ephemeris Precision** | Professional-grade accuracy attracts serious users | MEDIUM | Most apps use simpler calculations. NASA-grade precision is marketable |
 | **Bulgarian Language & Cultural Context** | First-mover advantage in underserved market | MEDIUM | No major competitors in Bulgarian market. Localized content increases retention 15-25% |
 | **Journal Integration with Astro-Correlation** | Track mood/energy correlated to transits | HIGH | CHANI and Soulloop offer this; creates habit formation and long-term engagement |
@@ -205,7 +205,7 @@ Features to defer until product-market fit is established.
 
 ## Competitor Feature Analysis
 
-| Feature | Co-Star | The Pattern | Sanctuary | CHANI | TimePassages | Celestia AI (Our Plan) |
+| Feature | Co-Star | The Pattern | Sanctuary | CHANI | TimePassages | Stellaeum AI (Our Plan) |
 |---------|---------|-------------|-----------|-------|--------------|------------------------|
 | **Birth Chart** | Yes (NASA data) | Limited (no visible chart) | Yes | Yes | Yes (professional-grade) | Swiss Ephemeris (professional) |
 | **Daily Horoscope** | Yes (AI + human) | Yes (patterns focus) | Yes | Yes (rising sign focus) | Yes | AI-personalized to natal chart |
@@ -229,9 +229,9 @@ Features to defer until product-market fit is established.
 
 3. **Gap: Precision + Accessibility** - TimePassages has professional-grade calculations but dated UX. Co-Star has modern UX but questionable accuracy. Opportunity: professional precision with modern experience.
 
-4. **Gap: Positive Framing** - Co-Star criticized for negative/anxiety-inducing content. CHANI praised for inclusive, positive approach. Celestia should follow CHANI's lead.
+4. **Gap: Positive Framing** - Co-Star criticized for negative/anxiety-inducing content. CHANI praised for inclusive, positive approach. Stellaeum should follow CHANI's lead.
 
-5. **Gap: Privacy-First** - Co-Star criticized for contact scraping, phone number requirements. Celestia should be privacy-conscious.
+5. **Gap: Privacy-First** - Co-Star criticized for contact scraping, phone number requirements. Stellaeum should be privacy-conscious.
 
 6. **Pricing Insight** - CHANI at $12/mo and Sanctuary at $20/mo are high end. TimePassages at $9.99 proves precision users will pay. Our 9.99/mo target is competitive.
 
@@ -295,4 +295,4 @@ Features to defer until product-market fit is established.
 
 *Feature research for: Premium Astrology/Horoscope Mobile SaaS*
 *Researched: 2026-01-19*
-*Project: Celestia AI - Bulgarian market astrology app*
+*Project: Stellaeum AI - Bulgarian market astrology app*

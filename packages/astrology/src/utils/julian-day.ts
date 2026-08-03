@@ -6,7 +6,12 @@
  * a single continuous time scale.
  */
 
-import * as sweph from 'sweph'
+// sweph via createRequire (CJS entry) — same rationale as
+// calculator.ts. See doc-drift tracker #14 and the preserved
+// apps/web/next.config.js serverExternalPackages + transpilePackages.
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+const sweph = require('sweph') as typeof import('sweph')
 
 /**
  * Convert a date and time to Julian Day number
@@ -14,6 +19,16 @@ import * as sweph from 'sweph'
  * @param date - The date (UTC)
  * @param time - Time in HH:MM format (treated as UTC)
  * @returns Julian Day number
+ *
+ * @remarks
+ * The malformed-time throw below is defense-in-depth for internal
+ * callers that construct inputs without going through a validator. On
+ * the /api/birth-data HTTP surface, `apps/web/lib/validators/birth-data.ts`
+ * enforces `/^([01]\d|2[0-3]):([0-5]\d)$/` before any value reaches
+ * this function — a strict superset of what the guard rejects — so
+ * the throw is unreachable from external input. Keep the guard
+ * regardless: in-repo callers (transit calculations, internal probes,
+ * future endpoints) may not share that discipline.
  *
  * @example
  * ```typescript
@@ -24,6 +39,9 @@ import * as sweph from 'sweph'
  */
 export function getJulianDay(date: Date, time: string): number {
   const [hours, minutes] = time.split(':').map(Number)
+  if (hours === undefined || minutes === undefined || Number.isNaN(hours) || Number.isNaN(minutes)) {
+    throw new Error(`getJulianDay: time must be "HH:MM", got "${time}"`)
+  }
   const decimalHours = hours + minutes / 60
 
   // Use UTC methods to avoid timezone issues

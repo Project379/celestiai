@@ -1,12 +1,12 @@
 /**
- * @celestia/astrology - Swiss Ephemeris wrapper for natal chart calculations
+ * @stellaeum/astrology - Swiss Ephemeris wrapper for natal chart calculations
  *
  * This package provides server-side astrology calculations using the Swiss Ephemeris.
  * All calculations use the Moshier ephemeris (built-in, no external files needed).
  *
  * @example
  * ```typescript
- * import { calculateNatalChart, PLANETS_BG, ZODIAC_SIGNS_BG } from '@celestia/astrology'
+ * import { calculateNatalChart, PLANETS_BG, ZODIAC_SIGNS_BG } from '@stellaeum/astrology'
  *
  * const chart = calculateNatalChart({
  *   date: new Date('1990-06-15'),
@@ -41,6 +41,7 @@ export {
   ASPECTS_BG,
   DEFAULT_UNKNOWN_TIME,
   HOUSE_SYSTEM_PLACIDUS,
+  PLANET_GLYPHS,
   PLANET_IDS,
   PLANETS_BG,
   PLANETS_ORDER,

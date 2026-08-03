@@ -14,7 +14,7 @@
 2.  **The "NASA" Moment:**
     *   *Step:* Enter Birth Date, Time (Exact minute required!), and Place.
     *   *Observe:* They explicitly mention **"NASA Jet Propulsion Laboratory data."**
-    *   *Takeaway:* This single line convinces users it's overly scientific. **Celestia must match this trust signal.**
+    *   *Takeaway:* This single line convinces users it's overly scientific. **Stellaeum must match this trust signal.**
 3.  **The "Roast" Introduction:**
     *   *Action:* Read your first "Day at Glance."
     *   *Critique:* Does it feel like a friend or a bully?
@@ -24,12 +24,12 @@ Co-Star is famous for its unhinged notifications. Look for (or Google) these exa
 *   *"Start a cult."*
 *   *"Don't get back with your ex."*
 *   *"Correct all the time-wasting at your job."*
-*   **Celestia's Pivot:** We want the *wit* without the *mean-spiritedness*. We are the "Wise Mentor," not the "Toxic Best Friend."
+*   **Stellaeum's Pivot:** We want the *wit* without the *mean-spiritedness*. We are the "Wise Mentor," not the "Toxic Best Friend."
 
 ### 🎨 Mission 3: Brutalist Design
 *   *Action:* Navigate the main dashboard.
 *   *Observe:* The jagged lines, serif fonts, and lack of "soft" UI elements.
-*   *Contrast:* Celestia's "Cosmic Glassmorphism" will feel significantly more premium and welcoming by comparison.
+*   *Contrast:* Stellaeum's "Cosmic Glassmorphism" will feel significantly more premium and welcoming by comparison.
 
 ---
 
@@ -43,7 +43,7 @@ Co-Star is famous for its unhinged notifications. Look for (or Google) these exa
 *   *Translation Guide:*
     *   They say: "Cycles of Growth" -> We know it as: "Saturn Return"
     *   They say: "Expansion" -> We know it as: "Jupiter Transit"
-    *   *Lesson:* **Celestia should use the professional terms (as Bulgarians respect the science) but explain them just as simply.**
+    *   *Lesson:* **Stellaeum should use the professional terms (as Bulgarians respect the science) but explain them just as simply.**
 
 ### ❤️ Mission 2: "Bonds" (The Killer Feature)
 1.  **Run a Bond:** Connect with a partner or celebrity.
@@ -63,7 +63,7 @@ Co-Star is famous for its unhinged notifications. Look for (or Google) these exa
 *   *Action:* Start the web onboarding (hint.app).
 *   *Count:* Notice they ask 20+ simple questions ("What is your goal?", "Do you feel lost?").
 *   *Psychology:* By the time they ask for money, you've invested 5 minutes. You *have* to pay to see the result.
-*   *Ethics:* It feels predatory. **Celestia's onboarding should be smoother and more honest.**
+*   *Ethics:* It feels predatory. **Stellaeum's onboarding should be smoother and more honest.**
 
 ### 💸 Mission 2: The Subscription Trap
 *   *The Offer:* "7-day trial for $1."
@@ -79,7 +79,7 @@ Co-Star is famous for its unhinged notifications. Look for (or Google) these exa
 *   *Action:* Explore the menu.
 *   *List:* Palmistry, Tarot, Psychic Chat, Sleep Stories, Calendars.
 *   *Takeaway:* They throw everything at the wall.
-*   *Celestia's Stance:* **Do one thing perfectly (Astrology).** Don't dilute the brand with Tarot and Palmistry (yet).
+*   *Stellaeum's Stance:* **Do one thing perfectly (Astrology).** Don't dilute the brand with Tarot and Palmistry (yet).
 
 ---
 
@@ -92,4 +92,4 @@ Co-Star is famous for its unhinged notifications. Look for (or Google) these exa
     *   The Ads (usually bottom banners).
     *   The UI (Android 4.0 vibes).
     *   The Content (Generic newspaper horoscope).
-    *   *Confidence Booster:* **Just by having a dark mode and a clean font, Celestia is already 10 years ahead.**
+    *   *Confidence Booster:* **Just by having a dark mode and a clean font, Stellaeum is already 10 years ahead.**

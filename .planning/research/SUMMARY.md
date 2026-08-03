@@ -1,4 +1,4 @@
-# Celestia AI - Research Synthesis
+# Stellaeum AI - Research Synthesis
 
 **Synthesized:** 2026-01-21
 **Source Documents:** ARCHITECTURE.md, FEATURES.md, PITFALLS.md, STACK.md
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Celestia AI is a premium astrology application targeting the Bulgarian market with Web + iOS from a single universal codebase. Research validates the chosen stack (Turborepo + Solito + Next.js 15 + Expo SDK 52+) can achieve 90%+ code sharing. The key architectural insight is **server-side WASM calculations** — Swiss Ephemeris runs only in API routes, never bundled in mobile.
+Stellaeum AI is a premium astrology application targeting the Bulgarian market with Web + iOS from a single universal codebase. Research validates the chosen stack (Turborepo + Solito + Next.js 15 + Expo SDK 52+) can achieve 90%+ code sharing. The key architectural insight is **server-side WASM calculations** — Swiss Ephemeris runs only in API routes, never bundled in mobile.
 
 **Market opportunity:** No major competitor serves Bulgarian users. First-mover advantage with localized content in an underserved €3-5B market.
 
@@ -168,7 +168,7 @@ Celestia AI is a premium astrology application targeting the Bulgarian market wi
 ## Monorepo Structure (Recommended)
 
 ```
-celestia-ai/
+stellaeum-ai/
 ├── apps/
 │   ├── web/                    # Next.js 15 (App Router)
 │   │   └── app/api/            # WASM calculations, webhooks

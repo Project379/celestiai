@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 
 /* ═══════════════════════════════════════════════════════════════
-   CONSTELLATION DATA — Real zodiac + iconic constellations
+   CONSTELLATION DATA - Real zodiac + iconic constellations
    Star offsets in px at 1920px reference width.
    ═══════════════════════════════════════════════════════════════ */
 export interface ConstellationStar {
@@ -26,7 +26,7 @@ export interface ConstellationData {
 export const CONSTELLATIONS: ConstellationData[] = [
   {
     id: 'aries', name: 'Овен', latin: 'Aries', element: 'Огън',
-    description: 'Първият зодиакален знак — символ на ново начало, смелост и водачество. Златното руно от древногръцкия мит за аргонавтите.',
+    description: 'Първият зодиакален знак - символ на ново начало, смелост и водачество. Златното руно от древногръцкия мит за аргонавтите.',
     season: 'Пролет (март–април)', brightestStar: 'Хамал (α Arietis)',
     L0: 15, D0: 0.45,
     stars: [{ dx: 0, dy: 0, mag: 2.0, name: 'Хамал' }, { dx: 18, dy: -6, mag: 2.6, name: 'Шератан' }, { dx: 30, dy: -10, mag: 4.4 }, { dx: -12, dy: 8, mag: 5.2 }],
@@ -34,7 +34,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'taurus', name: 'Телец', latin: 'Taurus', element: 'Земя',
-    description: 'V-образната фигура на Хиадите с ярко-оранжевия Алдебаран — окото на бика. Плеядите (Квачката) блестят съвсем наблизо.',
+    description: 'V-образната фигура на Хиадите с ярко-оранжевия Алдебаран - окото на бика. Плеядите (Квачката) блестят съвсем наблизо.',
     season: 'Зима (ноември–март)', brightestStar: 'Алдебаран (α Tauri)',
     L0: 45, D0: -0.45,
     stars: [{ dx: 0, dy: 0, mag: 0.9, name: 'Алдебаран' }, { dx: -20, dy: -18, mag: 3.5 }, { dx: 18, dy: -12, mag: 3.4 }, { dx: -10, dy: 15, mag: 3.8 }, { dx: 25, dy: 10, mag: 3.6 }, { dx: -35, dy: -30, mag: 4.2 }],
@@ -42,7 +42,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'gemini', name: 'Близнаци', latin: 'Gemini', element: 'Въздух',
-    description: 'Кастор и Полукс — двамата ярки „близнаци" в горната част. Символ на двойствеността, общуването и любознателността.',
+    description: 'Кастор и Полукс - двамата ярки „близнаци" в горната част. Символ на двойствеността, общуването и любознателността.',
     season: 'Зима–Пролет (декември–юни)', brightestStar: 'Полукс (β Geminorum)',
     L0: 75, D0: 0.5,
     stars: [{ dx: -8, dy: -30, mag: 1.6, name: 'Кастор' }, { dx: 8, dy: -25, mag: 1.1, name: 'Полукс' }, { dx: -12, dy: 0, mag: 3.5 }, { dx: 6, dy: 5, mag: 3.3 }, { dx: -15, dy: 30, mag: 3.6 }, { dx: 10, dy: 32, mag: 3.8 }],
@@ -50,7 +50,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'cancer', name: 'Рак', latin: 'Cancer', element: 'Вода',
-    description: 'Слабо съзвездие, но крие звездния куп Ясли (Praesepe) — забележим с просто око при тъмно небе. Четвъртият зодиакален знак.',
+    description: 'Слабо съзвездие, но крие звездния куп Ясли (Praesepe) - забележим с просто око при тъмно небе. Четвъртият зодиакален знак.',
     season: 'Пролет (февруари–май)', brightestStar: 'Ал Тарф (β Cancri)',
     L0: 105, D0: -0.5,
     stars: [{ dx: 0, dy: 0, mag: 3.5 }, { dx: -15, dy: -12, mag: 4.0 }, { dx: 12, dy: -15, mag: 3.9 }, { dx: -10, dy: 18, mag: 4.3 }, { dx: 14, dy: 16, mag: 4.7 }],
@@ -58,7 +58,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'leo', name: 'Лъв', latin: 'Leo', element: 'Огън',
-    description: 'Сърпът (обърнат въпросителен знак) очертава гривата на лъва. Регул блести в сърцето му — една от четирите царски звезди.',
+    description: 'Сърпът (обърнат въпросителен знак) очертава гривата на лъва. Регул блести в сърцето му - една от четирите царски звезди.',
     season: 'Пролет (март–юни)', brightestStar: 'Регул (α Leonis)',
     L0: 135, D0: 0.42,
     stars: [{ dx: -20, dy: -25, mag: 3.5 }, { dx: -8, dy: -30, mag: 3.4 }, { dx: 5, dy: -18, mag: 2.6 }, { dx: 0, dy: 0, mag: 1.4, name: 'Регул' }, { dx: 25, dy: -5, mag: 3.3 }, { dx: 35, dy: 10, mag: 2.1, name: 'Денебола' }, { dx: 20, dy: 15, mag: 3.5 }],
@@ -66,7 +66,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'virgo', name: 'Дева', latin: 'Virgo', element: 'Земя',
-    description: 'Най-голямото зодиакално съзвездие. Спика — ослепително синьо-бялата звезда — е 15-ата по яркост на нощното небе.',
+    description: 'Най-голямото зодиакално съзвездие. Спика - ослепително синьо-бялата звезда - е 15-ата по яркост на нощното небе.',
     season: 'Пролет–Лято (април–юли)', brightestStar: 'Спика (α Virginis)',
     L0: 165, D0: -0.48,
     stars: [{ dx: 0, dy: 0, mag: 1.0, name: 'Спика' }, { dx: -15, dy: -30, mag: 3.6 }, { dx: 10, dy: -25, mag: 3.4 }, { dx: -5, dy: -50, mag: 3.9 }, { dx: 20, dy: -45, mag: 4.0 }, { dx: -25, dy: -15, mag: 4.2 }],
@@ -74,7 +74,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'libra', name: 'Везни', latin: 'Libra', element: 'Въздух',
-    description: 'Единственото съзвездие от зодиака, което не изобразява живо същество. Олицетворява равновесието и справедливостта — везните на Астрея.',
+    description: 'Единственото съзвездие от зодиака, което не изобразява живо същество. Олицетворява равновесието и справедливостта - везните на Астрея.',
     season: 'Лято (юни–август)', brightestStar: 'Зубенешамали (β Librae)',
     L0: 195, D0: 0.48,
     stars: [{ dx: 0, dy: 0, mag: 2.6 }, { dx: 25, dy: -5, mag: 2.7 }, { dx: -10, dy: 25, mag: 3.3 }, { dx: 30, dy: 22, mag: 3.6 }],
@@ -82,7 +82,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'scorpius', name: 'Скорпион', latin: 'Scorpius', element: 'Вода',
-    description: 'Антарес — червеният свръхгигант в сърцето на скорпиона — съперничи на Марс по цвят. Дългата извита опашка завършва с жилото.',
+    description: 'Антарес - червеният свръхгигант в сърцето на скорпиона - съперничи на Марс по цвят. Дългата извита опашка завършва с жилото.',
     season: 'Лято (юни–септември)', brightestStar: 'Антарес (α Scorpii)',
     L0: 225, D0: -0.52,
     stars: [{ dx: -15, dy: -30, mag: 3.0 }, { dx: -5, dy: -15, mag: 2.9 }, { dx: 0, dy: 0, mag: 0.9, name: 'Антарес' }, { dx: 8, dy: 15, mag: 2.8 }, { dx: 18, dy: 25, mag: 3.0 }, { dx: 25, dy: 35, mag: 2.7 }, { dx: 18, dy: 42, mag: 3.2 }, { dx: 28, dy: 45, mag: 2.5 }],
@@ -90,7 +90,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'sagittarius', name: 'Стрелец', latin: 'Sagittarius', element: 'Огън',
-    description: 'Астеризмът „Чайникът" е лесен за намиране. Стрелецът сочи право към центъра на Млечния път — най-гъстата звездна област.',
+    description: 'Астеризмът „Чайникът" е лесен за намиране. Стрелецът сочи право към центъра на Млечния път - най-гъстата звездна област.',
     season: 'Лято–Есен (юли–октомври)', brightestStar: 'Каус Аустралис (ε Sagittarii)',
     L0: 255, D0: 0.5,
     stars: [{ dx: -15, dy: 15, mag: 2.8 }, { dx: -15, dy: -5, mag: 3.0 }, { dx: 0, dy: -15, mag: 2.7 }, { dx: 15, dy: -5, mag: 2.6, name: 'Каус Аустр.' }, { dx: 15, dy: 15, mag: 2.8 }, { dx: 0, dy: 20, mag: 3.2 }, { dx: 5, dy: -28, mag: 3.0 }, { dx: -8, dy: -25, mag: 3.4 }],
@@ -98,7 +98,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'capricorn', name: 'Козирог', latin: 'Capricornus', element: 'Земя',
-    description: 'Морската коза — наполовина коза, наполовина риба. Едно от най-старите описани съзвездия, познато още от древните шумери.',
+    description: 'Морската коза - наполовина коза, наполовина риба. Едно от най-старите описани съзвездия, познато още от древните шумери.',
     season: 'Есен (август–ноември)', brightestStar: 'Денеб Алгеди (δ Capricorni)',
     L0: 285, D0: -0.5,
     stars: [{ dx: -20, dy: -10, mag: 3.6 }, { dx: -8, dy: -18, mag: 3.1 }, { dx: 10, dy: -12, mag: 3.7 }, { dx: 22, dy: 0, mag: 2.9 }, { dx: 10, dy: 15, mag: 3.8 }, { dx: -10, dy: 12, mag: 4.0 }],
@@ -106,7 +106,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'aquarius', name: 'Водолей', latin: 'Aquarius', element: 'Въздух',
-    description: 'Водоносецът. Зигзагообразните линии символизират водния поток. В митологията се свързва с Ганимед — виночерпецът на боговете.',
+    description: 'Водоносецът. Зигзагообразните линии символизират водния поток. В митологията се свързва с Ганимед - виночерпецът на боговете.',
     season: 'Есен (септември–декември)', brightestStar: 'Садалсууд (β Aquarii)',
     L0: 315, D0: 0.44,
     stars: [{ dx: 0, dy: -20, mag: 2.9, name: 'Садалсууд' }, { dx: 15, dy: -10, mag: 3.0 }, { dx: 5, dy: 0, mag: 3.3 }, { dx: 18, dy: 8, mag: 3.7 }, { dx: 0, dy: 18, mag: 3.5 }, { dx: 15, dy: 25, mag: 4.0 }, { dx: -10, dy: 30, mag: 4.2 }],
@@ -123,7 +123,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   // ─── Знакови извънзодиакални съзвездия ───
   {
     id: 'orion', name: 'Орион', latin: 'Orion',
-    description: 'Ловецът — най-разпознаваемото съзвездие на нощното небе. Три звезди в редица образуват прочутия „Пояс на Орион".',
+    description: 'Ловецът - най-разпознаваемото съзвездие на нощното небе. Три звезди в редица образуват прочутия „Пояс на Орион".',
     season: 'Зима (ноември–март)', brightestStar: 'Ригел (β Orionis)',
     L0: 80, D0: -0.55,
     stars: [
@@ -153,7 +153,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
   },
   {
     id: 'cassiopeia', name: 'Касиопея', latin: 'Cassiopeia',
-    description: 'Характерната W-форма е лесно разпознаваема и никога не залязва, гледана от България. Царицата на трона — наказана заради суетата си.',
+    description: 'Характерната W-форма е лесно разпознаваема и никога не залязва, гледана от България. Царицата на трона - наказана заради суетата си.',
     season: 'Целогодишно', brightestStar: 'Шедар (α Cassiopeiae)',
     L0: 20, D0: 0.68,
     stars: [
@@ -168,7 +168,7 @@ export const CONSTELLATIONS: ConstellationData[] = [
 ]
 
 /* ═══════════════════════════════════════════════════════════════
-   PLANET POSITIONS — Simplified Keplerian mean longitudes
+   PLANET POSITIONS - Simplified Keplerian mean longitudes
    ═══════════════════════════════════════════════════════════════ */
 export interface PlanetVisual {
   id: string
@@ -184,26 +184,56 @@ export interface PlanetVisual {
   screenY: number
 }
 
-// Planets in solar system order (Mercury → Saturn) with proportional sizes
+// Planets with proportional sizes.
+// Editorial palette: violet + amber + ivory, matching the mystical app aesthetic.
+// Sun is included (no Moon - astrology-app convention).
 const PLANET_DEFS = [
-  { id: 'mercury', name: 'Меркурий', latin: 'Mercury', period: 87.97, L0: 252.25, color: '#b8a9c9', glowColor: 'rgba(184,169,201,0.5)', size: 4.5, order: 0 },
-  { id: 'venus', name: 'Венера', latin: 'Venus', period: 224.7, L0: 181.98, color: '#fcd34d', glowColor: 'rgba(252,211,77,0.6)', size: 7, order: 1 },
-  { id: 'mars', name: 'Марс', latin: 'Mars', period: 687.0, L0: 355.45, color: '#f87171', glowColor: 'rgba(248,113,113,0.55)', size: 5.5, order: 2 },
-  { id: 'jupiter', name: 'Юпитер', latin: 'Jupiter', period: 4332.6, L0: 34.40, color: '#fdba74', glowColor: 'rgba(253,186,116,0.6)', size: 11, order: 3 },
-  { id: 'saturn', name: 'Сатурн', latin: 'Saturn', period: 10759.2, L0: 49.94, color: '#e8c872', glowColor: 'rgba(232,200,114,0.55)', size: 9.5, order: 4 },
+  { id: 'sun',     name: 'Слънце',  latin: 'Sun',     period: 0,       L0: 0,      color: '#fcd34d', glowColor: 'rgba(252,211,77,0.88)',  size: 10,  order: 0 },
+  { id: 'mercury', name: 'Меркурий', latin: 'Mercury', period: 87.97,   L0: 252.25, color: '#c4b5fd', glowColor: 'rgba(196,181,253,0.55)', size: 4.5, order: 1 },
+  { id: 'venus',   name: 'Венера',  latin: 'Venus',   period: 224.7,   L0: 181.98, color: '#fcd34d', glowColor: 'rgba(252,211,77,0.6)',   size: 7,   order: 2 },
+  { id: 'mars',    name: 'Марс',    latin: 'Mars',    period: 687.0,   L0: 355.45, color: '#fb923c', glowColor: 'rgba(251,146,60,0.55)',  size: 5.5, order: 3 },
+  { id: 'jupiter', name: 'Юпитер',  latin: 'Jupiter', period: 4332.6,  L0: 34.40,  color: '#fed7aa', glowColor: 'rgba(254,215,170,0.6)',  size: 11,  order: 4 },
+  { id: 'saturn',  name: 'Сатурн',  latin: 'Saturn',  period: 10759.2, L0: 49.94,  color: '#fbbf24', glowColor: 'rgba(251,191,36,0.55)',  size: 9.5, order: 5 },
+  { id: 'uranus',  name: 'Уран',    latin: 'Uranus',  period: 30687,   L0: 314.05, color: '#a5b4fc', glowColor: 'rgba(165,180,252,0.55)', size: 7,   order: 6 },
+  { id: 'neptune', name: 'Нептун',  latin: 'Neptune', period: 60190,   L0: 304.35, color: '#a78bfa', glowColor: 'rgba(167,139,250,0.55)', size: 6.5, order: 7 },
+  { id: 'pluto',   name: 'Плутон',  latin: 'Pluto',   period: 90560,   L0: 238.92, color: '#cbd5e1', glowColor: 'rgba(203,213,225,0.45)', size: 3.5, order: 8 },
 ]
 
-// Lay planets in a horizontal line (solar system order), evenly spaced in the middle
-function computePlanetPositions(w: number, h: number): PlanetVisual[] {
-  const count = PLANET_DEFS.length
-  const sorted = [...PLANET_DEFS].sort((a, b) => a.order - b.order)
-  const margin = w * 0.15
-  const usable = w - margin * 2
-  const lineY = h * 0.50 // vertically centered
+// Scatter planets across safe zones that stay clear of page content on all routes.
+// The app's pages use centered max-width containers (max-w-2xl on dashboard up to
+// max-w-7xl on chart), which leaves predictable negative space:
+//
+//   - Top strip    (y 6-14%):   below nav, above every page's hero title
+//   - Mid-left     (x 16-24%):  free on dashboard/transits/guide/pricing
+//   - Mid-right    (x 76-84%):  mirror of mid-left
+//   - Bottom strip (y 93-97%):  below every page's main content
+//
+// A centerFade safety net (applied at draw time) auto-dims any planet that
+// accidentally lands over content on the widest page (chart, max-w-7xl).
+//
+// Positions are normalized (fraction of viewport) so they adapt to resize.
+const PLANET_LAYOUT: Record<string, { fx: number; fy: number }> = {
+  sun:     { fx: 0.50, fy: 0.06 }, // top-center, straddling the navbar so it's visible both above and below
+  mercury: { fx: 0.24, fy: 0.10 }, // top-left, spread from the Sun, slightly lower
+  venus:   { fx: 0.76, fy: 0.10 }, // top-right, spread from the Sun, slightly lower
+  mars:    { fx: 0.19, fy: 0.34 }, // mid-left upper, outside dashboard content
+  jupiter: { fx: 0.81, fy: 0.38 }, // mid-right upper, outside dashboard content
+  uranus:  { fx: 0.20, fy: 0.72 }, // mid-left lower, outside dashboard content
+  neptune: { fx: 0.80, fy: 0.70 }, // mid-right lower, outside dashboard content
+  saturn:  { fx: 0.17, fy: 0.96 }, // bottom-left outer edge, clear of content column
+  pluto:   { fx: 0.83, fy: 0.97 }, // bottom-right outer edge, clear of content column
+}
 
-  return sorted.map((p, i) => {
-    const screenX = margin + (count > 1 ? (i / (count - 1)) * usable : usable / 2)
-    const screenY = lineY
+// Navbar height in pixels (h-14 = 56px). Sun is anchored here so its
+// center always sits exactly at the bottom edge of the protected layout's
+// navbar regardless of viewport height.
+const NAVBAR_PX = 56
+
+function computePlanetPositions(w: number, h: number): PlanetVisual[] {
+  return PLANET_DEFS.map(p => {
+    const layout = PLANET_LAYOUT[p.id] ?? { fx: 0.5, fy: 0.95 }
+    const screenX = w * layout.fx
+    const screenY = p.id === 'sun' ? NAVBAR_PX : h * layout.fy
     const longitude = 0
     const dimGlow = p.glowColor.replace(/[\d.]+\)$/, '0.15)')
     return { ...p, longitude, screenX, screenY, dimGlow }
@@ -254,12 +284,26 @@ export interface CelestialCanvasProps {
   interactive?: boolean
   hoveredConstellationId?: string | null
   selectedConstellationId?: string | null
-  /** External mouse position ref — if provided, canvas uses it instead of tracking its own */
+  /** External mouse position ref - if provided, canvas uses it instead of tracking its own */
   externalMouseRef?: React.RefObject<{ x: number; y: number } | null>
-  /** External scroll offset ref — constellations shift by this amount */
+  /** External scroll offset ref - constellations shift by this amount */
   externalScrollRef?: React.RefObject<number | null>
   /** Callback: writes constellation screen positions each frame for overlay positioning */
   onPositionsUpdate?: (positions: Map<string, { x: number; y: number; stars: { sx: number; sy: number }[] }>) => void
+  /**
+   * Skip drawing the decorative planets entirely. Stars, constellations,
+   * nebulae, and shooting stars still render.
+   *
+   * Why the boolean: the previous `planetCenterFadeFloor` prop attempted
+   * to push planets to 0 opacity on dense routes but relied on the
+   * centerFade safety net, which only dims planets drifting into the
+   * center content band (fx 0.305-0.695). Planets at fx 0.75-1.0 — where
+   * the chart page's right column sits — are PAST that band, so
+   * centerFade returns ~0.5-0.7 and Math.max with any floor still leaves
+   * them at ~0.5-0.7. A route-aware fader doesn't help; a binary skip
+   * does.
+   */
+  skipPlanets?: boolean
 }
 
 export function CelestialCanvas({
@@ -271,6 +315,7 @@ export function CelestialCanvas({
   externalMouseRef,
   externalScrollRef,
   onPositionsUpdate,
+  skipPlanets = false,
 }: CelestialCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const internalMouseRef = useRef({ x: -1000, y: -1000 })
@@ -360,13 +405,15 @@ export function CelestialCanvas({
     /* ─── Planet positions ─── */
     const planets = computePlanetPositions(w, h)
 
-    /* ─── Milky way renderer (cached) ─── */
+    /* ─── Milky way + corner nebulae renderer (cached) ─── */
     function renderMilkyWay(tw: number, th: number): HTMLCanvasElement {
       const off = document.createElement('canvas')
       off.width = Math.floor(tw / 4); off.height = Math.floor(th / 4)
       const octx = off.getContext('2d')
       if (!octx) return off
       const sw = off.width, sh = off.height
+
+      // 1) Milky way noise band - rendered via ImageData
       const imageData = octx.createImageData(sw, sh)
       const data = imageData.data
       for (let py = 0; py < sh; py++) {
@@ -379,13 +426,53 @@ export function CelestialCanvas({
           const cloudiness = fbmNoise(nx * 8 + 0.5, ny * 8 + 0.5, 4)
           const intensity = bandIntensity * bandIntensity * cloudiness * 0.3
           const idx = (py * sw + px) * 4
-          data[idx] = Math.floor(160 * intensity)
-          data[idx + 1] = Math.floor(155 * intensity)
-          data[idx + 2] = Math.floor(175 * intensity)
+          data[idx] = Math.floor(175 * intensity)
+          data[idx + 1] = Math.floor(160 * intensity)
+          data[idx + 2] = Math.floor(170 * intensity)
           data[idx + 3] = Math.floor(255 * intensity)
         }
       }
       octx.putImageData(imageData, 0, 0)
+
+      // 2) Corner nebulae - editorial violet + amber tint radial gradients
+      // Painted over the milky way, blended additively for soft atmosphere.
+      // Diagonal pairing: violet in TL+BR, amber in TR+BL - matches dashboard aura direction.
+      octx.globalCompositeOperation = 'lighter'
+      const cornerR = Math.max(sw, sh) * 0.55
+
+      // Top-left violet
+      let g = octx.createRadialGradient(0, 0, 0, 0, 0, cornerR)
+      g.addColorStop(0, 'rgba(167, 139, 250, 0.18)') // violet-400
+      g.addColorStop(0.45, 'rgba(139, 92, 246, 0.06)')
+      g.addColorStop(1, 'rgba(0,0,0,0)')
+      octx.fillStyle = g
+      octx.fillRect(0, 0, sw, sh)
+
+      // Top-right amber
+      g = octx.createRadialGradient(sw, 0, 0, sw, 0, cornerR)
+      g.addColorStop(0, 'rgba(251, 191, 36, 0.14)') // amber-400
+      g.addColorStop(0.45, 'rgba(217, 119, 6, 0.05)')
+      g.addColorStop(1, 'rgba(0,0,0,0)')
+      octx.fillStyle = g
+      octx.fillRect(0, 0, sw, sh)
+
+      // Bottom-left amber (dimmer - planet row lives at bottom so keep low)
+      g = octx.createRadialGradient(0, sh, 0, 0, sh, cornerR * 0.9)
+      g.addColorStop(0, 'rgba(251, 191, 36, 0.10)')
+      g.addColorStop(0.5, 'rgba(217, 119, 6, 0.035)')
+      g.addColorStop(1, 'rgba(0,0,0,0)')
+      octx.fillStyle = g
+      octx.fillRect(0, 0, sw, sh)
+
+      // Bottom-right violet
+      g = octx.createRadialGradient(sw, sh, 0, sw, sh, cornerR * 0.9)
+      g.addColorStop(0, 'rgba(167, 139, 250, 0.12)')
+      g.addColorStop(0.5, 'rgba(139, 92, 246, 0.04)')
+      g.addColorStop(1, 'rgba(0,0,0,0)')
+      octx.fillStyle = g
+      octx.fillRect(0, 0, sw, sh)
+
+      octx.globalCompositeOperation = 'source-over'
       return off
     }
 
@@ -443,7 +530,7 @@ export function CelestialCanvas({
       }),
     ]
 
-    // Reuse a single Map for constellation positions — avoids GC pressure from creating one every frame
+    // Reuse a single Map for constellation positions - avoids GC pressure from creating one every frame
     const positionsMap = new Map<string, { x: number; y: number; stars: { sx: number; sy: number }[] }>()
 
     let animId: number
@@ -453,7 +540,7 @@ export function CelestialCanvas({
     let smoothScrollY = 0
     let prevSmoothScrollY = 0
 
-    // Pause rendering when tab is hidden — saves 100% of CPU when backgrounded
+    // Pause rendering when tab is hidden - saves 100% of CPU when backgrounded
     const handleVisibility = () => {
       paused = document.hidden
       if (!paused) animId = requestAnimationFrame(animate)
@@ -470,7 +557,7 @@ export function CelestialCanvas({
       smoothScrollY += (targetScrollY - smoothScrollY) * 0.08
       // Snap when close enough to avoid perpetual micro-drift
       if (Math.abs(targetScrollY - smoothScrollY) < 0.5) smoothScrollY = targetScrollY
-      // How fast scroll is changing — used for motion blur intensity
+      // How fast scroll is changing - used for motion blur intensity
       const scrollDelta = Math.abs(smoothScrollY - prevSmoothScrollY)
       const motionBlur = Math.min(0.45, scrollDelta * 0.015) // 0..0.45
 
@@ -480,12 +567,12 @@ export function CelestialCanvas({
         ctx.fillRect(0, 0, w, h)
       }
 
-      /* ─── Milky way (cached, warm) — dimmed in center ─── */
+      /* ─── Milky way (cached, warm) - dimmed in center ─── */
       if (!milkyWayRenderedRef.current || !offscreenRef.current) {
         offscreenRef.current = renderMilkyWay(w, h)
         milkyWayRenderedRef.current = true
       }
-      ctx.globalAlpha = 0.35
+      ctx.globalAlpha = 0.55
       ctx.drawImage(offscreenRef.current!, 0, 0, w, h)
       ctx.globalAlpha = 1
 
@@ -506,17 +593,19 @@ export function CelestialCanvas({
       const pxOffsetY = mouseActive ? (my - h / 2) * 0.02 : 0
 
       /* ─── Center fade: dim stars/effects in the content zone ─── */
-      // Content occupies roughly the center 50% of viewport width and 60% of height
-      // Returns 0..1 where 0 = center (fully dimmed), 1 = edges (full brightness)
+      // Widened to protect the dashboard's max-w-2xl column on medium
+      // viewports and the guide's max-w-3xl column. Covers the center
+      // ~78% of width and ~70% of height. Returns 0..1 where 0 = center
+      // (fully dimmed), 1 = edges (full brightness).
       function centerFade(sx: number, sy: number): number {
-        // Horizontal: fade within center 60% of width
+        // Horizontal: fade within center 78% of width
         const hCenter = w / 2
-        const hHalf = w * 0.30
+        const hHalf = w * 0.39
         const hDist = Math.abs(sx - hCenter)
         const hFade = Math.min(1, Math.max(0, (hDist - hHalf * 0.5) / (hHalf * 0.5)))
-        // Vertical: fade within center 60% of height (offset down a bit for header)
+        // Vertical: fade within center 70% of height (offset down a bit for header)
         const vCenter = h * 0.52
-        const vHalf = h * 0.32
+        const vHalf = h * 0.35
         const vDist = Math.abs(sy - vCenter)
         const vFade = Math.min(1, Math.max(0, (vDist - vHalf * 0.5) / (vHalf * 0.5)))
         // Both axes must be in center for full dimming
@@ -533,17 +622,25 @@ export function CelestialCanvas({
         const sx = ((star.x + px) % w + w) % w
         const sy = ((star.y + py) % h + h) % h
 
-        // Dim stars in the center content area
+        // Stars dim in the center but never fully disappear. Gives the
+        // middle of the page a subtle starfield (fewer, fainter than the
+        // edges) instead of a black void. Brightest stars at the edges,
+        // sparse faint pinpricks over the content.
         const edgeFactor = centerFade(sx, sy)
-        if (edgeFactor < 0.05) continue // skip fully hidden stars
+        // Probabilistically skip ~45% of stars when deep in the center zone
+        // so the middle has a visible starfield but still reads as sparser
+        // than the edges. Uses twinklePhase as a cheap per-star RNG.
+        if (edgeFactor < 0.12 && star.twinklePhase > 3.4) continue
+
+        const starFade = Math.max(0.22, edgeFactor)
 
         // Simplified twinkle: single sin is visually indistinguishable from dual-sin
         const twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase) * 0.3 + 0.7
-        let opacity = star.baseOpacity * twinkle * edgeFactor
-        let sz = star.size * (0.4 + edgeFactor * 0.6)
+        let opacity = star.baseOpacity * twinkle * starFade
+        let sz = star.size * (0.5 + starFade * 0.5)
         const cb = star.colorBase // pre-cached "r,g,b"
 
-        // Mouse proximity glow — squared distance avoids expensive sqrt
+        // Mouse proximity glow - squared distance avoids expensive sqrt
         if (mouseActive) {
           const dx = sx - mx, dy = sy - my
           const distSq = dx * dx + dy * dy
@@ -554,7 +651,7 @@ export function CelestialCanvas({
           }
         }
 
-        // Glow for brighter stars — single pass instead of two
+        // Glow for brighter stars - single pass instead of two
         if (sz > 1.2 && opacity > 0.35) {
           ctx.fillStyle = `rgba(${cb},${opacity * 0.1})`
           ctx.beginPath(); ctx.arc(sx, sy, sz * 3, 0, PI2); ctx.fill()
@@ -564,7 +661,7 @@ export function CelestialCanvas({
         ctx.fillStyle = `rgba(${cb},${opacity})`
         ctx.beginPath(); ctx.arc(sx, sy, sz, 0, PI2); ctx.fill()
 
-        // Diffraction spikes — only for the brightest stars
+        // Diffraction spikes - only for the brightest stars
         if (sz > 1.8 && opacity > 0.5) {
           const spikeLen = sz * 3 * twinkle
           ctx.strokeStyle = `rgba(${cb},${opacity * 0.18})`
@@ -592,7 +689,12 @@ export function CelestialCanvas({
         const isHovered = stateRef.current.hoveredConstellationId === c.id
         const isSelected = stateRef.current.selectedConstellationId === c.id
 
-        // Compute screen positions of stars — reuse pre-allocated arrays
+        // Dim constellations that have drifted into the content zone during
+        // scroll. Keep interactive ones (hovered / selected) at full brightness.
+        const constellationFade =
+          isHovered || isSelected ? 1 : Math.max(0.25, centerFade(cx, cy))
+
+        // Compute screen positions of stars - reuse pre-allocated arrays
         const screenStars = c._screenStars
         const posStars = c._posStars
         for (let si = 0; si < c.stars.length; si++) {
@@ -612,17 +714,17 @@ export function CelestialCanvas({
           ctx.globalAlpha = motionBlur * 0.6
           for (const s of screenStars) {
             const sz = (3.5 - s.mag * 0.4) * scale * 0.8
-            ctx.fillStyle = 'rgba(180,200,240,0.3)'
+            ctx.fillStyle = 'rgba(230,210,180,0.3)'
             ctx.beginPath(); ctx.arc(s.sx, s.sy + blurOffsetY * 2, Math.max(1, sz * 1.5), 0, PI2); ctx.fill()
           }
           ctx.globalAlpha = 1
         }
 
-        // Draw connection lines — solid thin lines for a cleaner look
-        const lineAlpha = isHovered || isSelected ? 0.5 : 0.1
+        // Draw connection lines - solid thin lines for a cleaner look
+        const lineAlpha = (isHovered || isSelected ? 0.5 : 0.1) * constellationFade
         const lineColor = isHovered || isSelected
-          ? 'rgba(200, 220, 255,' + lineAlpha + ')'
-          : 'rgba(160, 180, 210,' + lineAlpha + ')'
+          ? 'rgba(240, 224, 190,' + lineAlpha + ')'
+          : 'rgba(200, 190, 170,' + lineAlpha + ')'
 
         ctx.strokeStyle = lineColor
         ctx.lineWidth = isHovered || isSelected ? 1 : 0.5
@@ -634,20 +736,20 @@ export function CelestialCanvas({
           ctx.stroke()
         }
 
-        // Draw constellation stars (brighter than background) — single glow pass
+        // Draw constellation stars (brighter than background) - single glow pass
         for (const s of screenStars) {
           const brightness = Math.max(0.5, 1 - s.mag / 6)
           const sz = (3.5 - s.mag * 0.4) * scale * (isHovered || isSelected ? 1.3 : 1)
-          const alpha = brightness * (isHovered || isSelected ? 1 : 0.75)
+          const alpha = brightness * (isHovered || isSelected ? 1 : 0.75) * constellationFade
 
-          // Single glow pass (reduced from 2)
+          // Single glow pass (reduced from 2) - warm amber-ivory
           if (sz > 1.5) {
-            ctx.fillStyle = `rgba(200,215,255,${alpha * 0.15})`
+            ctx.fillStyle = `rgba(240,220,190,${alpha * 0.15})`
             ctx.beginPath(); ctx.arc(s.sx, s.sy, sz * 3, 0, PI2); ctx.fill()
           }
 
-          // Star core
-          ctx.fillStyle = `rgba(220,230,255,${alpha})`
+          // Star core - warm ivory
+          ctx.fillStyle = `rgba(240,232,216,${alpha})`
           ctx.beginPath(); ctx.arc(s.sx, s.sy, Math.max(1, sz), 0, PI2); ctx.fill()
         }
 
@@ -671,11 +773,11 @@ export function CelestialCanvas({
           ctx.beginPath()
           ctx.roundRect(pillX, pillY, pillW, pillH, 4)
           ctx.fill()
-          ctx.strokeStyle = 'rgba(200, 220, 255, 0.3)'
+          ctx.strokeStyle = 'rgba(240, 224, 190, 0.35)'
           ctx.lineWidth = 0.5
           ctx.stroke()
-          // Label text
-          ctx.fillStyle = 'rgba(200, 220, 255, 0.9)'
+          // Label text - warm ivory
+          ctx.fillStyle = 'rgba(240, 232, 216, 0.92)'
           ctx.fillText(c.name, cx, labelY)
           ctx.restore()
         }
@@ -686,24 +788,42 @@ export function CelestialCanvas({
         stateRef.current.onPositionsUpdate(positionsMap)
       }
 
-      /* ═══ PLANETS — horizontal line, scrolls with page ═══ */
-      const planetScrollOffset = smoothScrollY * 0.25 // slightly slower parallax than constellations
+      /* ═══ PLANETS - scattered top + bottom, pinned to viewport ═══ */
+      // Fully fixed so they always stay in their safe strips even on long scroll
+      // Planets drift with the page but at a slightly slower rate than
+      // constellations (0.22 vs 0.35), so they stay in their safe top/bottom
+      // strips longer and don't sweep across the dashboard content during
+      // long scrolls. Still visually connected to the rest of the sky.
+      const planetScrollOffset = smoothScrollY * 0.22
       ctx.save()
       ctx.textAlign = 'center'
-      for (const p of planets) {
+      // Skip decorative planets on /chart — natal chart's right column
+      // lg:w-80 sits at fx 0.75-1.0, past the centerFade protection zone.
+      // See Bug 3c follow-up 2026-04-20.
+      for (const p of skipPlanets ? [] : planets) {
         const px = p.screenX + pxOffsetX * 0.3
         const py = p.screenY - planetScrollOffset + pxOffsetY * 0.3
+
+        // Safety net: dim planet if its position lands inside the center
+        // content zone (sparse-layout pages like dashboard/guide). The
+        // 0.2 floor keeps planets faintly visible when they land on
+        // content there; chart page opts out entirely via skipPlanets.
+        const sunDim = p.id === 'sun' ? 1 : 1
+        const planetFade = Math.max(0.2, centerFade(px, py)) * sunDim
+
         const pulse = Math.sin(time * 0.8 + p.order * 1.3) * 0.08 + 0.92
         const sz = p.size * pulse
         const glowR = sz * 5
 
+        ctx.globalAlpha = planetFade
+
         // Motion blur ghost for planets
         if (motionBlur > 0.01) {
           const ghostY = py + blurOffsetY * 1.5
-          ctx.globalAlpha = motionBlur * 0.5
+          ctx.globalAlpha = planetFade * motionBlur * 0.5
           ctx.fillStyle = p.glowColor
           ctx.beginPath(); ctx.arc(px, ghostY, sz * 1.8, 0, PI2); ctx.fill()
-          ctx.globalAlpha = 1
+          ctx.globalAlpha = planetFade
         }
 
         // Outer glow
@@ -722,30 +842,49 @@ export function CelestialCanvas({
         ctx.fillStyle = 'rgba(255,255,255,0.5)'
         ctx.beginPath(); ctx.arc(px - sz * 0.25, py - sz * 0.25, sz * 0.35, 0, PI2); ctx.fill()
 
-        // Saturn rings
+        // Saturn rings - warm amber matching editorial palette
         if (p.id === 'saturn') {
-          ctx.strokeStyle = 'rgba(232,200,114,0.45)'
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.48)'
           ctx.lineWidth = 1.5
           ctx.beginPath()
           ctx.ellipse(px, py, sz * 2.2, sz * 0.5, -0.2, 0, PI2)
           ctx.stroke()
-          ctx.strokeStyle = 'rgba(232,200,114,0.25)'
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.22)'
           ctx.lineWidth = 1
           ctx.beginPath()
           ctx.ellipse(px, py, sz * 2.8, sz * 0.65, -0.2, 0, PI2)
           ctx.stroke()
         }
 
-        // Label
-        ctx.font = `500 ${Math.max(10, p.size * 1.4)}px -apple-system, BlinkMacSystemFont, sans-serif`
-        ctx.fillStyle = 'rgba(200, 215, 235, 0.6)'
-        ctx.fillText(p.name, px, py + sz + 16)
+        // Sun diffraction rays - glowy glint, rotates slowly
+        if (p.id === 'sun') {
+          const rayLen = sz * 4.5
+          const rot = time * 0.15
+          ctx.strokeStyle = 'rgba(252, 211, 77, 0.55)'
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          for (let r = 0; r < 4; r++) {
+            const a = rot + (r * Math.PI) / 2
+            ctx.moveTo(px - Math.cos(a) * rayLen, py - Math.sin(a) * rayLen)
+            ctx.lineTo(px + Math.cos(a) * rayLen, py + Math.sin(a) * rayLen)
+          }
+          ctx.stroke()
+        }
+
+        // Label - warm ivory to match editorial palette. Sun is intentionally
+        // unlabeled so it reads as atmospheric glow, not a labeled planet.
+        if (p.id !== 'sun') {
+          ctx.font = `500 ${Math.max(10, p.size * 1.4)}px -apple-system, BlinkMacSystemFont, sans-serif`
+          ctx.fillStyle = 'rgba(240, 224, 196, 0.62)'
+          ctx.fillText(p.name, px, py + sz + 16)
+        }
       }
+      ctx.globalAlpha = 1
       ctx.restore()
 
       /* ─── Shooting stars ─── */
       shootingTimer += 0.006
-      if (shootingTimer > 5 + Math.random() * 15) {
+      if (shootingTimer > 2.5 + Math.random() * 8) {
         shootingTimer = 0
         const startX = Math.random() * w
         const startY = Math.random() * h * 0.5
@@ -769,15 +908,15 @@ export function CelestialCanvas({
           const prev = s.trail[t - 1], curr = s.trail[t]
           const trailAlpha = headAlpha * (1 - t / s.trail.length) * 0.6
           if (trailAlpha <= 0) continue
-          ctx.strokeStyle = `rgba(200, 215, 235, ${trailAlpha})`
+          ctx.strokeStyle = `rgba(240, 224, 190, ${trailAlpha})`
           ctx.lineWidth = s.size * (1 - t / s.trail.length)
           ctx.lineCap = 'round'
           ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(curr.x, curr.y); ctx.stroke()
         }
         if (headAlpha > 0) {
-          ctx.fillStyle = `rgba(255,255,255,${headAlpha * 0.6})`
+          ctx.fillStyle = `rgba(255,250,235,${headAlpha * 0.6})`
           ctx.beginPath(); ctx.arc(s.x, s.y, s.size * 1.5, 0, Math.PI * 2); ctx.fill()
-          ctx.fillStyle = `rgba(200,210,235,${headAlpha * 0.25})`
+          ctx.fillStyle = `rgba(240,220,180,${headAlpha * 0.25})`
           ctx.beginPath(); ctx.arc(s.x, s.y, s.size * 3, 0, Math.PI * 2); ctx.fill()
         }
         if (s.life >= s.maxLife) shootingStars.splice(i, 1)

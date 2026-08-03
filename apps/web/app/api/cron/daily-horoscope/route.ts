@@ -6,7 +6,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  * Sends a generic morning push notification to all subscribers.
  * Scheduled at 06:00 UTC daily via Vercel cron.
  *
- * NOTE: The notification body is intentionally generic — not a personalized preview.
+ * NOTE: The notification body is intentionally generic - not a personalized preview.
  * Personalized horoscope content is generated when the user visits /dashboard.
  * This avoids N concurrent AI calls at cron execution time.
  */
@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
   // Configure VAPID details for web-push authentication
   webpush.setVapidDetails(
-    'mailto:hello@celestia.app',
+    'mailto:hello@stellaeum.app',
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
     process.env.VAPID_PRIVATE_KEY!
   )

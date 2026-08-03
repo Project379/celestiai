@@ -1,8 +1,8 @@
-# Roadmap: Celestia AI v0.1
+# Roadmap: Stellaeum AI v0.1
 
 ## Overview
 
-Celestia AI v0.1 delivers a web-first Bulgarian astrology MVP. The journey starts with monorepo foundation and security headers, progresses through authentication and birth data collection, builds the core astrology engine with interactive charts, layers AI-powered readings and daily horoscopes, integrates Stripe payments, and concludes with landing page polish and GDPR compliance. Eight phases, 54 requirements, zero enterprise theater.
+Stellaeum AI v0.1 delivers a web-first Bulgarian astrology MVP. The journey starts with monorepo foundation and security headers, progresses through authentication and birth data collection, builds the core astrology engine with interactive charts, layers AI-powered readings and daily horoscopes, integrates Stripe payments, and concludes with landing page polish and GDPR compliance. Eight phases, 54 requirements, zero enterprise theater.
 
 ## Domain Expertise
 
@@ -91,7 +91,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Clerk SDK setup, clerkMiddleware replacing Phase 1 CSP, ClerkProvider with Bulgarian localization
-- [x] 02-02-PLAN.md — Combined auth page (/auth) with cosmic background and Celestia branding
+- [x] 02-02-PLAN.md — Combined auth page (/auth) with cosmic background and Stellaeum branding
 - [x] 02-03-PLAN.md — Protected routes, user menu with logout, session expiry modal, API protection
 
 ---
@@ -128,7 +128,7 @@ Plans:
 **Plans**: 5 plans in 4 waves (COMPLETE)
 
 Plans:
-- [x] 03-01-PLAN.md — @celestia/db package with Drizzle schema, RLS policies, Supabase client factory
+- [x] 03-01-PLAN.md — @stellaeum/db package with Drizzle schema, RLS policies, Supabase client factory
 - [x] 03-02-PLAN.md — Bulgarian city seed data and search API endpoint
 - [x] 03-03-PLAN.md — Zod validation schemas and birth data CRUD API routes
 - [x] 03-04-PLAN.md — Birth data wizard UI with city search
@@ -192,7 +192,7 @@ Plans:
 **Plans**: 4 plans in 4 waves (COMPLETE)
 
 Plans:
-- [x] 04-01-PLAN.md — @celestia/astrology package with sweph bindings and calculation utilities
+- [x] 04-01-PLAN.md — @stellaeum/astrology package with sweph bindings and calculation utilities
 - [x] 04-02-PLAN.md — Chart calculation API route with database caching
 - [x] 04-03-PLAN.md — Interactive chart visualization with D3.js and Big Three cards
 - [x] 04-04-PLAN.md — Planet interpretation popups with placeholder text

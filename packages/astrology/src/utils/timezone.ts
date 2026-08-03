@@ -34,16 +34,24 @@ export function localTimeToUTC(
 ): { utcHours: number; dayOffset: number } {
   // Look up timezone from coordinates
   const timezones = findTimezone(lat, lon)
-  if (!timezones || timezones.length === 0) {
+  if (!timezones || timezones.length === 0 || timezones[0] === undefined) {
     // Fallback: treat as UTC if timezone cannot be determined
-    const [hours, minutes] = localTime.split(':').map(Number)
+    const fallbackParts = localTime.split(':').map(Number)
+    if (fallbackParts.length < 2) {
+      throw new Error(`Invalid localTime: expected HH:MM, got "${localTime}"`)
+    }
+    const [hours, minutes] = fallbackParts as [number, number]
     return { utcHours: hours + minutes / 60, dayOffset: 0 }
   }
 
-  const timezone = timezones[0]
+  const timezone: string = timezones[0]
 
   // Parse local time
-  const [localHours, localMinutes] = localTime.split(':').map(Number)
+  const localParts = localTime.split(':').map(Number)
+  if (localParts.length < 2) {
+    throw new Error(`Invalid localTime: expected HH:MM, got "${localTime}"`)
+  }
+  const [localHours, localMinutes] = localParts as [number, number]
 
   // Construct a Date object in the birth timezone to find the UTC offset.
   // We build an ISO-like string and use Intl to resolve the offset.
@@ -97,8 +105,16 @@ function getUTCOffsetMinutes(localDateStr: string, timezone: string): number {
 
   // Parse the local date/time components
   const [datePart, timePart] = localDateStr.split('T')
-  const [year, month, day] = datePart.split('-').map(Number)
-  const [hours, minutes] = timePart.split(':').map(Number)
+  if (datePart === undefined || timePart === undefined) {
+    throw new Error(`Invalid localDateStr: expected ISO-like format, got "${localDateStr}"`)
+  }
+  const dateParts = datePart.split('-').map(Number)
+  const timeParts = timePart.split(':').map(Number)
+  if (dateParts.length !== 3 || timeParts.length < 2) {
+    throw new Error(`Invalid localDateStr: expected YYYY-MM-DDTHH:MM, got "${localDateStr}"`)
+  }
+  const [year, month, day] = dateParts as [number, number, number]
+  const [hours, minutes] = timeParts as [number, number]
 
   // Create a date as if this time were UTC
   const probeUTC = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0))

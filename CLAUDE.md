@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Celestia AI** is a subscription-based astrology application for the Bulgarian market. It combines Swiss Ephemeris astronomical precision with AI-powered readings (via Gemini/GPT-5), serving Web, iOS, and Android from a single codebase.
+**Stellaeum AI** is a subscription-based astrology application for the Bulgarian market. It combines Swiss Ephemeris astronomical precision with AI-powered readings (via Gemini/GPT-5), serving Web, iOS, and Android from a single codebase.
 
 ## Tech Stack
 

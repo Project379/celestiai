@@ -1,7 +1,7 @@
 import { generateText, streamText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
-import type { TransitAspect } from '@celestia/astrology'
-import type { PlanetPosition } from '@celestia/astrology/client'
+import type { TransitAspect } from '@stellaeum/astrology'
+import type { PlanetPosition } from '@stellaeum/astrology/client'
 import { logAuditEvent } from '@/lib/audit'
 import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
     if (transitCache) {
       transitPlanets = transitCache.planet_positions as Omit<PlanetPosition, 'house'>[]
     } else {
-      const { calculateDailyTransits } = await import('@celestia/astrology')
+      const { calculateDailyTransits } = await import('@stellaeum/astrology')
       const transitData = calculateDailyTransits(new Date())
       transitPlanets = transitData.planets
 
@@ -132,7 +132,7 @@ export async function POST(req: Request) {
       .single()
 
     if (!calculation) {
-      const { calculateNatalChart } = await import('@celestia/astrology')
+      const { calculateNatalChart } = await import('@stellaeum/astrology')
 
       const chartData = calculateNatalChart({
         date: new Date(chart.birth_date),
@@ -172,7 +172,7 @@ export async function POST(req: Request) {
       calculation = insertedCalculation
     }
 
-    const { calculateTransitAspects } = await import('@celestia/astrology')
+    const { calculateTransitAspects } = await import('@stellaeum/astrology')
     const transitAspects: TransitAspect[] = calculateTransitAspects(
       { date: today, planets: transitPlanets },
       calculation.planet_positions as PlanetPosition[]

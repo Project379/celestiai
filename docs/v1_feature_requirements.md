@@ -1,4 +1,4 @@
-# Celestia AI v1.0 — Developer Feature Spec
+# Stellaeum AI v1.0 — Developer Feature Spec
 
 **Date:** 2026-04-02
 **Audience:** Next.js developer joining to build, refactor, and ship v1.0
@@ -55,7 +55,7 @@ Status tags: `DONE` (shipped), `BUILD` (new), `UPGRADE` (exists but needs work),
 │       └── public/             # sw.js (service worker for push)
 │
 ├── packages/
-│   ├── astrology/              # @celestia/astrology — Swiss Ephemeris wrapper
+│   ├── astrology/              # @stellaeum/astrology — Swiss Ephemeris wrapper
 │   │   └── src/
 │   │       ├── calculator.ts   # calculateNatalChart() — 11 bodies, Placidus, topocentric Moon
 │   │       ├── transit.ts      # calculateDailyTransits(), calculateTransitAspects()
@@ -64,13 +64,13 @@ Status tags: `DONE` (shipped), `BUILD` (new), `UPGRADE` (exists but needs work),
 │   │       ├── client.ts       # Browser-safe re-export (no sweph import)
 │   │       └── utils/          # aspects.ts, julian-day.ts, zodiac.ts
 │   │
-│   ├── db/                     # @celestia/db — Drizzle schema + Supabase client
+│   ├── db/                     # @stellaeum/db — Drizzle schema + Supabase client
 │   │   ├── src/schema/         # 11 schema files (users, charts, cities, ai-readings, etc.)
 │   │   ├── src/seed/           # Bulgarian cities seeder (203 settlements)
 │   │   ├── drizzle/            # 8 SQL migrations (0000–0007)
 │   │   └── drizzle.config.ts
 │   │
-│   ├── ui/                     # @celestia/ui — GlassCard, Text primitives
+│   ├── ui/                     # @stellaeum/ui — GlassCard, Text primitives
 │   └── config/                 # Shared TypeScript base config
 ```
 
@@ -140,8 +140,8 @@ There are **zero tests** in the project. `npm test` will fail. This is the #1 ga
 
 **Install:**
 ```bash
-pnpm add -D vitest @testing-library/react @testing-library/jest-dom -w --filter @celestia/web
-pnpm add -D vitest -w --filter @celestia/astrology
+pnpm add -D vitest @testing-library/react @testing-library/jest-dom -w --filter @stellaeum/web
+pnpm add -D vitest -w --filter @stellaeum/astrology
 ```
 
 **What to test first (highest value):**
@@ -168,7 +168,7 @@ pnpm add -D vitest -w --filter @celestia/astrology
 
 **Install:**
 ```bash
-pnpm add -D @playwright/test -w --filter @celestia/web
+pnpm add -D @playwright/test -w --filter @stellaeum/web
 ```
 
 **Priority flows:** Landing → Auth → Birth data wizard → Chart view → Oracle reading → Stripe checkout → Settings.
@@ -177,7 +177,7 @@ pnpm add -D @playwright/test -w --filter @celestia/web
 
 **Install:**
 ```bash
-pnpm add @sentry/nextjs -w --filter @celestia/web
+pnpm add @sentry/nextjs -w --filter @stellaeum/web
 npx @sentry/wizard@latest -i nextjs
 ```
 
@@ -202,7 +202,7 @@ Every string is hardcoded in Bulgarian across ~36 components, ~13 lib files, and
 **Recommended: `next-intl`** (best Next.js App Router integration).
 
 ```bash
-pnpm add next-intl -w --filter @celestia/web
+pnpm add next-intl -w --filter @stellaeum/web
 ```
 
 **Steps:**
@@ -236,7 +236,7 @@ pnpm add next-intl -w --filter @celestia/web
 <ClerkProvider localization={locale === 'bg' ? bgBG : enUS}>
 ```
 
-**Gotcha:** The `@celestia/ui` `Text` component accepts a `variant` prop but has no locale awareness. Strings flow through from the parent component — no changes needed to the primitives themselves.
+**Gotcha:** The `@stellaeum/ui` `Text` component accepts a `variant` prop but has no locale awareness. Strings flow through from the parent component — no changes needed to the primitives themselves.
 
 ---
 
@@ -331,26 +331,26 @@ pnpm add next-intl -w --filter @celestia/web
 
 ```bash
 npx create-expo-app apps/mobile --template blank-typescript
-pnpm add solito -w --filter @celestia/mobile
-pnpm add @clerk/clerk-expo -w --filter @celestia/mobile
-pnpm add react-native-purchases -w --filter @celestia/mobile  # RevenueCat
-pnpm add @shopify/react-native-skia -w --filter @celestia/mobile
+pnpm add solito -w --filter @stellaeum/mobile
+pnpm add @clerk/clerk-expo -w --filter @stellaeum/mobile
+pnpm add react-native-purchases -w --filter @stellaeum/mobile  # RevenueCat
+pnpm add @shopify/react-native-skia -w --filter @stellaeum/mobile
 ```
 
-Add `@celestia/mobile` to root `pnpm-workspace.yaml`.
+Add `@stellaeum/mobile` to root `pnpm-workspace.yaml`.
 
 ### 5.2 Code Sharing Strategy
 
 | Layer | Shared? | How |
 |-------|---------|-----|
-| Types & constants | Yes | Import from `@celestia/astrology/client` |
+| Types & constants | Yes | Import from `@stellaeum/astrology/client` |
 | Validation schemas | Yes | Import from `apps/web/lib/validators/` → move to `packages/shared/` |
 | API calls | Yes | Extract fetch logic from hooks into shared service layer |
 | UI components | No | Web uses Tailwind/D3, mobile uses NativeWind/Skia |
 | Navigation | No | Web uses Next.js router, mobile uses Expo Router |
 | Auth | Partial | Both use Clerk but different SDKs |
 
-**Key decision:** The calculation engine (`@celestia/astrology`) uses `sweph` native Node.js bindings. It **cannot** run on mobile. All calculations go through `POST /api/chart/calculate`. This is already the pattern — no change needed.
+**Key decision:** The calculation engine (`@stellaeum/astrology`) uses `sweph` native Node.js bindings. It **cannot** run on mobile. All calculations go through `POST /api/chart/calculate`. This is already the pattern — no change needed.
 
 ### 5.3 RevenueCat + Stripe Sync
 
@@ -367,7 +367,7 @@ RevenueCat handles IAP on iOS. Stripe handles web. Both need to update the same 
 
 The web uses D3.js SVG (`components/chart/NatalWheel.tsx`, ~350 lines). The mobile app needs a React Native Skia equivalent.
 
-- Reuse the same calculation data (`ChartData` type from `@celestia/astrology/client`)
+- Reuse the same calculation data (`ChartData` type from `@stellaeum/astrology/client`)
 - Build a new `NatalWheelSkia.tsx` using `@shopify/react-native-skia` Canvas, Path, Circle primitives
 - The layout logic (planet positions on circle, zodiac segment angles) can be extracted from `NatalWheel.tsx` into a shared `chartLayout.ts` utility
 

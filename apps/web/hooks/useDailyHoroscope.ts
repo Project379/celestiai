@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import useSWR from 'swr'
 
 export type HoroscopeDate = 'today' | 'yesterday'
 
@@ -18,113 +19,65 @@ function getStorageKey(chartId: string, date: string) {
   return `daily-horoscope:${chartId}:${date}`
 }
 
+function getTodayString(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Sofia',
+  }).format(new Date())
+}
+
+function getYesterdayString(): string {
+  const todayDate = new Date(getTodayString())
+  todayDate.setDate(todayDate.getDate() - 1)
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Sofia',
+  }).format(todayDate)
+}
+
+interface HoroscopeResponse {
+  content?: string | null
+  cached?: boolean
+  generatedAt?: string
+  unavailable?: boolean
+  error?: string
+}
+
+async function fetchHoroscope(
+  chartId: string,
+  dateValue: string
+): Promise<HoroscopeResponse> {
+  const params = new URLSearchParams()
+  params.set('date', dateValue)
+  params.set('format', 'json')
+
+  const res = await fetch(`/api/horoscope/generate?${params.toString()}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chartId }),
+  })
+
+  const data = (await res.json().catch(() => ({}))) as HoroscopeResponse
+
+  if (!res.ok) {
+    throw new Error(data.error ?? 'Failed to load horoscope.')
+  }
+
+  return data
+}
+
 export function useDailyHoroscope(chartId: string) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
   const [selectedDate, setSelectedDate] = useState<HoroscopeDate>('today')
   const [cachedContent, setCachedContent] = useState<CachedHoroscopeState>({})
   const [yesterdayUnavailable, setYesterdayUnavailable] = useState(false)
-  const [fetchError, setFetchError] = useState<string | null>(null)
 
-  const getTodayString = useCallback((): string => {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Europe/Sofia',
-    }).format(new Date())
-  }, [])
+  const todayStr = getTodayString()
+  const yesterdayStr = getYesterdayString()
 
-  const getYesterdayString = useCallback((): string => {
-    const todayDate = new Date(getTodayString())
-    todayDate.setDate(todayDate.getDate() - 1)
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Europe/Sofia',
-    }).format(todayDate)
-  }, [getTodayString])
-
-  const requestHoroscope = useCallback(
-    async (date: HoroscopeDate) => {
-      if (!chartId) return
-
-      const isToday = date === 'today'
-      const dateValue = isToday ? getTodayString() : getYesterdayString()
-      const params = new URLSearchParams()
-      params.set('date', dateValue)
-      params.set('format', 'json')
-
-      setFetchError(null)
-      setError(null)
-      setIsLoading(true)
-
-      try {
-        const res = await fetch(`/api/horoscope/generate?${params.toString()}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chartId }),
-        })
-
-        const data = (await res.json().catch(() => ({}))) as {
-          content?: string | null
-          cached?: boolean
-          generatedAt?: string
-          unavailable?: boolean
-          error?: string
-        }
-
-        if (!res.ok) {
-          const message = data.error ?? 'Failed to load horoscope.'
-          setFetchError(message)
-          setError(new Error(message))
-          return
-        }
-
-        if (data.unavailable) {
-          setYesterdayUnavailable(true)
-          return
-        }
-
-        if (typeof data.content === 'string') {
-          const generatedAt = data.generatedAt ?? new Date().toISOString()
-          try {
-            localStorage.setItem(
-              getStorageKey(chartId, dateValue),
-              JSON.stringify({
-                content: data.content,
-                generatedAt,
-              } satisfies CachedHoroscope)
-            )
-          } catch {}
-
-          setCachedContent((prev) => ({
-            ...prev,
-            [date]: {
-              content: data.content!,
-              generatedAt,
-            },
-          }))
-        }
-      } catch {
-        const message = 'Failed to load horoscope.'
-        setFetchError(message)
-        setError(new Error(message))
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [chartId, getTodayString, getYesterdayString]
-  )
-
-  const generateHoroscope = useCallback(async () => {
-    await requestHoroscope('today')
-  }, [requestHoroscope])
-
+  // Hydrate from localStorage on mount
   useEffect(() => {
     if (!chartId) return
-
-    const today = getTodayString()
-    const yesterday = getYesterdayString()
-
     try {
-      const todayCached = localStorage.getItem(getStorageKey(chartId, today))
-      const yesterdayCached = localStorage.getItem(getStorageKey(chartId, yesterday))
+      const todayCached = localStorage.getItem(getStorageKey(chartId, todayStr))
+      const yesterdayCached = localStorage.getItem(getStorageKey(chartId, yesterdayStr))
 
       setCachedContent((prev) => ({
         ...prev,
@@ -134,29 +87,101 @@ export function useDailyHoroscope(chartId: string) {
           : prev.yesterday,
       }))
     } catch {}
-  }, [chartId, getTodayString, getYesterdayString])
+  }, [chartId, todayStr, yesterdayStr])
 
-  useEffect(() => {
-    void requestHoroscope('today')
-  }, [requestHoroscope])
-
-  useEffect(() => {
-    if (selectedDate === 'yesterday' && !cachedContent.yesterday && !yesterdayUnavailable) {
-      void requestHoroscope('yesterday')
+  // SWR for today's horoscope
+  const {
+    error: todayError,
+    isLoading: todayLoading,
+  } = useSWR(
+    chartId ? ['horoscope', chartId, todayStr] : null,
+    ([, id, date]) => fetchHoroscope(id, date),
+    {
+      revalidateOnFocus: false,
+      onSuccess(data) {
+        if (data.unavailable) return
+        if (typeof data.content === 'string') {
+          const generatedAt = data.generatedAt ?? new Date().toISOString()
+          try {
+            localStorage.setItem(
+              getStorageKey(chartId, todayStr),
+              JSON.stringify({ content: data.content, generatedAt } satisfies CachedHoroscope)
+            )
+          } catch {}
+          setCachedContent((prev) => ({
+            ...prev,
+            today: { content: data.content!, generatedAt },
+          }))
+        }
+      },
     }
-  }, [selectedDate, cachedContent.yesterday, yesterdayUnavailable, requestHoroscope])
+  )
+
+  // SWR for yesterday's horoscope — only fetched when tab is selected
+  const {
+    error: yesterdayError,
+    isLoading: yesterdayLoading,
+  } = useSWR(
+    chartId && selectedDate === 'yesterday' && !cachedContent.yesterday && !yesterdayUnavailable
+      ? ['horoscope', chartId, yesterdayStr]
+      : null,
+    ([, id, date]) => fetchHoroscope(id, date),
+    {
+      revalidateOnFocus: false,
+      onSuccess(data) {
+        if (data.unavailable) {
+          setYesterdayUnavailable(true)
+          return
+        }
+        if (typeof data.content === 'string') {
+          const generatedAt = data.generatedAt ?? new Date().toISOString()
+          try {
+            localStorage.setItem(
+              getStorageKey(chartId, yesterdayStr),
+              JSON.stringify({ content: data.content, generatedAt } satisfies CachedHoroscope)
+            )
+          } catch {}
+          setCachedContent((prev) => ({
+            ...prev,
+            yesterday: { content: data.content!, generatedAt },
+          }))
+        }
+      },
+    }
+  )
+
+  const isLoading = selectedDate === 'today' ? todayLoading : yesterdayLoading
+  const activeError = selectedDate === 'today' ? todayError : yesterdayError
+
+  const generateHoroscope = useCallback(async () => {
+    // SWR handles the initial fetch; this is kept for manual re-trigger compatibility
+    const data = await fetchHoroscope(chartId, todayStr)
+    if (typeof data.content === 'string') {
+      const generatedAt = data.generatedAt ?? new Date().toISOString()
+      try {
+        localStorage.setItem(
+          getStorageKey(chartId, todayStr),
+          JSON.stringify({ content: data.content, generatedAt } satisfies CachedHoroscope)
+        )
+      } catch {}
+      setCachedContent((prev) => ({
+        ...prev,
+        today: { content: data.content!, generatedAt },
+      }))
+    }
+  }, [chartId, todayStr])
 
   return {
     completion: '',
     isLoading,
-    error,
+    error: activeError ?? null,
     cachedContent,
     selectedDate,
     setSelectedDate,
     yesterdayUnavailable,
-    fetchError,
+    fetchError: activeError ? (activeError as Error).message : null,
     generateHoroscope,
-    getTodayString,
-    getYesterdayString,
+    getTodayString: () => todayStr,
+    getYesterdayString: () => yesterdayStr,
   }
 }

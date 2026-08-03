@@ -2,7 +2,7 @@ import { generateText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
-import type { ChartData } from '@celestia/astrology/client'
+import type { ChartData } from '@stellaeum/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
 import {
   requireAppUser,
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
     await requireOwnedChart(userId, chartId, 'id')
 
-    // Check if teaser already exists — return cached if so
+    // Check if teaser already exists - return cached if so
     const { data: existingReading } = await supabase
       .from('ai_readings')
       .select('teaser_content')
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
 
     const { text: teaserText } = await generateText({
       model: openrouter(LLAMA_MODEL),
-      system: `Ти си Celestia — мистичен астрологически оракул. Пишеш интригуващи, поетични прогнози на български.`,
+      system: `Ти си Stellaeum - мистичен астрологически оракул. Пишеш интригуващи, поетични прогнози на български.`,
       prompt: `Напиши 2-3 изречения на български като мистично астрологическо предзнаменование за "${topicNameBg}" за тази натална карта. Бъди примамлив и загадъчен, но не разкривай конкретни детайли. Целта е да събудиш любопитство.
 
 ${chartPromptText}`,
@@ -128,7 +128,7 @@ ${chartPromptText}`,
         chart_id: chartId,
         user_id: userId,
         topic: validatedTopic,
-        content: '', // Empty — teaser row, full content not generated yet
+        content: '', // Empty - teaser row, full content not generated yet
         teaser_content: teaserText,
         generated_at: now.toISOString(),
         expires_at: expiresAt.toISOString(),
@@ -136,7 +136,7 @@ ${chartPromptText}`,
       },
       {
         onConflict: 'chart_id,topic',
-        // Only update teaser_content — don't overwrite existing content
+        // Only update teaser_content - don't overwrite existing content
         ignoreDuplicates: false,
       }
     )

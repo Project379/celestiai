@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import type { ChartData } from '@celestia/astrology/client'
+import useSWR from 'swr'
+import type { ChartData } from '@stellaeum/astrology/client'
 
 interface UseChartResult {
   /** Calculated chart data */
@@ -14,68 +14,39 @@ interface UseChartResult {
   refetch: () => void
 }
 
+async function fetchChart(chartId: string): Promise<ChartData> {
+  const response = await fetch('/api/chart/calculate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chartId }),
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || 'Грешка при зареждане на картата')
+  }
+
+  return response.json()
+}
+
 /**
- * Hook for fetching calculated natal chart data
+ * Hook for fetching calculated natal chart data.
  *
+ * Uses SWR for automatic deduplication, caching, and revalidation.
  * Calls POST /api/chart/calculate with the chartId to get the full
  * calculated chart with planets, houses, and aspects.
- *
- * @param chartId The chart ID to calculate (from charts table)
- * @returns Chart data, loading state, and error
  */
 export function useChart(chartId: string | undefined): UseChartResult {
-  const [chart, setChart] = useState<ChartData | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchChart = useCallback(async () => {
-    if (!chartId) {
-      setChart(null)
-      setError(null)
-      setIsLoading(false)
-      return
-    }
-
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch('/api/chart/calculate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ chartId }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        const errorMessage = data.error || 'Грешка при зареждане на картата'
-        setError(errorMessage)
-        setChart(null)
-        return
-      }
-
-      const data: ChartData = await response.json()
-      setChart(data)
-      setError(null)
-    } catch (err) {
-      console.error('Error fetching chart:', err)
-      setError('Грешка при зареждане на картата')
-      setChart(null)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [chartId])
-
-  useEffect(() => {
-    fetchChart()
-  }, [fetchChart])
+  const { data, error, isLoading, mutate } = useSWR(
+    chartId ? ['chart', chartId] : null,
+    ([, id]) => fetchChart(id),
+    { revalidateOnFocus: false }
+  )
 
   return {
-    chart,
+    chart: data ?? null,
     isLoading,
-    error,
-    refetch: fetchChart,
+    error: error ? (error as Error).message : null,
+    refetch: () => { void mutate() },
   }
 }

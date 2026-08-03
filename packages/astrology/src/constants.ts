@@ -60,6 +60,53 @@ export const PLANETS_BG: Record<Planet, string> = {
 } as const
 
 /**
+ * Planet glyphs (Unicode).
+ *
+ * Canonical single source of truth — any display surface wanting a
+ * character glyph must import from here. The `Record<Planet, string>`
+ * typing forces completeness: a new entry in the Planet union will
+ * fail to compile here until its glyph is added, preventing the
+ * silent-fallback drift that caused northNode to render as raw
+ * "northNode" on the chart Аспекти / Детайли surfaces.
+ */
+export const PLANET_GLYPHS: Record<Planet, string> = {
+  sun: '☉',
+  moon: '☽',
+  mercury: '☿',
+  venus: '♀',
+  mars: '♂',
+  jupiter: '♃',
+  saturn: '♄',
+  uranus: '♅',
+  neptune: '♆',
+  pluto: '♇',
+  northNode: '☊',
+} as const
+
+/**
+ * Zodiac sign glyphs (Unicode).
+ *
+ * Mobile uses these for system-font rendering of zodiac symbols on the
+ * natal wheel; web has its own custom SVG line-art via `<GlyphDefs />`
+ * but can fall back to these if the SVG path bundle is too heavy. Both
+ * surfaces share the same source-of-truth via this Record.
+ */
+export const ZODIAC_GLYPHS: Record<ZodiacSign, string> = {
+  aries: '♈',
+  taurus: '♉',
+  gemini: '♊',
+  cancer: '♋',
+  leo: '♌',
+  virgo: '♍',
+  libra: '♎',
+  scorpio: '♏',
+  sagittarius: '♐',
+  capricorn: '♑',
+  aquarius: '♒',
+  pisces: '♓',
+} as const
+
+/**
  * Ordered list of planets for calculation
  */
 export const PLANETS_ORDER: Planet[] = [
@@ -91,14 +138,18 @@ export const PLANET_IDS: Record<Planet, number> = {
   uranus: 7, // SE_URANUS
   neptune: 8, // SE_NEPTUNE
   pluto: 9, // SE_PLUTO
-  northNode: 11, // SE_TRUE_NODE
+  // Mean Node per §9.1 precision-floor decision
+  // (see .planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md)
+  // True Node (id 11) under Moshier has ~70″ deviation from JPL; Mean Node (id 10)
+  // has <20″ worst-case across full Moshier range, <5″ at modern dates.
+  northNode: 10, // SE_MEAN_NODE
 } as const
 
 /**
  * Aspects in Bulgarian
  */
 export const ASPECTS_BG: Record<AspectType, string> = {
-  conjunction: 'Съвпад',
+  conjunction: 'Съединение',
   sextile: 'Секстил',
   square: 'Квадрат',
   trine: 'Тригон',

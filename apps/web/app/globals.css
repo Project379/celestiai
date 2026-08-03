@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Celestia — Deep Night Sky Aesthetic */
+    /* Stellaeum — Deep Night Sky Aesthetic */
 
     /* Core colors (RGB values for Tailwind alpha support) */
     --color-background: 3 7 18;           /* Near-black navy #030712 */
@@ -54,6 +54,83 @@ h1, h2, h3, h4 {
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
+}
+
+/* ─── Mystical panel — obsidian glass with violet atmosphere + gold rim ─── */
+@layer components {
+  .mystic-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    border: 1px solid rgba(226, 232, 240, 0.06);
+    background:
+      radial-gradient(130% 70% at 50% 0%, rgba(167, 139, 250, 0.055) 0%, transparent 55%),
+      radial-gradient(80% 60% at 100% 100%, rgba(251, 191, 36, 0.025) 0%, transparent 60%),
+      linear-gradient(158deg, rgba(15, 13, 26, 0.88) 0%, rgba(8, 6, 16, 0.78) 50%, rgba(18, 14, 30, 0.88) 100%);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    box-shadow:
+      0 30px 90px -40px rgba(0, 0, 0, 0.95),
+      0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+      0 0 0 1px rgba(167, 139, 250, 0.025) inset;
+  }
+
+  /* Top ivory hairline — razor-thin, fades to gold center */
+  .mystic-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 2rem;
+    right: 2rem;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(226, 232, 240, 0.18) 25%,
+      rgba(251, 191, 36, 0.55) 50%,
+      rgba(226, 232, 240, 0.18) 75%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Ambient violet radial — top-right, primary atmosphere */
+  .mystic-panel::after {
+    content: '';
+    position: absolute;
+    top: -7rem;
+    right: -7rem;
+    width: 20rem;
+    height: 20rem;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.09), transparent 70%);
+    filter: blur(48px);
+    pointer-events: none;
+  }
+
+  /* Sharp corner accents — ivory L-brackets, can be toggled per panel */
+  .mystic-corners::before,
+  .mystic-corners::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: rgba(226, 232, 240, 0.22);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .mystic-corners::before {
+    top: 10px;
+    left: 10px;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+  .mystic-corners::after {
+    bottom: 10px;
+    right: 10px;
+    border-bottom: 1px solid;
+    border-right: 1px solid;
+  }
 }
 
 /* ─── JoJo Stand-style Animations ─── */
@@ -201,4 +278,71 @@ h1, h2, h3, h4 {
 
 .animate-dramatic-slash {
   animation: dramatic-slash 0.4s ease-out forwards;
+}
+
+/* ─── Scrollbar-hidden nav ─────────────────────────────────────────── */
+.nav-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Editorial scrollbars ─────────────────────────────────────────── */
+/* Firefox + modern spec — thin violet/amber accent on the deep base */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(167, 139, 250, 0.28) transparent;
+}
+
+/* WebKit — page, modals, any overflow surface */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(167, 139, 250, 0.28) 0%,
+    rgba(251, 191, 36, 0.22) 100%
+  );
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transition: background 0.2s ease;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(167, 139, 250, 0.48) 0%,
+    rgba(251, 191, 36, 0.42) 100%
+  );
+  background-clip: padding-box;
+  box-shadow:
+    inset 0 0 0 1px rgba(251, 191, 36, 0.22),
+    0 0 12px rgba(251, 191, 36, 0.22);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Horizontal scrollbars get the same gradient rotated */
+*::-webkit-scrollbar-thumb:horizontal {
+  background: linear-gradient(
+    90deg,
+    rgba(167, 139, 250, 0.28) 0%,
+    rgba(251, 191, 36, 0.22) 100%
+  );
+  background-clip: padding-box;
+}
+
+/* Explicit opt-out for surfaces that already hide scrollbars (e.g. .nav-scroll) */
+.nav-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  box-shadow: none;
 }

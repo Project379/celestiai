@@ -1,8 +1,8 @@
-# Celestia AI — Comprehensive Competitor Analysis
+# Stellaeum AI — Comprehensive Competitor Analysis
 
 **Date:** 2026-04-02  
 **Scope:** Global AI Astrology Leaders, Rising AI-Native Players, Vedic Market, Bulgarian Incumbents  
-**Purpose:** Understand how each competitor operates, what they charge, how they build, and where Celestia AI creates clear separation.
+**Purpose:** Understand how each competitor operates, what they charge, how they build, and where Stellaeum AI creates clear separation.
 
 ---
 
@@ -19,7 +19,7 @@
 | **Premium Conversion** | 30–47% of active users engage with paid features |
 | **Dominant Revenue Model** | Subscriptions replacing ad-supported models |
 
-The market is massive and accelerating. AI personalization and daily engagement loops are the two biggest growth drivers. The shift from ad-supported to subscription-first models validates Celestia's freemium approach.
+The market is massive and accelerating. AI personalization and daily engagement loops are the two biggest growth drivers. The shift from ad-supported to subscription-first models validates Stellaeum's freemium approach.
 
 ### 1.2 The Bulgarian Market — In-Depth Research
 
@@ -65,16 +65,16 @@ The market is massive and accelerating. AI personalization and daily engagement 
 | **Sofia average salary** | ~€1,900+/month | 2025 |
 | **Highest-paying sector** | ICT (tech workers) | — |
 
-**Celestia €6.99/mo in context:**
+**Stellaeum €6.99/mo in context:**
 
 | Benchmark | Monthly Cost | % of Average Salary | % of Minimum Wage |
 |-----------|-------------|--------------------|--------------------|
-| **Celestia AI Premium** | €6.99 | 0.51% | 1.13% |
+| **Stellaeum AI Premium** | €6.99 | 0.51% | 1.13% |
 | **Netflix (Standard)** | ~€7.99 | 0.58% | 1.29% |
 | **Spotify Premium** | ~€9.99 | 0.73% | 1.61% |
 | **YouTube Premium** | ~€11.99 | 0.88% | 1.93% |
 
-**Key insight:** At €6.99/mo, Celestia is **cheaper than Netflix** and significantly below Spotify — services Bulgarians are already paying for. It's just 0.51% of the average salary and 1.13% of the minimum wage. This price point makes the "should I subscribe?" decision almost frictionless for the target demographic. The 11% YoY salary growth trend means digital subscription affordability is improving rapidly. Sofia tech workers (prime target — digitally savvy, spiritual interest, high income) won't think twice.
+**Key insight:** At €6.99/mo, Stellaeum is **cheaper than Netflix** and significantly below Spotify — services Bulgarians are already paying for. It's just 0.51% of the average salary and 1.13% of the minimum wage. This price point makes the "should I subscribe?" decision almost frictionless for the target demographic. The 11% YoY salary growth trend means digital subscription affordability is improving rapidly. Sofia tech workers (prime target — digitally savvy, spiritual interest, high income) won't think twice.
 
 #### 1.2.4 Subscription Culture & Digital Spending Habits
 
@@ -88,13 +88,13 @@ The market is massive and accelerating. AI personalization and daily engagement 
 | **Willingness to pay** | Increases for specialized content; research shows 13% of Bulgarians actively state willingness to pay ~10 BGN/mo (€5) for subscriptions |
 | **Key driver for upgrades** | Affordability is paramount (51% would upgrade if priced low enough), followed by an ad-free experience (41%), and content depth (38%) |
 
-**Key insight:** The Bulgarian subscription market is **early-stage but growing**. Only 5% pay for music streaming — but this reflects a broader pattern where generic content stays free while specialized, personal-value content justifies payment. Astrology readings are deeply personal (literally about YOU), which positions Celestia in the "worth paying for" category. The critical success factor is demonstrating value in the free tier so compellingly that the premium upgrade feels inevitable, not optional.
+**Key insight:** The Bulgarian subscription market is **early-stage but growing**. Only 5% pay for music streaming — but this reflects a broader pattern where generic content stays free while specialized, personal-value content justifies payment. Astrology readings are deeply personal (literally about YOU), which positions Stellaeum in the "worth paying for" category. The critical success factor is demonstrating value in the free tier so compellingly that the premium upgrade feels inevitable, not optional.
 
 **Strategic implication:** The free tier MUST be genuinely good — not crippled. Bulgarian users won't pay for something they haven't experienced. The freemium model must follow the path of: Free → "this is amazing" → "I want more" → Premium. Not: Free → paywall → frustration → uninstall.
 
 #### 1.2.5 Astrology & Spirituality — Cultural Demand
 
-This is where Bulgaria differs fundamentally from Western markets and represents Celestia's strongest tailwind:
+This is where Bulgaria differs fundamentally from Western markets and represents Stellaeum's strongest tailwind:
 
 | Dimension | Detail |
 |-----------|--------|
@@ -109,13 +109,13 @@ This is where Bulgaria differs fundamentally from Western markets and represents
 | **Technology adoption** | Social media (Facebook, TikTok, Viber) and apps have made astrology more accessible and relevant to younger generations [(Digital Spirituality Trends)](https://www.einpresswire.com/article/digital-spirituality-apps-bulgaria) |
 | **Driving motivations** | Seeking support in uncertainty, filling spiritual void post-socialism, psychological comfort, navigating daily life [(3SeasEurope Analysis)](https://3seaseurope.com/bulgaria-religion/) |
 
-**Key insight:** Bulgaria has a **uniquely high cultural demand** for astrology and spiritual guidance compared to most European markets. With 65% of the population holding karma/spiritual beliefs, this isn't a niche hobby — it's statically proven to be embedded in daily life, media, and social behavior [(Trend Research, 2025)](https://www.novinite.com/articles/230063/More+Than+800+000+Bulgarians+Have+Sought+a+Fortune-Teller+at+Least+Once). The demand clearly exists, yet the supply of premium, personalized, digitally-native astrology products is essentially zero. Celestia doesn't need to create demand — it needs to meet it.
+**Key insight:** Bulgaria has a **uniquely high cultural demand** for astrology and spiritual guidance compared to most European markets. With 65% of the population holding karma/spiritual beliefs, this isn't a niche hobby — it's statically proven to be embedded in daily life, media, and social behavior [(Trend Research, 2025)](https://www.novinite.com/articles/230063/More+Than+800+000+Bulgarians+Have+Sought+a+Fortune-Teller+at+Least+Once). The demand clearly exists, yet the supply of premium, personalized, digitally-native astrology products is essentially zero. Stellaeum doesn't need to create demand — it needs to meet it.
 
 **Tone implication:** The AI Oracle's "wise friend" positioning maps perfectly to Bulgarian cultural expectations. Bulgarians who consult astrologers seek genuine support and insight, not entertainment or "roasting" [(BTA Cultural Analysis)](https://www.bta.bg/en/news/bulgaria) (Co-Star's approach would culturally alienate the 38% of the market seeking serious spiritual guidance).
 
 #### 1.2.6 Euro Adoption Impact (Jan 1, 2026)
 
-Bulgaria officially adopted the euro on January 1, 2026, becoming the 21st eurozone member [(European Commission)](https://economy-finance.ec.europa.eu/euro/eu-countries-and-euro/bulgaria-and-euro_en). This has direct implications for Celestia:
+Bulgaria officially adopted the euro on January 1, 2026, becoming the 21st eurozone member [(European Commission)](https://economy-finance.ec.europa.eu/euro/eu-countries-and-euro/bulgaria-and-euro_en). This has direct implications for Stellaeum:
 
 | Impact Area | Detail |
 |-------------|--------|
@@ -139,7 +139,7 @@ Bulgaria officially adopted the euro on January 1, 2026, becoming the 21st euroz
 | **Data protection as differentiator** | Companies are encouraged to treat data protection as a trust-building mechanism, not just compliance [(Pandectes Data Protection Strategies)](https://pandectes.io/blog/bulgaria-gdpr-compliance/) |
 | **EU Data Act** | Fully applicable since September 2025 — new obligations on data access for connected products/services [(Boyanov & Co EU Data Act, 2025)](https://boyanov.com/eu-data-act-applicable-in-bulgaria/) |
 
-**Key insight:** 31% consumer distrust + 29% awareness gap = 60% of the market has concerns about digital services [(TPA Group)](https://www.tpa-group.bg/en/the-state-of-shopping-2025-bulgaria/). This is Celestia's opening. Being explicitly, visibly privacy-first is not just ethical — it's a competitive weapon. "Your birth data is encrypted. We never share it. We never sell it. Your stars are yours." This message resonates powerfully in a market where 60% of consumers have trust concerns about digital tools.
+**Key insight:** 31% consumer distrust + 29% awareness gap = 60% of the market has concerns about digital services [(TPA Group)](https://www.tpa-group.bg/en/the-state-of-shopping-2025-bulgaria/). This is Stellaeum's opening. Being explicitly, visibly privacy-first is not just ethical — it's a competitive weapon. "Your birth data is encrypted. We never share it. We never sell it. Your stars are yours." This message resonates powerfully in a market where 60% of consumers have trust concerns about digital tools.
 
 #### 1.2.8 Market Sizing (TAM / SAM / SOM)
 
@@ -204,46 +204,46 @@ If Bulgaria validates, the natural expansion path multiplies the market dramatic
 **Founded:** 2017 | **HQ:** New York  
 **Scale:** 30M+ downloads, dominant in US/UK English-speaking markets  
 
-#### 🥊 Co-Star vs. Celestia: The Key Differences
+#### 🥊 Co-Star vs. Stellaeum: The Key Differences
 
 **1. Astrology Engine (Precision)**
 *   ❌ **Co-Star:** Uses standard NASA JPL data for planetary positions.
-*   💫 **Celestia:** Employs professional-grade Swiss Ephemeris (`swisseph-wasm`), applying advanced micro-calculations like topocentric Moon correction and True Node for exacting precision.
+*   💫 **Stellaeum:** Employs professional-grade Swiss Ephemeris (`swisseph-wasm`), applying advanced micro-calculations like topocentric Moon correction and True Node for exacting precision.
 
 **2. AI & Content Generation**
 *   ❌ **Co-Star:** Relies heavily on an old algorithm that glues together thousands of pre-written text snippets. Newly created LLM chat features feel bolted-on.
-*   💫 **Celestia:** AI-native from day one. Feeds exact mathematical chart coordinates into GPT/Gemini to stream wholly original, context-aware readings that cite specific planetary degrees.
+*   💫 **Stellaeum:** AI-native from day one. Feeds exact mathematical chart coordinates into GPT/Gemini to stream wholly original, context-aware readings that cite specific planetary degrees.
 
 **3. Tone & Personality**
 *   ❌ **Co-Star:** Promotes a "brutally honest" or mean-spirited brand. Famous for unhinged, commanding push notifications ("Start a cult", "Don't speak").
-*   💫 **Celestia:** The "Wise Friend". Supportive, grounded, and rich in psychological insight. Seriously treats astrology without crossing into pop-fluff or hostility.
+*   💫 **Stellaeum:** The "Wise Friend". Supportive, grounded, and rich in psychological insight. Seriously treats astrology without crossing into pop-fluff or hostility.
 
 **4. Design Language**
 *   ❌ **Co-Star:** Black-and-white brutalism. Jagged borders, serif fonts, intentionally stark aesthetics mapping to their cold tone.
-*   💫 **Celestia:** Premium "Cosmic Glassmorphism". Deep dark space palettes with translucent glass rendering, explicitly designed to look stunning and welcoming on modern OLED screens.
+*   💫 **Stellaeum:** Premium "Cosmic Glassmorphism". Deep dark space palettes with translucent glass rendering, explicitly designed to look stunning and welcoming on modern OLED screens.
 
 **5. Social Features**
 *   ❌ **Co-Star:** Completely reliant on its social graph and friend-sharing mechanics. 
-*   💫 **Celestia:** Focuses relentlessly on individual depth and high accuracy for the v1.0 MVP, deferring social/synastry to a later wave to ensure core product quality first.
+*   💫 **Stellaeum:** Focuses relentlessly on individual depth and high accuracy for the v1.0 MVP, deferring social/synastry to a later wave to ensure core product quality first.
 
 **6. Platform & Friction**
 *   ❌ **Co-Star:** Mobile-first, walled garden forcing an iOS/Android client download. No web app.
-*   💫 **Celestia:** Web-first responsive launch, bypassing app stores and giving immediate, frictionless access directly via URLs.
+*   💫 **Stellaeum:** Web-first responsive launch, bypassing app stores and giving immediate, frictionless access directly via URLs.
 
-#### 🏷️ Pricing Breakdown: Co-Star vs Celestia
+#### 🏷️ Pricing Breakdown: Co-Star vs Stellaeum
 
 *   **Free Tier:** Both offer free charts and daily updates. 
 *   **The Upsell:** Co-Star relies heavily on "À La Carte" microtransactions ($2.99–$9.99 per individual relationship report or AI Q&A).
 *   **Subscriptions:** Co-Star charges ~$9.99/mo exclusively for its "Eros" couples feature. 
-*   **The Celestia Difference:** Co-Star does *not* offer a single "unlock everything" premium tier, creating a Nickel-and-Dime effect. Celestia provides immense clarity: **€6.99/mo unlocks absolute access** to the entire AI Oracle and all features.
+*   **The Stellaeum Difference:** Co-Star does *not* offer a single "unlock everything" premium tier, creating a Nickel-and-Dime effect. Stellaeum provides immense clarity: **€6.99/mo unlocks absolute access** to the entire AI Oracle and all features.
 
-#### Co-Star's Vulnerabilities (Celestia's Opportunities)
+#### Co-Star's Vulnerabilities (Stellaeum's Opportunities)
 
-1. **Privacy:** Collects contacts, coarse location, device identifiers. Uses Google Analytics. Surfshark (2025) flagged astrology apps broadly as "not privacy-friendly." Co-Star says they don't *sell* data, but they *share* for analytics. **Celestia: Encrypted at rest and in transit. No third-party data sharing. GDPR-compliant. "Your stars, your data."**
+1. **Privacy:** Collects contacts, coarse location, device identifiers. Uses Google Analytics. Surfshark (2025) flagged astrology apps broadly as "not privacy-friendly." Co-Star says they don't *sell* data, but they *share* for analytics. **Stellaeum: Encrypted at rest and in transit. No third-party data sharing. GDPR-compliant. "Your stars, your data."**
 2. **No localization:** English-only. Zero consideration for non-English markets.
-3. **Tone alienates users:** The "roasting" tone is polarizing. Many users find it anxiety-inducing. Celestia's warm, wise tone is a deliberate counter-position.
-4. **No web presence:** Mobile-only. Celestia launches on web first — lower friction, instant access, no download required.
-5. **AI is bolted on:** Their core was pre-written snippets. LLM features feel added later. Celestia is AI-native from the ground up.
+3. **Tone alienates users:** The "roasting" tone is polarizing. Many users find it anxiety-inducing. Stellaeum's warm, wise tone is a deliberate counter-position.
+4. **No web presence:** Mobile-only. Stellaeum launches on web first — lower friction, instant access, no download required.
+5. **AI is bolted on:** Their core was pre-written snippets. LLM features feel added later. Stellaeum is AI-native from the ground up.
 
 ---
 
@@ -253,38 +253,38 @@ If Bulgaria validates, the natural expansion path multiplies the market dramatic
 **Founded:** 2017 | **HQ:** Los Angeles  
 **Scale:** 15M+ downloads, strong in US, growing globally  
 
-#### 🥊 The Pattern vs. Celestia: The Key Differences
+#### 🥊 The Pattern vs. Stellaeum: The Key Differences
 
 **1. Astrological Approach**
 *   ❌ **The Pattern:** Strips out ALL astrology jargon. Uses vague terms like "Cycles of Growth" instead of "Saturn Return".
-*   💫 **Celestia:** Uses proper, mathematically accurate astrological terms. Bulgarians respect the science of it, so Celestia bridges precision and accessibility rather than watering it down.
+*   💫 **Stellaeum:** Uses proper, mathematically accurate astrological terms. Bulgarians respect the science of it, so Stellaeum bridges precision and accessibility rather than watering it down.
 
 **2. Content Depth**
 *   ❌ **The Pattern:** DENSE long-form text. Proves that users will read 500+ words when the content is deeply personal.
-*   💫 **Celestia:** Embraces this exact philosophy. The AI Oracle produces incredibly detailed, personalized markdown readings, unafraid of length because the quality is high.
+*   💫 **Stellaeum:** Embraces this exact philosophy. The AI Oracle produces incredibly detailed, personalized markdown readings, unafraid of length because the quality is high.
 
 **3. Killer Features & Dating**
 *   ❌ **The Pattern:** Focuses heavily on "Bonds" (compatibility) and "Connect+" (built-in dating algorithms).
-*   💫 **Celestia:** Strictly a personal insight tool, not a dating app. Synastry (compatibility) is planned post-MVP and will be fully AI-powered rather than template-mapped.
+*   💫 **Stellaeum:** Strictly a personal insight tool, not a dating app. Synastry (compatibility) is planned post-MVP and will be fully AI-powered rather than template-mapped.
 
 **4. Design & UX**
 *   ❌ **The Pattern:** Clean and modern, but features highly complex navigation and a steep learning curve.
-*   💫 **Celestia:** Radically simpler information architecture. Clean bottom nav (Home, Chart, Oracle, Profile) that requires zero tutorials to understand.
+*   💫 **Stellaeum:** Radically simpler information architecture. Clean bottom nav (Home, Chart, Oracle, Profile) that requires zero tutorials to understand.
 
-#### 🏷️ Pricing Breakdown: The Pattern vs Celestia
+#### 🏷️ Pricing Breakdown: The Pattern vs Stellaeum
 
 *   **Free Tier:** Basic personality insights, daily updates.
 *   **Core Subscription ($14.99/mo):** "Go Deeper+" unlocks the content library, audio, and past/future transits. 
 *   **Dating Subscription ($24.99/quarter):** "Connect+" for compatibility matching.
 *   **Microtransactions ($9.99+):** Charging specifically for extra "profile slots" to run charts for friends/family.
-*   **The Celestia Difference:** The Pattern has an extremely complex, multi-tiered pricing matrix that feels expensive ($14.99/mo is 50%+ more than Celestia). Celestia never charges for "extra profile slots" or creates separate sub-tiers.
+*   **The Stellaeum Difference:** The Pattern has an extremely complex, multi-tiered pricing matrix that feels expensive ($14.99/mo is 50%+ more than Stellaeum). Stellaeum never charges for "extra profile slots" or creates separate sub-tiers.
 
 #### The Pattern's Vulnerabilities
 
-1. **Over-abstraction:** By removing all astrology terminology, they alienate users who *want* to learn. Celestia teaches while it reads.
-2. **Complex UX:** Too many tiers, too many features, steep onboarding. Celestia keeps it simple.
+1. **Over-abstraction:** By removing all astrology terminology, they alienate users who *want* to learn. Stellaeum teaches while it reads.
+2. **Complex UX:** Too many tiers, too many features, steep onboarding. Stellaeum keeps it simple.
 3. **No localization:** English-only. Same gap as Co-Star for the Bulgarian market.
-4. **Expensive at scale:** $14.99/mo for full access is 50% more than Celestia's €9.99/mo.
+4. **Expensive at scale:** $14.99/mo for full access is 50% more than Stellaeum's €9.99/mo.
 5. **No cultural sensitivity:** Generic "wellness" framing. Doesn't acknowledge any specific spiritual tradition.
 
 ---
@@ -295,31 +295,31 @@ If Bulgaria validates, the natural expansion path multiplies the market dramatic
 **Founded:** 2019 | **HQ:** Cyprus (Spiritual Nebula Limited)  
 **Scale:** 10M+ downloads  
 
-#### 🥊 Nebula vs. Celestia: The Key Differences
+#### 🥊 Nebula vs. Stellaeum: The Key Differences
 
 **1. Scope & Content**
 *   ❌ **Nebula:** The "Supermarket" approach. Tries to do everything: horoscopes, natal charts, tarot, palmistry, psychic chats, and sleep stories. Feels extremely generic.
-*   💫 **Celestia:** Laser-focused strictly on astrology. One discipline executed exceptionally well, with deep, personal readings referencing exact planetary degrees.
+*   💫 **Stellaeum:** Laser-focused strictly on astrology. One discipline executed exceptionally well, with deep, personal readings referencing exact planetary degrees.
 
 **2. Human Element vs. Scale**
 *   ❌ **Nebula:** Relies heavily on live psychic/expert readings charged per-minute ($3.99/min).
-*   💫 **Celestia:** 100% AI-native Oracle. Zero human labor costs, allowing infinite scale and immediate answers for the user 24/7.
+*   💫 **Stellaeum:** 100% AI-native Oracle. Zero human labor costs, allowing infinite scale and immediate answers for the user 24/7.
 
 **3. Monetization Strategy**
 *   ❌ **Nebula:** Highly aggressive. Uses confusing wallet systems, per-minute charges, hidden weekly billing, and constant upsells.
-*   💫 **Celestia:** Transparent. One simple tier (€6.99/mo). No hidden charges, no per-minute billing, no gimmicky wallets.
+*   💫 **Stellaeum:** Transparent. One simple tier (€6.99/mo). No hidden charges, no per-minute billing, no gimmicky wallets.
 
-#### 🏷️ Pricing Breakdown: Nebula vs Celestia
+#### 🏷️ Pricing Breakdown: Nebula vs Stellaeum
 
 *   **Predatory Subscriptions:** Nebula heavily pushes a **~$7.99/week** tier meant to obscure the true cost (over $31/mo). Their named "Monthly" tier ranges from $25–$45 depending on the region.
 *   **Live Consultation Fees:** Charging astronomical rates of **~$3.99 per minute** for 1:1 human psychic readings.
-*   **The Celestia Difference:** Nebula acts as a high-pressure spiritual marketplace aiming to extract maximum value fast. Celestia builds long-term retention explicitly by avoiding weekly tier traps, adhering to fair, transparent €6.99 monthly billing.
+*   **The Stellaeum Difference:** Nebula acts as a high-pressure spiritual marketplace aiming to extract maximum value fast. Stellaeum builds long-term retention explicitly by avoiding weekly tier traps, adhering to fair, transparent €6.99 monthly billing.
 
 #### Nebula's Vulnerabilities
 
-1. **Predatory pricing:** Weekly billing that obscures monthly cost. Users feel tricked. Celestia is transparent — one monthly price, cancel anytime.
+1. **Predatory pricing:** Weekly billing that obscures monthly cost. Users feel tricked. Stellaeum is transparent — one monthly price, cancel anytime.
 2. **Brand dilution:** Tarot + palmistry + psychic = nothing done well. Jack of all trades, master of none.
-3. **Cancellation complaints:** Users report difficulty canceling. Trust-destroying. Celestia: clear cancellation, no dark patterns.
+3. **Cancellation complaints:** Users report difficulty canceling. Trust-destroying. Stellaeum: clear cancellation, no dark patterns.
 4. **No real AI:** Content is template-based or from human readers. No genuine personalization engine.
 5. **No localization:** Not available in Bulgarian with cultural context.
 
@@ -331,31 +331,31 @@ If Bulgaria validates, the natural expansion path multiplies the market dramatic
 **Founded:** 2019 | **HQ:** New York  
 **Scale:** ~2M downloads  
 
-#### 🥊 Sanctuary vs. Celestia: The Key Differences
+#### 🥊 Sanctuary vs. Stellaeum: The Key Differences
 
 **1. Core Value & Availability**
 *   ❌ **Sanctuary:** Built entirely on human connection. Users have to schedule, book, and wait for a real astrologer.
-*   💫 **Celestia:** Built on ambient AI connection. The Oracle provides instant, 24/7 personalized readings without any waiting or scheduling.
+*   💫 **Stellaeum:** Built on ambient AI connection. The Oracle provides instant, 24/7 personalized readings without any waiting or scheduling.
 
 **2. Scalability & Economics**
 *   ❌ **Sanctuary:** Completely bottlenecked by human labor. Every dollar of revenue requires a paid professional.
-*   💫 **Celestia:** Infinite scale. Because it leverages LLMs, the marginal cost per reading approaches zero, allowing for incredible profit margins.
+*   💫 **Stellaeum:** Infinite scale. Because it leverages LLMs, the marginal cost per reading approaches zero, allowing for incredible profit margins.
 
 **3. Content Focus**
 *   ❌ **Sanctuary:** Distracted by tarot, crystal readings, and generic educational content.
-*   💫 **Celestia:** Strictly astrology. Combines Swiss Ephemeris mathematical precision with advanced AI interpretation for massive value.
+*   💫 **Stellaeum:** Strictly astrology. Combines Swiss Ephemeris mathematical precision with advanced AI interpretation for massive value.
 
-#### 🏷️ Pricing Breakdown: Sanctuary vs Celestia
+#### 🏷️ Pricing Breakdown: Sanctuary vs Stellaeum
 
 *   **Free Tier:** Daily horoscopes and very basic tarot/chart logic.
 *   **Sanctuary+ Subscriptions:** Expanded content, unlocking basic compatibility tools.
 *   **Live Sessions (The Real Cost):** The app exists to funnel users into Live Human Readings. A standard 30-minute reading can easily exceed $30–$60+.
-*   **The Celestia Difference:** Sanctuary monetizes human labor (which is fundamentally expensive and un-scalable). Celestia monetizes an always-on, instant AI. Celestia provides unlimited 24/7 Oracle readings for less than the cost of a 5-minute promo session on Sanctuary.
+*   **The Stellaeum Difference:** Sanctuary monetizes human labor (which is fundamentally expensive and un-scalable). Stellaeum monetizes an always-on, instant AI. Stellaeum provides unlimited 24/7 Oracle readings for less than the cost of a 5-minute promo session on Sanctuary.
 
 #### Sanctuary's Vulnerabilities
 
-1. **Doesn't scale:** Every dollar of revenue requires human labor. Celestia's AI Oracle has near-zero marginal cost.
-2. **Expensive for users:** A 30-minute reading can cost $30–$60+. Celestia gives unlimited AI readings for €9.99/mo.
+1. **Doesn't scale:** Every dollar of revenue requires human labor. Stellaeum's AI Oracle has near-zero marginal cost.
+2. **Expensive for users:** A 30-minute reading can cost $30–$60+. Stellaeum gives unlimited AI readings for €9.99/mo.
 3. **Inconsistent quality:** Reader quality varies. AI Oracle delivers consistent, high-quality output every time.
 4. **Small market:** ~2M downloads vs Co-Star's 30M+. Hasn't achieved breakout growth because the model doesn't support virality.
 
@@ -367,27 +367,27 @@ If Bulgaria validates, the natural expansion path multiplies the market dramatic
 **Founded:** ~2020 | **HQ:** Not publicly disclosed  
 **Scale:** Significant downloads, strong on web (hint.app)  
 
-#### 🥊 Hint vs. Celestia: The Key Differences
+#### 🥊 Hint vs. Stellaeum: The Key Differences
 
 **1. Onboarding & Psychology**
 *   ❌ **Hint:** Uses dark patterns. Forces users through 20+ generic "micro-commitment" questions to exploit sunk-cost psychology before hitting an immediate paywall.
-*   💫 **Celestia:** Respects the user. Quick, beautiful birth data input immediately unlocks high value (the Natal Wheel and a free AI reading) with zero psychological manipulation.
+*   💫 **Stellaeum:** Respects the user. Quick, beautiful birth data input immediately unlocks high value (the Natal Wheel and a free AI reading) with zero psychological manipulation.
 
 **2. Monetization & Ethics**
 *   ❌ **Hint:** Operates a "trial trap" ($0.50 for 7 days, then auto-renews at $30/mo or $19/week). Widely criticized as predatory, hiding cancellation buttons while spamming users with upsells like "Soulmate Sketches."
-*   💫 **Celestia:** Fully transparent. €6.99/mo unlocks everything. Unsubscribe with one click. Clear GDPR-compliant terms. The free tier gives actual value to build real consumer trust.
+*   💫 **Stellaeum:** Fully transparent. €6.99/mo unlocks everything. Unsubscribe with one click. Clear GDPR-compliant terms. The free tier gives actual value to build real consumer trust.
 
-#### 🏷️ Pricing Breakdown: Hint vs Celestia
+#### 🏷️ Pricing Breakdown: Hint vs Stellaeum
 
 *   **The Trial Trap:** Charges ~$0.50–$1.00 for a 7-day trial to capture the credit card upfront.
 *   **The Dark Pattern Renewal:** Auto-renews into extremely expensive tiers: **$29.99/mo** or even an exorbitant **$19.00/week**.
 *   **Upsells:** Pushes "Soulmate Sketches" and specific palm readings for additional one-time charges.
-*   **The Celestia Difference:** Hint is the industry anti-pattern. Celestia's 7-day trial is genuinely free, and the conversion price (€6.99) is over 4x cheaper than Hint's standard monthly wrap.
+*   **The Stellaeum Difference:** Hint is the industry anti-pattern. Stellaeum's 7-day trial is genuinely free, and the conversion price (€6.99) is over 4x cheaper than Hint's standard monthly wrap.
 
 #### Hint's Vulnerabilities
 
 1. **Reputation damage:** Widely seen as a scam. App Store reviews full of complaints about unexpected charges. Anti-pattern for trust.
-2. **Unsustainable:** Model depends on tricking users. High churn rate. Celestia builds long-term retention through genuine daily value.
+2. **Unsustainable:** Model depends on tricking users. High churn rate. Stellaeum builds long-term retention through genuine daily value.
 3. **No real product depth:** Once you strip away the funnel psychology, the actual astrology content is shallow.
 
 ---
@@ -397,28 +397,28 @@ If Bulgaria validates, the natural expansion path multiplies the market dramatic
 **Positioning:** Comprehensive Vedic astrology with AI chatbot interfaces.  
 **Market:** India-centric, Hindi/English, massive scale in South Asia  
 
-#### 🥊 AstroSage vs. Celestia: The Key Differences
+#### 🥊 AstroSage vs. Stellaeum: The Key Differences
 
 **1. Astrological System & Market**
 *   ❌ **AstroSage:** Uses the Vedic (Jyotish) system. Built explicitly for the Indian market where it has tremendous scale.
-*   💫 **Celestia:** Uses the Western (Tropical) system with Placidus houses, flawlessly mapped to Bulgarian and European astrological traditions.
+*   💫 **Stellaeum:** Uses the Western (Tropical) system with Placidus houses, flawlessly mapped to Bulgarian and European astrological traditions.
 
 **2. AI vs. Chatbots**
 *   ❌ **AstroSage:** Implements a basic "AI Astrologer" chatbot while violently pushing users toward human astrologers charged via a wallet system.
-*   💫 **Celestia:** The LLM *is* the core product, not a lead-gen tool for humans. The context-aware Oracle queries the distinct natal chart natively.
+*   💫 **Stellaeum:** The LLM *is* the core product, not a lead-gen tool for humans. The context-aware Oracle queries the distinct natal chart natively.
 
 **3. Monetization**
 *   ❌ **AstroSage:** Uses a highly fragmented model (premium PDFs, wallet recharges for humans, separate cloud storage subscriptions).
-*   💫 **Celestia:** A single, simple €6.99/mo Stripe subscription that unlocks everything.
+*   💫 **Stellaeum:** A single, simple €6.99/mo Stripe subscription that unlocks everything.
 
-#### 🏷️ Pricing Breakdown: AstroSage vs Celestia
+#### 🏷️ Pricing Breakdown: AstroSage vs Stellaeum
 
 *   **Free Tier:** Basic Indian (Jyotish) charts.
 *   **A La Carte Reports:** Charges one-time fees for massive, statically generated PDF reports ("Brihat Kundli").
 *   **Wallet-Recharge System:** "AstroSage Varta" forces users to buy digital token wallets to pay per-minute for human consultations.
-*   **The Celestia Difference:** AstroSage is built for an entirely different cultural and economic paradigm. Celestia utilizes standard European SaaS logic (a flat Stripe subscription), intentionally avoiding the friction of "wallet top-ups" that vastly deter Bulgarian users.
+*   **The Stellaeum Difference:** AstroSage is built for an entirely different cultural and economic paradigm. Stellaeum utilizes standard European SaaS logic (a flat Stripe subscription), intentionally avoiding the friction of "wallet top-ups" that vastly deter Bulgarian users.
 
-#### Relevance to Celestia
+#### Relevance to Stellaeum
 
 **Low direct competition** — different astrological system (Vedic vs Western), different market (India vs Bulgaria), different cultural context. However, AstroSage validates that:
 - Users WANT to talk to an AI astrologer (the chatbot model works)
@@ -432,23 +432,23 @@ If Bulgaria validates, the natural expansion path multiplies the market dramatic
 **Representative:** Хороскоп БГ and similar Bulgarian-language apps  
 **Scale:** Small, local user base  
 
-#### 🥊 Local BG Apps vs. Celestia: The Key Differences
+#### 🥊 Local BG Apps vs. Stellaeum: The Key Differences
 
 **1. Tech & Calculations**
 *   ❌ **Local Apps:** Rely on basic randomization algorithms. No actual astronomical backing.
-*   💫 **Celestia:** Built on `swisseph-wasm` server-side calculations, bringing true professional-grade astronomy to the local market for the first time.
+*   💫 **Stellaeum:** Built on `swisseph-wasm` server-side calculations, bringing true professional-grade astronomy to the local market for the first time.
 
 **2. Content & Personalization**
 *   ❌ **Local Apps:** Generic 12-sign logic. Every "Leo" gets the exact same two sentences. Cluttered with magic 8-balls, coffee cup readings, and lucky numbers.
-*   💫 **Celestia:** Hyper-personalized. The AI reads exactly where every planet was for your specific birth minute. Zero generic content.
+*   💫 **Stellaeum:** Hyper-personalized. The AI reads exactly where every planet was for your specific birth minute. Zero generic content.
 
 **3. Design Language**
 *   ❌ **Local Apps:** Feel stuck in the Android 4.0 era. Cluttered, aggressively monetized with banner ads, and using dated typography.
-*   💫 **Celestia:** "Cosmic Glassmorphism." A state-of-the-art premium dark UI with glass effects and micro-animations that immediately wows the user.
+*   💫 **Stellaeum:** "Cosmic Glassmorphism." A state-of-the-art premium dark UI with glass effects and micro-animations that immediately wows the user.
 
 **4. Monetization**
 *   ❌ **Local Apps:** 100% Ad-supported. Annoying, spammy user experience.
-*   💫 **Celestia:** Clean Freemium subscription. Even the free tier features zero ads, building immense product trust before naturally encouraging the €6.99/mo premium upgrade.
+*   💫 **Stellaeum:** Clean Freemium subscription. Even the free tier features zero ads, building immense product trust before naturally encouraging the €6.99/mo premium upgrade.
 
 #### Why This Is Our Real Competition
 
@@ -457,7 +457,7 @@ While Co-Star and The Pattern are global benchmarks, the average Bulgarian user 
 2. It's free
 3. It shows up first in local app store searches (Bulgarian keywords)
 
-**Celestia's play:** Offer everything these apps do (Bulgarian, free tier, daily horoscope) PLUS everything they don't (precision, AI, premium design, personalization). The moment a local user tries Celestia, the comparison is devastating. It's like going from a flip phone to an iPhone.
+**Stellaeum's play:** Offer everything these apps do (Bulgarian, free tier, daily horoscope) PLUS everything they don't (precision, AI, premium design, personalization). The moment a local user tries Stellaeum, the comparison is devastating. It's like going from a flip phone to an iPhone.
 
 ---
 
@@ -467,7 +467,7 @@ While Co-Star and The Pattern are global benchmarks, the average Bulgarian user 
 
 | App | Free Tier | Monthly | Annual Effective | Per-Reading/Extra | Billing Model |
 |-----|-----------|---------|-----------------|-------------------|---------------|
-| **Celestia AI** | ✅ General reading, basic chart | **€6.99/mo** | TBD (likely ~€59.99/yr) | None — unlimited Oracle | Clean subscription |
+| **Stellaeum AI** | ✅ General reading, basic chart | **€6.99/mo** | TBD (likely ~€59.99/yr) | None — unlimited Oracle | Clean subscription |
 | **Co-Star** | ✅ Full chart, daily updates, friends | ~$9.99/mo (Eros only) | N/A | $2.99–$9.99 per report | À la carte + micro-subs |
 | **The Pattern** | ✅ Basic insights, limited bonds | $9.99–$14.99/mo | ~$83.99/yr (~$7/mo) | $9.99–$19.99 profile slots | Multi-tier subscription |
 | **Nebula** | ✅ Basic chart, limited horoscopes | $24.99–$45.00/mo | $39.99–$49.99/yr | $3.99/min live readings | Subscription + per-minute |
@@ -476,9 +476,9 @@ While Co-Star and The Pattern are global benchmarks, the average Bulgarian user 
 | **AstroSage** | ✅ Basic charts, horoscopes | Wallet-based | N/A | Per-minute consultations | Wallet + one-time reports |
 | **Хороскоп БГ** | ✅ Everything (ad-supported) | N/A | N/A | N/A | Ad-supported only |
 
-### 3.2 Celestia's Pricing Advantage
+### 3.2 Stellaeum's Pricing Advantage
 
-**€6.99/mo positions Celestia as:**
+**€6.99/mo positions Stellaeum as:**
 - **Cheaper than Netflix** (~€7.99/mo) — a powerful psychological anchor
 - **Cheaper than The Pattern's full tier** ($14.99/mo) — less than half the price
 - **Massively cheaper than Hint** ($29.99/mo) — over 4x cheaper
@@ -486,7 +486,7 @@ While Co-Star and The Pattern are global benchmarks, the average Bulgarian user 
 - **More transparent than Co-Star** (one price vs nickel-and-diming per report)
 - **More premium than local apps** (which are free but ad-ridden and low-quality)
 
-The €6.99 price point is strategically aggressive — it's the first subscription cycle post-Euro adoption. Bulgarian users are price-sensitive but willing to pay for quality digital products. €6.99 sits well under the €10 psychological threshold, cheaper than Netflix, and positions Celestia as the most affordable premium astrology product globally while still generating meaningful revenue at scale.
+The €6.99 price point is strategically aggressive — it's the first subscription cycle post-Euro adoption. Bulgarian users are price-sensitive but willing to pay for quality digital products. €6.99 sits well under the €10 psychological threshold, cheaper than Netflix, and positions Stellaeum as the most affordable premium astrology product globally while still generating meaningful revenue at scale.
 
 ---
 
@@ -494,7 +494,7 @@ The €6.99 price point is strategically aggressive — it's the first subscript
 
 ### 4.1 How They Build vs How We Build
 
-| Component | Industry Standard | Celestia AI |
+| Component | Industry Standard | Stellaeum AI |
 |-----------|------------------|-------------|
 | **Astrology Engine** | NASA JPL data (Co-Star), proprietary algorithms (The Pattern), basic/random (local apps) | **Swiss Ephemeris (swisseph-wasm)** — the gold standard used by professional astrologers worldwide. Server-side WASM for fast, accurate calculations |
 | **AI Layer** | Template-mapped snippets (most apps), recently bolted-on LLM chatbots (Co-Star "Ask the Stars") | **AI-native from day one.** Gemini/GPT-5 with full chart context injection. The Oracle knows your chart before you ask |
@@ -507,21 +507,21 @@ The €6.99 price point is strategically aggressive — it's the first subscript
 
 ### 4.2 Architecture Advantage
 
-Celestia's **Turborepo monorepo** with **Solito** enables:
+Stellaeum's **Turborepo monorepo** with **Solito** enables:
 - 90% code sharing between web and mobile
 - Web-first launch (faster to market, no App Store review)
 - iOS app reuses same logic and components
 - Single source of truth for the astrology engine (`packages/astrology`)
 
-No competitor uses this architecture. Most are mobile-only (Co-Star, The Pattern) or web-only (Hint). Celestia is designed to be universal from the start.
+No competitor uses this architecture. Most are mobile-only (Co-Star, The Pattern) or web-only (Hint). Stellaeum is designed to be universal from the start.
 
 ---
 
 ## 5. Competitive Positioning Matrix
 
-### 5.1 Where Celestia Wins
+### 5.1 Where Stellaeum Wins
 
-| Competitive Axis | Leader Today | Celestia's Position | Advantage Level |
+| Competitive Axis | Leader Today | Stellaeum's Position | Advantage Level |
 |-----------------|-------------|--------------------|----|
 | **Bulgarian market** | Local ad-supported apps | Only premium AI astrology in native Bulgarian | 🟢 **Dominant** |
 | **Privacy & trust** | No clear leader (all have issues) | Encrypted, GDPR, no data sharing | 🟢 **Dominant** |
@@ -540,7 +540,7 @@ No competitor uses this architecture. Most are mobile-only (Co-Star, The Pattern
 1. **Language moat:** No global competitor will localize for Bulgaria's 6.5M market anytime soon. It's not worth their effort at their scale. It's perfectly worth ours.
 2. **Cultural moat:** Understanding Petar Dunov, White Brotherhood influence, name days, Bulgarian spiritual sensibility — this can't be copied by adding a language pack.
 3. **Privacy moat:** GDPR + encryption + transparency is a real differentiator in the EU. As data privacy awareness grows, this becomes more valuable.
-4. **AI-native moat:** Competitors are retrofitting AI onto template-based systems. Celestia is built AI-first. The Oracle is the product, not a feature.
+4. **AI-native moat:** Competitors are retrofitting AI onto template-based systems. Stellaeum is built AI-first. The Oracle is the product, not a feature.
 5. **Price moat in Bulgaria:** €6.99/mo is aggressively affordable post-Euro adoption — cheaper than Netflix. Global competitors pricing at $15–$30/mo are 2–4x more expensive, even if they localized.
 
 ---
@@ -549,7 +549,7 @@ No competitor uses this architecture. Most are mobile-only (Co-Star, The Pattern
 
 ### 6.1 Why Global Competitors Won't Come to Bulgaria
 
-| Factor | Why It Protects Celestia |
+| Factor | Why It Protects Stellaeum |
 |--------|------------------------|
 | **Market size** | ~6.5M people. Too small for Co-Star (30M users in English) to justify localization investment |
 | **Localization cost** | Native Bulgarian AI content ≠ Google Translate. Requires cultural expertise, not just translation |
@@ -557,7 +557,7 @@ No competitor uses this architecture. Most are mobile-only (Co-Star, The Pattern
 | **Cultural nuance** | Understanding Bulgarian spirituality requires local knowledge no US company has |
 | **Regulatory compliance** | Small EU market with GDPR enforcement means compliance cost is high relative to revenue for outsiders |
 
-### 6.2 Celestia's Expansion Path (If It Works)
+### 6.2 Stellaeum's Expansion Path (If It Works)
 
 The Bulgarian MVP validates the model, then:
 1. **Balkans:** Serbia, Romania, Greece, North Macedonia — similar cultural affinity for spirituality, EU/near-EU markets, translation is more manageable
@@ -575,7 +575,7 @@ This is the **"IKEA strategy"** — dominate a small home market with a superior
 | From | What | Why |
 |------|------|-----|
 | **Co-Star** | Daily morning push notification strategy | #1 retention driver across all astrology apps. Users open for their daily reading |
-| **Co-Star** | "NASA data" trust signal framing | Celestia should frame Swiss Ephemeris as "the engine trusted by professional astrologers worldwide" |
+| **Co-Star** | "NASA data" trust signal framing | Stellaeum should frame Swiss Ephemeris as "the engine trusted by professional astrologers worldwide" |
 | **The Pattern** | Long-form, deeply personal content | Users WILL read 500+ words if it's about them. Don't fear AI output length |
 | **The Pattern** | No-jargon explanations alongside technical terms | Use proper astrological terms but always explain simply |
 | **Nebula** | Monetization analytics & funnel tracking | Study their conversion funnels (but execute ethically) |
@@ -586,14 +586,14 @@ This is the **"IKEA strategy"** — dominate a small home market with a superior
 |------|------|-----|
 | **Co-Star** | Mean/anxious/edgy tone | Alienates users who want genuine guidance. Especially wrong for Bulgarian cultural sensibility |
 | **Hint** | Trial trap → auto-renew at high price | Destroys trust. GDPR enforcement makes this legally risky in EU |
-| **Nebula** | Weekly billing that obscures monthly cost | Dark pattern. Violates Celestia's transparency values |
+| **Nebula** | Weekly billing that obscures monthly cost | Dark pattern. Violates Stellaeum's transparency values |
 | **Nebula** | Feature bloat (tarot + palmistry + psychic) | Dilutes brand. Do one thing perfectly |
 | **Sanctuary** | Human-dependent model | Doesn't scale. AI first, always |
 | **All competitors** | Ignoring data privacy | In the EU, this is both a legal risk and a competitive opportunity |
 
-### 7.3 Celestia's Elevator Pitch vs Each Competitor
+### 7.3 Stellaeum's Elevator Pitch vs Each Competitor
 
-| Competitor | Celestia's One-Liner |
+| Competitor | Stellaeum's One-Liner |
 |-----------|---------------------|
 | vs **Co-Star** | "Same precision, without the anxiety. Your data stays yours." |
 | vs **The Pattern** | "Same depth, in your language, for less money." |

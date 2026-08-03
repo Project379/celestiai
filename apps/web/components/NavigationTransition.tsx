@@ -3,22 +3,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-
-// Precomputed dot positions (shared with LandingSplash)
-const RING_DOTS = Array.from({ length: 12 }, (_, i) => {
-  const angle = (i * 30 * Math.PI) / 180
-  return {
-    cx: +(60 + 48 * Math.cos(angle)).toFixed(2),
-    cy: +(60 + 48 * Math.sin(angle)).toFixed(2),
-    r: i % 3 === 0 ? 2.5 : 1.5,
-    fill: i % 3 === 0 ? '#a78bfa' : '#6366f1',
-    opacity: +(0.3 + (i % 4) * 0.18).toFixed(2),
-  }
-})
+import { LoadingAnimation } from './LoadingAnimation'
 
 /**
- * Shows a brief star-ring transition overlay when the route changes.
- * Renders children immediately — the overlay sits on top then fades out.
+ * Shows a brief loading overlay when the route changes client-side.
+ * Uses the canonical <LoadingAnimation /> so transition + Suspense
+ * loading share one visual language.
  */
 export function NavigationTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -29,7 +19,7 @@ export function NavigationTransition({ children }: { children: React.ReactNode }
     if (prevPath.current !== pathname) {
       prevPath.current = pathname
       setTransitioning(true)
-      const timer = setTimeout(() => setTransitioning(false), 600)
+      const timer = setTimeout(() => setTransitioning(false), 700)
       return () => clearTimeout(timer)
     }
   }, [pathname])
@@ -41,55 +31,39 @@ export function NavigationTransition({ children }: { children: React.ReactNode }
       <AnimatePresence>
         {transitioning && (
           <motion.div
-            className="fixed inset-0 z-[90] flex items-center justify-center bg-[#060a18]/90 backdrop-blur-sm"
+            className="fixed inset-0 z-[90] flex items-center justify-center bg-[#04030a]/88 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ duration: 0.24, ease: 'easeOut' }}
           >
-            {/* Glow */}
+            {/* Ambient halos - matches protected loading.tsx */}
             <div
-              className="absolute"
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
               style={{
-                width: 160,
-                height: 160,
+                width: 520,
+                height: 520,
                 borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)',
+                background:
+                  'radial-gradient(circle, rgba(139,92,246,0.12) 0%, rgba(99,102,241,0.05) 38%, transparent 72%)',
+                filter: 'blur(40px)',
+              }}
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+              style={{
+                width: 280,
+                height: 280,
+                borderRadius: '50%',
+                background:
+                  'radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%)',
+                filter: 'blur(50px)',
               }}
             />
 
-            {/* Spinning star ring */}
-            <motion.div
-              style={{ width: 64, height: 64 }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, ease: 'linear', repeat: Infinity }}
-            >
-              <svg viewBox="0 0 120 120" className="h-full w-full">
-                {RING_DOTS.map((dot, i) => (
-                  <circle
-                    key={i}
-                    cx={dot.cx}
-                    cy={dot.cy}
-                    r={dot.r}
-                    fill={dot.fill}
-                    opacity={dot.opacity}
-                  />
-                ))}
-                <path
-                  d="M60 28 L63.5 50 L76 38 L66 53 L88 52 L68 58 L84 72 L64 62 L68 84 L60 64 L52 84 L56 62 L36 72 L52 58 L32 52 L54 53 L44 38 L56.5 50 Z"
-                  fill="none"
-                  stroke="url(#navTransGrad)"
-                  strokeWidth={1}
-                  opacity={0.5}
-                />
-                <defs>
-                  <linearGradient id="navTransGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#a78bfa" />
-                    <stop offset="100%" stopColor="#6366f1" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </motion.div>
+            <LoadingAnimation />
           </motion.div>
         )}
       </AnimatePresence>

@@ -11,13 +11,6 @@ interface SuccessContentProps {
 
 type State = 'activating' | 'activated' | 'timeout'
 
-/**
- * SuccessContent — client component for the /subscription/success page.
- *
- * Polls /api/stripe/status every 2 seconds until:
- * - tier becomes 'premium' → shows celebration state
- * - 30 seconds elapse without confirmation → shows timeout fallback
- */
 export function SuccessContent({ initialTier }: SuccessContentProps) {
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('session_id')
@@ -52,7 +45,7 @@ export function SuccessContent({ initialTier }: SuccessContentProps) {
           setUiState('activated')
         }
       } catch {
-        // Network error — keep polling until timeout
+        // Keep polling until timeout
       }
     }, POLL_INTERVAL_MS)
 
@@ -60,90 +53,100 @@ export function SuccessContent({ initialTier }: SuccessContentProps) {
   }, [uiState, sessionId])
 
   return (
-    <AnimatePresence mode="wait">
-      {uiState === 'activating' && (
-        <motion.div
-          key="activating"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.1, filter: 'blur(8px)' }}
-          transition={{ duration: 0.5, ease: [0.22, 0.68, 0.35, 1] }}
-        >
-          <ActivatingState />
-        </motion.div>
-      )}
-      {uiState === 'activated' && (
-        <motion.div
-          key="activated"
-          initial={{ opacity: 0, scale: 0.8, filter: 'blur(12px)' }}
-          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-          transition={{ duration: 0.7, ease: [0.22, 0.68, 0.35, 1] }}
-        >
-          <ActivatedState />
-        </motion.div>
-      )}
-      {uiState === 'timeout' && (
-        <motion.div
-          key="timeout"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <TimeoutState />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className="relative mx-auto w-full max-w-xl">
+      {/* Ambient atmosphere */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/[0.10] blur-[130px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-500/[0.08] blur-[100px]"
+      />
+
+      <AnimatePresence mode="wait">
+        {uiState === 'activating' && (
+          <motion.div
+            key="activating"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.05, filter: 'blur(8px)' }}
+            transition={{ duration: 0.5, ease: [0.22, 0.68, 0.35, 1] }}
+          >
+            <ActivatingState />
+          </motion.div>
+        )}
+        {uiState === 'activated' && (
+          <motion.div
+            key="activated"
+            initial={{ opacity: 0, scale: 0.85, filter: 'blur(12px)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            transition={{ duration: 0.7, ease: [0.22, 0.68, 0.35, 1] }}
+          >
+            <ActivatedState />
+          </motion.div>
+        )}
+        {uiState === 'timeout' && (
+          <motion.div
+            key="timeout"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <TimeoutState />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
-// ---------------------------------------------------------------------------
-// UI States
-// ---------------------------------------------------------------------------
-
+/* ─── Activating ─────────────────────────────────────── */
 function ActivatingState() {
   return (
-    <div className="text-center max-w-md mx-auto">
-      {/* Cosmic pulsing icon */}
-      <div className="relative mx-auto mb-8 w-24 h-24">
-        <motion.div
-          className="absolute inset-0 rounded-full bg-purple-600/20"
+    <div className="mx-auto max-w-md text-center">
+      <div className="relative mx-auto mb-10 flex h-24 w-24 items-center justify-center">
+        <motion.span
+          aria-hidden
+          className="absolute inset-0 rounded-full bg-violet-500/15"
           animate={{ scale: [1, 1.8, 1], opacity: [0.3, 0, 0.3] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
         />
-        <motion.div
-          className="absolute inset-2 rounded-full bg-purple-600/30"
+        <motion.span
+          aria-hidden
+          className="absolute inset-2 rounded-full bg-amber-500/15"
           animate={{ scale: [1, 1.6, 1], opacity: [0.4, 0, 0.4] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeOut', delay: 0.3 }}
         />
-        <motion.div
-          className="relative flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700 shadow-lg shadow-purple-900/50"
-          animate={{ rotate: [0, 5, -5, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <span className="text-4xl">✨</span>
-        </motion.div>
+        <motion.span
+          aria-hidden
+          className="relative block h-5 w-5 rotate-45 bg-amber-300/90 shadow-[0_0_22px_rgba(251,191,36,0.75)]"
+          animate={{ rotate: 405 }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+        />
       </div>
 
-      <h1 className="text-2xl font-semibold text-white mb-3">
-        Активираме премиум достъпа ти...
+      <p className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+        Активация
+      </p>
+      <h1 className="mb-4 font-display text-[1.75rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[2rem]">
+        <span className="font-light text-slate-400">Отключваме </span>
+        <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(251,191,36,0.18)]">
+          Премиум.
+        </span>
       </h1>
-      <p className="text-white/60 text-sm">
-        Това обикновено отнема няколко секунди
+      <p className="font-display text-[14px] font-light text-slate-400">
+        Това обикновено отнема няколко секунди.
       </p>
 
-      {/* Animated loading dots */}
-      <div className="flex justify-center gap-1.5 mt-6">
+      {/* Pulsing amber diamond trio */}
+      <div className="mt-8 flex justify-center gap-2">
         {[0, 1, 2].map((i) => (
           <motion.span
             key={i}
-            className="w-2 h-2 rounded-full bg-purple-400"
-            animate={{ y: [0, -8, 0], opacity: [0.5, 1, 0.5] }}
-            transition={{
-              duration: 0.8,
-              repeat: Infinity,
-              delay: i * 0.15,
-              ease: 'easeInOut',
-            }}
+            className="h-1 w-1 rotate-45 bg-amber-300/80"
+            animate={{ opacity: [0.25, 1, 0.25], scale: [0.85, 1.3, 0.85] }}
+            transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.2, ease: 'easeInOut' }}
           />
         ))}
       </div>
@@ -151,25 +154,24 @@ function ActivatingState() {
   )
 }
 
+/* ─── Activated ──────────────────────────────────────── */
 function ActivatedState() {
-  // Generate stable particle positions
   const particles = useMemo(
     () =>
       Array.from({ length: 24 }, (_, i) => ({
-        x: (i * 137.5) % 360, // golden angle spread
+        angle: (i * 137.5) % 360,
         delay: (i * 0.08) % 1,
         size: 3 + (i % 4) * 2,
-        color: ['#a78bfa', '#6366f1', '#fbbf24', '#22d3ee', '#f472b6'][i % 5],
+        color: ['#c4b5fd', '#a78bfa', '#fbbf24', '#fde68a', '#e0e7ff'][i % 5],
         distance: 60 + (i % 5) * 30,
       })),
     []
   )
 
   return (
-    <div className="text-center max-w-md mx-auto">
-      {/* Celebration icon with particles */}
-      <div className="relative mx-auto mb-8 w-40 h-40 flex items-center justify-center">
-        {/* Burst particles */}
+    <div className="mx-auto max-w-lg text-center">
+      {/* Burst */}
+      <div className="relative mx-auto mb-10 flex h-44 w-44 items-center justify-center">
         {particles.map((p, i) => (
           <motion.div
             key={i}
@@ -183,138 +185,165 @@ function ActivatedState() {
             }}
             initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
             animate={{
-              x: Math.cos((p.x * Math.PI) / 180) * p.distance,
-              y: Math.sin((p.x * Math.PI) / 180) * p.distance,
+              x: Math.cos((p.angle * Math.PI) / 180) * p.distance,
+              y: Math.sin((p.angle * Math.PI) / 180) * p.distance,
               opacity: [0, 1, 0],
-              scale: [0, 1.5, 0],
+              scale: [0, 1.6, 0],
             }}
-            transition={{
-              duration: 1.2,
-              delay: p.delay + 0.2,
-              ease: 'easeOut',
-            }}
+            transition={{ duration: 1.3, delay: p.delay + 0.2, ease: 'easeOut' }}
           />
         ))}
 
-        {/* Glow ring */}
+        {/* Ring burst */}
         <motion.div
-          className="absolute rounded-full border-2 border-yellow-400/30"
+          className="absolute rounded-full border border-amber-300/50"
           initial={{ width: 0, height: 0, opacity: 0 }}
-          animate={{ width: 140, height: 140, opacity: [0, 0.6, 0] }}
+          animate={{ width: 160, height: 160, opacity: [0, 0.7, 0] }}
           transition={{ duration: 1, delay: 0.1, ease: 'easeOut' }}
           style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
         />
 
+        {/* Central amber diamond */}
         <motion.div
           className="relative"
-          initial={{ scale: 0, rotate: -180 }}
+          initial={{ scale: 0, rotate: -90 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
         >
-          <motion.div
-            className="absolute -inset-2 rounded-full bg-yellow-400/10"
-            animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          <span
+            aria-hidden
+            className="absolute inset-0 -m-6 rounded-full bg-violet-500/[0.15] blur-2xl"
           />
-          <div className="flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 shadow-lg shadow-yellow-900/40">
-            <span className="text-4xl">⭐</span>
-          </div>
+          <span
+            aria-hidden
+            className="relative block h-5 w-5 rotate-45 bg-amber-300/95 shadow-[0_0_34px_rgba(251,191,36,0.8)]"
+          />
         </motion.div>
       </div>
 
-      <motion.h1
-        className="text-2xl font-semibold text-white mb-2"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
-      >
-        Добре дошли в Celestia Премиум! ✨
-      </motion.h1>
       <motion.p
-        className="text-white/60 text-sm mb-6"
+        className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.55, duration: 0.4 }}
+        transition={{ delay: 0.5 }}
       >
-        Премиум достъпът ти е активен
+        Premium · активен
+      </motion.p>
+      <motion.h1
+        className="mb-4 font-display text-[2rem] leading-[1.15] tracking-tight sm:text-[2.375rem]"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.55, duration: 0.55 }}
+      >
+        <span className="font-light text-slate-400">Добре дошъл в </span>
+        <span className="bg-gradient-to-br from-white via-slate-100 to-amber-200/90 bg-clip-text font-semibold text-transparent drop-shadow-[0_0_28px_rgba(251,191,36,0.22)]">
+          Stellaeum.
+        </span>
+      </motion.h1>
+      <motion.p
+        className="font-display text-[15px] font-light leading-relaxed text-slate-400"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7, duration: 0.45 }}
+      >
+        Звездите вече разкриват цялата история.
       </motion.p>
 
-      {/* Unlocked features summary */}
-      <motion.div
-        className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-6 py-5 mb-8 text-left space-y-2"
+      {/* Unlocked features */}
+      <motion.ul
+        className="mx-auto mt-10 max-w-sm space-y-3 border-y border-white/[0.06] py-6 text-left"
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
+        transition={{ delay: 0.75, duration: 0.55 }}
       >
         {[
           'Пълни AI анализи за всички теми',
           'Неограничени персонализирани четения',
-          'Дневен хороскоп с детайлни транзити',
+          'Детайлни транзити и прогресии',
           'Приоритетен достъп до нови функции',
         ].map((feature, i) => (
-          <motion.div
+          <motion.li
             key={feature}
-            className="flex items-center gap-2 text-sm text-white/80"
+            className="flex items-start gap-3"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.7 + i * 0.1, duration: 0.3 }}
+            transition={{ delay: 0.85 + i * 0.09, duration: 0.32 }}
           >
-            <span className="text-purple-400">✦</span>
-            {feature}
-          </motion.div>
+            <span
+              aria-hidden
+              className="mt-[9px] h-1 w-1 shrink-0 rotate-45 bg-amber-300/85 shadow-[0_0_6px_rgba(251,191,36,0.55)]"
+            />
+            <span className="font-display text-[14px] leading-relaxed text-slate-300/90">
+              {feature}
+            </span>
+          </motion.li>
         ))}
-      </motion.div>
+      </motion.ul>
 
       <motion.div
+        className="mt-10"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.1, duration: 0.4 }}
+        transition={{ delay: 1.3, duration: 0.4 }}
       >
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-purple-900/40 hover:from-purple-500 hover:to-indigo-500 transition-all"
+          className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-amber-300/50 bg-gradient-to-r from-violet-500/15 via-transparent to-amber-400/15 px-7 py-3 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-100 transition-all hover:border-amber-300/80 hover:text-white hover:shadow-[0_0_32px_rgba(251,191,36,0.24)]"
         >
-          Към таблото
-          <span aria-hidden>→</span>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-amber-200/20 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+          />
+          <span aria-hidden className="relative h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.7)]" />
+          <span className="relative">Към таблото</span>
+          <svg className="relative h-3 w-3 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </Link>
       </motion.div>
     </div>
   )
 }
 
+/* ─── Timeout ─────────────────────────────────────────── */
 function TimeoutState() {
   return (
-    <div className="text-center max-w-md mx-auto">
-      {/* Neutral cosmic icon */}
-      <motion.div
-        className="flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full bg-white/5 border border-white/10"
-        initial={{ scale: 0.8 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.4 }}
-      >
-        <span className="text-3xl">🌌</span>
-      </motion.div>
+    <div className="mx-auto max-w-md text-center">
+      <div className="mb-6 flex justify-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm">
+          <span
+            aria-hidden
+            className="h-3 w-3 rotate-45 bg-amber-300/70 shadow-[0_0_14px_rgba(251,191,36,0.55)]"
+          />
+        </div>
+      </div>
 
-      <h1 className="text-xl font-semibold text-white mb-3">
-        Активирането продължава...
+      <p className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-500">
+        Изчакване
+      </p>
+      <h1 className="mb-4 font-display text-[1.625rem] font-semibold leading-tight tracking-tight text-slate-100">
+        Активирането продължава…
       </h1>
-      <p className="text-white/60 text-sm mb-6">
-        Ако активирането отнеме повече време, опреснете страницата или се
-        свържете с нас.
+      <p className="mb-8 font-display text-[14px] font-light leading-relaxed text-slate-400">
+        Ако отнема повече време, опресни страницата или се свържи с нас.
       </p>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+      <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
         <button
           onClick={() => window.location.reload()}
-          className="rounded-lg border border-white/20 bg-white/5 px-5 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+          className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 transition-colors hover:text-amber-300"
         >
-          Опресни страницата
+          Опресни
         </button>
         <Link
           href="/dashboard"
-          className="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:from-purple-500 hover:to-indigo-500 transition-all"
+          className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-amber-300/40 bg-gradient-to-r from-violet-500/10 via-transparent to-amber-400/10 px-6 py-2.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200 transition-all hover:border-amber-300/70 hover:text-amber-100 hover:shadow-[0_0_24px_rgba(251,191,36,0.18)]"
         >
-          Към таблото
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-amber-200/15 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+          />
+          <span className="relative">Към таблото</span>
         </Link>
       </div>
     </div>

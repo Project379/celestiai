@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Stellaeum",
+    "slug": "stellaeum",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "stellaeum",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.stellaeum.app"
+    },
+    "android": {
+      "package": "com.stellaeum.app"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#08060f"
+        }
+      ],
+      "expo-secure-store",
+      "expo-web-browser",
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

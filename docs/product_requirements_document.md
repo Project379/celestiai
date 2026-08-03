@@ -1,11 +1,11 @@
-# Product Requirements Document (PRD): Celestia AI
+# Product Requirements Document (PRD): Stellaeum AI
 
 **Version:** 1.0  
 **Date:** January 18, 2026  
 **Status:** Draft / Review Required
 
 ## 1. Executive Summary
-**Celestia AI (BG Edition)** is a premium, subscription-based astrology application designed for the Bulgarian market. It harmonizes rigorous astronomical accuracy (Swiss Ephemeris) with the deep spiritual heritage of the region (Petar Dunov/White Brotherhood influence), utilizing state-of-the-art AI for hyper-personalized, culturally resonant readings.
+**Stellaeum AI (BG Edition)** is a premium, subscription-based astrology application designed for the Bulgarian market. It harmonizes rigorous astronomical accuracy (Swiss Ephemeris) with the deep spiritual heritage of the region (Petar Dunov/White Brotherhood influence), utilizing state-of-the-art AI for hyper-personalized, culturally resonant readings.
 
 ## 2. Core Value Proposition
 -   **Scientific & Spiritual**: Bridging NASA-level precision with the intuitive wisdom valued in Bulgarian culture.

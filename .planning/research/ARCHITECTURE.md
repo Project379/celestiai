@@ -1,4 +1,4 @@
-# Celestia AI - Universal App Architecture Research
+# Stellaeum AI - Universal App Architecture Research
 
 **Research Date:** January 2026
 **Domain:** Premium Astrology SaaS (Web + iOS, Bulgarian Market)
@@ -35,7 +35,7 @@
 |  |  +------------------------------------------------------------------+    |   |
 |  |  |                                                                  |    |   |
 |  |  |  +---------------+  +---------------+  +---------------------+   |    |   |
-|  |  |  | @celestia/app |  | @celestia/db  |  | @celestia/astrology |   |    |   |
+|  |  |  | @stellaeum/app |  | @stellaeum/db  |  | @stellaeum/astrology |   |    |   |
 |  |  |  +---------------+  +---------------+  +---------------------+   |    |   |
 |  |  |  | Screens/UI    |  | Drizzle Schema|  | swisseph-wasm types |   |    |   |
 |  |  |  | Navigation    |  | Supabase      |  | Chart calculations  |   |    |   |
@@ -44,7 +44,7 @@
 |  |  |  +---------------+  +---------------+  +---------------------+   |    |   |
 |  |  |                                                                  |    |   |
 |  |  |  +---------------+  +---------------+  +---------------------+   |    |   |
-|  |  |  | @celestia/ui  |  | @celestia/api |  | @celestia/config    |   |    |   |
+|  |  |  | @stellaeum/ui  |  | @stellaeum/api |  | @stellaeum/config    |   |    |   |
 |  |  |  +---------------+  +---------------+  +---------------------+   |    |   |
 |  |  |  | NativeWind    |  | tRPC/API types|  | tsconfig bases      |   |    |   |
 |  |  |  | Design tokens |  | Validators    |  | ESLint configs      |   |    |   |
@@ -85,19 +85,19 @@
 |-----------|---------------|----------|------------------|
 | **apps/web** | Next.js web application with SSR/SSG, API routes for WASM calculations | Web | Next.js 15, App Router, D3.js, Canvas |
 | **apps/mobile** | Expo mobile application shell | iOS/Android | Expo SDK 52, React Navigation, RN Skia |
-| **@celestia/app** | Shared screens, business logic, navigation patterns | Universal | Solito, React, Zustand, TanStack Query |
-| **@celestia/db** | Database schema, Supabase client, migrations | Server/Universal | Drizzle ORM, Supabase, PostgreSQL |
-| **@celestia/astrology** | Swiss Ephemeris types, calculation interfaces, zodiac utilities | Universal (types) | TypeScript, Zod |
-| **@celestia/ui** | Design system, NativeWind components, primitives | Universal | NativeWind v4, Tailwind CSS |
-| **@celestia/api** | Shared API types, validators, tRPC contracts | Universal | tRPC, Zod |
-| **@celestia/config** | Shared configs (tsconfig, eslint, tailwind) | Build-time | TypeScript, ESLint |
+| **@stellaeum/app** | Shared screens, business logic, navigation patterns | Universal | Solito, React, Zustand, TanStack Query |
+| **@stellaeum/db** | Database schema, Supabase client, migrations | Server/Universal | Drizzle ORM, Supabase, PostgreSQL |
+| **@stellaeum/astrology** | Swiss Ephemeris types, calculation interfaces, zodiac utilities | Universal (types) | TypeScript, Zod |
+| **@stellaeum/ui** | Design system, NativeWind components, primitives | Universal | NativeWind v4, Tailwind CSS |
+| **@stellaeum/api** | Shared API types, validators, tRPC contracts | Universal | tRPC, Zod |
+| **@stellaeum/config** | Shared configs (tsconfig, eslint, tailwind) | Build-time | TypeScript, ESLint |
 
 ---
 
 ## Recommended Project Structure
 
 ```
-celestia-ai/
+stellaeum-ai/
 ├── apps/
 │   ├── web/                              # Next.js 15 app
 │   │   ├── app/                          # App Router
@@ -462,7 +462,7 @@ export async function calculatePlanetPositions(
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { calculatePlanetPositions } from '@/lib/swisseph'
-import { chartInputSchema } from '@celestia/astrology/validators'
+import { chartInputSchema } from '@stellaeum/astrology/validators'
 
 export async function POST(request: Request) {
   const { userId } = await auth()
@@ -537,7 +537,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
 ```tsx
 // packages/app/features/chart/hooks/useChart.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@celestia/db'
+import { supabase } from '@stellaeum/db'
 
 export function useChart(id: string | undefined) {
   return useQuery({
@@ -784,7 +784,7 @@ Use React Native Skia for mobile (performance) and D3.js + Canvas for web:
 
 import { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
-import type { ChartData } from '@celestia/astrology/types'
+import type { ChartData } from '@stellaeum/astrology/types'
 
 export function NatalChartRenderer({ data }: { data: ChartData }) {
   const svgRef = useRef<SVGSVGElement>(null)
@@ -852,7 +852,7 @@ export function NatalChartRenderer({ data }: { data: ChartData }) {
 // packages/app/features/chart/components/NatalChartRenderer/index.native.tsx (NATIVE)
 import { Canvas, Circle, Path, Skia, Text, useFont } from '@shopify/react-native-skia'
 import { View } from 'react-native'
-import type { ChartData } from '@celestia/astrology/types'
+import type { ChartData } from '@stellaeum/astrology/types'
 
 export function NatalChartRenderer({ data }: { data: ChartData }) {
   const font = useFont(require('./fonts/Inter-Medium.ttf'), 10)
@@ -929,8 +929,8 @@ export function NatalChartRenderer({ data }: { data: ChartData }) {
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { serverDb } from '@celestia/db'
-import { users } from '@celestia/db/schema'
+import { serverDb } from '@stellaeum/db'
+import { users } from '@stellaeum/db/schema'
 import { eq } from 'drizzle-orm'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -991,8 +991,8 @@ export async function POST(request: Request) {
 ```tsx
 // apps/web/app/api/webhooks/revenuecat/route.ts
 import { NextResponse } from 'next/server'
-import { serverDb } from '@celestia/db'
-import { users } from '@celestia/db/schema'
+import { serverDb } from '@stellaeum/db'
+import { users } from '@stellaeum/db/schema'
 import { eq } from 'drizzle-orm'
 
 interface RevenueCatWebhook {

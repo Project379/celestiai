@@ -1,6 +1,7 @@
 'use client'
 
 import { useClerk } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 import { useState, useCallback, useEffect, useRef } from 'react'
 
 interface LogoutConfirmDialogProps {
@@ -10,6 +11,7 @@ interface LogoutConfirmDialogProps {
 
 export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProps) {
   const { signOut } = useClerk()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
 
@@ -27,12 +29,16 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
   const handleSignOut = useCallback(async () => {
     setIsLoading(true)
     try {
-      await signOut({ redirectUrl: '/' })
+      await signOut()
+      onClose()
+      router.replace('/')
+      router.refresh()
     } catch (error) {
       console.error('Sign out error:', error)
+    } finally {
       setIsLoading(false)
     }
-  }, [signOut])
+  }, [onClose, router, signOut])
 
   const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
     const rect = dialogRef.current?.getBoundingClientRect()
@@ -53,14 +59,14 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
       ref={dialogRef}
       onClick={handleBackdropClick}
       onClose={onClose}
-      className="fixed inset-0 z-[100] m-auto max-w-md rounded-xl border border-slate-700/50 bg-slate-900/95 p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+      className="fixed inset-0 z-[100] m-auto max-w-md rounded-2xl border border-slate-200/[0.06] bg-[#0d0b18]/98 p-0 shadow-[0_30px_90px_rgba(0,0,0,0.9)] backdrop:bg-black/70 backdrop:backdrop-blur-sm"
     >
       <div className="p-6">
         {/* Header */}
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-500/10">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-slate-200/10 bg-violet-500/10 shadow-[0_0_20px_rgba(167,139,250,0.15)]">
             <svg
-              className="h-6 w-6 text-purple-400"
+              className="h-6 w-6 text-violet-300"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -87,7 +93,7 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
+            className="flex-1 rounded-lg border border-slate-200/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-slate-200 transition-all hover:border-slate-200/20 hover:bg-white/[0.06] hover:text-white focus:outline-none focus:ring-2 focus:ring-violet-400/30 disabled:opacity-50"
           >
             Отказ
           </button>
@@ -95,7 +101,7 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
             type="button"
             onClick={handleSignOut}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-[0_0_20px_rgba(167,139,250,0.25)] transition-all hover:from-violet-500 hover:to-indigo-500 hover:shadow-[0_0_28px_rgba(167,139,250,0.35)] focus:outline-none focus:ring-2 focus:ring-violet-400/40 disabled:opacity-50"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">

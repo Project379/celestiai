@@ -20,9 +20,9 @@
  * ...
  */
 
-import type { ChartData, PlanetPosition, AspectData } from '@celestia/astrology/client'
-import { PLANETS_BG, ZODIAC_SIGNS_BG, ASPECTS_BG } from '@celestia/astrology/client'
-import type { Planet, ZodiacSign, AspectType } from '@celestia/astrology/client'
+import type { ChartData, PlanetPosition, AspectData } from '@stellaeum/astrology/client'
+import { PLANETS_BG, ZODIAC_SIGNS_BG, ASPECTS_BG } from '@stellaeum/astrology/client'
+import type { Planet, ZodiacSign, AspectType } from '@stellaeum/astrology/client'
 
 /**
  * Formats a planet position as a human-readable line in Bulgarian.
@@ -80,7 +80,7 @@ export function chartToPromptText(chartData: ChartData): string {
 
   // Birth time note
   if (!chartData.birthTimeKnown) {
-    lines.push('(Часът на раждане е неизвестен — Асцендент и домове са приблизителни)')
+    lines.push('(Часът на раждане е неизвестен - Асцендент и домове са приблизителни)')
   }
 
   // Aspects section

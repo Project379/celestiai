@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 
 const PLANET_ICONS = ['sun', 'moon', 'mercury', 'venus', 'mars']
@@ -16,114 +17,156 @@ export function NatalWheelLegend() {
         setOpen(false)
       }
     }
-
     document.addEventListener('mousedown', handlePointerDown)
     return () => document.removeEventListener('mousedown', handlePointerDown)
   }, [])
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute right-3 top-3 z-[60]"
-    >
+    <div ref={containerRef} className="absolute right-3 top-3 z-[60]">
       <button
         type="button"
         aria-label="Легенда на наталната карта"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-slate-900/80 text-slate-200 shadow-lg backdrop-blur transition-colors hover:border-cyan-400/40 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+        onClick={() => setOpen((v) => !v)}
+        className="group relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/[0.08] bg-[#08060f]/85 backdrop-blur transition-all duration-200 hover:border-amber-300/50 hover:shadow-[0_0_18px_rgba(251,191,36,0.22)] focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60"
       >
-        <span className="text-sm font-semibold">i</span>
+        <span className="font-cinzel text-[11px] font-semibold text-slate-300 transition-colors group-hover:text-amber-200">
+          i
+        </span>
       </button>
 
-      {open && (
-        <div className="absolute right-0 mt-2 w-[340px] rounded-2xl border border-slate-700/70 bg-slate-950/95 p-4 text-sm text-slate-300 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-          <h4 className="mb-3 text-sm font-semibold text-slate-100">
-            Как да четете наталната карта
-          </h4>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -4, filter: 'blur(4px)' }}
+            transition={{ duration: 0.28, ease: [0.22, 0.68, 0.35, 1] }}
+            className="mystic-panel absolute right-0 mt-3 w-[320px] overflow-hidden"
+          >
+            {/* Ambient atmosphere */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -left-14 -top-14 h-[220px] w-[220px] rounded-full bg-violet-500/[0.10] blur-[80px]"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-10 -bottom-10 h-[160px] w-[160px] rounded-full bg-amber-500/[0.06] blur-[70px]"
+            />
 
-          <div className="space-y-3">
-            <div>
-              <div className="mb-1 flex items-center gap-2">
-                <span className="inline-flex gap-1 rounded-lg bg-slate-900/80 px-2 py-1 text-slate-200">
-                  {ZODIAC_ICONS.map(name => <CelestialIcon key={name} name={name} size={18} />)}
-                </span>
-                <p className="font-medium text-slate-200">Зодиак</p>
-              </div>
-              <p className="text-slate-400">
-                Външният пояс е разделен на 12 зодиакални знака. Той показва в кой знак попада всяка планета.
+            <div className="relative px-5 py-5">
+              {/* Header */}
+              <p className="mb-4 flex items-center gap-3 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/80">
+                <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_6px_rgba(251,191,36,0.55)]" />
+                Легенда
               </p>
-            </div>
 
-            <div>
-              <p className="font-medium text-slate-200">Домове</p>
-              <p className="text-slate-400">
-                Вътрешните линии и номерата 1-12 показват домовете. Те описват в коя житейска сфера действа дадена планета.
-              </p>
-            </div>
-
-            <div>
-              <div className="mb-1 flex items-center gap-2">
-                <span className="inline-flex gap-1 rounded-lg bg-slate-900/80 px-2 py-1 text-slate-200">
-                  {PLANET_ICONS.map(name => <CelestialIcon key={name} name={name} size={18} />)}
-                </span>
-                <p className="font-medium text-slate-200">Планети</p>
-              </div>
-              <p className="text-slate-400">
-                Цветните символи в картата са планетите. Натиснете върху тях, за да видите тълкуване.
-              </p>
-            </div>
-
-            <div>
-              <p className="font-medium text-slate-200">Аспекти</p>
-              <p className="text-slate-400">
-                Линиите в центъра показват връзки между планетите. Те описват как различни части от характера работят в синхрон или напрежение.
-              </p>
-            </div>
-
-            <div>
-              <p className="font-medium text-slate-200">Аспектни точки</p>
-              <p className="text-slate-400">
-                Малките цветни точки показват откъде точно започва аспектът за всяка планета. Цветът им съвпада със съответната планета.
-              </p>
-            </div>
-
-            <div>
-              <div className="mb-1 flex items-center gap-2">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-slate-900/80 text-xs font-bold text-red-400">
-                  R
-                </span>
-                <p className="font-medium text-slate-200">Ретрограден (R)</p>
-              </div>
-              <p className="text-slate-400">
-                Малкото червено „R“ до планета означава, че тя е ретроградна – от Земята изглежда сякаш се движи назад. Тази енергия обикновено се проявява по-вътрешно или изисква преосмисляне.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-900/70 p-3">
-              <div>
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="h-3 w-8 rounded-full bg-cyan-400" />
-                  <span className="font-medium text-slate-200">Синя линия</span>
+              {/* Editorial definition list */}
+              <dl className="divide-y divide-white/[0.05]">
+                {/* Zodiac */}
+                <div className="flex items-start gap-4 py-3">
+                  <span className="inline-flex shrink-0 items-center gap-0.5 text-slate-200/85">
+                    {ZODIAC_ICONS.map((name) => (
+                      <CelestialIcon key={name} name={name} size={13} />
+                    ))}
+                  </span>
+                  <div className="min-w-0">
+                    <dt className="font-display text-[13px] font-semibold text-slate-100">
+                      Зодиак
+                    </dt>
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
+                      12 знака по външния пояс - показват в кой знак попада всяка планета.
+                    </dd>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-400">
-                  Асцендент (Изгряващ знак). Това е знакът, изгрял на хоризонта в момента на раждането. Олицетворява външното ви "Аз", спонтанния ви подход към света и първото впечатление, което оставяте – "маската", с която посрещате живота.
-                </p>
-              </div>
 
-              <div>
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="h-3 w-8 rounded-full bg-pink-400" />
-                  <span className="font-medium text-slate-200">Розова линия</span>
+                {/* Houses */}
+                <div className="flex items-start gap-4 py-3">
+                  <span className="inline-flex shrink-0 items-center justify-center font-cinzel text-[10px] font-semibold tabular-nums text-amber-300/80">
+                    1–12
+                  </span>
+                  <div className="min-w-0">
+                    <dt className="font-display text-[13px] font-semibold text-slate-100">
+                      Домове
+                    </dt>
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
+                      12 житейски сфери - домът казва <span className="text-slate-300">къде</span> действа планетата.
+                    </dd>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-400">
-                  Медиум Цели (MC). Най-високата точка в картата. Показва вашата кариера, житейско призвание, най-високи амбиции, социален статус и ролята ви в обществото.
-                </p>
-              </div>
+
+                {/* Planets */}
+                <div className="flex items-start gap-4 py-3">
+                  <span className="inline-flex shrink-0 items-center gap-0.5 text-slate-200/85">
+                    {PLANET_ICONS.map((name) => (
+                      <CelestialIcon key={name} name={name} size={13} />
+                    ))}
+                  </span>
+                  <div className="min-w-0">
+                    <dt className="font-display text-[13px] font-semibold text-slate-100">
+                      Планети
+                    </dt>
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
+                      Всяка носи жизнен принцип. Натисни за тълкуване.
+                    </dd>
+                  </div>
+                </div>
+
+                {/* Aspects */}
+                <div className="flex items-start gap-4 py-3">
+                  <span className="flex shrink-0 flex-col gap-1 py-1">
+                    <span className="h-px w-6 bg-emerald-400/80 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+                    <span className="h-px w-6 bg-rose-400/80 shadow-[0_0_6px_rgba(251,113,133,0.5)]" />
+                  </span>
+                  <div className="min-w-0">
+                    <dt className="font-display text-[13px] font-semibold text-slate-100">
+                      Аспекти
+                    </dt>
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
+                      Линиите в центъра - зелено е хармония, розово е напрежение.
+                    </dd>
+                  </div>
+                </div>
+
+                {/* Angles */}
+                <div className="flex items-start gap-4 py-3">
+                  <span className="flex shrink-0 flex-col gap-1 py-1">
+                    <span className="h-px w-6 bg-cyan-400/80 shadow-[0_0_6px_rgba(34,211,238,0.5)]" />
+                    <span className="h-px w-6 bg-pink-400/80 shadow-[0_0_6px_rgba(244,114,182,0.5)]" />
+                  </span>
+                  <div className="min-w-0">
+                    <dt className="font-display text-[13px] font-semibold text-slate-100">
+                      Ъгли
+                    </dt>
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
+                      Асцендент <span className="text-slate-300">(персона)</span> и Медиум Цели <span className="text-slate-300">(цел)</span>.
+                    </dd>
+                  </div>
+                </div>
+
+                {/* Retrograde */}
+                <div className="flex items-start gap-4 py-3">
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center font-cinzel text-[10px] font-bold text-rose-300/90">
+                    R
+                  </span>
+                  <div className="min-w-0">
+                    <dt className="font-display text-[13px] font-semibold text-slate-100">
+                      Ретрограден
+                    </dt>
+                    <dd className="mt-0.5 font-display text-[12px] leading-snug text-slate-300/90">
+                      Планетата изглежда движеща се назад - по-вътрешна енергия.
+                    </dd>
+                  </div>
+                </div>
+              </dl>
+
+              <p className="mt-4 border-t border-white/[0.05] pt-3 font-cinzel text-[8.5px] font-semibold uppercase tracking-[0.28em] text-slate-600">
+                За детайли → раздел Речник
+              </p>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

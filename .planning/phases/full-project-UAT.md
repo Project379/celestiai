@@ -14,7 +14,7 @@ name: Landing Page with Starfield and Navigation
 expected: |
   Navigate to the root URL (localhost:3000). You should see:
   - Animated starfield background with twinkling stars
-  - "Celestia AI" title with gradient styling
+  - "Stellaeum AI" title with gradient styling
   - Bulgarian motto/tagline text
   - Sticky navigation bar with tabs: Функции, Цени, За нас
   - "Вход" (login) and CTA buttons linking to /auth
@@ -25,7 +25,7 @@ awaiting: user response
 ## Tests
 
 ### 1. Landing Page with Starfield and Navigation
-expected: Navigate to root URL. See animated starfield, "Celestia AI" gradient title, Bulgarian motto, sticky nav with Функции/Цени/За нас tabs, login/CTA buttons to /auth, scrollable sections, footer with /privacy link.
+expected: Navigate to root URL. See animated starfield, "Stellaeum AI" gradient title, Bulgarian motto, sticky nav with Функции/Цени/За нас tabs, login/CTA buttons to /auth, scrollable sections, footer with /privacy link.
 result: [pending]
 
 ### 2. Feature Cards with Icons and Premium Badges
@@ -37,7 +37,7 @@ expected: Scroll to Pricing section. See Free vs Premium comparison cards. Premi
 result: [pending]
 
 ### 4. Auth Page with Cosmic Background
-expected: Navigate to /auth. See animated cosmic background with twinkling stars and nebula glow. Celestia AI branding header with Bulgarian tagline. Clerk sign-in form with Bulgarian localization. Purple/violet themed form elements.
+expected: Navigate to /auth. See animated cosmic background with twinkling stars and nebula glow. Stellaeum AI branding header with Bulgarian tagline. Clerk sign-in form with Bulgarian localization. Purple/violet themed form elements.
 result: [pending]
 
 ### 5. Sign Up and Email Verification
@@ -93,7 +93,7 @@ expected: On /chart page, see Oracle section with 4 topic cards: Личност 
 result: [pending]
 
 ### 18. AI Oracle General Reading
-expected: Click the Личност (general/personality) topic card. Streaming text begins with pulsing "Celestia консултира звездите..." loading state. Reading streams in Bulgarian, citing specific degree positions (e.g., "Вашето Слънце на 15 градуса Лъв..."). Planet names in reading are highlighted with accent colors.
+expected: Click the Личност (general/personality) topic card. Streaming text begins with pulsing "Stellaeum консултира звездите..." loading state. Reading streams in Bulgarian, citing specific degree positions (e.g., "Вашето Слънце на 15 градуса Лъв..."). Planet names in reading are highlighted with accent colors.
 result: [pending]
 
 ### 19. Oracle Locked Premium Topics
@@ -117,7 +117,7 @@ expected: Navigate to /pricing. See side-by-side Free/Premium cards (stacked on 
 result: [pending]
 
 ### 24. Stripe Checkout Flow
-expected: On /pricing, click "Отключи Премиум". Redirected to Stripe checkout page. Complete payment with test card (4242 4242 4242 4242). Redirected to /subscription/success. See activating state with cosmic spinner, then celebration message "Добре дошли в Celestia Премиум!".
+expected: On /pricing, click "Отключи Премиум". Redirected to Stripe checkout page. Complete payment with test card (4242 4242 4242 4242). Redirected to /subscription/success. See activating state with cosmic spinner, then celebration message "Добре дошли в Stellaeum Премиум!".
 result: [pending]
 
 ### 25. Settings Page - Subscription Management

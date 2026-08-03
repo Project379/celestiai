@@ -49,34 +49,46 @@ export function TopicCard({
       onClick={onClick}
       onKeyDown={handleKeyDown}
       className={[
-        'relative flex flex-col items-center gap-2 rounded-xl border p-4 transition-all duration-200',
-        'cursor-pointer select-none outline-none',
-        'focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-900',
+        'group relative flex flex-col items-center gap-2.5 rounded-2xl border px-4 py-5 transition-all duration-300',
+        'cursor-pointer select-none outline-none backdrop-blur-sm',
+        'focus-visible:ring-1 focus-visible:ring-amber-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08060f]',
         isActive
-          ? 'border-purple-500/70 bg-slate-800/80 shadow-[0_0_16px_rgba(168,85,247,0.3)]'
+          ? 'border-amber-300/45 bg-gradient-to-br from-violet-500/[0.10] via-transparent to-amber-400/[0.06] shadow-[0_0_28px_rgba(167,139,250,0.18)]'
           : isLocked
-            ? 'border-slate-700/30 bg-slate-800/30 opacity-70'
-            : 'border-slate-700/50 bg-slate-800/60 hover:border-slate-600/70 hover:bg-slate-800/80',
-        'backdrop-blur',
+            ? 'border-white/[0.04] bg-white/[0.015] opacity-70'
+            : 'border-white/[0.06] bg-white/[0.015] hover:border-violet-300/25 hover:bg-white/[0.03] hover:shadow-[0_0_22px_rgba(167,139,250,0.10)]',
       ].join(' ')}
       aria-pressed={isActive}
       aria-label={`${label}${isLocked ? ' (заключено)' : ''}${hasSavedReading ? ' (записано)' : ''}`}
     >
+      {/* Amber corner mark on active */}
+      {isActive && (
+        <span aria-hidden className="absolute left-3 top-3 h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+      )}
+
       {/* Topic icon */}
       <div
         className={[
-          'flex h-8 w-8 items-center justify-center',
-          isLocked ? 'text-slate-500' : isActive ? 'text-purple-300' : 'text-slate-300',
+          'flex h-9 w-9 items-center justify-center transition-colors duration-300',
+          isLocked
+            ? 'text-slate-600'
+            : isActive
+              ? 'text-amber-200'
+              : 'text-violet-300/85 group-hover:text-violet-200',
         ].join(' ')}
       >
         {icon}
       </div>
 
-      {/* Label */}
+      {/* Label - Cinzel uppercase for editorial rhythm */}
       <span
         className={[
-          'text-xs font-medium',
-          isLocked ? 'text-slate-500' : isActive ? 'text-purple-200' : 'text-slate-300',
+          'font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em] transition-colors duration-300',
+          isLocked
+            ? 'text-slate-600'
+            : isActive
+              ? 'text-white'
+              : 'text-slate-400 group-hover:text-slate-100',
         ].join(' ')}
       >
         {label}
@@ -84,12 +96,11 @@ export function TopicCard({
 
       {/* Lock overlay for premium-gated topics */}
       {isLocked && (
-        <div className="absolute right-2 top-2">
+        <div className="absolute right-2.5 top-2.5" aria-hidden>
           <svg
-            className="h-3.5 w-3.5 text-slate-500"
+            className="h-3 w-3 text-slate-600"
             fill="currentColor"
             viewBox="0 0 20 20"
-            aria-hidden="true"
           >
             <path
               fillRule="evenodd"
@@ -100,22 +111,13 @@ export function TopicCard({
         </div>
       )}
 
-      {/* Saved reading indicator */}
+      {/* Saved-reading indicator - tiny amber diamond */}
       {hasSavedReading && !isLocked && (
-        <div className="absolute left-2 top-2">
-          <svg
-            className="h-3 w-3 text-emerald-400/70"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </div>
+        <span
+          aria-hidden
+          className="absolute right-2.5 top-2.5 h-1 w-1 rotate-45 bg-amber-300/85 shadow-[0_0_6px_rgba(251,191,36,0.55)]"
+          title="Записано четене"
+        />
       )}
     </div>
   )

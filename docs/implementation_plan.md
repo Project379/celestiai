@@ -1,4 +1,4 @@
-# Implementation Plan - Celestia AI (Universal)
+# Implementation Plan - Stellaeum AI (Universal)
 
 ## Goal
 Build a state-of-the-art "Universal" astrology app (Web + iOS + Android) for the Bulgarian market.

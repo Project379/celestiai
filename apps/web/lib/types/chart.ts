@@ -1,11 +1,13 @@
 /**
  * Canonical type for a chart row as returned by Supabase queries.
  *
- * Supabase returns snake_case column names, unlike the Drizzle schema
- * (`@celestia/db/schema`) which uses camelCase. This type is the single
- * source of truth for the Supabase response shape across the web app.
+ * Hand-maintained snake_case type matching the Supabase REST response
+ * shape. Planned replacement is the generated Database type from
+ * `supabase gen types typescript` (see MIGRATION_TOOLING.md open items)
+ * — until that lands, this stays the source of truth for web code.
  *
- * If the Drizzle `charts` schema changes, update this type to match.
+ * If the `charts` DB schema changes, update this type and the matching
+ * input shapes in `packages/core/src/charts/birth-data.ts` together.
  */
 export interface ChartRow {
   id: string

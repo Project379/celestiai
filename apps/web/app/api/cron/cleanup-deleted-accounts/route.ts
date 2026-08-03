@@ -1,5 +1,6 @@
 import { clerkClient } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { deleteUserDiaryEntries } from '@stellaeum/core/diary/entries'
 
 /**
  * GET /api/cron/cleanup-deleted-accounts
@@ -70,6 +71,48 @@ export async function GET(req: Request) {
         .delete()
         .eq('user_id', clerkId)
 
+      // Delete crush / saved-people reports before profiles
+      await supabase
+        .from('saved_people_reports')
+        .delete()
+        .eq('user_id', clerkId)
+
+      await supabase
+        .from('saved_people_profiles')
+        .delete()
+        .eq('user_id', clerkId)
+
+      // Delete connection-space records where the user participated or initiated
+      await supabase
+        .from('connection_reports')
+        .delete()
+        .eq('generated_by', clerkId)
+
+      await supabase
+        .from('connection_invites')
+        .delete()
+        .eq('inviter_user_id', clerkId)
+
+      const { data: spaceMemberships } = await supabase
+        .from('connection_members')
+        .select('space_id')
+        .eq('user_id', clerkId)
+
+      const spaceIds = (spaceMemberships ?? []).map((row: { space_id: string }) => row.space_id)
+
+      await supabase
+        .from('connection_members')
+        .delete()
+        .eq('user_id', clerkId)
+
+      if (spaceIds.length > 0) {
+        await supabase
+          .from('connection_spaces')
+          .delete()
+          .in('id', spaceIds)
+          .eq('created_by_user_id', clerkId)
+      }
+
       // Delete charts
       await supabase
         .from('charts')
@@ -81,6 +124,20 @@ export async function GET(req: Request) {
         .from('push_subscriptions')
         .delete()
         .eq('user_id', clerkId)
+
+      // Delete diary entries (§8.7). Uses the core helper per the
+      // §8.7 direction-of-travel ratification — new cascade tables go
+      // through packages/core/src/diary/entries.ts rather than inline
+      // Supabase calls. Helper returns { ok: true } | { ok: false, error,
+      // message }; a false result is logged and the batch continues,
+      // matching the "one failure shouldn't stop the batch" semantic.
+      const diaryResult = await deleteUserDiaryEntries(clerkId)
+      if (!diaryResult.ok) {
+        console.error(
+          `[Cron Cleanup] diary_entries delete failed for ${clerkId}:`,
+          diaryResult.message,
+        )
+      }
 
       // Delete user record
       await supabase
@@ -96,7 +153,7 @@ export async function GET(req: Request) {
       console.log(`[Cron Cleanup] Deleted user ${clerkId}`)
     } catch (err) {
       console.error(`[Cron Cleanup] Failed to delete user ${clerkId}:`, err)
-      // Continue with remaining users — one failure shouldn't stop the batch
+      // Continue with remaining users - one failure shouldn't stop the batch
     }
   }
 

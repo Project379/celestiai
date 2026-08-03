@@ -5,7 +5,19 @@
  * All calculations use the Moshier ephemeris (built-in, no external files needed).
  */
 
-import * as sweph from 'sweph'
+// sweph is loaded via createRequire (CJS entry) rather than static ESM
+// import to keep it off Next.js's Webpack module graph — the ESM entry
+// (`index.mjs`) uses `fileURLToPath(new URL(".", import.meta.url))` at
+// bootstrap, which fails under Next's RSC bundler on Node 24 because
+// the bundled `import.meta.url` resolves to `webpack-internal://...`
+// instead of a `file://` URL. The CJS entry (`index.js`) avoids that
+// bootstrap entirely. See doc-drift tracker #14 at
+// .planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md
+// and the preserved serverExternalPackages + transpilePackages config
+// at apps/web/next.config.js.
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+const sweph = require('sweph') as typeof import('sweph')
 
 import {
   DEFAULT_UNKNOWN_TIME,

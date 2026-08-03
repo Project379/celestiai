@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
@@ -35,7 +36,7 @@ export async function POST() {
     )
   }
 
-  logAuditEvent(userId, 'account.deletion_request', { scheduledDeletion: scheduledDeletion.toISOString() })
+  after(() => logAuditEvent(userId, 'account.deletion_request', { scheduledDeletion: scheduledDeletion.toISOString() }))
 
   return Response.json({
     message: 'Заявката за изтриване е регистрирана',
@@ -73,7 +74,7 @@ export async function DELETE() {
     )
   }
 
-  logAuditEvent(userId, 'account.deletion_confirm', { action: 'cancelled' })
+  after(() => logAuditEvent(userId, 'account.deletion_confirm', { action: 'cancelled' }))
 
   return Response.json({
     message: 'Изтриването е отменено успешно',

@@ -1,7 +1,7 @@
 'use client'
 
 import { useFormContext, useWatch } from 'react-hook-form'
-import type { BirthData, ApproximateTimeRange } from '@/lib/validators/birth-data'
+import type { BirthData, ApproximateTimeRange } from '@stellaeum/core/charts/schemas'
 
 interface ConfirmStepProps {
   onPrev: () => void
@@ -10,10 +10,10 @@ interface ConfirmStepProps {
 }
 
 const TIME_RANGE_LABELS: Record<ApproximateTimeRange, string> = {
-  morning: 'Сутрин (06:00-12:00)',
-  afternoon: 'Следобед (12:00-18:00)',
-  evening: 'Вечер (18:00-24:00)',
-  night: 'Нощ (00:00-06:00)',
+  morning: 'Сутрин (06:00–12:00)',
+  afternoon: 'Следобед (12:00–18:00)',
+  evening: 'Вечер (18:00–23:59)',
+  night: 'Нощ (00:00–06:00)',
 }
 
 export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepProps) {
@@ -29,7 +29,6 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
   const longitude = useWatch<BirthData>({ name: 'longitude' })
   const manualCoordinates = useWatch<BirthData>({ name: 'manualCoordinates' })
 
-  // Format date for display
   const formatDate = (dateStr: string) => {
     if (!dateStr) return ''
     const date = new Date(dateStr)
@@ -40,130 +39,119 @@ export function ConfirmStep({ onPrev, isSubmitting, submitError }: ConfirmStepPr
     })
   }
 
-  // Get time display
   const getTimeDisplay = () => {
-    if (birthTimeKnown && birthTime) {
-      return birthTime
-    }
+    if (birthTimeKnown && birthTime) return birthTime as string
     if (!birthTimeKnown && approximateTimeRange) {
       return TIME_RANGE_LABELS[approximateTimeRange as ApproximateTimeRange]
     }
     return 'Не е посочено'
   }
 
-  // Check if there are validation errors
   const hasErrors = Object.keys(errors).length > 0
 
+  const rows: { label: string; value: string }[] = [
+    { label: 'Име на картата',  value: (name as string) || '-' },
+    { label: 'Дата на раждане', value: formatDate(birthDate as string) || '-' },
+    { label: 'Час на раждане',  value: getTimeDisplay() },
+    { label: 'Място',            value: (cityName as string) || '-' },
+  ]
+
+  if (manualCoordinates || latitude || longitude) {
+    rows.push({
+      label: 'Координати',
+      value: `${typeof latitude === 'number' ? latitude.toFixed(4) : '0'}, ${
+        typeof longitude === 'number' ? longitude.toFixed(4) : '0'
+      }`,
+    })
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <h2 className="text-xl font-semibold text-slate-100">
-          Преглед на данните
+        <p className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/75">
+          IV · Преглед
+        </p>
+        <h2 className="font-display text-[1.375rem] font-semibold leading-tight tracking-tight text-slate-100 sm:text-[1.5rem]">
+          Подготвяме картата
         </h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Проверете рождените данни преди да изчислим наталната карта.
+        <p className="mt-2 font-display text-[14.5px] font-light leading-relaxed text-slate-400">
+          Провери данните преди да изчислим позициите на планетите.
         </p>
       </div>
 
-      {/* Summary card */}
-      <div className="space-y-4 rounded-lg border border-slate-600/50 bg-slate-800/50 p-4">
-        {/* Name */}
-        <div className="flex justify-between">
-          <span className="text-sm text-slate-400">Име на картата</span>
-          <span className="text-sm font-medium text-slate-100">{name || '-'}</span>
-        </div>
-
-        {/* Birth date */}
-        <div className="flex justify-between">
-          <span className="text-sm text-slate-400">Дата на раждане</span>
-          <span className="text-sm font-medium text-slate-100">
-            {formatDate(birthDate as string) || '-'}
-          </span>
-        </div>
-
-        {/* Birth time */}
-        <div className="flex justify-between">
-          <span className="text-sm text-slate-400">Час на раждане</span>
-          <span className="text-sm font-medium text-slate-100">
-            {getTimeDisplay()}
-          </span>
-        </div>
-
-        {/* Location */}
-        <div className="flex justify-between">
-          <span className="text-sm text-slate-400">Място</span>
-          <span className="text-sm font-medium text-slate-100">
-            {cityName || '-'}
-          </span>
-        </div>
-
-        {/* Coordinates */}
-        {(manualCoordinates || latitude || longitude) && (
-          <div className="flex justify-between">
-            <span className="text-sm text-slate-400">Координати</span>
-            <span className="text-sm font-medium text-slate-100">
-              {typeof latitude === 'number' ? latitude.toFixed(4) : '0'}, {typeof longitude === 'number' ? longitude.toFixed(4) : '0'}
-            </span>
+      {/* Editorial summary list - hairlines, no card */}
+      <dl className="divide-y divide-white/[0.05] border-y border-white/[0.05]">
+        {rows.map((row) => (
+          <div key={row.label} className="flex items-baseline justify-between gap-4 py-4">
+            <dt className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+              {row.label}
+            </dt>
+            <dd className="text-right font-display text-[15px] font-medium tabular-nums text-slate-100">
+              {row.value}
+            </dd>
           </div>
-        )}
-      </div>
+        ))}
+      </dl>
 
-      {/* Validation errors */}
+      {birthTimeKnown === false && approximateTimeRange && (
+        <p className="font-display text-[12px] leading-relaxed text-slate-500">
+          Когато часът не е точен, картата се изчислява по обяд на местно
+          време — така грешката при неизвестен час е най-малка. Избраният
+          период се запазва за контекст при тълкуването, но не влияе върху
+          позициите на планетите. Възходящият знак е приблизителен, затова
+          тълкуването му е ориентировъчно.
+        </p>
+      )}
+
       {hasErrors && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
-          <p className="text-sm text-red-400">
-            Моля, попълнете всички задължителни полета преди да запазите.
+        <div className="border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
+          <p className="font-display text-[13px] text-rose-300/90">
+            Моля, попълни всички задължителни полета преди да запазиш.
           </p>
         </div>
       )}
 
-      {/* Submit error */}
       {submitError && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
-          <p className="text-sm text-red-400">{submitError}</p>
+        <div className="border-l border-rose-300/50 bg-rose-500/[0.04] px-5 py-3">
+          <p className="font-display text-[13px] text-rose-300/90">{submitError}</p>
         </div>
       )}
 
-      {/* Navigation buttons */}
-      <div className="flex justify-between pt-4">
+      <div className="flex items-center justify-between pt-6">
         <button
           type="button"
           onClick={onPrev}
           disabled={isSubmitting}
-          className="rounded-lg border border-slate-600 px-6 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+          className="group inline-flex items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 transition-colors hover:text-amber-300 disabled:pointer-events-none disabled:opacity-40"
         >
+          <svg className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
           Назад
         </button>
         <button
           type="submit"
           disabled={isSubmitting || hasErrors}
-          className="rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:from-purple-600 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50"
+          className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-amber-300/50 bg-gradient-to-r from-violet-500/15 via-transparent to-amber-400/15 px-7 py-3 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-100 transition-all hover:border-amber-300/80 hover:text-white hover:shadow-[0_0_32px_rgba(251,191,36,0.24)] focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60 disabled:pointer-events-none disabled:opacity-45"
         >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-amber-200/20 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+          />
           {isSubmitting ? (
-            <span className="flex items-center gap-2">
-              <svg
-                className="h-4 w-4 animate-spin"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
+            <span className="relative flex items-center gap-3">
+              <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Запазване...
+              Запазване…
             </span>
           ) : (
-            'Запази'
+            <>
+              <span aria-hidden className="relative h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.7)]" />
+              <span className="relative">Изчисли картата</span>
+              <span aria-hidden className="relative h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.7)]" />
+            </>
           )}
         </button>
       </div>

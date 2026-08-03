@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import useSWR from 'swr'
 import type { TransitOverview } from '@/lib/horoscope/transit-analysis'
 
 interface UseTransitOverviewResult {
@@ -9,68 +9,37 @@ interface UseTransitOverviewResult {
   error: string | null
 }
 
+async function fetchTransitOverview(chartId: string): Promise<TransitOverview> {
+  const response = await fetch(
+    `/api/transits/overview?chartId=${encodeURIComponent(chartId)}`,
+    { cache: 'no-store' }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(data.error ?? 'Failed to load transit overview.')
+  }
+
+  return data as TransitOverview
+}
+
+/**
+ * Hook for fetching transit overview data.
+ *
+ * Uses SWR for automatic deduplication and caching.
+ * Multiple components using the same chartId will share a single request.
+ */
 export function useTransitOverview(chartId: string | null | undefined): UseTransitOverviewResult {
-  const [overview, setOverview] = useState<TransitOverview | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { data, error, isLoading } = useSWR(
+    chartId ? ['transit-overview', chartId] : null,
+    ([, id]) => fetchTransitOverview(id),
+    { revalidateOnFocus: false }
+  )
 
-  useEffect(() => {
-    if (!chartId) {
-      setOverview(null)
-      setError(null)
-      setIsLoading(false)
-      return
-    }
-
-    let cancelled = false
-
-    async function loadOverview() {
-      const safeChartId = chartId
-      if (!safeChartId) return
-
-      setIsLoading(true)
-      setError(null)
-
-      try {
-        const response = await fetch(
-          `/api/transits/overview?chartId=${encodeURIComponent(safeChartId)}`,
-          { cache: 'no-store' }
-        )
-
-        const data = (await response.json().catch(() => ({}))) as TransitOverview & {
-          error?: string
-        }
-
-        if (!response.ok) {
-          if (!cancelled) {
-            setError(data.error ?? 'Failed to load transit overview.')
-            setOverview(null)
-          }
-          return
-        }
-
-        if (!cancelled) {
-          setOverview(data)
-          setError(null)
-        }
-      } catch {
-        if (!cancelled) {
-          setError('Failed to load transit overview.')
-          setOverview(null)
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadOverview()
-
-    return () => {
-      cancelled = true
-    }
-  }, [chartId])
-
-  return { overview, isLoading, error }
+  return {
+    overview: data ?? null,
+    isLoading,
+    error: error ? (error as Error).message : null,
+  }
 }

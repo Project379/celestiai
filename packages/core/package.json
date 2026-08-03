@@ -1,0 +1,49 @@
+{
+  "name": "@stellaeum/core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./moon-phase": "./src/lib/moon-phase.ts",
+    "./welcome": "./src/welcome/index.ts",
+    "./crystals/today": "./src/crystals/today.ts",
+    "./crystals/schemas": "./src/crystals/schemas.ts",
+    "./crystals/queries": "./src/crystals/queries.ts",
+    "./crystals/recommend": "./src/crystals/recommend.ts",
+    "./crystals/collect": "./src/crystals/collect.ts",
+    "./crystals/daily-collect": "./src/crystals/daily-collect.ts",
+    "./crystals/overview": "./src/crystals/overview.ts",
+    "./planets/current": "./src/planets/current.ts",
+    "./subscription/tier": "./src/subscription/tier.ts",
+    "./horoscope/transit-analysis": "./src/horoscope/transit-analysis.ts",
+    "./horoscope/transits": "./src/horoscope/transits.ts",
+    "./charts/calculate": "./src/charts/calculate.ts",
+    "./charts/birth-data": "./src/charts/birth-data.ts",
+    "./charts/schemas": "./src/charts/schemas.ts",
+    "./charts/interpretations": "./src/charts/interpretations.ts",
+    "./charts/glyphs": "./src/charts/glyphs.ts",
+    "./relationships/compatibility": "./src/relationships/compatibility.ts",
+    "./relationships/types": "./src/relationships/types.ts",
+    "./diary/entries": "./src/diary/entries.ts",
+    "./oracle/planet-parser": "./src/oracle/planet-parser.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@stellaeum/astrology": "workspace:*",
+    "@supabase/supabase-js": "^2.49.1",
+    "sweph": "2.10.0-11",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^22.10.10",
+    "eslint": "^9",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.0.0"
+  }
+}

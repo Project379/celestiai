@@ -1,0 +1,8 @@
+# Supabase CLI project config — minimal. We do NOT use Supabase's
+# local dev stack (docker-compose, studio, inbucket, edge-functions).
+# The dev workflow hits the hosted Supabase project directly via
+# `supabase db push --db-url <DATABASE_URL>`.
+#
+# See MIGRATION_TOOLING.md at repo root for the canonical workflow.
+
+project_id = "stellaeum"
