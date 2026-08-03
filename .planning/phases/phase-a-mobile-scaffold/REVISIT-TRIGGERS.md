@@ -1536,6 +1536,20 @@ None of this was caught by Round A's own audit because it checked the route file
 
 **Why documented:** the same failure this whole audit exists to prevent — hand-applied schema silently invisible to anyone who only reads migration history — would otherwise repeat exactly here: a future Stream K investigation pass reading `supabase/migrations/` and concluding no backend work has started, when nine tables' worth already has.
 
+## 62. RevenueCat -> users.subscription_tier sync webhook — MISSING, blocks real mobile purchases from granting anything
+
+**Severity, stated plainly:** this is not a missing nicety. Without this webhook, a mobile purchase can succeed in RevenueCat — the user is charged — and grant premium access **nowhere in the app**, because `users.subscription_tier`/`subscription_status` never updates. That is a payment path that takes money and delivers nothing. Filed 2026-08-03 during P.15's scaffold pass, before either P.9 or P.11 gets built on top of an assumption this already works.
+
+**Current architecture, confirmed by direct code read, not assumed:** `public.users.subscription_tier` / `subscription_status` is the single source of truth for premium status app-wide. Today it is written **only** by the Stripe webhook (`apps/web/app/api/webhooks/stripe/route.ts`). Mobile already reads premium status correctly — server-side, through API responses (`useCrystalsOverview.ts` and others reading the tier the server computed), never via a client-side SDK entitlement check — and **must keep doing this** once RevenueCat exists; a client that trusts `CustomerInfo.entitlements` locally instead of the server's own column would let the two diverge silently.
+
+**The gap:** P.15 (this pass) only installs the client SDK and calls `Purchases.configure()` — no webhook, no server-side RevenueCat integration at all. Once a real purchase can happen (P.11), RevenueCat's own dashboard will show it, but nothing tells `public.users` about it.
+
+**The known fix pattern** (`.planning/research/PITFALLS.md` §3, "RevenueCat + Stripe Subscription Sync Failure," HIGH confidence, sourced from RevenueCat's own Stripe-integration docs): RevenueCat webhooks require the receipt to already exist server-side — a `POST /receipts` call pairing `app_user_id` (the Clerk ID) with the platform-specific purchase token must happen before RevenueCat's own webhook can associate the purchase with the app's user. The missing piece here is symmetric: a RevenueCat-side webhook handler (mirroring the existing Stripe webhook route's shape) that receives RevenueCat's subscription lifecycle events and writes to the same `users.subscription_tier`/`subscription_status` columns Stripe already writes — so premium status stays one column, updated from two payment providers, not two divergent sources of truth.
+
+**Trigger, and why it can't wait:** hard prerequisite for P.11 (the pricing surface that will drive real purchases) and P.9 (subscription status display — read-only initially, but "read-only" only means something if the underlying data is real). Needs a home before either opens, not discovered mid-build. Recommend: land as part of P.11's own sub-round (P.11 is the first sub-round that creates a real purchase to sync), or as a small dedicated backend sub-round immediately before P.11 opens if P.11's own scope is already full — founder call, not mine, but it must be decided before P.11 starts, not during.
+
+**Why documented:** discovered by tracing what P.15's scaffold does and doesn't cover, specifically to avoid the failure mode where P.9/P.11 get built assuming server-side sync already exists because "RevenueCat is installed."
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have

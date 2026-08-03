@@ -11,6 +11,8 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
+import { RevenueCatProvider } from '@/lib/purchases/RevenueCatProvider'
+
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
 
 SplashScreen.preventAutoHideAsync()
@@ -59,20 +61,22 @@ export default function RootLayout() {
 
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
-          <StatusBar style="light" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: '#08060f' },
-            }}
-          >
-            <Stack.Screen name="(authed)" />
-            <Stack.Screen name="(public)" />
-          </Stack>
-        </SafeAreaProvider>
-      </QueryClientProvider>
+      <RevenueCatProvider>
+        <QueryClientProvider client={queryClient}>
+          <SafeAreaProvider>
+            <StatusBar style="light" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: '#08060f' },
+              }}
+            >
+              <Stack.Screen name="(authed)" />
+              <Stack.Screen name="(public)" />
+            </Stack>
+          </SafeAreaProvider>
+        </QueryClientProvider>
+      </RevenueCatProvider>
     </ClerkProvider>
   )
 }
