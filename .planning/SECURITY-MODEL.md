@@ -62,7 +62,7 @@ Public reference data. Anyone can read; nobody writes via the API (only seed scr
 
 | Table | Posture | Reasoning |
 |---|---|---|
-| `users` | INTERNAL | Server reads tier via service role (`getCachedUserTier`); browser never queries directly. AppUser data is hydrated via the new `/api/user` endpoint (CA-0002 work, B.0c). |
+| `users` | INTERNAL | Server reads tier via service role (`getCachedUserTier`); browser never queries directly. AppUser data is hydrated via the new `/api/user` endpoint (CA-0002 work, B.0c). `subscription_provider` column (2026-08-03, REVISIT-62) records which payment provider — `stripe` or `revenuecat` — is authoritative for a given row; see the column comment in `20260803122000_revenuecat_provider_column.sql` for the NULL-semantics rationale. |
 | `audit_logs` | INTERNAL | `logAuditEvent` writes via service role; browser never reads. |
 | `chart_calculations` | INTERNAL | Chart-calc API writes via service role; chart-id-keyed (no user_id column on this table). Browser receives chart data via `/api/chart/calculate` API JSON, not directly. |
 | `processed_webhook_events` | INTERNAL | Stripe webhook handler (idempotency check); only the webhook route touches this. RLS from `20260803102000_b0d_rls_lockdown_capture.sql` (hand-applied 2026-05-09, migration-captured 2026-08-03). |
@@ -91,6 +91,7 @@ Public reference data. Anyone can read; nobody writes via the API (only seed scr
 | `compatibility_reports` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
 | `saved_people_profiles` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
 | `saved_people_reports` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
+| `processed_revenuecat_events` | INTERNAL | Idempotency table for the RevenueCat webhook (REVISIT-62, sub-commit A). Mirrors `processed_webhook_events`' shape but kept as its own table rather than reusing Stripe's `stripe_event_id`-named column. Written only by the RevenueCat webhook route (service role). RLS from `20260803122000_revenuecat_provider_column.sql`. |
 
 ### Footnote — `subscription_quotas` wiring (B.0f — CLOSED 2026-05-10)
 

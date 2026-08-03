@@ -8,12 +8,14 @@ export type SubscriptionStatus =
   | 'cancelled'
   | 'past_due'
   | 'trialing'
+export type SubscriptionProvider = 'stripe' | 'revenuecat'
 
 export interface AppUser {
   id: string
   clerk_id: string
   subscription_tier: SubscriptionTier
   subscription_status: SubscriptionStatus
+  subscription_provider: SubscriptionProvider
   created_at: string | null
   updated_at: string | null
   stripe_customer_id: string | null
@@ -29,6 +31,7 @@ const APP_USER_SELECT = `
   clerk_id,
   subscription_tier,
   subscription_status,
+  subscription_provider,
   created_at,
   updated_at,
   stripe_customer_id,
