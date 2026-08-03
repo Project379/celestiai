@@ -743,7 +743,9 @@ investigation thread. SR 8 closes Phase A's launch-readiness infra DOD
 minus this one item — Phase B opener is the explicit trigger so the
 deferral doesn't go quiet between rounds.
 
-## 26. push_tokens schema + RLS + token registration endpoint design
+## 26. push_tokens schema + RLS + token registration endpoint design — CLOSED 2026-08-03 (P.16)
+
+**Resolution (P.16 build, 2026-08-03):** `push_tokens` table + RLS shipped in `supabase/migrations/20260803070000_push_tokens.sql` (columns match the spec below exactly: `id, user_id, token, platform, device_id, registered_at, revoked_at, last_sent_at`; FK to `users.clerk_id` ON DELETE CASCADE, mirroring `push_subscriptions`). `POST /api/push/register` added at `apps/web/app/api/push/register/route.ts`, upserting on `(user_id, device_id)`. Mobile-side: `registerPushToken()` in `maybePromptPushPermission.ts` now calls it after the AsyncStorage stash. Delivery: the existing `daily-horoscope` cron extended with a `sendMobilePush()` step (Expo push via `expo-server-sdk`, DeviceNotRegistered receipts revoke the token). Cleanup cascade: `cleanup-deleted-accounts` cron now also deletes `push_tokens` rows for a deleted user, matching its existing per-table delete style. Classified USER_DATA in `.planning/SECURITY-MODEL.md`. End-to-end delivery to a real device is unverified until P.17/SR9 (Dev Client) per REVISIT-27 — schema/RLS/endpoint/cron logic were verified without a device (see P.16 close notes).
 
 **Status:** SR 8.3 scaffolds the iOS/Android push permission flow
 (`apps/mobile/lib/notifications/maybePromptPushPermission.ts`), but per
@@ -1280,7 +1282,9 @@ Web has no multi-scale precedent — the decision is mobile-led product design, 
 
 **Why documented:** the design intent is preserved here so a future Claude session or founder iteration on Phase C doesn't accidentally re-invent the multi-scale concept from scratch. The chips were a real artifact, not a placeholder; the deletion was a parity-scope-only decision.
 
-## 47. Transit event deep-link target architecture (P.16 prerequisite)
+## 47. Transit event deep-link target architecture — DEFERRED, not applicable to P.16 as built (2026-08-03)
+
+**Resolution (P.16 investigation, 2026-08-03):** P.16's actual scope is the generic, blanket daily-horoscope notification only (matching web's existing non-personalized `daily-horoscope` cron) — the same payload for every user, deep-linking to Днес/dashboard, not a per-transit-event alert. None of the three architectural options below need deciding for that payload; there is no transit-specific push in P.16's scope to attach a deep-link decision to. **Deferred, not a live P.16 blocker** — re-open this item if/when a transit-specific push notification (e.g. «Транзитът Марс квадрат Венера е активен сега») is actually built, which is unbuilt future scope on both platforms today.
 
 **Status:** Filed during P.3 close 2026-05-12. P.3-c shipped EventModal for transit detail (absolute View + Pressable backdrop + BackHandler per HT 4 ratification). The standalone `/rhythm/[eventId]` route on web (consumed by `TransitEventDetail.tsx`) was deferred per HT 3 — mobile ships modal only.
 
@@ -1443,7 +1447,7 @@ P.7-b added a fourth consumer (`useStoryList`) with key `stellaeum.stories.state
 
 **Estimated scope:** ~40-60 LOC in the cron route + founder decision on email provider + service setup (API key, sender domain verification).
 
-**Trigger:** before App Store submission (this is a genuine submission blocker per Apple's own documented requirement, not a nice-to-have) — group with the other App Store submission blockers (REVISIT-1 Apple enrollment, ToS authoring, REVISIT-56 production deployment) tracked in HANDOFF's founder-track section.
+**Trigger:** before App Store submission (this is a genuine submission blocker per Apple's own documented requirement, not a nice-to-have) — group with the other App Store submission blockers (REVISIT-1 Apple enrollment, ToS authoring, REVISIT-56 production deployment). **Canonical location for this group as of 2026-08-03: `MOBILE_ALPHA_REDESIGN.md` §7 "Founder-track / non-coding blockers"** — the `HANDOFF-CC-2026-05-12-EOD.md` version is a frozen single-shot snapshot, not maintained.
 
 **Why documented:** discovered during B.0h investigation while verifying Apple's actual guideline text (not assumed from memory) — the completion-confirmation requirement is easy to miss since the deletion flow otherwise looks complete (grace period, cron, cascade all work). Filing separately from the rest of B.0h since it needs new infrastructure (email) rather than wiring existing pieces.
 
@@ -1457,7 +1461,7 @@ P.7-b added a fourth consumer (`useStoryList`) with key `stellaeum.stories.state
 
 **Sub-round when ready:** deployment task, not a code change to this repo per se — provision hosting (Vercel is the implied target given the Next.js stack), point `stellaeum.com` DNS at it, verify `/privacy` (and any other founder-facing routes) resolve.
 
-**Why documented:** groups with REVISIT-1 (Apple enrollment), ToS authoring, and REVISIT-55 (deletion completion email) as one of the founder-track items that gate App Store submission — see HANDOFF's "App Store submission blockers" section for the consolidated list.
+**Why documented:** groups with REVISIT-1 (Apple enrollment), ToS authoring, and REVISIT-55 (deletion completion email) as one of the founder-track items that gate App Store submission. **Canonical location for this group as of 2026-08-03: `MOBILE_ALPHA_REDESIGN.md` §7 "Founder-track / non-coding blockers"** — the `HANDOFF-CC-2026-05-12-EOD.md` version is a frozen single-shot snapshot, not maintained.
 
 ## 57. Daily-horoscope reading length — re-verify prompt tuning if the production model changes
 

@@ -77,9 +77,19 @@ export async function GET(req: Request) {
         .delete()
         .eq('user_id', clerkId)
 
-      // Delete push subscriptions
+      // Delete push subscriptions (web)
       await supabase
         .from('push_subscriptions')
+        .delete()
+        .eq('user_id', clerkId)
+
+      // Delete push tokens (mobile, P.16 / REVISIT-26). Sending push to a
+      // deleted account's device is a GDPR problem, not a tidiness one —
+      // explicit delete here rather than relying solely on the table's
+      // ON DELETE CASCADE FK to users.clerk_id, matching this cron's
+      // existing defense-in-depth style for every other cascade above.
+      await supabase
+        .from('push_tokens')
         .delete()
         .eq('user_id', clerkId)
 

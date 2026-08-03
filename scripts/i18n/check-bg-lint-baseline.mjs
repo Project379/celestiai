@@ -25,6 +25,17 @@
  * drop — lower BASELINE to match and get a visible "progress, not noise"
  * signal, per the founder's instruction.
  *
+ * Raised to 1344 on 2026-08-03 (P.16 — push delivery infra): 8 new,
+ * reviewed literals in apps/web/app/api/push/register/route.ts (5 genuinely
+ * new user-facing error strings, informal-ти, mirroring the existing
+ * push/subscribe and oracle/generate route error-copy pattern) and
+ * apps/web/app/api/cron/daily-horoscope/route.ts (title/body extracted to
+ * named constants — same two Bulgarian strings that already existed in
+ * that file's web-push payload, now also referenced by the new mobile-push
+ * path; not new copy, but the literal now appears twice in the AST so the
+ * count moved). Deliberate raise, not drift — see REVISIT-26 close note in
+ * REVISIT-TRIGGERS.md.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -34,7 +45,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1336
+const BASELINE = 1344
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

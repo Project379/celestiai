@@ -12,6 +12,7 @@ import { pressFeedback } from '@/components/design-system/tokens'
 import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useOracleReading } from '@/hooks/useOracleReading'
+import { useApiClient } from '@/lib/api/client'
 import { maybePromptPushPermission } from '@/lib/notifications/maybePromptPushPermission'
 
 /**
@@ -57,6 +58,7 @@ export default function OracleScreen() {
 function OracleScreenInner({ chartId }: { chartId: string }) {
   const router = useRouter()
   const navigation = useNavigation()
+  const { apiFetch } = useApiClient()
   const {
     savedReadings,
     activeTopic,
@@ -70,9 +72,11 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
     // reading completes. Idempotency is enforced inside
     // maybePromptPushPermission via the stellaeum.notifications.prompted.v1
     // AsyncStorage flag, so this fires across multiple fresh generations
-    // until the user has been prompted once.
+    // until the user has been prompted once. apiFetch is passed through so
+    // a system-granted permission can also register the token with the
+    // backend (P.16) in the same flow.
     onFreshGeneration: () => {
-      void maybePromptPushPermission()
+      void maybePromptPushPermission(apiFetch)
     },
   })
 

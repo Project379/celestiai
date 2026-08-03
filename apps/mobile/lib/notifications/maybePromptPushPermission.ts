@@ -3,9 +3,14 @@ import * as Sentry from '@sentry/react-native'
 import Constants from 'expo-constants'
 import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
-import { Alert } from 'react-native'
+import { Alert, Platform } from 'react-native'
 
 import { logError } from '@/lib/monitoring/logError'
+
+/** Matches the shape of useApiClient()'s apiFetch — kept structural so this
+ * module doesn't import the hook (it's called from a plain async function,
+ * not a component). */
+type ApiFetch = (path: string, init?: RequestInit) => Promise<unknown>
 
 /**
  * Push permission prompt scaffold (SR 8.3).
@@ -34,10 +39,14 @@ import { logError } from '@/lib/monitoring/logError'
  *
  * Token registration: on iOS/Android system grant, retrieve Expo push
  * token via getExpoPushTokenAsync, stash in AsyncStorage as
- * `stellaeum.notifications.push_token.v1`, log via Sentry breadcrumb.
- * Backend integration deferred to Phase B push-delivery work —
- * REVISIT-26 tracks the push_tokens table + RLS + registration endpoint
- * design.
+ * `stellaeum.notifications.push_token.v1`, log via Sentry breadcrumb, then
+ * POST it to /api/push/register (P.16 — closes REVISIT-26). Registration
+ * failure is caught and logged, never thrown — the AsyncStorage stash and
+ * the prompted-flag semantics must not depend on network reachability.
+ *
+ * device_id: the Expo token itself, not a separate stable device
+ * identifier — see the push_tokens migration comment for why (no
+ * expo-application dependency added for this pass).
  *
  * Expo Go caveat: getExpoPushTokenAsync rejects on Expo Go SDK 49+ —
  * the call needs a Dev Client / standalone build. Permission prompt
@@ -84,7 +93,7 @@ const RATIONALE_BODY =
 const ACCEPT_LABEL = 'Да, разказвай ми'
 const DECLINE_LABEL = 'Не сега'
 
-export async function maybePromptPushPermission(): Promise<void> {
+export async function maybePromptPushPermission(apiFetch: ApiFetch): Promise<void> {
   if (process.env.EXPO_PUBLIC_FF_PUSH === 'false') return
 
   await migrateKey(OLD_PROMPTED_FLAG_KEY, PROMPTED_FLAG_KEY)
@@ -144,7 +153,7 @@ export async function maybePromptPushPermission(): Promise<void> {
   await safeSetFlag()
 
   if (granted) {
-    await registerPushToken()
+    await registerPushToken(apiFetch)
   }
 }
 
@@ -156,7 +165,7 @@ async function safeSetFlag(): Promise<void> {
   }
 }
 
-async function registerPushToken(): Promise<void> {
+async function registerPushToken(apiFetch: ApiFetch): Promise<void> {
   if (!Device.isDevice) {
     Sentry.addBreadcrumb({
       category: 'push',
@@ -181,18 +190,40 @@ async function registerPushToken(): Promise<void> {
     return
   }
 
+  let token: string
   try {
-    const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data
+    token = (await Notifications.getExpoPushTokenAsync({ projectId })).data
     await AsyncStorage.setItem(PUSH_TOKEN_KEY, token)
     Sentry.addBreadcrumb({
       category: 'push',
-      message:
-        'Push token registered (AsyncStorage stash; backend integration is REVISIT-26)',
+      message: 'Push token retrieved (AsyncStorage stash + backend registration)',
       level: 'info',
     })
   } catch (err) {
     // Expected to fail in Expo Go SDK 49+ — getExpoPushTokenAsync
     // rejects without a Dev Client build.
     logError('ERR-MOB-PUSH-005', err)
+    return
+  }
+
+  try {
+    await apiFetch('/api/push/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        token,
+        platform: Platform.OS === 'ios' ? 'ios' : 'android',
+        deviceId: token,
+      }),
+    })
+    Sentry.addBreadcrumb({
+      category: 'push',
+      message: 'Push token registered with backend (P.16)',
+      level: 'info',
+    })
+  } catch (err) {
+    // Backend registration failure shouldn't break the local scaffold — the
+    // token stays stashed and the prompted-flag is already set by the
+    // caller regardless of this outcome. Logged, not rethrown.
+    logError('ERR-MOB-PUSH-006', err)
   }
 }

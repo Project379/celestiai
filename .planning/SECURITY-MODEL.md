@@ -76,6 +76,7 @@ Public reference data. Anyone can read; nobody writes via the API (only seed scr
 | `crystal_listings` | CATALOG | Phase B+ vendor display (currently empty). Public-read policy added in B.0d. |
 | `crystal_vendors` | CATALOG | Phase B+ vendor display (currently empty). Public-read policy added in B.0d. |
 | `bg_generation_flags` | INTERNAL | Runtime observation table for Bulgarian generation-quality safety net (2026-07-29). One row per horoscope/Oracle LLM generation; `generated_text` NULL unless flagged. `input_conditions` deliberately carries no chartId/userId — astrological conditions only. Written fire-and-forget from `apps/web/lib/ai/check-bg-output.ts`; read only via the offline `scripts/i18n/report-generation-flags.mjs` report script (service role). Migration `20260729120000_bg_generation_flags.sql`. |
+| `push_tokens` | USER_DATA | Per-user Expo push token registry (mobile native transport; sibling to `push_subscriptions`, not a replacement — different shape/transport). Mobile writes via Clerk session (`/api/push/register`); daily-horoscope delivery cron and cleanup-deleted-accounts cascade read/write via service role. RLS from `20260803070000_push_tokens.sql`. |
 
 ### Footnote — `subscription_quotas` wiring (B.0f — CLOSED 2026-05-10)
 

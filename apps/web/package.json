@@ -29,6 +29,7 @@
     "d3-selection": "^3.0.0",
     "d3-shape": "^3.2.0",
     "dictionary-bg": "^2.0.0",
+    "expo-server-sdk": "^7.0.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.574.0",
     "nativewind": "^4.1.23",

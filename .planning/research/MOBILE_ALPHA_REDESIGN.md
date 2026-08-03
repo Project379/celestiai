@@ -317,6 +317,15 @@ Superseded: the original "still HOLD until ratification" note. The chain sequenc
 
 **Founder-track note — highest-priority item:** Apple Developer enrollment is the confirmed critical-path blocker for P.15, P.17/SR9, and by dependency P.18. It has zero code dependency and unknown external duration once started — pure calendar time, not engineering effort. REVISIT-1's own founder-action deadline (begin within 2 weeks of Phase A close, by 2026-05-23) has already passed; as of this note enrollment is confirmed still not started, roughly two months past that internal target. Recorded in the App Store submission blockers group alongside REVISIT-55 (deletion completion email) and REVISIT-56 (stellaeum.com deployment) — see REVISIT-1's 2026-07-22 status addendum in `REVISIT-TRIGGERS.md`.
 
+**Founder-track / non-coding blockers — consolidated list (added 2026-08-03, this is now the canonical location; the equivalent list in `HANDOFF-CC-2026-05-12-EOD.md` §1 is a frozen single-shot snapshot, not maintained going forward).** None of these have a code dependency; none are owned by any Stream P sub-round. Each needs to stay visible here or it goes invisible the way REVISIT-55/56 did between 2026-05-12 and this note:
+
+1. **Apple Developer Program enrollment** — not started (see note above). Gates P.15 sandbox testing, P.17/SR9, P.18.
+2. **Terms of Service authoring** — no `/terms` route exists on web. Required before external TestFlight. Founder + legal review.
+3. **REVISIT-56 — production deployment to stellaeum.com** — domain founder-owned, Next.js app not deployed there; mobile's Privacy Policy link 404s until this lands (expected, not a bug). Blocks TestFlight (Apple requires a live privacy policy URL in App Store Connect).
+4. **REVISIT-55 — account deletion completion notification** — Apple Guideline 5.1.1(v) requires user-facing confirmation when deletion completes; `/api/cron/cleanup-deleted-accounts` currently only console-logs. Needs a transactional email service (none in the stack) + founder provider decision. Blocks App Store submission.
+
+**P.9 / P.11 mockup dependency — logged 2026-08-03.** Neither has a committed mockup in `.planning/design/mockups/`. `ti-v4.html` covers Ти's general navigation surface but not the subscription-status/cancel-reactivate content P.9 needs, or the pricing/paywall surface P.11 needs. Per standing design discipline (don't design against an existing screen as a diff), **both are blocked on a mockup pass in addition to Round B landing** — this is a second, independent dependency, not satisfied by Round B alone. Do not open P.9 or P.11 investigation until a mockup exists for the specific surface each needs.
+
 ## 8. Explicit continuity-layer changes requiring ratification — unchanged from v1
 
 Restated: canonical near-black `#08060f`, canonical violet `#8b5cf6`, cyan excluded, Playfair Display adopted (web convergence filed), Cinzel scoped to Roman numerals/Latin-only text, REVISIT-42 closed. None of these are affected by the hierarchy redo — the failure was in composition (how many decorated elements, what size ratios), not in the token/font decisions themselves.

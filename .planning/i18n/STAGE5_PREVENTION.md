@@ -93,6 +93,17 @@ new Cyrillic literal into a non-content-home file, ran the baseline check,
 confirmed it failed (1337 > 1336) with a clear message, reverted, confirmed
 clean pass (1336) again. Wired into `check:all` after `check:copy-lock`.
 
+**Raised to 1344, 2026-08-03 (P.16 — push delivery infra).** The gate did
+exactly what it's for: `apps/web/app/api/push/register/route.ts` landed 5
+new user-facing error strings (informal-ти, mirroring the established
+push/subscribe and oracle/generate error-copy pattern) and failed the
+build at 1344 > 1336. Reviewed, confirmed legitimate (not drift, not a
+register violation — `check:bg-strings` and `check:copy-lock` both passed
+on the same strings), baseline raised rather than routing the copy into a
+content-home module (these are short per-route validation errors, not
+interpretive content). See REVISIT-26's close note in
+`REVISIT-TRIGGERS.md` for the full P.16 change list.
+
 ## 4. Assembled-output register/grammar check — DESIGNED, NOT BUILT
 
 **Why this exists**: found 2026-07-30, during register-conversion cleanup.

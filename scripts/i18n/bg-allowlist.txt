@@ -297,3 +297,8 @@ W-форма
 Шератан
 Шон
 Ясуджиро
+
+# P.16 addition (2026-08-03) — established tech loanword, not a typo.
+# Standard Bulgarian rendering of "token" (session/push/API token); already
+# the conventional spelling in Bulgarian tech writing.
+токен
