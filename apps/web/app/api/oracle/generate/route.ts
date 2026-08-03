@@ -1,44 +1,38 @@
-import { auth } from '@clerk/nextjs/server'
-import { generateText, streamText } from 'ai'
+import { streamText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
-import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
-import type { ChartData } from '@stellaeum/astrology/client'
+import { stripSentinels } from '@/lib/oracle/planet-parser'
+import type { ChartData } from '@celestia/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
 import { logAuditEvent } from '@/lib/audit'
+import {
+  requireAppUser,
+  requireOwnedChart,
+  toErrorResponse,
+} from '@/lib/auth/guards'
+import { assertRateLimit, getRequestIp } from '@/lib/rate-limit'
+import { consumeQuota } from '@/lib/subscriptions/quota'
 
 /**
  * POST /api/oracle/generate
  * Streams an AI-generated natal chart reading via Gemini.
  *
- * Flow (post 2026-04-20 premium-matrix cap-gate refactor):
+ * Flow:
  * 1. Auth check
  * 2. Parse & validate body (chartId, topic, regenerate)
- * 3. Upsert user row + read subscription tier
+ * 3. Subscription tier gate (premium topics require premium tier)
  * 4. Chart ownership verification
- * 5. Cache check - return cached reading without calling Gemini
- *    (cache hits do NOT count against the daily cap)
+ * 5. Cache check — return cached reading without calling Gemini
  * 6. Regeneration rate limit (once per day per chart-topic pair)
- * 7. Daily cap for free tier — Europe/Sofia calendar day, default 3
- *    readings/day, configurable via ORACLE_FREE_MESSAGES_PER_DAY env
- * 8. Load chart calculation data
- * 9. Build prompts from chart data
- * 10. Stream via OpenRouter / Llama
- * 11. onFinish: upsert completed reading into ai_readings
+ * 7. Load chart calculation data
+ * 8. Build prompts from chart data
+ * 9. Stream via Gemini gemini-2.5-flash
+ * 10. onFinish: upsert completed reading into ai_readings
  */
 export const maxDuration = 60
 const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
-
-/**
- * Daily cap for free-tier oracle readings. Premium tier removes the
- * cap entirely. Env override lets the cap change without a code
- * deploy once a production value is chosen.
- */
-const ORACLE_FREE_MESSAGES_PER_DAY = Number(
-  process.env.ORACLE_FREE_MESSAGES_PER_DAY ?? '3',
-)
 
 const openrouter = createOpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
@@ -46,39 +40,16 @@ const openrouter = createOpenAI({
 })
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
-
-/**
- * UTC ISO timestamp for the start of today's Europe/Sofia calendar
- * day. Used as the lower bound for counting readings against the
- * free-tier daily cap. Simpler to communicate to users than a
- * rolling 24-hour window.
- */
-function sofiaDayStartUtcIso(now: Date = new Date()): string {
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Europe/Sofia',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  })
-  const parts = Object.fromEntries(
-    fmt.formatToParts(now).map((p) => [p.type, p.value]),
-  )
-  const h = parseInt(parts.hour, 10) % 24
-  const m = parseInt(parts.minute, 10)
-  const s = parseInt(parts.second, 10)
-  const msSinceSofiaMidnight = ((h * 60 + m) * 60 + s) * 1000
-  return new Date(now.getTime() - msSinceSofiaMidnight).toISOString()
-}
+const PREMIUM_TOPICS: ReadingTopic[] = ['love', 'career', 'health']
 
 export async function POST(req: Request) {
-  // 1. Auth check
-  const { userId } = await auth()
-  if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
-  }
-
   try {
+    const { userId, user: appUser } = await requireAppUser()
+    assertRateLimit({
+      key: `oracle-generate:${userId}:${getRequestIp(req)}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
     // 2. Parse and validate body
     const body = await req.json()
     const { chartId, topic, regenerate } = body as {
@@ -99,41 +70,23 @@ export async function POST(req: Request) {
     }
 
     const validatedTopic = topic as ReadingTopic
-    const url = new URL(req.url)
-    const jsonOnly = url.searchParams.get('format') === 'json'
     const supabase = createServiceSupabaseClient()
 
-    // 3. Upsert user row (default 'free'), read tier. Used for the
-    //    cap check in step 7; no topic-level gate anymore.
-    await supabase
-      .from('users')
-      .upsert(
-        { clerk_id: userId, subscription_tier: 'free' },
-        { onConflict: 'clerk_id', ignoreDuplicates: true },
+    // 3. Subscription tier check — upsert user row if missing (default 'free')
+    if (
+      PREMIUM_TOPICS.includes(validatedTopic) &&
+      appUser.subscription_tier !== 'premium'
+    ) {
+      return Response.json(
+        { error: 'Изисква се Premium абонамент', code: 'PREMIUM_REQUIRED' },
+        { status: 403 }
       )
-    const { data: userRow } = await supabase
-      .from('users')
-      .select('subscription_tier')
-      .eq('clerk_id', userId)
-      .single()
-    const tier = userRow?.subscription_tier === 'premium' ? 'premium' : 'free'
+    }
 
     // 4. Chart ownership verification
-    const { data: chart, error: chartError } = await supabase
-      .from('charts')
-      .select('id, user_id')
-      .eq('id', chartId)
-      .single()
+    await requireOwnedChart(userId, chartId, 'id')
 
-    if (chartError || !chart) {
-      return Response.json({ error: 'Картата не е намерена' }, { status: 404 })
-    }
-
-    if (chart.user_id !== userId) {
-      return Response.json({ error: 'Неоторизиран достъп' }, { status: 403 })
-    }
-
-    // 5. Cache check - return cached reading without calling Gemini
+    // 5. Cache check — return cached reading without calling Gemini
     const now = new Date().toISOString()
     const { data: existingReading } = await supabase
       .from('ai_readings')
@@ -151,7 +104,7 @@ export async function POST(req: Request) {
       })
     }
 
-    // 6. Regeneration rate limit - once per day per chart-topic pair
+    // 6. Regeneration rate limit — once per day per chart-topic pair
     if (regenerate && existingReading?.last_regenerated_at) {
       const lastRegen = new Date(existingReading.last_regenerated_at)
       const hoursElapsed =
@@ -164,31 +117,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // 7. Daily cap for free tier. Europe/Sofia calendar day. Cache
-    //    hits (step 5) skipped this branch already, so the count
-    //    reflects actual generations the user triggered today.
-    if (tier !== 'premium') {
-      const sofiaDayStart = sofiaDayStartUtcIso()
-      const { count } = await supabase
-        .from('ai_readings')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('generated_at', sofiaDayStart)
-
-      if ((count ?? 0) >= ORACLE_FREE_MESSAGES_PER_DAY) {
-        return Response.json(
-          {
-            error: `Достигна дневния лимит от ${ORACLE_FREE_MESSAGES_PER_DAY} четения. Премиум абонаментът премахва ограничението.`,
-            code: 'CAP_REACHED',
-            cap: ORACLE_FREE_MESSAGES_PER_DAY,
-            tier,
-          },
-          { status: 429 },
-        )
-      }
-    }
-
-    // 8. Load chart calculation data
+    // 7. Load chart calculation data
     const { data: calculation, error: calcError } = await supabase
       .from('chart_calculations')
       .select(
@@ -217,58 +146,21 @@ export async function POST(req: Request) {
     const systemPrompt = buildSystemPrompt(validatedTopic)
     const chartPromptText = chartToPromptText(chartData)
 
-    logAuditEvent(userId, 'data.ai_reading', { chartId, topic: validatedTopic })
-
-    // 10a. Mobile path — non-streaming JSON response. Mirrors the
-    //      ?format=json branch in /api/horoscope/generate added in
-    //      sub-round 5.3 (REVISIT-TRIGGERS item 20 logs the streaming
-    //      polish for mobile). react-native-sse is finicky on iOS so
-    //      mobile collects the full text and renders once. Web's
-    //      streaming path stays untouched below.
-    if (jsonOnly) {
-      const result = await generateText({
-        model: openrouter(LLAMA_MODEL),
-        system: systemPrompt,
-        prompt: chartPromptText,
-        temperature: 0.85,
-        maxOutputTokens: 2000,
-      })
-
-      try {
-        const cleanContent = stripSentinels(result.text)
-        const generatedAt = new Date()
-        const expiresAt = new Date(generatedAt)
-        expiresAt.setDate(expiresAt.getDate() + 7)
-
-        await supabase.from('ai_readings').upsert(
-          {
-            chart_id: chartId,
-            user_id: userId,
-            topic: validatedTopic,
-            content: cleanContent,
-            generated_at: generatedAt.toISOString(),
-            expires_at: expiresAt.toISOString(),
-            last_regenerated_at: regenerate ? generatedAt.toISOString() : null,
-            model_version: LLAMA_MODEL,
-          },
-          { onConflict: 'chart_id,topic' }
-        )
-
-        return Response.json({
-          content: cleanContent,
-          cached: false,
-          generatedAt: generatedAt.toISOString(),
-        })
-      } catch (err) {
-        console.error('[Oracle Generate] Failed to save reading:', err)
-        return Response.json(
-          { error: 'Грешка при запазване на четенето' },
-          { status: 500 }
-        )
-      }
+    const quota = await consumeQuota(userId)
+    if (!quota.allowed) {
+      return Response.json(
+        {
+          error: 'QUOTA_EXCEEDED',
+          feature: 'ai_readings',
+          limit: quota.limit,
+          used: quota.used,
+          resetAt: quota.resetAt.toISOString(),
+        },
+        { status: 429 }
+      )
     }
 
-    // 10b. Web path — stream via OpenRouter / meta-llama/llama-3.3-70b-instruct
+    // 9. Stream via Gemini gemini-2.5-flash
     const result = streamText({
       model: openrouter(LLAMA_MODEL),
       system: systemPrompt,
@@ -276,7 +168,7 @@ export async function POST(req: Request) {
       temperature: 0.85,
       maxOutputTokens: 2000,
 
-      // onFinish: upsert completed reading into ai_readings
+      // 10. onFinish: upsert completed reading into ai_readings
       onFinish: async ({ text }) => {
         try {
           const cleanContent = stripSentinels(text)
@@ -302,20 +194,18 @@ export async function POST(req: Request) {
             }
           )
         } catch (err) {
-          // Log but don't fail - stream already returned to client
+          // Log but don't fail — stream already returned to client
           console.error('[Oracle Generate] Failed to save reading:', err)
         }
       },
     })
 
-    // Return streaming response - toTextStreamResponse() is the v6 API
+    logAuditEvent(userId, 'data.ai_reading', { chartId, topic: validatedTopic })
+
+    // Return streaming response — toTextStreamResponse() is the v6 API
     // useCompletion with streamProtocol: 'text' reads this format
     return result.toTextStreamResponse()
   } catch (error) {
-    console.error('[Oracle Generate] Unhandled error:', error)
-    return Response.json(
-      { error: 'Грешка при генериране на четенето' },
-      { status: 500 }
-    )
+    return toErrorResponse(error, 'Грешка при генериране на четенето')
   }
 }

@@ -1,14 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { CelestialBackgroundLazy } from '@/components/CelestialBackgroundLazy'
 import { NavigationTransition } from '@/components/NavigationTransition'
-import { ProtectedNav } from '@/components/layout/ProtectedNav'
-import { UserMenu } from '@/components/auth/UserMenu'
-import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
-import { OraclePanelGlobal } from '@/components/oracle/OraclePanelGlobal'
-import { OracleFab } from '@/components/oracle/OracleFab'
-import { getCachedLatestChart, getCachedUserTier } from '@/lib/supabase/queries'
+import { OracleButtonGlobal } from '@/components/oracle/OracleButtonGlobal'
+import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 export default async function ProtectedLayout({
   children,
@@ -17,85 +13,50 @@ export default async function ProtectedLayout({
 }) {
   const { userId } = await auth()
 
-  // Backup defense. Primary enforcement is Clerk middleware at
-  // apps/web/middleware.ts; this redirect catches the case where the
-  // middleware matcher drifts and a new route under (protected)/ lands
-  // without a corresponding matcher entry. Render nothing authenticated
-  // before confirming a signed-in user.
-  if (!userId) {
-    redirect('/sign-in')
-  }
-
   // Fetch chart + tier for the global Oracle button
-  // Uses React.cache() - deduped with any page-level fetches in the same render pass
   let chartId: string | null = null
   let subscriptionTier: 'free' | 'premium' = 'free'
-  try {
-    const [chart, tier] = await Promise.all([
-      getCachedLatestChart(userId),
-      getCachedUserTier(userId),
-    ])
-    chartId = chart?.id ?? null
-    subscriptionTier = tier
-  } catch {
-    // Defaults stay null / 'free' on DB hiccups — chrome still renders
+  if (userId) {
+    try {
+      const supabase = createServiceSupabaseClient()
+      const [chartResult, appUser] = await Promise.all([
+        supabase
+          .from('charts')
+          .select('id')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single(),
+        ensureUserRecord(userId),
+      ])
+      if (!chartResult.error && chartResult.data) {
+        chartId = chartResult.data.id
+      }
+      if (appUser.subscription_tier === 'premium') {
+        subscriptionTier = 'premium'
+      }
+    } catch {
+      // Defaults stay null / 'free'
+    }
   }
 
   return (
     <div className="relative min-h-screen">
-      {/* TODO: background redesign - CelestialBackground still uses the legacy
-         starfield + constellation overlay. Align it with the editorial system
-         (ambient violet/amber, Cinzel accents, slower parallax) before ship. */}
+      {/* Animated celestial background — behind everything */}
       <CelestialBackgroundLazy />
 
       {/* Content layer */}
       <div className="relative z-10">
-        <header className="sticky top-0 z-50 border-b border-slate-200/[0.05] bg-[#08060f]/50 backdrop-blur-md">
-          {/* Top ivory accent hairline */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200/20 to-transparent" />
-          <div className="absolute left-1/2 top-0 h-px w-32 -translate-x-1/2 bg-gradient-to-r from-transparent via-amber-300/40 to-transparent" />
-
-          {/* Main row: logo | nav (desktop center) | profile */}
-          <div className="container mx-auto flex h-14 items-center justify-between px-4">
-            {/* Logo */}
-            <Link
-              href="/dashboard"
-              className="group flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-90"
-            >
-              <div className="relative flex h-7 w-7 items-center justify-center rounded-md border border-slate-200/10 bg-gradient-to-br from-violet-500/20 via-transparent to-amber-400/10">
-                <span aria-hidden className="absolute inset-0 rounded-md bg-violet-500/10 blur-sm" />
-                <span className="relative font-cinzel text-xs font-bold text-amber-200/90">C</span>
+        {/* Header */}
+        <header className="sticky top-0 z-50 border-b border-slate-800/50 bg-slate-900/80 backdrop-blur-xl">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4">
+            <Link href="/dashboard" className="flex items-center gap-3 transition-opacity hover:opacity-80">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600">
+                <span className="text-sm font-bold text-white font-display">C</span>
               </div>
-              <span className="font-cinzel text-[12px] font-semibold uppercase tracking-[0.22em] text-slate-100/90 transition-colors group-hover:text-white">
-                Stellaeum
-              </span>
+              <span className="font-semibold font-display text-slate-100 tracking-wide">Celestia</span>
             </Link>
-
-            {/* Nav - centered horizontally and vertically, desktop only */}
-            <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex md:items-center">
-              <ProtectedNav />
-            </div>
-
-            {/* Right - premium badge + user avatar */}
-            <div className="flex shrink-0 items-center gap-4">
-              {subscriptionTier === 'premium' && (
-                <span className="hidden h-8 items-center gap-2 font-cinzel text-[9px] font-semibold uppercase leading-none tracking-[0.3em] text-amber-300/85 sm:inline-flex">
-                  <span
-                    aria-hidden
-                    className="h-1 w-1 rotate-45 bg-amber-300/85 shadow-[0_0_6px_rgba(251,191,36,0.55)]"
-                  />
-                  Premium
-                </span>
-              )}
-              <UserMenu />
-            </div>
-          </div>
-
-          {/* Mobile nav - slim scrollable row below brand */}
-          <div className="border-t border-slate-200/[0.04] md:hidden">
-            <div className="container mx-auto px-4 py-1.5">
-              <ProtectedNav />
-            </div>
+            <div id="user-menu-slot" />
           </div>
         </header>
 
@@ -107,15 +68,8 @@ export default async function ProtectedLayout({
         </main>
       </div>
 
-      {/* Oracle FAB — always-visible bottom-right entry (MOBILE_UX_RESEARCH §2.6).
-         Dispatches oracle:open which OraclePanelGlobal listens for. */}
-      <OracleFab hasChart={!!chartId} />
-
-      {/* Global Oracle modal — listens for oracle:open event */}
-      <OraclePanelGlobal chartId={chartId} />
-
-      {/* Global session expiry modal */}
-      <SessionExpiryModal />
+      {/* Global floating Oracle button — fixed bottom-right on all protected pages */}
+      <OracleButtonGlobal chartId={chartId} subscriptionTier={subscriptionTier} />
     </div>
   )
 }

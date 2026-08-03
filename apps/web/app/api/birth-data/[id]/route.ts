@@ -1,53 +1,45 @@
 import { auth } from '@clerk/nextjs/server'
-import {
-  deleteBirthChart,
-  getBirthChart,
-  updateBirthChart,
-} from '@stellaeum/core/charts/birth-data'
 import { logAuditEvent } from '@/lib/audit'
-import { updateBirthDataSchema } from '@stellaeum/core/charts/schemas'
-import { logServerError } from '@/lib/monitoring/log-server-error'
-
-/**
- * Error IDs emitted by this handler (wired to Sentry via logServerError
- * in §10.2; see PRE_LAUNCH_PREREQS.md item 2 for the monitoring rationale):
- *   ERR-BD-002 — PATCH update threw / failed unexpectedly (404 stays as
- *                plain "Данните не бяха намерени", distinct category)
- *   ERR-BD-003 — DELETE failed (core returned DELETE_FAILED or threw)
- *   ERR-BD-005 — GET single-chart fetch threw unexpectedly (404 stays
- *                as plain "Данните не бяха намерени", distinct)
- */
+import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { updateBirthDataSchema } from '@/lib/validators/birth-data'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
+import {
+  normalizeBirthDataChart,
+  toApproximateTimeRangeLiteral,
+} from '@/lib/birth-data/time-range'
 
 interface RouteParams {
   params: Promise<{ id: string }>
 }
 
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(request: Request, { params }: RouteParams) {
   const { userId } = await auth()
   if (!userId) {
     return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
   }
 
   try {
+    await ensureUserRecord(userId)
     const { id } = await params
-    const result = await getBirthChart(userId, id)
-    if (!result.ok) {
-      return Response.json(
-        { error: 'Данните не бяха намерени' },
-        { status: 404 },
-      )
+    const supabase = createServiceSupabaseClient()
+
+    const { data, error } = await supabase
+      .from('charts')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single()
+
+    if (error || !data) {
+      return Response.json({ error: 'Данните не бяха намерени' }, { status: 404 })
     }
-    return Response.json(result.data)
+
+    return Response.json(normalizeBirthDataChart(data))
   } catch (error) {
-    logServerError('ERR-BD-005', error, {
-      context: 'GET /api/birth-data/[id] failed',
-    })
+    console.error('Error fetching birth data:', error)
     return Response.json(
-      {
-        error: 'Не успяхме да заредим рождените данни. Опитай отново. Код: ERR-BD-005.',
-        code: 'ERR-BD-005',
-      },
-      { status: 500 },
+      { error: 'Грешка при зареждане на данните' },
+      { status: 500 }
     )
   }
 }
@@ -59,6 +51,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 
   try {
+    await ensureUserRecord(userId)
     const { id } = await params
     const body = await request.json()
 
@@ -67,74 +60,115 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       const fieldErrors: Record<string, string[]> = {}
       for (const issue of validation.error.issues) {
         const path = issue.path.join('.')
-        if (!fieldErrors[path]) fieldErrors[path] = []
+        if (!fieldErrors[path]) {
+          fieldErrors[path] = []
+        }
         fieldErrors[path].push(issue.message)
       }
 
       return Response.json(
         { error: 'Невалидни данни', details: fieldErrors },
-        { status: 400 },
+        { status: 400 }
       )
     }
 
-    const result = await updateBirthChart(userId, id, validation.data)
-    if (!result.ok) {
-      return Response.json(
-        { error: 'Данните не бяха намерени' },
-        { status: 404 },
+    const supabase = createServiceSupabaseClient()
+    const validData = validation.data
+    const updateData: Record<string, unknown> = {}
+    let birthDateForRange = validData.birthDate
+
+    if (validData.name !== undefined) updateData.name = validData.name
+    if (validData.birthDate !== undefined) {
+      updateData.birth_date = validData.birthDate
+    }
+    if (validData.birthTimeKnown !== undefined) {
+      updateData.birth_time_known = validData.birthTimeKnown
+    }
+    if (validData.birthTime !== undefined) updateData.birth_time = validData.birthTime
+    if (validData.approximateTimeRange !== undefined && !birthDateForRange) {
+      const { data: existingChart } = await supabase
+        .from('charts')
+        .select('birth_date')
+        .eq('id', id)
+        .eq('user_id', userId)
+        .single()
+
+      birthDateForRange =
+        typeof existingChart?.birth_date === 'string'
+          ? existingChart.birth_date.slice(0, 10)
+          : undefined
+    }
+    if (validData.approximateTimeRange !== undefined) {
+      if (!birthDateForRange) {
+        return Response.json({ error: 'Данните не бяха намерени' }, { status: 404 })
+      }
+      updateData.approximate_time_range = toApproximateTimeRangeLiteral(
+        birthDateForRange,
+        validData.approximateTimeRange
       )
+    }
+    if (validData.cityId !== undefined) updateData.city_id = validData.cityId
+    if (validData.cityName !== undefined) updateData.city_name = validData.cityName
+    if (validData.latitude !== undefined) updateData.latitude = validData.latitude
+    if (validData.longitude !== undefined) updateData.longitude = validData.longitude
+
+    updateData.updated_at = new Date().toISOString()
+
+    const { data, error } = await supabase
+      .from('charts')
+      .update(updateData)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error || !data) {
+      return Response.json({ error: 'Данните не бяха намерени' }, { status: 404 })
+    }
+
+    const { error: calcDeleteError } = await supabase
+      .from('chart_calculations')
+      .delete()
+      .eq('chart_id', id)
+
+    if (calcDeleteError) {
+      console.error('Failed to invalidate chart calculation cache:', calcDeleteError)
     }
 
     logAuditEvent(userId, 'account.birth_data_edit', { chartId: id })
 
-    return Response.json(result.data)
+    return Response.json(normalizeBirthDataChart(data))
   } catch (error) {
-    logServerError('ERR-BD-002', error, {
-      context: 'PATCH /api/birth-data/[id] failed',
-    })
-    return Response.json(
-      {
-        error: 'Не успяхме да обновим рождените данни. Опитай отново. Код: ERR-BD-002.',
-        code: 'ERR-BD-002',
-      },
-      { status: 500 },
-    )
+    console.error('Error updating birth data:', error)
+    return Response.json({ error: 'Грешка при запазване' }, { status: 500 })
   }
 }
 
-export async function DELETE(_request: Request, { params }: RouteParams) {
+export async function DELETE(request: Request, { params }: RouteParams) {
   const { userId } = await auth()
   if (!userId) {
     return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
   }
 
   try {
+    await ensureUserRecord(userId)
     const { id } = await params
-    const result = await deleteBirthChart(userId, id)
-    if (!result.ok) {
-      logServerError('ERR-BD-003', result.error, {
-        context: 'DELETE /api/birth-data/[id] delete failed',
-        message: result.message,
-      })
-      return Response.json(
-        {
-          error: 'Не успяхме да изтрием рождените данни. Опитай отново. Код: ERR-BD-003.',
-          code: 'ERR-BD-003',
-        },
-        { status: 500 },
-      )
+    const supabase = createServiceSupabaseClient()
+
+    const { error } = await supabase
+      .from('charts')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Supabase error deleting chart:', error)
+      return Response.json({ error: 'Грешка при изтриване' }, { status: 500 })
     }
+
     return new Response(null, { status: 204 })
   } catch (error) {
-    logServerError('ERR-BD-003', error, {
-      context: 'DELETE /api/birth-data/[id] unhandled error',
-    })
-    return Response.json(
-      {
-        error: 'Не успяхме да изтрием рождените данни. Опитай отново. Код: ERR-BD-003.',
-        code: 'ERR-BD-003',
-      },
-      { status: 500 },
-    )
+    console.error('Error deleting birth data:', error)
+    return Response.json({ error: 'Грешка при изтриване' }, { status: 500 })
   }
 }

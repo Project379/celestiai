@@ -19,16 +19,11 @@ export type AuditEventType =
   | 'payment.subscription_created'
   | 'payment.subscription_cancelled'
   | 'payment.subscription_reactivated'
+  | 'payment.invoice_payment_failed'
   | 'payment.webhook_received'
-  // Relationship / circle
-  | 'relationship.invite_created'
-  | 'relationship.invite_cancelled'
-  | 'relationship.connected'
-  | 'relationship.archived'
-  | 'relationship.report_generated'
-  | 'relationship.saved_profile_created'
-  | 'relationship.saved_profile_deleted'
-  | 'relationship.saved_profile_report_generated'
+  | 'system.payment.webhook_received'
+  | 'system.payment.webhook_ignored'
+  | 'system.security.stripe_ownership_mismatch'
 
 export async function logAuditEvent(
   userId: string | null,
@@ -43,7 +38,7 @@ export async function logAuditEvent(
       metadata: metadata ?? {},
     })
   } catch (err) {
-    // Never throw from audit logging - log to console and move on
+    // Never throw from audit logging — log to console and move on
     console.error('[Audit] Failed to log event:', eventType, err)
   }
 }

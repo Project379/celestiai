@@ -1,5 +1,7 @@
-import { auth } from '@clerk/nextjs/server'
+﻿import { auth } from '@clerk/nextjs/server'
+import { toErrorResponse } from '@/lib/auth/guards'
 import { createPublicSupabaseClient } from '@/lib/supabase/public'
+import { assertRateLimit, getRequestIp } from '@/lib/rate-limit'
 
 /**
  * City search API endpoint
@@ -14,7 +16,7 @@ export async function GET(request: Request) {
   const { userId } = await auth()
   if (!userId) {
     return Response.json(
-      { error: 'Неоторизиран достъп' },
+      { error: 'ÐÐµÐ¾Ñ‚Ð¾Ñ€Ð¸Ð·Ð¸Ñ€Ð°Ð½ Ð´Ð¾ÑÑ‚ÑŠÐ¿' },
       { status: 401 }
     )
   }
@@ -28,19 +30,25 @@ export async function GET(request: Request) {
   // Validate query
   if (!query || query.length < 1) {
     return Response.json(
-      { error: 'Моля, въведете поне 1 символ' },
+      { error: 'ÐœÐ¾Ð»Ñ, Ð²ÑŠÐ²ÐµÐ´ÐµÑ‚Ðµ Ð¿Ð¾Ð½Ðµ 1 ÑÐ¸Ð¼Ð²Ð¾Ð»' },
       { status: 400 }
     )
   }
 
   if (query.length > 100) {
     return Response.json(
-      { error: 'Заявката е твърде дълга' },
+      { error: 'Ð—Ð°ÑÐ²ÐºÐ°Ñ‚Ð° Ðµ Ñ‚Ð²ÑŠÑ€Ð´Ðµ Ð´ÑŠÐ»Ð³Ð°' },
       { status: 400 }
     )
   }
 
   try {
+    assertRateLimit({
+      key: `cities-search:${userId}:${getRequestIp(request)}`,
+      limit: 60,
+      windowMs: 60_000,
+    })
+
     const supabase = createPublicSupabaseClient()
 
     // Search cities by name (Bulgarian) or name_ascii (Latin) using ILIKE
@@ -55,7 +63,7 @@ export async function GET(request: Request) {
     if (error) {
       console.error('City search error:', error)
       return Response.json(
-        { error: 'Грешка при търсене' },
+        { error: 'Ð“Ñ€ÐµÑˆÐºÐ° Ð¿Ñ€Ð¸ Ñ‚ÑŠÑ€ÑÐµÐ½Ðµ' },
         { status: 500 }
       )
     }
@@ -74,10 +82,7 @@ export async function GET(request: Request) {
       },
     })
   } catch (error) {
-    console.error('City search error:', error)
-    return Response.json(
-      { error: 'Вътрешна грешка' },
-      { status: 500 }
-    )
+    return toErrorResponse(error, 'Вътрешна грешка')
   }
 }
+

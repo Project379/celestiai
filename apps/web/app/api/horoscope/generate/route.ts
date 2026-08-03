@@ -1,4 +1,3 @@
-import { auth } from '@clerk/nextjs/server'
 import { generateText, streamText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import type { TransitAspect } from '@stellaeum/astrology'
@@ -8,6 +7,12 @@ import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
 import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import {
+  requireAppUser,
+  requireOwnedChart,
+  toErrorResponse,
+} from '@/lib/auth/guards'
+import { assertRateLimit, getRequestIp } from '@/lib/rate-limit'
 
 export const maxDuration = 60
 const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
@@ -18,12 +23,13 @@ const openrouter = createOpenAI({
 })
 
 export async function POST(req: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   try {
+    const { userId } = await requireAppUser()
+    assertRateLimit({
+      key: `horoscope-generate:${userId}:${getRequestIp(req)}`,
+      limit: 20,
+      windowMs: 60_000,
+    })
     const body = await req.json()
     const { chartId } = body as { chartId?: string }
 
@@ -61,21 +67,18 @@ export async function POST(req: Request) {
 
     const supabase = createServiceSupabaseClient()
 
-    const { data: chart, error: chartError } = await supabase
-      .from('charts')
-      .select(
-        'id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude'
-      )
-      .eq('id', chartId)
-      .single()
-
-    if (chartError || !chart) {
-      return Response.json({ error: 'Chart not found' }, { status: 404 })
-    }
-
-    if (chart.user_id !== userId) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const chart = await requireOwnedChart<{
+      id: string
+      birth_date: string
+      birth_time: string | null
+      birth_time_known: boolean
+      latitude: number
+      longitude: number
+    }>(
+      userId,
+      chartId,
+      'id, birth_date, birth_time, birth_time_known, latitude, longitude'
+    )
 
     const { data: cachedHoroscope } = await supabase
       .from('daily_horoscopes')
@@ -133,7 +136,7 @@ export async function POST(req: Request) {
 
       const chartData = calculateNatalChart({
         date: new Date(chart.birth_date),
-        time: chart.birth_time || null,
+        time: chart.birth_time?.slice(0, 5) || null,
         lat: chart.latitude,
         lon: chart.longitude,
         birthTimeKnown: chart.birth_time_known,
@@ -246,10 +249,6 @@ export async function POST(req: Request) {
 
     return result.toTextStreamResponse()
   } catch (error) {
-    console.error('[Horoscope Generate] Unhandled error:', error)
-    return Response.json(
-      { error: 'Failed to generate horoscope.' },
-      { status: 500 }
-    )
+    return toErrorResponse(error, 'Failed to generate horoscope.')
   }
 }

@@ -1,5 +1,9 @@
 import { stripe } from '@/lib/stripe/client'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import {
+  ensureUserRecord,
+  type SubscriptionStatus,
+  type SubscriptionTier,
+} from '@/lib/users/ensure-user'
 
 export interface SubscriptionData {
   status: string
@@ -11,25 +15,21 @@ export interface SubscriptionData {
 }
 
 export interface SubscriptionOverview {
-  tier: string
+  tier: SubscriptionTier
+  subscriptionStatus: SubscriptionStatus
   subscriptionData: SubscriptionData | null
   subscriptionExpiresAt: string | null
 }
 
 export async function getSubscriptionOverview(userId: string): Promise<SubscriptionOverview> {
-  const supabase = createServiceSupabaseClient()
-  const { data: user } = await supabase
-    .from('users')
-    .select('subscription_tier, stripe_subscription_id, subscription_expires_at')
-    .eq('clerk_id', userId)
-    .single()
-
-  const tier = user?.subscription_tier ?? 'free'
-  const subscriptionExpiresAt = user?.subscription_expires_at ?? null
+  const user = await ensureUserRecord(userId)
+  const tier = user.subscription_tier
+  const subscriptionStatus = user.subscription_status
+  const subscriptionExpiresAt = user.subscription_expires_at
 
   let subscriptionData: SubscriptionData | null = null
 
-  if (user?.stripe_subscription_id) {
+  if (user.stripe_subscription_id) {
     try {
       const sub = await stripe.subscriptions.retrieve(user.stripe_subscription_id, {
         expand: ['default_payment_method'],
@@ -65,6 +65,7 @@ export async function getSubscriptionOverview(userId: string): Promise<Subscript
 
   return {
     tier,
+    subscriptionStatus,
     subscriptionData,
     subscriptionExpiresAt,
   }

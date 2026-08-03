@@ -1,8 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { SuccessContent } from './SuccessContent'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 export const metadata: Metadata = {
   title: 'Абонаментът е активен',
@@ -26,14 +26,8 @@ export default async function SubscriptionSuccessPage() {
     redirect('/auth')
   }
 
-  const supabase = createServiceSupabaseClient()
-  const { data: user } = await supabase
-    .from('users')
-    .select('subscription_tier')
-    .eq('clerk_id', userId)
-    .maybeSingle()
-
-  const initialTier = user?.subscription_tier ?? 'free'
+  const user = await ensureUserRecord(userId)
+  const initialTier = user.subscription_tier
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">

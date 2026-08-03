@@ -2,6 +2,7 @@ import { after } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 /**
  * POST /api/gdpr/delete-account
@@ -15,6 +16,7 @@ export async function POST() {
   }
 
   const supabase = createServiceSupabaseClient()
+  await ensureUserRecord(userId)
   const now = new Date()
   const scheduledDeletion = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
@@ -54,6 +56,7 @@ export async function DELETE() {
   }
 
   const supabase = createServiceSupabaseClient()
+  await ensureUserRecord(userId)
 
   const { error } = await supabase
     .from('users')
