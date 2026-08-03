@@ -156,9 +156,14 @@ async function main() {
     }
 
     console.log('\n=== Constraints (public schema) — present in some migration file? ===')
+    console.log('(PRIMARY KEY constraints skipped — Postgres auto-names them "<table>_pkey"')
+    console.log(' deterministically from an inline PRIMARY KEY column, so they never appear')
+    console.log(' as literal text even when the migration correctly creates them; flagging')
+    console.log(' every single one is 100% false positive, not a real signal.)')
     const constraints = await sql`
       SELECT conname, conrelid::regclass::text AS table_name FROM pg_constraint
-      WHERE connamespace = 'public'::regnamespace ORDER BY table_name, conname
+      WHERE connamespace = 'public'::regnamespace AND contype != 'p'
+      ORDER BY table_name, conname
     `
     for (const c of constraints) {
       report('CONSTRAINT', `${c.table_name}.${c.conname}`, foundIn(c.conname))

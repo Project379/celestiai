@@ -1524,6 +1524,18 @@ None of this was caught by Round A's own audit because it checked the route file
 
 **Why documented:** the same blind spot already hit twice (LunarPhaseCard, PlanetDetail) — filing immediately rather than letting a third instance surface by accident.
 
+## 61. Nine Stream K tables pre-provisioned in production, zero code references, zero migration history
+
+**Status:** Filed 2026-08-03, found during the RLS migration-history audit (`apps/web/scripts/diagnostics/audit-hand-applied-schema.mjs`). Nine tables exist in production, fully built — `connection_spaces`, `connection_members`, `connection_invites`, `connection_reports`, `relationship_profiles`, `relationship_invites`, `compatibility_reports`, `saved_people_profiles`, `saved_people_reports`. Complete schema: FKs, CHECK constraints (relationship_type enums, status enums), indexes, RLS with owner/member-scoped policies, `updated_at` triggers reusing `public.set_updated_at()`. None of it had any migration-file record — not even `CREATE TABLE` — until this audit; now captured verbatim in `supabase/migrations/20260803101500_capture_stream_k_relationship_schema.sql`.
+
+**Why this is a REVISIT and not just a migration fix:** the schema is dormant, not just undocumented. Grepped `apps/web`, `apps/mobile`, and `packages` for every one of the nine table names — zero references anywhere in current application code. Nothing reads or writes these tables today. This looks like backend work done ahead of building Stream K's UI (synastry/couples/crush/friends-group features — `relationship_profiles`/`relationship_invites` map to couples-linked-charts and crush reports, `connection_spaces`/`connection_members`/`connection_invites`/`connection_reports` map to friends-group reads, `compatibility_reports` to synastry, `saved_people_profiles`/`saved_people_reports` to ghost-profile crush reports — per the feature list in `.planning/research/MOBILE_UX_RESEARCH.md` Phase C), provisioned directly against production and never wired to any code or captured in history.
+
+**Concern for whoever opens Stream K next:** this schema predates any current Stream K spec/plan. Whoever plans that work will find fully-built tables they didn't create and can't trace to a decision doc — don't assume it matches whatever gets designed later. Before building against it: re-verify column shapes, RLS policies, and the relationship_type/status CHECK constraint value sets still match the actual feature spec once one exists; treat it as a found artifact to validate, not a finished foundation to build on unquestioned.
+
+**Trigger:** whenever a Stream K sub-round is first opened for planning — read this entry and `.planning/SECURITY-MODEL.md`'s per-table rows for these nine before assuming any schema needs to be designed from scratch, and before assuming what's there is still correct.
+
+**Why documented:** the same failure this whole audit exists to prevent — hand-applied schema silently invisible to anyone who only reads migration history — would otherwise repeat exactly here: a future Stream K investigation pass reading `supabase/migrations/` and concluding no backend work has started, when nine tables' worth already has.
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
