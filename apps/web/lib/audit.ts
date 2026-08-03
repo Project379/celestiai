@@ -20,6 +20,15 @@ export type AuditEventType =
   | 'payment.subscription_cancelled'
   | 'payment.subscription_reactivated'
   | 'payment.webhook_received'
+  // Relationship / circle
+  | 'relationship.invite_created'
+  | 'relationship.invite_cancelled'
+  | 'relationship.connected'
+  | 'relationship.archived'
+  | 'relationship.report_generated'
+  | 'relationship.saved_profile_created'
+  | 'relationship.saved_profile_deleted'
+  | 'relationship.saved_profile_report_generated'
 
 export async function logAuditEvent(
   userId: string | null,

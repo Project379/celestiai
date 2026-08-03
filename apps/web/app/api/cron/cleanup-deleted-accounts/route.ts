@@ -71,6 +71,48 @@ export async function GET(req: Request) {
         .delete()
         .eq('user_id', clerkId)
 
+      // Delete crush / saved-people reports before profiles
+      await supabase
+        .from('saved_people_reports')
+        .delete()
+        .eq('user_id', clerkId)
+
+      await supabase
+        .from('saved_people_profiles')
+        .delete()
+        .eq('user_id', clerkId)
+
+      // Delete connection-space records where the user participated or initiated
+      await supabase
+        .from('connection_reports')
+        .delete()
+        .eq('generated_by', clerkId)
+
+      await supabase
+        .from('connection_invites')
+        .delete()
+        .eq('inviter_user_id', clerkId)
+
+      const { data: spaceMemberships } = await supabase
+        .from('connection_members')
+        .select('space_id')
+        .eq('user_id', clerkId)
+
+      const spaceIds = (spaceMemberships ?? []).map((row: { space_id: string }) => row.space_id)
+
+      await supabase
+        .from('connection_members')
+        .delete()
+        .eq('user_id', clerkId)
+
+      if (spaceIds.length > 0) {
+        await supabase
+          .from('connection_spaces')
+          .delete()
+          .in('id', spaceIds)
+          .eq('created_by_user_id', clerkId)
+      }
+
       // Delete charts
       await supabase
         .from('charts')

@@ -24,6 +24,8 @@
     "./charts/schemas": "./src/charts/schemas.ts",
     "./charts/interpretations": "./src/charts/interpretations.ts",
     "./charts/glyphs": "./src/charts/glyphs.ts",
+    "./relationships/compatibility": "./src/relationships/compatibility.ts",
+    "./relationships/types": "./src/relationships/types.ts",
     "./diary/entries": "./src/diary/entries.ts",
     "./oracle/planet-parser": "./src/oracle/planet-parser.ts"
   },

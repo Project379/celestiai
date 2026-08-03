@@ -21,7 +21,14 @@ const nextConfig = {
   // `node -e` from packages/astrology — confirming the issue is
   // bundler-only, not runtime. See doc-drift tracker #14 at
   // .planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md.
-  serverExternalPackages: ['sweph'],
+  // geo-tz has the same class of runtime requirement as sweph, but
+  // instead of a native binary it expects packaged data files under
+  // ../data at runtime. If Next bundles geo-tz into .next/server, the
+  // JS lands there without its data directory and calls like
+  // findTimezone() fail with ENOENT for timezones-1970.geojson.geo.dat.
+  // Keeping it external ensures Node resolves it from node_modules
+  // where the package's data/ directory exists.
+  serverExternalPackages: ['sweph', 'geo-tz'],
   // Belt-and-suspenders externalization at the Webpack layer. The
   // serverExternalPackages config above is the newer sugar but did not
   // take effect through three attempted configurations on Next 15.5.9
@@ -34,7 +41,7 @@ const nextConfig = {
   // code path. See doc-drift tracker #14.
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals = [...(config.externals || []), 'sweph']
+      config.externals = [...(config.externals || []), 'sweph', 'geo-tz']
     }
     return config
   },

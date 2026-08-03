@@ -629,18 +629,18 @@ export default defineConfig({
 
 ### Environment Variables
 ```bash
-# .env.local.local
+# .env.example.local.local
 
 # Supabase (from Dashboard > Settings > API)
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 
 # Direct database connection (for Drizzle migrations)
-DATABASE_URL=postgresql://postgres:[password]@db.xxx.supabase.co:5432/postgres
+DATABASE_URL=your-database-url
 
 # Clerk (existing from Phase 2)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your-clerk-publishable-key
+CLERK_SECRET_KEY=your-clerk-secret-key
 ```
 
 ## State of the Art

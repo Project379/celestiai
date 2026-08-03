@@ -3,7 +3,7 @@
  * M3 UAT harness — runtime verification of every extracted endpoint.
  *
  * Invoke:
- *   node --env-file=apps/web/.env.local apps/web/scripts/m3-uat-harness.mjs
+ *   node --env-file=apps/web/.env.example.local apps/web/scripts/m3-uat-harness.mjs
  *
  * Prereqs: dev server running on http://localhost:3000.
  *

@@ -40,7 +40,7 @@ key_files:
     - apps/web/lib/supabase/client.ts
   modified:
     - apps/web/package.json
-    - apps/web/.env.local.example
+    - apps/web/.env.example.local.example
     - pnpm-lock.yaml
 decisions:
   - id: "03-01-01"
