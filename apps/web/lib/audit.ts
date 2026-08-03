@@ -24,6 +24,10 @@ export type AuditEventType =
   | 'system.payment.webhook_ignored'
   | 'system.payment.quota_refund_failed'
   | 'system.security.stripe_ownership_mismatch'
+  // RevenueCat (REVISIT-62)
+  | 'system.payment.revenuecat_webhook_received'
+  | 'system.payment.revenuecat_webhook_ignored'
+  | 'system.payment.revenuecat_unexpected_non_renewing_purchase'
 
 export async function logAuditEvent(
   userId: string | null,
