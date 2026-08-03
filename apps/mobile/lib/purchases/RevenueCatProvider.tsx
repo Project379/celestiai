@@ -107,7 +107,11 @@ export function RevenueCatProvider({ children }: { children: React.ReactNode }) 
       Purchases.logIn(userId)
         .then(({ created }) => {
           loggedInUserIdRef.current = userId
-          console.log(`[RevenueCat] logIn() -> userId=${userId}, created=${created}`)
+          // Verification checkpoint (REVISIT-62): confirm this exact Clerk
+          // userId matches what you see for your account in the app, and
+          // that it appears in RevenueCat's dashboard under this same ID.
+          // Remove once verified — not meant to stay long-term.
+          console.log(`[RevenueCat][VERIFY] logIn() succeeded — Clerk userId="${userId}", created=${created}`)
         })
         .catch((err) => logError('ERR-MOB-RC-004', err))
       return
