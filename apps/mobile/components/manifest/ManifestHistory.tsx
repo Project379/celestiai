@@ -91,7 +91,7 @@ function HistoryItem({ entry, isFirst }: HistoryItemProps) {
                 {['I', 'II', 'III'][i]}
               </Text>
               <Text className="flex-1 text-[14.5px] font-light leading-[1.8] text-slate-200/95">
-                „{intention}"
+                „{intention}“
               </Text>
             </View>
           ))}

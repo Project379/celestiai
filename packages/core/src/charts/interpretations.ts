@@ -189,7 +189,6 @@ export function getPlanetInterpretation(planet: string, sign: string, degree?: n
 
 export function getRisingInterpretation(sign: string, degree?: number, isApproximate?: boolean): InterpretationData {
     const signKey = sign.toLowerCase() as ZodiacSign
-    const signName = ZODIAC_SIGNS_BG[signKey] || sign
 
     return {
         title: isApproximate ? 'Приблизителен асцендент' : 'Асцендент',

@@ -174,7 +174,7 @@ export function getNextMeteorShower(
 ): { shower: MeteorShower; daysAway: number } | null {
   const today = dayOfYear(date.getMonth() + 1, date.getDate())
   const candidates = METEOR_SHOWERS.map(s => {
-    let peakDoy = dayOfYear(s.peakMonth, s.peakDay)
+    const peakDoy = dayOfYear(s.peakMonth, s.peakDay)
     let diff = peakDoy - today
     if (diff < 0) diff += 365 // wrap around
     return { shower: s, daysAway: diff }
