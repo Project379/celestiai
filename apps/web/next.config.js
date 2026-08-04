@@ -30,7 +30,16 @@ const nextConfig = {
   // (2026-07-29) that failed page-data collection for /api/oracle/generate
   // with exactly that error. Externalizing it so it's require()'d natively
   // at runtime, same fix as sweph.
-  serverExternalPackages: ['sweph', 'dictionary-bg'],
+  //
+  // geo-tz (used by packages/astrology/src/utils/timezone.ts's findTimezone)
+  // has the same class of runtime requirement as sweph, but instead of a
+  // native binary it expects packaged data files under ../data at runtime.
+  // If Next bundles geo-tz into .next/server, the JS lands there without
+  // its data directory and calls like findTimezone() fail with ENOENT for
+  // timezones-1970.geojson.geo.dat. Keeping it external ensures Node
+  // resolves it from node_modules where the package's data/ directory
+  // exists — found independently on the Circle-features branch, same fix.
+  serverExternalPackages: ['sweph', 'dictionary-bg', 'geo-tz'],
   // Belt-and-suspenders externalization at the Webpack layer. The
   // serverExternalPackages config above is the newer sugar but did not
   // take effect through three attempted configurations on Next 15.5.9
@@ -40,11 +49,11 @@ const nextConfig = {
   // native modules (sweph, sharp, bcrypt, etc.) across Next.js
   // versions. Paired with the pinned `next: 15.2.4` in package.json
   // so a future 15.5+ regression is not regression-sensitive on this
-  // code path. See doc-drift tracker #14. dictionary-bg added alongside
-  // sweph for the same reason (see comment above).
+  // code path. See doc-drift tracker #14. dictionary-bg and geo-tz added
+  // alongside sweph for the same reason (see comment above).
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals = [...(config.externals || []), 'sweph', 'dictionary-bg']
+      config.externals = [...(config.externals || []), 'sweph', 'dictionary-bg', 'geo-tz']
     }
     return config
   },

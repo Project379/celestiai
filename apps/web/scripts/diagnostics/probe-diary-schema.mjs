@@ -13,7 +13,7 @@
  * Run:
  *   DATABASE_URL=<connection-string> node apps/web/scripts/diagnostics/probe-diary-schema.mjs
  *   # or via env-file:
- *   node --env-file=apps/web/.env.local apps/web/scripts/diagnostics/probe-diary-schema.mjs
+ *   node --env-file=apps/web/.env.example.local apps/web/scripts/diagnostics/probe-diary-schema.mjs
  *
  * The `DATABASE_URL` must be a direct-Postgres connection string
  * (postgres://...) — this script reads information_schema and

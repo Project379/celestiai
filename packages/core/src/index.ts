@@ -21,6 +21,19 @@ export type { CurrentPlanet, CurrentPlanetsResponse } from './planets/current'
 
 export { getSubscriptionTier } from './subscription/tier'
 export type { SubscriptionTier } from './subscription/tier'
+export {
+  buildCompositeChartData,
+  calculateCompatibilitySummary,
+  calculateCrossChartAspects,
+} from './relationships/compatibility'
+export type {
+  CompatibilitySummary,
+  CompatibilityDomainKey,
+  CompatibilityDomainResult,
+  RelationshipType,
+  CrossChartAspect,
+  CompositeChartData,
+} from './relationships/types'
 
 export { getTransitsOverview } from './horoscope/transits'
 export type { TransitsOverviewResult } from './horoscope/transits'

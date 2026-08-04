@@ -302,3 +302,13 @@ W-форма
 # Standard Bulgarian rendering of "token" (session/push/API token); already
 # the conventional spelling in Bulgarian tech writing.
 токен
+
+# Circle-branch recovery addition (2026-08-04) — genuine Bulgarian words the
+# dictionary lacks, ruled on individually by founder review, same as every
+# other entry in this file. Astrology/relationship-report vocabulary from
+# apps/web/lib/circle/{report,service,weather}.ts and CircleHub.tsx.
+синхрон
+композитния
+недоизказване
+Линкът
+синастрия
