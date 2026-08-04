@@ -5,10 +5,10 @@ name: Astrology Validation
 # scope and design rationale.
 #
 # Triggers:
-#   - pull_request to develop/main when astrology files change
-#   - push to develop/main/mobile-parallel-test when astrology files change
-#     (feature-branch push-trigger supports verification runs without needing
-#     an open PR; narrow branch list prevents noise on short-lived branches)
+#   - pull_request to main when astrology files change
+#   - push to main when astrology files change (direct pushes and
+#     short-lived branches merging back both land here — single-branch
+#     strategy since 2026-08-04, see HANDOFF-2026-05-09.md)
 #
 # Path filter scoped to packages/astrology/** + this workflow file. Changes
 # outside the astrology package do not fire this workflow; typecheck-level
@@ -17,12 +17,12 @@ name: Astrology Validation
 
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main]
     paths:
       - 'packages/astrology/**'
       - '.github/workflows/astrology.yml'
   push:
-    branches: [develop, main, mobile-parallel-test]
+    branches: [main]
     paths:
       - 'packages/astrology/**'
       - '.github/workflows/astrology.yml'

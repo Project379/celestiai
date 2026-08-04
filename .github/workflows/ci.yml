@@ -1,8 +1,16 @@
 name: CI
 
+# Single-branch strategy since 2026-08-04 (see HANDOFF-2026-05-09.md) — main
+# is the only long-lived branch, so both PR merges and direct/short-lived-
+# branch pushes to main need to fire this. push trigger added alongside the
+# pre-existing pull_request one for that reason, not narrowed from a wider
+# push list like astrology.yml's (this workflow never had a push trigger
+# before today).
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   check:
