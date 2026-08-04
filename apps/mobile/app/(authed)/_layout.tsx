@@ -80,6 +80,9 @@ export default function AuthedLayout() {
         <Stack.Screen name="you/guide" />
         <Stack.Screen name="you/premium" />
         <Stack.Screen name="you/settings" />
+        <Stack.Screen name="you/settings-name" />
+        <Stack.Screen name="you/settings-email" />
+        <Stack.Screen name="you/settings-password" />
       </Stack>
     </View>
   )

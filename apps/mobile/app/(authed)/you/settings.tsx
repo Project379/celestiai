@@ -3,6 +3,7 @@ import Constants from 'expo-constants'
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated from 'react-native-reanimated'
+import { useRouter } from 'expo-router'
 
 import { BackButton } from '@/components/design-system/BackButton'
 import { pressFeedback } from '@/components/design-system/tokens'
@@ -18,20 +19,25 @@ const PRIVACY_URL = 'https://stellaeum.com/privacy'
  * /you/settings — P.10 close. Replaces the P.5 stub. D5 amended
  * (2026-07-21): Clerk RN <UserProfile> is a native TurboModule, unloadable
  * in the current Expo Go runtime and unstyleable even under Dev Client —
- * ruled out. This ships the custom app-specific section only; profile-
- * field editing (name/email/password) is deferred to REVISIT-53.
+ * ruled out.
  *
  * P.10-a: sign-out (relocated from you.tsx, now confirmed via Alert.alert
  * — it previously had none) + legal link + app version.
- * P.10-b (this commit): data export + account deletion, both destructive-
- * action-adjacent and both wired to B.0h's previously-unwired GDPR routes.
- * Deletion confirm states the concrete computed date, not a vague "30
- * days" (matches web's DataAccountPage.tsx dialog). The persistent
- * pending-deletion banner (mounted in (authed)/_layout.tsx, not here)
- * owns cancellation — this screen only requests deletion.
+ * P.10-b: data export + account deletion, both destructive-action-adjacent
+ * and both wired to B.0h's previously-unwired GDPR routes. Deletion confirm
+ * states the concrete computed date, not a vague "30 days" (matches web's
+ * DataAccountPage.tsx dialog). The persistent pending-deletion banner
+ * (mounted in (authed)/_layout.tsx, not here) owns cancellation — this
+ * screen only requests deletion.
+ * REVISIT-53 (this batch): profile-field editing. <UserProfile> was ruled
+ * out above, but the underlying update()/createEmailAddress()/
+ * updatePassword() resource methods are plain REST-backed calls, not part
+ * of that native component — three new routes (you/settings-{name,email,
+ * password}.tsx) cover it without needing a native module.
  */
 export default function SettingsScreen() {
   const { signOut } = useClerk()
+  const router = useRouter()
   const { apiFetch } = useApiClient()
   const { status, requestDeletion } = useAccountDeletion()
 
@@ -102,6 +108,45 @@ export default function SettingsScreen() {
         onScroll={backVisibility.onScroll}
         scrollEventThrottle={100}
       >
+        <View className="mb-10">
+          <Text className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-400">
+            Профил
+          </Text>
+          <Pressable
+            onPress={() => {
+              hapticSelect()
+              router.push('/you/settings-name')
+            }}
+            className="flex-row items-center justify-between border-b border-slate-800/60 py-4"
+            style={({ pressed }) => pressFeedback(pressed)}
+          >
+            <Text className="text-[14px] text-slate-200">Име</Text>
+            <Text className="text-[14px] text-slate-500">›</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              hapticSelect()
+              router.push('/you/settings-email')
+            }}
+            className="flex-row items-center justify-between border-b border-slate-800/60 py-4"
+            style={({ pressed }) => pressFeedback(pressed)}
+          >
+            <Text className="text-[14px] text-slate-200">Имейл</Text>
+            <Text className="text-[14px] text-slate-500">›</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              hapticSelect()
+              router.push('/you/settings-password')
+            }}
+            className="flex-row items-center justify-between py-4"
+            style={({ pressed }) => pressFeedback(pressed)}
+          >
+            <Text className="text-[14px] text-slate-200">Парола</Text>
+            <Text className="text-[14px] text-slate-500">›</Text>
+          </Pressable>
+        </View>
+
         <View className="mb-10">
           <Text className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-400">
             Данни и акаунт

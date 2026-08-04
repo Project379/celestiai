@@ -36,6 +36,13 @@
  * count moved). Deliberate raise, not drift — see REVISIT-26 close note in
  * REVISIT-TRIGGERS.md.
  *
+ * Raised to 1371 on 2026-08-04 (REVISIT-53 — mobile profile-field editing):
+ * 27 new, reviewed literals across the three new you/settings-{name,email,
+ * password}.tsx routes plus the three new row labels added to
+ * you/settings.tsx — same outside-content-home shape as those files'
+ * existing siblings ((public)/verify.tsx, sign-in.tsx), informal ти,
+ * checked against check:bg-strings and the approved-copy lock.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -45,7 +52,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1344
+const BASELINE = 1371
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },
