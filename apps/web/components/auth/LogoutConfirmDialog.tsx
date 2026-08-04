@@ -1,6 +1,7 @@
 'use client'
 
 import { useClerk } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 import { useState, useCallback, useEffect, useRef } from 'react'
 
 interface LogoutConfirmDialogProps {
@@ -10,6 +11,7 @@ interface LogoutConfirmDialogProps {
 
 export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProps) {
   const { signOut } = useClerk()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
 
@@ -27,12 +29,16 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
   const handleSignOut = useCallback(async () => {
     setIsLoading(true)
     try {
-      await signOut({ redirectUrl: '/' })
+      await signOut()
+      onClose()
+      router.replace('/')
+      router.refresh()
     } catch (error) {
       console.error('Sign out error:', error)
+    } finally {
       setIsLoading(false)
     }
-  }, [signOut])
+  }, [onClose, router, signOut])
 
   const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
     const rect = dialogRef.current?.getBoundingClientRect()

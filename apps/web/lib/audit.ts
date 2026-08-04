@@ -28,6 +28,15 @@ export type AuditEventType =
   | 'system.payment.revenuecat_webhook_received'
   | 'system.payment.revenuecat_webhook_ignored'
   | 'system.payment.revenuecat_unexpected_non_renewing_purchase'
+  // Relationship / circle
+  | 'relationship.invite_created'
+  | 'relationship.invite_cancelled'
+  | 'relationship.connected'
+  | 'relationship.archived'
+  | 'relationship.report_generated'
+  | 'relationship.saved_profile_created'
+  | 'relationship.saved_profile_deleted'
+  | 'relationship.saved_profile_report_generated'
 
 export async function logAuditEvent(
   userId: string | null,

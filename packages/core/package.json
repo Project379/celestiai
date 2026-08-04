@@ -26,6 +26,8 @@
     "./charts/interpretations": "./src/charts/interpretations.ts",
     "./charts/glyphs": "./src/charts/glyphs.ts",
     "./charts/sections": "./src/charts/sections.ts",
+    "./relationships/compatibility": "./src/relationships/compatibility.ts",
+    "./relationships/types": "./src/relationships/types.ts",
     "./diary/entries": "./src/diary/entries.ts",
     "./diary/export": "./src/diary/export.ts",
     "./diary/prompts": "./src/diary/prompts.ts",
