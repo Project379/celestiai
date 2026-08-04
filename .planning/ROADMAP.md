@@ -1,6 +1,15 @@
-# Roadmap: Stellaeum AI v0.1
+# Roadmap: Stellaeum AI
 
-## Overview
+This document covers two milestones:
+
+- **v0.1 — web MVP** (COMPLETE 2026-02-19) — Phases 1–8 documented below for historical reference.
+- **v1.0 — mobile-led launch** (Phase A complete 2026-05-09; Phase B opens next) — appended at the bottom.
+
+---
+
+## v0.1 milestone — web MVP
+
+### Overview
 
 Stellaeum AI v0.1 delivers a web-first Bulgarian astrology MVP. The journey starts with monorepo foundation and security headers, progresses through authentication and birth data collection, builds the core astrology engine with interactive charts, layers AI-powered readings and daily horoscopes, integrates Stripe payments, and concludes with landing page polish and GDPR compliance. Eight phases, 54 requirements, zero enterprise theater.
 
@@ -424,4 +433,82 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8
 *Phase 7 complete: 2026-02-17*
 *Phase 8 planned: 2026-02-19*
 *Phase 8 complete: 2026-02-19*
-*Milestone: v0.1 MVP*
+*Milestone: v0.1 MVP — COMPLETE*
+
+---
+
+## v1.0 milestone — mobile-led launch
+
+### Overview
+
+v0.1 closed the web MVP. v1.0 is the mobile-led commercial launch: native iOS + Android apps via Expo, paywall-driven freemium revenue, and Bulgarian soft-launch (50–100 users) before GA. Source-of-truth UX framing lives in `.planning/research/MOBILE_UX_RESEARCH.md §10`; per-phase execution lives under `.planning/phases/phase-{a,b,c,d}-*/` with sub-round close summaries (SR `n` close docs at each Phase A SR boundary).
+
+Speed-mode discipline preserved: investigation pass before any code in a sub-round, founder ratifies in one response, sub-commits execute sequentially, TypeScript green between commits, founder verification only at sub-round close.
+
+### Phases
+
+- [x] **Phase A: Mobile scaffold** (2026-04-18 → 2026-05-09, ~3 weeks) — Auth, first fetch, rename, birth-data wizard, horoscope, chart, Oracle, infra batch. **Exit criterion:** TestFlight build navigates 5 tabs, renders chart, opens Oracle. Closed per documented exit criteria.
+- [ ] **Phase B: Mobile parity + Кръг** (OPEN 2026-05-09, timeline TBD) — Two parallel streams: Stream P ports all missing web features to mobile per `MOBILE-WEB-PARITY-GAP.md`; Stream K ports Кръг features as friend ships them on web. Soft-launch quality bar reframed 2026-05-09 to **full web parity less Friends groups (deferred to future research)**. **Soft-launch milestone** at end of Phase B: TestFlight + Google Play internal track, 50–100 Bulgarian users.
+- [ ] **Phase C: Remaining premium features** (~8–12 weeks) — Crush reports, couples linked, yearly forecast, deep synastry, **Friends groups research**. Native retention plumbing: home-screen widgets, biometric anchored quick-open, expanded notification taxonomy.
+- [ ] **Phase D: Web reposition** — Bulgarian SEO acquisition funnel, shareable chart surfaces, desktop becomes read-only-ish, Oracle chat remains on web.
+
+### Phase A — Mobile scaffold (COMPLETE)
+
+**Goal:** Native iOS app reachable in Expo Go on real iPhone with the chart-and-Oracle clauses of the TestFlight DOD satisfied, plus the launch-readiness infra additions per `MOBILE_UX_RESEARCH.md §13.5`.
+
+**Sub-round trail:** SR 1 (auth foundation) → SR 2 (first fetch) → SR 3 (Stellaeum rename) → SR 4 (birth-data wizard) → SR 5 (chart calc + horoscope + Bulgarian copy audit) → SR 6 (chart visualization) → SR 7 (mobile Oracle) → SR 8 (launch-readiness infra: Sentry + feature flags + push permission scaffold). SR 9 (EAS Dev Client + TestFlight + biometric, bundled per REVISIT-1) deferred to Phase B close.
+
+**Outcome:** Chart-bearing users on iOS open Oracle from any tab, browse saved readings instantly from cache, generate fresh readings on tap, hit the daily cap with a clear Bulgarian text notice, and return through the topic grid. Sentry receives errors with `errorId` tags. Feature-flag kill switches gate the three AI features (Днес hero, Oracle, push). Push permission scaffold prompts after first successful Oracle reading with bulgarian-skill-calibrated copy, stashes token in AsyncStorage on grant.
+
+**Sub-round close docs:** `.planning/phases/phase-a-mobile-scaffold/SUB-ROUND-{1,2,3,4,7,8}-CLOSE.md`. (5 and 6 are documented in the SR 6 handoff doc rather than dedicated close summaries.)
+
+### Phase B — Mobile parity + Кръг (OPEN)
+
+**Goal:** Soft-launch invites go out to 50–100 Bulgarian users on a mobile app at FULL web parity (less Friends groups, deferred to future research). One complete revenue loop validated end-to-end via the soft-launch milestone — install → birth data → use the full feature surface (chart, Oracle, daily horoscope with streaming, lunar diary, recommendations, crystals collection, astrology guide, Кръг compatibility, paid features) → convert to premium via RevenueCat → receive push notifications at the user's pattern-time. **Soft-launch milestone closes Phase B.**
+
+**Two parallel streams** per founder ratification 2026-05-09:
+
+- **Stream P (Parity)** — port all missing web features to mobile per `.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md`. Single source of truth for Stream P scope, status tracked per-item. Toni's primary work.
+- **Stream K (Кръг)** — port Кръг features as friend ships them on web. Per-port reactive investigation pass when each feature lands. Sequence dictated by friend's web shipping order. Friends groups deferred to future research.
+
+**Soft-launch milestone (end of Phase B):**
+
+- TestFlight internal beta + Google Play internal track open
+- 50–100 Bulgarian users invited (founder network + targeted recruitment)
+- Real push delivery, real RevenueCat purchases, real synastry feedback, real diary use, real recommendations engagement collected before GA
+- SR 9 (EAS Dev Client + TestFlight provisioning + biometric `expo-local-authentication`, bundled per REVISIT-1) fires alongside the soft-launch cut as Stream P P.17
+- Apple Developer Program enrollment must complete before P.17 (founder track during Stream P middle weeks)
+
+**Carry-forward from Phase A close:**
+
+- REVISIT-25 (RevenueCat code-side scaffold) lands in Stream P P.15 (renamed from "Phase B opener" — RevenueCat sequencing depends on parity work order)
+- REVISIT-26 (push_tokens schema + RLS + registration endpoint) lands in Stream P P.16
+- REVISIT-27 (Expo Go push token retrieval verification) closes when P.17's Dev Client build lands
+- Telemetry vendor wiring (PostHog selected at Phase A close ratification) opens Stream P P.13 with the 10-event taxonomy from `phase-b-mobile-parity/HANDOFF-2026-05-09.md`
+- REVISIT-23 (web Oracle cap-reached silent failure) — promoted to active scope as Stream P web-touching item; founder + friend coordination required
+
+**Stream P sub-round investigation:** initial layering surfaced 2026-05-09 (~18 sub-rounds covering Днес/Карта/Ритъм/Ти tab parity batches + sub-routes + infra + SR 9 + soft-launch verification). Awaiting founder ratification before any code commits. See `phase-b-mobile-parity/HANDOFF-2026-05-09.md` and the parity gap inventory.
+
+**Stream K sub-round investigation:** NOT pre-planned. Friend's coordination conversation (gating Stream P start) also informs Stream K shipping order expectations. Per-port log lives at `phase-b-mobile-parity/STREAM-K-PORT-LOG.md` (created when first Кръг port lands).
+
+### Phase C — Remaining premium features
+
+**Goal:** Five additional paid wedges shipping post-soft-launch, plus native retention plumbing (widgets, biometric-anchored quick-open, expanded notification taxonomy). Out of scope for now; detailed planning at Phase B close.
+
+### Phase D — Web reposition
+
+**Goal:** Web becomes a Bulgarian SEO content acquisition funnel + read-only chart viewer + Oracle chat surface, complementing the native apps as primary product. Detailed planning at Phase C close. Pre-launch gates from `.planning/PRE_LAUNCH_PREREQS.md` cluster here (telemetry post-launch tuning, color-contrast audit, GDPR/ToS final pass).
+
+### Phase A trail timestamps
+
+*Phase A planned: 2026-04-18*
+*SR 1 (auth foundation) complete: 2026-05-03*
+*SR 2 (first fetch) complete: 2026-05-03*
+*SR 3 (Stellaeum rename) complete: 2026-05-03*
+*SR 4 (birth-data wizard) complete: 2026-05-07*
+*SR 5 (chart calc + horoscope + Bulgarian copy audit) complete: 2026-05-08*
+*SR 6 (chart visualization) complete: 2026-05-08*
+*SR 7 (mobile Oracle) complete: 2026-05-09*
+*SR 8 (launch-readiness infra) complete: 2026-05-09*
+*Phase A close ratification: 2026-05-09*
+*Milestone: v1.0 mobile-led launch — Phase B opens next*

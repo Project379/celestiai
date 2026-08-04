@@ -1,6 +1,6 @@
-﻿import { auth } from '@clerk/nextjs/server'
-import { toErrorResponse } from '@/lib/auth/guards'
+import { auth } from '@clerk/nextjs/server'
 import { createPublicSupabaseClient } from '@/lib/supabase/public'
+import { toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit, getRequestIp } from '@/lib/rate-limit'
 
 /**
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const { userId } = await auth()
   if (!userId) {
     return Response.json(
-      { error: 'ÐÐµÐ¾Ñ‚Ð¾Ñ€Ð¸Ð·Ð¸Ñ€Ð°Ð½ Ð´Ð¾ÑÑ‚ÑŠÐ¿' },
+      { error: 'Сесията ти изтече. Влез отново.' },
       { status: 401 }
     )
   }
@@ -30,20 +30,20 @@ export async function GET(request: Request) {
   // Validate query
   if (!query || query.length < 1) {
     return Response.json(
-      { error: 'ÐœÐ¾Ð»Ñ, Ð²ÑŠÐ²ÐµÐ´ÐµÑ‚Ðµ Ð¿Ð¾Ð½Ðµ 1 ÑÐ¸Ð¼Ð²Ð¾Ð»' },
+      { error: 'Въведи поне 1 символ' },
       { status: 400 }
     )
   }
 
   if (query.length > 100) {
     return Response.json(
-      { error: 'Ð—Ð°ÑÐ²ÐºÐ°Ñ‚Ð° Ðµ Ñ‚Ð²ÑŠÑ€Ð´Ðµ Ð´ÑŠÐ»Ð³Ð°' },
+      { error: 'Заявката е твърде дълга' },
       { status: 400 }
     )
   }
 
   try {
-    assertRateLimit({
+    await assertRateLimit({
       key: `cities-search:${userId}:${getRequestIp(request)}`,
       limit: 60,
       windowMs: 60_000,
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
     if (error) {
       console.error('City search error:', error)
       return Response.json(
-        { error: 'Ð“Ñ€ÐµÑˆÐºÐ° Ð¿Ñ€Ð¸ Ñ‚ÑŠÑ€ÑÐµÐ½Ðµ' },
+        { error: 'Грешка при търсене' },
         { status: 500 }
       )
     }
@@ -85,4 +85,3 @@ export async function GET(request: Request) {
     return toErrorResponse(error, 'Вътрешна грешка')
   }
 }
-

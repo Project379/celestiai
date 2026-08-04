@@ -15,8 +15,11 @@ import type {
   ApproximateTimeRange,
   BirthData,
 } from '@stellaeum/core/charts/schemas'
+import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticInvite, hapticSelect } from '@/lib/haptics'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { TimePicker } from '@/components/wizard/TimePicker'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 const TIME_RANGES: {
   value: ApproximateTimeRange
@@ -25,7 +28,7 @@ const TIME_RANGES: {
 }[] = [
   { value: 'morning', label: 'Сутрин', hours: '06 - 12' },
   { value: 'afternoon', label: 'Следобед', hours: '12 - 18' },
-  { value: 'evening', label: 'Вечер', hours: '18:00–23:59' },
+  { value: 'evening', label: 'Вечер', hours: '18 - 24' },
   { value: 'night', label: 'Нощ', hours: '00 - 06' },
 ]
 
@@ -51,6 +54,7 @@ function parseHHMM(time: string | null | undefined): Date {
 
 export default function WizardTimeScreen() {
   const router = useRouter()
+  const { push } = useGuardedNavigation()
   const {
     control,
     setValue,
@@ -105,7 +109,7 @@ export default function WizardTimeScreen() {
       'birthTime',
       'approximateTimeRange',
     ])
-    if (ok) router.push('/wizard/location')
+    if (ok) push('/wizard/location')
   }
 
   return (
@@ -134,12 +138,16 @@ export default function WizardTimeScreen() {
 
         {/* Known/unknown toggle — rail-with-amber-diamond mirrors web */}
         <Pressable
-          onPress={() => handleTimeKnownChange(!birthTimeKnown)}
+          onPress={() => {
+            hapticSelect()
+            handleTimeKnownChange(!birthTimeKnown)
+          }}
           className={`mb-7 flex-row items-center justify-between border-y px-1 py-4 ${
             birthTimeKnown
               ? 'border-amber-300/25'
               : 'border-white/[0.06]'
           }`}
+          style={({ pressed }) => pressFeedback(pressed)}
         >
           <View className="mr-4 flex-1">
             <Text className="text-[15px] font-medium text-slate-100">
@@ -187,8 +195,12 @@ export default function WizardTimeScreen() {
               name="birthTime"
               render={({ field: { value } }) => (
                 <Pressable
-                  onPress={handleTimePress}
+                  onPress={() => {
+                    hapticSelect()
+                    handleTimePress()
+                  }}
                   className="border-b border-white/[0.08] px-1 py-3"
+                  style={({ pressed }) => pressFeedback(pressed)}
                 >
                   <Text
                     className={`text-[16px] tabular-nums ${
@@ -221,13 +233,16 @@ export default function WizardTimeScreen() {
                 return (
                   <Pressable
                     key={value}
-                    onPress={() => handleRangeSelect(value)}
+                    onPress={() => {
+                      hapticSelect()
+                      handleRangeSelect(value)
+                    }}
                     className={`items-center rounded-xl border px-4 py-4 ${
                       isActive
                         ? 'border-amber-300/45 bg-amber-400/[0.06]'
                         : 'border-white/[0.06] bg-white/[0.015]'
                     }`}
-                    style={{ width: '48%' }}
+                    style={({ pressed }) => ({ ...pressFeedback(pressed), width: '48%' })}
                   >
                     {isActive && (
                       <View
@@ -267,14 +282,25 @@ export default function WizardTimeScreen() {
         )}
 
         <View className="flex-row items-center justify-between">
-          <Pressable onPress={() => router.back()} className="px-2 py-2">
+          <Pressable
+            onPress={() => {
+              hapticSelect()
+              router.back()
+            }}
+            className="px-2 py-2"
+            style={({ pressed }) => pressFeedback(pressed)}
+          >
             <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">
               ‹ Назад
             </Text>
           </Pressable>
           <Pressable
-            onPress={handleNext}
+            onPress={() => {
+              hapticInvite()
+              handleNext()
+            }}
             className="rounded-full border border-amber-300/40 px-6 py-2.5"
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
               Напред ›

@@ -11,7 +11,7 @@
  * information_schema when you only care about one column.
  *
  * Configure the PROBE_* constants at the top of the file, then run:
- *   node --env-file=apps/web/.env.example.local \
+ *   node --env-file=apps/web/.env.local \
  *        apps/web/scripts/diagnostics/probe-column-type.mjs
  *
  * Shipped config targets charts.approximate_time_range with the four

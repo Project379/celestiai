@@ -44,6 +44,7 @@ export async function activatePremiumFromSession(
         stripe_customer_id: session.customer as string,
         stripe_subscription_id: subscription.id,
         subscription_expires_at: expiresAt,
+        subscription_provider: 'stripe',
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'clerk_id' },

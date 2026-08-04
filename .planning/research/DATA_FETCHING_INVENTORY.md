@@ -178,7 +178,7 @@ The rest are genuinely interactive (user triggers the fetch by action — pressi
 | Factory | File | Auth context | Works in Server Components? | Works in Route Handlers? | Works in Client Components? |
 |---|---|---|---|---|---|
 | `createServiceSupabaseClient()` | `apps/web/lib/supabase/service.ts` | None — env-only, service role key, bypasses RLS | ✅ | ✅ | ❌ (service key must not reach client) |
-| `createServerSupabaseClient()` | `apps/web/lib/supabase/server.ts` | Clerk `await auth()` + JWT template | ✅ | ✅ | ❌ (uses `@clerk/nextjs/server`) |
+| ~~`createServerSupabaseClient()`~~ | ~~`apps/web/lib/supabase/server.ts`~~ | **DELETED in B.0e (2026-05-09)** — zero callers, legacy Bearer-header path predating Clerk third-party auth migration. Server-side reads go through `createServiceSupabaseClient()` + manual `.eq('user_id', userId)` filter (see `.planning/SECURITY-MODEL.md`). | — | — | — |
 | `createPublicSupabaseClient()` | `apps/web/lib/supabase/public.ts` | None — anon key | ✅ | ✅ | ✅ |
 | `useSupabaseClient()` | `apps/web/lib/supabase/client.ts` | Clerk `useSession()` hook | ❌ (React hook) | ❌ (React hook) | ✅ |
 | `createSupabaseClient(accessToken)` | `packages/db/src/client.ts` | Generic — takes token provider | ✅ | ✅ | ✅ (if caller provides accessToken) |

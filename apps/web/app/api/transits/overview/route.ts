@@ -1,91 +1,44 @@
-import { calculateNatalChart } from '@celestia/astrology'
-import {
-  requireAppUser,
-  requireOwnedChart,
-  requirePremium,
-  toErrorResponse,
-} from '@/lib/auth/guards'
-import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { auth } from '@clerk/nextjs/server'
+import { getTransitsOverview } from '@stellaeum/core/horoscope/transits'
 
-interface TransitChart {
-  id: string
-  birth_date: string
-  birth_time: string | null
-  birth_time_known: boolean
-  latitude: number
-  longitude: number
-}
-
+/**
+ * GET /api/transits/overview?chartId=...
+ *
+ * Thin wrapper over @stellaeum/core getTransitsOverview(). Core function
+ * returns a discriminated-union result; this wrapper maps it to HTTP
+ * status codes.
+ */
 export async function GET(req: Request) {
-  try {
-    const { userId, user } = await requireAppUser()
-    requirePremium(user)
+  const { userId } = await auth()
+  if (!userId) {
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+  }
 
-    const url = new URL(req.url)
-    const chartId = url.searchParams.get('chartId')
+  const url = new URL(req.url)
+  const chartId = url.searchParams.get('chartId')
+  if (!chartId) {
+    return Response.json({ error: 'Missing chartId' }, { status: 400 })
+  }
 
-    if (!chartId) {
-      return Response.json({ error: 'Missing chartId' }, { status: 400 })
-    }
-
-    const chart = await requireOwnedChart<TransitChart>(
-      userId,
-      chartId,
-      'id, birth_date, birth_time, birth_time_known, latitude, longitude'
-    )
-    const supabase = createServiceSupabaseClient()
-
-    let { data: calculation } = await supabase
-      .from('chart_calculations')
-      .select('planet_positions, house_cusps, aspects, ascendant, mc, birth_time_known')
-      .eq('chart_id', chartId)
-      .single()
-
-    if (!calculation) {
-      const chartData = calculateNatalChart({
-        date: new Date(chart.birth_date),
-        time: chart.birth_time?.slice(0, 5) || null,
-        lat: chart.latitude,
-        lon: chart.longitude,
-        birthTimeKnown: chart.birth_time_known,
-      })
-
-      const { data: insertedCalculation, error: insertError } = await supabase
-        .from('chart_calculations')
-        .upsert(
-          {
-            chart_id: chartId,
-            planet_positions: chartData.planets,
-            house_cusps: chartData.houses,
-            aspects: chartData.aspects,
-            ascendant: chartData.ascendant,
-            mc: chartData.mc,
-            birth_time_known: chartData.birthTimeKnown,
-          },
-          { onConflict: 'chart_id' }
-        )
-        .select('planet_positions, house_cusps, aspects, ascendant, mc, birth_time_known')
-        .single()
-
-      if (insertError || !insertedCalculation) {
-        console.error('[Transit Overview] Failed to bootstrap chart calculation:', insertError)
-        return Response.json(
-          { error: 'Failed to prepare natal chart for transit overview.' },
-          { status: 500 }
-        )
-      }
-
-      calculation = insertedCalculation
-    }
-
-    const overview = buildTransitOverview(calculation, new Date())
-    return Response.json(overview, {
+  const result = await getTransitsOverview(userId, chartId)
+  if (result.ok) {
+    return Response.json(result.data, {
       headers: {
         'Cache-Control': 'private, max-age=900, stale-while-revalidate=600',
       },
     })
-  } catch (error) {
-    return toErrorResponse(error, 'Failed to load transit overview.')
+  }
+
+  switch (result.error) {
+    case 'CHART_NOT_FOUND':
+      return Response.json({ error: 'Chart not found' }, { status: 404 })
+    case 'FORBIDDEN':
+      return Response.json({ error: 'Forbidden' }, { status: 403 })
+    case 'INTERNAL':
+    default:
+      return Response.json(
+        { error: 'Failed to load transit overview.' },
+        { status: 500 },
+      )
   }
 }

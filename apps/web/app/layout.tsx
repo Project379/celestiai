@@ -54,7 +54,15 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider
-      localization={bgBG}
+      localization={{
+        ...bgBG,
+        // REVISIT-12 fix: Clerk's bgBG ships the delete-account input placeholder
+        // as «Изтрий акаунта» (imperative) while the page title, actionDescription,
+        // and confirm button all use «Изтриване на акаунта» (verbal-noun). A user
+        // typing the placeholder text fails the match. Unify on the verbal-noun
+        // form to match what the actionDescription explicitly asks the user to type.
+        formFieldInputPlaceholder__confirmDeletionUserAccount: 'Изтриване на акаунта',
+      }}
       dynamic
       appearance={{
         baseTheme: dark,

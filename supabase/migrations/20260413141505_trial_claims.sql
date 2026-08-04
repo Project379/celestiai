@@ -1,0 +1,22 @@
+-- Trial claims — CA-0002 (origin: packages/db/drizzle/0009_trial_claims.sql).
+--
+-- Adds users.trial_claimed_at for trial-period fraud prevention. Originally
+-- authored on the CA-0002-improve-backend branch (commit d7dc548) and
+-- applied to production via the Supabase dashboard during PR #5 review.
+-- Migration-history hygiene under Strategy C; expected to be marked
+-- already-applied via:
+--
+--   supabase migration repair --status applied 20260413141505
+--
+-- Filename timestamp is bumped 1 second past 0008 (20260413141504) to
+-- preserve commit ordering; both files originate from the same Drizzle
+-- commit but Supabase requires unique YYYYMMDDHHMMSS keys.
+--
+-- Read by:
+--   * apps/web/lib/users/ensure-user.ts (AppUser.trial_claimed_at field)
+--   * apps/web/lib/stripe/subscription.ts handleCheckoutComplete trial
+--     gate — when set AND a new subscription ID differs from the existing
+--     one, the webhook is rejected as `trial_already_claimed` (logged via
+--     system.payment.webhook_ignored audit event for fraud trail).
+
+ALTER TABLE "users" ADD COLUMN "trial_claimed_at" timestamp with time zone;

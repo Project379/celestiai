@@ -35,7 +35,7 @@ Originally pending: Celestia → Stellaeum rename.
 
 ## Verification gates passed (all layers)
 
-- **Pattern A vs B JWT verification — RESOLVED**: founder verified during Layer 2 dashboard work that Clerk's "supabase" JWT template exists (created 2026-01-31). Confirms web's `apps/web/lib/supabase/server.ts` template-first path hits Pattern A. Mobile's `useSupabaseClient` (sub-round 1.5) resolves to Pattern A on first invocation. Sub-rounds 1.7 + 2.5 deferred verification: closed.
+- **Pattern A vs B JWT verification — SUPERSEDED 2026-05-09 by B.0e:** the Clerk "supabase" JWT template was deprecated when Supabase rotated to ECC P-256 keys + third-party auth model. Mobile + web now use the third-party auth pattern via Clerk's standard session JWT, but server-side data access uses service role + manual `user_id` filter (see `.planning/SECURITY-MODEL.md`). Pattern A historical reference only — `apps/web/lib/supabase/server.ts` was deleted in B.0e (zero callers, legacy Bearer-header path). The 2026-01-31 dashboard verification is no longer load-bearing.
 - **Mobile sub-round 2 verification**: pass with documented deferrals (Pattern A/B + loading/error visibility now closed).
 - **`pnpm typecheck`** across 5 workspaces: green at every Layer 1/3 commit.
 - **`pnpm --filter @stellaeum/astrology test`** (39 tests / 12 cases): green throughout — confirms theme integrity (test fixtures use "celestial sphere/poles/mechanics" as astronomy theme; word-boundary regex correctly preserved).

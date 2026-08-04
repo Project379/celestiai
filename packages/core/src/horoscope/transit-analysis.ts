@@ -1,8 +1,10 @@
 import * as sweph from 'sweph'
 import {
   ASPECTS_BG,
+  ASPECTS_BG_GENDER,
   PLANET_IDS,
   PLANETS_BG,
+  PLANETS_BG_GENDER,
   PLANETS_ORDER,
   ZODIAC_SIGNS_BG,
   getJulianDay,
@@ -17,6 +19,15 @@ import type {
   ZodiacSign,
 } from '@stellaeum/astrology/client'
 import type { TransitAspect } from '@stellaeum/astrology'
+import {
+  EXACT_ADJ,
+  NATAL_ADJ,
+  TRANSITING_ADJ,
+  YOUR_POSSESSIVE,
+  agreeAdjective,
+  bgPrep,
+  pluralizeBg,
+} from '../i18n/bg-grammar'
 
 type TimedTransitPlanet = Omit<PlanetPosition, 'house'> & { house: number }
 
@@ -539,18 +550,12 @@ function formatSign(sign: ZodiacSign): string {
   return ZODIAC_SIGNS_BG[sign] ?? sign
 }
 
-/** "в" → "във" before в/ф; "с" → "със" before с/з */
-function bgPrep(prep: 'в' | 'с', nextWord: string): string {
-  if (prep === 'в') return /^[вВфФ]/.test(nextWord) ? 'във' : 'в'
-  return /^[сСзЗ]/.test(nextWord) ? 'със' : 'с'
-}
-
 function houseTheme(house: number): string {
   switch (house) {
     case 1:
-      return 'личната ви посока и начинът, по който се заявявате'
+      return 'личната ти посока и начинът, по който се заявяваш'
     case 2:
-      return 'ценностите, парите и чувството ви за стабилност'
+      return 'ценностите, парите и чувството ти за стабилност'
     case 3:
       return 'комуникацията, ученето и ежедневните разговори'
     case 4:
@@ -566,7 +571,7 @@ function houseTheme(house: number): string {
     case 9:
       return 'смисъла, знанието и по-широката перспектива'
     case 10:
-      return 'кариерата, образа ви и посоката на амбицията'
+      return 'кариерата, образа ти и посоката на амбицията'
     case 11:
       return 'приятелствата, общностите и бъдещите планове'
     case 12:
@@ -581,13 +586,13 @@ function aspectMeaning(aspect: AspectType): string {
     case 'conjunction':
       return 'засилва темата директно и я прави трудно пренебрежима'
     case 'sextile':
-      return 'отваря възможност, която работи най-добре, ако я използвате съзнателно'
+      return 'отваря възможност, която работи най-добре, ако я използваш съзнателно'
     case 'square':
       return 'създава напрежение, което иска корекция, действие или честност'
     case 'trine':
-      return 'пуска енергията по-леко и естествено, но иска да не я приемате за даденост'
+      return 'пуска енергията по-леко и естествено, но иска да не я приемаш за даденост'
     case 'opposition':
-      return 'ви среща с контраст, обратна връзка и нужда от баланс'
+      return 'те среща с контраст, обратна връзка и нужда от баланс'
   }
 }
 
@@ -605,12 +610,17 @@ function enrichActiveTransit(item: ActiveTransitDetail): ActiveTransitDetail {
   const applyingText = item.applying
     ? 'Влиянието още се усилва.'
     : 'Пикът вече е минал, но темата още е активна.'
+  const natalGender = PLANETS_BG_GENDER[item.natalPlanet as Planet]
+  const natalPhrase = `${agreeAdjective(YOUR_POSSESSIVE, natalGender)} ${agreeAdjective(
+    NATAL_ADJ,
+    natalGender
+  )} ${natal.toLowerCase()}`
 
   return {
     ...item,
     title: `${transit} ${aspect} ${natal}`,
     summary: `${transit} активира ${theme}.`,
-    detail: `${transit} прави ${aspect.toLowerCase()} с вашия натален ${natal.toLowerCase()}, което ${aspectMeaning(
+    detail: `${transit} прави ${aspect.toLowerCase()} с ${natalPhrase}, което ${aspectMeaning(
       item.aspect
     )}. Това насочва вниманието към ${theme}. ${applyingText} ${speedMeaning(item.speedBand)}`,
   }
@@ -621,14 +631,22 @@ function enrichUpcomingTransit(item: UpcomingTransitDetail): UpcomingTransitDeta
   const natal = formatPlanet(item.natalPlanet)
   const aspect = formatAspect(item.aspect)
   const theme = houseTheme(item.house)
+  const natalGender = PLANETS_BG_GENDER[item.natalPlanet]
+  const natalPhrase = `${agreeAdjective(YOUR_POSSESSIVE, natalGender)} ${agreeAdjective(
+    NATAL_ADJ,
+    natalGender
+  )} ${natal.toLowerCase()}`
+  const aspectGender = ASPECTS_BG_GENDER[item.aspect]
+  const exactPhrase = `${agreeAdjective(EXACT_ADJ, aspectGender)} ${aspect.toLowerCase()}`
+  const hoursPhrase = `${pluralizeBg(item.hoursUntil, 'следващия', 'следващите')} ${
+    item.hoursUntil
+  } ${pluralizeBg(item.hoursUntil, 'час', 'часа')}`
 
   return {
     ...item,
     title: `${transit} ${aspect} ${natal}`,
     summary: `Наближава точен пик по теми като ${theme}.`,
-    detail: `${transit} се движи към точен ${aspect.toLowerCase()} с вашия натален ${natal.toLowerCase()}. Това подсказва, че през следващите ${
-      item.hoursUntil
-    } часа ще се изостри тема, свързана ${bgPrep('с', theme)} ${theme}. ${aspectMeaning(item.aspect)} ${speedMeaning(
+    detail: `${transit} се движи към ${exactPhrase} с ${natalPhrase}. Това подсказва, че през ${hoursPhrase} ще се изостри тема, свързана ${bgPrep('с', theme)} ${theme}. ${aspectMeaning(item.aspect)} ${speedMeaning(
       item.speedBand
     )}`,
   }
@@ -670,10 +688,12 @@ export function transitOverviewToPromptText(overview: TransitOverview): string {
     lines.push('(Няма силни активни транзити в момента)')
   } else {
     for (const aspect of overview.activeTransits.slice(0, 8)) {
+      const transitGender = PLANETS_BG_GENDER[aspect.transitPlanet as Planet]
+      const natalGender = PLANETS_BG_GENDER[aspect.natalPlanet as Planet]
       lines.push(
-        `Транзитен ${formatPlanet(aspect.transitPlanet as Planet)} ${formatAspect(
+        `${agreeAdjective(TRANSITING_ADJ, transitGender)} ${formatPlanet(aspect.transitPlanet as Planet)} ${formatAspect(
           aspect.aspect
-        )} натален ${formatPlanet(aspect.natalPlanet as Planet)} в дом ${aspect.house} (орб ${aspect.orb.toFixed(1)}°, ${aspect.applying ? 'прилагащ' : 'раздалечаващ'}, ${aspect.speedBand === 'fast' ? 'бърз ритъм' : 'бавен ритъм'})`
+        )} ${agreeAdjective(NATAL_ADJ, natalGender)} ${formatPlanet(aspect.natalPlanet as Planet)} в дом ${aspect.house} (орб ${aspect.orb.toFixed(1)}°, ${aspect.applying ? 'прилагащ' : 'раздалечаващ'}, ${aspect.speedBand === 'fast' ? 'бърз ритъм' : 'бавен ритъм'})`
       )
     }
   }

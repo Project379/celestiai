@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-
-import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
+import { useCallback, useState } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { useApiClient } from '@/lib/api/client'
+import { useFeatureFlag } from '@/hooks/useFeatureFlag'
 
 interface DailyHoroscopeResponse {
   content: string | null
@@ -11,11 +12,14 @@ interface DailyHoroscopeResponse {
   unavailable?: boolean
 }
 
+export type HoroscopeDate = 'today' | 'yesterday'
+
 /**
- * Today's date in Europe/Sofia, formatted YYYY-MM-DD. Used as part of the
- * query key so the cache naturally invalidates at the next-day boundary
- * (a re-render past midnight Sofia produces a new key, TanStack fires a
- * fresh fetch). Mirrors web's getTodayString in apps/web/hooks/useDailyHoroscope.ts.
+ * Today's date in Europe/Sofia, YYYY-MM-DD. Used as part of the TanStack
+ * Query key + AsyncStorage cache key so the cache naturally invalidates
+ * at the next-day boundary (a re-render past midnight Sofia produces a
+ * new key, query refetches). Mirrors web's getTodayString in
+ * apps/web/hooks/useDailyHoroscope.ts.
  */
 function getTodayString(): string {
   return new Intl.DateTimeFormat('en-CA', {
@@ -23,50 +27,103 @@ function getTodayString(): string {
   }).format(new Date())
 }
 
+function getYesterdayString(): string {
+  const today = new Date(getTodayString())
+  today.setDate(today.getDate() - 1)
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Sofia',
+  }).format(today)
+}
+
+function getCacheKey(chartId: string, date: string): string {
+  // REVISIT-50 harmonization — unprefixed stellaeum.* convention. No
+  // migration needed: a cache miss on the old key just refetches.
+  return `stellaeum.horoscope.daily.${chartId}.${date}.v1`
+}
+
 /**
- * Hook for fetching today's daily horoscope for the signed-in user's chart.
+ * Hook for fetching the signed-in user's daily horoscope with Today/Yesterday
+ * tab support (item 1.11, P.1-f). Yesterday's horoscope is lazy-fetched —
+ * the second TanStack Query only fires when `selectedDate` flips to
+ * 'yesterday'. Yesterday-unavailable (clean-install user, or post-midnight
+ * rollover before today's reading is generated) drives the «Неналично»
+ * disabled-tab state in the UI.
  *
- * Calls POST /api/horoscope/generate?date=YYYY-MM-DD&format=json with body
- * { chartId } via Clerk-authed apiFetch. The endpoint streams by default;
- * the &format=json switch forces a single non-streaming JSON response, which
- * is what mobile consumes for sub-round 5 (streaming-text upgrade is
- * REVISIT-TRIGGERS item 20).
+ * AsyncStorage cache strategy mirrors web's localStorage path
+ * (apps/web/hooks/useDailyHoroscope.ts):
+ * - Each (chartId, date) tuple has its own cache key.
+ * - On queryFn fire: AsyncStorage read first; network round-trip only on miss.
+ * - On success with real content: persist to AsyncStorage so the next app
+ *   cold-start hydrates without a network call.
+ * - `unavailable` responses are NOT cached — preserves the path where a
+ *   later regenerate (or post-midnight day rollover) can refetch fresh.
  *
- * Caching: query key includes chartId + today's Sofia-local date. With the
- * QueryClientProvider defaults (staleTime Infinity, no auto-revalidate),
- * a single fetch per (chartId, date) pair runs across all consumers.
+ * Server route is /api/horoscope/generate?date=YYYY-MM-DD&format=json. The
+ * endpoint defaults to SSE; the &format=json switch forces a single JSON
+ * response, which is what both surfaces consume post-item-1.6-close.
  *
- * Server-side, the same endpoint also auto-bootstraps chart_calculations
- * if a row doesn't exist yet (calculateNatalChart inline path), so first
- * call after wizard submit can take longer (~5-15s) before cache hit.
- *
- * Pass null/undefined chartId to disable the query (e.g. while still
- * resolving whether a chart exists).
+ * Pass null/undefined chartId to disable both queries.
  */
 export function useDailyHoroscope(chartId: string | null | undefined) {
   const { apiFetch } = useApiClient()
-  const today = getTodayString()
+  const ffEnabled = useFeatureFlag('daily_horoscope')
+  const [selectedDate, setSelectedDate] = useState<HoroscopeDate>('today')
 
-  return useQuery({
-    queryKey: ['daily-horoscope', chartId, today],
-    enabled: !!chartId,
-    queryFn: async () => {
+  const today = getTodayString()
+  const yesterday = getYesterdayString()
+
+  const fetchHoroscope = useCallback(
+    async (date: string): Promise<DailyHoroscopeResponse> => {
+      if (chartId) {
+        try {
+          const cached = await AsyncStorage.getItem(getCacheKey(chartId, date))
+          if (cached) {
+            return JSON.parse(cached) as DailyHoroscopeResponse
+          }
+        } catch {}
+      }
+
       const raw = await apiFetch(
-        `/api/horoscope/generate?date=${today}&format=json`,
+        `/api/horoscope/generate?date=${date}&format=json`,
         {
           method: 'POST',
           body: JSON.stringify({ chartId }),
         },
       )
-      return raw as DailyHoroscopeResponse
-    },
-  })
-}
+      const data = raw as DailyHoroscopeResponse
 
-/**
- * Re-export of the shared sentinel stripper. Source of truth lives at
- * @stellaeum/core/oracle/planet-parser (lifted in SR 7.0a). Web parses
- * sentinels into colored spans via PLANET_COLORS; mobile renders plain
- * text — colored sentinels are REVISIT-TRIGGERS item 22.
- */
-export const stripPlanetSentinels = stripSentinels
+      if (chartId && typeof data.content === 'string') {
+        try {
+          await AsyncStorage.setItem(getCacheKey(chartId, date), JSON.stringify(data))
+        } catch {}
+      }
+
+      return data
+    },
+    [apiFetch, chartId],
+  )
+
+  const todayQuery = useQuery({
+    queryKey: ['daily-horoscope', chartId, today],
+    enabled: !!chartId && ffEnabled,
+    queryFn: () => fetchHoroscope(today),
+  })
+
+  const yesterdayQuery = useQuery({
+    queryKey: ['daily-horoscope', chartId, yesterday],
+    enabled: !!chartId && ffEnabled && selectedDate === 'yesterday',
+    queryFn: () => fetchHoroscope(yesterday),
+  })
+
+  const yesterdayUnavailable = yesterdayQuery.data?.unavailable === true
+  const active = selectedDate === 'today' ? todayQuery : yesterdayQuery
+
+  return {
+    selectedDate,
+    setSelectedDate,
+    data: active.data,
+    isLoading: active.isLoading,
+    isError: active.isError,
+    yesterdayUnavailable,
+  }
+}

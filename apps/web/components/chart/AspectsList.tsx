@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { AspectData, AspectType, Planet } from '@stellaeum/astrology/client'
 import { PLANETS_BG, PLANET_GLYPHS } from '@stellaeum/astrology/client'
-import { ASPECT_BG, ASPECT_GLYPH } from './chart-sections'
+import { ASPECT_BG, ASPECT_GLYPH } from '@stellaeum/core/charts/sections'
 
 interface AspectsListProps {
   aspects: readonly AspectData[]
@@ -53,7 +53,7 @@ export function AspectsList({ aspects }: AspectsListProps) {
   if (aspects.length === 0) {
     return (
       <p className="font-display text-[14px] font-light text-slate-500">
-        Няма аспекти в рамките на зададения орбис.
+        Няма аспекти в рамките на зададения орб.
       </p>
     )
   }

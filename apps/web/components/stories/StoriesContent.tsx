@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { getLunarPhase, type LunarPhase } from '@/lib/moon-phase'
-import { getDailyForPhase, getMonthlyArcForSign, MONTHLY_BY_SIGN } from '@/lib/stories/catalog'
+import { getDailyForPhase, getMonthlyArcForSign, MONTHLY_BY_SIGN } from '@stellaeum/core/stories/catalog'
 import { useStoryList } from '@/hooks/useStoryList'
-import type { RecommendationStatus } from '@/lib/stories/types'
+import type { RecommendationStatus } from '@stellaeum/core/stories/types'
 import { RecommendationCard } from './RecommendationCard'
 
 const KIND_SECTION_LABEL: Record<'book' | 'film' | 'series' | 'episode' | 'story', string> = {

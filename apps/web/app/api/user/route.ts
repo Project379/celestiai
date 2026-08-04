@@ -2,19 +2,21 @@ import { auth } from '@clerk/nextjs/server'
 import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 /**
- * Protected API route example demonstrating SEC-17:
- * "API routes validate authentication before processing"
+ * GET /api/user
  *
- * auth.protect() returns 404 for unauthenticated requests,
- * preventing enumeration attacks while enforcing auth.
+ * Returns the caller's Clerk userId + sessionId + canonical app-user row.
+ * Auth: explicit auth() + BG 401. auth.protect() is deliberately not used
+ * inside route handlers — it throws on missing session, which surfaces as
+ * an opaque 500 from the route layer rather than the structured { error }
+ * JSON the rest of the protected API returns.
  */
 export async function GET() {
-  // Protect route - returns 404 if not authenticated
-  await auth.protect()
-
-  // Get user info after protection
   const { userId, sessionId } = await auth()
-  const appUser = userId ? await ensureUserRecord(userId) : null
+  if (!userId) {
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+  }
+
+  const appUser = await ensureUserRecord(userId)
 
   return Response.json({
     userId,

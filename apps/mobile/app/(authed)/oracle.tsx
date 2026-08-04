@@ -1,17 +1,28 @@
-import { Redirect } from 'expo-router'
+import { Redirect, useNavigation, useRouter } from 'expo-router'
+import { useEffect } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Animated from 'react-native-reanimated'
 
 import { CapReachedNotice } from '@/components/oracle/CapReachedNotice'
 import { ReadingBody } from '@/components/oracle/ReadingBody'
 import { TopicCards } from '@/components/oracle/TopicCards'
+import { BackButton } from '@/components/design-system/BackButton'
+import { pressFeedback } from '@/components/design-system/tokens'
+import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useOracleReading } from '@/hooks/useOracleReading'
+import { useApiClient } from '@/lib/api/client'
+import { maybePromptPushPermission } from '@/lib/notifications/maybePromptPushPermission'
 
 /**
- * Mobile Oracle screen — full-screen route under (authed) with the
- * Stack header from the parent layout providing the «Оракул» title +
- * native back button. Mirrors apps/web/components/oracle/OraclePanelGlobal.tsx
+ * Mobile Oracle screen — full-screen route under (authed). Founder
+ * correction (this batch): the Stack header (title + native back button)
+ * is gone — apps/mobile/app/(authed)/_layout.tsx renders no header at
+ * all now. BackButton (design-system/BackButton.tsx) replaces it, wired
+ * to `handleHeaderBack` below so the "clear active reading, don't pop the
+ * screen" behavior this screen already depended on keeps working exactly
+ * as before. Mirrors apps/web/components/oracle/OraclePanelGlobal.tsx
  * composition (TopicCards → ReadingBody / CapReachedNotice / loading)
  * minus web's modal overlay, streaming cursor, and dead
  * LockedTopicTeaser path (REVISIT-23 logs the web parity gap).
@@ -27,7 +38,11 @@ export default function OracleScreen() {
   // While useFirstChart resolves, render an empty surface so the
   // header animates in cleanly without a flash of fallback content.
   if (firstChart.isLoading) {
-    return <SafeAreaView edges={['bottom']} className="flex-1 bg-bg" />
+    return (
+      <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
+        <BackButton />
+      </SafeAreaView>
+    )
   }
 
   // No chart → user shouldn't be here. The OracleEntry FAB hides
@@ -41,6 +56,9 @@ export default function OracleScreen() {
 }
 
 function OracleScreenInner({ chartId }: { chartId: string }) {
+  const router = useRouter()
+  const navigation = useNavigation()
+  const { apiFetch } = useApiClient()
   const {
     savedReadings,
     activeTopic,
@@ -49,12 +67,56 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
     isGenerating,
     generationError,
     currentReading,
-  } = useOracleReading(chartId)
+  } = useOracleReading(chartId, {
+    // SR 8.3: ask for push permission after the first successful Oracle
+    // reading completes. Idempotency is enforced inside
+    // maybePromptPushPermission via the stellaeum.notifications.prompted.v1
+    // AsyncStorage flag, so this fires across multiple fresh generations
+    // until the user has been prompted once. apiFetch is passed through so
+    // a system-granted permission can also register the token with the
+    // backend (P.16) in the same flow.
+    onFreshGeneration: () => {
+      void maybePromptPushPermission(apiFetch)
+    },
+  })
+
+  // Custom header back: when a topic reading is open, the screen renders
+  // grid+reading inline gated by activeTopic local state — the system back
+  // would pop to dashboard and skip the grid. Branch on local state so a
+  // single button handles both cases.
+  const handleHeaderBack = () => {
+    if (activeTopic) clearActiveTopic()
+    else router.back()
+  }
+
+  // REVISIT-24 fix: the headerLeft button above only catches an explicit
+  // tap. iOS edge-swipe-back and Android hardware back both bypass it and
+  // pop straight to Днес through react-native-screens, skipping the topic
+  // grid. Intercepting the navigation removal event itself catches all
+  // three dismiss paths through one code path.
+  useEffect(() => {
+    return navigation.addListener('beforeRemove', (e) => {
+      if (activeTopic) {
+        e.preventDefault()
+        clearActiveTopic()
+      }
+    })
+  }, [navigation, activeTopic, clearActiveTopic])
+
+  const backVisibility = useBackButtonVisibility()
 
   return (
-    <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
+    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
+      <Animated.View
+        style={[{ position: 'absolute', top: 0, left: 0, zIndex: 10 }, backVisibility.style]}
+        pointerEvents={backVisibility.pointerEvents}
+      >
+        <BackButton onPress={handleHeaderBack} />
+      </Animated.View>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48 }}
+        onScroll={backVisibility.onScroll}
+        scrollEventThrottle={100}
       >
         <View className="mb-5">
           <View
@@ -102,7 +164,7 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
               onPress={clearActiveTopic}
               accessibilityRole="button"
               className="mb-5 flex-row items-center"
-              style={{ gap: 8 }}
+              style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 8 })}
             >
               <Text className="font-cinzel text-[16px] text-slate-500">‹</Text>
               <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">

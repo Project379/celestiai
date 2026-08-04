@@ -20,10 +20,14 @@ export type AuditEventType =
   | 'payment.subscription_cancelled'
   | 'payment.subscription_reactivated'
   | 'payment.invoice_payment_failed'
-  | 'payment.webhook_received'
   | 'system.payment.webhook_received'
   | 'system.payment.webhook_ignored'
+  | 'system.payment.quota_refund_failed'
   | 'system.security.stripe_ownership_mismatch'
+  // RevenueCat (REVISIT-62)
+  | 'system.payment.revenuecat_webhook_received'
+  | 'system.payment.revenuecat_webhook_ignored'
+  | 'system.payment.revenuecat_unexpected_non_renewing_purchase'
 
 export async function logAuditEvent(
   userId: string | null,
@@ -38,7 +42,7 @@ export async function logAuditEvent(
       metadata: metadata ?? {},
     })
   } catch (err) {
-    // Never throw from audit logging — log to console and move on
+    // Never throw from audit logging - log to console and move on
     console.error('[Audit] Failed to log event:', eventType, err)
   }
 }

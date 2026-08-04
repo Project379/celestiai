@@ -5,22 +5,23 @@ interface CapReachedNoticeProps {
 }
 
 /**
- * Free-tier daily-cap surface for the Oracle screen.
+ * Free-tier monthly-cap surface for the Oracle screen.
  *
- * Mobile-only — text-only notice with no CTA. RevenueCat isn't wired
- * yet and Stripe is web-only, so a button that opens nothing or web
- * checkout would be dead UX (founder ratification, SR 7). Web has dead
- * `LockedTopicTeaser` scaffolding that fails silently on the same 429
- * `CAP_REACHED` response — REVISIT-TRIGGERS logs web parity.
+ * Text-only notice with no CTA — RevenueCat isn't wired yet and Stripe
+ * is web-only, so a button that opens nothing or web checkout would be
+ * dead UX (founder ratification, SR 7). Web parity ported in B.0f-2-fix-1
+ * (apps/web/components/oracle/CapReachedNotice.tsx) — REVISIT-23 closed.
  *
- * Bulgarian copy calibrated via bulgarian-skill (mobile-only surface):
- *  - «четения» matches the established codebase term (server's existing
- *    429 message uses the same form).
- *  - Subject-dropped «Изчерпа…» is natural Bulgarian and stays in the
- *    ти register the rest of the app uses.
+ * Bulgarian copy unified across web and mobile per B.0f-2-fix-1
+ * Variant 2 ratification (2026-05-10):
+ *  - Verb-first «Изчерпа…» reads naturally when the time frame isn't
+ *    the topic; «за този месец» trailing matches the new monthly cap
+ *    (subscription_quotas, B.0f-1).
+ *  - «идния месец» is slightly literary; fits the oracle voice paired
+ *    with «Звездите ще говорят».
  *  - «безплатни» hints at premium without selling it.
- *  - «Звездите ще говорят отново утре» keeps the oracle voice without
- *    stapling on a transactional CTA.
+ *  - No transactional CTA — the upgrade path lands when RevenueCat ships
+ *    in P.15.
  */
 export function CapReachedNotice({ cap }: CapReachedNoticeProps) {
   return (
@@ -53,10 +54,10 @@ export function CapReachedNotice({ cap }: CapReachedNoticeProps) {
       </View>
 
       <Text className="text-center text-[15px] font-light leading-7 text-slate-300/90">
-        Днес изчерпа {cap} безплатни четения.
+        Изчерпа {cap} безплатни четения за този месец.
       </Text>
       <Text className="mt-2 text-center text-[14px] font-light leading-7 text-slate-400">
-        Звездите ще говорят отново утре.
+        Звездите ще говорят отново идния месец.
       </Text>
     </View>
   )

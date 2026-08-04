@@ -3,7 +3,7 @@
  * M3 UAT harness — runtime verification of every extracted endpoint.
  *
  * Invoke:
- *   node --env-file=apps/web/.env.example.local apps/web/scripts/m3-uat-harness.mjs
+ *   node --env-file=apps/web/.env.local apps/web/scripts/m3-uat-harness.mjs
  *
  * Prereqs: dev server running on http://localhost:3000.
  *
@@ -221,9 +221,11 @@ async function checkUnauthGates() {
     // Post 635f1a4 — every user-scoped 401 body is BG. The EN
     // "Unauthorized" fallback was removed; asserting the BG string
     // alone catches regressions that re-introduce the EN throw.
+    // Message updated 2026-07-30 (register-conversion workstream):
+    // "Неоторизиран достъп" -> "Сесията ти изтече. Влез отново."
     expect(
-      `${ep.method} ${ep.path} → 401 Неоторизиран достъп`,
-      status === 401 && json?.error?.includes('Неоторизиран'),
+      `${ep.method} ${ep.path} → 401 Сесията ти изтече. Влез отново.`,
+      status === 401 && json?.error?.includes('Сесията'),
       `status=${status} body=${JSON.stringify(json).slice(0, 80)}`,
     )
   }
@@ -1534,6 +1536,12 @@ async function cleanup(chartId, clerkId) {
 }
 
 async function main() {
+  throw new Error(
+    'm3-uat-harness is out of date as of B.0f-2 quota refactor (2026-05-10). ' +
+      'Cap mechanism migrated from ai_readings row-counting to subscription_quotas table. ' +
+      'See REVISIT-35 for harness disposition (rewrite vs delete) — pending test layer evaluation.',
+  )
+
   console.log(`M3 UAT harness — ${new Date().toISOString()}`)
   console.log(`Base URL: ${BASE_URL}`)
 

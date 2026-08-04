@@ -10,14 +10,16 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
 import { Controller, useFormContext } from 'react-hook-form'
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker'
 
 import type { BirthData } from '@stellaeum/core/charts/schemas'
+import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticInvite, hapticSelect } from '@/lib/haptics'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 /**
  * Bulgarian month-name display: «11 ноември 2002 г.»
@@ -44,7 +46,7 @@ function toIsoDate(d: Date): string {
 }
 
 export default function WizardDateScreen() {
-  const router = useRouter()
+  const { push } = useGuardedNavigation()
   const {
     control,
     setValue,
@@ -80,7 +82,7 @@ export default function WizardDateScreen() {
 
   const handleNext = async () => {
     const ok = await trigger(['name', 'birthDate'])
-    if (ok) router.push('/wizard/time')
+    if (ok) push('/wizard/time')
   }
 
   return (
@@ -150,8 +152,12 @@ export default function WizardDateScreen() {
               name="birthDate"
               render={({ field: { value } }) => (
                 <Pressable
-                  onPress={handleDatePress}
+                  onPress={() => {
+                    hapticSelect()
+                    handleDatePress()
+                  }}
                   className="border-b border-white/[0.08] px-1 py-3"
+                  style={({ pressed }) => pressFeedback(pressed)}
                 >
                   <Text
                     className={`text-[16px] ${
@@ -173,8 +179,12 @@ export default function WizardDateScreen() {
           {/* Forward button */}
           <View className="flex-row justify-end">
             <Pressable
-              onPress={handleNext}
+              onPress={() => {
+                hapticInvite()
+                handleNext()
+              }}
               className="rounded-full border border-amber-300/40 px-6 py-2.5"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
                 Напред ›
@@ -194,11 +204,16 @@ export default function WizardDateScreen() {
         >
           <Pressable
             className="flex-1 justify-end bg-black/50"
-            onPress={() => setShowIosPicker(false)}
+            onPress={() => {
+              hapticSelect()
+              setShowIosPicker(false)
+            }}
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <Pressable
               onPress={(e) => e.stopPropagation()}
               className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <DateTimePicker
                 value={
@@ -220,8 +235,12 @@ export default function WizardDateScreen() {
                 }}
               />
               <Pressable
-                onPress={() => setShowIosPicker(false)}
+                onPress={() => {
+                  hapticSelect()
+                  setShowIosPicker(false)
+                }}
                 className="mt-2 self-center rounded-full border border-amber-300/40 px-6 py-2.5"
+                style={({ pressed }) => pressFeedback(pressed)}
               >
                 <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
                   Готово

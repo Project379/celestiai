@@ -15,10 +15,10 @@ const ALL_TOPICS: OracleTopic[] = ['general', 'love', 'career', 'health']
  * Grid of four Oracle topic cards: Личност, Любов, Кариера, Здраве.
  *
  * All topics are available to any authed user. Free tier is gated by
- * a daily message cap (ORACLE_FREE_MESSAGES_PER_DAY, Europe/Sofia
- * calendar day), enforced server-side at /api/oracle/generate rather
- * than per-topic lock icons on the card grid. Cap-reached surfacing
- * happens in the generate flow, not here.
+ * a monthly generation cap from subscription_quotas, enforced server-
+ * side at /api/oracle/generate rather than per-topic lock icons on the
+ * card grid. Cap-reached surfacing happens in the generate flow, not
+ * here.
  */
 export function TopicCards({
   activeTopic,

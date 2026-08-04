@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { CrystalGem, type GemVariant } from './CrystalGem'
+import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 import type { CrystalOfTheDayResponse } from '@stellaeum/core'
 
 interface CrystalOfTheDayCardProps {
@@ -60,7 +61,7 @@ export function CrystalOfTheDayCard({ initialData }: CrystalOfTheDayCardProps) {
         {streak && streak.current > 0 && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/30 bg-amber-400/[0.06] px-3 py-1 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.28em] text-amber-200">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
-            {streak.current === 1 ? '1 ден' : `${streak.current} поредни дни`}
+            {streak.current} {pluralizeBg(streak.current, 'ден', 'поредни дни')}
           </span>
         )}
       </div>

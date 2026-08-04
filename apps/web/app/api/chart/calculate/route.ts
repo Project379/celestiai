@@ -1,26 +1,22 @@
-import { calculateNatalChart } from '@celestia/astrology'
-import type { ChartData } from '@celestia/astrology'
-import { logAuditEvent } from '@/lib/audit'
-import {
-  requireAppUser,
-  requireOwnedChart,
-  toErrorResponse,
-} from '@/lib/auth/guards'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { auth } from '@clerk/nextjs/server'
+import { calculateChartForUser } from '@stellaeum/core/charts/calculate'
 import { chartCalculationSchema } from '@/lib/validators/chart'
+import { logAuditEvent } from '@/lib/audit'
 
-interface CalculationChart {
-  id: string
-  birth_date: string
-  birth_time: string | null
-  birth_time_known: boolean
-  latitude: number
-  longitude: number
-}
-
+/**
+ * POST /api/chart/calculate
+ *
+ * Thin wrapper over @stellaeum/core calculateChartForUser(). Core returns a
+ * discriminated-union result; we map it to HTTP. Audit event fires only on
+ * fresh (non-cached) compute to preserve the pre-extraction behavior.
+ */
 export async function POST(request: Request) {
+  const { userId } = await auth()
+  if (!userId) {
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+  }
+
   try {
-    const { userId } = await requireAppUser()
     const body = await request.json()
 
     const validation = chartCalculationSchema.safeParse(body)
@@ -28,71 +24,47 @@ export async function POST(request: Request) {
       const fieldErrors: Record<string, string[]> = {}
       for (const issue of validation.error.issues) {
         const path = issue.path.join('.')
-        if (!fieldErrors[path]) {
-          fieldErrors[path] = []
-        }
+        if (!fieldErrors[path]) fieldErrors[path] = []
         fieldErrors[path].push(issue.message)
       }
       return Response.json(
         { error: 'Невалидни данни', details: fieldErrors },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     const { chartId } = validation.data
-    const chart = await requireOwnedChart<CalculationChart>(
-      userId,
-      chartId,
-      'id, birth_date, birth_time, birth_time_known, latitude, longitude'
-    )
-    const supabase = createServiceSupabaseClient()
+    const result = await calculateChartForUser(userId, chartId)
 
-    const { data: cached, error: cacheError } = await supabase
-      .from('chart_calculations')
-      .select('*')
-      .eq('chart_id', chartId)
-      .single()
-
-    if (cached && !cacheError) {
-      const cachedChart: ChartData = {
-        planets: cached.planet_positions as ChartData['planets'],
-        houses: cached.house_cusps as ChartData['houses'],
-        aspects: cached.aspects as ChartData['aspects'],
-        ascendant: cached.ascendant as ChartData['ascendant'],
-        mc: cached.mc as ChartData['mc'],
-        birthTimeKnown: cached.birth_time_known,
+    if (result.ok) {
+      if (!result.cached) {
+        logAuditEvent(userId, 'data.chart_calculation', { chartId })
       }
-      return Response.json(cachedChart)
+      return Response.json(result.data)
     }
 
-    const chartData = calculateNatalChart({
-      date: new Date(chart.birth_date),
-      time: chart.birth_time?.slice(0, 5) || null,
-      lat: chart.latitude,
-      lon: chart.longitude,
-      birthTimeKnown: chart.birth_time_known,
-    })
-
-    const { error: insertError } = await supabase
-      .from('chart_calculations')
-      .insert({
-        chart_id: chartId,
-        planet_positions: chartData.planets,
-        house_cusps: chartData.houses,
-        aspects: chartData.aspects,
-        ascendant: chartData.ascendant,
-        mc: chartData.mc,
-        birth_time_known: chartData.birthTimeKnown,
-      })
-
-    if (insertError) {
-      console.error('Failed to cache calculation:', insertError)
+    switch (result.error) {
+      case 'CHART_NOT_FOUND':
+        return Response.json({ error: 'Картата не е намерена' }, { status: 404 })
+      case 'FORBIDDEN':
+        return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 403 })
+      case 'CALC_ERROR':
+        return Response.json(
+          { error: 'Грешка при изчисление. Провери данните.' },
+          { status: 500 },
+        )
+      case 'INTERNAL':
+      default:
+        return Response.json(
+          { error: 'Грешка при обработка на заявката' },
+          { status: 500 },
+        )
     }
-
-    logAuditEvent(userId, 'data.chart_calculation', { chartId: chart.id })
-
-    return Response.json(chartData)
   } catch (error) {
-    return toErrorResponse(error, 'Грешка при обработка на заявката')
+    console.error('Error in chart calculation:', error)
+    return Response.json(
+      { error: 'Грешка при обработка на заявката' },
+      { status: 500 },
+    )
   }
 }

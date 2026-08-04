@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET
 
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const supabase = createServiceSupabaseClient()
@@ -71,57 +71,25 @@ export async function GET(req: Request) {
         .delete()
         .eq('user_id', clerkId)
 
-      // Delete crush / saved-people reports before profiles
-      await supabase
-        .from('saved_people_reports')
-        .delete()
-        .eq('user_id', clerkId)
-
-      await supabase
-        .from('saved_people_profiles')
-        .delete()
-        .eq('user_id', clerkId)
-
-      // Delete connection-space records where the user participated or initiated
-      await supabase
-        .from('connection_reports')
-        .delete()
-        .eq('generated_by', clerkId)
-
-      await supabase
-        .from('connection_invites')
-        .delete()
-        .eq('inviter_user_id', clerkId)
-
-      const { data: spaceMemberships } = await supabase
-        .from('connection_members')
-        .select('space_id')
-        .eq('user_id', clerkId)
-
-      const spaceIds = (spaceMemberships ?? []).map((row: { space_id: string }) => row.space_id)
-
-      await supabase
-        .from('connection_members')
-        .delete()
-        .eq('user_id', clerkId)
-
-      if (spaceIds.length > 0) {
-        await supabase
-          .from('connection_spaces')
-          .delete()
-          .in('id', spaceIds)
-          .eq('created_by_user_id', clerkId)
-      }
-
       // Delete charts
       await supabase
         .from('charts')
         .delete()
         .eq('user_id', clerkId)
 
-      // Delete push subscriptions
+      // Delete push subscriptions (web)
       await supabase
         .from('push_subscriptions')
+        .delete()
+        .eq('user_id', clerkId)
+
+      // Delete push tokens (mobile, P.16 / REVISIT-26). Sending push to a
+      // deleted account's device is a GDPR problem, not a tidiness one —
+      // explicit delete here rather than relying solely on the table's
+      // ON DELETE CASCADE FK to users.clerk_id, matching this cron's
+      // existing defense-in-depth style for every other cascade above.
+      await supabase
+        .from('push_tokens')
         .delete()
         .eq('user_id', clerkId)
 
@@ -160,6 +128,23 @@ export async function GET(req: Request) {
   console.log(
     `[Cron Cleanup] Completed: ${deleted}/${usersToDelete.length} accounts deleted`
   )
+
+  // Prune expired rate_limit_buckets rows (20260803130000_rate_limit_buckets.sql).
+  // Keys are route:userId(:ip), so cardinality is bounded by active users —
+  // a daily sweep is enough, no need for hot-path cleanup on every request.
+  const { error: rateLimitCleanupError, count: rateLimitRowsDeleted } = await supabase
+    .from('rate_limit_buckets')
+    .delete({ count: 'exact' })
+    .lt('reset_at', now)
+
+  if (rateLimitCleanupError) {
+    console.error(
+      '[Cron Cleanup] Failed to prune rate_limit_buckets:',
+      rateLimitCleanupError
+    )
+  } else {
+    console.log(`[Cron Cleanup] Pruned ${rateLimitRowsDeleted ?? 0} expired rate_limit_buckets rows`)
+  }
 
   return Response.json({ deleted })
 }

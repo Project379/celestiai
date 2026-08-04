@@ -1,7 +1,6 @@
 'use client'
 
 import { useClerk } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
 import { useState, useCallback, useEffect, useRef } from 'react'
 
 interface LogoutConfirmDialogProps {
@@ -11,7 +10,6 @@ interface LogoutConfirmDialogProps {
 
 export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProps) {
   const { signOut } = useClerk()
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
 
@@ -29,16 +27,12 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
   const handleSignOut = useCallback(async () => {
     setIsLoading(true)
     try {
-      await signOut()
-      onClose()
-      router.replace('/')
-      router.refresh()
+      await signOut({ redirectUrl: '/' })
     } catch (error) {
       console.error('Sign out error:', error)
-    } finally {
       setIsLoading(false)
     }
-  }, [onClose, router, signOut])
+  }, [signOut])
 
   const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
     const rect = dialogRef.current?.getBoundingClientRect()
@@ -83,7 +77,7 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
             Изход от профила
           </h2>
           <p className="mt-2 text-slate-400">
-            Сигурни ли сте, че искате да излезете?
+            Сигурен/а ли си, че искаш да излезеш?
           </p>
         </div>
 

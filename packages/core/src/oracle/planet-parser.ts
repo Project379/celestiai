@@ -55,3 +55,56 @@ export function stripSentinels(text: string): string {
   const sentinelRegex = /\[planet:(\w+)\]([\s\S]*?)\[\/planet\]/g
   return text.replace(sentinelRegex, (_match, _key, innerText: string) => innerText)
 }
+
+/**
+ * One parsed chunk from `parseSentinels`. Either a plain text run (no
+ * `planet`) or a planet mention (`planet` = lowercase English key, `text`
+ * = the Bulgarian inner text that was between the markers).
+ */
+export interface ParsedSentinel {
+  text: string
+  planet?: string
+}
+
+/**
+ * Parses text containing [planet:KEY]...[/planet] sentinel markers into a
+ * flat array of chunks in document order. Each chunk is either plain text
+ * (`planet` undefined) or a planet mention (`planet` set to the lowercase
+ * English key).
+ *
+ * Consumers map planet keys to their own presentation: web uses Tailwind
+ * className strings via a per-surface PLANET_COLORS map; mobile uses hex
+ * values for inline `style.color` since NativeWind's class scanner can't
+ * see dynamic className concatenations.
+ *
+ * @param text - Text potentially containing [planet:KEY]...[/planet] markers
+ * @returns Array of ParsedSentinel chunks. Empty for empty input.
+ *
+ * @example
+ * parseSentinels('[planet:mars]Марс[/planet] в Скорпион')
+ * // => [{ text: 'Марс', planet: 'mars' }, { text: ' в Скорпион' }]
+ */
+export function parseSentinels(text: string): ParsedSentinel[] {
+  const sentinelRegex = /\[planet:(\w+)\]([\s\S]*?)\[\/planet\]/g
+  const chunks: ParsedSentinel[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = sentinelRegex.exec(text)) !== null) {
+    const matchStart = match.index
+    if (matchStart > lastIndex) {
+      chunks.push({ text: text.slice(lastIndex, matchStart) })
+    }
+    chunks.push({
+      text: match[2] ?? '',
+      planet: match[1] ?? '',
+    })
+    lastIndex = sentinelRegex.lastIndex
+  }
+
+  if (lastIndex < text.length) {
+    chunks.push({ text: text.slice(lastIndex) })
+  }
+
+  return chunks
+}

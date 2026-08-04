@@ -1,35 +1,32 @@
+import { auth } from '@clerk/nextjs/server'
 import { generateText, streamText } from 'ai'
-import { createOpenAI } from '@ai-sdk/openai'
 import type { TransitAspect } from '@stellaeum/astrology'
 import type { PlanetPosition } from '@stellaeum/astrology/client'
+import { AI_MODEL, openrouter } from '@/lib/ai/client'
+import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { logAuditEvent } from '@/lib/audit'
 import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
 import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import {
-  requireAppUser,
-  requireOwnedChart,
-  toErrorResponse,
-} from '@/lib/auth/guards'
-import { assertRateLimit, getRequestIp } from '@/lib/rate-limit'
+import { toErrorResponse } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 export const maxDuration = 60
-const LLAMA_MODEL = 'meta-llama/llama-3.3-70b-instruct'
-
-const openrouter = createOpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-})
 
 export async function POST(req: Request) {
+  const { userId } = await auth()
+  if (!userId) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
-    const { userId } = await requireAppUser()
-    assertRateLimit({
-      key: `horoscope-generate:${userId}:${getRequestIp(req)}`,
-      limit: 20,
+    await assertRateLimit({
+      key: `horoscope-generate:${userId}`,
+      limit: 5,
       windowMs: 60_000,
     })
+
     const body = await req.json()
     const { chartId } = body as { chartId?: string }
 
@@ -67,18 +64,21 @@ export async function POST(req: Request) {
 
     const supabase = createServiceSupabaseClient()
 
-    const chart = await requireOwnedChart<{
-      id: string
-      birth_date: string
-      birth_time: string | null
-      birth_time_known: boolean
-      latitude: number
-      longitude: number
-    }>(
-      userId,
-      chartId,
-      'id, birth_date, birth_time, birth_time_known, latitude, longitude'
-    )
+    const { data: chart, error: chartError } = await supabase
+      .from('charts')
+      .select(
+        'id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude'
+      )
+      .eq('id', chartId)
+      .single()
+
+    if (chartError || !chart) {
+      return Response.json({ error: 'Chart not found' }, { status: 404 })
+    }
+
+    if (chart.user_id !== userId) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const { data: cachedHoroscope } = await supabase
       .from('daily_horoscopes')
@@ -136,7 +136,7 @@ export async function POST(req: Request) {
 
       const chartData = calculateNatalChart({
         date: new Date(chart.birth_date),
-        time: chart.birth_time?.slice(0, 5) || null,
+        time: chart.birth_time || null,
         lat: chart.latitude,
         lon: chart.longitude,
         birthTimeKnown: chart.birth_time_known,
@@ -192,13 +192,34 @@ export async function POST(req: Request) {
       date: requestedDate,
     })
 
+    // Astrological conditions only — no chartId/userId. Feeds the
+    // bg_generation_flags safety net (observes, never corrects).
+    const generationConditions = {
+      activeTransits: transitOverview.activeTransits.map((t) => ({
+        transitPlanet: t.transitPlanet,
+        aspect: t.aspect,
+        natalPlanet: t.natalPlanet,
+      })),
+      lunarEvents: transitOverview.lunarEvents.map((e) => ({
+        type: e.type,
+        sign: e.sign,
+      })),
+    }
+
     if (jsonOnly) {
       const result = await generateText({
-        model: openrouter(LLAMA_MODEL),
+        model: openrouter(AI_MODEL),
         system: systemPrompt,
         prompt: promptText,
         temperature: 0.85,
         maxOutputTokens: 1500,
+      })
+
+      void checkAndLogGeneration({
+        source: 'horoscope',
+        model: AI_MODEL,
+        text: result.text,
+        conditions: generationConditions,
       })
 
       try {
@@ -208,7 +229,7 @@ export async function POST(req: Request) {
             user_id: userId,
             date: requestedDate,
             content: result.text,
-            model_version: LLAMA_MODEL,
+            model_version: AI_MODEL,
           },
           { onConflict: 'chart_id,date' }
         )
@@ -224,12 +245,19 @@ export async function POST(req: Request) {
     }
 
     const result = streamText({
-      model: openrouter(LLAMA_MODEL),
+      model: openrouter(AI_MODEL),
       system: systemPrompt,
       prompt: promptText,
       temperature: 0.85,
       maxOutputTokens: 1500,
       onFinish: async ({ text }) => {
+        void checkAndLogGeneration({
+          source: 'horoscope',
+          model: AI_MODEL,
+          text,
+          conditions: generationConditions,
+        })
+
         try {
           await supabase.from('daily_horoscopes').upsert(
             {
@@ -237,7 +265,7 @@ export async function POST(req: Request) {
               user_id: userId,
               date: requestedDate,
               content: text,
-              model_version: LLAMA_MODEL,
+              model_version: AI_MODEL,
             },
             { onConflict: 'chart_id,date' }
           )

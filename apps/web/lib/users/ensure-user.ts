@@ -8,12 +8,14 @@ export type SubscriptionStatus =
   | 'cancelled'
   | 'past_due'
   | 'trialing'
+export type SubscriptionProvider = 'stripe' | 'revenuecat'
 
 export interface AppUser {
   id: string
   clerk_id: string
   subscription_tier: SubscriptionTier
   subscription_status: SubscriptionStatus
+  subscription_provider: SubscriptionProvider
   created_at: string | null
   updated_at: string | null
   stripe_customer_id: string | null
@@ -29,6 +31,7 @@ const APP_USER_SELECT = `
   clerk_id,
   subscription_tier,
   subscription_status,
+  subscription_provider,
   created_at,
   updated_at,
   stripe_customer_id,
@@ -105,6 +108,29 @@ export async function ensureUserRecord(clerkUserId: string): Promise<AppUser> {
       insertError?.message ?? 'unknown error'
     }`
   )
+}
+
+/**
+ * Read-only lookup, no auto-create — for callers (e.g. the RevenueCat
+ * webhook) where a missing row is itself a real problem to surface, not
+ * something to paper over. If RevenueCatProvider's logIn() never fired
+ * for this app_user_id, silently creating a blank `users` row here would
+ * hide that bug instead of surfacing it as "unknown user."
+ */
+export async function getAppUserByClerkId(clerkUserId: string): Promise<AppUser | null> {
+  const supabase = createServiceSupabaseClient()
+
+  const { data, error } = await supabase
+    .from('users')
+    .select(APP_USER_SELECT)
+    .eq('clerk_id', clerkUserId)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(`[Users] Failed to load app user ${clerkUserId}: ${error.message}`)
+  }
+
+  return data ? toAppUser(data) : null
 }
 
 export async function getCurrentAppUser(): Promise<{

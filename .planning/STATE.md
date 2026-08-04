@@ -2,12 +2,31 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-21)
+See: .planning/PROJECT.md (updated 2026-05-09)
 
 **Core value:** Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.
-**Current focus:** All phases complete — ready for launch
+**Current focus:** v1.0 mobile-led launch — Phase A complete; Phase B opened 2026-05-09 with two streams (Stream P parity, Stream K Кръг)
 
-## Current Position
+## Current Position — v1.0 mobile-led launch
+
+Milestone: v1.0 mobile-led launch
+Phase: B of 4 - OPEN (two parallel streams)
+  - Stream P (Parity): port web features to mobile per `.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md` — Toni's primary work
+  - Stream K (Кръг): port Кръг features as friend ships them on web — per-port reactive investigation
+Sub-round: investigation pass complete 2026-05-09 (Phase B re-plan after soft-launch quality bar reframe); Stream P sub-round layering surfaced for ratification
+Status: Phase B docs in place (parity gap inventory + handoff); Stream P ratification pending; friend coordination conversation gates first Stream P sub-round
+Last activity: 2026-05-09 — Phase B opening docs commit (parity gap inventory + handoff + state updates)
+
+Progress (Phase A): [####################] 100% — closed per documented exit criteria
+Progress (Phase B Stream P): [....................] 0% — ratification pending
+Progress (Phase B Stream K): [....................] 0% — gated on friend coordination
+Progress (v1.0 milestone): [#####...............] 25% (1 of 4 phases complete)
+
+Awaiting: Stream P sub-round layering ratification + friend coordination conversation. See `.planning/phases/phase-b-mobile-parity/HANDOFF-2026-05-09.md` for strategic items tracking (cost envelope, PostHog, Apple Developer enrollment, GDPR/ToS, friend coordination).
+
+Phase B soft-launch quality bar = full web parity (less Friends groups, deferred to future research). TestFlight at end of Phase B remains; timeline TBD based on parity work duration. No auto-fire of Stream P sub-rounds — founder ratifies layering first.
+
+## Current Position — v0.1 web MVP (HISTORICAL)
 
 Phase: 8 of 8 - COMPLETE
 Plan: 3 of 3 in phase 8 - COMPLETE

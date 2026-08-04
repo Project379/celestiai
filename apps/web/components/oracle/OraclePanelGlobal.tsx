@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useOracleReading } from '@/hooks/useOracleReading'
 import { TopicCards } from './TopicCards'
 import { ReadingStream } from './ReadingStream'
-import { LockedTopicTeaser } from './LockedTopicTeaser'
+import { CapReachedNotice } from './CapReachedNotice'
 import { TOPIC_META, type OracleTopic } from './TopicCard'
 import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
 
@@ -34,6 +34,7 @@ function OraclePanel({ chartId }: { chartId: string }) {
   const {
     completion,
     isLoading,
+    generationError,
     stop,
     savedReadings,
     activeTopic,
@@ -43,11 +44,6 @@ function OraclePanel({ chartId }: { chartId: string }) {
   } = useOracleReading(chartId)
 
   const [isOpen, setIsOpen] = useState(false)
-  const [lockedTopicShown, setLockedTopicShown] = useState<OracleTopic | null>(null)
-  const [teaserContent, setTeaserContent] = useState<
-    Record<string, string | null>
-  >({})
-  const [loadingTeaser, setLoadingTeaser] = useState<Record<string, boolean>>({})
 
   // Global open bridge — ProtectedNav dispatches this event.
   useEffect(() => {
@@ -58,7 +54,6 @@ function OraclePanel({ chartId }: { chartId: string }) {
 
   const handleTopicSelect = useCallback(
     (topic: OracleTopic) => {
-      setLockedTopicShown(null)
       const saved = savedReadings[topic]
       if (saved) {
         setActiveTopic(topic)
@@ -73,34 +68,6 @@ function OraclePanel({ chartId }: { chartId: string }) {
     if (!activeTopic) return
     void generateReading(activeTopic, true)
   }, [activeTopic, generateReading])
-
-  const handleRequestTeaser = useCallback(
-    async (topic: OracleTopic) => {
-      if (teaserContent[topic] !== undefined || loadingTeaser[topic]) return
-      setLoadingTeaser((prev) => ({ ...prev, [topic]: true }))
-      try {
-        const res = await fetch('/api/oracle/teaser', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chartId, topic }),
-        })
-        if (res.ok) {
-          const data = (await res.json()) as { teaserContent?: string }
-          setTeaserContent((prev) => ({
-            ...prev,
-            [topic]: data.teaserContent ?? null,
-          }))
-        } else {
-          setTeaserContent((prev) => ({ ...prev, [topic]: null }))
-        }
-      } catch {
-        setTeaserContent((prev) => ({ ...prev, [topic]: null }))
-      } finally {
-        setLoadingTeaser((prev) => ({ ...prev, [topic]: false }))
-      }
-    },
-    [chartId, teaserContent, loadingTeaser]
-  )
 
   const isGenerating = isLoading
   const savedReading = activeTopic ? savedReadings[activeTopic] : null
@@ -121,16 +88,13 @@ function OraclePanel({ chartId }: { chartId: string }) {
 
   const handleClose = useCallback(() => {
     if (isGenerating) stop()
-    setLockedTopicShown(null)
     setActiveTopic(null)
     setIsOpen(false)
   }, [isGenerating, stop, setActiveTopic])
 
   const modalTitle = activeTopic
     ? TOPIC_META[activeTopic as OracleTopic]?.label ?? activeTopic
-    : lockedTopicShown
-      ? TOPIC_META[lockedTopicShown]?.label
-      : 'Избери тема'
+    : 'Избери тема'
 
   return (
     <AnimatePresence>
@@ -219,7 +183,7 @@ function OraclePanel({ chartId }: { chartId: string }) {
             </div>
 
             {/* Topic picker — always visible when nothing selected */}
-            {!activeTopic && !lockedTopicShown && (
+            {!activeTopic && (
               <div className="relative border-b border-white/[0.05] px-7 py-5">
                 <TopicCards
                   activeTopic={activeTopic}
@@ -231,7 +195,7 @@ function OraclePanel({ chartId }: { chartId: string }) {
 
             {/* Content area */}
             <div className="relative flex-1 overflow-y-auto px-7 py-6">
-              {!activeTopic && !lockedTopicShown && (
+              {!activeTopic && (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <div className="mb-4 flex items-center gap-3" aria-hidden>
                     <span className="h-px w-10 bg-gradient-to-r from-transparent to-amber-300/40" />
@@ -244,15 +208,8 @@ function OraclePanel({ chartId }: { chartId: string }) {
                 </div>
               )}
 
-              {lockedTopicShown && !activeTopic && (
-                <LockedTopicTeaser
-                  topic={lockedTopicShown}
-                  teaserContent={teaserContent[lockedTopicShown] ?? null}
-                  isLoadingTeaser={loadingTeaser[lockedTopicShown] ?? false}
-                  onRequestTeaser={() =>
-                    void handleRequestTeaser(lockedTopicShown)
-                  }
-                />
+              {activeTopic && generationError?.kind === 'cap-reached' && (
+                <CapReachedNotice cap={generationError.cap} />
               )}
 
               {showStream && (
@@ -277,14 +234,13 @@ function OraclePanel({ chartId }: { chartId: string }) {
             </div>
 
             {/* Footer — back + regenerate */}
-            {(activeTopic || lockedTopicShown) && (
+            {activeTopic && (
               <div className="relative flex items-center justify-between border-t border-white/[0.06] px-7 py-4">
                 <button
                   type="button"
                   onClick={() => {
                     if (isGenerating) stop()
                     setActiveTopic(null)
-                    setLockedTopicShown(null)
                   }}
                   className="group inline-flex items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 transition-colors hover:text-amber-300"
                 >

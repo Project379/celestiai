@@ -12,7 +12,7 @@ import { getSubscriptionOverview } from '@/lib/stripe/subscription-overview'
 export async function GET() {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   const overview = await getSubscriptionOverview(userId)

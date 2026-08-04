@@ -60,6 +60,26 @@ export const PLANETS_BG: Record<Planet, string> = {
 } as const
 
 /**
+ * Grammatical gender of each planet's Bulgarian name, for adjective/pronoun
+ * agreement in composed sentences (e.g. "твоя натален" must become
+ * "твоето натално Слънце" / "твоята натална Луна"). "Северен възел" agrees
+ * as masculine — "възел" is the head noun.
+ */
+export const PLANETS_BG_GENDER: Record<Planet, 'masc' | 'fem' | 'neut'> = {
+  sun: 'neut',
+  moon: 'fem',
+  mercury: 'masc',
+  venus: 'fem',
+  mars: 'masc',
+  jupiter: 'masc',
+  saturn: 'masc',
+  uranus: 'masc',
+  neptune: 'masc',
+  pluto: 'masc',
+  northNode: 'masc',
+} as const
+
+/**
  * Planet glyphs (Unicode).
  *
  * Canonical single source of truth — any display surface wanting a
@@ -154,6 +174,18 @@ export const ASPECTS_BG: Record<AspectType, string> = {
   square: 'Квадрат',
   trine: 'Тригон',
   opposition: 'Опозиция',
+} as const
+
+/**
+ * Grammatical gender of each aspect's Bulgarian name, for adjective
+ * agreement (e.g. "точен" must become "точна опозиция" / "точно съединение").
+ */
+export const ASPECTS_BG_GENDER: Record<AspectType, 'masc' | 'fem' | 'neut'> = {
+  conjunction: 'neut',
+  sextile: 'masc',
+  square: 'masc',
+  trine: 'masc',
+  opposition: 'fem',
 } as const
 
 /**

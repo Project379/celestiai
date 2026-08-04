@@ -16,7 +16,9 @@
  */
 
 import type { LunarPhase } from '../lib/moon-phase'
-import type { PlanetPosition } from '@stellaeum/astrology'
+import type { Planet, PlanetPosition } from '@stellaeum/astrology'
+import { PLANETS_BG_GENDER } from '@stellaeum/astrology'
+import { agreeAccusativePronoun, bgPrep } from '../i18n/bg-grammar'
 
 export type CrystalTriggerType = 'birthstone' | 'lunar_phase' | 'transit'
 
@@ -210,7 +212,7 @@ export function recommendCrystals({
         triggerType: 'birthstone',
         reasonCode: `birthstone_${sunSign}`,
         reasonTextEn: `Your Sun sits in ${capitalize(sunSign)} and ${birthstone.nameBg ?? birthstone.nameEn} is its traditional guardian stone — a birthright crystal that stays with you regardless of phase or transit.`,
-        reasonTextBg: `Слънцето ти е в ${signBg}, а ${birthstone.nameBg ?? birthstone.nameEn} е неговият пазител от най-старите текстове. Това е рожденият ти камък — остава с теб независимо от фазата и от това какво прави небето.`,
+        reasonTextBg: `Слънцето ти е ${bgPrep('в', signBg)} ${signBg}, а ${birthstone.nameBg ?? birthstone.nameEn} е неговият пазител от най-старите текстове. Това е рожденият ти камък — остава с теб независимо от фазата и от това какво прави небето.`,
         validFrom: new Date('2000-01-01T00:00:00Z'),
         validUntil: new Date('2099-12-31T00:00:00Z'),
       })
@@ -270,13 +272,15 @@ export function recommendCrystals({
       const natalBg =
         NATAL_PLANET_BG[tightestTransit.natalPlanet] ??
         tightestTransit.natalPlanet
+      const natalGender = PLANETS_BG_GENDER[tightestTransit.natalPlanet as Planet] ?? 'masc'
+      const natalPronoun = agreeAccusativePronoun(natalGender)
       const validUntil = new Date(now.getTime() + 14 * 86_400_000)
       drafts.push({
         crystalSlug: transitCrystal.slug,
         triggerType: 'transit',
         reasonCode: `transit_${tightestTransit.transitPlanet}_${tightestTransit.natalPlanet}_${monthKey}`,
         reasonTextEn: `${capitalize(tightestTransit.transitPlanet)} is pressing on your natal ${capitalize(tightestTransit.natalPlanet)} right now. ${transitCrystal.nameBg ?? transitCrystal.nameEn} holds that pressure in something you can carry in your hand.`,
-        reasonTextBg: `${planetBg} в момента натиска ${natalBg} — усещаш го, дори когато не можеш да го назовеш. ${transitCrystal.nameBg ?? transitCrystal.nameEn} събира тази сила в нещо, което можеш да носиш.`,
+        reasonTextBg: `${planetBg} в момента натиска ${natalBg} — усещаш ${natalPronoun}, дори когато не можеш да ${natalPronoun} назовеш. ${transitCrystal.nameBg ?? transitCrystal.nameEn} събира тази сила в нещо, което можеш да носиш.`,
         validFrom: now,
         validUntil,
       })

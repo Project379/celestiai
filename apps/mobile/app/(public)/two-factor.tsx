@@ -13,6 +13,9 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticInvite, hapticSelect } from '@/lib/haptics'
+
 // Bulgarian error mapping — first-pass draft, calibrated in commit 1.4d via bulgarian-skill
 const ERROR_MESSAGES: Record<string, string> = {
   form_code_incorrect: 'Грешен код',
@@ -229,13 +232,17 @@ export default function TwoFactorScreen() {
           )}
 
           <Pressable
-            onPress={handleVerify}
+            onPress={() => {
+              hapticInvite()
+              handleVerify()
+            }}
             disabled={!canSubmit}
             className={`rounded-2xl border py-4 ${
               canSubmit
                 ? 'border-amber-300/40 bg-amber-300/5'
                 : 'border-slate-800/60 bg-slate-900/40'
             }`}
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <View className="flex-row items-center justify-center gap-3">
               {submitting && <ActivityIndicator color="#fcd34d" size="small" />}
@@ -251,9 +258,13 @@ export default function TwoFactorScreen() {
 
           {strategy === 'phone_code' && (
             <Pressable
-              onPress={handleResend}
+              onPress={() => {
+                hapticSelect()
+                handleResend()
+              }}
               disabled={resending || submitting}
               className="mt-8"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <View className="flex-row items-center justify-center gap-3">
                 {resending && <ActivityIndicator color="#94a3b8" size="small" />}
@@ -266,9 +277,13 @@ export default function TwoFactorScreen() {
 
           {showBackupSwitch && (
             <Pressable
-              onPress={() => switchStrategy('backup_code')}
+              onPress={() => {
+                hapticSelect()
+                switchStrategy('backup_code')
+              }}
               disabled={submitting}
               className="mt-8"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="text-center font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-400">
                 Използвай резервен код
@@ -278,9 +293,13 @@ export default function TwoFactorScreen() {
 
           {showTotpSwitch && (
             <Pressable
-              onPress={() => switchStrategy('totp')}
+              onPress={() => {
+                hapticSelect()
+                switchStrategy('totp')
+              }}
               disabled={submitting}
               className="mt-8"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="text-center font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-400">
                 Използвай код от приложение
@@ -290,9 +309,13 @@ export default function TwoFactorScreen() {
 
           {showSmsSwitch && (
             <Pressable
-              onPress={() => switchStrategy('phone_code')}
+              onPress={() => {
+                hapticSelect()
+                switchStrategy('phone_code')
+              }}
               disabled={submitting}
               className="mt-8"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="text-center font-cinzel text-[10px] uppercase tracking-[0.32em] text-slate-400">
                 Използвай SMS код

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import type { LunarPhaseId } from '@/lib/moon-phase'
-import type { ManifestEntry } from '@/lib/manifest/types'
+import type { ManifestEntry } from '@stellaeum/core/diary/types'
 import { logClientError } from '@/lib/monitoring/log-client-error'
 
 /**

@@ -6,6 +6,10 @@
           {
             "type": "command",
             "command": "node .claude/hooks/gsd-check-update.js"
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/claude-mem-cleanup.js"
           }
         ]
       }

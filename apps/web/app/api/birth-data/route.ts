@@ -1,135 +1,96 @@
 import { auth } from '@clerk/nextjs/server'
-import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { createBirthDataSchema } from '@/lib/validators/birth-data'
-import { ensureUserRecord } from '@/lib/users/ensure-user'
 import {
-  normalizeBirthDataChart,
-  toApproximateTimeRangeLiteral,
-} from '@/lib/birth-data/time-range'
+  createBirthChart,
+  listBirthCharts,
+} from '@stellaeum/core/charts/birth-data'
+import { createBirthDataSchema } from '@stellaeum/core/charts/schemas'
+import { logServerError } from '@/lib/monitoring/log-server-error'
 
 /**
- * GET /api/birth-data
- * Retrieve all birth charts for the authenticated user
+ * Error IDs emitted by this handler (wired to Sentry via logServerError
+ * in §10.2; see PRE_LAUNCH_PREREQS.md item 2 for the monitoring rationale):
+ *   ERR-BD-001 — POST insert failed (DB write rejected post-validation)
+ *   ERR-BD-004 — GET list failed (listBirthCharts threw)
+ */
+
+/**
+ * GET /api/birth-data — list the caller's birth charts.
  */
 export async function GET() {
-  // Check authentication - return JSON error if not authenticated
   const { userId } = await auth()
   if (!userId) {
-    return Response.json(
-      { error: 'Неоторизиран достъп' },
-      { status: 401 }
-    )
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {
-    await ensureUserRecord(userId)
-    const supabase = createServiceSupabaseClient()
-
-    // Manually filter by user_id since we're using service role
-    const { data, error } = await supabase
-      .from('charts')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Supabase error fetching charts:', error)
-      return Response.json(
-        { error: 'Грешка при зареждане на данните' },
-        { status: 500 }
-      )
-    }
-
-    return Response.json((data || []).map(normalizeBirthDataChart))
+    const charts = await listBirthCharts(userId)
+    return Response.json(charts)
   } catch (error) {
-    console.error('Error fetching birth data:', error)
+    logServerError('ERR-BD-004', error, {
+      context: 'GET /api/birth-data list failed',
+    })
     return Response.json(
-      { error: 'Грешка при зареждане на данните' },
-      { status: 500 }
+      {
+        error: 'Не успяхме да заредим списъка с рождени данни. Опитай отново. Код: ERR-BD-004.',
+        code: 'ERR-BD-004',
+      },
+      { status: 500 },
     )
   }
 }
 
 /**
- * POST /api/birth-data
- * Create a new birth chart for the authenticated user
+ * POST /api/birth-data — create a birth chart for the caller.
  */
 export async function POST(request: Request) {
-  // Check authentication - return JSON error if not authenticated
   const { userId } = await auth()
   if (!userId) {
-    return Response.json(
-      { error: 'Неоторизиран достъп' },
-      { status: 401 }
-    )
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {
-    await ensureUserRecord(userId)
     const body = await request.json()
 
-    console.log('[Birth Data] User:', userId)
-    console.log('[Birth Data] Received body:', JSON.stringify(body, null, 2))
-
-    // Validate input
     const validation = createBirthDataSchema.safeParse(body)
     if (!validation.success) {
-      console.error('[Birth Data] Validation failed:', validation.error.issues)
       const fieldErrors: Record<string, string[]> = {}
       for (const issue of validation.error.issues) {
         const path = issue.path.join('.')
-        if (!fieldErrors[path]) {
-          fieldErrors[path] = []
-        }
+        if (!fieldErrors[path]) fieldErrors[path] = []
         fieldErrors[path].push(issue.message)
       }
       return Response.json(
         { error: 'Невалидни данни', details: fieldErrors },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
-    const supabase = createServiceSupabaseClient()
-    const validData = validation.data
-
-    console.log('[Birth Data] Inserting for user:', userId)
-
-    // Insert chart with explicit user_id
-    const { data, error } = await supabase
-      .from('charts')
-      .insert({
-        user_id: userId, // Explicitly set user_id from Clerk
-        name: validData.name,
-        birth_date: validData.birthDate,
-        birth_time_known: validData.birthTimeKnown,
-        birth_time: validData.birthTime ?? null,
-        approximate_time_range: toApproximateTimeRangeLiteral(
-          validData.birthDate,
-          validData.approximateTimeRange
-        ),
-        city_id: validData.cityId ?? null,
-        city_name: validData.cityName,
-        latitude: validData.latitude,
-        longitude: validData.longitude,
+    const result = await createBirthChart(userId, validation.data)
+    if (!result.ok) {
+      logServerError('ERR-BD-001', result.error, {
+        context: 'POST /api/birth-data insert failed',
+        message: result.message,
       })
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase error creating chart:', JSON.stringify(error, null, 2))
       return Response.json(
-        { error: 'Грешка при запазване: ' + error.message },
-        { status: 500 }
+        {
+          error: 'Не успяхме да запазим рождените данни. Опитай отново. Код: ERR-BD-001.',
+          code: 'ERR-BD-001',
+        },
+        { status: 500 },
       )
     }
 
-    console.log('[Birth Data] Created:', data)
-    return Response.json(normalizeBirthDataChart(data), { status: 201 })
+    return Response.json(result.data, { status: 201 })
   } catch (error) {
-    console.error('Error creating birth data:', error)
+    logServerError('ERR-BD-001', error, {
+      context: 'POST /api/birth-data unhandled error',
+    })
     return Response.json(
-      { error: 'Грешка при запазване' },
-      { status: 500 }
+      {
+        error: 'Не успяхме да запазим рождените данни. Опитай отново. Код: ERR-BD-001.',
+        code: 'ERR-BD-001',
+      },
+      { status: 500 },
     )
   }
 }

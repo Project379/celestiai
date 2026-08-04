@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 
 import { birthDataSchema, type BirthData } from '@stellaeum/core/charts/schemas'
 import { useApiClient } from '@/lib/api/client'
+import { SkipWizardButton } from '@/components/onboarding/SkipWizardButton'
+import { color } from '@/components/design-system/tokens'
 
 /**
  * Birth-data wizard Stack layout.
@@ -60,14 +62,18 @@ export default function WizardLayout() {
     <FormProvider {...methods}>
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: '#08060f' },
+          headerStyle: { backgroundColor: color.base },
           headerTitleStyle: {
-            color: '#e2e8f0',
+            color: color.text,
             fontSize: 14,
           },
-          headerTintColor: '#fcd34d',
+          headerTintColor: color.amber,
           headerBackTitle: '',
-          contentStyle: { backgroundColor: '#08060f' },
+          contentStyle: { backgroundColor: color.base },
+          // B.0g-3 forced-wizard Path 2: persistent skip affordance on every
+          // step. Tap opens native Alert with ratified copy; on confirm,
+          // sets per-launch dismiss flag and bounces to Днес.
+          headerRight: () => <SkipWizardButton />,
         }}
       >
         <Stack.Screen name="date" options={{ title: 'Дата' }} />

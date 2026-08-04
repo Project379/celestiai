@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import * as Haptics from 'expo-haptics'
 
 import { ApiError, useApiClient } from '@/lib/api/client'
+import { useFeatureFlag } from '@/hooks/useFeatureFlag'
 
 export type OracleTopic = 'general' | 'love' | 'career' | 'health'
 
@@ -38,6 +40,17 @@ export interface CurrentReading {
   fresh: boolean
 }
 
+interface UseOracleReadingOptions {
+  /**
+   * Fires when a fresh /api/oracle/generate call succeeds for a topic
+   * that did not have a saved reading. Does NOT fire on saved-reading
+   * cache hits or cap-reached errors. Used by SR 8.3's push permission
+   * trigger — the first-ever-successful-Oracle-reading event is the
+   * deliberate moment to ask for push permission.
+   */
+  onFreshGeneration?: () => void
+}
+
 /**
  * Mobile hook for the Oracle screen.
  *
@@ -57,16 +70,20 @@ export interface CurrentReading {
  * Pass null chartId to disable the saved-readings query (e.g. while
  * useFirstChart is still resolving).
  */
-export function useOracleReading(chartId: string | null) {
+export function useOracleReading(
+  chartId: string | null,
+  options?: UseOracleReadingOptions,
+) {
   const { apiFetch } = useApiClient()
   const queryClient = useQueryClient()
   const [activeTopic, setActiveTopic] = useState<OracleTopic | null>(null)
+  const ffEnabled = useFeatureFlag('oracle')
 
   const savedReadingsKey = ['oracle-readings', chartId] as const
 
   const savedReadingsQuery = useQuery({
     queryKey: savedReadingsKey,
-    enabled: !!chartId,
+    enabled: !!chartId && ffEnabled,
     queryFn: async (): Promise<Record<string, SavedReading>> => {
       const raw = await apiFetch(
         `/api/oracle/readings?chartId=${encodeURIComponent(chartId!)}`,
@@ -96,6 +113,17 @@ export function useOracleReading(chartId: string | null) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: savedReadingsKey })
+      options?.onFreshGeneration?.()
+    },
+    onError: (err) => {
+      // Cap-reached is an expected, informational state (a soft limit,
+      // not a failure) — reserve the error haptic for genuine generation
+      // failures so it stays meaningful (Apple HIG: notification haptics
+      // signal a completed/failed task, not routine limits).
+      const isCapReached = err instanceof ApiError && err.status === 429
+      if (!isCapReached) {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      }
     },
   })
 
@@ -142,6 +170,11 @@ export function useOracleReading(chartId: string | null) {
     generateMutation.reset()
     if (savedReadings[topic]) {
       // Saved reading exists — render it directly, no API call.
+      return
+    }
+    if (!ffEnabled) {
+      // Kill switch is off; do not fire the AI generation call. Saved
+      // readings (if any) still render; new generations no-op.
       return
     }
     generateMutation.mutate({ topic, regenerate: false })

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ASPECTS_BG, PLANETS_BG, ZODIAC_SIGNS_BG } from '@stellaeum/astrology/client'
 import type { Planet } from '@stellaeum/astrology/client'
+import { bgPrep } from '@stellaeum/core/i18n/bg-grammar'
 import { AstrologyReference } from '../chart/AstrologyReference'
 import type {
   ActiveTransitDetail,
@@ -37,11 +38,6 @@ function formatActiveTransit(item: ActiveTransitDetail): string {
 
 function formatUpcoming(item: UpcomingTransitDetail): string {
   return `${PLANETS_BG[item.transitPlanet]} ${ASPECTS_BG[item.aspect]} ${PLANETS_BG[item.natalPlanet]}`
-}
-
-function bgPrep(prep: 'в' | 'с', nextWord: string): string {
-  if (prep === 'в') return /^[вВфФ]/.test(nextWord) ? 'във' : 'в'
-  return /^[сСзЗ]/.test(nextWord) ? 'със' : 'с'
 }
 
 function formatLunarEvent(item: LunarEventDetail): string {

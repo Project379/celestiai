@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import Stripe from 'stripe'
 import { logAuditEvent } from '@/lib/audit'
 import { stripe } from '@/lib/stripe/client'
@@ -19,9 +20,9 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  * CRITICAL: Uses request.text() (raw body), never request.json().
  * Stripe signature verification requires the exact raw bytes sent.
  *
- * Idempotency: checks processed_webhook_events before processing.
- * Returns 500 on real processing errors so Stripe retries delivery.
- * Returns 200 for duplicate or intentionally ignored malformed events.
+ * Idempotency: checks processed_webhook_events before processing; marks
+ * processed on success AND on StripeWebhookIgnoredError so Stripe stops retrying
+ * intentionally-ignored events. Returns 500 only on real processing errors.
  */
 export async function POST(request: Request) {
   const body = await request.text()
@@ -56,10 +57,14 @@ export async function POST(request: Request) {
     return new Response('OK', { status: 200 })
   }
 
-  logAuditEvent(null, 'system.payment.webhook_received', {
-    eventType: event.type,
-    eventId: event.id,
-  })
+  const eventId = event.id
+  const eventType = event.type
+  after(() =>
+    logAuditEvent(null, 'system.payment.webhook_received', {
+      eventType,
+      eventId,
+    })
+  )
 
   try {
     switch (event.type) {
@@ -68,9 +73,12 @@ export async function POST(request: Request) {
         if (session.mode === 'subscription') {
           await handleCheckoutComplete(session)
           const clerkUserId = session.metadata?.clerkUserId ?? null
-          logAuditEvent(clerkUserId, 'payment.subscription_created', {
-            stripeSubscriptionId: session.subscription,
-          })
+          const stripeSubscriptionId = session.subscription
+          after(() =>
+            logAuditEvent(clerkUserId, 'payment.subscription_created', {
+              stripeSubscriptionId,
+            })
+          )
         }
         break
       }
@@ -85,9 +93,12 @@ export async function POST(request: Request) {
         const sub = event.data.object as Stripe.Subscription
         await handleSubscriptionDeleted(sub)
         const clerkUserId = sub.metadata?.clerkUserId ?? null
-        logAuditEvent(clerkUserId, 'payment.subscription_cancelled', {
-          stripeSubscriptionId: sub.id,
-        })
+        const stripeSubscriptionId = sub.id
+        after(() =>
+          logAuditEvent(clerkUserId, 'payment.subscription_cancelled', {
+            stripeSubscriptionId,
+          })
+        )
         break
       }
 
@@ -104,11 +115,13 @@ export async function POST(request: Request) {
       }
 
       default:
-        logAuditEvent(null, 'system.payment.webhook_ignored', {
-          eventType: event.type,
-          eventId: event.id,
-          reason: 'unhandled_event_type',
-        })
+        after(() =>
+          logAuditEvent(null, 'system.payment.webhook_ignored', {
+            eventType,
+            eventId,
+            reason: 'unhandled_event_type',
+          })
+        )
         console.log(`[Webhook] Unhandled event type: ${event.type}`)
     }
 

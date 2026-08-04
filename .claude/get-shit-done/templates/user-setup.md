@@ -172,7 +172,7 @@ After completing setup:
 
 ```bash
 # Check env vars are set
-grep STRIPE .env.example.local.local
+grep STRIPE .env.local.local
 
 # Verify build passes
 npm run build

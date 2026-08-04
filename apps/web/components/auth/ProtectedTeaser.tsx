@@ -32,7 +32,7 @@ interface ProtectedTeaserProps {
  */
 export function ProtectedTeaser({
   children,
-  ctaText = 'Влезте, за да видите съдържанието',
+  ctaText = 'Влез, за да видиш съдържанието',
   buttonText = 'Вход',
 }: ProtectedTeaserProps) {
   return (

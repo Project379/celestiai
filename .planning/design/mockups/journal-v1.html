@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ЛУНЕН ДНЕВНИК</title>
+<style>
+
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+
+  :root{
+    --base:#08060f; --violet:#8b5cf6; --starlight:#f5f7fc; --bronze:#b8763e; --bronze-hi:#d9a06a; --cool:#5b8fc7;
+    --text:#e2e8f0; --muted:#94a3b8; --faint:#5d6a82;
+    --page-bg:#0c0a12; --page-surface:#141019; --page-text:#e9e6f0; --page-muted:#948fa3; --page-border:#241f30;
+    --serif-d: 'PF-Semi', Georgia, serif;
+    --serif-d-r: 'PF-Reg', Georgia, serif;
+    --numeral: 'Cinzel', Georgia, serif;
+    --body: 'EBG-Reg', Palatino, serif;
+    --body-i: 'EBG-Ital', Palatino, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: "SFMono-Regular", Consolas, Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--page-bg); color:var(--page-text); font-family:var(--sans); line-height:1.55; padding:0 0 100px; }
+  .wrap{max-width:1160px; margin:0 auto; padding:48px 24px 0;}
+  header.doc{margin-bottom:8px;}
+  .eyebrow{ font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--bronze-hi); margin:0 0 12px; }
+  h1{ font-family:var(--serif-d); font-weight:600; font-size:clamp(28px,4.4vw,44px); margin:0 0 16px; text-wrap:balance; letter-spacing:-.01em; }
+  .dek{font-size:15.5px; color:var(--page-muted); max-width:720px; margin:0 0 8px;}
+
+  section.screen{ padding:40px 0 12px; }
+  section.screen .stitle{ display:flex; align-items:baseline; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  section.screen h2{ font-family:var(--serif-d-r); font-weight:400; font-size:23px; margin:0; }
+  .temp{ font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; padding:3px 9px; border-radius:2px; }
+  .temp.warm{ background:rgba(184,118,62,.16); color:var(--bronze-hi); }
+
+  .stage{ display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
+  .phone-frame{ flex:0 0 auto; width:390px; height:780px; border-radius:44px; background:#000; padding:10px; box-shadow:0 30px 70px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04); }
+  .phone-screen{ width:100%; height:100%; border-radius:36px; overflow:hidden; position:relative; background:var(--base); }
+  .notes{ flex:1 1 280px; min-width:260px; padding-top:6px; }
+  .notes h3{ font-family:var(--serif-d-r); font-weight:400; font-size:16px; margin:0 0 10px; color:#e9e6f0; }
+  .notes p{ font-size:13.5px; color:#b8b3c6; margin:0 0 10px; }
+  .notes p:last-child{ margin-bottom:0; }
+  .notes .tag{ display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:#8f8aa0; background:rgba(255,255,255,.04); padding:2px 6px; border-radius:2px; margin:0 4px 4px 0; }
+
+  .stars{ position:absolute; inset:0; }
+  .star{ position:absolute; border-radius:50%; background:var(--starlight); animation:tw 4.5s ease-in-out infinite; }
+  @keyframes tw{ 0%,100%{opacity:.25;} 50%{opacity:.85;} }
+
+  .warm-quiet-wash{ position:absolute; inset:0; background:radial-gradient(ellipse 300px 260px at 50% 10%, rgba(184,118,62,.13), transparent 62%); }
+
+  .diary-content{ position:relative; height:100%; padding:50px 26px 0; display:flex; flex-direction:column; }
+  .label-mark{ font-family:var(--mono); font-size:9.5px; color:var(--faint); letter-spacing:.03em; }
+
+  .diary-dateline{ display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .mini-moon{ width:20px; height:20px; border-radius:50%; position:relative; overflow:hidden; background:radial-gradient(circle at 32% 28%, #dfe4ee, #2a2636 65%, #0c0913 82%); border:1px solid rgba(150,180,220,.3); }
+  .mini-moon .dark{ position:absolute; width:100%; height:100%; left:-30%; background:#08060f; opacity:.85; border-radius:50%; }
+  .diary-date{ font-family:var(--mono); font-size:9.5px; color:var(--cool); letter-spacing:.04em; }
+
+  .diary-heading{ font-family:var(--serif-d); font-weight:600; font-size:23px; color:var(--starlight); margin-top:22px; letter-spacing:-.005em; }
+  .diary-lead{ font-family:var(--body-i); font-style:italic; font-size:14px; color:var(--muted); line-height:1.6; margin-top:10px; max-width:300px; }
+
+  /* Three lit-line fields — the compose affordance lunar-diary-v4's own
+     notes proposed: "a new entry's compose affordance would reuse
+     Оракул's lit-line device." Each field is a label + an underline that
+     glows on focus (static amber here) + an italic placeholder, exactly
+     the ask-line device from Оракул, repeated. No boxes, no borders
+     around the whole field — only the single bottom rule per line, same
+     as Оракул's one question line. */
+  .diary-fields{ margin-top:30px; display:flex; flex-direction:column; gap:26px; }
+  .diary-field .fl{ font-family:var(--serif-d-r); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--bronze-hi); opacity:.85; margin-bottom:8px; }
+  .ask-line{ position:relative; border-bottom:1px solid rgba(184,118,62,.5); padding-bottom:9px; }
+  .ask-line::after{ content:""; position:absolute; left:0; right:0; bottom:-6px; height:12px; background:linear-gradient(to right, transparent, rgba(184,118,62,.18), transparent); filter:blur(3px); pointer-events:none; }
+  .ask-line .ph{ font-family:var(--body-i); font-style:italic; font-size:13.5px; color:var(--faint); }
+
+  footer.doc{ margin-top:52px; padding:24px 0 40px; border-top:1px solid var(--page-border); font-size:12.5px; color:var(--page-muted); }
+  @media (prefers-reduced-motion: reduce){ .star{ animation:none !important; } }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="doc">
+  <div class="eyebrow">Stellaeum — mockup, ratification pending</div>
+  <h1>Лунен дневник, designed from scratch</h1>
+  <div class="dek">The compose surface, extending lunar-diary-v4's own read-only page — same warm-with-one-cool-touch language, now with the three-field writing exercise. Content pulled from packages/core/src/diary/prompts.ts (waxing_gibbous, first variant), not invented.</div>
+</header>
+
+<section class="screen">
+  <div class="stitle"><h2>Лунен дневник — compose, warm with one cool touch</h2><span class="temp warm">Warm</span></div>
+  <div class="stage">
+    <div class="phone-frame"><div class="phone-screen">
+      <div class="stars"></div>
+      <div class="warm-quiet-wash"></div>
+      <div class="diary-content">
+        <div class="label-mark">лунен дневник</div>
+        <div class="diary-dateline">
+          <div class="mini-moon"><div class="dark"></div></div>
+          <div class="diary-date">28 юли · растяща луна</div>
+        </div>
+
+        <div class="diary-heading">Три настройки</div>
+        <div class="diary-lead">Пълнолунието е близо. Какво трябва да се коригира, преди светлината да стане пълна? Запиши три неща за усъвършенстване.</div>
+
+        <div class="diary-fields">
+          <div class="diary-field">
+            <div class="fl">Настройвам</div>
+            <div class="ask-line"><span class="ph">Настройвам...</span></div>
+          </div>
+          <div class="diary-field">
+            <div class="fl">Подобрявам</div>
+            <div class="ask-line"><span class="ph">Подобрявам...</span></div>
+          </div>
+          <div class="diary-field">
+            <div class="fl">Подготвям</div>
+            <div class="ask-line"><span class="ph">Подготвям се за...</span></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="notes">
+      <h3>The inverse of Ритъм, now writing not reading</h3>
+      <p><span class="tag">hero</span> No moon-object hero here — the mini-moon + date stays the small cool-toned fitting it already was in lunar-diary-v4 (reading mode). What's new is the writing surface itself: heading + lead + three fields, all typographic, no card wrapping the exercise.</p>
+      <p><span class="tag">fields</span> Each of the three fields reuses Оракул's ask-line device verbatim (bronze underline + soft glow beneath it + italic placeholder) — the same object family as the moon-detail screen's closing invitation, so entering the diary from there feels continuous rather than like a different app.</p>
+      <p><span class="tag">register</span> fieldLabels (Настройвам / Подобрявам / Подготвям) sit as small tracked bronze captions above each line — first-person verbs, matching the affirmation/journalPrompt voice already established, not generic "Field 1" labels.</p>
+      <p><span class="tag">no invitation block</span> No closing CTA on this render — the three lines themselves are the action; saving/submitting is a system affordance (keyboard "done," a header save mark) outside this design pass's scope, same as lunar-diary-v4 left composing open-ended.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="doc">Content source: packages/core/src/diary/prompts.ts, MANIFEST_PROMPTS.waxing_gibbous[0] (heading, lead, fieldLabels, placeholders). Dateline device and «лунен дневник» label from lunar-diary-v4.html, unchanged.</footer>
+</div>
+</body>
+</html>

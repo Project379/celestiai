@@ -8,10 +8,17 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "check:strictness": "node scripts/check-core-strictness.mjs",
-    "check:all": "pnpm run check:strictness && pnpm run typecheck",
+    "check:bg-strings": "node scripts/check-bg-static-strings.mjs",
+    "check:copy-lock": "node scripts/i18n/check-copy-lock.mjs",
+    "check:bg-lint-baseline": "node scripts/i18n/check-bg-lint-baseline.mjs",
+    "i18n:update-copy-lock": "node scripts/i18n/generate-copy-lock.mjs",
+    "check:all": "pnpm run check:strictness && pnpm run check:bg-strings && pnpm run check:copy-lock && pnpm run check:bg-lint-baseline && pnpm run typecheck",
     "supabase": "supabase"
   },
   "devDependencies": {
+    "dictionary-bg": "^2.0.0",
+    "fast-glob": "^3.3.3",
+    "nspell": "^2.1.5",
     "supabase": "^2.92.1",
     "turbo": "^2.8.1",
     "typescript": "^5.7.3"

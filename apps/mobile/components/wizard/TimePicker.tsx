@@ -11,6 +11,8 @@ import {
 } from 'react-native'
 import * as Haptics from 'expo-haptics'
 
+import { pressFeedback } from '@/components/design-system/tokens'
+
 const ITEM_HEIGHT = 44
 const VISIBLE_ITEMS = 5
 const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS // 220
@@ -193,6 +195,7 @@ export function TimePicker({
             <Pressable
               onPress={handleDismiss}
               className="mt-6 self-center rounded-full border border-amber-300/40 px-6 py-2.5"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
                 Готово

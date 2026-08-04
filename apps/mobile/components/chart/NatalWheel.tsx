@@ -1,17 +1,10 @@
-import { useMemo } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { Pressable, View } from 'react-native'
-import Svg, {
-  Circle,
-  G,
-  Line,
-  Path,
-  Text as SvgText,
-} from 'react-native-svg'
+import * as Haptics from 'expo-haptics'
+import { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated'
+import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg'
 
-import {
-  PLANET_GLYPHS,
-  ZODIAC_SIGNS_ORDER,
-} from '@stellaeum/astrology/client'
+import { PLANET_GLYPHS, ZODIAC_SIGNS_ORDER } from '@stellaeum/astrology/client'
 import type {
   AspectType,
   ChartData,
@@ -20,18 +13,31 @@ import type {
   ZodiacSign,
 } from '@stellaeum/astrology/client'
 import { ZODIAC_GLYPH_PATHS } from '@stellaeum/core/charts/glyphs'
+import { color } from '@/components/design-system/tokens'
+import { PlanetDisambiguation, PLANET_COLORS } from '@/components/chart/PlanetDisambiguation'
+import { NatalWheelFrame } from '@/components/chart/NatalWheelFrame'
+
+// The instrument's static furniture (rim/bezel/face/graticule, including
+// the graticule's tick-degree constants) lives in NatalWheelFrame.tsx —
+// Stage 2 LOC split, see that file's header.
+const GRATICULE_RESOLVE_MS = 500
 
 /**
  * Mobile natal-wheel render via react-native-svg. Direct port of
  * apps/web/components/chart/NatalWheel.tsx — same layout primitives
  * (zodiac segments → houses → ASC/MC → aspects → planets), same
- * de-clumping math (4-pass, 8° minimum separation), same planet color
- * palette and aspect color scheme.
+ * de-clumping math (4-pass, 8° minimum separation), same aspect color
+ * scheme and per-planet PLANET_COLORS. Stage 2 (2026-07-27, Decision (a))
+ * briefly made the wheel's gems uniform/glyphless per the ratified
+ * mockup; the founder's 2026-07-27 device pass INVERTED that decision —
+ * per-planet color and the Unicode glyph are both back on the gems,
+ * a deliberate departure from the mockup. PLANET_COLORS is imported from
+ * PlanetDisambiguation.tsx (single source, not duplicated).
  *
  * Scope-bounded vs web (per SR 6 ratifications):
- *  - Unicode glyphs from PLANET_GLYPHS / ZODIAC_GLYPHS instead of web's
- *    custom SVG line-art via <GlyphDefs />. Defer custom-paths port if
- *    Android rendering looks bad.
+ *  - Zodiac ring glyphs: Unicode/custom SVG line-art (ZODIAC_GLYPH_PATHS)
+ *    instead of web's <GlyphDefs />. Planet glyphs: Unicode from
+ *    PLANET_GLYPHS, same as web's fallback path.
  *  - No orbiting-orb selection FX canvas (decorative, defer to polish).
  *  - No pinch-to-zoom (screen-fit fixed size).
  *  - No hover tooltip (mobile-untestable; tap behavior owns interaction).
@@ -47,27 +53,25 @@ interface NatalWheelProps {
   selectedPlanet?: string | null
 }
 
-const PLANET_COLORS: Record<string, string> = {
-  sun: '#fcd34d',
-  moon: '#e2e8f0',
-  mercury: '#c4b5fd',
-  venus: '#fbcfe8',
-  mars: '#fda4af',
-  jupiter: '#fde68a',
-  saturn: '#94a3b8',
-  uranus: '#67e8f9',
-  neptune: '#a78bfa',
-  pluto: '#8b5cf6',
-  northNode: '#c4b5fd',
-}
-
-const ASPECT_COLORS: Record<AspectType, string> = {
+// PLANET_COLORS moved to PlanetDisambiguation.tsx — Decision (a) removed
+// per-planet color from the wheel's own gems, so this file no longer
+// needs the palette itself, only PLANET_GLYPHS (still used for the
+// Unicode placeholder glyph).
+// Exported so NatalWheelLegend can read the wheel's REAL aspect colors
+// directly instead of hand-copying its own guess — a hand-copied legend
+// drifted to only 2 colors (harmony/tension) against these actual 5,
+// stating something false about the app's own data (founder-flagged,
+// 2026-07-27). Same reasoning for the Ascendant/Midheaven line colors
+// below (also exported, also legend-consumed).
+export const ASPECT_COLORS: Record<AspectType, string> = {
   conjunction: '#fcd34d',
   sextile: '#6ee7b7',
   square: '#fda4af',
   trine: '#7dd3fc',
   opposition: '#f0abfc',
 }
+export const ASCENDANT_LINE_COLOR = '#22d3ee'
+export const MIDHEAVEN_LINE_COLOR = '#fcd34d'
 
 const ELEMENT_FILLS = {
   fire: 'rgba(253, 164, 175, 0.06)',
@@ -92,6 +96,20 @@ const SIGN_ELEMENTS: Record<ZodiacSign, keyof typeof ELEMENT_FILLS> = {
 }
 
 const MIN_SEPARATION_DEG = 8
+
+/**
+ * Hit-testing note (MOBILE-ALPHA-REDESIGN v3, gap 2): the de-clumping pass
+ * above only guarantees MIN_SEPARATION_DEG (8°) between adjacent planets —
+ * a real stellium still clusters several planets that tightly. At a
+ * typical 390px-wide-screen wheel, 8° of separation is ~15.6px of arc
+ * length, so independent per-planet 44pt hit regions would overlap by
+ * ~64% of their diameter for exactly the charts most likely to need
+ * disambiguation. Fixed by removing per-planet Pressables in favor of one
+ * tap surface that finds every planet within HIT_RADIUS_MIN of the tap
+ * point and opens a disambiguation list when more than one qualifies,
+ * rather than silently guessing via z-order.
+ */
+const HIT_RADIUS_MIN = 22 // px — 44pt HIG minimum tap target, as a radius
 
 /**
  * Convert ecliptic longitude to a screen-coordinate trigonometric angle.
@@ -130,7 +148,15 @@ function arcPath(
   return `M ${x1} ${y1} A ${outerR} ${outerR} 0 0 0 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 0 1 ${x4} ${y4} Z`
 }
 
-export function NatalWheel({
+// Perf fix (chart-tab frame drops): this tree renders ~500 SVG nodes
+// (zodiac segments/glyphs, house lines, aspect lines, planet gems) that
+// don't depend on unrelated ChartScreen state (e.g. opening DetailsSheet).
+// Without memo, every ChartScreen re-render forced a full re-render of
+// this whole tree. Requires callers to pass a referentially-stable
+// onPlanetSelect (see chart.tsx's useCallback) — otherwise the memo is a
+// no-op since a new function identity every render still fails the
+// shallow prop comparison.
+export const NatalWheel = memo(function NatalWheel({
   chart,
   size,
   onPlanetSelect,
@@ -182,21 +208,57 @@ export function NatalWheel({
   const labelRadius = (zodiacInnerRadius + zodiacOuterRadius) / 2
   const houseNumberRadius = houseInnerRadius * 1.15
 
+  const [ambiguous, setAmbiguous] = useState<PlanetPosition[] | null>(null)
+
+  const hitRadius = Math.max(HIT_RADIUS_MIN, size * 0.063)
+
+  // One-shot resolve on mount — not a continuous loop, so it costs nothing
+  // ongoing once settled. See WARM_COOL_AMENDMENT.md §8 for the frame
+  // budget this was checked against.
+  const graticule = useSharedValue(0)
+  useEffect(() => {
+    graticule.value = withTiming(1, { duration: GRATICULE_RESOLVE_MS })
+  }, [graticule])
+  const graticuleProps = useAnimatedProps(() => ({ opacity: graticule.value }))
+
   const handlePlanetPress = (planet: PlanetPosition) => {
+    // A definite, discrete selection on a small/precise tap target —
+    // Medium impact per Apple's own semantic taxonomy (a "collision"
+    // between the tap and the UI element, not a continuous scrub).
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     onPlanetSelect?.(planet)
+  }
+
+  const handleWheelPress = (locationX: number, locationY: number) => {
+    const candidates = planetPositions
+      .map((planet) => ({
+        planet,
+        distance: Math.hypot(locationX - planet.x, locationY - planet.y),
+      }))
+      .filter((c) => c.distance <= hitRadius)
+      .sort((a, b) => a.distance - b.distance)
+      .map((c) => c.planet)
+
+    if (candidates.length === 0) return
+    if (candidates.length === 1) {
+      handlePlanetPress(candidates[0])
+      return
+    }
+    // Stellium case — multiple planets within the same tap's catch
+    // radius. Ask rather than guess (see HIT_RADIUS_MIN note above).
+    setAmbiguous(candidates)
   }
 
   return (
     <View style={{ width: size, height: size }}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* Outer ring border */}
-        <Circle
-          cx={center}
-          cy={center}
-          r={outerRadius}
-          fill="none"
-          stroke="rgba(226, 232, 240, 0.22)"
-          strokeWidth={1}
+        <NatalWheelFrame
+          center={center}
+          size={size}
+          outerRadius={outerRadius}
+          zodiacInnerRadius={zodiacInnerRadius}
+          houseInnerRadius={houseInnerRadius}
+          graticuleProps={graticuleProps}
         />
 
         {/* Zodiac segments */}
@@ -307,7 +369,7 @@ export function NatalWheel({
           y1={center + Math.sin(ascAngle) * (houseInnerRadius * 0.5)}
           x2={center + Math.cos(ascAngle) * zodiacOuterRadius}
           y2={center + Math.sin(ascAngle) * zodiacOuterRadius}
-          stroke="#22d3ee"
+          stroke={ASCENDANT_LINE_COLOR}
           strokeWidth={2}
         />
 
@@ -317,7 +379,7 @@ export function NatalWheel({
           y1={center + Math.sin(mcAngle) * (houseInnerRadius * 0.5)}
           x2={center + Math.cos(mcAngle) * zodiacOuterRadius}
           y2={center + Math.sin(mcAngle) * zodiacOuterRadius}
-          stroke="#fcd34d"
+          stroke={MIDHEAVEN_LINE_COLOR}
           strokeWidth={2}
         />
 
@@ -366,10 +428,21 @@ export function NatalWheel({
           strokeWidth={1}
         />
 
-        {/* Planets */}
+        {/* Planets — Decision (a), Stage 2 (2026-07-27): uniform starlight/
+            cool gems.
+            FOUNDER CORRECTION (2026-07-27, device pass): Decision (a) —
+            uniform glyphless gems — is INVERTED here, deliberately, a
+            departure from the ratified mockup. Per-planet PLANET_COLORS
+            is back on the wheel's own gems (imported from
+            PlanetDisambiguation.tsx, not duplicated), and the Unicode
+            glyph renders on the gem again as a placeholder for the
+            designer asset. Selection stays categorical — solid fill +
+            an outer ring — never a hue swap; the base color IS per-planet
+            hue again, but selected-vs-not is still shown by brightness/
+            containment, not by changing which hue is shown. */}
         {planetPositions.map((planet) => {
           const isSelected = selectedPlanet === planet.planet
-          const color = PLANET_COLORS[planet.planet]
+          const planetColor = PLANET_COLORS[planet.planet]
           const anchorX = center + Math.cos(planet.angle) * aspectAnchorRadius
           const anchorY = center + Math.sin(planet.angle) * aspectAnchorRadius
           const planetGlyph = PLANET_GLYPHS[planet.planet as Planet] ?? '?'
@@ -380,32 +453,57 @@ export function NatalWheel({
                 cx={anchorX}
                 cy={anchorY}
                 r={size * 0.0085}
-                fill={color}
+                fill={planetColor}
                 stroke="rgba(8, 6, 15, 0.92)"
                 strokeWidth={1}
                 opacity={isSelected ? 1 : 0.78}
               />
-              {/* Planet circle background */}
+              {/* Selection ring — a categorical signal separate from the
+                  gem's own fill, drawn just outside it. Absent when not
+                  selected, not a dimmer version of itself. */}
+              {isSelected && (
+                <Circle
+                  cx={planet.x}
+                  cy={planet.y}
+                  r={size * 0.048}
+                  fill="none"
+                  stroke={color.starlight}
+                  strokeWidth={1}
+                  opacity={0.7}
+                />
+              )}
+              {/* Planet gem — per-planet color again (see inversion note
+                  above). Selected = solid fill; unselected = outline only
+                  on a near-black disc — same categorical (fill vs. no
+                  fill) signal as the pre-Stage-2 original, plus the ring
+                  above. */}
               <Circle
                 cx={planet.x}
                 cy={planet.y}
                 r={size * 0.035}
-                fill={isSelected ? color : 'rgba(8, 6, 15, 0.92)'}
-                stroke={color}
+                fill={isSelected ? planetColor : 'rgba(8, 6, 15, 0.92)'}
+                stroke={planetColor}
                 strokeWidth={isSelected ? 2.5 : 1.5}
               />
-              {/* Planet glyph */}
+              <Circle
+                cx={planet.x - size * 0.012}
+                cy={planet.y - size * 0.012}
+                r={size * 0.014}
+                fill="url(#gem-sheen)"
+              />
+              {/* Planet glyph — Unicode placeholder for the designer
+                  glyph asset (not yet landed). */}
               <SvgText
                 x={planet.x}
                 y={planet.y}
-                fill={isSelected ? '#08060f' : color}
+                fill={isSelected ? '#08060f' : planetColor}
                 fontSize={size * 0.04}
                 textAnchor="middle"
                 alignmentBaseline="central"
               >
                 {planetGlyph}
               </SvgText>
-              {/* Retrograde marker */}
+              {/* Retrograde marker — a status flag, not planet identity. */}
               {planet.speed < 0 && (
                 <SvgText
                   x={planet.x + size * 0.035}
@@ -423,27 +521,33 @@ export function NatalWheel({
         })}
       </Svg>
 
-      {/* Tap hit-area overlay — Pressables sized to each planet glyph
-          for tap-to-interpret. Sits above the SVG. Per SR 6 decision 6,
-          tap fires the bottom-sheet PlanetDetail in the parent. */}
-      {planetPositions.map((planet) => {
-        const hitSize = size * 0.09
-        return (
-          <Pressable
-            key={`hit-${planet.planet}`}
-            onPress={() => handlePlanetPress(planet)}
-            accessibilityRole="button"
-            accessibilityLabel={`${planet.planet} — натисни за тълкуване`}
-            style={{
-              position: 'absolute',
-              left: planet.x - hitSize / 2,
-              top: planet.y - hitSize / 2,
-              width: hitSize,
-              height: hitSize,
-            }}
-          />
-        )
-      })}
+      {/* Single tap surface — per SR 6 decision 6, tap fires the
+          bottom-sheet PlanetDetail in the parent. Replaces the old
+          per-planet independent Pressable array (each undersized at
+          size*0.09 and prone to overlapping at stellium separations) with
+          one nearest-planet-within-radius lookup; see HIT_RADIUS_MIN. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Натисни планета за тълкуване"
+        style={{ position: 'absolute', left: 0, top: 0, width: size, height: size }}
+        onPress={(e) => handleWheelPress(e.nativeEvent.locationX, e.nativeEvent.locationY)}
+      />
+
+      {/* Disambiguation list — shown only when a tap lands within
+          HIT_RADIUS_MIN of more than one planet (a stellium). Extracted
+          to PlanetDisambiguation.tsx (Stage 2 LOC split, see that file's
+          header). */}
+      {ambiguous && (
+        <PlanetDisambiguation
+          planets={ambiguous}
+          wheelSize={size}
+          onDismiss={() => setAmbiguous(null)}
+          onSelect={(planet) => {
+            handlePlanetPress(planet)
+            setAmbiguous(null)
+          }}
+        />
+      )}
     </View>
   )
-}
+})

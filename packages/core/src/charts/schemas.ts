@@ -41,14 +41,14 @@ export type ApproximateTimeRange = (typeof approximateTimeRanges)[number]
 export const birthDataSchema = z
   .object({
     name: z
-      .string({ error: 'Моля, въведете име' })
-      .min(1, { error: 'Моля, въведете име' })
+      .string({ error: 'Въведи име' })
+      .min(1, { error: 'Въведи име' })
       .max(100, { error: 'Името не може да е по-дълго от 100 символа' }),
 
     birthDate: z
-      .string({ error: 'Моля, изберете дата на раждане' })
+      .string({ error: 'Избери дата на раждане' })
       .regex(/^\d{4}-\d{2}-\d{2}$/, {
-        error: 'Датата трябва да е във формат YYYY-MM-DD',
+        error: 'Избери дата на раждане',
       })
       .refine(
         (val) => {
@@ -67,7 +67,7 @@ export const birthDataSchema = z
         { error: 'Датата трябва да е в миналото' }
       ),
 
-    birthTimeKnown: z.boolean({ error: 'Моля, посочете дали знаете часа на раждане' }),
+    birthTimeKnown: z.boolean({ error: 'Посочи дали знаеш часа на раждане' }),
 
     // Empty-string and null bypass the format check so the "missing time"
     // case surfaces once via the superRefine below as an intent-state error
@@ -83,7 +83,7 @@ export const birthDataSchema = z
 
     approximateTimeRange: z
       .enum(approximateTimeRanges, {
-        error: 'Изберете валидна стойност за приблизителен период',
+        error: 'Избери валидна стойност за приблизителен период',
       })
       .nullable()
       .optional(),
@@ -91,16 +91,16 @@ export const birthDataSchema = z
     cityId: z.string().uuid({ error: 'Невалиден идентификатор на град' }).nullable().optional(),
 
     cityName: z
-      .string({ error: 'Моля, изберете населено място' })
-      .min(1, { error: 'Моля, изберете населено място' }),
+      .string({ error: 'Избери населено място' })
+      .min(1, { error: 'Избери населено място' }),
 
     latitude: z
-      .number({ error: 'Моля, въведете ширина' })
+      .number({ error: 'Въведи ширина' })
       .min(-90, { error: 'Ширината трябва да е между -90 и 90' })
       .max(90, { error: 'Ширината трябва да е между -90 и 90' }),
 
     longitude: z
-      .number({ error: 'Моля, въведете дължина' })
+      .number({ error: 'Въведи дължина' })
       .min(-180, { error: 'Дължината трябва да е между -180 и 180' })
       .max(180, { error: 'Дължината трябва да е между -180 и 180' }),
 
@@ -112,7 +112,7 @@ export const birthDataSchema = z
       if (!data.birthTime) {
         ctx.addIssue({
           code: 'custom',
-          message: 'Моля, въведете час или изберете приблизителен период',
+          message: 'Въведи час или избери приблизителен период',
           path: ['birthTime'],
         })
       }
@@ -122,7 +122,7 @@ export const birthDataSchema = z
       if (!data.approximateTimeRange) {
         ctx.addIssue({
           code: 'custom',
-          message: 'Моля, въведете час или изберете приблизителен период',
+          message: 'Въведи час или избери приблизителен период',
           path: ['approximateTimeRange'],
         })
       }
@@ -148,14 +148,14 @@ export const updateBirthDataSchema = z
   .object({
     name: z
       .string()
-      .min(1, { error: 'Моля, въведете име' })
+      .min(1, { error: 'Въведи име' })
       .max(100, { error: 'Името не може да е по-дълго от 100 символа' })
       .optional(),
 
     birthDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, {
-        error: 'Датата трябва да е във формат YYYY-MM-DD',
+        error: 'Избери дата на раждане',
       })
       .refine(
         (val) => {
@@ -190,14 +190,14 @@ export const updateBirthDataSchema = z
 
     approximateTimeRange: z
       .enum(approximateTimeRanges, {
-        error: 'Изберете валидна стойност за приблизителен период',
+        error: 'Избери валидна стойност за приблизителен период',
       })
       .nullable()
       .optional(),
 
     cityId: z.string().uuid({ error: 'Невалиден идентификатор на град' }).nullable().optional(),
 
-    cityName: z.string().min(1, { error: 'Моля, изберете населено място' }).optional(),
+    cityName: z.string().min(1, { error: 'Избери населено място' }).optional(),
 
     latitude: z
       .number()

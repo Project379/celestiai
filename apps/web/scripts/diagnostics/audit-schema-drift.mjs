@@ -7,7 +7,7 @@
  * Invoke:
  *   pnpm --filter @stellaeum/web run diag:drift
  * or:
- *   node --env-file=apps/web/.env.example.local \
+ *   node --env-file=apps/web/.env.local \
  *        apps/web/scripts/diagnostics/audit-schema-drift.mjs
  *
  * Why this exists: 2026-04-20 Bug-1 investigation found that

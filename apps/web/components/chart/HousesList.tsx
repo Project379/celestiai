@@ -1,7 +1,7 @@
 'use client'
 
 import type { HouseData } from '@stellaeum/astrology/client'
-import { formatDegreeInSign } from './chart-sections'
+import { formatDegreeInSign } from '@stellaeum/core/charts/sections'
 
 interface HousesListProps {
   houses: readonly HouseData[]

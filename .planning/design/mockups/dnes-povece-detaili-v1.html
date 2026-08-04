@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ДНЕС — ПОВЕЧЕ ДЕТАЙЛИ</title>
+<style>
+
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+
+  :root{
+    --base:#08060f; --violet:#8b5cf6; --starlight:#f5f7fc; --bronze:#b8763e; --bronze-hi:#d9a06a; --cool:#5b8fc7;
+    --text:#e2e8f0; --muted:#94a3b8; --faint:#5d6a82;
+    --page-bg:#0c0a12; --page-surface:#141019; --page-text:#e9e6f0; --page-muted:#948fa3; --page-border:#241f30;
+    --serif-d: 'PF-Semi', Georgia, serif;
+    --serif-d-r: 'PF-Reg', Georgia, serif;
+    --numeral: 'Cinzel', Georgia, serif;
+    --body: 'EBG-Reg', Palatino, serif;
+    --body-i: 'EBG-Ital', Palatino, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: "SFMono-Regular", Consolas, Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--page-bg); color:var(--page-text); font-family:var(--sans); line-height:1.55; padding:0 0 100px; }
+  .wrap{max-width:1160px; margin:0 auto; padding:48px 24px 0;}
+  header.doc{margin-bottom:8px;}
+  .eyebrow{ font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--bronze-hi); margin:0 0 12px; }
+  h1{ font-family:var(--serif-d); font-weight:600; font-size:clamp(28px,4.4vw,44px); margin:0 0 16px; text-wrap:balance; letter-spacing:-.01em; }
+  .dek{font-size:15.5px; color:var(--page-muted); max-width:720px; margin:0 0 8px;}
+
+  section.screen{ padding:40px 0 12px; }
+  section.screen .stitle{ display:flex; align-items:baseline; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  section.screen h2{ font-family:var(--serif-d-r); font-weight:400; font-size:23px; margin:0; }
+  .temp{ font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; padding:3px 9px; border-radius:2px; }
+  .temp.warm{ background:rgba(184,118,62,.16); color:var(--bronze-hi); }
+
+  .stage{ display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
+  .phone-frame{ flex:0 0 auto; width:390px; height:780px; border-radius:44px; background:#000; padding:10px; box-shadow:0 30px 70px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04); }
+  .phone-screen{ width:100%; height:100%; border-radius:36px; overflow:hidden; position:relative; background:var(--base); }
+  .notes{ flex:1 1 280px; min-width:260px; padding-top:6px; }
+  .notes h3{ font-family:var(--serif-d-r); font-weight:400; font-size:16px; margin:0 0 10px; color:#e9e6f0; }
+  .notes p{ font-size:13.5px; color:#b8b3c6; margin:0 0 10px; }
+  .notes p:last-child{ margin-bottom:0; }
+  .notes .tag{ display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:#8f8aa0; background:rgba(255,255,255,.04); padding:2px 6px; border-radius:2px; margin:0 4px 4px 0; }
+
+  .stars{ position:absolute; inset:0; }
+  .star{ position:absolute; border-radius:50%; background:var(--starlight); animation:tw 4.5s ease-in-out infinite; }
+  @keyframes tw{ 0%,100%{opacity:.25;} 50%{opacity:.85;} }
+
+  .warm-wash{ position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 340px 300px at 78% 82%, rgba(184,118,62,.16), transparent 60%),
+      radial-gradient(ellipse 260px 220px at 12% 6%, rgba(139,92,246,.10), transparent 62%); }
+
+  .dnes-content{ position:relative; height:100%; padding:44px 26px 0; display:flex; flex-direction:column; overflow-y:auto; }
+  .label-mark{ font-family:var(--mono); font-size:9.5px; color:var(--faint); letter-spacing:.03em; }
+  .greet{ font-family:var(--body); font-style:italic; font-size:13px; color:var(--muted); margin-top:3px; }
+
+  .section-caption{ font-family:var(--serif-d-r); font-size:12px; letter-spacing:.29em; color:var(--bronze-hi); text-transform:uppercase; opacity:.9; }
+
+  .rhythm-block{ margin-top:34px; }
+  .rhythm-eyebrow{ text-align:center; font-family:var(--serif-d-r); font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--starlight); opacity:.82; margin-top:12px; }
+  .rhythm-sub{ text-align:center; font-family:var(--body-i); font-style:italic; font-size:15px; color:var(--muted); margin-top:4px; }
+
+  .mini-moon-stage{ position:relative; margin:8px auto 0; width:125px; height:125px; }
+  .mini-moon-halo{ position:absolute; inset:-40px; border-radius:50%; background:radial-gradient(circle, rgba(184,118,62,.16), rgba(139,92,246,.05) 55%, transparent 72%); filter:blur(2px); }
+  .mini-moon-depth{ position:absolute; inset:8px; border-radius:50%; background:radial-gradient(circle at 32% 30%, rgba(226,232,240,.5), rgba(20,16,30,.85) 60%, #08060f 78%); filter:blur(10px); opacity:.55; transform:scale(1.12); }
+  .mini-moon-object{ position:absolute; inset:0; border-radius:50%; overflow:hidden;
+    background:
+      radial-gradient(ellipse 58% 52% at 29% 26%, #fbfcff 0%, #e7ebf3 30%, #aab3c6 52%, #362f45 71%, #0c0913 85%),
+      radial-gradient(ellipse 46% 38% at 80% 85%, rgba(184,118,62,.9), transparent 50%),
+      radial-gradient(ellipse 40% 32% at 15% 12%, rgba(139,92,246,.52), transparent 42%);
+    background-blend-mode: normal, screen, screen;
+    box-shadow: inset -8px -6px 20px rgba(0,0,0,.4), inset 6px 5px 16px rgba(255,255,255,.08);
+  }
+  .mini-moon-dark{ position:absolute; width:100%; height:100%; border-radius:50%; background:#08060f; opacity:.88; left:-46%; top:0; }
+
+  .meteor-line{ text-align:center; font-family:var(--body-i); font-style:italic; font-size:13.5px; color:var(--muted); margin-top:16px; padding:0 8px; }
+
+  /* «повече детайли» — belongs to the небесен ритъм block above it, not a
+     peer of «Питай Оракула» below. Small, no glow, no ember, no box/pill/
+     border/chevron. A short bronze thread ties it visually to the block
+     it extends, and it sits close under the block (tight margin) rather
+     than being pushed toward the bottom of the screen the way the primary
+     invite is (margin-top:auto). Categorical differences from .invite:
+     weight (serif-d-r not serif-d/600), size (11px not 20px), no ember,
+     no radial glow — a quiet mark, not a lit invitation. */
+  .detail-link-wrap{ margin-top:20px; text-align:center; }
+  .detail-link-thread{ width:22px; height:1px; margin:0 auto 10px; background:linear-gradient(to right, transparent, var(--bronze), transparent); opacity:.7; }
+  .detail-link{ font-family:var(--serif-d-r); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--bronze); opacity:.78; }
+
+  .invite{ margin-top:auto; padding:26px 0 30px; text-align:center; position:relative; }
+  .invite-glow{ position:absolute; left:50%; top:50%; width:260px; height:120px; transform:translate(-50%,-50%); background:radial-gradient(ellipse, rgba(184,118,62,.28), transparent 68%); pointer-events:none; }
+  .invite-text{ position:relative; font-family:var(--serif-d); font-weight:600; font-size:20px; color:var(--bronze-hi); letter-spacing:.01em; display:inline-flex; align-items:baseline; gap:9px; }
+  .ember{ display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--bronze-hi); box-shadow:0 0 8px 2px rgba(217,160,106,.7); animation:breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe{ 0%,100%{opacity:.5; transform:scale(.8);} 50%{opacity:1; transform:scale(1.15);} }
+
+  .navbar{ position:absolute; left:0; right:0; bottom:0; height:72px; z-index:5; }
+  .nav-fade{ position:absolute; inset:0; background:linear-gradient(to top, rgba(8,6,15,.6), rgba(8,6,15,0) 78%); pointer-events:none; }
+  .nav-horizon{ position:absolute; left:16px; right:16px; top:0; height:1px; background:linear-gradient(to right, transparent, rgba(139,92,246,.4), transparent); }
+  .nav-row{ position:relative; height:100%; display:flex; align-items:center; justify-content:space-around; padding:12px 6px 16px; }
+  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:5px; color:var(--faint); }
+  .nav-item svg{ width:18px; height:18px; opacity:.5; }
+  .nav-star{ width:3px; height:3px; border-radius:50%; background:var(--violet); opacity:0; box-shadow:0 0 7px 2px rgba(139,92,246,.7); }
+  .nav-label{ font-family:var(--mono); font-size:7.5px; letter-spacing:.05em; color:var(--faint); opacity:.75; }
+  .nav-item.active{ color:var(--starlight); }
+  .nav-item.active svg{ opacity:.95; }
+  .nav-item.active .nav-star{ opacity:1; }
+  .nav-item.active .nav-label{ color:var(--starlight); opacity:1; }
+
+  footer.doc{ margin-top:52px; padding:24px 0 40px; border-top:1px solid var(--page-border); font-size:12.5px; color:var(--page-muted); }
+  @media (prefers-reduced-motion: reduce){ .star, .ember{ animation:none !important; } }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="doc">
+  <div class="eyebrow">Stellaeum — mockup, ratification pending</div>
+  <h1>«Повече детайли» in context</h1>
+  <div class="dek">небесен ритъм block on Днес, with the subordinate link that extends it, positioned against «Питай Оракула» — the screen's one true exit. Judge the hierarchy between them here, at 390px.</div>
+</header>
+
+<section class="screen">
+  <div class="stitle"><h2>Днес — небесен ритъм → повече детайли → Питай Оракула</h2><span class="temp warm">Warm</span></div>
+  <div class="stage">
+    <div class="phone-frame"><div class="phone-screen">
+      <div class="stars"></div>
+      <div class="warm-wash"></div>
+      <div class="dnes-content">
+        <div class="label-mark">вторник, 28 юли</div>
+        <div class="greet">Добър вечер, Николай.</div>
+
+        <div class="rhythm-block">
+          <div style="text-align:center;"><span class="section-caption">небесен ритъм</span></div>
+          <div class="rhythm-eyebrow">Растяща луна</div>
+          <div class="rhythm-sub">62% осветена · до пълнолуние: 5 дни</div>
+          <div class="mini-moon-stage">
+            <div class="mini-moon-halo"></div>
+            <div class="mini-moon-depth"></div>
+            <div class="mini-moon-object">
+              <div class="mini-moon-dark"></div>
+            </div>
+          </div>
+          <div class="meteor-line">Сега през небето минава потокът на Персеиди. Погледни нагоре след полунощ.</div>
+
+          <div class="detail-link-wrap">
+            <div class="detail-link-thread"></div>
+            <div class="detail-link">Повече детайли</div>
+          </div>
+        </div>
+
+        <div class="invite">
+          <div class="invite-glow"></div>
+          <div class="invite-text">Питай Оракула <span class="ember"></span></div>
+        </div>
+      </div>
+      <div class="navbar">
+        <div class="nav-fade"></div>
+        <div class="nav-horizon"></div>
+        <div class="nav-row">
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.2 5.8l-1.7 1.7M7.5 16.5l-1.7 1.7M18.2 18.2l-1.7-1.7M7.5 7.5L5.8 5.8"/></svg>
+            <div class="nav-star"></div><span class="nav-label">ДНЕС</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4v2M12 18v2M20 12h-2M4 12h2"/></svg>
+            <div class="nav-star"></div><span class="nav-label">КАРТА</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>
+            <div class="nav-star"></div><span class="nav-label">КРЪГ</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12h4l2-6 3 12 2.5-9 1.5 3h6.5"/></svg>
+            <div class="nav-star"></div><span class="nav-label">РИТЪМ</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.6" r="3.6"/><path d="M4.5 20c0-4.4 3.4-7 7.5-7s7.5 2.6 7.5 7"/></svg>
+            <div class="nav-star"></div><span class="nav-label">ТИ</span>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="notes">
+      <h3>Subordinate, not a peer</h3>
+      <p><span class="tag">weight</span> «Повече детайли» is 11px serif-d-r, uppercase, tracked, bronze at .78 opacity — no glow, no ember, no scale animation. «Питай Оракула» is 20px serif-d/600, bronze-hi, full glow + breathing ember. Two different objects by every axis: size, weight, color intensity, motion.</p>
+      <p><span class="tag">attachment</span> A 22px bronze thread sits directly above it, the same fitting-device used elsewhere in this system (Карта's pedestal, Ти's reveal-thread) to mark "this text is a continuation of what's above," not a new invitation. Margin-top is tight (20px) and belongs to <code>.rhythm-block</code>'s own flow — it does not get pushed toward the bottom of the screen.</p>
+      <p><span class="tag">exit</span> «Питай Оракула» keeps <code>margin-top:auto</code>, anchoring it as the screen's one true close — unchanged from dnes-v4. It reads first from a distance (size, glow); «Повече детайли» only reads on approach, the way a caption under a museum piece does.</p>
+      <p><span class="tag">non-container rule</span> Still no box, no pill, no border, no chevron on «Повече детайли» — same rule as «Питай Оракула» and Карта's pedestal. The distinction is entirely typographic + positional, never a drawn container.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="doc">Real strings: «небесен ритъм» (index.tsx caption), «Растяща луна» + illumination/countdown format (MoonHero, formatDaysHours), meteor line (welcome/compose.ts meteorNote), «Питай Оракула» (unchanged). «Повече детайли» is the existing link label, restyled only.</footer>
+</div>
+</body>
+</html>

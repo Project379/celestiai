@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 /**
  * POST /api/push/unsubscribe
@@ -9,11 +8,10 @@ import { ensureUserRecord } from '@/lib/users/ensure-user'
 export async function POST(req: Request) {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {
-    await ensureUserRecord(userId)
     const body = await req.json()
     const { endpoint } = body as { endpoint?: string }
 

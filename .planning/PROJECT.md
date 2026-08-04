@@ -8,18 +8,21 @@ A premium, subscription-based astrology application for the Bulgarian market. Co
 
 Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.
 
-## Current Milestone: v0.1 MVP
+## Current Milestone: v1.0 — mobile-led launch
 
-**Goal:** Validate the concept with a web-first Bulgarian MVP — landing page, auth, birth chart + AI Oracle, daily horoscope, and Stripe payments.
+**Status (as of 2026-05-09):** v0.1 web MVP complete (M1–M4 + supporting workstreams §7–§10). Phase A of the mobile-launch track closed per documented exit criteria — chart visualization (SR 6) and Oracle (SR 7) ship on iOS via Expo Go, and the launch-readiness infra (SR 8) added Sentry, feature-flag kill switches, and the push notification permission scaffold. **Phase B opened 2026-05-09 with two parallel streams** after the soft-launch quality bar reframed to full web parity:
 
-**Target features:**
-- Landing page with pricing comparison and feature showcase
-- Secure authentication (Clerk) with GDPR compliance
-- Birth data input with Bulgarian city coordinates
-- Interactive natal chart + AI Oracle reading (first value moment)
-- Daily personalized horoscope with morning push notification
-- Freemium paywall: free=general reading, premium=love/career/health
-- Stripe web payments (€9.99/mo)
+- **Stream P (Parity):** port all missing web features to mobile per `.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md`. The implicit "v1.0 = chart-and-Oracle-only on mobile" assumption from Phase A's exit criteria was reversed; soft launch invites can't go out to 50–100 Bulgarian users with mobile that's missing diary, recommendations, astrology guide, crystals collection, subscription management, etc. Toni's primary work for the duration of Phase B.
+- **Stream K (Кръг):** port Кръг features as friend ships them on web. Reactive sequence; per-port investigation pass when each feature lands. Friends groups deferred to future research, not in v1.0 scope.
+
+**Phase landscape** (per `.planning/research/MOBILE_UX_RESEARCH.md §10` + 2026-05-09 reframe):
+
+- **Phase A — Mobile scaffold (COMPLETE, ~3 weeks).** Auth, first fetch, rename, birth-data wizard, horoscope, chart, Oracle, infra batch (Sentry + feature flags + push perms). Exit criterion as written: TestFlight build navigates 5 tabs, renders chart, opens Oracle. ✓.
+- **Phase B — Mobile parity + Кръг (OPEN, timeline TBD).** Two streams in parallel. **Soft-launch milestone:** TestFlight + Google Play internal track, 50–100 Bulgarian users at end of Phase B, with FULL web parity less Friends groups. SR 9 (EAS Dev Client + TestFlight + biometric, bundled per REVISIT-1) fires at end of Phase B alongside soft launch.
+- **Phase C — Remaining premium features (~8–12 weeks).** Crush reports, couples linked, yearly forecast, deep synastry. Native-only retention wedges: home-screen widgets, biometric auth, expanded notification taxonomy. **Friends groups research happens here.**
+- **Phase D — Web reposition.** Bulgarian SEO content acquisition funnel, shareable chart surfaces, desktop becomes read-only-ish, Oracle chat remains on web.
+
+**v0.1 web milestone (M1–M4, COMPLETE 2026-02-19):** landing page, auth, birth chart + AI Oracle, daily horoscope, Stripe payments. Detailed phase trail in `.planning/ROADMAP.md` v0.1 section.
 
 ## Requirements
 
@@ -47,20 +50,23 @@ Users return daily for precise, personalized readings that feel like wisdom from
 - [ ] "Cosmic glassmorphism" UI theme (dark backgrounds, glass effects)
 - [ ] Web app deployment
 
-### Out of Scope
+### Out of Scope (for v0.1, now folded into v1.0 mobile-launch)
 
-- iOS app — deferred to v1.0 after web validation
-- English localization — add after Bulgarian MVP validated
-- iOS payments (RevenueCat/IAP) — comes with iOS app
-- Android app — deferred until iOS validated
-- Synastry (compatibility charts) — post-MVP feature
-- Journal feature — post-MVP engagement feature
-- Daily streak system / gamification — growth feature, not launch
-- Shareable quote images — social loop, add after user base exists
-- Ads integration — unnecessary complexity for free tier at launch
-- Multiple house systems — ship with Placidus only, add Koch/Whole Sign later
-- Live transit tracking — realtime feature for later milestone
-- Advanced transit alerts — basic morning horoscope only for v0.1
+- iOS app — Phase A complete (Expo SDK 54, Clerk auth, chart visualization, Oracle screen). TestFlight cut at end of Phase B per soft-launch milestone.
+- iOS payments (RevenueCat/IAP) — Phase B opener (REVISIT-25 logs the deferred SDK install + dashboard config in parallel).
+- Synastry (compatibility charts) — Phase B core feature (Кръг native-primary).
+- Android app — initial track is iOS via TestFlight; Google Play internal track joins at Phase B soft launch.
+
+### Out of Scope (still deferred)
+
+- English localization — Bulgarian-only through Phase D.
+- Journal feature — post-launch engagement.
+- Daily streak system / gamification — growth feature, not launch.
+- Shareable quote images — social loop, add after user base exists.
+- Ads integration — unnecessary complexity for free tier at launch.
+- Multiple house systems — ship with Placidus only, add Koch/Whole Sign later.
+- Live transit tracking — realtime feature for later milestone.
+- Advanced transit alerts — daily horoscope + lunar phase events only through Phase B; richer notification taxonomy lands in Phase C.
 
 ## Context
 
@@ -93,4 +99,5 @@ Users return daily for precise, personalized readings that feel like wisdom from
 | Basic push only | Morning horoscope notification; no complex transit alerts for v0.1 | — Pending |
 
 ---
-*Last updated: 2026-01-21 after v0.1 milestone definition*
+*Last updated: 2026-05-09 after Phase A close (mobile scaffold)*
+*Previous: 2026-01-21 after v0.1 milestone definition*

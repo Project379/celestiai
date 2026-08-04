@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type {
   RecommendationStatus,
   UserRecommendationState,
-} from '@/lib/stories/types'
+} from '@stellaeum/core/stories/types'
 
 const STORAGE_KEY = 'stellaeum.stories.state.v1'
 

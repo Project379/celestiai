@@ -13,8 +13,11 @@ import { useRouter } from 'expo-router'
 import { Controller, useFormContext, useWatch } from 'react-hook-form'
 
 import type { BirthData } from '@stellaeum/core/charts/schemas'
+import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticInvite, hapticSelect } from '@/lib/haptics'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { CitySearch, type City } from '@/components/wizard/CitySearch'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
 /**
  * Coordinate input with controlled local string state. Display text is
@@ -61,6 +64,7 @@ function CoordinateField({
 
 export default function WizardLocationScreen() {
   const router = useRouter()
+  const { push } = useGuardedNavigation()
   const {
     control,
     setValue,
@@ -89,7 +93,7 @@ export default function WizardLocationScreen() {
 
   const handleNext = async () => {
     const ok = await trigger(['cityName', 'latitude', 'longitude'])
-    if (ok) router.push('/wizard/confirm')
+    if (ok) push('/wizard/confirm')
   }
 
   return (
@@ -123,12 +127,16 @@ export default function WizardLocationScreen() {
 
           {/* Manual-coords toggle — same Pressable rail+diamond pattern as time.tsx */}
           <Pressable
-            onPress={() => handleManualToggle(!manualCoordinates)}
+            onPress={() => {
+              hapticSelect()
+              handleManualToggle(!manualCoordinates)
+            }}
             className={`mb-7 flex-row items-center justify-between border-y px-1 py-4 ${
               manualCoordinates
                 ? 'border-amber-300/25'
                 : 'border-white/[0.06]'
             }`}
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <View className="mr-4 flex-1">
               <Text className="text-[15px] font-medium text-slate-100">
@@ -259,14 +267,25 @@ export default function WizardLocationScreen() {
           )}
 
           <View className="flex-row items-center justify-between">
-            <Pressable onPress={() => router.back()} className="px-2 py-2">
+            <Pressable
+              onPress={() => {
+                hapticSelect()
+                router.back()
+              }}
+              className="px-2 py-2"
+              style={({ pressed }) => pressFeedback(pressed)}
+            >
               <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">
                 ‹ Назад
               </Text>
             </Pressable>
             <Pressable
-              onPress={handleNext}
+              onPress={() => {
+                hapticInvite()
+                handleNext()
+              }}
               className="rounded-full border border-amber-300/40 px-6 py-2.5"
+              style={({ pressed }) => pressFeedback(pressed)}
             >
               <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
                 Напред ›

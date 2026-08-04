@@ -13,6 +13,9 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { pressFeedback } from '@/components/design-system/tokens'
+import { hapticInvite, hapticSelect } from '@/lib/haptics'
+
 // Bulgarian error mapping — first-pass draft, calibrated in commit 1.4d via bulgarian-skill
 const ERROR_MESSAGES: Record<string, string> = {
   form_identifier_exists: 'Вече има профил с този имейл',
@@ -38,6 +41,8 @@ export default function SignUpScreen() {
   const { signUp } = useSignUp()
   const router = useRouter()
 
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -56,8 +61,12 @@ export default function SignUpScreen() {
     setSubmitting(true)
 
     try {
-      // Step 1: create sign-up with email + password (one-shot — both fields known)
+      // Step 1: create sign-up with name + email + password (one-shot — all fields
+      // known). firstName + lastName required since Clerk Dashboard "Require first
+      // and last name" was toggled ON 2026-05-12 (REVISIT-16 closure prep).
       const createResult = await signUp.create({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         emailAddress: email.trim(),
         password,
       })
@@ -85,6 +94,8 @@ export default function SignUpScreen() {
 
   const canSubmit =
     isLoaded &&
+    firstName.trim().length > 0 &&
+    lastName.trim().length > 0 &&
     email.length > 0 &&
     password.length >= 8 &&
     confirmPassword.length >= 8 &&
@@ -108,6 +119,44 @@ export default function SignUpScreen() {
           <Text className="mb-12 text-[26px] font-light leading-[1.3] text-slate-100">
             Създай профил
           </Text>
+
+          {/* Име + Фамилия — labels mirror Clerk bgBG formFieldLabel__firstName /
+              formFieldLabel__lastName (D2 mirror discipline, no net-new strings).
+              Required since Clerk Dashboard "Require first and last name" toggled
+              ON 2026-05-12; mobile must collect both before signUp.create. */}
+          <View className="mb-5">
+            <Text className="mb-2 font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-500">
+              Име
+            </Text>
+            <TextInput
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder=""
+              placeholderTextColor="#475569"
+              autoCapitalize="words"
+              autoComplete="given-name"
+              textContentType="givenName"
+              editable={!submitting}
+              className="rounded-2xl border border-slate-700/60 px-4 py-4 text-[16px] text-slate-100"
+            />
+          </View>
+
+          <View className="mb-5">
+            <Text className="mb-2 font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-500">
+              Фамилия
+            </Text>
+            <TextInput
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder=""
+              placeholderTextColor="#475569"
+              autoCapitalize="words"
+              autoComplete="family-name"
+              textContentType="familyName"
+              editable={!submitting}
+              className="rounded-2xl border border-slate-700/60 px-4 py-4 text-[16px] text-slate-100"
+            />
+          </View>
 
           <View className="mb-5">
             <Text className="mb-2 font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-500">
@@ -173,13 +222,17 @@ export default function SignUpScreen() {
           )}
 
           <Pressable
-            onPress={handleSignUp}
+            onPress={() => {
+              hapticInvite()
+              handleSignUp()
+            }}
             disabled={!canSubmit}
             className={`rounded-2xl border py-4 ${
               canSubmit
                 ? 'border-amber-300/40 bg-amber-300/5'
                 : 'border-slate-800/60 bg-slate-900/40'
             }`}
+            style={({ pressed }) => pressFeedback(pressed)}
           >
             <View className="flex-row items-center justify-center gap-3">
               {submitting && <ActivityIndicator color="#fcd34d" size="small" />}
@@ -196,7 +249,7 @@ export default function SignUpScreen() {
           <View className="mt-10 flex-row items-center justify-center gap-2">
             <Text className="text-[13px] text-slate-500">Имаш профил?</Text>
             <Link href={'/sign-in' as never} asChild>
-              <Pressable>
+              <Pressable onPress={() => hapticSelect()} style={({ pressed }) => pressFeedback(pressed)}>
                 <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-amber-300">
                   Влез
                 </Text>

@@ -1,22 +1,40 @@
-import { currentUser } from '@clerk/nextjs/server'
-import {
-  requireAccountActive,
-  requireAppUser,
-  toErrorResponse,
-} from '@/lib/auth/guards'
 import { stripe } from '@/lib/stripe/client'
+import { requireAppUser, requireAccountActive, toErrorResponse } from '@/lib/auth/guards'
 
+/**
+ * POST /api/stripe/checkout
+ * Creates a Stripe hosted Checkout session for a subscription upgrade.
+ *
+ * Auth: Required (Clerk)
+ * Body: { priceId: string }
+ * Returns: { url: string } - redirect user to this URL
+ *
+ * Narrow requireAccountActive guard (B.0h-1): a user with a pending
+ * account deletion cannot start a new subscription purchase — buying
+ * premium days before the 30-day grace period hard-deletes the account
+ * is a refund incident waiting to happen.
+ */
 export async function POST(req: Request) {
+  let userId: string
+  let stripeCustomerId: string | null
+  try {
+    const { userId: id, user } = await requireAppUser()
+    requireAccountActive(user)
+    userId = id
+    stripeCustomerId = user.stripe_customer_id
+  } catch (error) {
+    return toErrorResponse(error, 'Сесията ти изтече. Влез отново.')
+  }
+
   let priceId: string
-  let startTrial = false
   try {
     const body = await req.json()
     priceId = body?.priceId
-    startTrial = body?.startTrial === true
   } catch {
     return Response.json({ error: 'Невалидна заявка' }, { status: 400 })
   }
 
+  // Validate priceId against allowlist - prevent arbitrary price IDs
   const allowedPriceIds = new Set([
     process.env.STRIPE_PRICE_MONTHLY!,
     process.env.STRIPE_PRICE_ANNUAL!,
@@ -27,61 +45,20 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { userId, user } = await requireAppUser()
-    requireAccountActive(user)
-
-    if (startTrial && user.trial_claimed_at) {
-      return Response.json(
-        { error: 'Trial already claimed' },
-        { status: 403 }
-      )
-    }
-
-    if (startTrial && user.subscription_tier === 'premium') {
-      return Response.json(
-        { error: 'Premium access already active' },
-        { status: 400 }
-      )
-    }
-
-    const clerkUser = await currentUser()
-    const customerEmail = clerkUser?.primaryEmailAddress?.emailAddress ?? undefined
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-
-    if (user.stripe_customer_id && customerEmail) {
-      await stripe.customers.update(user.stripe_customer_id, {
-        email: customerEmail,
-      })
-    }
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      client_reference_id: userId,
-      ...(user.stripe_customer_id
-        ? { customer: user.stripe_customer_id }
-        : { customer_email: customerEmail }),
+      customer: stripeCustomerId ?? undefined,
       metadata: {
         clerkUserId: userId,
-        checkoutType: startTrial ? 'trial' : 'paid',
       },
       subscription_data: {
-        ...(startTrial
-          ? {
-              trial_period_days: 7,
-              trial_settings: {
-                end_behavior: {
-                  missing_payment_method: 'cancel' as const,
-                },
-              },
-            }
-          : {}),
         metadata: {
           clerkUserId: userId,
-          checkoutType: startTrial ? 'trial' : 'paid',
         },
       },
-      ...(startTrial ? { payment_method_collection: 'if_required' as const } : {}),
       success_url: `${appUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/pricing?cancelled=true`,
       allow_promotion_codes: true,
@@ -89,6 +66,7 @@ export async function POST(req: Request) {
 
     return Response.json({ url: session.url })
   } catch (error) {
-    return toErrorResponse(error, 'Грешка при създаване на плащане')
+    console.error('[Stripe Checkout] Error creating session:', error)
+    return Response.json({ error: 'Грешка при създаване на плащане' }, { status: 500 })
   }
 }

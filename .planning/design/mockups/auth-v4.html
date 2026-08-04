@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AUTH</title>
+<style>
+
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+  @font-face{/* binary stripped */}
+
+  :root{
+    --base:#08060f; --violet:#8b5cf6; --starlight:#f5f7fc; --bronze:#b8763e; --bronze-hi:#d9a06a; --cool:#5b8fc7;
+    --text:#e2e8f0; --muted:#94a3b8; --faint:#5d6a82;
+    --page-bg:#0c0a12; --page-surface:#141019; --page-text:#e9e6f0; --page-muted:#948fa3; --page-border:#241f30;
+    --serif-d: 'PF-Semi', Georgia, serif;
+    --serif-d-r: 'PF-Reg', Georgia, serif;
+    --numeral: 'Cinzel', Georgia, serif;
+    --body: 'EBG-Reg', Palatino, serif;
+    --body-i: 'EBG-Ital', Palatino, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: "SFMono-Regular", Consolas, Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--page-bg); color:var(--page-text); font-family:var(--sans); line-height:1.55; padding:0 0 100px; }
+  .wrap{max-width:1160px; margin:0 auto; padding:48px 24px 0;}
+  header.doc{margin-bottom:8px;}
+  .eyebrow{ font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--bronze-hi); margin:0 0 12px; }
+  h1{ font-family:var(--serif-d); font-weight:600; font-size:clamp(28px,4.4vw,44px); margin:0 0 16px; text-wrap:balance; letter-spacing:-.01em; }
+  .dek{font-size:15.5px; color:var(--page-muted); max-width:720px; margin:0 0 8px;}
+
+  section.lang{ border-top:1px solid var(--page-border); padding:36px 0 8px; margin-top:36px; }
+  section.lang h2{ font-family:var(--serif-d-r); font-weight:400; font-size:23px; margin:0 0 18px; }
+  .lang-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px; }
+  .lang-item{ background:var(--page-surface); border:1px solid var(--page-border); border-radius:4px; padding:18px 20px; }
+  .lang-item .k{ font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--violet); margin:0 0 8px; }
+  .lang-item p{ margin:0; font-size:14px; color:#cfcbdb; }
+  .lang-item p + p{ margin-top:8px; }
+
+  section.screen{ border-top:1px solid var(--page-border); padding:40px 0 12px; margin-top:40px; }
+  section.screen .stitle{ display:flex; align-items:baseline; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  section.screen h2{ font-family:var(--serif-d-r); font-weight:400; font-size:23px; margin:0; }
+  .temp{ font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; padding:3px 9px; border-radius:2px; }
+  .temp.warm{ background:rgba(184,118,62,.16); color:var(--bronze-hi); }
+  .temp.cool{ background:rgba(139,92,246,.16); color:#c9bdfb; }
+
+  .stage{ display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
+  .phone-frame{ flex:0 0 auto; width:390px; height:780px; border-radius:44px; background:#000; padding:10px; box-shadow:0 30px 70px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04); }
+  .phone-screen{ width:100%; height:100%; border-radius:36px; overflow:hidden; position:relative; background:var(--base); }
+  .notes{ flex:1 1 280px; min-width:260px; padding-top:6px; }
+  .notes h3{ font-family:var(--serif-d-r); font-weight:400; font-size:16px; margin:0 0 10px; color:#e9e6f0; }
+  .notes p{ font-size:13.5px; color:#b8b3c6; margin:0 0 10px; }
+  .notes p:last-child{ margin-bottom:0; }
+  .notes .tag{ display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:#8f8aa0; background:rgba(255,255,255,.04); padding:2px 6px; border-radius:2px; margin:0 4px 4px 0; }
+
+  /* ============ STARFIELD ============ */
+  .stars{ position:absolute; inset:0; }
+  .star{ position:absolute; border-radius:50%; background:var(--starlight); }
+  @keyframes tw{ 0%,100%{opacity:.25;} 50%{opacity:.85;} }
+  .star{ animation:tw 4.5s ease-in-out infinite; }
+
+  /* ============ DНЕС — WARM ============ */
+  .warm-wash{ position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 340px 300px at 78% 82%, rgba(184,118,62,.16), transparent 60%),
+      radial-gradient(ellipse 260px 220px at 12% 6%, rgba(139,92,246,.10), transparent 62%); }
+
+  .dnes-content{ position:relative; height:100%; padding:44px 26px 0; display:flex; flex-direction:column; }
+  .label-mark{ font-family:var(--mono); font-size:9.5px; color:var(--faint); letter-spacing:.03em; }
+  .greet{ font-family:var(--body); font-style:italic; font-size:13px; color:var(--muted); margin-top:3px; }
+
+  .moon-stage{ position:relative; margin:26px auto 0; width:230px; height:230px; }
+  .moon-halo{ position:absolute; inset:-70px; border-radius:50%; background:radial-gradient(circle, rgba(184,118,62,.16), rgba(139,92,246,.05) 55%, transparent 72%); filter:blur(2px); }
+  .moon-depth{ position:absolute; inset:14px; border-radius:50%; background:radial-gradient(circle at 32% 30%, rgba(226,232,240,.5), rgba(20,16,30,.85) 60%, #08060f 78%); filter:blur(18px); opacity:.55; transform:scale(1.12); }
+  /* "Less AI" correction: perfectly circular, evenly-spaced radial
+     gradients read as a clean vector fill. Real light pools unevenly —
+     switched to elliptical gradients at irregular sizes, plus two small
+     off-axis patches that break the symmetry a single centered gradient
+     produces, and a real feTurbulence grain (see the hidden <svg><filter>
+     at the top of the document) strong enough to read as a textured
+     surface, not a smooth fill. */
+  /* Under-lit diagnosis (flagged for device, not assumed fixed here): two
+     code-level causes identified directly, not guessed. (1) The lit-face
+     gradient's bright stops cut off early (white→24%, mid-grey by 44%,
+     dark by 64-79%) — steeper than a real crescent needs, so more than
+     half the visible disc was already in the dark transition. (2) The
+     inset box-shadow (rgba(0,0,0,.55), 40px blur) glazes a dark wash over
+     a large share of the sphere regardless of the gradient underneath.
+     Loosened both here (brighter stops carried further out, lighter/
+     tighter shadow) — but this is a static sRGB render in a desktop
+     browser, not the phone's actual display, and Reanimated's glow
+     pulse (0.5-0.85 opacity) plus the real feTurbulence grain both read
+     differently once genuinely compositing on-device. Re-verify brightness
+     on device before treating this as settled. */
+  .moon-object{ position:absolute; inset:0; border-radius:50%; overflow:hidden;
+    background:
+      radial-gradient(ellipse 58% 52% at 29% 26%, #fbfcff 0%, #e7ebf3 30%, #aab3c6 52%, #362f45 71%, #0c0913 85%),
+      radial-gradient(ellipse 46% 38% at 80% 85%, rgba(184,118,62,.9), transparent 50%),
+      radial-gradient(ellipse 40% 32% at 15% 12%, rgba(139,92,246,.52), transparent 42%),
+      radial-gradient(ellipse 16% 12% at 58% 52%, rgba(255,255,255,.05), transparent 72%),
+      radial-gradient(ellipse 20% 15% at 38% 66%, rgba(184,118,62,.09), transparent 76%);
+    background-blend-mode: normal, screen, screen, normal, normal;
+    box-shadow: inset -13px -10px 32px rgba(0,0,0,.4), inset 10px 8px 24px rgba(255,255,255,.08);
+  }
+  .grain-overlay{ position:absolute; inset:0; border-radius:50%; filter:url(#grain); opacity:.32; mix-blend-mode:overlay; pointer-events:none; }
+  .moon-dark{ position:absolute; width:100%; height:100%; border-radius:50%; background:#08060f; opacity:.88; left:-46%; top:0; }
+
+  .phase-mark{ text-align:center; margin-top:20px; font-family:var(--serif-d-r); font-size:9.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--starlight); opacity:.82; }
+  .phase-sub{ text-align:center; font-family:var(--body); font-style:italic; font-size:12px; color:var(--muted); margin-top:5px; }
+
+  /* Correction (founder-flagged BUG): the payoff used to break free via a
+     negative margin that pulled it PAST the spine (x=0 vs. the spine's
+     x=19px), so the spine visually cut through the payoff text instead of
+     leading into it. Fixed geometrically, not just visually: the spine is
+     now bounded to exactly the lead+dev block's own wrapper (spine-body),
+     and the payoff lives entirely outside that wrapper, in normal flow —
+     there is no coordinate range where spine and payoff can occupy the
+     same space, on any content length. */
+  .spine-wrap{ margin-top:26px; flex:1; display:flex; flex-direction:column; }
+  .spine-body{ position:relative; }
+  .spine{ position:absolute; left:19px; top:2px; bottom:8px; width:1px; background:linear-gradient(to bottom, rgba(184,118,62,.5), rgba(184,118,62,.05)); }
+  .reading{ padding-left:34px; }
+  .reading .lead{ font-family:var(--body-i); font-style:italic; font-size:14.5px; color:#e6e2f0; line-height:1.6; }
+  .reading .dev{ font-family:var(--body); font-size:13.5px; color:#c7c2d6; line-height:1.6; margin-top:10px; }
+  .payoff-block{ font-family:var(--serif-d-r); font-size:15px; color:var(--starlight); line-height:1.5; margin-top:18px; position:relative; }
+  .payoff-glow{ position:absolute; left:-16px; top:-8px; width:80px; height:60px; background:radial-gradient(ellipse, rgba(184,118,62,.14), transparent 70%); pointer-events:none; }
+
+  .invite{ margin-top:auto; padding:26px 0 30px; text-align:center; position:relative; }
+  .invite-glow{ position:absolute; left:50%; top:50%; width:260px; height:120px; transform:translate(-50%,-50%); background:radial-gradient(ellipse, rgba(184,118,62,.28), transparent 68%); pointer-events:none; }
+  .invite-text{ position:relative; font-family:var(--serif-d); font-weight:600; font-size:20px; color:var(--bronze-hi); letter-spacing:.01em; display:inline-flex; align-items:baseline; gap:9px; }
+  .ember{ display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--bronze-hi); box-shadow:0 0 8px 2px rgba(217,160,106,.7); animation:breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe{ 0%,100%{opacity:.5; transform:scale(.8);} 50%{opacity:1; transform:scale(1.15);} }
+
+  /* ============ КАРТА — COOL ============ */
+  .cool-wash{ position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 320px 300px at 50% 30%, rgba(139,92,246,.14), transparent 62%),
+      radial-gradient(ellipse 260px 200px at 85% 90%, rgba(91,143,199,.10), transparent 60%); }
+
+  .karta-content{ position:relative; height:100%; padding:44px 0 0; display:flex; flex-direction:column; align-items:center; }
+  .karta-label{ font-family:var(--mono); font-size:9.5px; color:var(--faint); letter-spacing:.03em; align-self:flex-start; margin-left:26px; }
+  .karta-name{ font-family:var(--serif-d-r); font-size:13.5px; color:var(--muted); align-self:flex-start; margin-left:26px; margin-top:3px; }
+
+  /* Correction 1 (founder-flagged): the instrument reads COLD — the rim
+     is a slender bronze BEVEL (a fitting, what a hand touches), not a
+     warm wash across the whole face. Face, bezel, ticks, gems, plaque
+     are all cool/starlight — the only bronze on this screen is the rim's
+     trim line and the pedestal below. */
+  .instrument{ position:relative; width:280px; height:280px; margin-top:22px; }
+  .inst-glow{ position:absolute; inset:-50px; border-radius:50%; background:radial-gradient(circle, rgba(139,92,246,.18), rgba(91,143,199,.07) 55%, transparent 72%); }
+  .inst-rim-outer{ position:absolute; inset:0; border-radius:50%; border:1.6px solid; border-color:#8a6339 #6b4b2a #5c3f22 #8a6339; box-shadow:0 2px 8px rgba(0,0,0,.5), inset 0 1px 1px rgba(217,160,106,.22); }
+  .inst-bezel{ position:absolute; inset:5px; border-radius:50%; border:1px solid rgba(180,200,230,.22); }
+  .inst-face{ position:absolute; inset:9px; border-radius:50%; overflow:hidden;
+    background:
+      radial-gradient(ellipse 60% 55% at 38% 34%, #10131d, #06070d 70%),
+      radial-gradient(ellipse 22% 16% at 66% 60%, rgba(150,180,220,.05), transparent 75%),
+      radial-gradient(ellipse 18% 14% at 30% 70%, rgba(91,143,199,.06), transparent 76%);
+  }
+  .etch-ring{ position:absolute; inset:22px; border-radius:50%; border:1px solid rgba(150,180,220,.2); }
+  .etch-tick{ position:absolute; width:1px; height:9px; background:rgba(150,180,220,.32); left:50%; top:22px; transform-origin:50% 119px; }
+  .etch-tick.major{ background:rgba(203,222,245,.55); height:13px; width:1.2px; }
+  .gem{ position:absolute; width:7px; height:7px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #eef4ff, var(--cool) 62%, #182636 100%); box-shadow:0 0 6px 1.5px rgba(91,143,199,.5); }
+
+  /* Correction 2: no pill/box. A lit plate — text with its own bronze
+     glow and a thread, the way Днес's invite has no container either. */
+  .pedestal{ margin-top:10px; text-align:center; position:relative; }
+  .pedestal-glow{ position:absolute; left:50%; top:50%; width:130px; height:56px; transform:translate(-50%,-50%); background:radial-gradient(ellipse, rgba(184,118,62,.22), transparent 70%); pointer-events:none; }
+  .pedestal span{ position:relative; font-family:var(--serif-d-r); font-size:10.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--bronze-hi); }
+  .pedestal .thread{ position:relative; width:32px; height:1px; margin:6px auto 0; background:linear-gradient(to right, transparent, var(--bronze), transparent); }
+
+  .plaque{ margin-top:24px; font-family:var(--serif-d-r); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#c9def2; opacity:.85; text-align:center; padding:0 30px; }
+  .plaque .sep{ color:rgba(91,143,199,.7); margin:0 8px; letter-spacing:0; text-transform:none; }
+
+  .karta-foot{ margin-top:auto; padding-bottom:30px; text-align:center; }
+  .karta-foot .hint{ font-family:var(--body-i); font-style:italic; font-size:11.5px; color:var(--faint); }
+
+  /* ============ ОРАКУЛ — WARMEST ============ */
+  /* Correction 3: strengthened as LIGHT on the ember/wash that already
+     exist — no new drawn fitting added. */
+  .oracle-wash{ position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 400px 360px at 50% 4%, rgba(184,118,62,.3), transparent 64%),
+      radial-gradient(ellipse 320px 260px at 50% 97%, rgba(184,118,62,.13), transparent 62%); }
+  .oracle-content{ position:relative; height:100%; padding:50px 26px 0; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .ember-hero-stage{ position:relative; width:120px; height:120px; }
+  .ember-hero-glow{ position:absolute; inset:-52px; border-radius:50%; background:radial-gradient(circle, rgba(184,118,62,.5), rgba(184,118,62,.1) 55%, transparent 78%); animation:breathe2 3.2s ease-in-out infinite; }
+  .ember-hero{ position:absolute; inset:44px; border-radius:50%; background:radial-gradient(circle at 38% 32%, #ffe8c9, var(--bronze-hi) 45%, var(--bronze) 75%, #4a2f18 100%); box-shadow:0 0 30px 6px rgba(217,160,106,.55); }
+  @keyframes breathe2{ 0%,100%{opacity:.7; transform:scale(.94);} 50%{opacity:1; transform:scale(1.06);} }
+  .oracle-question{ margin-top:22px; font-family:var(--body-i); font-style:italic; font-size:12.5px; color:var(--muted); max-width:260px; }
+  .oracle-answer{ margin-top:22px; max-width:290px; }
+  .oracle-answer .lead{ font-family:var(--body-i); font-style:italic; font-size:14.5px; color:#e6e2f0; line-height:1.6; }
+  .oracle-answer .dev{ font-family:var(--body); font-size:13.5px; color:#c7c2d6; line-height:1.6; margin-top:10px; }
+  .oracle-answer .payoff{ font-family:var(--serif-d-r); font-size:15.5px; color:var(--starlight); margin-top:16px; }
+  .ask-line-wrap{ margin-top:auto; padding:0 4px 30px; width:100%; }
+  .ask-line{ position:relative; border-bottom:1px solid rgba(184,118,62,.5); padding-bottom:10px; display:flex; justify-content:space-between; align-items:baseline; }
+  .ask-line::after{ content:""; position:absolute; left:0; right:0; bottom:-6px; height:14px; background:linear-gradient(to right, transparent, rgba(184,118,62,.22), transparent); filter:blur(3px); pointer-events:none; }
+  .ask-line .ph{ font-family:var(--body-i); font-style:italic; font-size:13px; color:var(--faint); }
+
+  /* ============ GUIDE — COOLEST, ARCHIVAL ============ */
+  .guide-wash{ position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 300px 260px at 20% 8%, rgba(139,92,246,.08), transparent 60%),
+      radial-gradient(ellipse 260px 220px at 90% 96%, rgba(91,143,199,.06), transparent 60%); }
+  .guide-content{ position:relative; height:100%; padding:46px 28px 0; display:flex; flex-direction:column; }
+  .guide-eyebrow{ font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); }
+  /* R5: numerals are Cinzel-Regular, scoped exactly here (Latin-only,
+     no Cyrillic) — matches the real token file rather than borrowing
+     the display face for them. */
+  .guide-numeral{ position:absolute; right:10px; top:26px; font-family:var(--numeral); font-size:128px; color:rgba(150,180,220,.055); line-height:1; user-select:none; }
+  .guide-title{ font-family:var(--serif-d-r); font-size:24px; color:var(--starlight); margin-top:8px; max-width:250px; position:relative; }
+  .guide-tablet{ margin-top:26px; position:relative; padding:20px 20px 22px; border-radius:2px; background:linear-gradient(160deg, rgba(30,34,46,.5), rgba(14,16,24,.6)); }
+  .guide-tablet::before{ content:""; position:absolute; inset:0; border:1px solid rgba(150,180,220,.14); border-radius:2px; pointer-events:none; }
+  .guide-body{ position:relative; font-family:var(--body); font-size:13px; color:#c3cfe0; line-height:1.7; }
+  .guide-body .term{ color:var(--cool); font-family:var(--serif-d-r); }
+  .guide-nav{ margin-top:auto; padding-bottom:30px; display:flex; justify-content:flex-end; }
+  .guide-next{ font-family:var(--numeral); font-size:24px; color:rgba(150,180,220,.5); opacity:.75; }
+  .guide-next-label{ display:block; font-family:var(--mono); font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin-top:2px; text-align:right; }
+
+  /* ============ РИТЪМ — BOTH, THE BOUNDARY ============ */
+  .rhythm-wash{ position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 300px 200px at 20% 8%, rgba(139,92,246,.10), transparent 60%),
+      radial-gradient(ellipse 260px 220px at 82% 52%, rgba(184,118,62,.15), transparent 62%); }
+  .rhythm-content{ position:relative; height:100%; padding:46px 26px 0; display:flex; flex-direction:column; }
+  .track{ position:relative; height:60px; margin-top:24px; }
+  .track-line{ position:absolute; left:0; right:0; top:50%; height:1px; background:rgba(150,180,220,.28); }
+  .track-point{ position:absolute; top:50%; width:6px; height:6px; border-radius:50%; background:var(--cool); transform:translate(-50%,-50%); box-shadow:0 0 5px 1px rgba(91,143,199,.5); }
+  /* Correction 3: the ignition point is the one place on a cool screen
+     that MUST read unmistakably warm — strengthened its glow radius and
+     the beam's brightness. Still light on an existing point, not a new
+     drawn object. */
+  /* Vertical-alignment bug, root cause: .track-point centers itself on the
+     line via transform:translate(-50%,-50%), but breathe2's keyframes
+     only specify transform:scale(...) — an animation's keyframes fully
+     replace the animated property for the whole cycle, so borrowing
+     breathe2 here silently dropped the centering translate the entire
+     time the dot was breathing, leaving it seated off the line. Fixed
+     with a dedicated keyframe that keeps the translate in every step;
+     horizontal position (left, data-driven — today's real place in the
+     week) is untouched. */
+  @keyframes ignitePulse{ 0%,100%{ opacity:.7; transform:translate(-50%,-50%) scale(.94); } 50%{ opacity:1; transform:translate(-50%,-50%) scale(1.06); } }
+  .track-point.now{ width:13px; height:13px; background:radial-gradient(circle at 35% 30%, #ffe8c9, var(--bronze-hi) 50%, var(--bronze) 100%); box-shadow:0 0 22px 7px rgba(217,160,106,.65); animation:ignitePulse 3s ease-in-out infinite; }
+  .track-label{ position:absolute; top:100%; margin-top:6px; font-family:var(--mono); font-size:8px; color:var(--faint); transform:translate(-50%,0); white-space:nowrap; }
+  .track-label.now{ color:var(--bronze-hi); }
+  .beam{ width:1.5px; height:22px; margin:14px auto 0; background:linear-gradient(to bottom, rgba(217,160,106,.75), rgba(184,118,62,.05)); box-shadow:0 0 6px 1px rgba(184,118,62,.3); }
+  .ignite{ margin:0 auto; max-width:280px; text-align:left; position:relative; }
+  .ignite-glow{ position:absolute; left:-20px; top:-14px; width:230px; height:110px; background:radial-gradient(ellipse, rgba(184,118,62,.14), transparent 70%); pointer-events:none; }
+  .ignite .lead{ font-family:var(--body-i); font-style:italic; font-size:13.5px; color:#e6e2f0; line-height:1.55; }
+  .ignite .payoff{ font-family:var(--serif-d-r); font-size:14px; color:var(--starlight); margin-top:10px; }
+  .upcoming{ margin-top:24px; padding-top:16px; border-top:1px solid rgba(150,180,220,.14); }
+  .upcoming-row{ display:flex; justify-content:space-between; padding:7px 0; font-family:var(--sans); }
+  .upcoming-row .d{ font-family:var(--mono); font-size:10px; color:var(--faint); }
+  .upcoming-row .t{ font-family:var(--body); font-size:12px; color:#a9b3c4; }
+
+  /* ============ NAVBAR — TEMPERATURE-NEUTRAL CONNECTIVE TISSUE ============
+     Belongs to every screen without competing with any hero: no fill, no
+     pill, no drop shadow — a soft dark fade up from the edge (recession,
+     not a panel) and a single hairline "horizon" in violet, the same
+     ambient-ground color already used everywhere, never bronze or cool.
+     Active state is a small violet-lit point — NOT bronze (that would
+     inject warmth onto Карта) and not the surface's own cool token
+     (that would inject cold onto Днес) — violet is the one color
+     already established as cross-temperature ground, so it's the only
+     honest choice for "you are here" on chrome shared by both. */
+  .navbar{ position:absolute; left:0; right:0; bottom:0; height:72px; z-index:5; }
+  .nav-fade{ position:absolute; inset:0; background:linear-gradient(to top, rgba(8,6,15,.6), rgba(8,6,15,0) 78%); pointer-events:none; }
+  .nav-horizon{ position:absolute; left:16px; right:16px; top:0; height:1px; background:linear-gradient(to right, transparent, rgba(139,92,246,.4), transparent); }
+  .nav-row{ position:relative; height:100%; display:flex; align-items:center; justify-content:space-around; padding:12px 6px 16px; }
+  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:5px; color:var(--faint); }
+  .nav-item svg{ width:18px; height:18px; opacity:.5; }
+  .nav-star{ width:3px; height:3px; border-radius:50%; background:var(--violet); opacity:0; box-shadow:0 0 7px 2px rgba(139,92,246,.7); }
+  .nav-label{ font-family:var(--mono); font-size:7.5px; letter-spacing:.05em; color:var(--faint); opacity:.75; }
+  .nav-item.active{ color:var(--starlight); }
+  .nav-item.active svg{ opacity:.95; }
+  .nav-item.active .nav-star{ opacity:1; }
+  .nav-item.active .nav-label{ color:var(--starlight); opacity:1; }
+
+  /* ============ ТИ — WARM (the seal) ============ */
+  .warm-quiet-wash{ position:absolute; inset:0; background:radial-gradient(ellipse 300px 260px at 50% 15%, rgba(184,118,62,.13), transparent 62%); }
+  .seal-stage{ position:relative; width:132px; height:132px; margin:30px auto 0; }
+  .seal-glow{ position:absolute; inset:-30px; border-radius:50%; background:radial-gradient(circle, rgba(184,118,62,.22), transparent 70%); }
+  .seal{ position:absolute; inset:0; border-radius:50%; background:radial-gradient(ellipse 60% 55% at 34% 30%, #c98a4d, #8a5a30 55%, #3c2716 85%); border:1.6px solid; border-color:#d9a06a #8a5a30 #6b431f #d9a06a; box-shadow:0 4px 14px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,214,170,.3); display:flex; align-items:center; justify-content:center; }
+  .seal svg{ width:38px; height:38px; opacity:.9; }
+  .ti-plaque{ margin-top:22px; text-align:center; font-family:var(--serif-d-r); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--starlight); opacity:.85; }
+  .ti-sub{ margin-top:6px; text-align:center; font-family:var(--body-i); font-style:italic; font-size:12px; color:var(--muted); }
+  .reveal-thread{ margin:26px auto 0; width:36px; height:1px; background:linear-gradient(to right, transparent, var(--bronze), transparent); position:relative; }
+  .reveal-label{ text-align:center; margin-top:8px; font-family:var(--serif-d-r); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--bronze-hi); opacity:.85; }
+
+  /* ============ КРЪГ — WARM (two lights near each other) ============ */
+  .circle-stage{ position:relative; height:150px; margin-top:34px; }
+  .orb{ position:absolute; width:74px; height:74px; border-radius:50%; top:38px; }
+  .orb.you{ left:36%; background:radial-gradient(circle at 35% 30%, #ffe8c9, var(--bronze-hi) 45%, var(--bronze) 80%); box-shadow:0 0 26px 6px rgba(217,160,106,.4); }
+  .orb.them{ left:56%; background:radial-gradient(circle at 35% 30%, rgba(226,232,240,.35), rgba(139,92,246,.15) 55%, transparent 78%); border:1px dashed rgba(226,232,240,.3); }
+  .orb-label{ position:absolute; top:118px; font-family:var(--mono); font-size:8px; letter-spacing:.05em; color:var(--faint); text-align:center; width:74px; }
+  .orb-label.you{ left:36%; }
+  .orb-label.them{ left:56%; color:var(--bronze-hi); opacity:.8; }
+
+  /* ============ CRYSTALS — WARM (the gift, lit) ============ */
+  .gem-hero-stage{ position:relative; width:120px; height:130px; margin:30px auto 0; }
+  .gem-hero-glow{ position:absolute; inset:-30px; border-radius:50%; background:radial-gradient(circle, rgba(184,118,62,.2), transparent 68%); }
+  .gem-hero{ position:absolute; left:50%; top:0; width:70px; height:88px; transform:translateX(-50%); clip-path:polygon(50% 0%, 90% 30%, 74% 100%, 26% 100%, 10% 30%); background:linear-gradient(160deg, #ffe8c9, var(--bronze-hi) 40%, var(--bronze) 75%, #4a2f18 100%); box-shadow:0 0 20px 4px rgba(217,160,106,.4); }
+  .gem-name{ text-align:center; margin-top:18px; font-family:var(--serif-d-r); font-size:17px; color:var(--starlight); }
+  .gem-sub{ text-align:center; margin-top:4px; font-family:var(--body-i); font-style:italic; font-size:11.5px; color:var(--muted); }
+  .strand{ display:flex; justify-content:center; gap:9px; margin-top:20px; }
+  .bead{ width:6px; height:6px; border-radius:50%; background:rgba(226,232,240,.15); }
+  .bead.lit{ background:radial-gradient(circle at 35% 30%, #ffe8c9, var(--bronze) 70%); box-shadow:0 0 5px 1px rgba(217,160,106,.5); }
+
+  /* ============ RECOMMENDATIONS — WARM (several small embers) ============ */
+  .rec-list{ margin-top:32px; padding:0 26px; }
+  .rec-row{ display:flex; gap:12px; align-items:flex-start; padding:14px 0; border-top:1px solid rgba(226,232,240,.06); }
+  .rec-row:first-child{ border-top:none; }
+  .rec-ember{ width:8px; height:8px; border-radius:50%; margin-top:4px; flex:0 0 auto; background:radial-gradient(circle at 35% 30%, #ffe8c9, var(--bronze) 70%); box-shadow:0 0 6px 1.5px rgba(217,160,106,.4); }
+  .rec-row.lead .rec-ember{ width:11px; height:11px; box-shadow:0 0 10px 3px rgba(217,160,106,.55); }
+  .rec-text{ font-family:var(--body); font-size:13px; color:#cfcbdb; line-height:1.5; }
+  .rec-row.lead .rec-text{ font-family:var(--serif-d-r); font-size:14.5px; color:var(--starlight); }
+
+  /* ============ LUNAR DIARY — WARM, ONE COOL TOUCH (mirrors Ритъм) ============ */
+  .diary-dateline{ display:flex; align-items:center; gap:8px; margin-top:6px; }
+  .mini-moon{ width:20px; height:20px; border-radius:50%; position:relative; overflow:hidden; background:radial-gradient(circle at 32% 28%, #dfe4ee, #2a2636 65%, #0c0913 82%); border:1px solid rgba(150,180,220,.3); }
+  .mini-moon .dark{ position:absolute; width:100%; height:100%; left:-30%; background:#08060f; opacity:.85; border-radius:50%; }
+  .diary-date{ font-family:var(--mono); font-size:9.5px; color:var(--cool); letter-spacing:.04em; }
+  .diary-page{ margin-top:20px; }
+  .diary-page .entry{ font-family:var(--body-i); font-style:italic; font-size:14px; color:#e6e2f0; line-height:1.65; }
+
+  /* ============ SETTINGS — NEUTRAL (no hero, no accent) ============ */
+  .neutral-wash{ position:absolute; inset:0; background:radial-gradient(ellipse 260px 220px at 20% 4%, rgba(139,92,246,.06), transparent 60%); }
+  .set-row{ display:flex; justify-content:space-between; padding:14px 0; border-top:1px solid rgba(226,232,240,.07); font-family:var(--sans); }
+  .set-row:first-child{ border-top:none; }
+  .set-label{ font-size:13px; color:var(--text); }
+  .set-hint{ font-size:11px; color:var(--faint); }
+
+  /* ============ WIZARD — WARM, RESTRAINED (the star being placed) ============ */
+  .wiz-star-stage{ position:relative; width:60px; height:60px; margin:20px auto 0; }
+  .wiz-star{ position:absolute; inset:14px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #ffe8c9, var(--bronze-hi) 55%, var(--bronze) 90%); box-shadow:0 0 18px 4px rgba(217,160,106,.35); }
+  .wiz-ring{ position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(184,118,62,.3); }
+  .wiz-prompt{ text-align:center; margin-top:20px; font-family:var(--serif-d-r); font-size:18px; color:var(--starlight); }
+  .wiz-line-wrap{ margin:26px 30px 0; }
+  .wiz-line{ border-bottom:1px solid rgba(184,118,62,.4); padding-bottom:8px; font-family:var(--body-i); font-style:italic; font-size:13px; color:var(--faint); }
+  .wiz-steps{ display:flex; justify-content:center; gap:7px; margin-top:26px; }
+  .wiz-dot{ width:4px; height:4px; border-radius:50%; background:rgba(226,232,240,.2); }
+  .wiz-dot.done{ background:var(--bronze); }
+
+  /* ============ AUTH — NEUTRAL, PRE-IDENTITY (the sky alone) ============ */
+  .auth-content{ position:relative; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .auth-mark{ font-family:var(--serif-d); font-weight:600; font-size:15px; letter-spacing:.02em; color:var(--starlight); opacity:.9; }
+  .auth-sub{ margin-top:8px; font-family:var(--body-i); font-style:italic; font-size:12px; color:var(--faint); }
+  .auth-enter{ margin-top:34px; font-family:var(--serif-d-r); font-size:15px; color:var(--starlight); opacity:.92; position:relative; display:inline-flex; align-items:baseline; gap:8px; }
+  .auth-enter-glow{ position:absolute; left:50%; top:50%; width:180px; height:70px; transform:translate(-50%,-50%); background:radial-gradient(ellipse, rgba(139,92,246,.18), transparent 70%); pointer-events:none; }
+  .auth-star{ width:4px; height:4px; border-radius:50%; background:var(--starlight); box-shadow:0 0 6px 2px rgba(245,247,252,.6); animation:breathe 3.4s ease-in-out infinite; }
+
+  footer.doc{ margin-top:52px; padding:24px 0 40px; border-top:1px solid var(--page-border); font-size:12.5px; color:var(--page-muted); }
+  @media (prefers-reduced-motion: reduce){ .star, .ember, .wiz-star, .auth-star, .track-point.now, .ember-hero-glow{ animation:none !important; } }
+  @media (max-width:820px){ .stage{ flex-wrap:nowrap; overflow-x:auto; } .phone-frame{ flex:0 0 320px; width:320px; height:640px; } }
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute;">
+  <filter id="grain">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="noise"/>
+    <feColorMatrix in="noise" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0"/>
+  </filter>
+</svg>
+<section class="screen">
+    <div class="stitle"><h2>Вход — the sky, before it knows you</h2><span class="temp" style="background:rgba(148,163,184,.14); color:#c7cad4;">Neutral, pre-identity</span></div>
+    <div class="stage">
+      <div class="phone-frame"><div class="phone-screen">
+        <div class="stars" id="stars-auth"></div>
+        <div class="auth-content">
+          <div class="auth-mark">Stellaeum</div>
+          <div class="auth-sub">небето те очаква</div>
+          <div class="auth-enter">
+            <div class="auth-enter-glow"></div>
+            Влез <span class="auth-star"></span>
+          </div>
+        </div>
+      </div></div>
+      <div class="notes">
+        <h3>No temperature yet — nothing has been read</h3>
+        <p><span class="tag">hero</span> None but the starfield itself. Neither warm nor cool: the app hasn't spoken to you or read anything about you yet, so neither register applies — the sky is just the sky.</p>
+        <p><span class="tag">atmosphere</span> The fullest, plainest starfield in the app — no wash pooling anywhere, violet ground only.</p>
+        <p><span class="tag">eye-lead</span> Mark → one line of welcome → the entry word, lit starlight (not bronze — nothing warm has happened yet) with a single breathing star beside it, foreshadowing the ember language without claiming it early.</p>
+        <p><span class="tag">invitation</span> "Влез" (Enter) is a lit word with its own glow, same non-container logic as every other invitation in the app — the first thing a new user sees is already this language, not a generic auth form.</p>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

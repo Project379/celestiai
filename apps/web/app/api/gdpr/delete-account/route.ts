@@ -2,21 +2,41 @@ import { after } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
-import { ensureUserRecord } from '@/lib/users/ensure-user'
+import { requireAppUser } from '@/lib/auth/guards'
+import { isDeletionPending } from '@/lib/users/ensure-user'
+
+/**
+ * GET /api/gdpr/delete-account
+ * Returns the current deletion-pending state. Web reads deletion_scheduled_at
+ * directly in the protected layout Server Component (no direct Supabase
+ * access needed); mobile has no such path, so this GET exists for mobile's
+ * pending-deletion banner (P.10-b) to poll via apiFetch.
+ */
+export async function GET() {
+  const { user } = await requireAppUser()
+  return Response.json({ deletionScheduledAt: user.deletion_scheduled_at })
+}
 
 /**
  * POST /api/gdpr/delete-account
  * Request account deletion with 30-day grace period.
  * Sets deleted_at and deletion_scheduled_at on users table.
+ *
+ * Narrow requireAccountActive-class guard (B.0h-1): rejects a second
+ * request while one is already pending, rather than silently resetting
+ * the 30-day clock or double-logging the audit event.
  */
 export async function POST() {
-  const { userId } = await auth()
-  if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+  const { userId, user } = await requireAppUser()
+
+  if (isDeletionPending(user)) {
+    return Response.json(
+      { error: 'Вече има чакаща заявка за изтриване', code: 'DELETION_ALREADY_PENDING' },
+      { status: 409 }
+    )
   }
 
   const supabase = createServiceSupabaseClient()
-  await ensureUserRecord(userId)
   const now = new Date()
   const scheduledDeletion = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
@@ -52,11 +72,10 @@ export async function POST() {
 export async function DELETE() {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   const supabase = createServiceSupabaseClient()
-  await ensureUserRecord(userId)
 
   const { error } = await supabase
     .from('users')

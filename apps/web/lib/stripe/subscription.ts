@@ -176,7 +176,6 @@ export async function handleCheckoutComplete(
     })
   }
 
-  // Retrieve the full subscription to get period end and subscription ID
   const subscription = await stripe.subscriptions.retrieve(
     session.subscription as string
   )
@@ -232,6 +231,7 @@ export async function handleCheckoutComplete(
       stripe_customer_id: stripeCustomerId,
       stripe_subscription_id: subscription.id,
       subscription_expires_at: getSubscriptionExpiry(subscription),
+      subscription_provider: 'stripe',
       updated_at: new Date().toISOString(),
     })
     .eq('clerk_id', clerkUserId)
@@ -283,6 +283,7 @@ export async function handleSubscriptionUpdated(
       stripe_customer_id: getSubscriptionCustomerId(sub),
       stripe_subscription_id: sub.id,
       subscription_expires_at: getSubscriptionExpiry(sub),
+      subscription_provider: 'stripe',
       updated_at: new Date().toISOString(),
     })
     .eq('clerk_id', user.clerk_id)
@@ -319,6 +320,7 @@ export async function handleSubscriptionDeleted(
       subscription_status: 'cancelled',
       stripe_subscription_id: null,
       subscription_expires_at: null,
+      subscription_provider: 'stripe',
       updated_at: new Date().toISOString(),
     })
     .eq('clerk_id', user.clerk_id)
@@ -361,6 +363,7 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> 
       stripe_customer_id: getSubscriptionCustomerId(subscription),
       stripe_subscription_id: subscription.id,
       subscription_expires_at: getSubscriptionExpiry(subscription),
+      subscription_provider: 'stripe',
       updated_at: new Date().toISOString(),
     })
     .eq('clerk_id', user.clerk_id)
@@ -376,6 +379,13 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> 
   )
 }
 
+/**
+ * Handle invoice.payment_failed event.
+ *
+ * Marks user past_due only when premium AND expiry has lapsed; otherwise audit-only.
+ * Stripe retries automatically — local state updates only when Stripe's grace
+ * period has run out per our local expiry record.
+ */
 export async function handleInvoicePaymentFailed(
   invoice: Stripe.Invoice
 ): Promise<void> {
@@ -394,7 +404,12 @@ export async function handleInvoicePaymentFailed(
   const expiresAt = user.subscription_expires_at
     ? new Date(user.subscription_expires_at).getTime()
     : null
+  // REVISIT-62: subscription_expires_at IS NULL means something different
+  // per provider (see the column comment in the 20260803122000 migration) —
+  // this Stripe-specific "treat null-expiry as already-expired" reading
+  // must never fire against a row RevenueCat currently owns.
   const shouldMarkPastDue =
+    user.subscription_provider === 'stripe' &&
     user.subscription_tier === 'premium' &&
     (expiresAt === null || expiresAt <= now)
 
@@ -424,6 +439,7 @@ export async function handleInvoicePaymentFailed(
       stripe_customer_id: getSubscriptionCustomerId(subscription),
       stripe_subscription_id: subscription.id,
       subscription_expires_at: getSubscriptionExpiry(subscription),
+      subscription_provider: 'stripe',
       updated_at: new Date().toISOString(),
     })
     .eq('clerk_id', user.clerk_id)

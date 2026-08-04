@@ -21,14 +21,16 @@ const nextConfig = {
   // `node -e` from packages/astrology — confirming the issue is
   // bundler-only, not runtime. See doc-drift tracker #14 at
   // .planning/phases/09-ephemeris-validation/09-01-PRECISION-FLOOR.md.
-  // geo-tz has the same class of runtime requirement as sweph, but
-  // instead of a native binary it expects packaged data files under
-  // ../data at runtime. If Next bundles geo-tz into .next/server, the
-  // JS lands there without its data directory and calls like
-  // findTimezone() fail with ENOENT for timezones-1970.geojson.geo.dat.
-  // Keeping it external ensures Node resolves it from node_modules
-  // where the package's data/ directory exists.
-  serverExternalPackages: ['sweph', 'geo-tz'],
+  // dictionary-bg (used by lib/ai/check-bg-output.ts's bg-speller.mjs import,
+  // the runtime safety net for LLM-generated Bulgarian) is an ESM package
+  // that resolves its own .dic/.aff asset files via import.meta.url
+  // internally. Webpack bundling mangles that the same way it mangled
+  // sweph's native binary loading below — same "path must be string or URL.
+  // Received URL" failure, confirmed via a real `next build` run
+  // (2026-07-29) that failed page-data collection for /api/oracle/generate
+  // with exactly that error. Externalizing it so it's require()'d natively
+  // at runtime, same fix as sweph.
+  serverExternalPackages: ['sweph', 'dictionary-bg'],
   // Belt-and-suspenders externalization at the Webpack layer. The
   // serverExternalPackages config above is the newer sugar but did not
   // take effect through three attempted configurations on Next 15.5.9
@@ -38,10 +40,11 @@ const nextConfig = {
   // native modules (sweph, sharp, bcrypt, etc.) across Next.js
   // versions. Paired with the pinned `next: 15.2.4` in package.json
   // so a future 15.5+ regression is not regression-sensitive on this
-  // code path. See doc-drift tracker #14.
+  // code path. See doc-drift tracker #14. dictionary-bg added alongside
+  // sweph for the same reason (see comment above).
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals = [...(config.externals || []), 'sweph', 'geo-tz']
+      config.externals = [...(config.externals || []), 'sweph', 'dictionary-bg']
     }
     return config
   },

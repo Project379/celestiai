@@ -142,8 +142,12 @@ function signTail(sunSign: string | null, phaseId: LunarPhase['id']): string | n
 
 /**
  * Optional meteor note added at the end if a shower is currently active.
+ * Exported (2026-07-28) so mobile's Днес can render this specific prose
+ * verbatim, separately from the lunar-phase data line it already shows —
+ * it's a pure function of the shower alone, never entangled with the
+ * lunar sentence beyond being joined into `summary` below.
  */
-function meteorNote(shower: MeteorShower | null): string | null {
+export function meteorNote(shower: MeteorShower | null): string | null {
   if (!shower) return null
   return `Сега през небето минава потокът на ${shower.name}. Погледни нагоре след полунощ.`
 }

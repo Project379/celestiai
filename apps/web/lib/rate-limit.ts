@@ -1,9 +1,5 @@
+import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { ApiError } from '@/lib/auth/guards'
-
-interface RateLimitEntry {
-  count: number
-  resetAt: number
-}
 
 interface RateLimitOptions {
   key: string
@@ -11,16 +7,12 @@ interface RateLimitOptions {
   windowMs: number
 }
 
-const buckets = new Map<string, RateLimitEntry>()
-
-function cleanup(now: number) {
-  for (const [key, entry] of buckets) {
-    if (entry.resetAt <= now) {
-      buckets.delete(key)
-    }
-  }
-}
-
+/**
+ * True client IP on Vercel: the platform overwrites x-forwarded-for at its
+ * edge before the request reaches this function, so a client-supplied value
+ * doesn't survive (non-Enterprise plans). REVISIT-63: if a CDN/WAF is ever
+ * placed in front of Vercel, this stops holding and needs re-verification.
+ */
 export function getRequestIp(request: Request) {
   const forwardedFor = request.headers.get('x-forwarded-for')
   if (forwardedFor) {
@@ -30,19 +22,29 @@ export function getRequestIp(request: Request) {
   return request.headers.get('x-real-ip') ?? 'unknown'
 }
 
-export function assertRateLimit({ key, limit, windowMs }: RateLimitOptions) {
-  const now = Date.now()
-  cleanup(now)
+/**
+ * Table-backed rate limit (see 20260803130000_rate_limit_buckets.sql) —
+ * durable across serverless instances, unlike a module-scope in-memory map.
+ *
+ * Fails open: if the limiter's own query errors, the request proceeds
+ * rather than blocking on a degraded Supabase call the rest of the route
+ * already depends on. Logged loudly so a persistent failure is visible.
+ */
+export async function assertRateLimit({ key, limit, windowMs }: RateLimitOptions) {
+  const supabase = createServiceSupabaseClient()
 
-  const existing = buckets.get(key)
-  if (!existing || existing.resetAt <= now) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs })
+  const { data, error } = await supabase.rpc('check_and_increment_rate_limit', {
+    p_key: key,
+    p_limit: limit,
+    p_window_ms: windowMs,
+  })
+
+  if (error) {
+    console.error(`[RateLimit] Check failed for key "${key}", failing open:`, error)
     return
   }
 
-  if (existing.count >= limit) {
+  if (typeof data === 'number' && data > limit) {
     throw new ApiError(429, 'Too many requests', 'RATE_LIMITED')
   }
-
-  existing.count += 1
 }

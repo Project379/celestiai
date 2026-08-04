@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { Recommendation, RecommendationStatus } from '@/lib/stories/types'
+import type { Recommendation, RecommendationStatus } from '@stellaeum/core/stories/types'
 
 const KIND_LABEL: Record<Recommendation['kind'], string> = {
   story: 'Разказ',

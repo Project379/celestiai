@@ -21,19 +21,21 @@
  */
 
 import type { ChartData, PlanetPosition, AspectData } from '@stellaeum/astrology/client'
-import { PLANETS_BG, ZODIAC_SIGNS_BG, ASPECTS_BG } from '@stellaeum/astrology/client'
+import { PLANETS_BG, PLANETS_BG_GENDER, ZODIAC_SIGNS_BG, ASPECTS_BG } from '@stellaeum/astrology/client'
 import type { Planet, ZodiacSign, AspectType } from '@stellaeum/astrology/client'
+import { RETROGRADE_ADJ, agreeAdjective } from '@stellaeum/core/i18n/bg-grammar'
 
 /**
  * Formats a planet position as a human-readable line in Bulgarian.
- * Example: "Слънце: 15° Лъв, дом 5 (ретроградна)"
+ * Example: "Слънце: 15° Лъв, дом 5 (ретроградно)"
  */
 function formatPlanetLine(position: PlanetPosition): string {
   const planetName = PLANETS_BG[position.planet as Planet] ?? position.planet
   const signName = ZODIAC_SIGNS_BG[position.sign as ZodiacSign] ?? position.sign
   const degrees = Math.floor(position.signDegree)
   const minutes = Math.floor((position.signDegree - degrees) * 60)
-  const retrograde = position.speed < 0 ? ' (ретроградна)' : ''
+  const retrogradeGender = PLANETS_BG_GENDER[position.planet as Planet] ?? 'masc'
+  const retrograde = position.speed < 0 ? ` (${agreeAdjective(RETROGRADE_ADJ, retrogradeGender)})` : ''
   return `${planetName}: ${degrees}°${minutes.toString().padStart(2, '0')}' ${signName}, дом ${position.house}${retrograde}`
 }
 

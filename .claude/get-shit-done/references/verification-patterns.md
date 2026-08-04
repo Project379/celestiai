@@ -306,17 +306,17 @@ grep -r "$hook_name()" src/ --include="*.tsx" --include="*.ts" | grep -v "$hook_
 
 **Existence check:**
 ```bash
-# .env.example.local file exists
+# .env.local file exists
 [ -f ".env" ] || [ -f ".env.local" ]
 
 # Required variable is defined
-grep -E "^$VAR_NAME=" .env.example.local .env.example.local.local 2>/dev/null
+grep -E "^$VAR_NAME=" .env.local .env.local.local 2>/dev/null
 ```
 
 **Substantive check:**
 ```bash
 # Variable has actual value (not placeholder)
-grep -E "^$VAR_NAME=.+" .env.example.local .env.example.local.local 2>/dev/null | grep -v "your-.*-here|xxx|placeholder|TODO" -i
+grep -E "^$VAR_NAME=.+" .env.local .env.local.local 2>/dev/null | grep -v "your-.*-here|xxx|placeholder|TODO" -i
 
 # Value looks valid for type:
 # - URLs should start with http
@@ -328,7 +328,7 @@ grep -E "^$VAR_NAME=.+" .env.example.local .env.example.local.local 2>/dev/null 
 ```bash
 # RED FLAGS - These are stubs:
 DATABASE_URL=your-database-url-here
-STRIPE_SECRET_KEY=your-stripe-secret-key
+STRIPE_SECRET_KEY=sk_test_xxx
 API_KEY=placeholder
 NEXT_PUBLIC_API_URL=http://localhost:3000  # Still pointing to localhost in prod
 ```

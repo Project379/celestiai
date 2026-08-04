@@ -1,11 +1,14 @@
 'use client'
 
 import React from 'react'
+import { parseSentinels } from '@stellaeum/core/oracle/planet-parser'
 
 /**
- * Planet key to accent color mapping.
- * Matches the English planet keys used in [planet:KEY]...[/planet] sentinel markers.
- * Colors chosen to match the cosmic theme and are legible on dark backgrounds.
+ * Planet key → Tailwind text-color class. Web-specific presentation map
+ * for the shared `parseSentinels` parser in `@stellaeum/core/oracle/planet-parser`.
+ * Mobile maintains its own hex equivalent at `apps/mobile/app/(authed)/(tabs)/index.tsx`
+ * (NativeWind requires static className strings at scan time, so mobile
+ * applies colors via inline `style.color` with hex values).
  */
 const PLANET_COLORS: Record<string, string> = {
   sun: 'text-amber-300',
@@ -19,51 +22,6 @@ const PLANET_COLORS: Record<string, string> = {
   neptune: 'text-blue-400',
   pluto: 'text-purple-400',
   northNode: 'text-violet-400',
-}
-
-/**
- * Parses text with [planet:KEY]...[/planet] sentinel markers into React nodes.
- * Planet names are rendered with their associated accent color.
- * All other text is rendered as plain text.
- *
- * A fresh RegExp is created each call to avoid stateful lastIndex bugs with 'g' flag.
- */
-function parseSentinels(text: string): React.ReactNode[] {
-  const sentinelRegex = /\[planet:(\w+)\]([\s\S]*?)\[\/planet\]/g
-  const nodes: React.ReactNode[] = []
-  let lastIndex = 0
-  let match: RegExpExecArray | null
-
-  while ((match = sentinelRegex.exec(text)) !== null) {
-    const matchStart = match.index
-
-    // Add plain text before this match
-    if (matchStart > lastIndex) {
-      nodes.push(text.slice(lastIndex, matchStart))
-    }
-
-    const planetKey = match[1] ?? ''
-    const innerText = match[2] ?? ''
-    const colorClass = PLANET_COLORS[planetKey] ?? 'text-violet-300'
-
-    nodes.push(
-      <span
-        key={`planet-${matchStart}`}
-        className={`font-medium ${colorClass}`}
-      >
-        {innerText}
-      </span>
-    )
-
-    lastIndex = sentinelRegex.lastIndex
-  }
-
-  // Add any remaining plain text after the last match
-  if (lastIndex < text.length) {
-    nodes.push(text.slice(lastIndex))
-  }
-
-  return nodes
 }
 
 interface HoroscopeStreamProps {
@@ -133,11 +91,21 @@ export function HoroscopeStream({ text, isStreaming }: HoroscopeStreamProps) {
     <div className="space-y-5">
       {paragraphs.map((paragraph, index) => {
         const isLastParagraph = index === paragraphs.length - 1
-        const nodes = parseSentinels(paragraph.trim())
+        const chunks = parseSentinels(paragraph.trim())
 
         return (
           <p key={index} className="font-display text-[15px] leading-[1.85] text-slate-300/90">
-            {nodes}
+            {chunks.map((chunk, i) => {
+              if (chunk.planet) {
+                const colorClass = PLANET_COLORS[chunk.planet] ?? 'text-violet-300'
+                return (
+                  <span key={i} className={`font-medium ${colorClass}`}>
+                    {chunk.text}
+                  </span>
+                )
+              }
+              return <React.Fragment key={i}>{chunk.text}</React.Fragment>
+            })}
             {isStreaming && isLastParagraph && (
               <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-amber-300/85 align-middle shadow-[0_0_6px_rgba(251,191,36,0.6)]" />
             )}
