@@ -1332,11 +1332,13 @@ const openrouter = createOpenAI({
 OPENROUTER_API_KEY=***
 ```
 
-That's the full set. No `GEMINI_API_KEY`, no `GOOGLE_GENERATIVE_AI_API_KEY`, no `OPENAI_API_KEY`, no `ANTHROPIC_API_KEY`, no `BGGPT_*` — never were, per git history spot-checks.
+That's the full set today. No `GEMINI_API_KEY`, no `GOOGLE_GENERATIVE_AI_API_KEY`, no `ANTHROPIC_API_KEY`, no `BGGPT_*`.
+
+**Correction (2026-08-04):** this section previously claimed "no `OPENAI_API_KEY` … never was." That was wrong. `.env.local` stored the OpenRouter key under the name `OPENAI_API_KEY` for an unknown period, and `lib/ai/client.ts` read `process.env.OPENROUTER_API_KEY`, which was undefined the whole time. `@ai-sdk/openai`'s `loadApiKey` helper silently falls back to `process.env.OPENAI_API_KEY` when the passed `apiKey` is falsy — so the routes worked anyway, with no error, log, or 500 to surface it. Two coincidences stacked and neither alone would have been visible. Fixed 2026-08-04 by renaming the var in `.env.local` to `OPENROUTER_API_KEY` and documenting it in `apps/web/.env.example`. See §3.3 and `MODEL_CAPABILITY_LOG.md` for the naming-collision history.
 
 ### 3.3 Fallback behavior
 
-`[verified]` **None configured.** If OpenRouter returns 429/5xx mid-stream:
+`[verified]` **SDK-level fallback exists and was previously masking a misconfiguration** — see the correction in §3.2. Provider-level fallback (across models/vendors on request failure) is still **none configured**. If OpenRouter returns 429/5xx mid-stream:
 
 - The AI SDK's `streamText` / `generateText` throws
 - The route handler's outermost try/catch returns a 500 with a generic Bulgarian error ("Грешка при генериране на четенето" or variant)
