@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Database**: Supabase (PostgreSQL + Realtime)
 - **ORM**: Drizzle ORM
 - **Styling**: NativeWind v4
-- **Visualization**: React Native Skia (mobile), D3.js + Canvas (web)
+- **Visualization**: react-native-svg (mobile), D3.js-driven SVG (web) — corrected 2026-08-04; no Skia dependency exists in the app, and web's chart renders to SVG, not Canvas. See CHECKPOINT-2026-08-04.md §2.
 - **Astrology Engine**: swisseph-wasm (Swiss Ephemeris)
 - **Payments**: Stripe (web) + RevenueCat (mobile IAP)
 

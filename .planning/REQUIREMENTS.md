@@ -19,7 +19,7 @@ Requirements for MVP web launch. Each maps to roadmap phases.
 - [x] **AUTH-01**: User can register with email and password
 - [x] **AUTH-02**: User receives email verification after signup
 - [x] **AUTH-03**: User can log in with email and password
-- [x] **AUTH-04**: User can reset password via email link
+- [x] **AUTH-04**: User can reset password via email link (web only — Clerk's stock `<SignIn>` component includes this for free. Mobile uses fully custom auth screens on `useSignIn`/`useSignUp` and has no forgot-password screen or link anywhere in `(public)`. Corrected 2026-08-04, see CHECKPOINT-2026-08-04.md §3.)
 - [x] **AUTH-05**: User session persists across browser refresh
 - [x] **AUTH-06**: User can log out
 
@@ -157,7 +157,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-01 | Phase 2 | Complete |
 | AUTH-02 | Phase 2 | Complete |
 | AUTH-03 | Phase 2 | Complete |
-| AUTH-04 | Phase 2 | Complete |
+| AUTH-04 | Phase 2 | Complete (web only — mobile gap, see line 22) |
 | AUTH-05 | Phase 2 | Complete |
 | AUTH-06 | Phase 2 | Complete |
 | BIRTH-01 | Phase 3 | Pending |
