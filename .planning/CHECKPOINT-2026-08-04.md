@@ -166,3 +166,19 @@ Areas 3-6 (chart calculation/persistence, Oracle quota enforcement, GDPR delete,
 3. Mobile subscription UI (§4 item 2) — ~650-950 LOC band, blocked on RevenueCat dashboard configuration (founder-side, in parallel per §9.7).
 
 Vercel work resumes when the founder's access is unblocked. Domain, ToS, DPAs, Apple Developer enrollment, and RevenueCat dashboard configuration are founder-owned and run in parallel with the port work above — none of them gate or are gated by items 2-3.
+
+### 9.8 EAS build investigation — what's possible before Apple enrollment
+
+Investigated, not built — no `eas.json` was created and no `eas` command was run, since EAS builds are tied to a real Expo account (`eas login`) that only the founder can authenticate, and a cloud build against real project infrastructure isn't something to trigger without that authentication in hand.
+
+**Direct answer: yes, an Android development build can be produced today with zero Apple involvement, and it does not require installing the Android SDK locally either.** EAS's cloud build service builds Android APKs entirely on Expo's own infrastructure — the only local requirements are Node (already present) and `eas-cli` (not yet installed; `npx eas-cli` works without a global install). This machine has no Android SDK, no `adb`, and Java 1.8 (too old for a modern Gradle/RN build) — so a fully *local* `expo run:android` build is not available today without a separate Android Studio + JDK 17 setup. That local-toolchain gap is irrelevant to the recommended path, though, because EAS cloud build sidesteps it entirely: nothing about it depends on Apple Developer status, and nothing about it depends on this machine having Android build tools.
+
+What's confirmed present and absent in the repo right now: `apps/mobile/app.json` already has a valid Android `package` (`com.stellaeum.app`) and no Apple-specific fields are required for an Android profile. What's confirmed missing: `eas.json` (no build profiles defined at all — this is the actual gap, not Apple enrollment), and `expo-dev-client` is not installed as a dependency, which matters only if the founder wants a true "development" build profile (hot-reload against a running Metro bundler); a "preview" (or Expo's "internal distribution") profile produces a fully standalone, installable APK without needing `expo-dev-client` at all — closer to what "a real device build to test against" actually calls for, since it doesn't require a laptop running Metro nearby.
+
+Concrete next steps, in order, all Android-only and Apple-independent:
+1. `npx eas-cli login` (free Expo account — create one if none exists; this is separate from and unrelated to Apple Developer enrollment).
+2. `npx eas-cli build:configure` — generates `eas.json` with default `development`/`preview`/`production` profiles and links the project to an EAS project id (writes into `app.json`).
+3. Add `expo-dev-client` to `apps/mobile/package.json` only if the `development` profile is wanted; skip it for a `preview`-profile build.
+4. `npx eas-cli build --platform android --profile preview` — builds on Expo's servers (no local Android SDK needed), returns a downloadable/installable APK link when done (typically several minutes, not instant).
+
+This gives the founder a real device build today, independent of the Apple Developer enrollment timeline — the iOS side of EAS setup (equally worth scaffolding via `eas.json`'s `ios` profile block, but not buildable to a real device until Apple enrollment completes and a distribution certificate/provisioning profile exist) can follow once enrollment clears without blocking the Android path in the meantime.
