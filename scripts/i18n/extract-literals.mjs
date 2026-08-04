@@ -13,7 +13,12 @@ const CYRILLIC_RE = /[Ѐ-ӿ]/
 const STRING_LITERAL_RE = /'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`/g
 
 function stripComments(source) {
-  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '')
+  // Negative lookbehind on ':' — without it, the `//` inside a string literal
+  // like 'https://example.com' reads as a line-comment start and eats the
+  // rest of that line, including the literal's closing quote. That desyncs
+  // quote-matching for every literal extracted later in the file (surfaced
+  // by REVISIT-53: apps/mobile/.../you/settings.tsx's PRIVACY_URL constant).
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(?<!:)\/\/[^\n]*/g, '')
 }
 
 function lineNumberAt(source, index) {
