@@ -20,6 +20,47 @@ or a health-check endpoint would be. If a future change adds a genuinely
 user-facing auth failure to a cron-triggered code path, that new surface
 gets evaluated on its own, not by pattern-matching "it's in `api/cron/`."
 
+## Scope note: Кръг (Circle) relationship copy is legitimately plural, not formal Вие
+
+`apps/web/lib/circle/report.ts` and `apps/web/lib/circle/weather.ts`
+describe a relationship between two people, and use `вас`/`ви` ("between
+the two of you" / "your(pl) relationship") throughout as genuine dual
+address — a compatibility report is inherently about a pair, not a solo
+reader. Verbs conjugated in the plural inside those same blocks/sentences
+(e.g. `говорите`, `движите`, `оставите`, `гледате`, `приемете`/`спрете`/
+`подхранвате`, `четете`) are grammatically **required** to agree with that
+plural subject — Bulgarian doesn't have a way to write "the two of you
+move through X" with a singular verb. This is not the app's informal-ти
+register rule failing to apply; it's ordinary subject-verb agreement with
+a plural grammatical subject, a different axis entirely from ти/Вие
+formality.
+
+Written Bulgarian cannot distinguish "plural you-two" from formal
+singular "Вие" by verb form alone — both use identical `-ете`/`-ате`/`-ите`
+conjugations. Confirmed 2026-08-04 (Circle-branch recovery) by checking
+each flagged instance against the `вас`/`ви` possessive already
+established in the same block/function/sentence — every one lined up.
+Counter-example confirming the test works: `ConnectInviteAcceptance.tsx`'s
+`"${inviterName} иска да свържете картите си."` looked identical in shape
+but IS real formal-register drift — its addressee is the single invitee
+performing a specific accept action, confirmed by the sibling ternary
+branch in the same component addressing that same person informally
+(`"${inviterName} те кани..."`, singular `те`). That one was fixed to
+`свържеш`; the report.ts/weather.ts instances were not touched.
+
+**Do not "fix" report.ts/weather.ts's plural verbs to singular ти-forms
+in a future register sweep.** Converting them would break subject-verb
+agreement with the surrounding `вас`/`ви` possessives already in the same
+sentences and produce worse Bulgarian than what's there — this was
+checked and deliberately left alone, not missed. Any future Circle/Кръг
+copy addressing the two people jointly (not a single action the reader
+alone performs) should default to this same dual-plural pattern, not the
+app's usual solo-ти address. When adding new Circle copy, apply the same
+per-sentence test used here: does this sentence describe something the
+pair does/experiences together, or an action the one reader alone
+performs? The former is dual-plural and correct; the latter is
+informal-ти like everywhere else in the app.
+
 ## 1. `check:bg-strings` wired into `check:all` — IMPLEMENTED, GATING
 
 `scripts/check-bg-static-strings.mjs` scans every `.ts`/`.tsx` Cyrillic

@@ -43,6 +43,23 @@
  * existing siblings ((public)/verify.tsx, sign-in.tsx), informal ти,
  * checked against check:bg-strings and the approved-copy lock.
  *
+ * Raised to 1613 on 2026-08-04 (Circle-branch recovery, same day): 242 new
+ * literals recovered from Petko's implementation-of-final-features branch
+ * (d150828) — apps/web/app/api/circle/**, lib/circle/*, components/circle/*,
+ * app/connect/[token]/page.tsx, app/(protected)/circle/page.tsx. Not new
+ * copy in the sense of freshly written this session — this is existing,
+ * previously-unmerged application code being brought into the tree for the
+ * first time. Reviewed for the two things this workstream actually checks:
+ * spelling (check:bg-strings — 15x "Неоторизиран достъп" replaced with the
+ * already-ratified "Сесията ти изтече. Влез отново.", one real typo fixed
+ * синстрия -> синастрия, 5 genuine dictionary-gap words allowlisted after
+ * individual founder review) and register (one genuine ти/Вие violation in
+ * ConnectInviteAcceptance.tsx fixed; the rest of the flagged verbs in
+ * report.ts/weather.ts turned out to be correct plural dual-address, not
+ * register drift — see STAGE5_PREVENTION.md's Кръг scope note). The
+ * remaining Circle UI/design pass (CircleHub.tsx vs krug-v4.html) is
+ * deliberately NOT part of this raise — that's separate, deferred work.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -52,7 +69,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1371
+const BASELINE = 1613
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

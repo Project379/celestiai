@@ -5,7 +5,7 @@ import { getCircleDashboardData } from '@/lib/circle/service'
 
 export const metadata: Metadata = {
   title: 'Кръг',
-  description: 'Споделена астрологична връзка, синстрия и compatibility профил за двама.',
+  description: 'Споделена астрологична връзка, синастрия и compatibility профил за двама.',
 }
 
 export default async function CirclePage() {

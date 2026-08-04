@@ -52,7 +52,7 @@ export function ConnectInviteAcceptance({
   const title =
     label ||
     (relationshipType === 'romantic'
-      ? `${inviterName} иска да свържете картите си.`
+      ? `${inviterName} иска да свържеш картите си.`
       : `${inviterName} те кани в ${TYPE_LABELS[relationshipType]}.`)
 
   return (

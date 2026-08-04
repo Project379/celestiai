@@ -21,7 +21,7 @@ export async function POST(
 ) {
   const { userId } = await auth()
   if (!userId) {
-    return Response.json({ error: 'Неоторизиран достъп' }, { status: 401 })
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
   try {
@@ -50,7 +50,7 @@ export async function POST(
     }
 
     if (!members.some((member) => member.user_id === userId)) {
-      return Response.json({ error: 'Неоторизиран достъп' }, { status: 403 })
+      return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 403 })
     }
 
     const relationshipType = parsed.data.relationshipType ?? space.relationship_type
