@@ -37,7 +37,19 @@ export async function extractAllLiterals(root) {
   const results = []
 
   for (const file of files) {
-    const raw = readFileSync(file, 'utf8')
+    // Normalize CRLF -> LF before anything else. Git stores (and Linux CI
+    // checks out) LF; a Windows checkout with core.autocrlf=true silently
+    // converts working-tree files to CRLF regardless of a .gitattributes
+    // eol=lf rule (git skips re-writing files whose blob content hasn't
+    // changed, even after the attribute is added) — invisible for most
+    // tooling, but a real bug here: a multi-line template literal's
+    // extracted text differs by the presence of \r, so a copy-lock
+    // snapshot generated on a CRLF working tree doesn't match what CI
+    // extracts from the true LF-committed content. Found 2026-08-04 when
+    // a local check:all pass didn't reproduce on CI. Normalizing here
+    // makes extraction identical regardless of any contributor's local
+    // line-ending state, independent of relying on everyone's git config.
+    const raw = readFileSync(file, 'utf8').replace(/\r\n/g, '\n')
     const stripped = stripComments(raw)
     let match
     while ((match = STRING_LITERAL_RE.exec(stripped))) {

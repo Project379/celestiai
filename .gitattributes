@@ -1,0 +1,20 @@
+# Enforce LF in the repository regardless of a contributor's local
+# core.autocrlf setting. Without this, Windows checkouts with
+# core.autocrlf=true silently convert every text file to CRLF on disk while
+# git stores (and Linux CI checks out) LF — invisible for most tooling, but
+# a real bug for anything that hashes or extracts multi-line string content
+# byte-for-byte, like scripts/i18n/extract-literals.mjs and copy-lock.json.
+# Found 2026-08-04 when a local check:all pass didn't reproduce on CI.
+* text=auto eol=lf
+
+# Binary assets — never touch these.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
