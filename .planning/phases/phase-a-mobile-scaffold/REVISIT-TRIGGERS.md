@@ -1562,6 +1562,25 @@ None of this was caught by Round A's own audit because it checked the route file
 
 **Why documented:** this is exactly the class of assumption that's correct until infrastructure changes silently invalidate it, filed at build time rather than left to be rediscovered mid-incident.
 
+## 64. Mobile Sentry has been dead since install — wrong env var name, and the RN project likely never existed
+
+**Status:** Filed 2026-08-04 during EAS build-setup prep for the first Android preview build. Mobile's `@sentry/react-native` install and `lib/monitoring/sentry.ts` wiring (per SUB-ROUND-8-CLOSE.md's "Init" section) look complete and match web's conservative-defaults posture exactly — `sendDefaultPii: false`, `tracesSampleRate: 0`, no replay, no logs. Despite that, mobile Sentry has produced zero events since it was wired, for two independent reasons, either one of which alone would have been enough:
+
+1. **Wrong env var name, not just wrong value.** `sentry.ts:21` reads `process.env.EXPO_PUBLIC_SENTRY_DSN` and no-ops cleanly by design when it's unset — that's the correct behavior for local dev without credentials, documented in the same file's comment. The actual bug: `apps/mobile/.env.local` carried the value under `NEXT_PUBLIC_SENTRY_DSN` — web's naming convention, not mobile's Expo convention — so every local run had the DSN sitting right there in the file and Sentry still silently no-opped, because the code was never looking at that name. Confirmed via direct grep: the only place `NEXT_PUBLIC_SENTRY_DSN` appeared anywhere in the mobile app was `.env.local` itself; the code, `app.json`, and this REVISIT file's own SUB-ROUND-8-CLOSE.md all correctly reference `EXPO_PUBLIC_SENTRY_DSN`. Fixed 2026-08-04 (founder edited `.env.local` directly; `apps/mobile/.env.example` corrected to document the right name with an explicit warning comment about the mismatch).
+
+2. **`SENTRY_ORG`/`SENTRY_PROJECT` point at web's project, not a mobile one.** `apps/web/.env.local` has `SENTRY_ORG=celestia-ul`, `SENTRY_PROJECT=javascript-nextjs` — the Next.js-specific project slug. `apps/mobile/app.json`'s `@sentry/react-native` plugin entry has no `organization`/`project`/`authToken` config at all, so even once the DSN is correct, there is currently no build-time source-map-upload wiring, and — unverified, `[inferred]` — the RN-specific Sentry project under `celestia-ul` may never have been created in the first place, since nothing in the repo references a mobile-specific project slug anywhere.
+
+**Why this matters going into the first real device/emulator build:** finding #1 means every prior local dev session and every device test run to date had zero crash reporting, and nothing surfaced that — a missing DSN and a working-but-unreported DSN look identical from the outside. This is the same silent-fallback shape as the `OPENROUTER_API_KEY` naming-collision finding (`AI_PROVIDER_DECISION.md` §3.2) and item 9 above (Sentry org slug) — a third, independent instance of "the required-looking thing was quietly doing nothing."
+
+**Fix path:**
+- Confirm in the Sentry dashboard whether an RN/mobile project already exists under `celestia-ul`; create one if not (get its own DSN — do not reuse web's `javascript-nextjs` DSN, which routes events to the wrong project's issue stream).
+- Set `SENTRY_ORG`, `SENTRY_PROJECT` as regular (non-`EXPO_PUBLIC_`) EAS env vars, and `SENTRY_AUTH_TOKEN` as an EAS secret (`--visibility secret`) — these are build-time-only, used by the Sentry Expo plugin's source-map-upload step, never bundled client-side.
+- Once set, verify with a real build (not Expo Go, which only exercises JS-side capture) by force-throwing a test error and confirming it lands in the correct project's Sentry dashboard with a readable (non-minified) stack trace — mirrors the verification method SUB-ROUND-8-CLOSE.md already specified for the DSN-only check.
+
+**Trigger:** Before the first EAS preview/production build is treated as having working crash reporting. Not launch-blocking by itself (the app functions without it), but every day it stays broken is a day of zero visibility into real-device crashes — worth closing before, not after, the first round of device testing generates the crashes it should be reporting.
+
+**Why documented:** Two structurally identical, independently-caused silent failures compounding on the same feature is worth naming as a pattern, not just fixing quietly — the founder's own framing on discovering this: "the same silent-fallback shape as the OPENROUTER_API_KEY finding."
+
 ## Appendix — Pre-existing peer warnings (not action items)
 
 - `react-native-web@0.19.13` declares `react@^18.0.0` peer; we have
