@@ -177,6 +177,22 @@ branch divergence that cost hours earlier this week
 section above). It was only caught because the founder happened to
 inspect the tree before either session committed.
 
+**The actual danger isn't just conflicting edits.** At the moment of
+discovery, the dependency-removal fix had been silently reverted by the
+other session's concurrent write, while that same other session's
+override was independently forcing the lockfile to resolve cleanly
+anyway. Result: no error, no warning, a single React version resolving
+workspace-wide, everything green on inspection — and the actual wrong
+declaration still sitting in the tree the whole time. Neither session
+could have detected this from its own view; each saw a clean state
+consistent with its own fix having worked. This is the concrete case for
+correcting a wrong declaration at its source instead of overriding
+around it: a correction is verifiable by its own absence, an override's
+success says nothing about whether the thing underneath it is still
+broken.
+
 **Standing discipline, effective now: one Claude Code session at a time
 against this repo.** Before starting substantive work in a new session,
-confirm no other session is active against the same working tree.
+confirm no other session is active against the same working tree. If a
+session ever finds files it did not modify, stop and surface it rather
+than working around them.
