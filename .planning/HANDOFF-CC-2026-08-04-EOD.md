@@ -31,6 +31,22 @@ naming collision. The standing lesson: a gate that has never been run is not
 evidence of a clean codebase, it's an unknown. Assume anything ungated is
 probably hiding something until proven otherwise, not the other way around.
 
+A sixth instance landed 2026-08-05, worth recording as its own finding rather
+than folding silently into the splash-screen bug fix (REVISIT-TRIGGERS item
+67): the app has had zero brand imagery anywhere in the repo — no app icon,
+no splash logo, no notification icon, no web favicon — for the app's entire
+existence, and nobody noticed, because Expo Go supplies its own icon and
+splash chrome and always has. The first native build ran the real Android
+asset-linking pipeline for the first time ever and found it immediately, the
+same session it was run. This is the same shape as the other five, not a
+coincidence: a check that has never executed isn't evidence the thing it
+checks is fine, whether the "check" is a CI gate, a lint rule, an RLS policy
+audit, or — as this instance shows — simply *running the real build pipeline
+instead of the dev-tool stand-in for it*. Worth carrying forward as a general
+question when adopting any new dev-convenience tool (Expo Go, a mock server,
+a stubbed integration): what does the real pipeline do that the convenience
+tool silently papers over, and when was that real pipeline last actually run?
+
 === SHIPPED AND PUSHED TODAY (all on main, confirmed green in CI, watched live) ===
 
 1. Three doc corrections (CLAUDE.md's Skia claim, REQUIREMENTS.md's
