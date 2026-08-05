@@ -4,6 +4,8 @@ import {
   upsertDiaryEntry,
 } from '@stellaeum/core/diary/entries'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 import { createDiaryEntrySchema } from '@/lib/validators/diary'
 import { logServerError } from '@/lib/monitoring/log-server-error'
 
@@ -52,11 +54,20 @@ export async function GET(request: Request) {
   }
 
   try {
+    await assertRateLimit({
+      key: `diary-entries-list:${userId}`,
+      limit: 60,
+      windowMs: 60_000,
+    })
+
     const url = new URL(request.url)
     const phaseId = url.searchParams.get('phase_id') ?? undefined
     const entries = await listDiaryEntries(userId, phaseId ? { phaseId } : {})
     return Response.json(entries)
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     logServerError('ERR-DI-004', error, {
       context: 'GET /api/diary/entries list failed',
     })
@@ -90,6 +101,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    await assertRateLimit({
+      key: `diary-entries-upsert:${userId}`,
+      limit: 20,
+      windowMs: 60_000,
+    })
+
     const body = await request.json()
 
     const validation = createDiaryEntrySchema.safeParse(body)
@@ -157,6 +174,9 @@ export async function POST(request: Request) {
       { status: 200 },
     )
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     logServerError('ERR-DI-003', error, {
       context: 'POST /api/diary/entries unhandled error',
     })

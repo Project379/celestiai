@@ -1,6 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 import { logAuditEvent } from '@/lib/audit'
 import { buildSavedProfileFullContent, buildSavedProfileTeaserContent } from '@/lib/circle/report'
 import {
@@ -24,6 +26,12 @@ export async function POST(
   }
 
   try {
+    await assertRateLimit({
+      key: `circle-profile-report:${userId}`,
+      limit: 5,
+      windowMs: 60_000,
+    })
+
     const { profileId } = await context.params
     const parsed = reportSchema.safeParse(await req.json().catch(() => ({})))
     if (!parsed.success) {
@@ -93,6 +101,9 @@ export async function POST(
 
     return Response.json(data)
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('[Circle Profiles] report unhandled error:', error)
     return Response.json({ error: 'Не успяхме да анализираме профила.' }, { status: 500 })
   }

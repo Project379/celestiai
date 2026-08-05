@@ -13,6 +13,30 @@ image, not bare AOSP) — if the emulator was created without one, push
 registration failing is an emulator-config gap, not an app bug. Check the
 AVD's system image before treating a push failure as real.
 
+**Actual AVD used (2026-08-05):** Pixel 8, 1080x2400 @ 420dpi, Google Play
+system image, API 37.1 (Android 17) — the newest available API, not matched
+to the app's target SDK. If something breaks, check whether it's
+OS-version-related before treating it as an app bug — this is an untested
+variable, not a controlled match to a known-good API level. Image reports
+ABI x86_64 with Translated ABI arm64-v8a (native-ish ARM translation), so
+the universal-vs-ARM-only APK question from build planning is moot here —
+no `unzip -l` check needed before install.
+
+**Screen width caveat — read before step 4 or 6:** all prior device
+verification of this design was done on an iPhone 12 Pro Max, 428pt logical
+width. The 390px figure that appeared in earlier planning came from mockups
+and browser renders, not a verified device. This emulator is ~360 logical
+px wide — narrower than anything this design has been checked against, by a
+meaningful margin (428 → 360). Layout problems observed at 360 are real
+findings at an untested width, not emulator artifacts — do not wave them
+off as emulator quirks. Specifically inspect, against the longest real
+Bulgarian strings (not placeholder/short text):
+  - the Big Three label/value columns
+  - the phase name and illumination line under the moon
+  - the Питай Оракула invitation and its glow
+  - the Детайли pedestal
+All four were sized against the 428pt reference and have never run at 360.
+
 ## Order and what "working" looks like
 
 1. **Launch.** App icon, splash screen, and app name should be Stellaeum's

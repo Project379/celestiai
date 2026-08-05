@@ -1,6 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 import { logAuditEvent } from '@/lib/audit'
 import { buildCompatibilityReportContent } from '@/lib/circle/report'
 import {
@@ -25,6 +27,12 @@ export async function POST(
   }
 
   try {
+    await assertRateLimit({
+      key: `circle-relationship-report:${userId}`,
+      limit: 5,
+      windowMs: 60_000,
+    })
+
     const { relationshipId } = await context.params
     const parsed = generateReportSchema.safeParse(await req.json().catch(() => ({})))
     if (!parsed.success) {
@@ -118,6 +126,9 @@ export async function POST(
 
     return Response.json(inserted)
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('[Circle Report] unhandled error:', error)
     return Response.json({ error: 'Не успяхме да генерираме доклада.' }, { status: 500 })
   }
