@@ -30,6 +30,12 @@
 
 ---
 
+## Founder watch item — not a launch gate, but time-sensitive
+
+**Buy the Swiss Ephemeris Professional License the moment the first genuine paying premium subscriber lands (real traction, not friends/testers).** CHF 700 one-time, unlimited licence, valid 99 years. Purchase: [astro.com/swisseph/swephprice_e.htm](https://www.astro.com/swisseph/swephprice_e.htm) — contract at [astro.com/swisseph/secont_e.pdf](http://www.astro.com/swisseph/secont_e.pdf). **No retroactivity (contract clause 13)** — the licence is valid only from the date of complete payment, so don't sit on this once the trigger fires. Deliberately deferred pre-launch (cash-flow priority on an unlaunched product), not ignored — full reasoning and revisit-trigger list in `docs/licensing.md § Revisit triggers` and `.planning/POST_LAUNCH_UPGRADES.md` item 1. The first-subscriber trigger fires automatically: both `apps/web/lib/stripe/subscription.ts` and `apps/web/lib/revenuecat/webhook-events.ts` log loudly (`[Licensing]`-prefixed) the first time premium is granted with no prior premium row in `users`.
+
+---
+
 ## Gate list
 
 Last reviewed: 2026-04-27

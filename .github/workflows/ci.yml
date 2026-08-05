@@ -29,4 +29,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Verify sweph license pin (GPL-2.0, 2.10.0-11 only)
+        run: |
+          if grep -oP 'sweph@\K[^:]+' pnpm-lock.yaml | grep -v '^2\.10\.0-11$'; then
+            echo "::error::sweph resolved to a version other than the GPL-2.0-pinned 2.10.0-11. Versions above this are AGPL-3.0-or-later, which is incompatible with closed-source SaaS without a Swiss Ephemeris Professional License. See docs/licensing.md."
+            exit 1
+          fi
+          echo "sweph license pin verified: 2.10.0-11 only"
+
       - run: pnpm run check:all

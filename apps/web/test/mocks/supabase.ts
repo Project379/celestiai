@@ -20,7 +20,16 @@ import { vi } from 'vitest'
 
 type QueryResult = { data: unknown; error: unknown }
 
-const CHAIN_METHODS = ['select', 'eq', 'insert', 'update', 'delete', 'single', 'maybeSingle'] as const
+const CHAIN_METHODS = [
+  'select',
+  'eq',
+  'insert',
+  'update',
+  'delete',
+  'single',
+  'maybeSingle',
+  'limit',
+] as const
 
 function makeBuilder(result: QueryResult) {
   const builder: Record<string, unknown> = {}

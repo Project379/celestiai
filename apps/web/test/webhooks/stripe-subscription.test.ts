@@ -79,6 +79,7 @@ describe('handleCheckoutComplete', () => {
     } as never
     vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription)
     vi.mocked(ensureUserRecord).mockResolvedValue(makeAppUser({ clerk_id: 'user_1' }))
+    mockSupabase.push('users', { data: { clerk_id: 'existing_premium_user' } }) // first-premium-subscription check
     mockSupabase.push('users', { error: null })
 
     await handleCheckoutComplete(session)
@@ -223,6 +224,7 @@ describe('handleInvoicePaid', () => {
     } as never
     vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription)
     vi.mocked(ensureUserRecord).mockResolvedValue(makeAppUser({ clerk_id: 'user_1' }))
+    mockSupabase.push('users', { data: { clerk_id: 'existing_premium_user' } }) // first-premium-subscription check
     mockSupabase.push('users', { error: null })
 
     await handleInvoicePaid(invoice)

@@ -1,6 +1,7 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { getAppUserByClerkId } from '@/lib/users/ensure-user'
 import { logAuditEvent } from '@/lib/audit'
+import { logIfFirstPremiumSubscription } from '@/lib/licensing/first-premium-trigger'
 
 /**
  * REVISIT-62 sub-commit D — RevenueCat webhook event handling.
@@ -52,6 +53,7 @@ async function grantPremium(
   status: 'active' | 'trialing'
 ): Promise<void> {
   const supabase = createServiceSupabaseClient()
+  await logIfFirstPremiumSubscription(supabase)
   const { error } = await supabase
     .from('users')
     .update({

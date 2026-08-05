@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 import { logAuditEvent } from '@/lib/audit'
+import { logIfFirstPremiumSubscription } from '@/lib/licensing/first-premium-trigger'
 import { stripe } from '@/lib/stripe/client'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { type AppUser, ensureUserRecord } from '@/lib/users/ensure-user'
@@ -218,6 +219,9 @@ export async function handleCheckoutComplete(
   }
 
   const supabase = createServiceSupabaseClient()
+  if (isTrialCheckout) {
+    await logIfFirstPremiumSubscription(supabase)
+  }
   const { error } = await supabase
     .from('users')
     .update({
@@ -268,6 +272,9 @@ export async function handleSubscriptionUpdated(
     sub.status === 'trialing' && sub.metadata?.checkoutType === 'trial'
 
   const supabase = createServiceSupabaseClient()
+  if (isTrialSubscription) {
+    await logIfFirstPremiumSubscription(supabase)
+  }
   const { error } = await supabase
     .from('users')
     .update({
@@ -355,6 +362,7 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> 
   })
 
   const supabase = createServiceSupabaseClient()
+  await logIfFirstPremiumSubscription(supabase)
   const { error } = await supabase
     .from('users')
     .update({

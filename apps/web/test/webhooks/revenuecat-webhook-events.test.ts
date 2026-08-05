@@ -76,6 +76,7 @@ describe('with a known user', () => {
   })
 
   it('INITIAL_PURCHASE with the premium entitlement grants active premium', async () => {
+    mockSupabase.push('users', { error: null }) // first-premium-subscription check
     await handleRevenueCatEvent(makeEvent({ type: 'INITIAL_PURCHASE' }))
 
     const payload = lastUpdatePayload()
@@ -85,6 +86,7 @@ describe('with a known user', () => {
   })
 
   it('INITIAL_PURCHASE with period_type TRIAL grants trialing status', async () => {
+    mockSupabase.push('users', { error: null }) // first-premium-subscription check
     await handleRevenueCatEvent(makeEvent({ type: 'INITIAL_PURCHASE', period_type: 'TRIAL' }))
 
     expect(lastUpdatePayload().subscription_status).toBe('trialing')
