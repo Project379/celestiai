@@ -16,12 +16,6 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#08060f"
-        }
-      ],
       "expo-secure-store",
       "expo-web-browser",
       "@react-native-community/datetimepicker",
