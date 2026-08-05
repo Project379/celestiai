@@ -155,3 +155,28 @@ See HANDOFF-CC-2026-08-03-EOD.md for the standing-discipline section
 (halt boundary, standing answers, what does not relax) — still in effect,
 nothing here supersedes it. This handoff only adds today's checkpoint,
 gate-hardening, and EAS-setup-in-progress state.
+
+=== ADDENDUM 2026-08-05 — ONE SESSION AT A TIME, NOW STANDING DISCIPLINE ===
+
+Two Claude Code sessions ran against this working tree concurrently on
+2026-08-05 during the Android EAS build debugging. Both independently
+diagnosed and fixed the same duplicate-React bug (`packages/ui` resolving
+its own React copy) — one via removing the wrong `dependencies` entry
+(root-cause fix), the other via a workspace-wide `pnpm.overrides` pin
+(symptom-level fix) plus an unrelated `expo install --fix`. Both landed in
+the same uncommitted tree at once, neither session aware of the other.
+Reconciled same-day: kept the dependency-removal fix, discarded the
+override, verified via a clean `next build` (the override session's own
+acceptance test — no `useContext` null crash at `/404`). Full detail in
+`.planning/phases/phase-a-mobile-scaffold/REVISIT-TRIGGERS.md` item 66.
+
+No data was lost and the fixes were compatible enough that reconciling
+took under 30 minutes — but this is the same class of risk as the two-
+branch divergence that cost hours earlier this week
+(see [[feedback_develop_branch]] / HANDOFF-CC-2026-08-04-EOD's own branch
+section above). It was only caught because the founder happened to
+inspect the tree before either session committed.
+
+**Standing discipline, effective now: one Claude Code session at a time
+against this repo.** Before starting substantive work in a new session,
+confirm no other session is active against the same working tree.
