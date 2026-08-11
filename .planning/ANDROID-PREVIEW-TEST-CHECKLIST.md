@@ -52,6 +52,27 @@ changes should be visible in app behavior — if something breaks that isn't
 splash- or notification-icon-related, it's a real regression to investigate,
 not expected fallout from these changes.
 
+**Second update, 2026-08-11 — build #4's actual Gradle failure, and a real
+crash it caused:** a fourth build failure (`:app:mergeReleaseJavaResource`
+colliding on a duplicate `META-INF/versions/9/OSGI-INF/MANIFEST.MF` between
+two Clerk-pulled-in dependencies) was fixed with a scoped
+`expo-build-properties` packaging exclusion, plus an unrelated Windows-only
+local-build bug (`@react-native/gradle-plugin` patch) and a real phantom
+`@babel/plugin-transform-react-jsx` dependency found along the way — all
+three are build-toolchain-only, zero app-behavior surface, nothing new to
+test because of them. Build #5 then succeeded (first APK ever produced)
+but **crashed instantly on launch**: `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` and
+`EXPO_PUBLIC_SENTRY_DSN` were both set to a literal placeholder string as
+EAS env vars, not real values — `@clerk/clerk-js` threw on init before
+`RootLayout` could render. Fixed via `eas env:set`; **not a code bug, but a
+process gap worth closing before any future build**: EAS env values are
+never validated at build time, so a placeholder produces a green build and
+a dead app. Run `eas env:list <environment>` and eyeball every value before
+trusting a build to actually launch — cheap, and would have caught this
+before spending the cycle. See the Sentry entry under "Expected failures"
+below — it's no longer safe to assume Sentry is silently broken now that
+the DSN is real.
+
 ## Order and what "working" looks like
 
 1. **Launch.** App name and **splash background** should be Stellaeum's own
@@ -141,10 +162,21 @@ not expected fallout from these changes.
 - **Ти → Премиум: "Премиум идва скоро."** Literal, deliberate stub — no
   purchase flow exists yet, waiting on RevenueCat dashboard config and the
   mobile subscription UI port.
-- **Sentry: no crash events show up even if something crashes.** REVISIT-64
-  (filed today) — the DSN env var was misnamed and the RN Sentry project may
-  not exist yet. Fixed for *future* builds once that REVISIT closes; this
-  first build may predate the fix depending on build timing.
+- **Sentry — no longer safe to assume "expected," worth actually checking.**
+  Updated 2026-08-11: build #5 crashed instantly on launch because
+  `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` and `EXPO_PUBLIC_SENTRY_DSN` were both
+  set to a literal placeholder string as EAS env vars — fixed via
+  `eas env:set` before build #6. That means build #6 carries a real DSN for
+  the first time, so basic Sentry crash-event capture (the DSN alone is
+  enough to ingest events) may now actually work. What's still genuinely
+  missing per REVISIT-64 finding #2: `SENTRY_ORG`/`SENTRY_PROJECT` aren't
+  configured, so source maps won't upload — if an event does show up, expect
+  a minified/unreadable stack trace, not a fully symbolicated one. If
+  something crashes during this test pass, check the Sentry dashboard: an
+  event with a bad stack trace is a partial win (DSN fix confirmed, org/
+  project fix still open); no event at all means REVISIT-64 isn't fully
+  closed and is still worth chasing before trusting crash reporting on
+  future builds.
 
 ## If something breaks and it's not on the expected-failure list
 
