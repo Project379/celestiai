@@ -1,0 +1,26 @@
+diff --git a/shared/src/main/kotlin/com/facebook/react/utils/Os.kt b/shared/src/main/kotlin/com/facebook/react/utils/Os.kt
+index a741fde8e43dbdd66d42f00745c8492b3d7f07d4..79f25309d01d7a1d3aefb6818557f92cfa17e9c0 100644
+--- a/shared/src/main/kotlin/com/facebook/react/utils/Os.kt
++++ b/shared/src/main/kotlin/com/facebook/react/utils/Os.kt
+@@ -34,10 +34,19 @@ object Os {
+ 
+   /**
+    * As Gradle doesn't support well path with spaces on Windows, we need to return relative path on
+-   * Win. On Linux & Mac we'll default to return absolute path.
++   * Win when the absolute path contains a space. On Linux & Mac, and on Windows paths without a
++   * space, we default to returning the absolute path.
++   *
++   * Patched: the previous unconditional `isWindows()` branch made Expo's `--entry-file` relative
++   * to the react `root` (apps/mobile), but Metro/Expo CLI re-resolves that relative path against
++   * its own monorepo-detected projectRoot (the pnpm workspace root), double-applying the `../../`
++   * offset and failing to resolve any entry file that lives inside node_modules/.pnpm two levels
++   * up. Absolute paths sidestep that mismatch entirely, matching what already happens on Linux/Mac
++   * (including EAS build workers) and only falling back to relative for the actual space-related
++   * case the original comment describes.
+    */
+   fun File.cliPath(base: File): String =
+-      if (isWindows()) {
++      if (isWindows() && absolutePath.contains(" ")) {
+         this.relativeTo(base).path
+       } else {
+         absolutePath

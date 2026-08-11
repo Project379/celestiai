@@ -7,6 +7,11 @@ settings:
 overrides:
   sweph: 2.10.0-11
 
+patchedDependencies:
+  '@react-native/gradle-plugin@0.81.5':
+    hash: sgrq2szqed6z5ps7gctvnlggxq
+    path: patches/@react-native__gradle-plugin@0.81.5.patch
+
 importers:
 
   .:
@@ -165,6 +170,9 @@ importers:
       '@babel/core':
         specifier: ^7.26.0
         version: 7.28.6
+      '@babel/plugin-transform-react-jsx':
+        specifier: ^7.28.6
+        version: 7.28.6(@babel/core@7.28.6)
       '@types/node':
         specifier: ^22.10.10
         version: 22.19.7
@@ -9878,7 +9886,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@react-native/gradle-plugin@0.81.5': {}
+  '@react-native/gradle-plugin@0.81.5(patch_hash=sgrq2szqed6z5ps7gctvnlggxq)': {}
 
   '@react-native/gradle-plugin@0.83.1': {}
 
@@ -14838,7 +14846,7 @@ snapshots:
       '@react-native/assets-registry': 0.81.5
       '@react-native/codegen': 0.81.5(@babel/core@7.28.6)
       '@react-native/community-cli-plugin': 0.81.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      '@react-native/gradle-plugin': 0.81.5
+      '@react-native/gradle-plugin': 0.81.5(patch_hash=sgrq2szqed6z5ps7gctvnlggxq)
       '@react-native/js-polyfills': 0.81.5
       '@react-native/normalize-colors': 0.81.5
       '@react-native/virtualized-lists': 0.81.5(@types/react@19.1.17)(react-native@0.81.5(@babel/core@7.28.6)(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(utf-8-validate@6.0.6))(react@19.1.0)
