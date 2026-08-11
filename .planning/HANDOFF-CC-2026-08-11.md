@@ -129,3 +129,124 @@ work first.
 - `patches/@react-native__gradle-plugin@0.81.5.patch` — the actual fix,
   tracked via `pnpm.patchedDependencies` in root `package.json`. Easy to
   miss if not looking for it; noted here for exactly that reason.
+
+=== UPDATE — BUILD #5 (crashed), BUILD #6 (launches, black screen), END OF DAY ===
+
+**Build #5 succeeded, then crashed instantly on launch.** All four Gradle-
+stage blockers are now closed for real, `[verified]` against an actual EAS
+build, not just local Gradle: Sentry-upload postinstall, duplicate React,
+splashscreen_logo resource linking, and the META-INF collision this
+session fixed. This is the first native binary this project has ever
+produced. `adb logcat -b crash` showed a clean fatal on
+`@clerk/clerk-js: The publishableKey passed to Clerk is invalid` —
+`EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` and `EXPO_PUBLIC_SENTRY_DSN` had both
+been set as EAS env vars to the literal placeholder string from setup
+instructions, pasted verbatim rather than replaced. `EXPO_PUBLIC_API_BASE`
+and `SENTRY_DISABLE_AUTO_UPLOAD` were correct. Fixed via `eas env:set`
+(note for next time: `env:update` is deprecated on this CLI version, and
+`--force` is not a valid flag — `env:set` is the one that works).
+
+**The lesson, worth repeating because it cost a full build cycle: EAS never
+validates env var values.** A placeholder produces a green build and a
+dead app — the failure is invisible until the binary actually launches on
+a device, an hour and a build slot after the mistake was made. Concrete
+process fix, not just a note: **before spending any future EAS build, run
+`eas env:list <environment>` and read every value — confirm nothing looks
+like a placeholder, an example string, or a `REPLACE_WITH_` prefix.** This
+is a 30-second check against a 1-hour+ build cycle; do it every time from
+now on, not just after getting burned once.
+
+**Build #6 installs and launches — no crash, but goes black after the
+loading screen and stays there.** `[verified]` from a full 607-line
+filtered logcat: process alive, zero FATAL/AndroidRuntime errors, clean
+foreground/background transitions — this is not a crash, the JS thread
+simply stops producing output after a handled RevenueCat error. `[verified]`
+zero network requests were ever made (grepped logcat for `10.0.2.2`,
+`okhttp`, `fetch` — nothing), meaning execution never reached any
+data-fetching code, not a hung fetch.
+
+**Also `[verified]` this build: Sentry captured its first-ever mobile
+error** (`ERR-MOB-RC-001`, missing `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`
+— genuinely still unset in EAS, not part of the four vars fixed for build
+#6) — but it landed in the `javascript-nextjs` Sentry project, confirming
+REVISIT-64 finding #2 (`SENTRY_ORG`/`SENTRY_PROJECT` point at web's
+project) in production, not just in source. Raise this — mobile errors
+polluting web's issue stream is worse than not reporting at all, because it
+looks like it's working.
+
+**Black-screen diagnosis — root cause found, `[inferred]` from source
+reading, not yet re-run on-device to confirm live:**
+
+1. `RevenueCatProvider` (`lib/purchases/RevenueCatProvider.tsx:134`) —
+   ruled out, confirmed by reading the code: it `return <>{children}</>`
+   unconditionally regardless of whether `configure()` succeeds, throws, or
+   the API key is missing. The RC-001 error is real (and the missing env
+   var is a real, separate gap — see above) but it cannot be what blanks
+   the screen; nothing in this component gates rendering on it.
+
+2. **The actual gate: `app/(authed)/_layout.tsx:50`** —
+   `if (!isLoaded) return <AppLoadingScreen />`, where `isLoaded` comes
+   from `@clerk/expo`'s `useAuth()`. Traced the routing: root `"/"` maps
+   through `(authed)/(tabs)/index.tsx` (the only `index.tsx` in either
+   route group), so `AuthedLayout` is the first thing to render on a cold,
+   signed-out launch — before any redirect to `/sign-in` can happen, since
+   the redirect itself is gated on `isLoaded` first (line 34:
+   `if (!isLoaded || !isSignedIn) return`). If Clerk's `isLoaded` never
+   becomes `true`, the app is stuck on `AppLoadingScreen` forever — no
+   further code past that gate ever mounts, which is exactly why zero
+   network requests and zero further JS logs were observed: the Stack
+   containing every real screen (`(tabs)`, `wizard`, `oracle`, etc.) never
+   renders.
+
+3. **This also resolves the "separate, lower-priority" launch-animation
+   note — it is not a splash-asset mismatch, it's this same screen.** Read
+   `components/design-system/AppLoadingScreen.tsx` — a rotating instrument
+   wheel with 24 tick marks, concentric stroked circles, a violet radial
+   glow, and "STELLAEUM" set in Cinzel-SemiBold with a violet text-shadow
+   glow, on a `color.base` (near-black) background. This is a pixel-for-
+   pixel match for what was described ("bordered circle with tick marks,
+   hexagonal glow, and STELLAEUM in Cinzel, with hard visible borders").
+   It isn't the native splash handoff at all — `splash.png` is correct and
+   already verified pixel-by-pixel — it's this JS component, and it's
+   stuck on screen because `isLoaded` never resolves, not briefly shown
+   before something else takes over. **Same root cause, one finding, not
+   two.**
+
+4. **`NativeEventEmitter` warnings — checked, not the cause.** Two sources
+   identified: `@clerk/expo`'s own `useNativeAuthEvents` hook (wrapped in
+   try/catch, sets only local optional state, cannot block rendering even
+   if it throws — read the source directly) and `react-native-purchases`'
+   native module (standard RN pattern warning, non-fatal). Neither gates
+   anything; ruled out as contributing to the black screen.
+
+**What's still open, not yet confirmed live:** *why* `isLoaded` never
+resolves. Not chased further per instruction (diagnose only, no fix
+without on-device verification available). Clerk's readiness typically
+depends on a token-cache read (SecureStore — fast, unlikely culprit) and a
+network round-trip to Clerk's own Frontend API to validate/refresh the
+session (a different host than `EXPO_PUBLIC_API_BASE`'s `10.0.2.2`, so the
+"zero network requests" grep — which specifically searched `10.0.2.2`,
+`okhttp`, `fetch` — would not have caught a stalled or failed call to
+Clerk's cloud API if it used a different log tag). The "Clerk has been
+loaded with development keys" log line is a synchronous SDK-init message
+tied to recognizing the publishable key's `pk_test_` prefix, not proof
+that `isLoaded` itself has resolved — it does not contradict this
+hypothesis. **First thing to check tomorrow:** re-run with `adb logcat`
+grepping for Clerk's own network activity (its actual API host, not
+`10.0.2.2`) to see whether a session-fetch call was attempted, is hanging,
+or failed silently.
+
+**End-of-day status:**
+- Nothing uncommitted or unpushed — checked via `git status --short` and
+  `git log origin/main..HEAD`, both clean, before this handoff was written.
+- `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` still needs setting in EAS
+  (confirmed missing via the ERR-MOB-RC-001 Sentry event, not assumed).
+- Founder is fixing `apps/mobile/.env.local`'s `NEXT_PUBLIC_SENTRY_DSN` →
+  `EXPO_PUBLIC_SENTRY_DSN` themselves — confirmed via direct grep that
+  nothing in mobile's own code reads the wrong name (only `.env.local`/
+  `.env.example` reference it; `lib/monitoring/sentry.ts` already reads
+  the correct `EXPO_PUBLIC_SENTRY_DSN`), so no code-side fix needed.
+- No fix was implemented for the black screen — diagnosis only, per
+  explicit instruction, since on-device verification wasn't available this
+  session. Tomorrow starts with confirming the `isLoaded`-never-resolves
+  hypothesis live (the Clerk-network-call check above), then a fix.
