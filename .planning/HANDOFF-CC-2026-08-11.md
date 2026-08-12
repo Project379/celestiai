@@ -356,3 +356,85 @@ unexpected dependency addition, check whether a tool added it for a reason —
 week something got reverted as apparent noise and turned out load-bearing;
 the first was a concurrent-session React fix (see the standing
 one-session-at-a-time discipline note).
+
+=== UPDATE — 2026-08-12, third phantom dependency, build #8 queued ===
+
+**Build #7 failed with a real, different error, and it was in the plugin —
+but not the resolution-path problem the local `expo prebuild` verification
+was checking for:** `Cannot find module '@expo/config-plugins'` from
+`apps/mobile/plugins/withEmulatorLoopbackCleartext.js`. The plugin required
+`@expo/config-plugins` directly, which was never a declared dependency of
+`apps/mobile` — it resolved locally by accident through pnpm's shared store
+(the same store `expo-dev-client` and `@babel/plugin-transform-react-jsx`
+had already been found hiding in), and EAS's clean install doesn't have that
+accident available. **Third instance of this exact shape in this project.**
+
+**New known local-fidelity gap, alongside the fallback-splash-image
+finding from build-planning: a green local `expo prebuild` run cannot catch
+a phantom dependency.** Local resolution walks the same long-lived,
+broadly-populated pnpm store that hid the other two phantom deps; EAS
+resolves against a fresh install with nothing ambient. Reading the generated
+manifest/XML output (the standard this project has held to since the
+META-INF collision) was still the right verification method for "did the
+plugin do what it's supposed to" — it was never capable of catching "does
+this module even resolve on a machine that doesn't already have it by
+accident," which needs a different check (see below).
+
+**Fixed, `604d032`:** switched the plugin's import from `@expo/config-plugins`
+to `expo/config-plugins` — a subpath Expo ships specifically so local config
+plugins don't need the package directly. It's a thin re-export file inside
+the `expo` package itself, and `expo`'s own `package.json` declares
+`@expo/config-plugins` as its dependency — so this resolves anywhere `expo`
+resolves (guaranteed by npm-compatible resolution, not by local accident),
+with no new dependency and no version-drift surface. Verified by reading
+`expo`'s own `package.json` and the `config-plugins.js` re-export file
+directly (not just "it resolved on my machine" — confirmed *why* it's
+guaranteed to resolve identically anywhere `expo` itself does), plus a full
+clean `expo prebuild` (`android/` deleted first, not incremental) confirming
+identical, correct generated output.
+
+**Also fixed, `15ed39c`:** `expo-dev-client` had been added via plain
+`pnpm add -D expo-dev-client`, which resolved `^57.0.11` — not aligned with
+this app's SDK 54. Corrected via `npx expo install expo-dev-client`, which
+resolved `^6.0.21`, the SDK-54-correct line. **Caught a real footgun doing
+this: the first `git checkout -- package.json` used to revert `expo
+prebuild`'s known android/ios-script-rewrite side effect also silently
+reverted this uncommitted version fix**, because both changes were sitting
+in the same uncommitted file at once. Re-applied and re-verified the diff
+contained only the intended change before committing — worth remembering
+that a blanket `checkout` on a file discards *everything* uncommitted in it,
+not just the change you're trying to undo.
+
+**Two general rules, going forward:**
+- **Use `npx expo install <package>` instead of `pnpm add` for any
+  `expo-*`/`@expo/*` package**, so the resolved version aligns with the
+  SDK the project actually targets rather than whatever's newest on the
+  registry. `pnpm add -D expo-dev-client` pulling `^57.0.11` against SDK 54
+  is the concrete example that already cost a cycle.
+- **Any local config plugin under `apps/mobile/plugins/` must resolve its
+  imports through packages actually declared as dependencies** — either a
+  real, declared `devDependency`, or (preferably, when available) a subpath
+  re-export of a package that's already a real dependency, the way
+  `expo/config-plugins` is. Working locally proves nothing about EAS: pnpm's
+  shared store makes a local machine's resolution strictly more permissive
+  than a fresh install, and this project has now hit that gap three times
+  (`@babel/plugin-transform-react-jsx`, `expo-dev-client`,
+  `@expo/config-plugins`) without it once showing up as a local failure
+  first.
+
+**Also worth recording — a failure mode that looks like success:** running
+`pnpm add` while `node_modules` already exists can silently do a
+lockfile-only update ("resolved N, reused 0, downloaded 0, added 0",
+with a warning about `node_modules` being present) without actually placing
+anything on disk. `package.json` and `pnpm-lock.yaml` both look correctly
+updated; only a subsequent full `pnpm install` (or checking whether the
+package is actually reachable in `node_modules`) reveals nothing was
+installed. Worth checking for this specifically after any `pnpm add` that
+doesn't clearly report packages downloaded.
+
+**Build #8 outcome not yet known as of this update** — founder is pushing
+`604d032` and `15ed39c` (plus the earlier `53ddb2a`/`7415d72`/`bec6fef`/
+`cc6e8a6`/`c1d83dd` from this same session) and rebuilding. The two prepared
+black-screen diagnostic paths from the previous update still stand
+unchanged — nothing about this build/dependency fix touches the
+`isLoaded`-resolution question.
