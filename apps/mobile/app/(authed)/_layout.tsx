@@ -25,10 +25,14 @@ import { isWizardDismissedThisLaunch } from '@/lib/onboarding/dismissState'
  * already inside /wizard to avoid bouncing the user out of their own flow.
  */
 export default function AuthedLayout() {
-  const { isLoaded, isSignedIn } = useAuth()
+  const { isLoaded, isSignedIn, userId } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const firstChart = useFirstChart()
+
+  // TEMP INSTRUMENTATION — black-screen investigation (2026-08-12). Remove
+  // once isLoaded is confirmed to resolve (or the stall cause is found).
+  console.log('[AuthedLayout]', { isLoaded, isSignedIn, userId })
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return
