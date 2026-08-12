@@ -1,4 +1,9 @@
-const { withDangerousMod, withAndroidManifest, AndroidConfig } = require('@expo/config-plugins')
+// Imported from `expo/config-plugins`, not `@expo/config-plugins` directly —
+// `expo` is a real declared dependency of this package (the framework
+// itself), so this re-export can't become a phantom dependency the way a
+// direct @expo/config-plugins import did (resolved locally by pnpm-store
+// accident, absent on EAS). See HANDOFF-CC-2026-08-11.md for the incident.
+const { withDangerousMod, withAndroidManifest, AndroidConfig } = require('expo/config-plugins')
 const fs = require('fs')
 const path = require('path')
 
