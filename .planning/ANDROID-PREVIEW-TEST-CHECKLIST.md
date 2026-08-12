@@ -90,6 +90,20 @@ the DSN is real.
 3. **Birth-data wizard.** Date, time, location (live city autocomplete —
    this is the first real network-dependent screen; confirms `EXPO_PUBLIC_API_BASE`
    is reachable), confirm. Working: chart gets created, redirected to Днес/home.
+
+   **New this build, worth understanding before testing:** this is the first
+   build where `EXPO_PUBLIC_API_BASE` (`http://10.0.2.2:3000`, plain HTTP)
+   has a chance to actually work from a native binary — every prior build
+   either never got past Gradle or never got past the black-screen gate
+   before reaching this screen, and Android blocks cleartext HTTP by default
+   in release builds. A `network-security-config` plugin
+   (`apps/mobile/plugins/withEmulatorLoopbackCleartext.js`) scoped to the
+   literal `10.0.2.2` domain was added and verified against generated
+   manifest output ahead of this build. If city autocomplete fails, check
+   `adb logcat` for `CLEARTEXT communication ... not permitted` specifically
+   before treating it as a backend/API bug — that exact string means the
+   plugin didn't take effect on this build, a distinct failure from the API
+   being unreachable for some other reason.
 4. **Natal chart (Карта tab).** Working: real computed chart renders — planet
    positions, houses, aspects — not a placeholder. This is the first time
    the chart wheel has rendered from a real compiled binary rather than
@@ -151,11 +165,21 @@ the DSN is real.
 
 ## Expected failures — not bugs, don't file them as such
 
-- **RevenueCat: `ERR-MOB-RC-003` logged, nothing else happens.** The API key
-  is still the literal placeholder (`REPLACE_WITH_...`) — the native SDK
-  correctly rejects it and the code catches that loudly, by design. Stays
-  expected until the RevenueCat Test Store dashboard work is done and a real
-  key is set via `eas env:create`.
+- **RevenueCat — updated 2026-08-12, placeholder-key entry no longer
+  applies.** A real Test Store key was set for `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`
+  ahead of this build, replacing the `REPLACE_WITH_...` placeholder. Expect
+  `ERR-MOB-RC-001`/`ERR-MOB-RC-002`/`ERR-MOB-RC-003` to all stay silent, and
+  `[RevenueCat] configure() called for platform "android"` +
+  `[RevenueCat] isConfigured() -> true` to appear instead. **Worth
+  understanding, not chasing as a bug:** this is the first build where
+  RevenueCat leaves Expo Go's Browser Mode and loads the real native SDK — a
+  Test Store key behaving differently natively than it did in Browser Mode
+  is expected, not a regression. Moot for this pass in practice:
+  `purchasePackage()`/`getOfferings()` aren't called anywhere in the codebase
+  yet (`RevenueCatProvider` is still the `configure()` + identity-only
+  scaffold), so there's no purchase-flow behavior to observe either way this
+  build — `configure()`/`isConfigured()` succeeding is the only signal to
+  check.
 - **Кръг tab: three static cards, nothing happens when tapped.** No
   `onPress` handlers exist yet — this is the known 70-line stub, not a
   regression. Confirmed in CHECKPOINT-2026-08-04.md §2.

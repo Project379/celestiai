@@ -250,3 +250,109 @@ or failed silently.
   explicit instruction, since on-device verification wasn't available this
   session. Tomorrow starts with confirming the `isLoaded`-never-resolves
   hypothesis live (the Clerk-network-call check above), then a fix.
+
+=== UPDATE — 2026-08-12, cleartext fix + instrumentation, build #7 queued ===
+
+**EAS env values confirmed clean before spending the build:** `eas env:list
+preview` showed real values for `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`,
+`EXPO_PUBLIC_SENTRY_DSN`, `EXPO_PUBLIC_API_BASE`, `SENTRY_DISABLE_AUTO_UPLOAD`
+— no repeat of the build #5 placeholder mistake. The Clerk `ClerkProvider`
+setup in `app/_layout.tsx` matches the documented `@clerk/expo` pattern
+exactly (no custom domain/`frontendApi` override), so the dev-instance-key
+hypothesis has no code-level smoking gun — the live network trace decides it,
+not source reading.
+
+**New bug found and fixed before it could bite: cleartext HTTP blocked in
+release builds.** `EXPO_PUBLIC_API_BASE` is `http://10.0.2.2:3000` — plain
+HTTP, and Android blocks cleartext traffic by default in release builds. This
+was going to break every API call the moment the app got past whatever gates
+`isLoaded`, so it was fixed in the same cycle as the instrumentation rather
+than queued for a second build. **General lesson worth keeping: when
+`expo-build-properties` (currently `1.0.10`) doesn't expose an option you
+need — here, a domain-scoped `network-security-config` rather than its only
+option, a blanket `android:usesCleartextTraffic` switch — a small local
+config plugin under `apps/mobile/plugins/` is the sanctioned route, using
+`@expo/config-plugins`'s `withDangerousMod`/`withAndroidManifest` directly.
+It must be verified against actual generated output before being trusted,
+the same way every other build-toolchain fix this project has shipped was
+verified — a plugin that runs without error is not evidence it did anything;
+run `expo prebuild` locally and read the generated `android/app/src/main/res/
+xml/` file and `AndroidManifest.xml` attribute directly.** Done here:
+`apps/mobile/plugins/withEmulatorLoopbackCleartext.js` writes a
+`network-security-config` XML permitting cleartext for the literal domain
+`10.0.2.2` only (the emulator's documented loopback alias, never a real
+routable host) and sets `android:networkSecurityConfig` on `<application>`.
+Confirmed via a local `expo prebuild` run that both the XML file and the
+manifest attribute are present in the generated output — not inferred from
+the plugin source alone. Because the domain match is exact and `10.0.2.2`
+never resolves to anything in production, this is safe in a production build
+by construction; no build-profile branching was needed (this project's
+`app.json` is static, with no `app.config.js` env-conditional logic, so a
+profile-scoped approach wasn't even available here without a larger
+restructure — the domain-scoped config plugin sidesteps needing one).
+Committed separately from the instrumentation below, `53ddb2a`.
+
+**Temporary instrumentation added, `7415d72`:** `app/(authed)/_layout.tsx`
+now logs `[AuthedLayout] { isLoaded, isSignedIn, userId }` on every render, to
+get a direct answer on whether `isLoaded` ever resolves rather than inferring
+it from silence. Marked for removal once the black-screen cause is confirmed.
+
+**RevenueCat: real Test Store key being set for build #7,** replacing the
+`REPLACE_WITH_...` placeholder that's been in EAS since day one. Not
+platform-split, goes in as `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` as-is.
+Expected effect confirmed by reading `RevenueCatProvider.tsx`: `ERR-MOB-RC-001`
+(missing key) and `ERR-MOB-RC-002` (placeholder-key warning) should both stop
+firing; `configure()` should succeed and log `[RevenueCat] configure() called
+for platform "android"` followed by `[RevenueCat] isConfigured() -> true`.
+**Worth noting, not chasing as a bug if it deviates:** this is the first
+build where RevenueCat leaves Expo Go's "Browser Mode" stub and loads the
+real native SDK — a Test Store key working in Browser Mode does not guarantee
+it behaves identically natively. Moot for this pass regardless: grepped the
+codebase, `purchasePackage()`/`getOfferings()` are not called anywhere yet —
+`RevenueCatProvider` is still the P.15 scaffold (`configure()` + identity
+`logIn()`/`logOut()` only, per its own header comment), so there is nothing
+purchase-flow-shaped to test natively this build. The only live signal this
+pass is whether `configure()`/`isConfigured()` succeed.
+
+**Build #7 outcome not yet known as of this update** — founder is setting the
+RevenueCat env var, pushing `53ddb2a` and `7415d72`, and starting the build.
+Two prepared paths depending on what the `[AuthedLayout]` log shows:
+- If `isLoaded` never flips: next diagnostic is an **unfiltered** full-launch
+  `adb logcat` capture (not pre-filtered to `10.0.2.2` or any tag — that
+  exact mistake is what hid Clerk's traffic in the original black-screen
+  read). Capture once, analyze for multiple signals after the fact rather
+  than re-capturing per hypothesis: presence/absence of any
+  `clerk.accounts.dev` network activity (distinguishes "never called out" from
+  "called out and hung"), any `expo-secure-store`/`RNCSecureStore`/Keystore
+  exception (a local, non-network cause that would explain a stuck `isLoaded`
+  with zero network activity at all), and any `UnknownHostException`/
+  `SSLHandshakeException`/`SocketTimeoutException`/`CLEARTEXT communication
+  ... not permitted` (the last one specifically would mean the new
+  network-security-config plugin didn't take effect on this build — check
+  first if seen, cheap to rule in or out).
+- If `isLoaded` resolves and the app renders: `ANDROID-PREVIEW-TEST-CHECKLIST.md`
+  updated this session (RevenueCat expected-failure entry corrected, cleartext/
+  network note added ahead of step 3) — that becomes the live document again,
+  first real chance to confirm `EXPO_PUBLIC_API_BASE` actually works from a
+  native build.
+
+**Correction, same session: I reverted `expo-dev-client` as apparent noise,
+and it was load-bearing.** `expo prebuild` had auto-added it because
+`eas.json`'s `development` profile sets `developmentClient: true`; I reverted
+it on the reasoning that it was unrequested and unrelated to the cleartext/
+instrumentation work. It was not unrelated — `eas-cli` probes for it via
+`resolve-from` against a synthetic file, and under pnpm's strict isolation
+the module genuinely isn't resolvable when absent, so the probe throws
+instead of returning null and the build stays blocked (`eas-cli/build/build/
+utils/devClient.js:77`, `isExpoDevClientInstalled`). Same class of issue as
+`@babel/plugin-transform-react-jsx` from build #4/#5 — pnpm surfacing a real
+requirement that hoisting-based package managers hide. Founder reinstalled it
+deliberately (`pnpm add -D expo-dev-client`, `bec6fef`) and pinned `eas-cli`
+to `21.8.0` in the same pass (`cc6e8a6`) to stop the version drift that had
+already cost time three times (`env:update` deprecated mid-session,
+`env:set` behaving unexpectedly, this probe). **Lesson: before reverting an
+unexpected dependency addition, check whether a tool added it for a reason —
+"unrequested" is not the same as "unrelated."** This is the second time this
+week something got reverted as apparent noise and turned out load-bearing;
+the first was a concurrent-session React fix (see the standing
+one-session-at-a-time discipline note).
