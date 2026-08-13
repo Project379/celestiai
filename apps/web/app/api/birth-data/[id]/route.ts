@@ -7,6 +7,8 @@ import {
 import { logAuditEvent } from '@/lib/audit'
 import { updateBirthDataSchema } from '@stellaeum/core/charts/schemas'
 import { logServerError } from '@/lib/monitoring/log-server-error'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * Error IDs emitted by this handler (wired to Sentry via logServerError
@@ -29,6 +31,12 @@ export async function GET(_request: Request, { params }: RouteParams) {
   }
 
   try {
+    await assertRateLimit({
+      key: `birth-data-get:${userId}`,
+      limit: 60,
+      windowMs: 60_000,
+    })
+
     const { id } = await params
     const result = await getBirthChart(userId, id)
     if (!result.ok) {
@@ -39,6 +47,9 @@ export async function GET(_request: Request, { params }: RouteParams) {
     }
     return Response.json(result.data)
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     logServerError('ERR-BD-005', error, {
       context: 'GET /api/birth-data/[id] failed',
     })
@@ -59,6 +70,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 
   try {
+    await assertRateLimit({
+      key: `birth-data-patch:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
     const { id } = await params
     const body = await request.json()
 
@@ -89,6 +106,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return Response.json(result.data)
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     logServerError('ERR-BD-002', error, {
       context: 'PATCH /api/birth-data/[id] failed',
     })
@@ -109,6 +129,12 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
   }
 
   try {
+    await assertRateLimit({
+      key: `birth-data-delete:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
     const { id } = await params
     const result = await deleteBirthChart(userId, id)
     if (!result.ok) {
@@ -126,6 +152,9 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     }
     return new Response(null, { status: 204 })
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     logServerError('ERR-BD-003', error, {
       context: 'DELETE /api/birth-data/[id] unhandled error',
     })

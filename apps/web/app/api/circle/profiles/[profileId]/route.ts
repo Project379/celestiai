@@ -2,6 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { getSavedProfileForUser } from '@/lib/circle/service'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 export async function DELETE(
   _req: Request,
@@ -10,6 +12,19 @@ export async function DELETE(
   const { userId } = await auth()
   if (!userId) {
     return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+  }
+
+  try {
+    await assertRateLimit({
+      key: `circle-profiles-delete:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    throw error
   }
 
   const { profileId } = await context.params

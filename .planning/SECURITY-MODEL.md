@@ -9,7 +9,7 @@ This document is the canonical reference for Row Level Security posture across a
 
 The B.0d security audit (2026-05-09) found that 7 tables — `users`, `audit_logs`, `chart_calculations`, `processed_webhook_events`, `user_crystals`, `user_daily_crystals`, `daily_transits` — were fully readable AND writable by anyone with the publishable API key (which ships in the client JS bundle). The CA-0002 schema-hardening migration (0008) had ENABLE RLS on a selective subset of tables but left these unprotected. Without this document, the same gap could recur whenever a new table is added.
 
-Full incident write-up: `.planning/INCIDENT-2026-05-09-RLS-EXPOSURE.md`.
+Full incident write-up: `.planning/archive/INCIDENT-2026-05-09-RLS-EXPOSURE.md`.
 
 ## Posture taxonomy
 

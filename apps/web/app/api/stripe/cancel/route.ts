@@ -2,6 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { stripe } from '@/lib/stripe/client'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
+import { toErrorResponse } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * POST /api/stripe/cancel
@@ -27,6 +29,12 @@ export async function POST(req: Request) {
   }
 
   try {
+    await assertRateLimit({
+      key: `stripe-cancel:${userId}`,
+      limit: 5,
+      windowMs: 60_000,
+    })
+
     const supabase = createServiceSupabaseClient()
     const { data: user } = await supabase
       .from('users')
@@ -51,8 +59,7 @@ export async function POST(req: Request) {
 
     return Response.json({ success: true })
   } catch (error) {
-    console.error('[Stripe Cancel] Error cancelling subscription:', error)
-    return Response.json({ error: 'Грешка при отказ от абонамент' }, { status: 500 })
+    return toErrorResponse(error, 'Грешка при отказ от абонамент')
   }
 }
 
@@ -71,6 +78,12 @@ export async function DELETE() {
   }
 
   try {
+    await assertRateLimit({
+      key: `stripe-reactivate:${userId}`,
+      limit: 5,
+      windowMs: 60_000,
+    })
+
     const supabase = createServiceSupabaseClient()
     const { data: user } = await supabase
       .from('users')
@@ -91,7 +104,6 @@ export async function DELETE() {
 
     return Response.json({ success: true })
   } catch (error) {
-    console.error('[Stripe Reactivate] Error reactivating subscription:', error)
-    return Response.json({ error: 'Грешка при възстановяване на абонамент' }, { status: 500 })
+    return toErrorResponse(error, 'Грешка при възстановяване на абонамент')
   }
 }

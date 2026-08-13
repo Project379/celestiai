@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { createInviteToken, hashInviteToken } from '@/lib/circle/token'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 import {
   getLatestChartRowForUser,
   getSpaceById,
@@ -25,6 +27,12 @@ export async function POST(req: Request) {
   }
 
   try {
+    await assertRateLimit({
+      key: `circle-invites-create:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
     const parsed = createInviteSchema.safeParse(await req.json())
     if (!parsed.success) {
       return Response.json({ error: 'Невалидни данни' }, { status: 400 })
@@ -125,6 +133,9 @@ export async function POST(req: Request) {
       relationshipType: parsed.data.relationshipType,
     })
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('[Circle Invite] unhandled error:', error)
     return Response.json({ error: 'Не успяхме да създадем поканата.' }, { status: 500 })
   }

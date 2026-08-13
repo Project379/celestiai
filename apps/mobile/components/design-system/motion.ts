@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated'
+import { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated'
 
 // Phase 0 foundation — generalizes the one-shot "resolve into focus" motion
 // already proven on NatalWheel's graticule, so new heroes (Guide's tablet,
@@ -40,5 +40,45 @@ export function useBreathe(durationMs = 2600, range: [number, number] = [0.5, 1]
   return useAnimatedStyle(() => ({
     opacity: phase.value,
     transform: [{ scale: 0.9 + phase.value * 0.15 }],
+  }))
+}
+
+// Continuous linear rotation — ported 2026-08-13 for Oracle's loading
+// glyph (spinning ring + rotating diamond, mirroring web's ReadingStream.tsx
+// pre-first-token block), generalized so any future "spins forever" need
+// (a loading ring, an ambient rotating accent) reuses this instead of a
+// fresh useSharedValue/withRepeat pair.
+export function useSpin(durationMs = 5000) {
+  const angle = useSharedValue(0)
+
+  useEffect(() => {
+    angle.value = withRepeat(
+      withTiming(360, { duration: durationMs, easing: Easing.linear }),
+      -1,
+      false,
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return useAnimatedStyle(() => ({
+    transform: [{ rotate: `${angle.value}deg` }],
+  }))
+}
+
+// One-shot-repeating "ping" — scale up + fade out, restarting from the
+// base state each cycle (not a back-and-forth breathe). Ported 2026-08-13
+// for Oracle's loading glyph outer halo, mirroring Tailwind's
+// `animate-ping` used in web's ReadingStream.tsx.
+export function usePing(durationMs = 2400) {
+  const progress = useSharedValue(0)
+
+  useEffect(() => {
+    progress.value = withRepeat(withTiming(1, { duration: durationMs, easing: Easing.out(Easing.ease) }), -1, false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return useAnimatedStyle(() => ({
+    opacity: (1 - progress.value) * 0.15,
+    transform: [{ scale: 1 + progress.value * 1.2 }],
   }))
 }

@@ -23,6 +23,7 @@ import { useApiClient } from '@/lib/api/client'
 import { getDisplayName } from '@/lib/clerk/displayName'
 import { formatDaysHours } from '@/lib/formatDaysHours'
 import { hapticSelect } from '@/lib/haptics'
+import { renderSentinelChunks, type SentinelChunk } from '@/lib/oracle/renderSentinelChunks'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
@@ -793,8 +794,6 @@ export function ReadingParagraphs({ text }: { text: string }) {
   )
 }
 
-type SentinelChunk = ReturnType<typeof parseSentinels>[number]
-
 // The founder's diagnosis, checked against compose.ts/prompts.ts rather
 // than assumed: the reading isn't actually one undifferentiated block —
 // the AI prompt spec (apps/web/lib/horoscope/prompts.ts) asks for a small
@@ -833,27 +832,6 @@ function firstPlanetOf(chunks: SentinelChunk[]): Planet | null {
 // cached for today). See REVISIT 57 (daily-reading length re-verification
 // against production model).
 const EXPAND_THRESHOLD_CHARS = 900
-
-// Shared sentinel-chunk renderer — planet mentions always render Medium,
-// never italic, including inside the italic opener paragraph, where an
-// italic amber word would read as emphasis-on-emphasis and fight the
-// opener's own register shift instead of standing out.
-// Founder device-pass fix (this batch, art choice): planet-mention color
-// was a hardcoded '#fcd34d' — off the token system entirely, not even the
-// amber being retired. Swapped to color.bronzeText, matching the reading's
-// other bronze accents (payoff, captions) instead of introducing a third
-// untokenized hue.
-function renderSentinelChunks(chunks: SentinelChunk[]) {
-  return chunks.map((chunk, j) =>
-    chunk.planet ? (
-      <Text key={j} style={{ color: color.bronzeText, fontFamily: font.bodyMedium }}>
-        {chunk.text}
-      </Text>
-    ) : (
-      chunk.text
-    ),
-  )
-}
 
 // Opener/development paragraph block — shared by both the single-paragraph
 // (ReadingFrame) and multi-paragraph (LeadLine) HoroscopeBody paths. Payoff

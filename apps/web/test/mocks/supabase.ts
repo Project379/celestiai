@@ -18,17 +18,24 @@ import { vi } from 'vitest'
  * rather than building a second mock.
  */
 
-type QueryResult = { data: unknown; error: unknown }
+type QueryResult = { data: unknown; error: unknown; count?: number }
 
 const CHAIN_METHODS = [
   'select',
   'eq',
   'insert',
   'update',
+  'upsert',
   'delete',
   'single',
   'maybeSingle',
   'limit',
+  'order',
+  'in',
+  'gt',
+  'lt',
+  'not',
+  'lte',
 ] as const
 
 function makeBuilder(result: QueryResult) {
@@ -45,6 +52,7 @@ function makeBuilder(result: QueryResult) {
 
 export function createMockSupabase() {
   const queues = new Map<string, QueryResult[]>()
+  const rpcQueues = new Map<string, QueryResult[]>()
 
   function push(table: string, result: Partial<QueryResult>) {
     const entry: QueryResult = { data: null, error: null, ...result }
@@ -53,13 +61,30 @@ export function createMockSupabase() {
     queues.set(table, existing)
   }
 
+  // Queue a result for a named RPC function (e.g. 'check_and_increment_rate_limit',
+  // 'increment_quota_if_available'). Added 2026-08-13 for Batch 3 (rate-limit +
+  // quota tests) — `.rpc()` isn't a `.from(table)` chain, so it needs its own
+  // queue rather than reusing `push()`.
+  function pushRpc(fn: string, result: Partial<QueryResult>) {
+    const entry: QueryResult = { data: null, error: null, ...result }
+    const existing = rpcQueues.get(fn) ?? []
+    existing.push(entry)
+    rpcQueues.set(fn, existing)
+  }
+
   const from = vi.fn((table: string) => {
     const queue = queues.get(table)
     const result = queue?.shift() ?? { data: null, error: null }
     return makeBuilder(result)
   })
 
-  return { from, push }
+  const rpc = vi.fn((fn: string) => {
+    const queue = rpcQueues.get(fn)
+    const result = queue?.shift() ?? { data: null, error: null }
+    return Promise.resolve(result)
+  })
+
+  return { from, push, rpc, pushRpc }
 }
 
 export type MockSupabase = ReturnType<typeof createMockSupabase>

@@ -3,6 +3,8 @@ import { createBirthDataSchema } from '@stellaeum/core/charts/schemas'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { listSavedProfilesForUser, getUserTier } from '@/lib/circle/service'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 export async function GET() {
   const { userId } = await auth()
@@ -11,9 +13,18 @@ export async function GET() {
   }
 
   try {
+    await assertRateLimit({
+      key: `circle-profiles-list:${userId}`,
+      limit: 60,
+      windowMs: 60_000,
+    })
+
     const profiles = await listSavedProfilesForUser(userId)
     return Response.json(profiles)
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('[Circle Profiles] list failed:', error)
     return Response.json({ error: 'Не успяхме да заредим профилите.' }, { status: 500 })
   }
@@ -26,6 +37,12 @@ export async function POST(req: Request) {
   }
 
   try {
+    await assertRateLimit({
+      key: `circle-profiles-create:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
     const body = await req.json()
     const validation = createBirthDataSchema.safeParse(body)
     if (!validation.success) {
@@ -78,6 +95,9 @@ export async function POST(req: Request) {
 
     return Response.json(data, { status: 201 })
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('[Circle Profiles] create unhandled error:', error)
     return Response.json({ error: 'Не успяхме да запазим профила.' }, { status: 500 })
   }

@@ -1,30 +1,36 @@
 # Project State
 
+**Refreshed 2026-08-13 — see git history for the prior stale snapshot.** This
+file's "Current Position" sat frozen at 2026-05-09 ("Stream P ratification
+pending", "0%") through most of Stream P actually shipping; see
+`.planning/VERIFICATION-SURFACE-GAPS.md` item 4. For a continuously-verified
+view, see `.planning/COMPLETION-TRACKER.md` — treat the progress bars below
+as accurate as of this refresh, not self-maintaining.
+
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-09)
+See: .planning/PROJECT.md (updated 2026-08-13)
 
 **Core value:** Users return daily for precise, personalized readings that feel like wisdom from a knowledgeable friend who happens to know the stars.
-**Current focus:** v1.0 mobile-led launch — Phase A complete; Phase B opened 2026-05-09 with two streams (Stream P parity, Stream K Кръг)
+**Current focus:** v1.0 mobile-led launch — Phase A complete; Phase B (Stream P parity, Stream K Кръг) substantially advanced, remaining work sequenced as a batch ledger in `.planning/COMPLETION-TRACKER.md`
 
 ## Current Position — v1.0 mobile-led launch
 
 Milestone: v1.0 mobile-led launch
 Phase: B of 4 - OPEN (two parallel streams)
-  - Stream P (Parity): port web features to mobile per `.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md` — Toni's primary work
-  - Stream K (Кръг): port Кръг features as friend ships them on web — per-port reactive investigation
-Sub-round: investigation pass complete 2026-05-09 (Phase B re-plan after soft-launch quality bar reframe); Stream P sub-round layering surfaced for ratification
-Status: Phase B docs in place (parity gap inventory + handoff); Stream P ratification pending; friend coordination conversation gates first Stream P sub-round
-Last activity: 2026-05-09 — Phase B opening docs commit (parity gap inventory + handoff + state updates)
+  - Stream P (Parity): shipped — Днес, Карта, Ритъм + lunar diary, most of Ти (crystals, recommendations, guide, GDPR settings), RevenueCat SDK/identity plumbing. Open — Кръг port, subscription-management UI, RevenueCat paywall/purchase flow, push notification delivery, amber→bronze token migration. See `.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md` (refreshed 2026-08-13) for the row-by-row state.
+  - Stream K (Кръг): superseded 2026-08-04 — a friend merged a complete web Circle backend+UI in one shot rather than the originally-planned reactive per-feature cadence (`STREAM-K-PORT-LOG.md`). Now a single from-scratch mobile port, sequenced in the Stream P batch ledger rather than tracked separately.
+Status: Stream P actively shipping via a batch sequence (see COMPLETION-TRACKER.md for the current batch and its status) rather than sub-round-by-sub-round ratification.
+Last activity: 2026-08-13 — rate-limit sweep, chart-tab perf fix, documentation refresh (Batch 1 of the current sequence)
 
 Progress (Phase A): [####################] 100% — closed per documented exit criteria
-Progress (Phase B Stream P): [....................] 0% — ratification pending
-Progress (Phase B Stream K): [....................] 0% — gated on friend coordination
-Progress (v1.0 milestone): [#####...............] 25% (1 of 4 phases complete)
+Progress (Phase B Stream P): most surfaces shipped; Кръг port, subscription/paywall UI, and push delivery remain — see COMPLETION-TRACKER.md for exact batch-by-batch status, not a single percentage (the work no longer fits one number cleanly given how much has landed)
+Progress (Phase B Stream K): folded into Stream P's Кръг-port batch — see above
+Progress (v1.0 milestone): Phase A complete, Phase B well underway — see COMPLETION-TRACKER.md's END STATE section for the launch bar this is measured against
 
-Awaiting: Stream P sub-round layering ratification + friend coordination conversation. See `.planning/phases/phase-b-mobile-parity/HANDOFF-2026-05-09.md` for strategic items tracking (cost envelope, PostHog, Apple Developer enrollment, GDPR/ToS, friend coordination).
+Awaiting: founder rulings on the two halt-required items pulled out of batching — RevenueCat paywall/purchase flow (money path, no tests, no mockup) and push notification delivery (schema migration required). See `.planning/COMPLETION-TRACKER.md` HALT-REQUIRED REGISTER.
 
-Phase B soft-launch quality bar = full web parity (less Friends groups, deferred to future research). TestFlight at end of Phase B remains; timeline TBD based on parity work duration. No auto-fire of Stream P sub-rounds — founder ratifies layering first.
+Phase B soft-launch quality bar = full web parity (less Friends groups, deferred to future research). TestFlight at end of Phase B remains; timeline TBD based on remaining batch work.
 
 ## Current Position — v0.1 web MVP (HISTORICAL)
 

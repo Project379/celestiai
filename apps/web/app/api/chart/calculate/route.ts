@@ -2,6 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { calculateChartForUser } from '@stellaeum/core/charts/calculate'
 import { chartCalculationSchema } from '@/lib/validators/chart'
 import { logAuditEvent } from '@/lib/audit'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * POST /api/chart/calculate
@@ -17,6 +19,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    await assertRateLimit({
+      key: `chart-calculate:${userId}`,
+      limit: 30,
+      windowMs: 60_000,
+    })
+
     const body = await request.json()
 
     const validation = chartCalculationSchema.safeParse(body)
@@ -61,6 +69,9 @@ export async function POST(request: Request) {
         )
     }
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('Error in chart calculation:', error)
     return Response.json(
       { error: 'Грешка при обработка на заявката' },

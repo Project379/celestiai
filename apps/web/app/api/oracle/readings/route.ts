@@ -1,5 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * GET /api/oracle/readings?chartId=<uuid>
@@ -16,6 +18,12 @@ export async function GET(req: Request) {
   }
 
   try {
+    await assertRateLimit({
+      key: `oracle-readings:${userId}`,
+      limit: 60,
+      windowMs: 60_000,
+    })
+
     const url = new URL(req.url)
     const chartId = url.searchParams.get('chartId')
 
@@ -67,6 +75,9 @@ export async function GET(req: Request) {
 
     return Response.json(result)
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('[Oracle Readings] Unhandled error:', error)
     return Response.json(
       { error: 'Грешка при обработка на заявката' },

@@ -1,9 +1,15 @@
 # Roadmap: Stellaeum AI
 
+**Refreshed 2026-08-13 — see git history for the prior stale snapshot.** This
+file's Phase B section sat frozen at "OPEN 2026-05-09, awaiting ratification"
+through most of Stream P actually shipping; see
+`.planning/VERIFICATION-SURFACE-GAPS.md` item 4. For a continuously-verified
+view, see `.planning/COMPLETION-TRACKER.md`.
+
 This document covers two milestones:
 
 - **v0.1 — web MVP** (COMPLETE 2026-02-19) — Phases 1–8 documented below for historical reference.
-- **v1.0 — mobile-led launch** (Phase A complete 2026-05-09; Phase B opens next) — appended at the bottom.
+- **v1.0 — mobile-led launch** (Phase A complete 2026-05-09; Phase B substantially advanced as of 2026-08-13) — appended at the bottom.
 
 ---
 
@@ -448,7 +454,7 @@ Speed-mode discipline preserved: investigation pass before any code in a sub-rou
 ### Phases
 
 - [x] **Phase A: Mobile scaffold** (2026-04-18 → 2026-05-09, ~3 weeks) — Auth, first fetch, rename, birth-data wizard, horoscope, chart, Oracle, infra batch. **Exit criterion:** TestFlight build navigates 5 tabs, renders chart, opens Oracle. Closed per documented exit criteria.
-- [ ] **Phase B: Mobile parity + Кръг** (OPEN 2026-05-09, timeline TBD) — Two parallel streams: Stream P ports all missing web features to mobile per `MOBILE-WEB-PARITY-GAP.md`; Stream K ports Кръг features as friend ships them on web. Soft-launch quality bar reframed 2026-05-09 to **full web parity less Friends groups (deferred to future research)**. **Soft-launch milestone** at end of Phase B: TestFlight + Google Play internal track, 50–100 Bulgarian users.
+- [ ] **Phase B: Mobile parity + Кръг** (OPEN 2026-05-09, substantially advanced as of 2026-08-13, not closed) — Two parallel streams: Stream P ports all missing web features to mobile per `MOBILE-WEB-PARITY-GAP.md` — most of it now shipped (Днес, Карта, Ритъм/diary, most of Ти, RevenueCat SDK plumbing); remaining work (Кръг port, subscription/paywall UI, push delivery) sequenced as a batch ledger in `.planning/COMPLETION-TRACKER.md`. Stream K ports Кръг features as friend ships them on web — superseded 2026-08-04, now folded into Stream P's Кръг-port batch (see `STREAM-K-PORT-LOG.md`). Soft-launch quality bar reframed 2026-05-09 to **full web parity less Friends groups (deferred to future research)**. **Soft-launch milestone** at end of Phase B: TestFlight + Google Play internal track, 50–100 Bulgarian users.
 - [ ] **Phase C: Remaining premium features** (~8–12 weeks) — Crush reports, couples linked, yearly forecast, deep synastry, **Friends groups research**. Native retention plumbing: home-screen widgets, biometric anchored quick-open, expanded notification taxonomy.
 - [ ] **Phase D: Web reposition** — Bulgarian SEO acquisition funnel, shareable chart surfaces, desktop becomes read-only-ish, Oracle chat remains on web.
 
@@ -462,7 +468,9 @@ Speed-mode discipline preserved: investigation pass before any code in a sub-rou
 
 **Sub-round close docs:** `.planning/phases/phase-a-mobile-scaffold/SUB-ROUND-{1,2,3,4,7,8}-CLOSE.md`. (5 and 6 are documented in the SR 6 handoff doc rather than dedicated close summaries.)
 
-### Phase B — Mobile parity + Кръг (OPEN)
+### Phase B — Mobile parity + Кръг (OPEN, substantially advanced 2026-08-13)
+
+**Status correction 2026-08-13:** the "Stream P sub-round investigation... Awaiting founder ratification before any code commits" line below is stale — ratification happened and most of Stream P (batches P.1 through P.10 per the parity doc) has since shipped. See `.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md` for the row-by-row state and `.planning/COMPLETION-TRACKER.md` for the current batch ledger driving what's left. The narrative below is kept for historical context on how Phase B was originally scoped, not as a live status.
 
 **Goal:** Soft-launch invites go out to 50–100 Bulgarian users on a mobile app at FULL web parity (less Friends groups, deferred to future research). One complete revenue loop validated end-to-end via the soft-launch milestone — install → birth data → use the full feature surface (chart, Oracle, daily horoscope with streaming, lunar diary, recommendations, crystals collection, astrology guide, Кръг compatibility, paid features) → convert to premium via RevenueCat → receive push notifications at the user's pattern-time. **Soft-launch milestone closes Phase B.**
 
@@ -511,4 +519,4 @@ Speed-mode discipline preserved: investigation pass before any code in a sub-rou
 *SR 7 (mobile Oracle) complete: 2026-05-09*
 *SR 8 (launch-readiness infra) complete: 2026-05-09*
 *Phase A close ratification: 2026-05-09*
-*Milestone: v1.0 mobile-led launch — Phase B opens next*
+*Milestone: v1.0 mobile-led launch — Phase B substantially advanced as of 2026-08-13, see COMPLETION-TRACKER.md*

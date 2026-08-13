@@ -5,6 +5,8 @@ import {
 } from '@stellaeum/core/charts/birth-data'
 import { createBirthDataSchema } from '@stellaeum/core/charts/schemas'
 import { logServerError } from '@/lib/monitoring/log-server-error'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * Error IDs emitted by this handler (wired to Sentry via logServerError
@@ -23,9 +25,18 @@ export async function GET() {
   }
 
   try {
+    await assertRateLimit({
+      key: `birth-data-list:${userId}`,
+      limit: 60,
+      windowMs: 60_000,
+    })
+
     const charts = await listBirthCharts(userId)
     return Response.json(charts)
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     logServerError('ERR-BD-004', error, {
       context: 'GET /api/birth-data list failed',
     })
@@ -49,6 +60,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    await assertRateLimit({
+      key: `birth-data-create:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
     const body = await request.json()
 
     const validation = createBirthDataSchema.safeParse(body)
@@ -82,6 +99,9 @@ export async function POST(request: Request) {
 
     return Response.json(result.data, { status: 201 })
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     logServerError('ERR-BD-001', error, {
       context: 'POST /api/birth-data unhandled error',
     })

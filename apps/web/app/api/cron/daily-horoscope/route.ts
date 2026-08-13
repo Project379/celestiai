@@ -23,6 +23,11 @@ const MOBILE_BODY = 'Новото ти послание от звездите т
 
 export async function GET(req: Request) {
   // Verify CRON_SECRET to prevent unauthorized execution
+  //
+  // Not rate-limited: request authenticity is enforced via this bearer-secret
+  // check, a stronger control than a request-count limit here. If this
+  // handler ever accepts requests without the CRON_SECRET check, it needs
+  // rate limiting.
   const authHeader = req.headers.get('Authorization')
   const cronSecret = process.env.CRON_SECRET
 

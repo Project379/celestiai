@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated from 'react-native-reanimated'
+import Svg, { Circle } from 'react-native-svg'
 
 import { CapReachedNotice } from '@/components/oracle/CapReachedNotice'
 import { ReadingBody } from '@/components/oracle/ReadingBody'
@@ -10,6 +11,7 @@ import { TopicCards } from '@/components/oracle/TopicCards'
 import { BackButton } from '@/components/design-system/BackButton'
 import { pressFeedback } from '@/components/design-system/tokens'
 import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
+import { usePing, useSpin } from '@/components/design-system/motion'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useOracleReading } from '@/hooks/useOracleReading'
 import { useApiClient } from '@/lib/api/client'
@@ -67,6 +69,8 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
     isGenerating,
     generationError,
     currentReading,
+    canRegenerate,
+    regenerate,
   } = useOracleReading(chartId, {
     // SR 8.3: ask for push permission after the first successful Oracle
     // reading completes. Idempotency is enforced inside
@@ -160,17 +164,43 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
 
         {activeTopic && (
           <>
-            <Pressable
-              onPress={clearActiveTopic}
-              accessibilityRole="button"
-              className="mb-5 flex-row items-center"
-              style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 8 })}
-            >
-              <Text className="font-cinzel text-[16px] text-slate-500">‹</Text>
-              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">
-                Всички теми
-              </Text>
-            </Pressable>
+            <View className="mb-5 flex-row items-center justify-between">
+              <Pressable
+                onPress={clearActiveTopic}
+                accessibilityRole="button"
+                className="flex-row items-center"
+                style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 8 })}
+              >
+                <Text className="font-cinzel text-[16px] text-slate-500">‹</Text>
+                <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">
+                  Всички теми
+                </Text>
+              </Pressable>
+
+              {/* Regenerate — only alongside a saved (not freshly-generated,
+                  not currently generating) reading, mirroring web's
+                  showSavedReading gate. Ported 2026-08-13, Batch 2. */}
+              {!isGenerating && !generationError && currentReading && !currentReading.fresh && (
+                <Pressable
+                  onPress={regenerate}
+                  disabled={!canRegenerate}
+                  accessibilityRole="button"
+                  accessibilityLabel={canRegenerate ? 'Ново четене' : 'Можеш да обновиш веднъж на ден'}
+                  className="rounded-full border px-4 py-1.5"
+                  style={({ pressed }) => ({
+                    ...pressFeedback(pressed),
+                    borderColor: canRegenerate ? 'rgba(252, 211, 77, 0.35)' : 'rgba(255, 255, 255, 0.06)',
+                  })}
+                >
+                  <Text
+                    className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em]"
+                    style={{ color: canRegenerate ? 'rgba(253, 230, 138, 0.9)' : 'rgb(71, 85, 105)' }}
+                  >
+                    Ново четене
+                  </Text>
+                </Pressable>
+              )}
+            </View>
 
             {isGenerating && <GeneratingState />}
 
@@ -198,24 +228,69 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
 }
 
 /**
- * Loading state mirroring web's ReadingStream pre-first-token block
- * (apps/web/components/oracle/ReadingStream.tsx). Web wraps the text in
- * an animated orbiting-diamond canvas; mobile ships a static rendition
- * for SR 7. Animation is REVISIT polish.
+ * Loading state, ported 2026-08-13 (Batch 2) from web's ReadingStream
+ * pre-first-token block (apps/web/components/oracle/ReadingStream.tsx):
+ * an outer pulsing violet halo (Tailwind `animate-ping` → usePing),
+ * a spinning partial-arc amber ring (web's conic-gradient mask → an SVG
+ * circle with a partial strokeDasharray, rotated via useSpin — RN has no
+ * conic-gradient mask, so the arc is drawn directly rather than masked,
+ * same visual result via a different primitive), and a rotating diamond
+ * (useSpin at web's 5s rate, nested inside the static 45deg tilt already
+ * used elsewhere in this app for diamond accents). This is a translation
+ * of a fully-specified existing animation to RN primitives already used
+ * elsewhere in the codebase (Reanimated + SVG, per NatalWheel/
+ * WheelArrivalContainer) — not a new visual treatment invented for this
+ * screen.
  */
+const LOADING_GLYPH_SIZE = 64
+const LOADING_RING_RADIUS = 30
+
 function GeneratingState() {
+  const ringSpin = useSpin(3200)
+  const diamondSpin = useSpin(5000)
+  const haloPing = usePing(2400)
+
   return (
     <View className="items-center py-12" style={{ gap: 18 }}>
-      <View
-        className="h-2 w-2 bg-amber-300/90"
-        style={{
-          transform: [{ rotate: '45deg' }],
-          shadowColor: 'rgb(251, 191, 36)',
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.75,
-          shadowRadius: 14,
-        }}
-      />
+      <View style={{ width: LOADING_GLYPH_SIZE, height: LOADING_GLYPH_SIZE, alignItems: 'center', justifyContent: 'center' }}>
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              width: LOADING_GLYPH_SIZE,
+              height: LOADING_GLYPH_SIZE,
+              borderRadius: LOADING_GLYPH_SIZE / 2,
+              backgroundColor: 'rgba(139, 92, 246, 1)',
+            },
+            haloPing,
+          ]}
+        />
+        <Animated.View style={[{ position: 'absolute' }, ringSpin]}>
+          <Svg width={LOADING_GLYPH_SIZE} height={LOADING_GLYPH_SIZE}>
+            <Circle
+              cx={LOADING_GLYPH_SIZE / 2}
+              cy={LOADING_GLYPH_SIZE / 2}
+              r={LOADING_RING_RADIUS}
+              stroke="rgba(252, 211, 77, 0.35)"
+              strokeWidth={1}
+              fill="none"
+              strokeDasharray={`${2 * Math.PI * LOADING_RING_RADIUS * 0.4} ${2 * Math.PI * LOADING_RING_RADIUS * 0.6}`}
+            />
+          </Svg>
+        </Animated.View>
+        <Animated.View style={diamondSpin}>
+          <View
+            className="h-2 w-2 bg-amber-300/90"
+            style={{
+              transform: [{ rotate: '45deg' }],
+              shadowColor: 'rgb(251, 191, 36)',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.75,
+              shadowRadius: 14,
+            }}
+          />
+        </Animated.View>
+      </View>
       <View className="items-center" style={{ gap: 6 }}>
         <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
           Stellaeum

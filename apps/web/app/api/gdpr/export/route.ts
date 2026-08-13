@@ -2,6 +2,8 @@ import { after } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * GET /api/gdpr/export
@@ -12,6 +14,19 @@ export async function GET() {
   const { userId } = await auth()
   if (!userId) {
     return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+  }
+
+  try {
+    await assertRateLimit({
+      key: `gdpr-export:${userId}`,
+      limit: 5,
+      windowMs: 60_000,
+    })
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    throw error
   }
 
   const supabase = createServiceSupabaseClient()

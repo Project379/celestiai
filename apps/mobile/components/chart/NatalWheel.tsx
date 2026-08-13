@@ -148,14 +148,357 @@ function arcPath(
   return `M ${x1} ${y1} A ${outerR} ${outerR} 0 0 0 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 0 1 ${x4} ${y4} Z`
 }
 
-// Perf fix (chart-tab frame drops): this tree renders ~500 SVG nodes
-// (zodiac segments/glyphs, house lines, aspect lines, planet gems) that
-// don't depend on unrelated ChartScreen state (e.g. opening DetailsSheet).
-// Without memo, every ChartScreen re-render forced a full re-render of
-// this whole tree. Requires callers to pass a referentially-stable
-// onPlanetSelect (see chart.tsx's useCallback) — otherwise the memo is a
-// no-op since a new function identity every render still fails the
-// shallow prop comparison.
+// Perf fix, round 2 (2026-08-13, founder-reported FPS drop on planet tap):
+// the outer `memo()` on NatalWheel only blocks re-renders triggered by
+// UNRELATED ChartScreen state (e.g. opening DetailsSheet) — it does nothing
+// for a tap, because `selectedPlanet` is itself a NatalWheel prop that
+// changes on every tap, so NatalWheel's function body always re-executes
+// then. Previously every one of the ~500 SVG nodes below (zodiac segments,
+// zodiac glyphs, house lines, aspect lines, planet gems) was inline JSX in
+// that one function body, so all ~500 re-rendered and re-diffed on every
+// single tap even though ~430 of them (everything except the planet gems)
+// never depend on `selectedPlanet` at all.
+//
+// Fixed by splitting the tree into two independently memoized pieces:
+//  - `WheelStaticLayers` — zodiac segments/glyphs, house lines, ASC/MC
+//    lines, aspect lines. Props are all chart/geometry-derived, never
+//    `selectedPlanet`, so React.memo's shallow-prop-equality bails out of
+//    re-rendering this whole subtree on a tap (chart.houses/chart.aspects
+//    and planetPositions are referentially stable across selection-only
+//    re-renders — planetPositions is already behind its own `useMemo` keyed
+//    on chart data, not selectedPlanet).
+//  - `PlanetGems` — the ~70 selection-dependent nodes. This one SHOULD
+//    re-render on tap (that's the actual visual change), so no memo bypass
+//    is expected or wanted here.
+// Net effect: a tap now re-diffs ~70 nodes instead of ~500.
+//
+// This narrows the per-tap COST but does not by itself explain the
+// founder-reported "stays at ~30fps until force-quit" persistence — a
+// single expensive re-render, however large, doesn't normally survive past
+// the render that caused it. If frame rate is still depressed after this
+// fix on a real device, that points at something accumulating across taps
+// (e.g. an animated-value/worklet subscription from WheelArrivalContainer
+// or graticuleProps not tearing down) rather than a per-render cost, and
+// needs a profiler session — see the note in COMPLETION-TRACKER.md.
+const WheelStaticLayers = memo(function WheelStaticLayers({
+  center,
+  size,
+  rotationDeg,
+  zodiacInnerRadius,
+  zodiacOuterRadius,
+  labelRadius,
+  houses,
+  houseInnerRadius,
+  houseNumberRadius,
+  ascAngle,
+  mcAngle,
+  aspects,
+  planetPositions,
+  aspectRadius,
+  aspectAnchorRadius,
+}: {
+  center: number
+  size: number
+  rotationDeg: number
+  zodiacInnerRadius: number
+  zodiacOuterRadius: number
+  labelRadius: number
+  houses: ChartData['houses']
+  houseInnerRadius: number
+  houseNumberRadius: number
+  ascAngle: number
+  mcAngle: number
+  aspects: ChartData['aspects']
+  planetPositions: Array<PlanetPosition & { x: number; y: number; angle: number }>
+  aspectRadius: number
+  aspectAnchorRadius: number
+}) {
+  return (
+    <>
+      {/* Zodiac segments */}
+      {ZODIAC_SIGNS_ORDER.map((sign, index) => {
+        const startRad = longitudeToScreenRad((index + 1) * 30, rotationDeg)
+        const endRad = longitudeToScreenRad(index * 30, rotationDeg)
+        return (
+          <Path
+            key={`seg-${sign}`}
+            d={arcPath(center, center, zodiacInnerRadius, zodiacOuterRadius, startRad, endRad)}
+            fill={ELEMENT_FILLS[SIGN_ELEMENTS[sign]]}
+            stroke="rgba(226, 232, 240, 0.12)"
+            strokeWidth={1}
+          />
+        )
+      })}
+
+      {/* Zodiac glyphs — custom SVG line-art ported from web's
+          CelestialIcons.tsx via @stellaeum/core/charts/glyphs.
+          Each glyph is in a 24×24 viewBox; we translate to the
+          target position and scale via <G transform>. Strokes use
+          vectorEffect="non-scaling-stroke" so they stay at 1.5px
+          in screen space regardless of the scale factor. */}
+      {ZODIAC_SIGNS_ORDER.map((sign, index) => {
+        const angle = longitudeToScreenRad(index * 30 + 15, rotationDeg)
+        const x = center + Math.cos(angle) * labelRadius
+        const y = center + Math.sin(angle) * labelRadius
+        const glyphSize = size * 0.055
+        const scale = glyphSize / 24
+        return (
+          <G
+            key={`glyph-${sign}`}
+            transform={`translate(${x - glyphSize / 2} ${y - glyphSize / 2}) scale(${scale})`}
+          >
+            {ZODIAC_GLYPH_PATHS[sign].map((d, i) => (
+              <Path
+                key={i}
+                d={d}
+                fill="none"
+                stroke="rgba(226, 232, 240, 0.78)"
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+          </G>
+        )
+      })}
+
+      {/* Inner zodiac ring border */}
+      <Circle
+        cx={center}
+        cy={center}
+        r={zodiacInnerRadius}
+        fill="none"
+        stroke="rgba(226, 232, 240, 0.15)"
+        strokeWidth={1}
+      />
+
+      {/* House cusp lines + numbers */}
+      {houses.map((house) => {
+        const angle = longitudeToScreenRad(house.cuspLongitude, rotationDeg)
+        const x1 = center + Math.cos(angle) * houseInnerRadius
+        const y1 = center + Math.sin(angle) * houseInnerRadius
+        const x2 = center + Math.cos(angle) * zodiacInnerRadius
+        const y2 = center + Math.sin(angle) * zodiacInnerRadius
+        const labelAngle = angle - (15 * Math.PI) / 180
+        const labelX = center + Math.cos(labelAngle) * houseNumberRadius
+        const labelY = center + Math.sin(labelAngle) * houseNumberRadius
+        const isAngular = house.number === 1 || house.number === 10
+        return (
+          <G key={`house-${house.number}`}>
+            <Line
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke="rgba(226, 232, 240, 0.22)"
+              strokeWidth={1}
+              strokeDasharray={isAngular ? undefined : '3,3'}
+            />
+            <SvgText
+              x={labelX}
+              y={labelY}
+              fill="rgba(203, 213, 225, 0.55)"
+              fontSize={size * 0.022}
+              fontWeight="600"
+              textAnchor="middle"
+              alignmentBaseline="central"
+            >
+              {String(house.number)}
+            </SvgText>
+          </G>
+        )
+      })}
+
+      {/* Ascendant line — cyan accent */}
+      <Line
+        x1={center + Math.cos(ascAngle) * (houseInnerRadius * 0.5)}
+        y1={center + Math.sin(ascAngle) * (houseInnerRadius * 0.5)}
+        x2={center + Math.cos(ascAngle) * zodiacOuterRadius}
+        y2={center + Math.sin(ascAngle) * zodiacOuterRadius}
+        stroke={ASCENDANT_LINE_COLOR}
+        strokeWidth={2}
+      />
+
+      {/* Midheaven line — amber accent */}
+      <Line
+        x1={center + Math.cos(mcAngle) * (houseInnerRadius * 0.5)}
+        y1={center + Math.sin(mcAngle) * (houseInnerRadius * 0.5)}
+        x2={center + Math.cos(mcAngle) * zodiacOuterRadius}
+        y2={center + Math.sin(mcAngle) * zodiacOuterRadius}
+        stroke={MIDHEAVEN_LINE_COLOR}
+        strokeWidth={2}
+      />
+
+      {/* Aspect lines */}
+      {aspects.map((aspect, idx) => {
+        const planet1 = planetPositions.find((p) => p.planet === aspect.planet1)
+        const planet2 = planetPositions.find((p) => p.planet === aspect.planet2)
+        if (!planet1 || !planet2) return null
+        const p1x = center + Math.cos(planet1.angle) * aspectRadius
+        const p1y = center + Math.sin(planet1.angle) * aspectRadius
+        const p2x = center + Math.cos(planet2.angle) * aspectRadius
+        const p2y = center + Math.sin(planet2.angle) * aspectRadius
+        const isHard = aspect.aspect === 'square' || aspect.aspect === 'opposition'
+        return (
+          <Line
+            key={`aspect-${idx}`}
+            x1={p1x}
+            y1={p1y}
+            x2={p2x}
+            y2={p2y}
+            stroke={ASPECT_COLORS[aspect.aspect]}
+            strokeWidth={aspect.orb < 3 ? 1.5 : 1}
+            strokeOpacity={Math.max(0.3, 1 - aspect.orb / 8)}
+            strokeDasharray={isHard ? '4,2' : undefined}
+          />
+        )
+      })}
+
+      {/* Aspect anchor ring */}
+      <Circle
+        cx={center}
+        cy={center}
+        r={aspectAnchorRadius}
+        fill="none"
+        stroke="rgba(226, 232, 240, 0.06)"
+        strokeWidth={1}
+      />
+
+      {/* Inner circle border */}
+      <Circle
+        cx={center}
+        cy={center}
+        r={houseInnerRadius}
+        fill="none"
+        stroke="rgba(226, 232, 240, 0.15)"
+        strokeWidth={1}
+      />
+    </>
+  )
+})
+
+// Planet gems, isolated from WheelStaticLayers above specifically so a tap
+// (which only ever changes `selectedPlanet`) re-renders just this ~70-node
+// subtree instead of the ~430-node static layers. See the perf-fix header
+// comment on NatalWheel below for the full diagnosis.
+const PlanetGems = memo(function PlanetGems({
+  planetPositions,
+  selectedPlanet,
+  size,
+  center,
+  aspectAnchorRadius,
+}: {
+  planetPositions: Array<PlanetPosition & { x: number; y: number; angle: number }>
+  selectedPlanet?: string | null
+  size: number
+  center: number
+  aspectAnchorRadius: number
+}) {
+  return (
+    <>
+      {/* Planets — Decision (a), Stage 2 (2026-07-27): uniform starlight/
+          cool gems.
+          FOUNDER CORRECTION (2026-07-27, device pass): Decision (a) —
+          uniform glyphless gems — is INVERTED here, deliberately, a
+          departure from the ratified mockup. Per-planet PLANET_COLORS
+          is back on the wheel's own gems (imported from
+          PlanetDisambiguation.tsx, not duplicated), and the Unicode
+          glyph renders on the gem again as a placeholder for the
+          designer asset. Selection stays categorical — solid fill +
+          an outer ring — never a hue swap; the base color IS per-planet
+          hue again, but selected-vs-not is still shown by brightness/
+          containment, not by changing which hue is shown. */}
+      {planetPositions.map((planet) => {
+        const isSelected = selectedPlanet === planet.planet
+        const planetColor = PLANET_COLORS[planet.planet]
+        const anchorX = center + Math.cos(planet.angle) * aspectAnchorRadius
+        const anchorY = center + Math.sin(planet.angle) * aspectAnchorRadius
+        const planetGlyph = PLANET_GLYPHS[planet.planet as Planet] ?? '?'
+        return (
+          <G key={`planet-${planet.planet}`}>
+            {/* Anchor dot at the aspect-line attachment radius */}
+            <Circle
+              cx={anchorX}
+              cy={anchorY}
+              r={size * 0.0085}
+              fill={planetColor}
+              stroke="rgba(8, 6, 15, 0.92)"
+              strokeWidth={1}
+              opacity={isSelected ? 1 : 0.78}
+            />
+            {/* Selection ring — a categorical signal separate from the
+                gem's own fill, drawn just outside it. Absent when not
+                selected, not a dimmer version of itself. */}
+            {isSelected && (
+              <Circle
+                cx={planet.x}
+                cy={planet.y}
+                r={size * 0.048}
+                fill="none"
+                stroke={color.starlight}
+                strokeWidth={1}
+                opacity={0.7}
+              />
+            )}
+            {/* Planet gem — per-planet color again (see inversion note
+                above). Selected = solid fill; unselected = outline only
+                on a near-black disc — same categorical (fill vs. no
+                fill) signal as the pre-Stage-2 original, plus the ring
+                above. */}
+            <Circle
+              cx={planet.x}
+              cy={planet.y}
+              r={size * 0.035}
+              fill={isSelected ? planetColor : 'rgba(8, 6, 15, 0.92)'}
+              stroke={planetColor}
+              strokeWidth={isSelected ? 2.5 : 1.5}
+            />
+            <Circle
+              cx={planet.x - size * 0.012}
+              cy={planet.y - size * 0.012}
+              r={size * 0.014}
+              fill="url(#gem-sheen)"
+            />
+            {/* Planet glyph — Unicode placeholder for the designer
+                glyph asset (not yet landed). */}
+            <SvgText
+              x={planet.x}
+              y={planet.y}
+              fill={isSelected ? '#08060f' : planetColor}
+              fontSize={size * 0.04}
+              textAnchor="middle"
+              alignmentBaseline="central"
+            >
+              {planetGlyph}
+            </SvgText>
+            {/* Retrograde marker — a status flag, not planet identity. */}
+            {planet.speed < 0 && (
+              <SvgText
+                x={planet.x + size * 0.035}
+                y={planet.y - size * 0.02}
+                fill="rgba(253, 164, 175, 0.9)"
+                fontSize={size * 0.018}
+                fontWeight="600"
+                textAnchor="middle"
+              >
+                R
+              </SvgText>
+            )}
+          </G>
+        )
+      })}
+    </>
+  )
+})
+
+// Outer memo (unchanged from round 1): blocks re-renders from UNRELATED
+// ChartScreen state (e.g. opening DetailsSheet). Requires callers to pass a
+// referentially-stable onPlanetSelect (see chart.tsx's useCallback) —
+// otherwise this memo is a no-op since a new function identity every
+// render still fails the shallow prop comparison. Round 2 above handles
+// the case this one can't: re-renders caused by NatalWheel's OWN props
+// changing (selectedPlanet, on every tap).
 export const NatalWheel = memo(function NatalWheel({
   chart,
   size,
@@ -261,264 +604,31 @@ export const NatalWheel = memo(function NatalWheel({
           graticuleProps={graticuleProps}
         />
 
-        {/* Zodiac segments */}
-        {ZODIAC_SIGNS_ORDER.map((sign, index) => {
-          const startRad = longitudeToScreenRad((index + 1) * 30, rotationDeg)
-          const endRad = longitudeToScreenRad(index * 30, rotationDeg)
-          return (
-            <Path
-              key={`seg-${sign}`}
-              d={arcPath(
-                center,
-                center,
-                zodiacInnerRadius,
-                zodiacOuterRadius,
-                startRad,
-                endRad,
-              )}
-              fill={ELEMENT_FILLS[SIGN_ELEMENTS[sign]]}
-              stroke="rgba(226, 232, 240, 0.12)"
-              strokeWidth={1}
-            />
-          )
-        })}
-
-        {/* Zodiac glyphs — custom SVG line-art ported from web's
-            CelestialIcons.tsx via @stellaeum/core/charts/glyphs.
-            Each glyph is in a 24×24 viewBox; we translate to the
-            target position and scale via <G transform>. Strokes use
-            vectorEffect="non-scaling-stroke" so they stay at 1.5px
-            in screen space regardless of the scale factor. */}
-        {ZODIAC_SIGNS_ORDER.map((sign, index) => {
-          const angle = longitudeToScreenRad(index * 30 + 15, rotationDeg)
-          const x = center + Math.cos(angle) * labelRadius
-          const y = center + Math.sin(angle) * labelRadius
-          const glyphSize = size * 0.055
-          const scale = glyphSize / 24
-          return (
-            <G
-              key={`glyph-${sign}`}
-              transform={`translate(${x - glyphSize / 2} ${y - glyphSize / 2}) scale(${scale})`}
-            >
-              {ZODIAC_GLYPH_PATHS[sign].map((d, i) => (
-                <Path
-                  key={i}
-                  d={d}
-                  fill="none"
-                  stroke="rgba(226, 232, 240, 0.78)"
-                  strokeWidth={1.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-              ))}
-            </G>
-          )
-        })}
-
-        {/* Inner zodiac ring border */}
-        <Circle
-          cx={center}
-          cy={center}
-          r={zodiacInnerRadius}
-          fill="none"
-          stroke="rgba(226, 232, 240, 0.15)"
-          strokeWidth={1}
+        <WheelStaticLayers
+          center={center}
+          size={size}
+          rotationDeg={rotationDeg}
+          zodiacInnerRadius={zodiacInnerRadius}
+          zodiacOuterRadius={zodiacOuterRadius}
+          labelRadius={labelRadius}
+          houses={chart.houses}
+          houseInnerRadius={houseInnerRadius}
+          houseNumberRadius={houseNumberRadius}
+          ascAngle={ascAngle}
+          mcAngle={mcAngle}
+          aspects={chart.aspects}
+          planetPositions={planetPositions}
+          aspectRadius={aspectRadius}
+          aspectAnchorRadius={aspectAnchorRadius}
         />
 
-        {/* House cusp lines + numbers */}
-        {chart.houses.map((house) => {
-          const angle = longitudeToScreenRad(house.cuspLongitude, rotationDeg)
-          const x1 = center + Math.cos(angle) * houseInnerRadius
-          const y1 = center + Math.sin(angle) * houseInnerRadius
-          const x2 = center + Math.cos(angle) * zodiacInnerRadius
-          const y2 = center + Math.sin(angle) * zodiacInnerRadius
-          const labelAngle = angle - (15 * Math.PI) / 180
-          const labelX = center + Math.cos(labelAngle) * houseNumberRadius
-          const labelY = center + Math.sin(labelAngle) * houseNumberRadius
-          const isAngular = house.number === 1 || house.number === 10
-          return (
-            <G key={`house-${house.number}`}>
-              <Line
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke="rgba(226, 232, 240, 0.22)"
-                strokeWidth={1}
-                strokeDasharray={isAngular ? undefined : '3,3'}
-              />
-              <SvgText
-                x={labelX}
-                y={labelY}
-                fill="rgba(203, 213, 225, 0.55)"
-                fontSize={size * 0.022}
-                fontWeight="600"
-                textAnchor="middle"
-                alignmentBaseline="central"
-              >
-                {String(house.number)}
-              </SvgText>
-            </G>
-          )
-        })}
-
-        {/* Ascendant line — cyan accent */}
-        <Line
-          x1={center + Math.cos(ascAngle) * (houseInnerRadius * 0.5)}
-          y1={center + Math.sin(ascAngle) * (houseInnerRadius * 0.5)}
-          x2={center + Math.cos(ascAngle) * zodiacOuterRadius}
-          y2={center + Math.sin(ascAngle) * zodiacOuterRadius}
-          stroke={ASCENDANT_LINE_COLOR}
-          strokeWidth={2}
+        <PlanetGems
+          planetPositions={planetPositions}
+          selectedPlanet={selectedPlanet}
+          size={size}
+          center={center}
+          aspectAnchorRadius={aspectAnchorRadius}
         />
-
-        {/* Midheaven line — amber accent */}
-        <Line
-          x1={center + Math.cos(mcAngle) * (houseInnerRadius * 0.5)}
-          y1={center + Math.sin(mcAngle) * (houseInnerRadius * 0.5)}
-          x2={center + Math.cos(mcAngle) * zodiacOuterRadius}
-          y2={center + Math.sin(mcAngle) * zodiacOuterRadius}
-          stroke={MIDHEAVEN_LINE_COLOR}
-          strokeWidth={2}
-        />
-
-        {/* Aspect lines */}
-        {chart.aspects.map((aspect, idx) => {
-          const planet1 = planetPositions.find((p) => p.planet === aspect.planet1)
-          const planet2 = planetPositions.find((p) => p.planet === aspect.planet2)
-          if (!planet1 || !planet2) return null
-          const p1x = center + Math.cos(planet1.angle) * aspectRadius
-          const p1y = center + Math.sin(planet1.angle) * aspectRadius
-          const p2x = center + Math.cos(planet2.angle) * aspectRadius
-          const p2y = center + Math.sin(planet2.angle) * aspectRadius
-          const isHard = aspect.aspect === 'square' || aspect.aspect === 'opposition'
-          return (
-            <Line
-              key={`aspect-${idx}`}
-              x1={p1x}
-              y1={p1y}
-              x2={p2x}
-              y2={p2y}
-              stroke={ASPECT_COLORS[aspect.aspect]}
-              strokeWidth={aspect.orb < 3 ? 1.5 : 1}
-              strokeOpacity={Math.max(0.3, 1 - aspect.orb / 8)}
-              strokeDasharray={isHard ? '4,2' : undefined}
-            />
-          )
-        })}
-
-        {/* Aspect anchor ring */}
-        <Circle
-          cx={center}
-          cy={center}
-          r={aspectAnchorRadius}
-          fill="none"
-          stroke="rgba(226, 232, 240, 0.06)"
-          strokeWidth={1}
-        />
-
-        {/* Inner circle border */}
-        <Circle
-          cx={center}
-          cy={center}
-          r={houseInnerRadius}
-          fill="none"
-          stroke="rgba(226, 232, 240, 0.15)"
-          strokeWidth={1}
-        />
-
-        {/* Planets — Decision (a), Stage 2 (2026-07-27): uniform starlight/
-            cool gems.
-            FOUNDER CORRECTION (2026-07-27, device pass): Decision (a) —
-            uniform glyphless gems — is INVERTED here, deliberately, a
-            departure from the ratified mockup. Per-planet PLANET_COLORS
-            is back on the wheel's own gems (imported from
-            PlanetDisambiguation.tsx, not duplicated), and the Unicode
-            glyph renders on the gem again as a placeholder for the
-            designer asset. Selection stays categorical — solid fill +
-            an outer ring — never a hue swap; the base color IS per-planet
-            hue again, but selected-vs-not is still shown by brightness/
-            containment, not by changing which hue is shown. */}
-        {planetPositions.map((planet) => {
-          const isSelected = selectedPlanet === planet.planet
-          const planetColor = PLANET_COLORS[planet.planet]
-          const anchorX = center + Math.cos(planet.angle) * aspectAnchorRadius
-          const anchorY = center + Math.sin(planet.angle) * aspectAnchorRadius
-          const planetGlyph = PLANET_GLYPHS[planet.planet as Planet] ?? '?'
-          return (
-            <G key={`planet-${planet.planet}`}>
-              {/* Anchor dot at the aspect-line attachment radius */}
-              <Circle
-                cx={anchorX}
-                cy={anchorY}
-                r={size * 0.0085}
-                fill={planetColor}
-                stroke="rgba(8, 6, 15, 0.92)"
-                strokeWidth={1}
-                opacity={isSelected ? 1 : 0.78}
-              />
-              {/* Selection ring — a categorical signal separate from the
-                  gem's own fill, drawn just outside it. Absent when not
-                  selected, not a dimmer version of itself. */}
-              {isSelected && (
-                <Circle
-                  cx={planet.x}
-                  cy={planet.y}
-                  r={size * 0.048}
-                  fill="none"
-                  stroke={color.starlight}
-                  strokeWidth={1}
-                  opacity={0.7}
-                />
-              )}
-              {/* Planet gem — per-planet color again (see inversion note
-                  above). Selected = solid fill; unselected = outline only
-                  on a near-black disc — same categorical (fill vs. no
-                  fill) signal as the pre-Stage-2 original, plus the ring
-                  above. */}
-              <Circle
-                cx={planet.x}
-                cy={planet.y}
-                r={size * 0.035}
-                fill={isSelected ? planetColor : 'rgba(8, 6, 15, 0.92)'}
-                stroke={planetColor}
-                strokeWidth={isSelected ? 2.5 : 1.5}
-              />
-              <Circle
-                cx={planet.x - size * 0.012}
-                cy={planet.y - size * 0.012}
-                r={size * 0.014}
-                fill="url(#gem-sheen)"
-              />
-              {/* Planet glyph — Unicode placeholder for the designer
-                  glyph asset (not yet landed). */}
-              <SvgText
-                x={planet.x}
-                y={planet.y}
-                fill={isSelected ? '#08060f' : planetColor}
-                fontSize={size * 0.04}
-                textAnchor="middle"
-                alignmentBaseline="central"
-              >
-                {planetGlyph}
-              </SvgText>
-              {/* Retrograde marker — a status flag, not planet identity. */}
-              {planet.speed < 0 && (
-                <SvgText
-                  x={planet.x + size * 0.035}
-                  y={planet.y - size * 0.02}
-                  fill="rgba(253, 164, 175, 0.9)"
-                  fontSize={size * 0.018}
-                  fontWeight="600"
-                  textAnchor="middle"
-                >
-                  R
-                </SvgText>
-              )}
-            </G>
-          )
-        })}
       </Svg>
 
       {/* Single tap surface — per SR 6 decision 6, tap fires the

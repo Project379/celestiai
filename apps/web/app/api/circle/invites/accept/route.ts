@@ -13,6 +13,8 @@ import {
   listSpaceMembers,
 } from '@/lib/circle/service'
 import { hashInviteToken } from '@/lib/circle/token'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 const acceptInviteSchema = z.object({
   token: z.string().min(16),
@@ -25,6 +27,12 @@ export async function POST(req: Request) {
   }
 
   try {
+    await assertRateLimit({
+      key: `circle-invites-accept:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
     const parsed = acceptInviteSchema.safeParse(await req.json())
     if (!parsed.success) {
       return Response.json({ error: 'Невалидна покана.' }, { status: 400 })
@@ -223,6 +231,9 @@ export async function POST(req: Request) {
 
     return Response.json({ spaceId })
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('[Circle Invite] accept unhandled error:', error)
     return Response.json({ error: 'Не успяхме да приемем поканата.' }, { status: 500 })
   }

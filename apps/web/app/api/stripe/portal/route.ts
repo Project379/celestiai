@@ -1,6 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { stripe } from '@/lib/stripe/client'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { toErrorResponse } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * POST /api/stripe/portal
@@ -17,6 +19,12 @@ export async function POST() {
   }
 
   try {
+    await assertRateLimit({
+      key: `stripe-portal:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
     const supabase = createServiceSupabaseClient()
     const { data: user } = await supabase
       .from('users')
@@ -38,7 +46,6 @@ export async function POST() {
 
     return Response.json({ url: portalSession.url })
   } catch (error) {
-    console.error('[Stripe Portal] Error creating portal session:', error)
-    return Response.json({ error: 'Грешка при отваряне на портала за плащания' }, { status: 500 })
+    return toErrorResponse(error, 'Грешка при отваряне на портала за плащания')
   }
 }

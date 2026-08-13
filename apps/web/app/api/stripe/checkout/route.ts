@@ -1,5 +1,7 @@
+import { auth } from '@clerk/nextjs/server'
 import { stripe } from '@/lib/stripe/client'
 import { requireAppUser, requireAccountActive, toErrorResponse } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * POST /api/stripe/checkout
@@ -15,12 +17,25 @@ import { requireAppUser, requireAccountActive, toErrorResponse } from '@/lib/aut
  * is a refund incident waiting to happen.
  */
 export async function POST(req: Request) {
+  // Batch 1 originally placed this rate-limit check after requireAppUser(),
+  // which does an ensureUserRecord DB upsert/read — a burst still cost a DB
+  // call before being limited. Fixed in Batch 3 (caught by
+  // routes-surface-429.test.ts) by resolving userId from auth() directly
+  // and limiting before touching ensureUserRecord/Stripe at all.
   let userId: string
   let stripeCustomerId: string | null
   try {
-    const { userId: id, user } = await requireAppUser()
-    requireAccountActive(user)
+    const { userId: id } = await auth()
+    if (!id) throw new Error('Unauthorized')
     userId = id
+    await assertRateLimit({
+      key: `stripe-checkout:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
+    const { user } = await requireAppUser()
+    requireAccountActive(user)
     stripeCustomerId = user.stripe_customer_id
   } catch (error) {
     return toErrorResponse(error, 'Сесията ти изтече. Влез отново.')

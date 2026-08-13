@@ -33,6 +33,11 @@ import { handleRevenueCatEvent, type RevenueCatEvent } from '@/lib/revenuecat/we
  * marker is deleted in the catch block so RevenueCat's automatic retry
  * can reprocess — insert-first buys race-safety without also silently
  * eating a real failure as "already handled."
+ *
+ * Not rate-limited: request authenticity is enforced via HMAC signature
+ * verification (below), a stronger control than a request-count limit here.
+ * If this handler ever accepts requests without signature verification, it
+ * needs rate limiting.
  */
 
 const SIGNATURE_TOLERANCE_SECONDS = 300 // 5 minutes, replay-attack guard

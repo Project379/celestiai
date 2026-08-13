@@ -2,8 +2,9 @@ import { after } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
-import { requireAppUser } from '@/lib/auth/guards'
+import { ApiError, requireAppUser } from '@/lib/auth/guards'
 import { isDeletionPending } from '@/lib/users/ensure-user'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * GET /api/gdpr/delete-account
@@ -27,7 +28,30 @@ export async function GET() {
  * the 30-day clock or double-logging the audit event.
  */
 export async function POST() {
-  const { userId, user } = await requireAppUser()
+  // Batch 1 originally placed this rate-limit check after requireAppUser(),
+  // which does an ensureUserRecord DB upsert/read — a burst still cost a DB
+  // call before being limited. Fixed in Batch 3 (caught by
+  // routes-surface-429.test.ts) by resolving userId from auth() directly
+  // and limiting before touching ensureUserRecord at all.
+  const { userId } = await auth()
+  if (!userId) {
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+  }
+
+  try {
+    await assertRateLimit({
+      key: `gdpr-delete-account:${userId}`,
+      limit: 5,
+      windowMs: 60_000,
+    })
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    throw error
+  }
+
+  const { user } = await requireAppUser()
 
   if (isDeletionPending(user)) {
     return Response.json(
@@ -73,6 +97,19 @@ export async function DELETE() {
   const { userId } = await auth()
   if (!userId) {
     return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+  }
+
+  try {
+    await assertRateLimit({
+      key: `gdpr-delete-account-cancel:${userId}`,
+      limit: 5,
+      windowMs: 60_000,
+    })
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    throw error
   }
 
   const supabase = createServiceSupabaseClient()

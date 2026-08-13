@@ -963,7 +963,7 @@ Diagnostic logs left in from a debugging session. Logs the existence of env vars
 **Status:** Filed during B.0e close 2026-05-09. The B.0e audit surfaced multiple `.planning/` documents that cite Pattern A / "supabase JWT template" as live architecture, when in fact the codebase has been on the third-party-auth pattern for some time and `createServerSupabaseClient` was dead code. Examples found in B.0e:
 
 - `.planning/research/DATA_FETCHING_INVENTORY.md:181` — load-bearing inventory table (updated inline in B.0e)
-- `.planning/RENAME.md:38` — Pattern A "RESOLVED" claim (updated inline in B.0e)
+- `.planning/archive/RENAME.md:38` — Pattern A "RESOLVED" claim (updated inline in B.0e)
 - `.planning/phases/phase-a-mobile-scaffold/SUB-ROUND-1-CLOSE.md:97, 153, 169, 195` — sub-round close referencing Pattern A as the active design (historical, not updated)
 - `.planning/phases/phase-a-mobile-scaffold/SUB-ROUND-2-CLOSE.md:84, 130, 149, 168, 176` — sub-round close referencing Pattern A (historical, not updated)
 - `.planning/phases/phase-a-mobile-scaffold/SUB-ROUND-3-CLOSE.md:102, 147` — close doc claiming Pattern A "RESOLVED" via dashboard verification (historical, not updated)

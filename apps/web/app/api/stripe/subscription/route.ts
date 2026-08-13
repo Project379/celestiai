@@ -1,5 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { getSubscriptionOverview } from '@/lib/stripe/subscription-overview'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * GET /api/stripe/subscription
@@ -13,6 +15,19 @@ export async function GET() {
   const { userId } = await auth()
   if (!userId) {
     return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+  }
+
+  try {
+    await assertRateLimit({
+      key: `stripe-subscription:${userId}`,
+      limit: 30,
+      windowMs: 60_000,
+    })
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    throw error
   }
 
   const overview = await getSubscriptionOverview(userId)

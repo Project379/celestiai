@@ -165,6 +165,23 @@ export function useOracleReading(
         }
       : null
 
+  // Mirrors web's canRegenerate (apps/web/components/oracle/
+  // OraclePanelGlobal.tsx) — a saved reading exists AND at least 24h have
+  // passed since it was generated. Ported 2026-08-13, Batch 2.
+  const activeSavedForRegenerate = activeTopic ? savedReadingsQuery.data?.[activeTopic] : null
+  const canRegenerate = (() => {
+    if (!activeTopic || !activeSavedForRegenerate) return false
+    const lastGeneratedAt = activeSavedForRegenerate.generatedAt
+    if (!lastGeneratedAt) return true
+    const hoursSince = (Date.now() - new Date(lastGeneratedAt).getTime()) / (1000 * 60 * 60)
+    return hoursSince >= 24
+  })()
+
+  const regenerate = () => {
+    if (!activeTopic || !canRegenerate) return
+    generateMutation.mutate({ topic: activeTopic, regenerate: true })
+  }
+
   const selectTopic = (topic: OracleTopic) => {
     setActiveTopic(topic)
     generateMutation.reset()
@@ -195,5 +212,7 @@ export function useOracleReading(
     isGenerating: generateMutation.isPending,
     generationError,
     currentReading,
+    canRegenerate,
+    regenerate,
   }
 }

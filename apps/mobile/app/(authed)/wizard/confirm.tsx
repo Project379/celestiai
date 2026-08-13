@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useFormContext, useWatch } from 'react-hook-form'
+import { useQueryClient } from '@tanstack/react-query'
 import * as Haptics from 'expo-haptics'
 
 import type {
@@ -17,6 +18,7 @@ import type {
 } from '@stellaeum/core/charts/schemas'
 import { pressFeedback } from '@/components/design-system/tokens'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
+import type { FirstChartSummary } from '@/hooks/useFirstChart'
 import { ApiError, useApiClient } from '@/lib/api/client'
 import { hapticInvite, hapticSelect } from '@/lib/haptics'
 
@@ -44,6 +46,7 @@ export default function WizardConfirmScreen() {
     formState: { errors },
   } = useFormContext<BirthData>()
   const { apiFetch } = useApiClient()
+  const queryClient = useQueryClient()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -91,10 +94,25 @@ export default function WizardConfirmScreen() {
     setIsSubmitting(true)
     setSubmitError(null)
     try {
-      await apiFetch('/api/birth-data', {
+      const created = (await apiFetch('/api/birth-data', {
         method: 'POST',
         body: JSON.stringify(data),
+      })) as { id: string; birth_date: string; birth_time_known: boolean }
+
+      // Seed the ['first-chart'] cache directly with the row the POST just
+      // returned instead of leaving it stale (staleTime Infinity, no auto-
+      // revalidate — see useFirstChart's header comment). Without this,
+      // AuthedLayout's forced-wizard effect keeps reading a stale `null`
+      // after this save, redirects straight back to /wizard/date, whose own
+      // mount-effect re-fetches /api/birth-data, sees the chart now exists,
+      // and bounces back to '/' — repeating indefinitely and flooding
+      // GET /api/birth-data on every cycle.
+      queryClient.setQueryData<FirstChartSummary>(['first-chart'], {
+        id: created.id,
+        birth_date: created.birth_date,
+        birth_time_known: created.birth_time_known,
       })
+
       router.replace('/')
     } catch (e) {
       const msg =

@@ -438,3 +438,54 @@ doesn't clearly report packages downloaded.
 black-screen diagnostic paths from the previous update still stand
 unchanged — nothing about this build/dependency fix touches the
 `isLoaded`-resolution question.
+
+=== UPDATE — 2026-08-13, black screen superseded, not diagnosed ===
+
+**`isLoaded` confirmed `true` — evidence, not inference.** The next build's
+`[AuthedLayout]` instrumentation captured:
+
+```
+16:09:07.549 ReactNativeJS: '[AuthedLayout]', { isLoaded: true,
+16:09:07.804 ... { isLoaded: true,
+16:09:07.866 ... { isLoaded: true,
+[repeating, ~2 logs per 300ms, continuously]
+```
+
+Settles the open question from the previous two updates: Clerk's `isLoaded`
+does resolve. The continuous ~300ms-cadence repeat is a *different* bug —
+the forced-wizard redirect loop diagnosed the same session (birth-data POST
+never invalidated the `['first-chart']` TanStack Query cache, so
+`AuthedLayout`'s effect kept reading stale `data === null` and redirecting
+back into `/wizard/date`, which re-fetched, found the chart, redirected back
+out, repeat). Fixed by seeding the cache from the POST response instead of
+leaving it stale. Unrelated to the original black-screen report but caught
+by the same instrumentation line.
+
+**Correction to the previous framing, stated plainly: the build-pipeline
+fixes (`expo-dev-client`, the `expo/config-plugins` import, the SDK-54
+version correction) and the cleartext fix are NOT shown to be the cause of
+the black screen. They are necessary — without them no build installs at
+all — but necessary is not sufficient, and nothing in any of those four
+diffs touches Clerk or the `isLoaded` gate.**
+
+This matters because build #6 is not the same situation as builds #1-5.
+Build #6 *did* install and launch — confirmed by its own 607-line filtered
+logcat (`Displayed MainActivity +967ms`, `Running main`, Clerk loaded with
+dev keys, then silence, zero network requests). That was a real, observed
+runtime stall, not a missing artifact. It predates the `[AuthedLayout]`
+instrumentation (`7415d72`), so whether `isLoaded` ever resolved *in that
+specific build* was never captured and still isn't known.
+
+**Current status: the build-#6 stall is superseded, not diagnosed.** The
+app now works end-to-end on the build that has all four fixes plus the
+instrumentation. That is a genuine, verified outcome — signup, wizard, and
+API calls all function, and `isLoaded` is confirmed to flip. But *why*
+build #6 specifically went black was never isolated, because the variable
+that would have proven or disproven the `isLoaded` hypothesis (the log
+line) didn't exist yet when build #6 ran, and by the time it did exist,
+three unrelated fixes had already landed alongside it. Do not close this as
+"fixed by X" — there is no X. Treat it as: the failure mode stopped
+reproducing under a different, larger change set, and the specific
+mechanism remains unconfirmed. If it recurs on a future build, the
+`[AuthedLayout]` log (still in the tree, marked for removal once this is
+closed) is now known to be sufficient evidence to check first.

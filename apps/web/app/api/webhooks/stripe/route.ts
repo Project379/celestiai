@@ -23,6 +23,11 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  * Idempotency: checks processed_webhook_events before processing; marks
  * processed on success AND on StripeWebhookIgnoredError so Stripe stops retrying
  * intentionally-ignored events. Returns 500 only on real processing errors.
+ *
+ * Not rate-limited: request authenticity is enforced via Stripe signature
+ * verification (constructEvent below), a stronger control than a request-count
+ * limit here. If this handler ever accepts requests without signature
+ * verification, it needs rate limiting.
  */
 export async function POST(request: Request) {
   const body = await request.text()
