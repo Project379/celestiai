@@ -247,10 +247,18 @@ export async function collectRecommendation(
 
   const now = new Date().toISOString()
 
+  // Batch 5.5 #17: .is('collected_at', null) closes the check-then-act
+  // window between the read above and this write — two concurrent
+  // collect calls previously could both pass the rec.collected_at check
+  // and both attempt this update. The real user_crystals unique index
+  // already prevented a double-reward, but this makes the update itself
+  // exclusive too, matching this file's own atomic-conditional-update
+  // precedent elsewhere.
   const { data: updatedRec, error: updateError } = await supabase
     .from('crystal_recommendations')
     .update({ collected_at: now })
     .eq('id', recommendationId)
+    .is('collected_at', null)
     .select('*')
     .single()
 
