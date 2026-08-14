@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-14
+last-updated: 2026-08-14 (Batch 4 sub-batch A)
 ---
 
 # Completion Tracker
@@ -46,8 +46,10 @@ product/money/auth/schema/ambiguity" operating model established 2026-08-13.
 - **Mobile (Expo, v1.0 launch track): most of parity phase shipped.** Днес,
   Карта (with a just-fixed tap-select perf issue), Ритъм + lunar diary, most
   of Ти (crystals, recommendations, guide, GDPR settings), RevenueCat SDK +
-  Clerk-identity sync all live. **Not yet built on mobile:** Кръг (any form
-  — web's version is real, mobile's is a 70-line placeholder), subscription
+  Clerk-identity sync all live. Кръг's Crush/saved-profiles surface (hub +
+  create/list/analyze/delete) shipped 2026-08-14, not yet device-tested;
+  Connections/invites/reports/weather still absent (Batch 4 sub-batch B).
+  **Not yet built on mobile:** Кръг Connections surface, subscription
   status/management UI, the RevenueCat paywall/purchase flow, push
   notification delivery (scaffold only), the amber→bronze visual-token
   migration (in progress, up to 48 files still on the old token).
@@ -323,16 +325,80 @@ lint-baseline, typecheck, lint, 121 tests) passes locally; pushed
 
 ### Batch 4 — Кръг mobile port (split in two)
 
-**Status: not started — planning only, do not start building yet.**
+**Status: sub-batch A done (2026-08-14) — hub + saved-profiles. Sub-batch B
+(invites, connection spaces, relationship reports/weather) not started.**
 
 **Scope:** full functional port of web's Кръг (relationship compatibility)
 feature to mobile — relationship types, compatibility domains, saved-people
 profiles, connection invites, relationship reports/weather. ~2,200 LOC of
 web reference (`CircleHub.tsx` 936 LOC, `SavedProfileForm.tsx` 278 LOC,
 `ConnectInviteAcceptance.tsx` 95 LOC, 9 API routes ~878 LOC), against a
-mobile `circle.tsx` that's currently a 70-line non-functional placeholder.
-Split into two batches given size: (a) hub/saved-profiles, (b) invites/
-reports-weather.
+mobile `circle.tsx` that (pre-sub-batch-A) was a 70-line non-functional
+placeholder — real per source-inspection, unlike two other parity-doc rows
+already caught stale this session. Split into two batches given size: (a)
+hub/saved-profiles, (b) invites/reports-weather.
+
+**Sub-batch A shipped (`ec9f642`), verified against source before and
+after building, not against the parity doc's premise:**
+- Full Crush/saved-profiles flow: create (`SavedProfileForm.tsx`, reusing
+  the wizard's own native date/time pickers and `CitySearch` rather than
+  inventing new form primitives), list, select, analyze/regenerate
+  compatibility report, delete. Wired against the existing `GET/POST
+  /api/circle/profiles`, `DELETE /api/circle/profiles/[id]`, `POST
+  /api/circle/profiles/[id]/report` routes — all already rate-limited from
+  Batch 1.
+- **One new backend route**: `GET /api/circle/profiles/[profileId]/report`.
+  Web never needed this — `CircleHub` reads `latestSavedProfileReports` off
+  a direct server-side DB call (`getCircleDashboardData`); mobile only has
+  HTTP, and re-running the existing POST (rate-limited 5/min, and it writes
+  a new report version every call) just to redisplay an already-computed
+  report on screen open would be wrong. Read-only, wraps the
+  already-existing `getLatestSavedProfileReport` service function. Judged
+  as filling an obvious REST gap forced by mobile's architecture, not a
+  product/schema decision — built without halting, consistent with the
+  narrower halt boundary.
+- `circle.tsx` (tab root) keeps the ratified §12.2 empty state
+  (`MOBILE_UX_RESEARCH.md`) and the chart-gate exactly as they were —
+  confirmed via source read that this screen was a deliberate, ratified
+  design (not throwaway placeholder text) before touching it. Only the
+  Crush card and "Или добави" line are wired to `/circle/new`; Партньор/
+  Приятел stay inert (as they already were pre-port) since those lead to
+  Connections-space invite flows scoped to sub-batch B, not built yet.
+- **Flagged, not unilaterally decided — founder review needed:**
+  1. No Connections/Crush tab switcher, unlike web's `CircleHub`. Building
+     that chrome now would show a tab with nothing behind it until
+     sub-batch B ships invites — judged worse than omitting it, but this
+     is the kind of structural call the ruling asked to flag rather than
+     assume.
+  2. The chart-gate paragraph is web's own sentence with "connection
+     spaces или" trimmed out (that clause names the not-yet-built
+     Connections surface) — an edit, not a verbatim port.
+  3. Teaser-mode "Отключи пълния прочит" routes to `/you/premium` (the
+     in-app paywall destination) rather than web's `/pricing` (an SEO
+     landing page mobile doesn't have) — a mapping decision, not a new
+     product call.
+- **Two real bugs caught by self-review before shipping, not device-
+  tested yet:** the populated/empty branch briefly rendered the ratified
+  empty state during the saved-profiles fetch (gate was `!profiles ||
+  profiles.length === 0`, true while `profiles` was still `undefined`;
+  fixed to gate on `profiles !== undefined` first). The relationship-type
+  picker didn't reset to `romantic` when switching to a profile with no
+  report yet — web's `CircleHub` does (`if (!selectedSavedProfileReport)
+  setSavedProfileRelationshipType('romantic')`); mobile's first pass only
+  set it when a report existed. Matched web's behavior.
+- Copy: see the founder-review list below (report handed to founder
+  separately from this file, per the batch's own instruction to report
+  provenance per string). Lint baseline `1616 → 1659` (+43: +40 mobile,
+  +3 web from the new GET route reusing 3 already-approved error strings
+  as new AST literal nodes). `copy-lock.json` regenerated, diff verified
+  to contain exactly the new/changed literals — no stray entries.
+  `check:all` green locally (strictness, bg-strings, copy-lock,
+  lint-baseline, typecheck both apps, lint, all 160 tests) and confirmed
+  green on the actual CI run (`31784121821`, `conclusion: success`).
+- **Not device-tested.** Founder verification still outstanding for this
+  sub-batch, same as Batch 1's chart-tap fix — typecheck/lint/tests are
+  necessary but not sufficient evidence for UI correctness on a real
+  device.
 
 **Ruling that constrains this batch, reversed once already — record both
 so nobody re-derives it:**
