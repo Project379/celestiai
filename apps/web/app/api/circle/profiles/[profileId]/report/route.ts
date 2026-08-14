@@ -95,22 +95,24 @@ export async function POST(
     }
 
     const relationshipType = parsed.data.relationshipType ?? 'romantic'
-    const computed = await buildSavedProfileComputation(userChart, profile, relationshipType)
-    const isFull = tier === 'premium'
-    const reportContent = isFull
-      ? buildSavedProfileFullContent(computed.compatibilitySummary, profile.name)
-      : buildSavedProfileTeaserContent(computed.compatibilitySummary, profile.name)
-
     const supabase = createServiceSupabaseClient()
-    const { data: latest } = await supabase
+
+    const { data: baseline } = await supabase
       .from('saved_people_reports')
       .select('version')
       .eq('profile_id', profileId)
       .order('version', { ascending: false })
       .limit(1)
       .maybeSingle()
+    const baselineVersion = baseline?.version ?? 0
 
-    const nextVersion = (latest?.version ?? 0) + 1
+    const computed = await buildSavedProfileComputation(userChart, profile, relationshipType)
+    const isFull = tier === 'premium'
+    const reportContent = isFull
+      ? buildSavedProfileFullContent(computed.compatibilitySummary, profile.name)
+      : buildSavedProfileTeaserContent(computed.compatibilitySummary, profile.name)
+
+    const nextVersion = baselineVersion + 1
     const { data, error } = await supabase
       .from('saved_people_reports')
       .insert({
@@ -127,6 +129,18 @@ export async function POST(
       .single()
 
     if (error || !data) {
+      // `saved_people_reports_unique_version` — UNIQUE(profile_id,
+      // version), live since the original schema migration — is the
+      // actual exclusivity control here. Two concurrent analyze/
+      // regenerate calls racing the same `nextVersion` both attempt this
+      // insert; the loser gets a 23505 unique-violation, not a generic
+      // failure. Fetch and return the winner's (now-current) report
+      // instead of a 500. See the sibling connection-report route for
+      // the fuller version of this comment.
+      if (error && (error as { code?: string }).code === '23505') {
+        const winner = await getLatestSavedProfileReport(profileId)
+        if (winner) return Response.json(winner)
+      }
       console.error('[Circle Profiles] report failed:', error)
       return Response.json({ error: 'Не успяхме да анализираме профила.' }, { status: 500 })
     }

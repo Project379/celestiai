@@ -72,21 +72,22 @@ export async function POST(
       )
     }
 
-    const computed = await buildSpaceComputation(resolvedCharts, relationshipType)
-    const reportContent = buildCompatibilityReportContent(
-      computed.compatibilitySummary,
-      space.label || 'вашето пространство',
-    )
-
-    const { data: latest } = await supabase
+    const { data: baseline } = await supabase
       .from('connection_reports')
       .select('version')
       .eq('space_id', relationshipId)
       .order('version', { ascending: false })
       .limit(1)
       .maybeSingle()
+    const baselineVersion = baseline?.version ?? 0
 
-    const nextVersion = (latest?.version ?? 0) + 1
+    const computed = await buildSpaceComputation(resolvedCharts, relationshipType)
+    const reportContent = buildCompatibilityReportContent(
+      computed.compatibilitySummary,
+      space.label || 'вашето пространство',
+    )
+
+    const nextVersion = baselineVersion + 1
 
     const { data: inserted, error } = await supabase
       .from('connection_reports')
@@ -103,6 +104,28 @@ export async function POST(
       .single()
 
     if (error || !inserted) {
+      // `connection_reports_unique_version` — UNIQUE(space_id, version),
+      // live since the original schema migration — is the actual
+      // exclusivity control here, the same shape the invite-accept fix
+      // added deliberately, except this one already existed. Two
+      // concurrent generations racing the same `nextVersion` both attempt
+      // this insert; Postgres serializes the two, and the loser gets a
+      // 23505 unique-violation, not a generic failure. Treat that
+      // specific error as "someone else already generated this version" —
+      // fetch and return their (now-current) report instead of a 500. Any
+      // OTHER insert error still fails loudly; a unique-violation on this
+      // exact constraint is the one case with a well-defined non-error
+      // resolution.
+      if (error && (error as { code?: string }).code === '23505') {
+        const { data: winner } = await supabase
+          .from('connection_reports')
+          .select('*')
+          .eq('space_id', relationshipId)
+          .order('version', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (winner) return Response.json(winner)
+      }
       console.error('[Circle Report] insert failed:', error)
       return Response.json({ error: 'Не успяхме да генерираме доклада.' }, { status: 500 })
     }
