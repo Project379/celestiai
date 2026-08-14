@@ -98,6 +98,21 @@
  * moved because the literal now appears twice in the AST, not because
  * anything new was written.
  *
+ * Raised to 1719 on 2026-08-14 (Batch 4 sub-batch B — Кръг Connections
+ * UI: invite creation, connection-space list/detail, report generation,
+ * weather). +59: +55 mobile (new circle.tsx surface toggle + Connections
+ * sections, circle/new-connection.tsx, ConnectionSpaceDetailPanel.tsx —
+ * almost entirely copy ported verbatim from
+ * apps/web/components/circle/CircleHub.tsx per the founder's
+ * port-faithfully ruling: TYPE_LABELS, TYPE_BLURB, DOMAIN_LABELS,
+ * WEATHER_TONE_LABELS, button/error strings, plus a couple of small
+ * newly-written strings flagged for founder review in the batch report
+ * ("Име (по избор)" field caption, "+ Нова връзка" button, matching the
+ * already-approved "+ Нов профил" pattern from sub-batch A)); +4 web (two
+ * new GET routes — /api/circle/relationships and GET on
+ * /api/circle/invites — reusing the two already-approved
+ * 'Сесията ти изтече...' / route-specific fallback error strings).
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -107,7 +122,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1660
+const BASELINE = 1719
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

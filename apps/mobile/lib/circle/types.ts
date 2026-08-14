@@ -3,7 +3,7 @@
 // isn't a workspace package apps/mobile can depend on, and these shapes
 // aren't in @stellaeum/core (they're API response/DB-row shapes, not shared
 // domain logic). Kept in sync by hand; if web's shapes change, update here.
-import type { RelationshipType } from '@stellaeum/core/relationships/types'
+import type { CompatibilityDomainKey, CompatibilitySummary, RelationshipType } from '@stellaeum/core/relationships/types'
 
 export interface SavedProfileRow {
   id: string
@@ -56,3 +56,90 @@ export interface SavedProfileReportRow {
   is_full: boolean
   created_at: string
 }
+
+export interface ConnectionSpaceRow {
+  id: string
+  label: string | null
+  created_by_user_id: string
+  status: 'active' | 'archived'
+  relationship_type: RelationshipType
+  max_members: number | null
+  member_count: number
+  connection_date: string
+  compatibility_summary: CompatibilitySummary
+  created_at: string
+}
+
+export interface ConnectionMemberView {
+  id: string
+  space_id: string
+  user_id: string
+  chart_id: string
+  role: 'owner' | 'member'
+  chart_name: string | null
+}
+
+export interface ConnectionInviteRow {
+  id: string
+  space_id: string | null
+  inviter_user_id: string
+  invite_label: string | null
+  relationship_type: RelationshipType
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled'
+  expires_at: string
+  created_at: string
+}
+
+export interface ConnectionReportContent {
+  overview: {
+    title: string
+    summary: string
+    strongestDomain: string
+    growthDomain: string
+  }
+  domains: Record<string, ConnectionReportSection>
+}
+
+export interface ConnectionReportRow {
+  id: string
+  space_id: string
+  version: number
+  relationship_type: RelationshipType
+  headline_score: number
+  domain_scores: CompatibilitySummary
+  report_content: ConnectionReportContent
+  created_at: string
+}
+
+export interface RelationshipWeatherSignal {
+  id: string
+  title: string
+  summary: string
+  date: string
+  tone: 'supportive' | 'challenging' | 'mixed'
+}
+
+export interface RelationshipWeatherDay {
+  date: string
+  label: string
+  headline: string
+  tone: 'supportive' | 'challenging' | 'mixed' | 'quiet'
+  signals: RelationshipWeatherSignal[]
+}
+
+export interface RelationshipWeatherOverview {
+  summary: string
+  tone: 'supportive' | 'challenging' | 'mixed' | 'quiet'
+  days: RelationshipWeatherDay[]
+}
+
+export interface CircleSpaceView {
+  space: ConnectionSpaceRow
+  members: ConnectionMemberView[]
+  latestReport: ConnectionReportRow | null
+  weather: RelationshipWeatherOverview | null
+}
+
+// Re-exported so consumers only need one import for both the domain
+// scoring key and these API-shape types.
+export type { CompatibilityDomainKey }

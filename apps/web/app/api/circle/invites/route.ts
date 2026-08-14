@@ -10,6 +10,7 @@ import {
   getSpaceById,
   getUserTier,
   hasActiveRomanticSpace,
+  listPendingInvitesForUser,
   listSpaceMembers,
 } from '@/lib/circle/service'
 
@@ -19,6 +20,37 @@ const createInviteSchema = z.object({
   relationshipType: z.enum(['romantic', 'friendship', 'work', 'family']).default('romantic'),
   existingSpaceId: z.string().uuid().optional(),
 })
+
+// GET added for the mobile port (Batch 4 sub-batch B) — web never needed
+// this either; CircleHub reads pendingInvites off getCircleDashboardData's
+// direct server-side DB call. Returns metadata only (no shareUrl/token —
+// the raw token is never persisted server-side, only its hash, same
+// reason web keeps shareUrl in localStorage rather than re-fetching it).
+// A client showing this list can only offer copy/share for invites it
+// itself just created and cached locally.
+export async function GET() {
+  const { userId } = await auth()
+  if (!userId) {
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+  }
+
+  try {
+    await assertRateLimit({
+      key: `circle-invites-list:${userId}`,
+      limit: 60,
+      windowMs: 60_000,
+    })
+
+    const invites = await listPendingInvitesForUser(userId)
+    return Response.json(invites)
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    console.error('[Circle Invite] list failed:', error)
+    return Response.json({ error: 'Не успяхме да заредим поканите.' }, { status: 500 })
+  }
+}
 
 export async function POST(req: Request) {
   const { userId } = await auth()

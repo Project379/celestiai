@@ -76,6 +76,7 @@ export default function AuthedLayout() {
         <Stack.Screen name="rhythm/journal" />
         <Stack.Screen name="moon-detail" />
         <Stack.Screen name="circle/new" />
+        <Stack.Screen name="circle/new-connection" />
         <Stack.Screen name="you/crystals" />
         <Stack.Screen name="you/recommendations" />
         <Stack.Screen name="you/guide" />
