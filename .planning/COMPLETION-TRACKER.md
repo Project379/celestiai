@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-14 (Batch 4 sub-batch B — both report-route races fixed and ratified; proceeding to sub-batch B UI)
+last-updated: 2026-08-14 (Batch 4 complete — sub-batch B UI shipped, `f733c08`)
 ---
 
 # Completion Tracker
@@ -46,13 +46,17 @@ product/money/auth/schema/ambiguity" operating model established 2026-08-13.
 - **Mobile (Expo, v1.0 launch track): most of parity phase shipped.** Днес,
   Карта (with a just-fixed tap-select perf issue), Ритъм + lunar diary, most
   of Ти (crystals, recommendations, guide, GDPR settings), RevenueCat SDK +
-  Clerk-identity sync all live. Кръг's Crush/saved-profiles surface (hub +
-  create/list/analyze/delete) shipped 2026-08-14, not yet device-tested;
-  Connections/invites/reports/weather still absent (Batch 4 sub-batch B).
-  **Not yet built on mobile:** Кръг Connections surface, subscription
-  status/management UI, the RevenueCat paywall/purchase flow, push
-  notification delivery (scaffold only), the amber→bronze visual-token
-  migration (in progress, up to 48 files still on the old token).
+  Clerk-identity sync all live. Кръг is functionally complete on mobile as
+  of 2026-08-14 (Crush/saved-profiles + Connections/invites/reports/
+  weather, Batch 4 both sub-batches), not yet device-tested; two
+  check-then-act races found and fixed during the port (invite-accept,
+  report-version conflicts — see Batch 4's own sections). Кръг has NOT
+  had a design pass — screens match web's structure, not Днес/Карта's
+  design language; redesign pass is Batch 8. **Not yet built on mobile:**
+  subscription status/management UI, the RevenueCat paywall/purchase
+  flow, push notification delivery (scaffold only), the amber→bronze
+  visual-token migration (in progress, up to 48 files still on the old
+  token).
 - **First real device build (2026-08-13) surfaced two real mobile bugs**,
   both since fixed: an infinite `/api/birth-data` request loop after wizard
   completion (stale TanStack Query cache never invalidated after save), and
@@ -438,8 +442,8 @@ the edited chart-gate paragraph.
 ### Batch 4 sub-batch B investigation — invite-accept race condition (security finding, not a Кръг feature item)
 
 **Status: all three fixes done and merged (`0d64d17` invite-accept,
-`7d60778` both report routes), all ratified. Proceeding to sub-batch B's
-UI (invites, connection spaces, reports, weather) now.**
+`7d60778` both report routes), all ratified, sub-batch B UI shipped
+(`f733c08`). Batch 4 is done.**
 
 This is filed separately from the Batch 4 ledger on purpose — a security
 fix landing as a footnote inside a feature batch reads as a feature
@@ -584,17 +588,59 @@ against the pre-fix code before trusting it (now in Claude's memory as
 (Batch 3) catching the invite fix's own ordering slip before merge is on
 record as the gates paying for themselves twice in one session.
 
-**Mobile-loop-risk commitment for when sub-batch B UI work resumes:**
-no connection-space/report/weather hooks exist yet — this is a design
-commitment for when they're built, not a verified property of shipped
-code. They'll follow sub-batch A's exact pattern (`useSavedProfileReport`/
-`useAnalyzeSavedProfile`, already merged and reviewed): explicit `enabled`
-gating, mutations that `invalidateQueries`/`setQueryData` on success
-rather than a `useEffect` re-fetch loop, no polling/interval refetch. That
-pattern directly avoids the birth-data bug's actual root cause (a stale
-TanStack cache never invalidated after a POST, causing a
-redirect-triggering read to refire against outdated data) — named
-explicitly here so it's checked against, not just assumed carried over.
+**Sub-batch B UI shipped (`f733c08`), verified against source, not just
+against the parity doc:**
+- Invite creation/share/cancel, connection-space list + detail (headline
+  score, members, weather, domain scores, latest report preview),
+  generate/regenerate report, archive. Two new backend GET routes
+  (`/api/circle/relationships` list, `GET /api/circle/invites` list) —
+  same class of gap as sub-batch A's saved-profile-report GET: web reads
+  this off a direct server-side DB call, mobile only has HTTP.
+- `circle.tsx` gained the Connections/Crush surface toggle that
+  sub-batch A deliberately omitted while Connections had nothing behind
+  it — now that it does, built it. All three ratified §12.2 empty-state
+  cards are wired (Партньор/Приятел pre-select romantic/friendship,
+  Crush unchanged). Chart-gate paragraph restored to web's exact
+  verbatim text — sub-batch A's trimmed version (with "connection spaces
+  или" removed) is stale now that Connections exists.
+- **Mobile-loop-risk commitment, now verified against shipped code, not
+  just stated as intent:** all three new list queries
+  (`useConnectionSpaces`, `usePendingInvites`, `useCachedInviteLinks`)
+  are plain TanStack queries, default `staleTime`, no polling; every
+  mutation (`useCreateInvite`, `useCancelInvite`,
+  `useGenerateConnectionReport`, `useArchiveSpace`) invalidates its own
+  query key on success, no `useEffect`-driven refetch anywhere in the
+  new code. Same pattern as sub-batch A's already-reviewed hooks.
+- **Flagged simplifications, not unilaterally assumed fine forever:**
+  1. Invite acceptance has no native mobile screen — the shared link
+     opens web's existing, already-auth-gated `/connect/[token]` page in
+     the recipient's browser. Reuses working infrastructure rather than
+     duplicating it; deep-linking `/connect/*` straight into the app is a
+     reasonable future improvement, not built here.
+  2. "Покани още човек" (invite another person into an existing space)
+     routes through the same create-invite screen with the relationship
+     type locked, rather than firing immediately the way web's
+     equivalent button does (no intermediate form on web at all).
+     Arguably safer (a confirmation step before creating another invite)
+     but is a real behavioral deviation from web, not a bug.
+  3. The invite label field isn't pre-filled from the existing space's
+     name the way web's forced-label parameter does on that same
+     "invite more" action.
+- Copy: mostly ported verbatim from `CircleHub.tsx` (`TYPE_LABELS`,
+  `TYPE_BLURB`, `DOMAIN_LABELS`, `WEATHER_TONE_LABELS`, error/button
+  strings). New, needs founder review: `"Име (по избор)"` field caption,
+  `"+ Нова връзка"` button (matches the already-approved `"+ Нов профил"`
+  pattern from sub-batch A). Lint baseline `1660 → 1719`; copy-lock
+  regenerated and diff-verified to contain exactly the new/changed
+  literals. `check:all` green locally and confirmed green on the actual
+  CI run (`31790951174`, `conclusion: success`).
+- **Not device-tested.** Same standing caveat as every UI batch this
+  session — typecheck/lint/tests are necessary, not sufficient, evidence
+  for real-device correctness.
+
+**Batch 4 status: done, both sub-batches shipped.** Кръг redesign pass
+(promised in Batch 4's original ruling) stays scoped into Batch 8, after
+Batch 5.5's Circle backend security review per the sequencing above.
 
 ---
 
