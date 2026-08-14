@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-14 (Batch 4 complete — sub-batch B UI shipped, `f733c08`)
+last-updated: 2026-08-14 (Batch 5 complete — /you/premium status/management + free-state CTA shipped)
 ---
 
 # Completion Tracker
@@ -52,11 +52,14 @@ product/money/auth/schema/ambiguity" operating model established 2026-08-13.
   check-then-act races found and fixed during the port (invite-accept,
   report-version conflicts — see Batch 4's own sections). Кръг has NOT
   had a design pass — screens match web's structure, not Днес/Карта's
-  design language; redesign pass is Batch 8. **Not yet built on mobile:**
-  subscription status/management UI, the RevenueCat paywall/purchase
-  flow, push notification delivery (scaffold only), the amber→bronze
-  visual-token migration (in progress, up to 48 files still on the old
-  token).
+  design language; redesign pass is Batch 8. `/you/premium` subscription
+  status/management (Batch 5) is now built, not yet device-tested — the
+  free-state branch's "subscribe on web" CTA is functional but its target
+  URL is an unfilled placeholder blocked on the founder's Vercel fix, see
+  halt-required register. **Not yet built on mobile:** the RevenueCat
+  paywall/purchase flow, push notification delivery (scaffold only), the
+  amber→bronze visual-token migration (in progress, up to 48 files still
+  on the old token).
 - **First real device build (2026-08-13) surfaced two real mobile bugs**,
   both since fixed: an infinite `/api/birth-data` request loop after wizard
   completion (stale TanStack Query cache never invalidated after save), and
@@ -680,24 +683,115 @@ where it sits in the sequence.
 
 ### Batch 5 — Premium subscription status/management port
 
-**Status: not started — planning only.**
+**Status: done (2026-08-14).**
 
 **Scope:** port web's subscription status/management surface
-(`SettingsContent.tsx`) to mobile's `/you/premium` (currently a 45-line
-stub). Confirmed cleanly separable from the paywall/purchase flow —
+(`SettingsContent.tsx`) to mobile's `/you/premium` (was a 45-line stub).
+Confirmed cleanly separable from the paywall/purchase flow —
 `SettingsContent.tsx` shows tier, renewal date, payment method, and wires
 `/api/stripe/{portal,cancel,subscription}` for cancel/reactivate/manage-
 billing; its only "upgrade" affordance is a plain `<Link href="/pricing">`,
-no purchase logic. This batch ports the status/management half only. The
-purchase/paywall half stays in the halt-required register below.
+no purchase logic. Shipped: status/management half (all four subscription
+states) plus a minimal free-state branch, per founder ruling below — the
+purchase/paywall half itself stays in the halt-required register.
 
-**Added scope, explicit (2026-08-14):** Batch 4 sub-batch A's Кръг teaser
-CTA already links to `/you/premium` (the correct in-app destination,
-ratified — see Batch 4's founder-review note) — that link currently leads
-to a dead end since `/you/premium` is still the 45-line stub. This batch
-is not "done" if it ships a built `/you/premium` that leaves that CTA
-still pointing at a stub-shaped page; verify the Кръг link lands somewhere
-real as part of this batch's own completion check, not as a follow-up.
+**Halt, ruled 2026-08-14 — three rounds, all resolved before building:**
+
+1. **Free-state scope.** The Кръг teaser CTA arrives as a free user by
+   definition, so "the CTA must not dead-end" is a statement about
+   `/you/premium`'s free-state branch, not the status/management branch
+   this batch was originally scoped around — and the stub's own in-file
+   note (D13, ratified 2026-05-12) already calls for both halves to live
+   here eventually. Founder ruled: build a minimal free-state branch now
+   (tier label + a features list ported from web, a CTA that sends users
+   to web to subscribe) — zero purchase calls, zero RevenueCat offering
+   reads. If building it had required `getOfferings()`, that would have
+   made it halt-required; it didn't.
+2. **CTA copy.** Founder rejected "coming soon"-shaped copy outright —
+   Premium exists and is purchasable on web today; only the *mobile*
+   purchase path is missing, and saying otherwise is false. Approved,
+   verbatim: button `„Абонирай се на stellaeum.com"`, caption `„Купуваш и
+   управляваш абонамента от уеб приложението."` (domain corrected from an
+   initial `.ai` draft — founder owns `.com`, not `.ai`).
+3. **No live domain to send users to.** Verified, not assumed: nothing in
+   the repo (`next.config.js`, `.env.example`, `layout.tsx` metadata,
+   `robots.txt`, every planning doc) references `stellaeum.com` or any
+   other live URL — consistent with Vercel's deploy still being broken
+   (blocked-externally register, below). Also checked and reported before
+   building: Clerk's `<SignIn>` in `apps/web/app/(auth)/sign-in/
+   [[...sign-in]]/page.tsx` has no explicit `redirect_url` wiring, and its
+   fallback redirect is hardcoded to `/dashboard`, not `/pricing` — a
+   mobile user bouncing through sign-in would not reliably land back on
+   pricing. Founder ruled: don't block Batch 5 on the Vercel fix (that's
+   founder-owned work, see blocked-externally). Build now with the URL as
+   a single named, guarded config value that fails loudly rather than
+   rendering a dead link — same shape as `RevenueCatProvider`'s
+   `REPLACE_WITH_` placeholder check. **This is now tracked as an explicit
+   unfilled item, see the halt-required register below — it must not be
+   forgotten.** The sign-in-then-purchase flow itself stays unverified,
+   blocked on the same thing (recorded as blocked, not assumed working).
+
+**Shipped:**
+- `apps/mobile/lib/config/webAppUrl.ts` — new file. `getWebAppUrl()` /
+  `getWebPricingUrl()` read `EXPO_PUBLIC_WEB_APP_URL`, treat a missing
+  value or the `REPLACE_WITH_` placeholder prefix as absent: logs once via
+  `logError('ERR-MOB-WEBURL-001', ...)` and returns `null`. Callers must
+  not render on `null` — the free-state CTA section (button + caption)
+  simply doesn't render when unset, it never links to nothing silently.
+  Added `EXPO_PUBLIC_WEB_APP_URL=REPLACE_WITH_WEB_APP_URL` to both
+  `.env.example` and `.env.local`.
+- `apps/mobile/hooks/useSubscription.ts` — `useSubscription` (GET
+  `/api/stripe/subscription`), `useBillingPortal` (POST `/api/stripe/
+  portal`, opens the returned URL via `expo-web-browser`'s
+  `openBrowserAsync` — already a mobile dependency, no native module
+  added), `useCancelSubscription` (POST `/api/stripe/cancel` with an
+  optional reason), `useReactivateSubscription` (DELETE `/api/stripe/
+  cancel`). Follows the established `useConnectionSpaces`/`useArchiveSpace`
+  hook shape: exported query-key constant, mutations invalidate it on
+  success (React Query, not web's `router.refresh()`).
+- `apps/mobile/app/(authed)/you/premium.tsx` — full rewrite of the stub.
+  Five branches: loading, error+retry, free (+ expired sub-case, same CTA),
+  active, cancelling — mirrors web's `SettingsContent.tsx` state logic
+  (`isFree`/`isExpired`/`isActive`/`isCancelling`) exactly. Cancel
+  confirmation is an RN `Modal` (web's `<dialog>` has no RN equivalent)
+  with the same 4 preset reason buttons, all copy ported verbatim from
+  `SettingsContent.tsx` — already-approved existing copy being reused, not
+  newly written, except the two founder-approved free-state strings above.
+- Verified all three real entry points to `/you/premium`
+  (`you.tsx`'s "Премиум" menu row, `crystals.tsx`'s `PremiumGate`, and
+  Batch 4's Кръг teaser CTA in `SavedProfileDetailPanel.tsx`) now land on
+  the real screen, not the stub — grepped for every `you/premium`
+  reference in `apps/mobile`, not assumed from the one Кръг call site.
+- Lint baseline `1719 → 1749` (+30, all from the new/changed screen and
+  hook, reviewed — matches the 30 new-Cyrillic-literal ESLint warnings
+  exactly). `copy-lock.json` regenerated (2963 → 2993 entries) and
+  diff-verified to contain exactly the new/changed literals from
+  `premium.tsx` and `useSubscription.ts`, no stray entries. Full
+  `check:all` (strictness, bg-strings, copy-lock, lint-baseline,
+  typecheck, lint, 126 web tests + astrology/core suites) passes locally,
+  exit 0.
+- **Not device-tested.** Same standing caveat as every UI batch this
+  session.
+
+**Known gap, not built, low priority:** `GET /api/stripe/subscription`
+doesn't return `subscription_provider`, so this screen can't currently
+distinguish a Stripe-provider subscriber from a (theoretical) RevenueCat-
+provider one. Not a live risk — RevenueCat's mobile provider scaffold
+(`RevenueCatProvider.tsx`) only configures the SDK and syncs Clerk
+identity; no offerings/purchase/entitlement code exists anywhere in
+`apps/mobile`, so no real user can currently reach `subscription_provider
+=== 'revenuecat'`. Revisit when the RevenueCat paywall batch ships — at
+that point this screen will show Stripe portal/cancel/reactivate actions
+to a RevenueCat subscriber, which is wrong (those subscriptions are
+managed via the App/Play Store, not Stripe's portal).
+
+**Related finding, not fixed (out of scope, flagged for awareness):**
+`apps/mobile/app/(authed)/you/settings.tsx` already hardcodes `const
+PRIVACY_URL = 'https://stellaeum.com/privacy'` with no placeholder guard —
+the same "assumed-live domain" shape this batch just added a guard for,
+already shipped elsewhere before this batch existed. Not touched here (no
+ask, different file, would be scope creep) — worth the same guard
+treatment whenever `/you/settings` is next touched.
 
 ---
 
@@ -768,6 +862,28 @@ diagnosis (no migration needed; the `UNIQUE(parent_id, version)`
 constraints already existed) and the fix itself. Kept here marked
 resolved for the same reason as the invite-UI entry above.
 
+### `/you/premium` free-state CTA — unfilled URL, blocked on Vercel
+
+**Not a decision to rule on — a tracked unfilled config value**, recorded
+here per founder instruction so it can't be forgotten the way the EAS
+`REPLACE_WITH_` RevenueCat key incident nearly was (a placeholder shipped
+in a GREEN build once before because nothing surfaced it). `apps/mobile/
+.env.local`'s `EXPO_PUBLIC_WEB_APP_URL=REPLACE_WITH_WEB_APP_URL` is a
+placeholder; `getWebAppUrl()` (`lib/config/webAppUrl.ts`) detects that
+prefix and hides the free-state "subscribe on web" CTA entirely rather
+than rendering a dead link, logging `ERR-MOB-WEBURL-001` once. **Blocked
+on:** the founder's own Vercel fix (Root Directory → `apps/web`, "Include
+source files outside the Root Directory" ON, Framework Preset Next.js,
+Node 22.x, Clerk publishable key in both Production and Preview — founder-
+owned, in progress). Once `stellaeum.com` serves the app, the founder
+gives Claude Code the confirmed URL to fill both `.env.local` and, before
+any real build, EAS env. **Also blocked on the same thing and still
+unverified:** whether a mobile user with no existing web session can
+actually complete sign-in-then-purchase there — Clerk's `<SignIn>` has no
+confirmed `redirect_url` wiring and its hardcoded fallback goes to
+`/dashboard`, not `/pricing` (see Batch 5's own section for detail). Check
+this the moment the domain is live, not assumed working.
+
 ### RevenueCat paywall and purchase flow
 
 **Decision needed:** what the paywall UI shows (offerings, pricing
@@ -777,10 +893,13 @@ purchases), zero tests exist, no committed mockup exists anywhere for a
 mobile paywall. RevenueCat SDK itself is already live and Clerk-identity-
 linked (`RevenueCatProvider.tsx`) — this is purely the missing UI/purchase-
 call layer on top of working plumbing.
-**Blocks:** Batch 5's subscription-management screen can ship without
-this (status/management doesn't need purchase logic), but the "Отключи
-Премиум"/"Абонирай се отново" CTAs on that screen will have nowhere real to
-link until this is ruled and built.
+**Blocks:** Batch 5's subscription-management screen shipped without this
+(status/management doesn't need purchase logic) — its free-state CTA
+points at web's `/pricing` instead of a native purchase flow, per founder
+ruling (see Batch 5's own section). That web-redirect CTA is itself
+blocked on a different thing (the Vercel deploy, see the entry above) —
+this paywall ruling still gates the eventual *native* purchase path, not
+Batch 5's screen.
 
 ### Push notification delivery
 
