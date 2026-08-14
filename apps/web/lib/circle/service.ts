@@ -574,7 +574,7 @@ export async function recomputeAndPersistSpace(
 
   const reportVersion = (latest?.version ?? 0) + 1
 
-  await supabase
+  const { error: spaceUpdateError } = await supabase
     .from('connection_spaces')
     .update({
       relationship_type: nextType,
@@ -584,6 +584,12 @@ export async function recomputeAndPersistSpace(
       composite_chart_data: computed.compositeChartData,
     })
     .eq('id', spaceId)
+
+  if (spaceUpdateError) {
+    // Not fatal (Batch 5.5 #13, same pattern as the report route's own
+    // cache-update) — cache staleness only.
+    console.error('[Circle Service] recomputeAndPersistSpace failed to refresh space cache:', spaceUpdateError)
+  }
 
   const refreshedSpace = await getSpaceById(spaceId)
   if (!refreshedSpace) {

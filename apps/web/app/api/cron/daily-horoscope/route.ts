@@ -1,6 +1,7 @@
 import webpush from 'web-push'
 import { Expo } from 'expo-server-sdk'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { verifyCronSecret } from '@/lib/auth/cron-secret'
 
 /**
  * GET /api/cron/daily-horoscope
@@ -31,7 +32,9 @@ export async function GET(req: Request) {
   const authHeader = req.headers.get('Authorization')
   const cronSecret = process.env.CRON_SECRET
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  // Timing-safe comparison (Batch 5.5 #22) — plain !== permits a timing
+  // side-channel, low real-world exploitability but a cheap fix.
+  if (!verifyCronSecret(authHeader, cronSecret)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

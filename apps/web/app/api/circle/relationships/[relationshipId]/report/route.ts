@@ -130,7 +130,7 @@ export async function POST(
       return Response.json({ error: 'Не успяхме да генерираме доклада.' }, { status: 500 })
     }
 
-    await supabase
+    const { error: spaceUpdateError } = await supabase
       .from('connection_spaces')
       .update({
         relationship_type: relationshipType,
@@ -140,6 +140,12 @@ export async function POST(
         composite_chart_data: computed.compositeChartData,
       })
       .eq('id', relationshipId)
+
+    if (spaceUpdateError) {
+      // Not fatal (Batch 5.5 #12) — cache staleness only, the report row
+      // itself was already inserted successfully above.
+      console.error('[Circle Report] failed to refresh space cache:', spaceUpdateError)
+    }
 
     void logAuditEvent(userId, 'relationship.report_generated', {
       spaceId: relationshipId,
