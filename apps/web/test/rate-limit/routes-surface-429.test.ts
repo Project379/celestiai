@@ -91,6 +91,18 @@ vi.mock('@stellaeum/core/charts/calculate', () => ({
   }),
 }))
 
+vi.mock('@stellaeum/core/diary/entries', () => ({
+  getDiaryEntry: vi.fn(() => {
+    throw new Error('getDiaryEntry should not be called')
+  }),
+  updateDiaryEntry: vi.fn(() => {
+    throw new Error('updateDiaryEntry should not be called')
+  }),
+  deleteDiaryEntry: vi.fn(() => {
+    throw new Error('deleteDiaryEntry should not be called')
+  }),
+}))
+
 vi.mock('@/lib/circle/service', () => ({
   getUserTier: vi.fn(() => {
     throw new Error('getUserTier should not be called')
@@ -207,6 +219,31 @@ describe('rate-limited routes surface 429, not 500, when assertRateLimit throws'
   it('GET /api/planets/current (Batch 5.5 #6 — unauthenticated, IP-keyed)', async () => {
     const { GET } = await import('@/app/api/planets/current/route')
     await expectRateLimited(GET(req('http://localhost/api/planets/current')))
+  })
+
+  it('GET /api/diary/entries/[id] (Batch 5.5 #7)', async () => {
+    const { GET } = await import('@/app/api/diary/entries/[id]/route')
+    await expectRateLimited(
+      GET(req('http://localhost/api/diary/entries/abc'), { params: Promise.resolve({ id: 'abc' }) }),
+    )
+  })
+
+  it('PATCH /api/diary/entries/[id] (Batch 5.5 #7)', async () => {
+    const { PATCH } = await import('@/app/api/diary/entries/[id]/route')
+    await expectRateLimited(
+      PATCH(jsonReq('http://localhost/api/diary/entries/abc', {}, 'PATCH'), {
+        params: Promise.resolve({ id: 'abc' }),
+      }),
+    )
+  })
+
+  it('DELETE /api/diary/entries/[id] (Batch 5.5 #7)', async () => {
+    const { DELETE } = await import('@/app/api/diary/entries/[id]/route')
+    await expectRateLimited(
+      DELETE(req('http://localhost/api/diary/entries/abc', { method: 'DELETE' }), {
+        params: Promise.resolve({ id: 'abc' }),
+      }),
+    )
   })
 
   it('POST /api/gdpr/delete-account', async () => {

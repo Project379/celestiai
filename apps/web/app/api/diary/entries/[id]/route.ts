@@ -6,6 +6,8 @@ import {
 } from '@stellaeum/core/diary/entries'
 import { updateDiaryEntrySchema } from '@/lib/validators/diary'
 import { logServerError } from '@/lib/monitoring/log-server-error'
+import { assertRateLimit } from '@/lib/rate-limit'
+import { ApiError } from '@/lib/auth/guards'
 
 /**
  * Error IDs emitted by this handler (wired to Sentry via logServerError
@@ -29,6 +31,12 @@ export async function GET(_request: Request, { params }: RouteParams) {
   }
 
   try {
+    await assertRateLimit({
+      key: `diary-entry-get:${userId}`,
+      limit: 60,
+      windowMs: 60_000,
+    })
+
     const { id } = await params
     const result = await getDiaryEntry(userId, id)
     if (!result.ok) {
@@ -39,6 +47,9 @@ export async function GET(_request: Request, { params }: RouteParams) {
     }
     return Response.json(result.data)
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     logServerError('ERR-DI-005', error, {
       context: 'GET /api/diary/entries/[id] failed',
     })
@@ -59,6 +70,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 
   try {
+    await assertRateLimit({
+      key: `diary-entry-patch:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
     const { id } = await params
     const body = await request.json()
 
@@ -99,6 +116,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return Response.json(result.data)
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     logServerError('ERR-DI-006', error, {
       context: 'PATCH /api/diary/entries/[id] unhandled error',
     })
@@ -119,6 +139,12 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
   }
 
   try {
+    await assertRateLimit({
+      key: `diary-entry-delete:${userId}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+
     const { id } = await params
     const result = await deleteDiaryEntry(userId, id)
     if (!result.ok) {
@@ -136,6 +162,9 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     }
     return new Response(null, { status: 204 })
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     logServerError('ERR-DI-007', error, {
       context: 'DELETE /api/diary/entries/[id] unhandled error',
     })

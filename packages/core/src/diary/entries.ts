@@ -190,6 +190,60 @@ export async function upsertDiaryEntry(
     .single()
 
   if (error || !data) {
+    // SECURITY/CORRECTNESS FIX (2026-08-14, Batch 5.5 #10): the SELECT
+    // above and this INSERT are not atomic — two concurrent upserts for
+    // the same (user_id, entry_date) (a double-submit, or a client retry
+    // after a timeout that actually succeeded) can both see "no existing
+    // row" and both attempt this INSERT. The real
+    // diary_entries_unique_user_date UNIQUE(user_id, entry_date)
+    // constraint correctly rejects the loser, but that 23505 was
+    // previously surfaced as a generic UPSERT_FAILED — breaking this
+    // function's own "always succeeds, idempotent upsert" contract under
+    // concurrency. Recover by re-fetching the winner's row and applying
+    // THIS request's data via UPDATE instead — same outcome as if this
+    // request had simply run a moment later and taken the update branch
+    // above.
+    if ((error as { code?: string } | null)?.code === '23505') {
+      const { data: winnerRow, error: refetchError } = await supabase
+        .from('diary_entries')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('entry_date', input.entryDate)
+        .maybeSingle()
+
+      if (refetchError || !winnerRow) {
+        console.error('[core/diary/entries] upsert-insert 23505 refetch failed:', refetchError)
+        return {
+          ok: false,
+          error: 'UPSERT_FAILED',
+          message: refetchError?.message ?? 'unknown',
+        }
+      }
+
+      const { data: updated, error: updateError } = await supabase
+        .from('diary_entries')
+        .update({
+          phase_id: input.phaseId,
+          phase_name: input.phaseName,
+          intentions: input.intentions,
+        })
+        .eq('id', (winnerRow as DiaryEntryRow).id)
+        .eq('user_id', userId)
+        .select()
+        .single()
+
+      if (updateError || !updated) {
+        console.error('[core/diary/entries] upsert-insert 23505 recovery update failed:', updateError)
+        return {
+          ok: false,
+          error: 'UPSERT_FAILED',
+          message: updateError?.message ?? 'unknown',
+        }
+      }
+
+      return { ok: true, data: updated as DiaryEntryRow, created: false }
+    }
+
     console.error('[core/diary/entries] upsert-insert failed:', error)
     return {
       ok: false,
