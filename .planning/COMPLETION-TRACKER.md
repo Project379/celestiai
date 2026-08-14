@@ -647,37 +647,160 @@ Batch 5.5's Circle backend security review per the sequencing above.
 
 ---
 
-### Batch 5.5 — Circle backend security review (NEW, 2026-08-14)
+### Batch 5.5 — Backend security sweep, all routes (2026-08-14)
 
-**Status: not started — sequenced, not scoped.** Founder instruction:
-"the wider question you recorded — what else in the Circle backend has
-never been reviewed — becomes a real batch, not a note... Add it to the
-sequence after Batch 5 and before the UI phase. Scope it when we get
-there; do not investigate now." Decimal-numbered (5.5) rather than
-renumbering the whole ledger, matching this project's own "insert as a
-decimal phase between existing ones" convention.
+**Status: in progress. Tier 1 done, Tier 2 done, Tier 3 mostly done,
+Migration A declined, Migration B code done (SQL not yet run), Migration
+C blocked on a founder-run schema query.**
 
 **Why it exists:** the invite-accept race was found only because porting
 Кръг to mobile forced an actual read of the authorisation model — not
-because anyone was auditing it. The Circle backend (9 tables, 9 routes)
-has been running in production-shaped form since 2026-08-04
-(`STREAM-K-PORT-LOG.md` "Port 1") with nobody having looked this closely
-at it until a port required it. Sub-batch B's own check-then-act sweep
-found **five** instances of one shape across a backend nobody had
-reviewed (see the table above) — two high severity and fixed, three
-lower severity and parked here. Founder's own framing: "that is the
-argument for Batch 5.5 being a real batch rather than a note."
+because anyone was auditing it. Founder instruction: make the sweep
+systematic across **all** routes, not just Circle's, since Circle was
+only where the port happened to force the first close look.
 
-**Scope note added by the founder (2026-08-14), not yet acted on:** the
-sweep that found these five should be systematic across **all** routes
-when this batch opens, not scoped to Circle alone — Circle is where it
-happened to start because Кръг was the feature being ported, not
-necessarily where the problem is concentrated.
+**Scoping investigation (2026-08-14):** dispatched 5 parallel read-only
+audits covering all 41 `apps/web/app/api/**/route.ts` files against six
+vulnerability classes (check-then-act races, ID-substitution auth
+bypass, trusted client identifiers, rate-limit ordering, missing
+ownership scoping, inconsistent-state failure paths). Full findings
+table (1 high, 8 medium, 14 low, plus re-confirmations of the three
+items parked from Batch 4) was reported to the founder for a single
+consolidated ruling before any fix work started, per instruction.
+VERIFIED vs. INFERRED stated per finding; the one INFERRED item
+(`processed_webhook_events` unique constraint existence) was flagged
+rather than guessed at, expressly per the founder's approval of that
+discipline.
 
-**Explicitly deferred, not investigated now:** scope, method, and
-checklist for this review are the founder's call when this batch opens,
-per instruction. Not pre-scoped here beyond recording that it exists and
-where it sits in the sequence.
+**Tier 1 — done, both fixed same day as found, ahead of everything else:**
+- **#1, oracle/generate quota bypass — HIGH, the most serious finding of
+  the project.** `regenerate:true` skipped both the 24h cooldown and the
+  full quota check/claim whenever no live cached reading existed (never
+  generated, or past the 7-day TTL) — a free-tier user could get
+  unlimited paid AI generations for free, repeatable forever. Fixed by
+  gating the B.0f-2-fix-1 quota exemption on `existingReading`
+  truthiness (`isRegenerationOfExisting`), not on the raw `regenerate`
+  flag alone. Checked `horoscope/generate` for the same shape (same
+  author, same pattern, per founder instruction to verify not assume) —
+  it has no quota system at all, so the specific bypass doesn't apply
+  there (its own issue is #5, below). Fix: `cd00147`.
+- **#4, cron/cleanup-deleted-accounts orphaned Clerk account — GDPR
+  contract failure.** Supabase `users` row deleted before the Clerk
+  account; a Clerk API failure left a live, loginable, data-wiped account
+  with no retry path (the row that anchors tomorrow's selection query was
+  already gone). Fixed: Clerk deleted first, `users` row last (the retry
+  anchor stays until every side effect, including Clerk, succeeds); a
+  Clerk 404 (already-deleted by a prior run) is treated as success rather
+  than a stuck retry loop. Fix: `854035f`.
+
+**Tier 2 — done, all seven items:**
+- **#2**, `invites/accept` group-space branch — same unchecked-insert-
+  error bug Batch 4 fixed elsewhere (`7d60778`), missed at this
+  third call site. Two different invites into the same group space,
+  accepted concurrently, race the same `connection_reports` version;
+  23505 now treated as success (member was already added), any other
+  error now surfaces instead of a silent false-200. Fix: `2b10618`.
+- **#5**, `horoscope/generate` duplicate paid-AI-call race — claimed the
+  chart+date pair via a real INSERT against the existing
+  `daily_horoscopes_chart_date_unique` constraint (no migration needed)
+  before calling the AI model; the loser gets 429 instead of a duplicate
+  paid generation. Fix: `6fc97b6`.
+- **#6**, `planets/current` — the one route with zero auth AND zero rate
+  limit, doing real Swiss Ephemeris compute. **Also found while fixing:
+  this route has no caller anywhere in `apps/web` or `apps/mobile`** —
+  currently dead code from a product-surface perspective, reachable by
+  anyone who finds the URL regardless. Added IP-keyed rate limiting
+  either way; founder should separately decide keep-public-for-a-future-
+  widget vs. remove. Fix: `0ab401c`.
+- **#7**, `diary/entries/[id]` — GET/PATCH/DELETE had no rate limiting at
+  all, unlike sibling `birth-data/[id]`. Added matching 60/10/10 limits.
+  Fix: `d42e216`.
+- **#10**, `diary/entries` POST TOCTOU — `upsertDiaryEntry`'s SELECT-then-
+  INSERT could 23505 a legitimate concurrent request into a spurious 500.
+  Recovers by re-fetching the winner's row and applying the request's own
+  data via UPDATE. Fix: `d42e216`.
+- **#19**, `push/subscribe` missing ownership guard — the upsert
+  (`onConflict:'endpoint'`) could silently reassign another user's
+  subscription to the caller. Added a check-then-act ownership read
+  (409 if the endpoint belongs to someone else) — not a DB constraint,
+  judged acceptable given the low likelihood and non-sensitive payload.
+  Fix: `a8c6907`.
+- **#20**, `push/register`/`subscribe`/`unsubscribe` — none rate-limited
+  at all. Added 20/min limits to all three. Fix: `a8c6907`.
+
+**Tier 3 — mostly done, judgement applied per instruction:**
+- **#12/#13** (unchecked `connection_spaces` cache-update error in the
+  standalone report route and the currently-unreachable
+  `recomputeAndPersistSpace` helper) — cheap, now logged. Not fatal
+  either way (cache staleness only). Fix: `65929b0`.
+- **#22** (cron `CRON_SECRET` non-constant-time comparison) — cheap,
+  extracted a shared `verifyCronSecret` (timingSafeEqual, same pattern
+  already used in the RevenueCat webhook's signature check) into both
+  cron routes. Fix: `65929b0`.
+- **#11** (birth-data/[id] chart_calculations cache-invalidation) —
+  checked, found already adequate: already logged via `console.error`
+  and non-fatal by design. The original audit's "silent" characterization
+  was imprecise. No change made.
+- **#21** (gdpr/delete-account POST check-then-act, duplicate audit log)
+  — same atomic-conditional-UPDATE pattern as the invite-accept/oracle-
+  quota claims (`.is('deletion_scheduled_at', null)`), closing the race
+  entirely rather than just reducing its blast radius. Added an `is`
+  chain method to the shared FIFO test mock (`test/mocks/supabase.ts`) —
+  needed for this fix, reusable going forward. Fix: `9a98797`.
+- **#17** (`crystals/collect` check-then-act, absorbed by a unique
+  constraint) — cheap one-line `.is('collected_at', null)` guard added
+  for defense-in-depth, even though no double-reward was ever possible.
+  Fix: `67ba684`.
+- **#18** (`crystals/daily/collect` cosmetic "alreadyCollected" double-
+  report) — checked, **not fixed**: a correct fix needs the shared
+  auto-collect insert (`today.ts`) to expose a fresh-vs-existing signal
+  to both call sites, not a one-line patch, despite the low severity.
+  Recorded per instruction ("otherwise record and move on").
+- **#8** (`crystals/today` GET-mutates-state) — **not fixed**: a proper
+  fix needs a route/verb redesign (GET shouldn't have a write side
+  effect), not a cheap patch. Impact is already low (idempotent, no
+  extra reward, absorbed by the same unique constraint as #17/#18).
+  Recorded, not fixed this batch.
+- **#23** (Stripe webhook cross-event delivery ordering) — accepted, no
+  fix. Inherent to Stripe's at-least-once/unordered delivery guarantees,
+  not something this codebase controls.
+- **#14/#15/#16** (Circle archive/invite-create/invite-cancel
+  check-then-act, all previously judged idempotent-or-dependent-on-a-
+  re-check) — re-confirmed genuinely safe during the original audit
+  re-read. Closed, no fix needed.
+
+**Migrations — ruled on all three at once, as the founder asked:**
+- **A (`connection_spaces.invite_id` defense-in-depth index) —
+  DECLINED.** The actual TOCTOU is already fixed at the route level;
+  founder judged this not worth a migration on an already-safe path.
+  Stays in the register as available, not needed.
+- **B (`saved_people_profiles` free-tier quota) — APPROVED, code done,
+  SQL NOT YET RUN.** Per founder instruction, used the RPC pattern
+  already proven for oracle quota (`increment_quota_if_available`)
+  rather than denormalising tier onto the profile row (a second source
+  of truth for subscription tier). New function
+  `create_saved_profile_if_allowed`
+  (`supabase/migrations/20260814180000_saved_profile_quota_rpc.sql`)
+  wraps the tier check, count check, and insert in one atomic Postgres
+  function — a brand-new user has zero existing profile rows for their
+  first profile (the exact race window), so there's no row to lock via
+  `SELECT...FOR UPDATE`; `pg_advisory_xact_lock(hashtext(p_user_id))`
+  serializes concurrent calls for the same user instead.
+  `apps/web/app/api/circle/profiles/route.ts` POST already calls this
+  RPC. **Not yet live** — per standing discipline, a migration isn't
+  done until confirmed landed. Founder needs to run the SQL (dashboard
+  or `supabase migration repair --status applied 20260814180000` if
+  applied out-of-band, matching the existing quota-functions migration's
+  own operational note) and confirm. Fix: `851d5ce`.
+- **C (`webhooks/stripe` idempotency) — blocked on a founder-run query.**
+  Whether `processed_webhook_events.stripe_event_id` has a live unique
+  constraint could not be verified from the repo (no tracked
+  `CREATE TABLE` for this table — same "predates migration tracking"
+  situation `connection_spaces` was in before its 2026-08-03 capture
+  migration) or from any local tool (Docker unavailable for local
+  Supabase, no `pg` client installed). SQL given to the founder to run
+  in the dashboard; fix shape depends entirely on the result — not
+  guessed at.
 
 ---
 
