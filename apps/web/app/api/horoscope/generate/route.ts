@@ -206,14 +206,67 @@ export async function POST(req: Request) {
       })),
     }
 
+    // SECURITY/COST FIX (2026-08-14, Batch 5.5 #5): claim this chart+date
+    // pair BEFORE calling the paid AI model, using a real INSERT (not the
+    // upsert used below) against daily_horoscopes_chart_date_unique
+    // (UNIQUE(chart_id, date) — confirmed live in
+    // 20260413141504_schema_hardening.sql, not assumed) as an
+    // application-level lock. Two concurrent requests both pass the
+    // cache-miss check above and both reach here; only one INSERT can
+    // succeed, and the loser's fails with 23505 immediately — well before
+    // either request would otherwise reach the AI call — closing the
+    // duplicate-paid-generation race. The placeholder content is
+    // overwritten by the real upsert below once generation finishes; a
+    // generation failure deletes the claim so a retry isn't permanently
+    // blocked by an empty placeholder row.
+    const { error: claimError } = await supabase.from('daily_horoscopes').insert({
+      chart_id: chartId,
+      user_id: userId,
+      date: requestedDate,
+      content: '',
+      model_version: AI_MODEL,
+    })
+
+    if (claimError) {
+      if ((claimError as { code?: string }).code === '23505') {
+        return Response.json(
+          { error: 'Хороскопът вече се генерира. Опитай отново след малко.' },
+          { status: 429 }
+        )
+      }
+      console.error('[Horoscope Generate] Failed to claim generation slot:', claimError)
+      return Response.json(
+        { error: 'Failed to prepare horoscope generation.' },
+        { status: 500 }
+      )
+    }
+
+    async function releaseClaimOnFailure() {
+      const { error } = await supabase
+        .from('daily_horoscopes')
+        .delete()
+        .eq('chart_id', chartId)
+        .eq('date', requestedDate)
+        .eq('content', '')
+      if (error) {
+        console.error('[Horoscope Generate] Failed to release claim after generation failure:', error)
+      }
+    }
+
     if (jsonOnly) {
-      const result = await generateText({
-        model: openrouter(AI_MODEL),
-        system: systemPrompt,
-        prompt: promptText,
-        temperature: 0.85,
-        maxOutputTokens: 1500,
-      })
+      let result
+      try {
+        result = await generateText({
+          model: openrouter(AI_MODEL),
+          system: systemPrompt,
+          prompt: promptText,
+          temperature: 0.85,
+          maxOutputTokens: 1500,
+        })
+      } catch (err) {
+        await releaseClaimOnFailure()
+        throw err
+      }
 
       void checkAndLogGeneration({
         source: 'horoscope',
@@ -272,6 +325,9 @@ export async function POST(req: Request) {
         } catch (err) {
           console.error('[Horoscope Generate] Failed to save horoscope:', err)
         }
+      },
+      onError: () => {
+        void releaseClaimOnFailure()
       },
     })
 

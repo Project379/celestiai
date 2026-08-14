@@ -122,7 +122,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1749
+const BASELINE = 1751
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

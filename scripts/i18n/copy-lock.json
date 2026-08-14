@@ -1,5 +1,5 @@
 {
-  "count": 2993,
+  "count": 2995,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -860,6 +860,7 @@
     "apps/web/app/api/circle/invites/accept/route.ts::'Липсва карта на изпращача на поканата.'",
     "apps/web/app/api/circle/invites/accept/route.ts::'Липсва пространство за поканата.'",
     "apps/web/app/api/circle/invites/accept/route.ts::'Не можеш да приемеш собствената си покана.'",
+    "apps/web/app/api/circle/invites/accept/route.ts::'Не успяхме да генерираме доклада.'",
     "apps/web/app/api/circle/invites/accept/route.ts::'Не успяхме да добавим човека в групата.'",
     "apps/web/app/api/circle/invites/accept/route.ts::'Не успяхме да приемем поканата.'",
     "apps/web/app/api/circle/invites/accept/route.ts::'Не успяхме да приемем поканата.'",
@@ -968,6 +969,7 @@
     "apps/web/app/api/gdpr/delete-account/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/gdpr/delete-account/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/gdpr/export/route.ts::'Сесията ти изтече. Влез отново.'",
+    "apps/web/app/api/horoscope/generate/route.ts::'Хороскопът вече се генерира. Опитай отново след малко.'",
     "apps/web/app/api/oracle/generate/route.ts::'Грешка при генериране на четенето'",
     "apps/web/app/api/oracle/generate/route.ts::'Грешка при запазване на четенето'",
     "apps/web/app/api/oracle/generate/route.ts::'Картата не е намерена'",
