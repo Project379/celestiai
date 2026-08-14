@@ -102,11 +102,16 @@ describe('POST /api/webhooks/stripe — signature verification', () => {
   })
 })
 
-describe('POST /api/webhooks/stripe — idempotency', () => {
-  it('returns 200 without reprocessing a duplicate event id', async () => {
+describe('POST /api/webhooks/stripe — idempotency (Batch 5.5 #9, insert-first)', () => {
+  it('returns 200 without reprocessing a duplicate event id — the insert 23505s', async () => {
     const event = makeEvent()
     vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as never)
-    mockSupabase.push('processed_webhook_events', { data: { id: 'row_1' } })
+    // Insert-first: a duplicate delivery hits the real UNIQUE(stripe_event_id)
+    // constraint immediately, before any handler runs.
+    mockSupabase.push('processed_webhook_events', {
+      data: null,
+      error: { code: '23505', message: 'duplicate key value violates unique constraint' },
+    })
 
     const res = await POST(makeRequest('{}'))
 
@@ -114,22 +119,24 @@ describe('POST /api/webhooks/stripe — idempotency', () => {
     expect(handleCheckoutComplete).not.toHaveBeenCalled()
   })
 
-  it('records the event as processed after a successful handler run', async () => {
+  it('inserts the processed-event marker BEFORE calling the handler, then calls the handler', async () => {
     const session = { mode: 'subscription', metadata: { clerkUserId: 'user_1' }, subscription: 'sub_1' }
     const event = makeEvent({ data: { object: session } })
     vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as never)
-    mockSupabase.push('processed_webhook_events', { data: null }) // no existing row
+    mockSupabase.push('processed_webhook_events', { data: { id: 'row_1' }, error: null })
     vi.mocked(handleCheckoutComplete).mockResolvedValue(undefined)
 
     const res = await POST(makeRequest('{}'))
 
     expect(res.status).toBe(200)
+    // Only one 'processed_webhook_events' call in the happy path now — the
+    // insert-first, not a separate insert-at-the-end.
+    expect(mockSupabase.from).toHaveBeenCalledWith('processed_webhook_events')
+    const insertBuilder = mockSupabase.from.mock.results[0].value
+    expect(insertBuilder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ stripe_event_id: event.id, event_type: event.type }),
+    )
     expect(handleCheckoutComplete).toHaveBeenCalledWith(session)
-    // insert() is the second call on 'processed_webhook_events' — assert it happened.
-    const insertCalls = mockSupabase.from.mock.results
-      .map((r) => r.value)
-      .filter((builder) => builder.insert.mock.calls.length > 0)
-    expect(insertCalls.length).toBeGreaterThan(0)
   })
 })
 
@@ -196,15 +203,25 @@ describe('POST /api/webhooks/stripe — error handling', () => {
     expect(res.status).toBe(200)
   })
 
-  it('returns 500 and does not mark processed on a real handler error', async () => {
+  it('returns 500 and rolls back the processed-event marker on a real handler error (Batch 5.5 #9)', async () => {
     const session = { mode: 'subscription', metadata: {}, subscription: 'sub_1' }
     const event = makeEvent({ data: { object: session } })
     vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as never)
-    mockSupabase.push('processed_webhook_events', { data: null })
+    // First call: the insert-first marker write, succeeds.
+    mockSupabase.push('processed_webhook_events', { data: { id: 'row_1' }, error: null })
+    // Second call: the rollback delete after the handler throws.
+    mockSupabase.push('processed_webhook_events', { data: null, error: null })
     vi.mocked(handleCheckoutComplete).mockRejectedValue(new Error('Supabase upsert failed'))
 
     const res = await POST(makeRequest('{}'))
 
     expect(res.status).toBe(500)
+    // Was previously "no insert at the end" (pre-fix, the insert only ever
+    // happened on success). Now the marker WAS inserted (insert-first),
+    // and the property that matters is that the failure path rolls it
+    // back via delete so Stripe's retry can reprocess.
+    const deleteBuilder = mockSupabase.from.mock.results[1].value
+    expect(deleteBuilder.delete).toHaveBeenCalled()
+    expect(deleteBuilder.eq).toHaveBeenCalledWith('stripe_event_id', event.id)
   })
 })

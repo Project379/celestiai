@@ -20,9 +20,14 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  * CRITICAL: Uses request.text() (raw body), never request.json().
  * Stripe signature verification requires the exact raw bytes sent.
  *
- * Idempotency: checks processed_webhook_events before processing; marks
- * processed on success AND on StripeWebhookIgnoredError so Stripe stops retrying
- * intentionally-ignored events. Returns 500 only on real processing errors.
+ * Idempotency: insert-first into processed_webhook_events, BEFORE any
+ * processing (Batch 5.5 #9 — mirrors the RevenueCat webhook). A 23505 on
+ * that insert means a duplicate delivery; returns 200 immediately without
+ * running any handler. The marker stays in place on success AND on
+ * StripeWebhookIgnoredError (so Stripe stops retrying an intentionally-
+ * ignored event), and is rolled back on any other processing failure so
+ * a genuine retry can reprocess. Returns 500 only on real processing
+ * errors.
  *
  * Not rate-limited: request authenticity is enforced via Stripe signature
  * verification (constructEvent below), a stronger control than a request-count
@@ -51,15 +56,32 @@ export async function POST(request: Request) {
 
   const supabase = createServiceSupabaseClient()
 
-  const { data: existing } = await supabase
+  // SECURITY/CORRECTNESS FIX (2026-08-14, Batch 5.5 #9): insert the
+  // processed-event marker FIRST, before any processing — mirrors the
+  // RevenueCat webhook's already-correct pattern. Was previously a plain
+  // SELECT-then-process-then-insert with the insert's own error unchecked;
+  // two concurrent deliveries of the same event (Stripe explicitly
+  // redelivers) both saw "not yet processed" and both fully re-ran the
+  // handler. processed_webhook_events.stripe_event_id has a live
+  // UNIQUE constraint in production (verified via a direct
+  // pg_constraint query, not assumed) — the loser's insert now 23505s
+  // near-instantly, before any handler runs, and returns 200 without
+  // doing any work.
+  const { error: insertError } = await supabase
     .from('processed_webhook_events')
-    .select('id')
-    .eq('stripe_event_id', event.id)
-    .single()
+    .insert({
+      stripe_event_id: event.id,
+      event_type: event.type,
+      processed_at: new Date().toISOString(),
+    })
 
-  if (existing) {
-    console.log(`[Webhook] Duplicate event ignored: ${event.id} (${event.type})`)
-    return new Response('OK', { status: 200 })
+  if (insertError) {
+    if (insertError.code === '23505') {
+      console.log(`[Webhook] Duplicate event ignored: ${event.id} (${event.type})`)
+      return new Response('OK', { status: 200 })
+    }
+    console.error('[Webhook] Failed to record processed event:', insertError.message)
+    return new Response('Processing error', { status: 500 })
   }
 
   const eventId = event.id
@@ -130,12 +152,6 @@ export async function POST(request: Request) {
         console.log(`[Webhook] Unhandled event type: ${event.type}`)
     }
 
-    await supabase.from('processed_webhook_events').insert({
-      stripe_event_id: event.id,
-      event_type: event.type,
-      processed_at: new Date().toISOString(),
-    })
-
     return new Response('OK', { status: 200 })
   } catch (err) {
     if (err instanceof StripeWebhookIgnoredError) {
@@ -143,12 +159,24 @@ export async function POST(request: Request) {
         `[Webhook] Ignored event ${event.id} (${event.type}): ${err.message}`,
         err.metadata
       )
-      await supabase.from('processed_webhook_events').insert({
-        stripe_event_id: event.id,
-        event_type: event.type,
-        processed_at: new Date().toISOString(),
-      })
+      // Marker was already inserted above (insert-first) — leave it in
+      // place so Stripe stops retrying an intentionally-ignored event.
       return new Response('OK', { status: 200 })
+    }
+
+    // A genuine processing failure — roll back the marker (mirrors the
+    // RevenueCat webhook) so Stripe's automatic retry can reprocess this
+    // event instead of it being silently swallowed as a duplicate.
+    const { error: deleteError } = await supabase
+      .from('processed_webhook_events')
+      .delete()
+      .eq('stripe_event_id', event.id)
+
+    if (deleteError) {
+      console.error(
+        `[Webhook] Failed to roll back processed-event marker for ${event.id} after a processing error — retries will be swallowed as duplicates until this is fixed manually:`,
+        deleteError.message
+      )
     }
 
     const message = err instanceof Error ? err.message : String(err)
