@@ -862,6 +862,25 @@ diagnosis (no migration needed; the `UNIQUE(parent_id, version)`
 constraints already existed) and the fix itself. Kept here marked
 resolved for the same reason as the invite-UI entry above.
 
+### `/you/settings.tsx` privacy-policy URL — 404s, Apple submission blocker
+
+**Not a decision to rule on — a tracked broken link with a real consequence,
+escalated 2026-08-14 from a passing mention in Batch 5's report to its own
+entry per founder correction.** `apps/mobile/app/(authed)/you/settings.tsx`
+hardcodes `const PRIVACY_URL = 'https://stellaeum.com/privacy'` — no
+placeholder guard, shipped before Batch 5 existed. Because web has no live
+deployment (Vercel still broken, see blocked-externally below), that URL
+currently 404s. **Apple requires a reachable privacy-policy URL at App
+Store submission** — this isn't just a dead link a user might tap, it's a
+review-blocking defect sitting in already-shipped code. **Do not add a
+guard here** — a guard that hides a broken privacy link is worse than a
+visibly broken one; the fix is the domain going live, which makes the
+existing link correct, not a code change. Cross-referenced from
+`PRE_LAUNCH_PREREQS.md` item 7 (Privacy/GDPR). **Blocked on:** the same
+founder-owned Vercel fix as the entry below. Resolves automatically once
+`stellaeum.com` serves the app — verify the link actually resolves at that
+point, don't assume.
+
 ### `/you/premium` free-state CTA — unfilled URL, blocked on Vercel
 
 **Not a decision to rule on — a tracked unfilled config value**, recorded
