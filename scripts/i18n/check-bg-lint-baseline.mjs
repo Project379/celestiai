@@ -60,6 +60,20 @@
  * remaining Circle UI/design pass (CircleHub.tsx vs krug-v4.html) is
  * deliberately NOT part of this raise — that's separate, deferred work.
  *
+ * Raised to 1616 (batch 4 lead-in, copy-lock's first real CI catch): the
+ * rule's file scope grew to include apps/web/test/**, which Batch 3 (Vitest
+ * coverage) populated with 11 new *.test.ts files, one of which contained a
+ * Cyrillic literal ('Тест', a fixture in birth-data.test.ts — test data, not
+ * product copy). Test files are the wrong scope for a product-copy check, so
+ * this and check:bg-strings/copy-lock's shared extractor were fixed to
+ * exclude test directories, __tests__ dirs, and *.test/*.spec files — see
+ * TEST_IGNORE_GLOBS in packages/config/eslint/no-new-bg-strings.cjs and the
+ * matching IGNORE entries in scripts/i18n/extract-literals.mjs. That
+ * exclusion drops 1 (the 'Тест' fixture). The other +3 are real, reviewed,
+ * approved copy: two Oracle regenerate strings (Batch 2) and the
+ * session-expired string ratified earlier — 1613 + 3 legitimate - 0 (test
+ * literal already excluded from this count) = 1616.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -69,7 +83,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1613
+const BASELINE = 1616
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

@@ -1,6 +1,6 @@
 const { defineConfig } = require('eslint/config')
 const expoConfig = require('eslint-config-expo/flat')
-const { NO_NEW_BG_STRINGS_RULE, CONTENT_HOME_GLOBS } = require('../../packages/config/eslint/no-new-bg-strings.cjs')
+const { NO_NEW_BG_STRINGS_RULE, CONTENT_HOME_GLOBS, TEST_IGNORE_GLOBS } = require('../../packages/config/eslint/no-new-bg-strings.cjs')
 
 module.exports = defineConfig([
   expoConfig,
@@ -28,6 +28,7 @@ module.exports = defineConfig([
   },
   {
     files: ['**/*.{ts,tsx}'],
+    ignores: TEST_IGNORE_GLOBS,
     rules: NO_NEW_BG_STRINGS_RULE,
   },
   {

@@ -10,7 +10,7 @@ import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import pkg from '../config/eslint/no-new-bg-strings.cjs'
 
-const { NO_NEW_BG_STRINGS_RULE, CONTENT_HOME_GLOBS } = pkg
+const { NO_NEW_BG_STRINGS_RULE, CONTENT_HOME_GLOBS, TEST_IGNORE_GLOBS } = pkg
 
 export default [
   js.configs.recommended,
@@ -69,6 +69,7 @@ export default [
   },
   {
     files: ['src/**/*.{ts,tsx}'],
+    ignores: TEST_IGNORE_GLOBS,
     rules: NO_NEW_BG_STRINGS_RULE,
   },
   {

@@ -1,5 +1,5 @@
 {
-  "count": 2857,
+  "count": 2860,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -51,6 +51,8 @@
     "apps/mobile/app/(authed)/moon-detail.tsx::\"Най-добра за\"",
     "apps/mobile/app/(authed)/moon-detail.tsx::\"Ритуал\"",
     "apps/mobile/app/(authed)/moon-detail.tsx::'съвсем скоро'",
+    "apps/mobile/app/(authed)/oracle.tsx::'Можеш да обновиш веднъж на ден'",
+    "apps/mobile/app/(authed)/oracle.tsx::'Ново четене'",
     "apps/mobile/app/(authed)/wizard/_layout.tsx::'Дата'",
     "apps/mobile/app/(authed)/wizard/_layout.tsx::'Място'",
     "apps/mobile/app/(authed)/wizard/_layout.tsx::'Преглед'",
@@ -830,6 +832,7 @@
     "apps/web/app/api/gdpr/delete-account/route.ts::'Грешка при отмяна на изтриването'",
     "apps/web/app/api/gdpr/delete-account/route.ts::'Заявката за изтриване е регистрирана'",
     "apps/web/app/api/gdpr/delete-account/route.ts::'Изтриването е отменено успешно'",
+    "apps/web/app/api/gdpr/delete-account/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/gdpr/delete-account/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/gdpr/export/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/oracle/generate/route.ts::'Грешка при генериране на четенето'",

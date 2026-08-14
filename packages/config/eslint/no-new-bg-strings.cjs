@@ -66,4 +66,19 @@ const CONTENT_HOME_GLOBS = [
   '**/i18n/strings/**',
 ]
 
-module.exports = { NO_NEW_BG_STRINGS_RULE, CONTENT_HOME_GLOBS }
+// Test files are scope, not content — a Cyrillic literal in a *.test.ts
+// fixture is test data, not product copy, and shouldn't need a content-home
+// entry or trip the copy-lock/spelling checks. Shared here so the ESLint
+// rule (this file's consumers) and scripts/i18n/extract-literals.mjs (the
+// copy-lock / bg-strings spelling checks) exclude the same files instead of
+// drifting into two different definitions of "test file".
+const TEST_IGNORE_GLOBS = [
+  '**/test/**',
+  '**/__tests__/**',
+  '**/*.test.ts',
+  '**/*.test.tsx',
+  '**/*.spec.ts',
+  '**/*.spec.tsx',
+]
+
+module.exports = { NO_NEW_BG_STRINGS_RULE, CONTENT_HOME_GLOBS, TEST_IGNORE_GLOBS }

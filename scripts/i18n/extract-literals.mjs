@@ -7,7 +7,25 @@ import { resolve, relative } from 'node:path'
 import fg from 'fast-glob'
 
 const GLOBS = ['apps/mobile/**/*.{ts,tsx}', 'apps/web/**/*.{ts,tsx}', 'packages/**/*.{ts,tsx}']
-const IGNORE = ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/build/**', '**/.expo/**']
+// Test files are scope, not content — a Cyrillic literal in a *.test.ts
+// fixture is test data, not product copy. Kept in sync with
+// packages/config/eslint/no-new-bg-strings.cjs's TEST_IGNORE_GLOBS (same
+// exclusion, enforced by a different mechanism there — ESLint `ignores`
+// vs. fast-glob `ignore` — so it isn't literally shared code, but must
+// stay the same set of files).
+const IGNORE = [
+  '**/node_modules/**',
+  '**/.next/**',
+  '**/dist/**',
+  '**/build/**',
+  '**/.expo/**',
+  '**/test/**',
+  '**/__tests__/**',
+  '**/*.test.ts',
+  '**/*.test.tsx',
+  '**/*.spec.ts',
+  '**/*.spec.tsx',
+]
 
 const CYRILLIC_RE = /[Ѐ-ӿ]/
 const STRING_LITERAL_RE = /'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`/g
