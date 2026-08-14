@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-14 (Batch 4 sub-batch B investigation — invite-accept race fix)
+last-updated: 2026-08-14 (Batch 4 sub-batch B investigation — report-route version races; Batch 5.5 added)
 ---
 
 # Completion Tracker
@@ -506,6 +506,92 @@ it this closely until a port required it. **Worth asking, separately and
 not now (per founder instruction): what else in the Circle backend has
 never actually been reviewed.**
 
+**Founder ratification (2026-08-14):** fix approved for both open items.
+Best-effort release (not a true transaction) accepted with reasoning —
+right call for scope. The defence-in-depth unique index stays parked in
+the halt-required register; founder rules on it alongside other
+migration-shaped items together, not one at a time. Two things recorded
+as standing discipline going forward, not just praise: (1) the test was
+proven to fail against the pre-fix code before being trusted — "a test
+not proven to fail against the bug it targets is just a test that
+passes," now the standard for anything security/correctness-shaped (see
+`feedback_prove_test_fails_against_bug` in Claude's memory). (2)
+`routes-surface-429.test.ts` (Batch 3) caught a real ordering slip in the
+rewrite itself before merge — the gate paid for itself twice in one
+session, once finding Batch 1's original ordering bugs, once preventing a
+new one during the fix that closed a *different* bug.
+
+**Wider question promoted to a real batch, not left as a note:** see
+Batch 5.5 below.
+
+**Sub-batch B investigation (2026-08-14) — same check-then-act shape found
+twice more, one of them already live in production:**
+
+Per the founder's instruction to treat any check-then-act shape in this
+sub-batch's surface the same way the invite-accept race was treated —
+halt, fix separately, don't fix inline — the remaining Circle routes this
+sub-batch touches were read before any UI work started. Two genuinely
+match the invite-accept bug's shape and severity class (real duplicate
+resource creation, real doubled AI/ephemeris cost); three are lower
+severity but still check-then-act and are recorded rather than silently
+judged fine unilaterally.
+
+| # | Route | Shape | Consequence of a race | Severity |
+|---|---|---|---|---|
+| 1 | `POST /api/circle/relationships/[id]/report` | reads `latest.version`, then inserts a report with `nextVersion` — no exclusivity | two concurrent generations can insert two `connection_reports` rows with the **same** version number (no `UNIQUE(space_id, version)` constraint either); "latest report" lookups become ambiguous; doubled ephemeris/AI cost | high — matches the invite-accept shape exactly. **Not built on mobile yet** — sub-batch B territory, not shipped anywhere. |
+| 2 | `POST /api/circle/profiles/[id]/report` | identical shape, `saved_people_reports` table | same as above | high — same shape, but **already live in production on web AND already has a mobile client wired to it** (`useAnalyzeSavedProfile`, shipped in sub-batch A, `ec9f642`). This is the more urgent of the two: it's not hypothetical, it's already reachable from a real client today. |
+| 3 | `POST /api/circle/relationships/[id]/archive` | checks `space.status !== 'active'`, then updates it | idempotent action — a race produces the same final state either way (both writes set `status:'archived'`), at worst a duplicate audit-log entry | low |
+| 4 | `POST /api/circle/invites` (create) | checks `hasActiveRomanticSpace` before creating an invite | could create two pending romantic invites for one user, but the (now-fixed) accept route re-validates the same invariant at accept time — doesn't bypass the actual constraint, just duplicate pending invites | low |
+| 5 | `POST /api/circle/profiles` (create, already shipped) | checks the free-tier 1-profile cap before inserting | a race could let a free user create 2 profiles instead of 1 | low — minor quota bypass |
+
+**Clean, no issue found:** `GET .../weather` (pure read, no writes — no
+TOCTOU possible), `DELETE invites/[inviteId]` (cancel), `GET
+/api/circle/profiles` (list).
+
+**Not fixed — halting per instruction, exactly as done for invite-accept.**
+Waiting on founder ruling for scope/priority on #1 and #2 particularly,
+given #2 is already live. #3–5 recorded for the same ruling rather than
+independently judged "fine" — that judgment is the founder's to make, not
+implied by severity language in this table.
+
+**Mobile-loop-risk commitment for when sub-batch B UI work resumes:**
+no connection-space/report/weather hooks exist yet — this is a design
+commitment for when they're built, not a verified property of shipped
+code. They'll follow sub-batch A's exact pattern (`useSavedProfileReport`/
+`useAnalyzeSavedProfile`, already merged and reviewed): explicit `enabled`
+gating, mutations that `invalidateQueries`/`setQueryData` on success
+rather than a `useEffect` re-fetch loop, no polling/interval refetch. That
+pattern directly avoids the birth-data bug's actual root cause (a stale
+TanStack cache never invalidated after a POST, causing a
+redirect-triggering read to refire against outdated data) — named
+explicitly here so it's checked against, not just assumed carried over.
+
+---
+
+### Batch 5.5 — Circle backend security review (NEW, 2026-08-14)
+
+**Status: not started — sequenced, not scoped.** Founder instruction:
+"the wider question you recorded — what else in the Circle backend has
+never been reviewed — becomes a real batch, not a note... Add it to the
+sequence after Batch 5 and before the UI phase. Scope it when we get
+there; do not investigate now." Decimal-numbered (5.5) rather than
+renumbering the whole ledger, matching this project's own "insert as a
+decimal phase between existing ones" convention.
+
+**Why it exists:** the invite-accept race was found only because porting
+Кръг to mobile forced an actual read of the authorisation model — not
+because anyone was auditing it. The Circle backend (9 tables, 9 routes)
+has been running in production-shaped form since 2026-08-04
+(`STREAM-K-PORT-LOG.md` "Port 1") with nobody having looked this closely
+at it until a port required it. Sub-batch B's own investigation (above)
+already found two more instances of the same bug class without looking
+very hard — reasonable grounds to suspect this isn't the last one.
+
+**Explicitly deferred, not investigated now:** scope, method, and
+checklist for this review are the founder's call when this batch opens,
+per instruction. Not pre-scoped here beyond recording that it exists and
+where it sits in the sequence.
+
 ---
 
 ### Batch 5 — Premium subscription status/management port
@@ -576,18 +662,35 @@ report/weather) — including the **Кръг redesign pass** promised in Batch
 Items pulled out of batching because they need a founder ruling before any
 implementation work starts.
 
-### Кръг invite UI (Batch 4 sub-batch B)
+### Кръг invite UI (Batch 4 sub-batch B) — RATIFIED 2026-08-14
 
-**Decision needed:** ratify the invite-accept race-condition fix
-(`0d64d17`) before any invite-acceptance UI gets built on top of it.
-**Why it halts:** explicit founder instruction — a security fix landing
-as a footnote inside a feature batch reads as a feature detail, so the
-fix (already merged, tested, CI-green) and the UI that depends on it are
-deliberately kept as separate reviewed changes. Full writeup in Batch 4's
-own section above ("Batch 4 sub-batch B investigation").
-**Blocks:** the rest of Batch 4 sub-batch B — invite creation/acceptance
-screens, connection-space list/detail, relationship reports, weather.
-None of that is started.
+**Was:** ratify the invite-accept race-condition fix (`0d64d17`) before
+any invite-acceptance UI gets built on top of it. **Resolved:** founder
+ratified the fix 2026-08-14; both open items from that fix (best-effort
+release, deferred unique-index) were explicitly addressed — see Batch 4's
+own section above. Kept here, marked resolved, rather than deleted, so
+the "halt → ratify → proceed" sequence stays visible.
+
+### Кръг relationship/saved-profile report generation — version race (Batch 4 sub-batch B investigation, 2026-08-14)
+
+**Decision needed:** whether to fix `POST /api/circle/relationships/[id]/
+report` and `POST /api/circle/profiles/[id]/report` now (same
+check-then-act-version pattern as the invite-accept bug — see the table
+in Batch 4 sub-batch B's investigation section above) or defer both to
+Batch 5.5's Circle backend security review. **Why it halts:** explicit
+founder instruction to treat any check-then-act shape found in this
+sub-batch's surface the same way as the invite bug — halt, fix
+separately, don't fix inline as part of feature work. Not judged
+low-priority unilaterally, even though the consequence (duplicate report
+version numbers, not unauthorized access) is less severe than the invite
+bug's duplicate spaces.
+**Blocks:** nothing currently shipped is broken by this — `POST
+/api/circle/profiles/[id]/report` is live and mobile-reachable
+(`useAnalyzeSavedProfile`, sub-batch A) but the race requires two
+concurrent calls, which normal single-tap usage doesn't trigger. Blocks
+building the connection-space report-generation UI in sub-batch B until
+ruled on, and blocks calling this resolved rather than open in future
+sessions.
 
 ### RevenueCat paywall and purchase flow
 
