@@ -16,9 +16,6 @@ export type { CatalogRow } from './crystals/queries'
 export { getCrystalOfTheDay } from './crystals/today'
 export type { GetCrystalOfTheDayOptions } from './crystals/today'
 
-export { getCurrentPlanets } from './planets/current'
-export type { CurrentPlanet, CurrentPlanetsResponse } from './planets/current'
-
 export { getSubscriptionTier } from './subscription/tier'
 export type { SubscriptionTier } from './subscription/tier'
 export {
