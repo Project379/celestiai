@@ -74,6 +74,21 @@
  * session-expired string ratified earlier — 1613 + 3 legitimate - 0 (test
  * literal already excluded from this count) = 1616.
  *
+ * Raised to 1659 on 2026-08-14 (Batch 4 sub-batch A — Кръг mobile port,
+ * hub + saved-profiles): +43. Mobile (+40): new circle.tsx hub, new
+ * circle/new.tsx create screen, SavedProfileForm.tsx and
+ * SavedProfileDetailPanel.tsx components — almost entirely copy ported
+ * verbatim from apps/web/components/circle/{CircleHub,SavedProfileForm}.tsx
+ * per the founder's port-faithfully ruling, plus a handful of small
+ * newly-written strings flagged for founder review in the batch report
+ * (the "+ Нов профил" button and two Alert.alert delete-confirmation
+ * strings). Web (+3): the new GET /api/circle/profiles/[profileId]/report
+ * route added this batch (mobile has no server-side DB access, so it
+ * needs a read path for a report that doesn't burn a rate-limited POST
+ * regeneration just to redisplay on screen open) reuses three
+ * already-approved error strings, but each is a new AST literal node so
+ * the count increases even though no new copy was written.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -83,7 +98,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1616
+const BASELINE = 1659
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

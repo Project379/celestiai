@@ -8,6 +8,7 @@ import { buildSavedProfileFullContent, buildSavedProfileTeaserContent } from '@/
 import {
   buildSavedProfileComputation,
   getLatestChartRowForUser,
+  getLatestSavedProfileReport,
   getSavedProfileForUser,
   getUserTier,
 } from '@/lib/circle/service'
@@ -15,6 +16,44 @@ import {
 const reportSchema = z.object({
   relationshipType: z.enum(['romantic', 'friendship', 'work', 'family']).optional(),
 })
+
+// GET added for the mobile port (web never needed this — CircleHub reads
+// latestSavedProfileReports off getCircleDashboardData's direct server-side
+// DB call). Mobile has no server-side DB access, only HTTP, so it needs a
+// read path that doesn't burn a report generation (rate-limited to 5/min)
+// just to redisplay an already-computed report on screen open.
+export async function GET(
+  _req: Request,
+  context: { params: Promise<{ profileId: string }> },
+) {
+  const { userId } = await auth()
+  if (!userId) {
+    return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
+  }
+
+  try {
+    await assertRateLimit({
+      key: `circle-profile-report-get:${userId}`,
+      limit: 60,
+      windowMs: 60_000,
+    })
+
+    const { profileId } = await context.params
+    const profile = await getSavedProfileForUser(userId, profileId)
+    if (!profile) {
+      return Response.json({ error: 'Профилът не е намерен.' }, { status: 404 })
+    }
+
+    const report = await getLatestSavedProfileReport(profileId)
+    return Response.json(report)
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    console.error('[Circle Profiles] report fetch unhandled error:', error)
+    return Response.json({ error: 'Не успяхме да заредим доклада.' }, { status: 500 })
+  }
+}
 
 export async function POST(
   req: Request,
