@@ -1,5 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { ApiError } from '@/lib/auth/guards'
+import { assertRateLimit } from '@/lib/rate-limit'
 
 const VALID_PLATFORMS = ['ios', 'android'] as const
 type Platform = (typeof VALID_PLATFORMS)[number]
@@ -19,6 +21,14 @@ export async function POST(req: Request) {
   }
 
   try {
+    // SECURITY FIX (2026-08-14, Batch 5.5 #20): no rate limiting at all,
+    // unlike every other authenticated write route in this app.
+    await assertRateLimit({
+      key: `push-register:${userId}`,
+      limit: 20,
+      windowMs: 60_000,
+    })
+
     const body = await req.json()
     const { token, platform, deviceId } = body as {
       token?: string
@@ -59,6 +69,9 @@ export async function POST(req: Request) {
 
     return Response.json({ success: true })
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('[Push Register] Error:', error)
     return Response.json({ error: 'Грешка при регистрирането' }, { status: 500 })
   }

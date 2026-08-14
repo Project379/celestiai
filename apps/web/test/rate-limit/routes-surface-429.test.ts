@@ -246,6 +246,31 @@ describe('rate-limited routes surface 429, not 500, when assertRateLimit throws'
     )
   })
 
+  it('POST /api/push/register (Batch 5.5 #20)', async () => {
+    const { POST } = await import('@/app/api/push/register/route')
+    await expectRateLimited(
+      POST(jsonReq('http://localhost/api/push/register', { token: 't', platform: 'ios', deviceId: 'd1' })),
+    )
+  })
+
+  it('POST /api/push/subscribe (Batch 5.5 #20)', async () => {
+    const { POST } = await import('@/app/api/push/subscribe/route')
+    await expectRateLimited(
+      POST(
+        jsonReq('http://localhost/api/push/subscribe', {
+          subscription: { endpoint: 'https://push.example/e1', keys: { p256dh: 'a', auth: 'b' } },
+        }),
+      ),
+    )
+  })
+
+  it('POST /api/push/unsubscribe (Batch 5.5 #20)', async () => {
+    const { POST } = await import('@/app/api/push/unsubscribe/route')
+    await expectRateLimited(
+      POST(jsonReq('http://localhost/api/push/unsubscribe', { endpoint: 'https://push.example/e1' })),
+    )
+  })
+
   it('POST /api/gdpr/delete-account', async () => {
     const { POST } = await import('@/app/api/gdpr/delete-account/route')
     await expectRateLimited(POST())

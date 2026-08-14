@@ -1,5 +1,5 @@
 {
-  "count": 2996,
+  "count": 2997,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -994,6 +994,7 @@
     "apps/web/app/api/push/register/route.ts::'Невалиден push токен'",
     "apps/web/app/api/push/register/route.ts::'Невалидна платформа'",
     "apps/web/app/api/push/register/route.ts::'Сесията ти изтече. Влез отново.'",
+    "apps/web/app/api/push/subscribe/route.ts::'Абонаментът вече принадлежи на друг акаунт.'",
     "apps/web/app/api/push/subscribe/route.ts::'Грешка при абонирането'",
     "apps/web/app/api/push/subscribe/route.ts::'Невалидна абонаментна информация'",
     "apps/web/app/api/push/subscribe/route.ts::'Сесията ти изтече. Влез отново.'",
