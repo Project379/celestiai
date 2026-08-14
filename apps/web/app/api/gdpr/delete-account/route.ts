@@ -64,19 +64,38 @@ export async function POST() {
   const now = new Date()
   const scheduledDeletion = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
-  const { error } = await supabase
+  // SECURITY/CORRECTNESS FIX (2026-08-14, Batch 5.5 #21): the
+  // isDeletionPending() check above and this UPDATE are not atomic — two
+  // concurrent POSTs (double-click) could both pass the check and both
+  // write, producing a duplicate audit-log entry. Same atomic-conditional-
+  // UPDATE pattern already used for the invite-accept claim and the
+  // oracle quota claim: `.is('deletion_scheduled_at', null)` makes the
+  // check part of the write itself, not a separate prior read. A losing
+  // racer matches zero rows and gets the same 409 the early-exit above
+  // gives a request that arrives after deletion is already pending.
+  const { data: updated, error } = await supabase
     .from('users')
     .update({
       deleted_at: now.toISOString(),
       deletion_scheduled_at: scheduledDeletion.toISOString(),
     })
     .eq('clerk_id', userId)
+    .is('deletion_scheduled_at', null)
+    .select('id')
+    .maybeSingle()
 
   if (error) {
     console.error('[GDPR Delete] Failed to request deletion:', error)
     return Response.json(
       { error: 'Грешка при заявка за изтриване' },
       { status: 500 }
+    )
+  }
+
+  if (!updated) {
+    return Response.json(
+      { error: 'Вече има чакаща заявка за изтриване', code: 'DELETION_ALREADY_PENDING' },
+      { status: 409 }
     )
   }
 

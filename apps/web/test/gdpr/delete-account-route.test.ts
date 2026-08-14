@@ -83,7 +83,11 @@ describe('POST /api/gdpr/delete-account', () => {
 
   it('schedules deletion exactly 30 days out and sets deleted_at to now, for a user with no pending deletion', async () => {
     currentUser = makeAppUser({ deletion_scheduled_at: null, deleted_at: null })
-    mockSupabase.push('users', { data: null, error: null })
+    // A truthy row here means the conditional UPDATE (.is('deletion_scheduled_at', null))
+    // actually matched a row — Batch 5.5 #21's race-loss guard treats a
+    // null/no-row result as "someone else already claimed it," so success
+    // tests need a real row, not just error:null.
+    mockSupabase.push('users', { data: { id: 'user-row-1' }, error: null })
 
     const before = Date.now()
     const res = await POST()
@@ -100,7 +104,11 @@ describe('POST /api/gdpr/delete-account', () => {
 
   it('logs the account.deletion_request audit event on success', async () => {
     currentUser = makeAppUser({ deletion_scheduled_at: null, deleted_at: null })
-    mockSupabase.push('users', { data: null, error: null })
+    // A truthy row here means the conditional UPDATE (.is('deletion_scheduled_at', null))
+    // actually matched a row — Batch 5.5 #21's race-loss guard treats a
+    // null/no-row result as "someone else already claimed it," so success
+    // tests need a real row, not just error:null.
+    mockSupabase.push('users', { data: { id: 'user-row-1' }, error: null })
 
     await POST()
 
@@ -109,6 +117,24 @@ describe('POST /api/gdpr/delete-account', () => {
       'account.deletion_request',
       expect.objectContaining({ scheduledDeletion: expect.any(String) }),
     )
+  })
+
+  it('rejects with 409 when the conditional UPDATE matches zero rows — a concurrent request already claimed it (Batch 5.5 #21)', async () => {
+    currentUser = makeAppUser({ deletion_scheduled_at: null, deleted_at: null })
+    // Pre-fix, the isDeletionPending() read above and this write were not
+    // atomic — a losing racer's plain UPDATE still succeeded (error:null,
+    // no row-matched signal to check), so the route returned 200 and
+    // double-logged the audit event. Post-fix, .is('deletion_scheduled_at',
+    // null) makes the check part of the write: a losing racer matches zero
+    // rows, surfaced here as data:null.
+    mockSupabase.push('users', { data: null, error: null })
+
+    const res = await POST()
+
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.code).toBe('DELETION_ALREADY_PENDING')
+    expect(logAuditEvent).not.toHaveBeenCalled()
   })
 
   it('returns 500 (not a silent 200) when the Supabase update fails', async () => {

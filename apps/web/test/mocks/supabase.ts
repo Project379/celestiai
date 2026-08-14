@@ -36,6 +36,7 @@ const CHAIN_METHODS = [
   'lt',
   'not',
   'lte',
+  'is',
 ] as const
 
 function makeBuilder(result: QueryResult) {

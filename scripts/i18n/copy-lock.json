@@ -1,5 +1,5 @@
 {
-  "count": 2997,
+  "count": 2998,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -961,6 +961,7 @@
     "apps/web/app/api/diary/entries/route.ts::'Невалидни данни'",
     "apps/web/app/api/diary/entries/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/diary/entries/route.ts::'Сесията ти изтече. Влез отново.'",
+    "apps/web/app/api/gdpr/delete-account/route.ts::'Вече има чакаща заявка за изтриване'",
     "apps/web/app/api/gdpr/delete-account/route.ts::'Вече има чакаща заявка за изтриване'",
     "apps/web/app/api/gdpr/delete-account/route.ts::'Грешка при заявка за изтриване'",
     "apps/web/app/api/gdpr/delete-account/route.ts::'Грешка при отмяна на изтриването'",
