@@ -204,6 +204,11 @@ describe('rate-limited routes surface 429, not 500, when assertRateLimit throws'
     await expectRateLimited(GET(req('http://localhost/api/oracle/readings?chartId=c1')))
   })
 
+  it('GET /api/planets/current (Batch 5.5 #6 — unauthenticated, IP-keyed)', async () => {
+    const { GET } = await import('@/app/api/planets/current/route')
+    await expectRateLimited(GET(req('http://localhost/api/planets/current')))
+  })
+
   it('POST /api/gdpr/delete-account', async () => {
     const { POST } = await import('@/app/api/gdpr/delete-account/route')
     await expectRateLimited(POST())

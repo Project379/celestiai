@@ -1,5 +1,5 @@
 {
-  "count": 2995,
+  "count": 2996,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -987,6 +987,7 @@
     "apps/web/app/api/oracle/readings/route.ts::'Липсва chartId параметър'",
     "apps/web/app/api/oracle/readings/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/oracle/readings/route.ts::'Сесията ти изтече. Влез отново.'",
+    "apps/web/app/api/planets/current/route.ts::'Грешка при зареждане на планетите'",
     "apps/web/app/api/push/register/route.ts::'Грешка при регистрирането'",
     "apps/web/app/api/push/register/route.ts::'Грешка при регистрирането'",
     "apps/web/app/api/push/register/route.ts::'Липсва device_id'",
