@@ -649,9 +649,10 @@ Batch 5.5's Circle backend security review per the sequencing above.
 
 ### Batch 5.5 — Backend security sweep, all routes (2026-08-14)
 
-**Status: in progress. Tier 1 done, Tier 2 done, Tier 3 mostly done,
-Migration A declined, Migration B code done (SQL not yet run), Migration
-C blocked on a founder-run schema query.**
+**Status: in progress. Tier 1 done, Tier 2 done, Tier 3 done (two items
+recorded-not-fixed with specific refactors, see below), Migration A
+declined, Migration C resolved (application-only, no migration).
+Migration B code done — SQL below, waiting on founder to run and confirm.**
 
 **Why it exists:** the invite-accept race was found only because porting
 Кръг to mobile forced an actual read of the authorisation model — not
@@ -706,12 +707,17 @@ discipline.
   before calling the AI model; the loser gets 429 instead of a duplicate
   paid generation. Fix: `6fc97b6`.
 - **#6**, `planets/current` — the one route with zero auth AND zero rate
-  limit, doing real Swiss Ephemeris compute. **Also found while fixing:
-  this route has no caller anywhere in `apps/web` or `apps/mobile`** —
-  currently dead code from a product-surface perspective, reachable by
-  anyone who finds the URL regardless. Added IP-keyed rate limiting
-  either way; founder should separately decide keep-public-for-a-future-
-  widget vs. remove. Fix: `0ab401c`.
+  limit, doing real Swiss Ephemeris compute, and no caller anywhere in
+  `apps/web` or `apps/mobile` (grepped exhaustively — its own doc comment
+  claiming the web celestial-background animation consumes it is stale,
+  `CelestialBackground.tsx` never fetches it). First fix (`0ab401c`)
+  added IP-keyed rate limiting; founder correction — dead public code
+  that runs real compute on every GET is attack surface with no user,
+  rate-limiting it was hardening unreachable-in-practice risk instead of
+  removing it. **Deleted entirely** (route, the underlying
+  `getCurrentPlanets` core function, its `packages/core` export, the
+  rate-limit-surface test entry) — rewrite from scratch if a future
+  widget genuinely needs it. Fix: `2f828bc`.
 - **#7**, `diary/entries/[id]` — GET/PATCH/DELETE had no rate limiting at
   all, unlike sibling `birth-data/[id]`. Added matching 60/10/10 limits.
   Fix: `d42e216`.
@@ -752,15 +758,36 @@ discipline.
   for defense-in-depth, even though no double-reward was ever possible.
   Fix: `67ba684`.
 - **#18** (`crystals/daily/collect` cosmetic "alreadyCollected" double-
-  report) — checked, **not fixed**: a correct fix needs the shared
-  auto-collect insert (`today.ts`) to expose a fresh-vs-existing signal
-  to both call sites, not a one-line patch, despite the low severity.
-  Recorded per instruction ("otherwise record and move on").
-- **#8** (`crystals/today` GET-mutates-state) — **not fixed**: a proper
-  fix needs a route/verb redesign (GET shouldn't have a write side
-  effect), not a cheap patch. Impact is already low (idempotent, no
-  extra reward, absorbed by the same unique constraint as #17/#18).
-  Recorded, not fixed this batch.
+  report) — checked, **not fixed, specific refactor recorded so this
+  doesn't quietly become permanent:** `collectDailyCrystal`
+  (`packages/core/src/crystals/daily-collect.ts`) pre-reads whether
+  today's row exists BEFORE calling `getCrystalOfTheDay`, which does its
+  own insert-or-noop. A concurrent racer can insert between that read and
+  `getCrystalOfTheDay`'s own insert, so this function's `alreadyCollected`
+  can be wrong (false when it should be true) even though DB state stays
+  correct. Real fix: change `getCrystalOfTheDay`'s internal auto-collect
+  insert (`packages/core/src/crystals/today.ts` lines ~92-103) to return
+  whether ITS OWN insert attempt hit `23505` (already existed) vs.
+  actually created a new row — that's the only place the true signal
+  exists — and thread that boolean back out through
+  `GetCrystalOfTheDayOptions`/the response shape (additive, so other
+  callers of `getCrystalOfTheDay` — dashboard, `/you/crystals`,
+  `/api/crystals/today` — aren't affected) instead of `daily-collect.ts`
+  doing its own separate, race-prone pre-check.
+- **#8** (`crystals/today` GET-mutates-state) — **not fixed, specific
+  refactor recorded:** `getCrystalOfTheDay` (`today.ts`) performs an
+  INSERT into `user_daily_crystals` as a side effect of every
+  authenticated GET via `GET /api/crystals/today`, `GET
+  /api/crystals/daily-streak`, and the dashboard/`/you/crystals` Server
+  Component callers. Real fix is a verb split: extract the auto-collect
+  insert (today.ts lines ~88-103) into its own explicit write path — a
+  POST/mutation the client calls once per session (e.g. on first
+  dashboard mount) — and make `getCrystalOfTheDay` a pure read that
+  reports `collectedToday` without also causing it. Touches every call
+  site listed above, not just the route handler, which is why this
+  wasn't cheap enough for this batch. Impact stays low in the meantime
+  (idempotent, no extra reward, same unique constraint as #17/#18
+  absorbs any race).
 - **#23** (Stripe webhook cross-event delivery ordering) — accepted, no
   fix. Inherent to Stripe's at-least-once/unordered delivery guarantees,
   not something this codebase controls.
@@ -792,15 +819,32 @@ discipline.
   or `supabase migration repair --status applied 20260814180000` if
   applied out-of-band, matching the existing quota-functions migration's
   own operational note) and confirm. Fix: `851d5ce`.
-- **C (`webhooks/stripe` idempotency) — blocked on a founder-run query.**
-  Whether `processed_webhook_events.stripe_event_id` has a live unique
-  constraint could not be verified from the repo (no tracked
-  `CREATE TABLE` for this table — same "predates migration tracking"
-  situation `connection_spaces` was in before its 2026-08-03 capture
-  migration) or from any local tool (Docker unavailable for local
-  Supabase, no `pg` client installed). SQL given to the founder to run
-  in the dashboard; fix shape depends entirely on the result — not
-  guessed at.
+- **C (`webhooks/stripe` idempotency) — RESOLVED, application-only fix,
+  no migration.** Whether `processed_webhook_events.stripe_event_id` had
+  a live unique constraint could not be verified from the repo (no
+  tracked `CREATE TABLE` for this table — same "predates migration
+  tracking" situation `connection_spaces` was in before its 2026-08-03
+  capture migration) or from any local tool (Docker unavailable for local
+  Supabase, no `pg` client installed). Founder ran the query directly
+  against production: `processed_webhook_events_stripe_event_id_unique`
+  — `UNIQUE (stripe_event_id)` — is live. No migration needed; fixed by
+  mirroring the RevenueCat webhook's already-correct insert-first
+  pattern (insert the marker before any processing, 23505 = duplicate,
+  return 200 with no handler call; roll back via delete on a genuine
+  processing failure). Fix: `427415b`.
+
+**`processed_webhook_events` CREATE TABLE gap — already tracked,
+cross-referenced here so it isn't rediscovered as new.** This table has
+a live production schema (confirmed above) but no `CREATE TABLE` in
+tracked migrations — a fresh environment built from `supabase/migrations/`
+alone would be missing it entirely. This is not a new finding: it's
+already one of the eight B.0d-remediated tables named explicitly in
+`20260803102000_b0d_rls_lockdown_capture.sql`'s own header comment and
+in `.planning/SECURITY-MODEL.md` line 59 as having zero migration-file
+record for their base schema (RLS was captured for these eight; the
+base schema wasn't — a separate, larger, deliberately-not-fixed-there
+gap per that migration's own "SCOPE NOTE"). Not re-scoped here; flagging
+so a future session doesn't treat it as undiscovered.
 
 ---
 
