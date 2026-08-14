@@ -268,7 +268,7 @@ export async function POST(req: Request) {
 
       const nextVersion = (latest?.version ?? 0) + 1
 
-      await supabase
+      const { error: spaceUpdateError } = await supabase
         .from('connection_spaces')
         .update({
           member_count: members.length,
@@ -278,7 +278,14 @@ export async function POST(req: Request) {
         })
         .eq('id', spaceId)
 
-      await supabase.from('connection_reports').insert({
+      if (spaceUpdateError) {
+        // Not fatal — cache staleness only (Batch 5.5 #12/#13, same
+        // unchecked-update shape as the standalone report routes). The
+        // member was already added successfully above.
+        console.error('[Circle Invite] accept failed to refresh space cache:', spaceUpdateError)
+      }
+
+      const { error: reportInsertError } = await supabase.from('connection_reports').insert({
         space_id: spaceId,
         generated_by: userId,
         version: nextVersion,
@@ -290,6 +297,33 @@ export async function POST(req: Request) {
           label || 'вашето пространство',
         ),
       })
+
+      if (reportInsertError) {
+        // SECURITY/CORRECTNESS FIX (2026-08-14, Batch 5.5 #2): same bug
+        // class Batch 4 fixed in the two standalone report routes (commit
+        // 7d60778) — connection_reports_unique_version (UNIQUE(space_id,
+        // version)) is the real exclusivity control when two DIFFERENT
+        // invites into the SAME existing group space are accepted
+        // concurrently. Both requests already claimed their own distinct
+        // token via the atomic UPDATE above and already added their own
+        // member row (both real, already-committed writes) — this is a
+        // genuine multi-invite race, not the single-token race the claim
+        // already prevents — but both compute the same nextVersion from
+        // the same pre-write read, so the loser's insert 23505s. Unlike
+        // the standalone report routes, this route's success response is
+        // just {spaceId} with no report content echoed, so there's
+        // nothing to fetch-and-return: the winner's concurrent request
+        // already produced a valid report for this space+version. Treat
+        // that as success. Any OTHER error is real — surface it via
+        // AcceptRejected rather than silently swallowing (the pre-fix
+        // behavior: no error check at all, so a genuine insert failure
+        // here still returned 200 with a member added and no report).
+        const code = (reportInsertError as { code?: string }).code
+        if (code !== '23505') {
+          console.error('[Circle Invite] accept report insert failed:', reportInsertError)
+          throw new AcceptRejected(500, { error: 'Не успяхме да генерираме доклада.' })
+        }
+      }
 
       void logAuditEvent(claimedInvite.inviter_user_id, 'relationship.connected', {
         spaceId,
