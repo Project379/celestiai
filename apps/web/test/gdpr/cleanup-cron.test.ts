@@ -171,3 +171,88 @@ describe('GET /api/cron/cleanup-deleted-accounts — batch continues past a sing
     expect(deleteClerkUser).toHaveBeenCalledWith('user_1')
   })
 })
+
+describe('GET /api/cron/cleanup-deleted-accounts — Clerk-account-orphan fix (Batch 5.5 #4)', () => {
+  // Distinguishes the SELECT-result 'users' call from the per-user DELETE
+  // 'users' call, and instruments whether that DELETE was actually invoked
+  // — the discriminating signal for this bug. Pre-fix, the users-row
+  // DELETE ran unconditionally BEFORE the Clerk delete, so it fired even
+  // when Clerk subsequently threw. Post-fix, it must only run once Clerk
+  // has succeeded (or is confirmed already-gone via a 404).
+  function mockUsersTable(clerkId: string, onDeleteCalled: () => void) {
+    let usersCallCount = 0
+    return (table: string) => {
+      if (table !== 'users') return null
+      usersCallCount++
+      if (usersCallCount === 1) {
+        const builder: Record<string, unknown> = {}
+        for (const m of ['select', 'not', 'lte']) builder[m] = vi.fn(() => builder)
+        builder.then = (onFulfilled: (v: unknown) => unknown) =>
+          Promise.resolve({ data: [{ id: 'row-1', clerk_id: clerkId }], error: null }).then(
+            onFulfilled,
+          )
+        return builder
+      }
+      const builder: Record<string, unknown> = {}
+      builder.delete = vi.fn(() => {
+        onDeleteCalled()
+        return builder
+      })
+      builder.eq = vi.fn(() => builder)
+      builder.then = (onFulfilled: (v: unknown) => unknown) =>
+        Promise.resolve({ data: null, error: null }).then(onFulfilled)
+      return builder
+    }
+  }
+
+  function genericBuilder() {
+    const builder: Record<string, unknown> = {}
+    const methods = ['select', 'eq', 'delete', 'in', 'not', 'lte', 'lt']
+    for (const m of methods) builder[m] = vi.fn(() => builder)
+    builder.then = (onFulfilled: (v: unknown) => unknown) =>
+      Promise.resolve({ data: [], error: null }).then(onFulfilled)
+    return builder
+  }
+
+  it('does NOT delete the users row when the Clerk account delete fails with a real error (not 404) — proving Clerk is now deleted before, not after, the Supabase row', async () => {
+    let usersDeleteCalled = false
+    const usersTable = mockUsersTable('user_clerk_fails', () => {
+      usersDeleteCalled = true
+    })
+    mockSupabase.from.mockImplementation(
+      (table: string) => usersTable(table) ?? genericBuilder(),
+    )
+    deleteClerkUser.mockRejectedValueOnce(
+      Object.assign(new Error('Clerk API outage'), { status: 500 }),
+    )
+
+    const res = await GET(req('test-cron-secret'))
+    const body = await res.json()
+
+    expect(deleteClerkUser).toHaveBeenCalledWith('user_clerk_fails')
+    // This is the assertion that fails against the pre-fix route: pre-fix,
+    // the users-row DELETE ran before the Clerk call and unconditionally,
+    // so it would have fired here too even though Clerk failed.
+    expect(usersDeleteCalled).toBe(false)
+    expect(body.deleted).toBe(0)
+  })
+
+  it('treats a Clerk 404 (already deleted by a prior run) as success and still deletes the users row — closes the retry loop for the narrow residual window', async () => {
+    let usersDeleteCalled = false
+    const usersTable = mockUsersTable('user_already_gone', () => {
+      usersDeleteCalled = true
+    })
+    mockSupabase.from.mockImplementation(
+      (table: string) => usersTable(table) ?? genericBuilder(),
+    )
+    deleteClerkUser.mockRejectedValueOnce(
+      Object.assign(new Error('Not Found'), { status: 404 }),
+    )
+
+    const res = await GET(req('test-cron-secret'))
+    const body = await res.json()
+
+    expect(usersDeleteCalled).toBe(true)
+    expect(body.deleted).toBe(1)
+  })
+})

@@ -154,15 +154,46 @@ export async function GET(req: Request) {
         )
       }
 
-      // Delete user record
+      // SECURITY/GDPR FIX (2026-08-14, Batch 5.5 #4): Clerk account deleted
+      // BEFORE the `users` row, not after. The `users` row is this cron's
+      // own retry anchor — tomorrow's selection query
+      // (`deletion_scheduled_at` not null + past) only finds a user while
+      // their row still exists. Deleting it FIRST (the old order) meant
+      // that if the Clerk API call failed afterward (rate limit, transient
+      // outage — a realistic failure mode as the last step in a long
+      // per-user chain), all Supabase data was already gone, the Clerk
+      // account survived, and the next run could never find this user
+      // again to retry — a live, loginable account with no data and no
+      // path to actual deletion. Deleting Clerk first and the `users` row
+      // last means any failure anywhere in this block (including the
+      // Clerk call itself) leaves the row in place, so tomorrow's run
+      // retries the whole per-user block — every delete above is already
+      // idempotent against already-empty tables.
+      const clerk = await clerkClient()
+      try {
+        await clerk.users.deleteUser(clerkId)
+      } catch (err) {
+        // Idempotency for the retry case one level deeper: if a PRIOR run
+        // already deleted the Clerk account but then failed on this same
+        // users-row delete below (the row is the only thing left, so a
+        // narrow failure window still exists), tomorrow's retry would
+        // otherwise throw here every time (Clerk 404s on deleting an
+        // already-gone user) and get stuck forever, never reaching the
+        // users-row delete that would stop the retries. Treat "already
+        // deleted" as success and continue.
+        const status = (err as { status?: number } | null)?.status
+        if (status !== 404) {
+          throw err
+        }
+      }
+
+      // Delete user record LAST — only once the Clerk account is
+      // confirmed gone (deleted just now, or already gone from a prior
+      // run). See the comment above.
       await supabase
         .from('users')
         .delete()
         .eq('clerk_id', clerkId)
-
-      // Delete Clerk account
-      const clerk = await clerkClient()
-      await clerk.users.deleteUser(clerkId)
 
       deleted++
       console.log(`[Cron Cleanup] Deleted user ${clerkId}`)
