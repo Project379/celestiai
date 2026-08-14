@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-13
+last-updated: 2026-08-14
 ---
 
 # Completion Tracker
@@ -285,6 +285,39 @@ plumbing, not padding).
   where the actual enforcement risk lives.
 - `apps/web` typechecks clean and the full suite (121 tests, 11 files)
   passes.
+
+---
+
+### Batch 4 lead-in — copy-lock CI gate fix
+
+**Status: done (2026-08-14).** Not part of Batch 4's Кръг scope — this was
+fixing Batch 3's push, which failed CI on `check:copy-lock`.
+
+**Finding:** the gate's first real catch, and it caught two different
+things in one run. Of 4 new/changed Cyrillic literals since the last
+snapshot, 3 were genuine approved copy (two Oracle regenerate strings from
+Batch 2, the session-expired string ratified earlier) and 1 —
+`'Тест'` in `apps/web/test/charts/birth-data.test.ts` — was a test fixture,
+not product copy. The extractor shared by `check:copy-lock` and
+`check:bg-strings` (`scripts/i18n/extract-literals.mjs`), and the
+`no-new-bg-strings` ESLint rule behind `check:bg-lint-baseline`
+(`packages/config/eslint/no-new-bg-strings.cjs`), both scanned
+`apps/web/test/**` with no exclusion — a tooling scope gap that predates
+this run but was invisible until Batch 3 put a Cyrillic string in a test
+file for the first time.
+
+**Fixed:** added a shared `TEST_IGNORE_GLOBS` list (test dirs,
+`__tests__/**`, `*.test.ts(x)`, `*.spec.ts(x)`) — applied to
+`extract-literals.mjs`'s `IGNORE` array and to all three ESLint configs'
+(`web`, `mobile`, `core`) rule block via `ignores`, so the two enforcement
+paths can't drift into two different definitions of "test file" again.
+`check:bg-lint-baseline`'s `BASELINE` raised 1613 → 1616 (the 3 legitimate
+strings; the test literal no longer counts at all). `copy-lock.json`
+regenerated — diff confirmed to contain exactly the 3 legitimate entries,
+no `'Тест'`. Full `check:all` (strictness, bg-strings, copy-lock,
+lint-baseline, typecheck, lint, 121 tests) passes locally; pushed
+(`f42291d`) and confirmed green on the actual GitHub Actions run
+(`31782637622`, `conclusion: success`), not assumed from a local pass.
 
 ---
 
