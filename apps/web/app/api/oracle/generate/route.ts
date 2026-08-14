@@ -130,8 +130,21 @@ export async function POST(req: Request) {
       })
     }
 
+    // SECURITY FIX (2026-08-14, Batch 5.5 #1): `regenerate` must only exempt
+    // quota when there is an actual existing reading being regenerated — the
+    // B.0f-2-fix-1 exemption was gated on the client-supplied `regenerate`
+    // flag alone, not on `existingReading` truthiness. Since `existingReading`
+    // is only populated for a non-expired cache hit, a free-tier user sending
+    // regenerate:true for any chart/topic with no live cached reading (never
+    // generated, or past the 7-day TTL) skipped both the 24h cooldown below
+    // AND the quota check/claim entirely — unlimited free paid AI calls. The
+    // fix: treat this as a real "regeneration" (quota-exempt, cooldown-gated)
+    // only when existingReading is present; otherwise it's functionally a
+    // fresh generation and must go through quota like any other.
+    const isRegenerationOfExisting = Boolean(regenerate && existingReading)
+
     // 6. Regeneration rate limit — once per day per chart-topic pair
-    if (regenerate && existingReading?.last_regenerated_at) {
+    if (isRegenerationOfExisting && existingReading?.last_regenerated_at) {
       const lastRegen = new Date(existingReading.last_regenerated_at)
       const hoursElapsed =
         (Date.now() - lastRegen.getTime()) / (1000 * 60 * 60)
@@ -143,11 +156,14 @@ export async function POST(req: Request) {
       }
     }
 
-    // 7. Quota cap-claim (Pattern B). Regenerations are exempt per
-    //    B.0f-2-fix-1 ratification — they fall through directly to the
-    //    chart-load step, no checkQuotaAvailable, no incrementQuotaUsage.
-    //    The 24-hour regenerate rate-limit at step 6 still applies.
-    if (!regenerate) {
+    // 7. Quota cap-claim (Pattern B). Regenerations of an existing, live
+    //    cached reading are exempt per B.0f-2-fix-1 ratification — they fall
+    //    through directly to the chart-load step, no checkQuotaAvailable, no
+    //    incrementQuotaUsage. The 24-hour regenerate rate-limit at step 6
+    //    still applies. Anything else (no existing reading to regenerate)
+    //    goes through quota regardless of the regenerate flag — see the
+    //    isRegenerationOfExisting fix above.
+    if (!isRegenerationOfExisting) {
       // 7a. Pre-flight quota check. Premium short-circuits with available=true;
       //     free path reads the current period row for { used, limit, periodStart }.
       const quota = await checkQuotaAvailable(user)
@@ -267,7 +283,7 @@ export async function POST(req: Request) {
             content: cleanContent,
             generated_at: generatedAt.toISOString(),
             expires_at: expiresAt.toISOString(),
-            last_regenerated_at: regenerate ? generatedAt.toISOString() : null,
+            last_regenerated_at: isRegenerationOfExisting ? generatedAt.toISOString() : null,
             model_version: AI_MODEL,
           },
           { onConflict: 'chart_id,topic' }
@@ -325,7 +341,7 @@ export async function POST(req: Request) {
               content: cleanContent,
               generated_at: generatedAt.toISOString(),
               expires_at: expiresAt.toISOString(),
-              last_regenerated_at: regenerate
+              last_regenerated_at: isRegenerationOfExisting
                 ? generatedAt.toISOString()
                 : null,
               model_version: AI_MODEL,
