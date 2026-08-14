@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-14 (Batch 4 sub-batch A)
+last-updated: 2026-08-14 (Batch 4 sub-batch B investigation — invite-accept race fix)
 ---
 
 # Completion Tracker
@@ -420,6 +420,92 @@ so nobody re-derives it:**
 4. Кръг redesign pass is scoped into Batch 8 (UI phase), after the
    functional port ships.
 
+**Founder review of sub-batch A (2026-08-14) — all three flags ratified:**
+1. No Connections/Crush tab switcher — approved. "A tab with nothing
+   behind it is worse than no tab."
+2. Trimmed chart-gate paragraph — approved.
+3. `/you/premium` over `/pricing` for the teaser upsell CTA — approved as
+   the correct destination, **with a consequence to track**: `/you/premium`
+   is currently Batch 5's target, still a 45-line stub. Until Batch 5
+   ships, the Кръг paywall CTA leads to a dead end. Acceptable pre-launch,
+   not acceptable at launch — added explicitly to Batch 5's scope below so
+   it can't ship half-wired.
+New copy ratified: `+ Нов профил`, the delete-confirmation Alert strings,
+the edited chart-gate paragraph.
+
+---
+
+### Batch 4 sub-batch B investigation — invite-accept race condition (security finding, not a Кръг feature item)
+
+**Status: fix done and merged (`0d64d17`, 2026-08-14). Invite UI itself NOT
+started — halted pending founder ratification of this fix before any UI is
+built on top of it, per explicit instruction.**
+
+This is filed separately from the Batch 4 ledger on purpose — a security
+fix landing as a footnote inside a feature batch reads as a feature
+detail, and it isn't one.
+
+**Finding:** per the founder's explicit instruction to verify the invite
+backend's authorisation model before porting its UI (not assume a
+production-shaped backend is sound), `POST /api/circle/invites/accept`
+had a real concurrent-replay race. It fetched the invite with a plain
+SELECT (`status='pending' AND expires_at>now`), did all the expensive
+work (create a `connection_spaces` row, insert members, run
+`buildSpaceComputation`, insert a `connection_reports` row), and only
+flipped the invite to `status='accepted'` in its LAST write. Two POSTs
+against the same still-valid token, close enough in time, could both pass
+the SELECT before either write landed — producing two separate spaces
+(each granting mutual relationship-data access) and two AI-cost report
+generations from one token. Token entropy (`crypto.randomBytes(24)`, 192
+bits) and sequential reuse-after-acceptance were both already sound; this
+was specifically a TOCTOU gap in the accept route, not the token itself.
+
+**Fix:** the SELECT-then-UPDATE became a single conditional
+`UPDATE connection_invites SET status='accepted', ... WHERE status='pending'
+AND expires_at>now() RETURNING *` — one atomic statement, executed as the
+FIRST write, not the last. A losing racer gets the identical 404 a
+stale/unknown token would (no timing or message signal). All the
+post-claim work runs inside an inner try/catch that reverts the claim
+back to `pending` if anything downstream fails, so a post-claim failure
+doesn't permanently burn the token. That release is best-effort, not a
+database transaction — a true rollback would need an RPC function
+(a migration), judged out of scope for this fix and noted rather than
+silently built. Also fixed, caught by Batch 3's own
+`routes-surface-429.test.ts` the moment the rewrite landed: the rewrite
+had briefly called `createServiceSupabaseClient()` before
+`assertRateLimit()`, the exact rate-limit-first ordering bug Batch 3
+fixed elsewhere — corrected before merge.
+
+**Defense-in-depth schema constraint — answered, not built:** a
+uniqueness constraint tying one `connection_spaces` row to its originating
+invite would survive future refactors of the route, but no `invite_id`
+column exists on `connection_spaces` today — nothing to constrain without
+adding one. Cheap in concept (one nullable column + a partial unique
+index), but it's a migration, which halts for ratification regardless of
+size, per standing instruction. Not built. Flagged for the founder to
+rule on, not decided unilaterally.
+
+**Test:** `apps/web/test/circle/invite-accept-race.test.ts` — two
+concurrent `POST /accept` calls against one token, asserting exactly one
+space is created and the loser gets the standard 404. Uses a
+purpose-built stateful fake Supabase client (not the shared FIFO mock,
+which can't model "the second concurrent UPDATE sees the row the first
+one already flipped") so the test genuinely exercises the race, not a
+scripted replay of it. **Verified empirically, not just reasoned about:**
+ran this exact test against the pre-fix route and confirmed it fails (2
+winners, 2 spaces created) before restoring the fix — a test that only
+checked sequential reuse would have passed against the broken code too,
+which was the whole point of building this one instead.
+
+**General lesson, worth recording as its own line item:** this was found
+because porting Кръг to mobile forced an actual read of the invite
+backend's authorisation model — not because anyone was auditing it. The
+Circle backend has been running in production-shaped form since
+2026-08-04 (`STREAM-K-PORT-LOG.md` "Port 1") with nobody having looked at
+it this closely until a port required it. **Worth asking, separately and
+not now (per founder instruction): what else in the Circle backend has
+never actually been reviewed.**
+
 ---
 
 ### Batch 5 — Premium subscription status/management port
@@ -434,6 +520,14 @@ stub). Confirmed cleanly separable from the paywall/purchase flow —
 billing; its only "upgrade" affordance is a plain `<Link href="/pricing">`,
 no purchase logic. This batch ports the status/management half only. The
 purchase/paywall half stays in the halt-required register below.
+
+**Added scope, explicit (2026-08-14):** Batch 4 sub-batch A's Кръг teaser
+CTA already links to `/you/premium` (the correct in-app destination,
+ratified — see Batch 4's founder-review note) — that link currently leads
+to a dead end since `/you/premium` is still the 45-line stub. This batch
+is not "done" if it ships a built `/you/premium` that leaves that CTA
+still pointing at a stub-shaped page; verify the Кръг link lands somewhere
+real as part of this batch's own completion check, not as a follow-up.
 
 ---
 
@@ -481,6 +575,19 @@ report/weather) — including the **Кръг redesign pass** promised in Batch
 
 Items pulled out of batching because they need a founder ruling before any
 implementation work starts.
+
+### Кръг invite UI (Batch 4 sub-batch B)
+
+**Decision needed:** ratify the invite-accept race-condition fix
+(`0d64d17`) before any invite-acceptance UI gets built on top of it.
+**Why it halts:** explicit founder instruction — a security fix landing
+as a footnote inside a feature batch reads as a feature detail, so the
+fix (already merged, tested, CI-green) and the UI that depends on it are
+deliberately kept as separate reviewed changes. Full writeup in Batch 4's
+own section above ("Batch 4 sub-batch B investigation").
+**Blocks:** the rest of Batch 4 sub-batch B — invite creation/acceptance
+screens, connection-space list/detail, relationship reports, weather.
+None of that is started.
 
 ### RevenueCat paywall and purchase flow
 
