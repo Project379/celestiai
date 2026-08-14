@@ -89,6 +89,15 @@
  * already-approved error strings, but each is a new AST literal node so
  * the count increases even though no new copy was written.
  *
+ * Raised to 1660 on 2026-08-14 (Batch 4 investigation — invite-accept race
+ * condition fix, apps/web/app/api/circle/invites/accept/route.ts): +1.
+ * Zero new copy. The rewrite adds one more call site for the
+ * already-approved 'Не успяхме да приемем поканата.' fallback message (the
+ * new atomic-claim UPDATE's own error branch reuses it, on top of the
+ * route's pre-existing final catch-all that already had it) — the count
+ * moved because the literal now appears twice in the AST, not because
+ * anything new was written.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -98,7 +107,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1659
+const BASELINE = 1660
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

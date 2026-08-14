@@ -1,5 +1,5 @@
 {
-  "count": 2903,
+  "count": 2904,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -776,6 +776,7 @@
     "apps/web/app/api/circle/invites/accept/route.ts::'Липсва пространство за поканата.'",
     "apps/web/app/api/circle/invites/accept/route.ts::'Не можеш да приемеш собствената си покана.'",
     "apps/web/app/api/circle/invites/accept/route.ts::'Не успяхме да добавим човека в групата.'",
+    "apps/web/app/api/circle/invites/accept/route.ts::'Не успяхме да приемем поканата.'",
     "apps/web/app/api/circle/invites/accept/route.ts::'Не успяхме да приемем поканата.'",
     "apps/web/app/api/circle/invites/accept/route.ts::'Не успяхме да свържем членовете.'",
     "apps/web/app/api/circle/invites/accept/route.ts::'Не успяхме да създадем пространството.'",
