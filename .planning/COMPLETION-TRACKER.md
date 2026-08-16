@@ -1240,6 +1240,28 @@ founder approves the mockup → build reads exact values from the committed
 file, not prose or memory → founder verifies on device → only then the
 next screen. One screen at a time.
 
+**Design language reference written (2026-08-16), before any Batch 8
+mockup starts:** `.planning/design/DESIGN-LANGUAGE-REFERENCE.md`. Derived
+from shipped code and the committed v4 mockups only, not from
+`WARM_COOL_AMENDMENT.md` (proven unreliable — the superseded `bronzeText`
+value). Covers actual token values with warm/cool/neutral consumer
+mapping, the precise temperature rule (`ScreenShell`'s wash + the "app
+speaking vs. reading data vs. chrome" distinction from `BackButton`'s own
+comment), every primitive to reuse with its verified API and the
+literal no-container mechanism behind "bronze is light and fittings,"
+and — as important as what shipped — every recorded deliberate departure
+from the original spec (`Plaque`'s restructure off a rejected
+hairline-framed-plate design, `CtaPanel`'s corrected background bug,
+`ScreenShell`'s wash-opacity correction, R7's categorical-not-degree
+calibration). Two open risks flagged for Batch 8 to carry, not solved by
+writing them down: `NavRow` still uses the function-style Pressable prop
+pattern that broke three sibling primitives on the same day and was never
+itself audited; Cinzel's Cyrillic-fallback bug (REVISIT-42) has no central
+guard, only ad hoc per-component fixes at 6+ sites — a new screen can
+still reintroduce it silently. Every Batch 8 mockup states which
+primitives it reuses and where/why it departs; a genuinely new primitive
+is a flag to raise, not a decision to make silently inside a mockup file.
+
 ---
 
 ## 4. Halt-required register
