@@ -163,7 +163,7 @@ function EventRow({ title, summary, meta, badge, onPress, isLast }: EventRowProp
 function SectionMark({ title }: { title: string }) {
   return (
     <View className="mb-4 flex-row items-baseline" style={{ gap: 12 }}>
-      <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-medium text-amber-300/85">
+      <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-medium text-bronze/85">
         {title}
       </Text>
       <View className="h-px flex-1 bg-slate-400/25" />
@@ -205,8 +205,8 @@ function EventModal({ event, onClose }: { event: TransitEvent; onClose: () => vo
           <View className="mb-6 flex-row items-start justify-between" style={{ gap: 16 }}>
             <View className="flex-1">
               <View className="mb-2 flex-row items-center" style={{ gap: 10 }}>
-                <View className="h-1 w-1 rotate-45 bg-amber-300/90" />
-                <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-medium text-amber-300/85">
+                <View className="h-1 w-1 rotate-45 bg-bronze/90" />
+                <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-medium text-bronze/85">
                   Значение на събитието
                 </Text>
               </View>
@@ -227,8 +227,8 @@ function EventModal({ event, onClose }: { event: TransitEvent; onClose: () => vo
             </Pressable>
           </View>
 
-          <View className="border-l border-amber-300/40" style={{ paddingLeft: 20 }}>
-            <Text style={{ fontFamily: font.bodyMedium }} className="mb-2 text-[12px] font-medium text-amber-300/85">
+          <View className="border-l border-bronze/40" style={{ paddingLeft: 20 }}>
+            <Text style={{ fontFamily: font.bodyMedium }} className="mb-2 text-[12px] font-medium text-bronze/85">
               Тълкувание
             </Text>
             <Text style={{ fontFamily: font.body }} className="text-[14px] leading-[1.85] text-slate-300/95">
@@ -302,13 +302,13 @@ export function TransitOverviewCard({ chartId }: TransitOverviewCardProps) {
               <Text
                 style={{ fontFamily: font.bodyMedium }}
                 className={`text-[16px] font-medium ${
-                  isActive ? 'text-amber-200' : 'text-slate-400'
+                  isActive ? 'text-bronze-text' : 'text-slate-400'
                 }`}
               >
                 {tab.label}
               </Text>
               {isActive && (
-                <View className="absolute inset-x-0 h-px bg-amber-400/75" style={{ bottom: 0 }} />
+                <View className="absolute inset-x-0 h-px bg-bronze/75" style={{ bottom: 0 }} />
               )}
             </Pressable>
           )

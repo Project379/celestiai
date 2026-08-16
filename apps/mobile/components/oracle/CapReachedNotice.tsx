@@ -34,21 +34,21 @@ export function CapReachedNotice({ cap }: CapReachedNoticeProps) {
         style={{ gap: 12 }}
       >
         <View
-          className="h-px flex-1 bg-amber-300/30"
+          className="h-px flex-1 bg-bronze/30"
           style={{ maxWidth: 40 }}
         />
         <View
-          className="h-1 w-1 bg-amber-300/80"
+          className="h-1 w-1 bg-bronze/80"
           style={{
             transform: [{ rotate: '45deg' }],
-            shadowColor: 'rgb(251, 191, 36)',
+            shadowColor: 'rgb(184, 118, 62)',
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: 0.7,
             shadowRadius: 8,
           }}
         />
         <View
-          className="h-px flex-1 bg-amber-300/30"
+          className="h-px flex-1 bg-bronze/30"
           style={{ maxWidth: 40 }}
         />
       </View>

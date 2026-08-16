@@ -23,7 +23,7 @@ export const PLANET_COLORS: Record<string, string> = {
   mercury: '#c4b5fd',
   venus: '#fbcfe8',
   mars: '#fda4af',
-  jupiter: '#fde68a',
+  jupiter: '#d9a06a',
   saturn: '#94a3b8',
   uranus: '#67e8f9',
   neptune: '#a78bfa',

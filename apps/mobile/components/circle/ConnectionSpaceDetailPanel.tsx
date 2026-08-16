@@ -128,10 +128,10 @@ export function ConnectionSpaceDetailPanel({
               <Pressable
                 disabled={isGenerating}
                 onPress={onGenerateReport}
-                className="rounded-full border border-amber-300/35 px-4 py-2"
+                className="rounded-full border border-bronze/35 px-4 py-2"
                 style={({ pressed }) => ({ ...pressFeedback(pressed), opacity: isGenerating ? 0.5 : pressed ? 0.6 : 1 })}
               >
-                <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-100">
+                <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-bronze-text">
                   {isGenerating ? 'Генериране...' : latestReport ? 'Регенерирай доклада' : 'Генерирай доклад'}
                 </Text>
               </Pressable>
@@ -215,7 +215,7 @@ export function ConnectionSpaceDetailPanel({
                   .slice(0, 3)
                   .map(([key, section]) => (
                     <View key={key} className="rounded-2xl border border-white/10 bg-slate-950/20 p-4">
-                      <Eyebrow className="text-amber-200/80">{DOMAIN_LABELS[key as CompatibilityDomainKey] ?? key}</Eyebrow>
+                      <Eyebrow className="text-bronze-text/80">{DOMAIN_LABELS[key as CompatibilityDomainKey] ?? key}</Eyebrow>
                       <Text className="mt-2 text-[15px] text-white">{section.headline}</Text>
                       <Text className="mt-2 text-[13px] leading-6 text-slate-300">{section.core}</Text>
                     </View>

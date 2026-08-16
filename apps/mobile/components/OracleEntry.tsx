@@ -55,17 +55,17 @@ export function OracleEntry() {
         accessibilityRole="button"
         accessibilityLabel="Отвори Оракула"
         onPress={handlePress}
-        className="h-14 w-14 items-center justify-center rounded-full border border-amber-300/40 bg-violet-stellaeum/20"
+        className="h-14 w-14 items-center justify-center rounded-full border border-bronze/40 bg-violet-stellaeum/20"
         style={({ pressed }) => ({
           ...pressFeedback(pressed),
-          shadowColor: '#fbbf24',
+          shadowColor: '#b8763e',
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.35,
           shadowRadius: 16,
           elevation: 8,
         })}
       >
-        <Text className="font-cinzel text-[14px] text-amber-200">✦</Text>
+        <Text className="font-cinzel text-[14px] text-bronze-text">✦</Text>
       </Pressable>
     </View>
   )

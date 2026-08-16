@@ -96,7 +96,7 @@ export default function RhythmScreen() {
               <>
                 <Text
                   style={{ fontFamily: font.displaySemibold, fontSize: 56, lineHeight: 62 }}
-                  className="tracking-tight text-amber-200/95"
+                  className="tracking-tight text-bronze-text/95"
                 >
                   Тих ден
                 </Text>
@@ -108,7 +108,7 @@ export default function RhythmScreen() {
               <>
                 <Text
                   style={{ fontFamily: font.displaySemibold, fontSize: 56, lineHeight: 62 }}
-                  className="tracking-tight text-amber-200/95"
+                  className="tracking-tight text-bronze-text/95"
                 >
                   {overview.data.activeTransits.length}
                 </Text>
@@ -124,7 +124,7 @@ export default function RhythmScreen() {
             <>
               <Text style={{ fontFamily: font.body }} className="text-[28px] leading-[1.15] tracking-tight">
                 <Text className="font-light text-slate-400">Какво ти </Text>
-                <Text className="font-semibold text-amber-200/95">влияе сега</Text>
+                <Text className="font-semibold text-bronze-text/95">влияе сега</Text>
               </Text>
               <Text style={{ fontFamily: font.body }} className="mt-3 max-w-xl text-[15px] font-light leading-relaxed text-slate-500">
                 Активните транзити към картата ти — как планетите говорят с теб точно днес.
@@ -164,13 +164,13 @@ function EmptyTransitsState() {
       </Text>
       <Pressable
         onPress={() => push('/wizard/date')}
-        className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
+        className="self-start flex-row items-center rounded-full border border-bronze/40 px-5 py-2.5"
         style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 10 })}
       >
-        <Text style={{ fontFamily: font.bodyMedium }} className="text-[15px] font-medium text-amber-200">
+        <Text style={{ fontFamily: font.bodyMedium }} className="text-[15px] font-medium text-bronze-text">
           Въведи рождени данни
         </Text>
-        <Text style={{ fontFamily: font.body }} className="text-[15px] text-amber-300">›</Text>
+        <Text style={{ fontFamily: font.body }} className="text-[15px] text-bronze">›</Text>
       </Pressable>
     </View>
   )

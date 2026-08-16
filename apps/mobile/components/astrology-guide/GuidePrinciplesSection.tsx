@@ -25,7 +25,7 @@ export function GuidePrinciplesSection() {
           <View key={item.label} style={{ minWidth: '28%' }}>
             <Text className="text-[2rem] font-light leading-none tracking-tight text-slate-100">
               {item.count}
-              <Text className="ml-1.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-300/70">
+              <Text className="ml-1.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em] text-bronze/70">
                 {' '}{item.label}
               </Text>
             </Text>

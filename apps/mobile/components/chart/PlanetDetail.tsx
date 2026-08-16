@@ -280,14 +280,14 @@ export function PlanetDetail({
                 <View style={{ flex: 1 }}>
                   <View className="flex-row items-center" style={{ gap: space.md, marginBottom: rhythm.tight }}>
                     <View
-                      className="h-1 w-1 bg-amber-300/90"
+                      className="h-1 w-1 bg-bronze/90"
                       style={{ transform: [{ rotate: '45deg' }] }}
                     />
                     {/* This screen's one reserved R3 eyebrow — everything
                         else in this modal is plain sentence-case. Cinzel
                         dropped: it has zero Cyrillic glyphs and this text
                         is Cyrillic (REVISIT-42's bug, present here too). */}
-                    <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+                    <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.42em] text-bronze/80">
                       {isRising ? 'Асцендент' : 'Планета'}
                     </Text>
                   </View>
@@ -429,11 +429,11 @@ export function PlanetDetail({
                   </View>
                 )}
                 {isRising && !birthTimeKnown && (
-                  <View className="border-l border-amber-300/50 bg-amber-300/[0.05] px-5 py-3">
-                    <Text style={{ fontFamily: font.bodyMedium }} className="mb-1 text-[12.5px] font-medium text-amber-300/80">
+                  <View className="border-l border-bronze/50 bg-bronze/[0.05] px-5 py-3">
+                    <Text style={{ fontFamily: font.bodyMedium }} className="mb-1 text-[12.5px] font-medium text-bronze/80">
                       Забележка
                     </Text>
-                    <Text style={{ fontFamily: font.body }} className="text-[12.5px] font-light leading-relaxed text-amber-100/85">
+                    <Text style={{ fontFamily: font.body }} className="text-[12.5px] font-light leading-relaxed text-bronze-text/85">
                       Часът на раждане е приблизителен, затова тълкуването на асцендента е ориентировъчно.
                     </Text>
                   </View>

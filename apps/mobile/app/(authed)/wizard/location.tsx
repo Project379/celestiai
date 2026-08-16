@@ -114,7 +114,7 @@ export default function WizardLocationScreen() {
           <StepIndicator currentStep={3} />
 
           <View className="mb-8">
-            <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/75">
+            <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-bronze/75">
               III · Място
             </Text>
             <Text className="mt-2 text-[22px] font-semibold leading-tight text-slate-100">
@@ -133,7 +133,7 @@ export default function WizardLocationScreen() {
             }}
             className={`mb-7 flex-row items-center justify-between border-y px-1 py-4 ${
               manualCoordinates
-                ? 'border-amber-300/25'
+                ? 'border-bronze/25'
                 : 'border-white/[0.06]'
             }`}
             style={({ pressed }) => pressFeedback(pressed)}
@@ -149,20 +149,20 @@ export default function WizardLocationScreen() {
             <View
               className={`h-5 w-10 rounded-full border ${
                 manualCoordinates
-                  ? 'border-amber-300/50 bg-amber-300/[0.08]'
+                  ? 'border-bronze/50 bg-bronze/[0.08]'
                   : 'border-white/[0.08] bg-white/[0.02]'
               }`}
             >
               <View
                 className={`absolute h-2 w-2 ${
-                  manualCoordinates ? 'bg-amber-300/90' : 'bg-slate-500'
+                  manualCoordinates ? 'bg-bronze/90' : 'bg-slate-500'
                 }`}
                 style={{
                   top: '50%',
                   left: manualCoordinates ? 21 : 6,
                   transform: [{ translateY: -3 }, { rotate: '45deg' }],
                   ...(manualCoordinates && {
-                    shadowColor: 'rgb(251, 191, 36)',
+                    shadowColor: 'rgb(184, 118, 62)',
                     shadowOffset: { width: 0, height: 0 },
                     shadowOpacity: 0.7,
                     shadowRadius: 8,
@@ -284,10 +284,10 @@ export default function WizardLocationScreen() {
                 hapticInvite()
                 handleNext()
               }}
-              className="rounded-full border border-amber-300/40 px-6 py-2.5"
+              className="rounded-full border border-bronze/40 px-6 py-2.5"
               style={({ pressed }) => pressFeedback(pressed)}
             >
-              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
+              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-bronze-text">
                 Напред ›
               </Text>
             </Pressable>

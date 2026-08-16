@@ -95,14 +95,14 @@ export function CrystalCollectionContent({ chartId, onSelectCrystal }: CrystalCo
             >
               <Text
                 className={`font-cinzel text-[11px] font-semibold uppercase tracking-[0.28em] ${
-                  isActive ? 'text-amber-200' : 'text-slate-400'
+                  isActive ? 'text-bronze-text' : 'text-slate-400'
                 }`}
               >
                 {t.label}
                 {typeof t.count === 'number' ? ` ${t.count}` : ''}
               </Text>
               {isActive && (
-                <View className="absolute -bottom-1 left-0 right-0 h-px bg-amber-400/70" />
+                <View className="absolute -bottom-1 left-0 right-0 h-px bg-bronze/70" />
               )}
             </Pressable>
           )

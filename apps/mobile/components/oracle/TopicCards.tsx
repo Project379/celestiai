@@ -71,7 +71,7 @@ interface TopicCardProps {
 
 function TopicCard({ topic, isActive, hasSavedReading, onPress }: TopicCardProps) {
   const meta = TOPIC_META[topic]
-  const iconColor = isActive ? '#fde68a' : 'rgba(196, 181, 253, 0.85)'
+  const iconColor = isActive ? '#d9a06a' : 'rgba(196, 181, 253, 0.85)'
 
   return (
     <Pressable
@@ -92,18 +92,18 @@ function TopicCard({ topic, isActive, hasSavedReading, onPress }: TopicCardProps
       })}
       className={`relative items-center justify-center rounded-2xl border px-4 py-5 ${
         isActive
-          ? 'border-amber-300/45 bg-violet-stellaeum/[0.08]'
+          ? 'border-bronze/45 bg-violet-stellaeum/[0.08]'
           : 'border-white/[0.06] bg-white/[0.015]'
       }`}
     >
       {isActive && (
         <View
-          className="absolute h-1 w-1 bg-amber-300/80"
+          className="absolute h-1 w-1 bg-bronze/80"
           style={{
             top: 12,
             left: 12,
             transform: [{ rotate: '45deg' }],
-            shadowColor: 'rgb(251, 191, 36)',
+            shadowColor: 'rgb(184, 118, 62)',
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: 0.6,
             shadowRadius: 6,
@@ -137,12 +137,12 @@ function TopicCard({ topic, isActive, hasSavedReading, onPress }: TopicCardProps
 
       {hasSavedReading && !isActive && (
         <View
-          className="absolute h-1 w-1 bg-amber-300/85"
+          className="absolute h-1 w-1 bg-bronze/85"
           style={{
             top: 10,
             right: 10,
             transform: [{ rotate: '45deg' }],
-            shadowColor: 'rgb(251, 191, 36)',
+            shadowColor: 'rgb(184, 118, 62)',
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: 0.55,
             shadowRadius: 5,

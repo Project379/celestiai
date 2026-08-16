@@ -38,7 +38,7 @@ export function NavRow({
       })}
     >
       <View style={{ flex: 1, paddingRight: 12 }}>
-        <Text style={{ ...type.row, color: tone === 'accent' ? color.amberText : color.text }}>
+        <Text style={{ ...type.row, color: tone === 'accent' ? color.bronzeText : color.text }}>
           {label}
         </Text>
         {hint && (

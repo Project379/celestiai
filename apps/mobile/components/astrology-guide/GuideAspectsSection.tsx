@@ -21,7 +21,7 @@ const ASPECTS = [
     name: 'Квадрат',
     degrees: '90°',
     keyword: 'Напрежение',
-    tint: 'text-amber-300',
+    tint: 'text-bronze',
     desc: 'Предизвикателство и триене — но именно те ни тласкат напред и ни изграждат.',
   },
   {

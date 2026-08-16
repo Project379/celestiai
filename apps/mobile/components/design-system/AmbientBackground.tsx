@@ -123,20 +123,20 @@ export function AmbientBackground() {
         pointerEvents="none"
       >
         <Defs>
-          {/* Violet/amber corner wash — R4-neutral per the ratified reading:
+          {/* Violet/bronze corner wash — R4-neutral per the ratified reading:
               this is atmosphere, same category as ScreenShell's existing
               violet glow, not a functional accent spend. */}
           <RadialGradient id="ambient-violet" cx="8%" cy="4%" r="55%">
             <Stop offset="0%" stopColor={color.violet} stopOpacity={0.08} />
             <Stop offset="100%" stopColor={color.violet} stopOpacity={0} />
           </RadialGradient>
-          <RadialGradient id="ambient-amber" cx="95%" cy="88%" r="45%">
-            <Stop offset="0%" stopColor={color.amber} stopOpacity={0.05} />
-            <Stop offset="100%" stopColor={color.amber} stopOpacity={0} />
+          <RadialGradient id="ambient-bronze" cx="95%" cy="88%" r="45%">
+            <Stop offset="0%" stopColor={color.bronze} stopOpacity={0.05} />
+            <Stop offset="100%" stopColor={color.bronze} stopOpacity={0} />
           </RadialGradient>
         </Defs>
         <Rect width="100%" height="100%" fill="url(#ambient-violet)" />
-        <Rect width="100%" height="100%" fill="url(#ambient-amber)" />
+        <Rect width="100%" height="100%" fill="url(#ambient-bronze)" />
       </Svg>
       {groups.map((g, i) => (
         <TwinkleGroup key={i} stars={g} phaseMs={i * (TWINKLE_MS / GROUP_COUNT)} width={width} height={height} />

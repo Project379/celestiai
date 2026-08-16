@@ -41,7 +41,7 @@ export function GuideMethodSection() {
             className={`flex-row items-baseline py-4 ${idx === 0 ? '' : 'border-t border-white/[0.05]'}`}
             style={{ gap: 16 }}
           >
-            <Text className="w-8 font-cinzel text-[13px] font-bold tracking-[0.18em] text-amber-300/80">
+            <Text className="w-8 font-cinzel text-[13px] font-bold tracking-[0.18em] text-bronze/80">
               {item.numeral}
             </Text>
             <View className="flex-1">

@@ -49,7 +49,7 @@ type RelationKind = { key: string; label: string; tint: string; border: string; 
 
 const KINDS: RelationKind[] = [
   { key: 'partner', label: 'Партньор', tint: 'bg-violet-stellaeum/10', border: 'border-violet-stellaeum/40', relationshipType: 'romantic' },
-  { key: 'friend', label: 'Приятел', tint: 'bg-amber-300/5', border: 'border-amber-300/40', relationshipType: 'friendship' },
+  { key: 'friend', label: 'Приятел', tint: 'bg-bronze/5', border: 'border-bronze/40', relationshipType: 'friendship' },
   { key: 'crush', label: 'Crush', tint: 'bg-rose-500/5', border: 'border-rose-400/30' },
 ]
 
@@ -382,13 +382,13 @@ function ChartGate() {
       </Text>
       <Pressable
         onPress={() => push('/wizard/date')}
-        className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
+        className="self-start flex-row items-center rounded-full border border-bronze/40 px-5 py-2.5"
         style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 10 })}
       >
-        <Text style={{ fontFamily: font.bodyMedium }} className="text-[15px] font-medium text-amber-200">
+        <Text style={{ fontFamily: font.bodyMedium }} className="text-[15px] font-medium text-bronze-text">
           Въведи рождени данни
         </Text>
-        <Text style={{ fontFamily: font.body }} className="text-[15px] text-amber-300">›</Text>
+        <Text style={{ fontFamily: font.body }} className="text-[15px] text-bronze">›</Text>
       </Pressable>
     </View>
   )

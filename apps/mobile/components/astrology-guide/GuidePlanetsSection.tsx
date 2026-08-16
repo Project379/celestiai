@@ -58,10 +58,10 @@ export function GuidePlanetsSection() {
         {PLANET_GROUPS.map((group) => (
           <View key={group.label}>
             <View className="mb-4 flex-row items-baseline" style={{ gap: 12 }}>
-              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-amber-300/80">
+              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-bronze/80">
                 {group.label}
               </Text>
-              <View className="h-px flex-1 bg-amber-300/20" />
+              <View className="h-px flex-1 bg-bronze/20" />
               <Text className="font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-400">
                 {group.caption}
               </Text>
@@ -80,7 +80,7 @@ export function GuidePlanetsSection() {
                   <View className="flex-1">
                     <View className="mb-0.5 flex-row items-baseline" style={{ gap: 10 }}>
                       <Text className="text-[15px] font-semibold text-slate-100">{planet.name}</Text>
-                      <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-amber-300/75">
+                      <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-bronze/75">
                         {planet.keyword}
                       </Text>
                     </View>

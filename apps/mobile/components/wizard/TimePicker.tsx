@@ -149,7 +149,7 @@ export function TimePicker({
         />
         {visible && (
           <View className="rounded-t-2xl border-t border-white/10 bg-bg px-4 py-6">
-            <Text className="mb-4 text-center font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-300/75">
+            <Text className="mb-4 text-center font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-bronze/75">
               Час на раждане
             </Text>
             <View
@@ -168,7 +168,7 @@ export function TimePicker({
                   hourIndexRef.current = i
                 }}
               />
-              <Text className="mx-2 font-cinzel text-[24px] text-amber-300/70">
+              <Text className="mx-2 font-cinzel text-[24px] text-bronze/70">
                 :
               </Text>
               <Wheel
@@ -188,16 +188,16 @@ export function TimePicker({
                   height: ITEM_HEIGHT,
                   borderTopWidth: 1,
                   borderBottomWidth: 1,
-                  borderColor: 'rgba(251, 191, 36, 0.3)',
+                  borderColor: 'rgba(184, 118, 62, 0.3)',
                 }}
               />
             </View>
             <Pressable
               onPress={handleDismiss}
-              className="mt-6 self-center rounded-full border border-amber-300/40 px-6 py-2.5"
+              className="mt-6 self-center rounded-full border border-bronze/40 px-6 py-2.5"
               style={({ pressed }) => pressFeedback(pressed)}
             >
-              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
+              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-bronze-text">
                 Готово
               </Text>
             </Pressable>

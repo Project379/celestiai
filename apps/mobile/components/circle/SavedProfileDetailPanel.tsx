@@ -177,7 +177,7 @@ export function SavedProfileDetailPanel({
                     <Text className="mt-2 text-[14px] leading-6 text-slate-300">{content.snapshot.pull}</Text>
                   </View>
                   <View className="rounded-2xl border border-white/10 bg-slate-950/20 p-4">
-                    <Eyebrow className="text-amber-200/80">Какво ще искаш</Eyebrow>
+                    <Eyebrow className="text-bronze-text/80">Какво ще искаш</Eyebrow>
                     <Text className="mt-2 text-[14px] leading-6 text-slate-300">{content.snapshot.need}</Text>
                   </View>
                   <View className="rounded-2xl border border-white/10 bg-slate-950/20 p-4">
@@ -199,7 +199,7 @@ export function SavedProfileDetailPanel({
               )}
 
               {content.mode === 'teaser' ? (
-                <View className="rounded-2xl border border-amber-300/20 bg-amber-500/5 p-5">
+                <View className="rounded-2xl border border-bronze/20 bg-bronze/5 p-5">
                   <Text className="text-[15px] leading-6 text-slate-100">{content.teaser}</Text>
                   <Pressable
                     onPress={() => {
@@ -207,10 +207,10 @@ export function SavedProfileDetailPanel({
                       onClose()
                       router.push('/you/premium')
                     }}
-                    className="mt-4 self-start rounded-full border border-amber-300/35 px-4 py-2"
+                    className="mt-4 self-start rounded-full border border-bronze/35 px-4 py-2"
                     style={({ pressed }) => pressFeedback(pressed)}
                   >
-                    <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-100">
+                    <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-bronze-text">
                       Отключи пълния прочит
                     </Text>
                   </Pressable>

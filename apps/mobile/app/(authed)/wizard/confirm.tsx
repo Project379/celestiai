@@ -140,7 +140,7 @@ export default function WizardConfirmScreen() {
         <StepIndicator currentStep={4} />
 
         <View className="mb-8">
-          <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/75">
+          <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-bronze/75">
             IV · Преглед
           </Text>
           <Text className="mt-2 text-[22px] font-semibold leading-tight text-slate-100">
@@ -214,7 +214,7 @@ export default function WizardConfirmScreen() {
               handleSubmit(onSubmit)()
             }}
             disabled={isSubmitting || hasErrors}
-            className="rounded-full border border-amber-300/50 bg-amber-300/[0.04] px-7 py-3"
+            className="rounded-full border border-bronze/50 bg-bronze/[0.04] px-7 py-3"
             style={({ pressed }) =>
               isSubmitting || hasErrors ? { opacity: 0.45 } : pressFeedback(pressed)
             }
@@ -222,31 +222,31 @@ export default function WizardConfirmScreen() {
             {isSubmitting ? (
               <View className="flex-row items-center" style={{ gap: 12 }}>
                 <ActivityIndicator color="rgb(252, 211, 77)" size="small" />
-                <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-100">
+                <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-bronze-text">
                   Запазване…
                 </Text>
               </View>
             ) : (
               <View className="flex-row items-center" style={{ gap: 12 }}>
                 <View
-                  className="h-1 w-1 bg-amber-300/90"
+                  className="h-1 w-1 bg-bronze/90"
                   style={{
                     transform: [{ rotate: '45deg' }],
-                    shadowColor: 'rgb(251, 191, 36)',
+                    shadowColor: 'rgb(184, 118, 62)',
                     shadowOffset: { width: 0, height: 0 },
                     shadowOpacity: 0.7,
                     shadowRadius: 8,
                     elevation: 4,
                   }}
                 />
-                <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-100">
+                <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-bronze-text">
                   Изчисли картата
                 </Text>
                 <View
-                  className="h-1 w-1 bg-amber-300/90"
+                  className="h-1 w-1 bg-bronze/90"
                   style={{
                     transform: [{ rotate: '45deg' }],
-                    shadowColor: 'rgb(251, 191, 36)',
+                    shadowColor: 'rgb(184, 118, 62)',
                     shadowOffset: { width: 0, height: 0 },
                     shadowOpacity: 0.7,
                     shadowRadius: 8,

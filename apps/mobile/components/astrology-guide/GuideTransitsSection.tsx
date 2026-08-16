@@ -20,8 +20,8 @@ export function GuideTransitsSection() {
       <View className="flex-row flex-wrap" style={{ gap: 24 }}>
         <View style={{ flex: 1, minWidth: '45%' }}>
           <View className="mb-3 flex-row items-center" style={{ gap: 10 }}>
-            <Text className="text-[15px] text-amber-300/90">{PLANET_GLYPHS.sun}</Text>
-            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-300/80">
+            <Text className="text-[15px] text-bronze/90">{PLANET_GLYPHS.sun}</Text>
+            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-bronze/80">
               Бързи планети
             </Text>
           </View>

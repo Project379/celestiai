@@ -84,12 +84,12 @@ export function RecommendationCard({
     <View className="relative">
       {/* Kind badge + duration + year */}
       <View className="mb-5 flex-row flex-wrap items-center" style={{ gap: 10 }}>
-        <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-amber-300/90">
+        <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-bronze/90">
           {KIND_LABEL[r.kind]}
         </Text>
         {duration && (
           <>
-            <View className="h-[3px] w-[3px] rotate-45 bg-amber-300/60" />
+            <View className="h-[3px] w-[3px] rotate-45 bg-bronze/60" />
             <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-slate-300">
               {duration}
             </Text>
@@ -97,7 +97,7 @@ export function RecommendationCard({
         )}
         {r.year && (
           <>
-            <View className="h-[3px] w-[3px] rotate-45 bg-amber-300/60" />
+            <View className="h-[3px] w-[3px] rotate-45 bg-bronze/60" />
             <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-slate-400">
               {r.year}
             </Text>
@@ -106,7 +106,7 @@ export function RecommendationCard({
       </View>
 
       {/* Title */}
-      <Text className="text-[22px] font-semibold leading-[1.15] tracking-tight text-amber-200/95">
+      <Text className="text-[22px] font-semibold leading-[1.15] tracking-tight text-bronze-text/95">
         {r.title}
       </Text>
       {r.titleEn && (
@@ -180,7 +180,7 @@ export function RecommendationCard({
 function WhyBlock({ label, body }: { label: string; body: string }) {
   return (
     <View>
-      <Text className="mb-1.5 font-cinzel text-[9px] font-semibold uppercase tracking-[0.34em] text-amber-300/85">
+      <Text className="mb-1.5 font-cinzel text-[9px] font-semibold uppercase tracking-[0.34em] text-bronze/85">
         {label}
       </Text>
       <Text className="text-[14.5px] font-light leading-[1.85] text-slate-200/95">
@@ -204,14 +204,14 @@ function StatusButton({ active, onPress, label, tone }: StatusButtonProps) {
         onPress={onPress}
         className={`rounded-full border px-4 py-2 ${
           active
-            ? 'border-amber-300/70 bg-amber-400/15'
-            : 'border-amber-300/30 bg-amber-400/[0.04]'
+            ? 'border-bronze/70 bg-bronze/15'
+            : 'border-bronze/30 bg-bronze/[0.04]'
         }`}
         style={({ pressed }) => pressFeedback(pressed)}
       >
         <Text
           className={`font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] ${
-            active ? 'text-amber-100' : 'text-amber-200'
+            active ? 'text-bronze-text' : 'text-bronze-text'
           }`}
         >
           {label}
@@ -223,7 +223,7 @@ function StatusButton({ active, onPress, label, tone }: StatusButtonProps) {
     <Pressable onPress={onPress} style={({ pressed }) => pressFeedback(pressed)}>
       <Text
         className={`font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] ${
-          active ? 'text-amber-200' : 'text-slate-400'
+          active ? 'text-bronze-text' : 'text-slate-400'
         }`}
       >
         {label}

@@ -39,7 +39,7 @@ export function AstrologyReference() {
         </View>
         <Text className="mt-3 text-[22px] font-semibold leading-tight tracking-tight text-slate-100">
           <Text className="font-light text-slate-400">Астрологичен </Text>
-          <Text className="font-semibold text-amber-200/95">справочник</Text>
+          <Text className="font-semibold text-bronze-text/95">справочник</Text>
         </Text>
         <Text className="mt-2 text-[13px] font-light leading-[1.75] text-slate-500">
           Планети, аспекти, транзитни влияния и условните знаци на картата.
@@ -81,14 +81,14 @@ function ReferenceTab({ active, onPress, label }: ReferenceTabProps) {
     >
       <Text
         className={`font-cinzel text-[11px] font-semibold uppercase tracking-[0.28em] ${
-          active ? 'text-amber-200' : 'text-slate-400'
+          active ? 'text-bronze-text' : 'text-slate-400'
         }`}
       >
         {label}
       </Text>
       {active && (
         <View
-          className="absolute inset-x-0 h-px bg-amber-400/70"
+          className="absolute inset-x-0 h-px bg-bronze/70"
           style={{ bottom: 0 }}
         />
       )}
@@ -228,7 +228,7 @@ const ASPECT_LEGEND: readonly { label: string; color: string; body: string }[] =
 /* ─── Planets tab ─── */
 
 const PLANETS_DATA: readonly { name: string; keyword: string; chip: string; description: string }[] = [
-  { name: 'Слънце',       keyword: 'сила',        chip: 'bg-amber-500/20 text-amber-300',
+  { name: 'Слънце',       keyword: 'сила',        chip: 'bg-bronze/20 text-bronze',
     description: 'Концентриране в собствената личност. Лидерство, сила, творчески проекти. Отстояване на Аз-а и личните граници.' },
   { name: 'Луна',         keyword: 'емоция',      chip: 'bg-sky-500/20 text-sky-300',
     description: 'Изострена чувствителност и емоционалност. Вътрешни преживявания, домашни ангажименти. Намиране на вътрешна стабилност.' },
@@ -365,7 +365,7 @@ const TRANSITS_DATA: readonly {
     chip: 'bg-sky-500/20 text-sky-300' },
   { name: 'Слънце',    influence: '±3 дни',          frequency: 'Средно влияние',
     description: 'Активира физически събития. Засилва жизнеността и самоизразяването.',
-    chip: 'bg-amber-500/20 text-amber-300' },
+    chip: 'bg-bronze/20 text-bronze' },
   { name: 'Меркурий',  influence: '±1 ден',          frequency: 'Бързо',
     description: 'Идеи и комуникация. Добър за разговори, пътувания и учене.',
     chip: 'bg-teal-500/20 text-teal-300' },

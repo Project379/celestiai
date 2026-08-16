@@ -64,7 +64,7 @@ function HistoryItem({ entry, isFirst }: HistoryItemProps) {
         style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 16 })}
       >
         <View className="flex-1">
-          <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-amber-300/80">
+          <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-bronze/80">
             {entry.phaseName}
           </Text>
           <Text className="mt-1 font-cinzel text-[10.5px] font-medium uppercase tracking-[0.26em] text-slate-300">
@@ -87,7 +87,7 @@ function HistoryItem({ entry, isFirst }: HistoryItemProps) {
         <View className="mt-4 border-t border-slate-300/[0.06] pt-4" style={{ gap: 12 }}>
           {entry.intentions.map((intention, i) => (
             <View key={i} className="flex-row" style={{ gap: 12 }}>
-              <Text className="mt-1 font-cinzel text-[9px] font-semibold tracking-[0.25em] text-amber-300/60">
+              <Text className="mt-1 font-cinzel text-[9px] font-semibold tracking-[0.25em] text-bronze/60">
                 {['I', 'II', 'III'][i]}
               </Text>
               <Text className="flex-1 text-[14.5px] font-light leading-[1.8] text-slate-200/95">

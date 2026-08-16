@@ -76,7 +76,7 @@ export function MoonGlyph({
   isWaxing,
   size = 92,
   animated = true,
-  outlineColor = 'rgba(251,191,36,0.4)',
+  outlineColor = 'rgba(184, 118, 62, 0.4)',
   // Stage 2 (2026-07-27) — Днес's hero passes 1.83 (mockup `.moon-halo`
   // inset -70px around the 202px depth-circle = 370/202 = 1.831×) and
   // 'bronzeViolet' explicitly. Defaults preserve Ритъм's LunarPhaseCard

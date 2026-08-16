@@ -137,7 +137,7 @@ export function WheelArrivalContainer({
           <Defs>
             <RadialGradient id="haloGrad" cx="50%" cy="50%" r="50%">
               <Stop offset="0%"  stopColor="rgba(167,139,250,1)" stopOpacity="0.07" />
-              <Stop offset="45%" stopColor="rgba(251,191,36,1)"  stopOpacity="0.03" />
+              <Stop offset="45%" stopColor="rgba(184, 118, 62,1)"  stopOpacity="0.03" />
               <Stop offset="72%" stopColor="rgba(0,0,0,0)"        stopOpacity="0" />
             </RadialGradient>
           </Defs>
@@ -156,7 +156,7 @@ export function WheelArrivalContainer({
         <Svg width={overlaySize} height={overlaySize}>
           <Defs>
             <RadialGradient id="flashGrad" cx="50%" cy="50%" r="50%">
-              <Stop offset="0%"  stopColor="rgba(251,191,36,1)"  stopOpacity="0.28" />
+              <Stop offset="0%"  stopColor="rgba(184, 118, 62,1)"  stopOpacity="0.28" />
               <Stop offset="38%" stopColor="rgba(167,139,250,1)" stopOpacity="0.18" />
               <Stop offset="62%" stopColor="rgba(99,102,241,1)"  stopOpacity="0.06" />
               <Stop offset="80%" stopColor="rgba(0,0,0,0)"        stopOpacity="0" />

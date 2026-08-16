@@ -88,15 +88,15 @@ export function CitySearch({ value, onSelect, error }: CitySearchProps) {
   if (value && !query) {
     return (
       <View
-        className="flex-row items-center justify-between border-y border-amber-300/25 bg-amber-400/[0.05] px-1 py-3"
+        className="flex-row items-center justify-between border-y border-bronze/25 bg-bronze/[0.05] px-1 py-3"
         style={{ gap: 16 }}
       >
         <View className="flex-row items-center" style={{ gap: 12 }}>
           <View
-            className="h-1.5 w-1.5 bg-amber-300/90"
+            className="h-1.5 w-1.5 bg-bronze/90"
             style={{
               transform: [{ rotate: '45deg' }],
-              shadowColor: 'rgb(251, 191, 36)',
+              shadowColor: 'rgb(184, 118, 62)',
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: 0.7,
               shadowRadius: 8,
@@ -145,7 +145,7 @@ export function CitySearch({ value, onSelect, error }: CitySearchProps) {
               justifyContent: 'center',
             }}
           >
-            <ActivityIndicator color="rgb(251, 191, 36)" />
+            <ActivityIndicator color="rgb(184, 118, 62)" />
           </View>
         )}
       </View>
@@ -191,7 +191,7 @@ export function CitySearch({ value, onSelect, error }: CitySearchProps) {
                       </Text>
                     </Text>
                   </View>
-                  <Text className="font-cinzel text-[8.5px] font-semibold uppercase tracking-[0.26em] text-amber-300/70">
+                  <Text className="font-cinzel text-[8.5px] font-semibold uppercase tracking-[0.26em] text-bronze/70">
                     {TYPE_LABELS[item.type]}
                   </Text>
                 </Pressable>

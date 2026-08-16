@@ -23,8 +23,8 @@ export function GuideHistorySection() {
         </Text>
       </View>
 
-      <View className="mt-8 border-l border-amber-300/40 pl-5">
-        <Text className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.36em] text-amber-300/80">
+      <View className="mt-8 border-l border-bronze/40 pl-5">
+        <Text className="mb-2 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.36em] text-bronze/80">
           Stellaeum
         </Text>
         <Text className="text-[15px] font-light leading-[1.8] text-slate-200/95">

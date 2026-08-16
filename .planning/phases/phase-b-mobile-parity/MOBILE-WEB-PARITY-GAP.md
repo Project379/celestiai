@@ -252,6 +252,23 @@ This doc does not carry an opinion on which of these need it before soft launch 
 
 Sizing, if/when this fires: up to 48 files with `amber-*` still to convert (upper bound — some files may already be transitional/mixed), and the 9 already-bronze files are precedent for the target pattern rather than remaining work. No component-level count of individual `amber-*` occurrences was taken; expect the real edit count to run higher than the file count.
 
+**Status: done — Batch 6, 2026-08-16.** Real count on execution was 52
+files with `amber-*` classes (not 48) plus ~28 literal-hex/`rgb()` strays
+this section didn't scope at all (a classname grep can't find those).
+The "not on the same styling mechanism" framing above is now resolved:
+`bronze`/`bronze-text` were added as real Tailwind colors
+(`tailwind.config.js`), not converted to inline `style={{ color:
+color.bronze }}` — founder-ruled, since the inline-token framing
+described how bronze happened to land in 9 files, not a hard
+requirement. `color.amber`/`color.amberText` are now deleted from
+`tokens.ts`; `tailwind.config.js`'s `amber-stellaeum` is deleted (had
+zero consumers). Full detail, the two deliberately-excluded non-bronze
+"amber" usages (Карта's Midheaven line color, Transit urgency-status
+colors — neither ever consumed the brand token), and the `bronzeText`
+hex correction (`#e0b587`→`#d9a06a`, mockup-verified) are in
+`COMPLETION-TRACKER.md`'s Batch 6 section, not duplicated here. Not yet
+device-reviewed.
+
 ---
 
 ## Tracking note

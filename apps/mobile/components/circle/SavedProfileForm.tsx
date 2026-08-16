@@ -258,17 +258,17 @@ function InnerForm({
           </View>
           <View
             className={`h-5 w-10 rounded-full border ${
-              birthTimeKnown ? 'border-amber-300/50 bg-amber-300/[0.08]' : 'border-white/[0.08] bg-white/[0.02]'
+              birthTimeKnown ? 'border-bronze/50 bg-bronze/[0.08]' : 'border-white/[0.08] bg-white/[0.02]'
             }`}
           >
             <View
-              className={`absolute h-2 w-2 ${birthTimeKnown ? 'bg-amber-300/90' : 'bg-slate-500'}`}
+              className={`absolute h-2 w-2 ${birthTimeKnown ? 'bg-bronze/90' : 'bg-slate-500'}`}
               style={{
                 top: '50%',
                 left: birthTimeKnown ? 21 : 6,
                 transform: [{ translateY: -3 }, { rotate: '45deg' }],
                 ...(birthTimeKnown && {
-                  shadowColor: 'rgb(251, 191, 36)',
+                  shadowColor: 'rgb(184, 118, 62)',
                   shadowOffset: { width: 0, height: 0 },
                   shadowOpacity: 0.7,
                   shadowRadius: 8,
@@ -313,14 +313,14 @@ function InnerForm({
                     setValue('approximateTimeRange', value, { shouldValidate: true })
                   }}
                   className={`rounded-xl border px-4 py-3 ${
-                    active ? 'border-amber-300/45 bg-amber-400/[0.06]' : 'border-white/[0.06] bg-white/[0.015]'
+                    active ? 'border-bronze/45 bg-bronze/[0.06]' : 'border-white/[0.06] bg-white/[0.015]'
                   }`}
                   style={({ pressed }) => ({ ...pressFeedback(pressed), width: '47%' })}
                 >
                   <Text className="text-[14px] font-semibold text-slate-100">{label}</Text>
                   <Text
                     style={{ fontFamily: font.bodyMedium }}
-                    className="mt-1 text-[9px] font-semibold uppercase tracking-[0.22em] tabular-nums text-amber-300/70"
+                    className="mt-1 text-[9px] font-semibold uppercase tracking-[0.22em] tabular-nums text-bronze/70"
                   >
                     {hours}
                   </Text>
@@ -356,11 +356,11 @@ function InnerForm({
             </Text>
             <View
               className={`h-5 w-10 rounded-full border ${
-                manualCoordinates ? 'border-amber-300/50 bg-amber-300/[0.08]' : 'border-white/[0.08] bg-white/[0.02]'
+                manualCoordinates ? 'border-bronze/50 bg-bronze/[0.08]' : 'border-white/[0.08] bg-white/[0.02]'
               }`}
             >
               <View
-                className={`absolute h-2 w-2 ${manualCoordinates ? 'bg-amber-300/90' : 'bg-slate-500'}`}
+                className={`absolute h-2 w-2 ${manualCoordinates ? 'bg-bronze/90' : 'bg-slate-500'}`}
                 style={{
                   top: '50%',
                   left: manualCoordinates ? 21 : 6,

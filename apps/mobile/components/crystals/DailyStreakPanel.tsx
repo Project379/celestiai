@@ -65,7 +65,7 @@ export function DailyStreakPanel() {
             seed={crystal.slug}
           />
           <View className="min-w-0 flex-1 pt-0.5">
-            <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.36em] text-amber-300/90">
+            <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.36em] text-bronze/90">
               Днешният камък
             </Text>
             <Text className="mt-1.5 text-[17px] font-semibold leading-tight text-slate-100">
@@ -75,9 +75,9 @@ export function DailyStreakPanel() {
               {crystal.tagline_bg ?? crystal.tagline_en}
             </Text>
             {today.collectedToday && (
-              <View className="mt-3 flex-row items-center self-start rounded-full border border-amber-300/30 bg-amber-400/[0.06] px-3.5 py-1.5" style={{ gap: 8 }}>
-                <View className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-amber-200">
+              <View className="mt-3 flex-row items-center self-start rounded-full border border-bronze/30 bg-bronze/[0.06] px-3.5 py-1.5" style={{ gap: 8 }}>
+                <View className="h-1.5 w-1.5 rounded-full bg-bronze" />
+                <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-bronze-text">
                   Събран днес
                 </Text>
               </View>
@@ -89,7 +89,7 @@ export function DailyStreakPanel() {
       <View className="mt-8">
         <View className="flex-row flex-wrap items-end justify-between" style={{ gap: 20 }}>
           <View>
-            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
+            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-bronze/90">
               Ежедневна серия
             </Text>
             <View className="mt-2 flex-row items-baseline" style={{ gap: 10 }}>
@@ -120,11 +120,11 @@ export function DailyStreakPanel() {
                 key={cell.date}
                 accessibilityLabel={`${formatShort(cell.date)}${cell.hit ? ` — ${cell.hit.name_bg ?? cell.hit.name_en ?? ''}` : ' — пропуснат'}`}
                 className={`h-4 w-4 rounded-full border ${
-                  cell.hit ? 'border-amber-300/40' : 'border-white/[0.08] bg-white/[0.02]'
-                } ${isToday ? 'ring-1 ring-amber-300/60' : ''}`}
+                  cell.hit ? 'border-bronze/40' : 'border-white/[0.08] bg-white/[0.02]'
+                } ${isToday ? 'ring-1 ring-bronze/60' : ''}`}
                 style={
                   cell.hit
-                    ? { backgroundColor: `${cell.hit.color_primary ?? '#fbbf24'}55` }
+                    ? { backgroundColor: `${cell.hit.color_primary ?? '#b8763e'}55` }
                     : undefined
                 }
               />

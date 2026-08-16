@@ -65,14 +65,14 @@ export function NatalWheelLegend() {
           >
             <View className="px-5 py-5">
               <View className="mb-4 flex-row items-center" style={{ gap: 10 }}>
-                <View className="h-1 w-1 rotate-45 bg-amber-300/90" />
+                <View className="h-1 w-1 rotate-45 bg-bronze/90" />
                 {/* REVISIT-42 fix (2026-07-27): was font-cinzel on Cyrillic
                     text — Cinzel has zero Cyrillic glyphs. Switched to
                     font.mono (inline style; NativeWind's own font-cinzel/
                     font-display classes point at unloaded family names per
                     tailwind.config.js's own tracked-issue comment, so this
                     file can't rely on className for font family at all). */}
-                <Text style={{ fontFamily: font.mono }} className="text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/80">
+                <Text style={{ fontFamily: font.mono }} className="text-[9.5px] font-semibold uppercase tracking-[0.38em] text-bronze/80">
                   Легенда
                 </Text>
               </View>
@@ -94,7 +94,7 @@ export function NatalWheelLegend() {
 
               <LegendRow
                 renderIcon={() => (
-                  <Text className="font-cinzel text-[10px] font-semibold text-amber-300/80">
+                  <Text className="font-cinzel text-[10px] font-semibold text-bronze/80">
                     1–12
                   </Text>
                 )}

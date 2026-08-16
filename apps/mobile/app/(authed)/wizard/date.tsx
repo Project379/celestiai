@@ -103,7 +103,7 @@ export default function WizardDateScreen() {
           <StepIndicator currentStep={1} />
 
           <View className="mb-8">
-            <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/75">
+            <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-bronze/75">
               I · Кога
             </Text>
             <Text className="mt-2 text-[22px] font-semibold leading-tight text-slate-100">
@@ -183,10 +183,10 @@ export default function WizardDateScreen() {
                 hapticInvite()
                 handleNext()
               }}
-              className="rounded-full border border-amber-300/40 px-6 py-2.5"
+              className="rounded-full border border-bronze/40 px-6 py-2.5"
               style={({ pressed }) => pressFeedback(pressed)}
             >
-              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
+              <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-bronze-text">
                 Напред ›
               </Text>
             </Pressable>
@@ -239,10 +239,10 @@ export default function WizardDateScreen() {
                   hapticSelect()
                   setShowIosPicker(false)
                 }}
-                className="mt-2 self-center rounded-full border border-amber-300/40 px-6 py-2.5"
+                className="mt-2 self-center rounded-full border border-bronze/40 px-6 py-2.5"
                 style={({ pressed }) => pressFeedback(pressed)}
               >
-                <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
+                <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-bronze-text">
                   Готово
                 </Text>
               </Pressable>

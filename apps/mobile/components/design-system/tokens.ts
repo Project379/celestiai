@@ -10,17 +10,15 @@ export const color = {
   surface2: '#161029',
   violet: '#8b5cf6',
   violetBorder: 'rgba(139,92,246,0.25)',
-  // PROOF ONLY — continuity-layer amendment (2026-07-25), not yet rolled
-  // out. amber/amberText remain live and in use across ~60 files; nothing
-  // consumes bronze/cool/starlight yet. See
-  // .planning/design/WARM_COOL_AMENDMENT.md for the audit, the R4
-  // re-amendment, and why amber is not simply deleted here.
-  amber: '#fbbf24',
-  amberText: '#fde68a',
-  // Bronze — retires amber once migration fires. Candidate value, refine
-  // against the proof render before treating as final.
+  // Bronze — retired amber (Batch 6, 2026-08-16). amber/amberText are gone;
+  // every former consumer now reads these two directly. bronzeText corrected
+  // from WARM_COOL_AMENDMENT.md's #e0b587 to #d9a06a — the mockups
+  // (.planning/design/mockups/*.html, --bronze-hi) are the actual built
+  // reference and disagree with the amendment doc's candidate value; the
+  // amendment doc itself called bronze's values "candidate, refine against
+  // real device render," so the mockup wins.
   bronze: '#b8763e',
-  bronzeText: '#e0b587',
+  bronzeText: '#d9a06a',
   // Cool instrument accent — scoped to celestial/historic surfaces only
   // (Карта, Astrology Guide), never warm surfaces. Deliberately desaturated
   // steel-blue, NOT the existing Ascendant-line cyan (#22d3ee,

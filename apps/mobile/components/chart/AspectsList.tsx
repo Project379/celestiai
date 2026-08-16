@@ -12,10 +12,10 @@ interface AspectsListProps {
 
 // Aspect type → accent color. Hard aspects rose, soft aspects violet,
 // conjunction stays amber (the "meeting"). Hex values mirror web's
-// Tailwind class palette (text-amber-300, text-rose-300/80, etc.) so
+// Tailwind class palette (text-bronze, text-rose-300/80, etc.) so
 // the visual register matches one-to-one across surfaces.
 const ASPECT_ACCENT: Record<AspectType, string> = {
-  conjunction: '#fcd34d',           // text-amber-300
+  conjunction: '#fcd34d',           // text-bronze
   opposition:  'rgba(253,164,175,0.8)', // text-rose-300/80
   square:      'rgba(253,164,175,0.8)',
   trine:       'rgba(196,181,253,0.9)', // text-violet-300/90

@@ -104,7 +104,7 @@ export function CrystalDetailPanel({
               seed={crystal.slug}
             />
 
-            <Text className="mt-4 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/80">
+            <Text className="mt-4 font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-bronze/80">
               {RARITY_BG[crystal.rarity] ?? crystal.rarity}
             </Text>
             <Text className="mt-2 text-center text-[24px] font-semibold leading-tight text-slate-100">
@@ -115,8 +115,8 @@ export function CrystalDetailPanel({
             </Text>
 
             {reason && (
-              <View className="mt-6 w-full rounded-2xl border border-amber-300/25 bg-amber-400/[0.06] px-5 py-4">
-                <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-amber-300/90">
+              <View className="mt-6 w-full rounded-2xl border border-bronze/25 bg-bronze/[0.06] px-5 py-4">
+                <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-bronze/90">
                   Избран за този момент
                 </Text>
                 <Text className="mt-2 text-[13.5px] font-light leading-[1.75] text-slate-200">
@@ -167,13 +167,13 @@ export function CrystalDetailPanel({
               <Pressable
                 onPress={onCollect}
                 disabled={collecting}
-                className="mt-6 w-full items-center rounded-full border border-amber-300/50 bg-amber-400/15 px-6 py-4"
+                className="mt-6 w-full items-center rounded-full border border-bronze/50 bg-bronze/15 px-6 py-4"
                 style={({ pressed }) => ({
                   ...pressFeedback(pressed),
                   opacity: pressed || collecting ? 0.6 : 1,
                 })}
               >
-                <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-100">
+                <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-bronze-text">
                   {collecting ? 'Събира се...' : 'Събери в колекцията'}
                 </Text>
               </Pressable>

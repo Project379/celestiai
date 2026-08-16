@@ -125,7 +125,7 @@ export default function WizardTimeScreen() {
         <StepIndicator currentStep={2} />
 
         <View className="mb-8">
-          <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-amber-300/75">
+          <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.38em] text-bronze/75">
             II · Час
           </Text>
           <Text className="mt-2 text-[22px] font-semibold leading-tight text-slate-100">
@@ -136,7 +136,7 @@ export default function WizardTimeScreen() {
           </Text>
         </View>
 
-        {/* Known/unknown toggle — rail-with-amber-diamond mirrors web */}
+        {/* Known/unknown toggle — rail-with-bronze-diamond mirrors web */}
         <Pressable
           onPress={() => {
             hapticSelect()
@@ -144,7 +144,7 @@ export default function WizardTimeScreen() {
           }}
           className={`mb-7 flex-row items-center justify-between border-y px-1 py-4 ${
             birthTimeKnown
-              ? 'border-amber-300/25'
+              ? 'border-bronze/25'
               : 'border-white/[0.06]'
           }`}
           style={({ pressed }) => pressFeedback(pressed)}
@@ -160,20 +160,20 @@ export default function WizardTimeScreen() {
           <View
             className={`h-5 w-10 rounded-full border ${
               birthTimeKnown
-                ? 'border-amber-300/50 bg-amber-300/[0.08]'
+                ? 'border-bronze/50 bg-bronze/[0.08]'
                 : 'border-white/[0.08] bg-white/[0.02]'
             }`}
           >
             <View
               className={`absolute h-2 w-2 ${
-                birthTimeKnown ? 'bg-amber-300/90' : 'bg-slate-500'
+                birthTimeKnown ? 'bg-bronze/90' : 'bg-slate-500'
               }`}
               style={{
                 top: '50%',
                 left: birthTimeKnown ? 21 : 6,
                 transform: [{ translateY: -3 }, { rotate: '45deg' }],
                 ...(birthTimeKnown && {
-                  shadowColor: 'rgb(251, 191, 36)',
+                  shadowColor: 'rgb(184, 118, 62)',
                   shadowOffset: { width: 0, height: 0 },
                   shadowOpacity: 0.7,
                   shadowRadius: 8,
@@ -239,14 +239,14 @@ export default function WizardTimeScreen() {
                     }}
                     className={`items-center rounded-xl border px-4 py-4 ${
                       isActive
-                        ? 'border-amber-300/45 bg-amber-400/[0.06]'
+                        ? 'border-bronze/45 bg-bronze/[0.06]'
                         : 'border-white/[0.06] bg-white/[0.015]'
                     }`}
                     style={({ pressed }) => ({ ...pressFeedback(pressed), width: '48%' })}
                   >
                     {isActive && (
                       <View
-                        className="absolute h-1 w-1 bg-amber-300/90"
+                        className="absolute h-1 w-1 bg-bronze/90"
                         style={{
                           top: 10,
                           left: 10,
@@ -261,7 +261,7 @@ export default function WizardTimeScreen() {
                     >
                       {label}
                     </Text>
-                    <Text className="mt-1 font-cinzel text-[9px] font-semibold uppercase tracking-[0.24em] tabular-nums text-amber-300/70">
+                    <Text className="mt-1 font-cinzel text-[9px] font-semibold uppercase tracking-[0.24em] tabular-nums text-bronze/70">
                       {hours}
                     </Text>
                   </Pressable>
@@ -299,10 +299,10 @@ export default function WizardTimeScreen() {
               hapticInvite()
               handleNext()
             }}
-            className="rounded-full border border-amber-300/40 px-6 py-2.5"
+            className="rounded-full border border-bronze/40 px-6 py-2.5"
             style={({ pressed }) => pressFeedback(pressed)}
           >
-            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200">
+            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-bronze-text">
               Напред ›
             </Text>
           </Pressable>

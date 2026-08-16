@@ -7,9 +7,9 @@ import { useCrystalOfTheDay } from '@/hooks/useCrystalOfTheDay'
 // matches web's bento accent system (violet for Lunar, slate for Transit,
 // rose for Circle, amber for Crystal).
 const TILE_CLASS =
-  'flex-1 min-w-[46%] rounded-2xl border border-amber-300/25 px-4 py-5'
+  'flex-1 min-w-[46%] rounded-2xl border border-bronze/25 px-4 py-5'
 const LABEL_CLASS =
-  'font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-amber-300/90'
+  'font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.32em] text-bronze/90'
 const PRIMARY_CLASS = 'mt-2 text-[13.5px] font-light text-slate-200'
 const SECONDARY_CLASS = 'mt-1 text-[11px] font-light text-slate-500'
 

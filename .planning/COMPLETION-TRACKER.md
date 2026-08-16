@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-14 (Batch 5 complete — /you/premium status/management + free-state CTA shipped)
+last-updated: 2026-08-16 (Batch 6 complete — amber→bronze token migration, not yet device-reviewed)
 ---
 
 # Completion Tracker
@@ -964,17 +964,118 @@ treatment whenever `/you/settings` is next touched.
 
 ### Batch 6 — Amber→bronze design-token migration
 
-**Status: not started — planning only.**
+**Status: done (2026-08-16). Not yet device-reviewed — founder review
+required before this counts as visually verified, same standing caveat as
+every UI-touching batch.**
 
-**Scope:** finish the amber→bronze token migration already underway (9
-files already on bronze per `MOBILE-WEB-PARITY-GAP.md` Section 12; up to
-48 files still on `amber-*` NativeWind classes, including
-`tailwind.config.js` itself). Not a find-and-replace — amber is a Tailwind
-class, bronze is an inline JS token, different mechanisms — so this is
-file-by-file conversion. Token itself is already ratified
-(`WARM_COOL_AMENDMENT.md`, LIVE); no new design decision needed, but the
-size warrants its own batch and its own post-batch visual review rather
-than folding into Batch 1.
+**Scoping correction, same pattern as Batches 2/4's parity-doc misses:**
+the real surface was bigger than either prior estimate. 52 files used
+`amber-*` Tailwind classes (not 48), across ~40 distinct shade/opacity
+combinations — not one class, five (`amber-100` through `amber-500`).
+`WARM_COOL_BUILD_PLAN.md` §1.1c estimated "2 literal-hex strays"; the
+actual count was **~28** (`shadowColor` props, SVG gradient stops, icon
+colors, none catchable by an `amber-` classname grep).
+
+**The one real decision, ruled by founder before building:** bronze
+existed only as a `tokens.ts` JS value, not a Tailwind class. Ruled:
+add `bronze`/`bronze-text` as real Tailwind colors
+(`tailwind.config.js`) and mechanically rename classes onto them,
+rather than rewriting ~80 files' `className` structure to inline
+`style={{ color: color.bronze }}` — same visual result, far less
+structural churn. Founder's reasoning on record: "bronze is an inline
+JS token" described how bronze happened to land in 9 files, not a
+requirement it stay that way.
+
+**Mapping verified before applying, not assumed:** checked every
+`amber-{100,200,300,400,500}` usage's Tailwind role (`text-`/`bg-`/
+`border-`), not just a sample. Clean split confirmed — `amber-100`/
+`amber-200` are 100% `text-` roles (51 instances) → `bronze-text`;
+`amber-300` spans all three roles (171 instances) → `bronze`;
+`amber-400`/`amber-500` are `bg-`/`border-` only (25 instances) →
+`bronze`. No stragglers that didn't fit the two-bucket split.
+
+**Real divergence found and resolved per founder's explicit rule ("if
+they diverge, the mockup wins, tell me"):** `WARM_COOL_AMENDMENT.md` and
+the shipped `tokens.ts` both said `bronzeText: '#e0b587'`, but every
+actual mockup (`.planning/design/mockups/*.html`, `--bronze-hi`) uses
+`#d9a06a` — and the amendment doc's own table calls its value
+"candidate, refine against real device render before final." The
+mockups are the built reference; `tokens.ts`'s `bronzeText` corrected to
+`#d9a06a` (matches `bronze: '#b8763e'`, which was already correct — no
+divergence there). This changes the rendered color on the 6 files that
+already consumed `color.bronzeText` pre-batch (`LeadLine.tsx`,
+`CtaPanel.tsx`), not just newly-migrated ones — flagging explicitly since
+it's a visual change to already-shipped components, not only new ones.
+
+**Shipped:**
+- `tailwind.config.js`: added `bronze`/`bronze-text` matching
+  `tokens.ts` exactly; dropped dead `amber-stellaeum` (zero consumers,
+  confirmed via grep before deleting).
+- `tokens.ts`: `amber`/`amberText` keys deleted (6 real JS consumers —
+  `wizard/_layout.tsx`, `AmbientBackground.tsx`, `NavRow.tsx`,
+  `States.tsx`, `StepIndicator.tsx` — repointed to `color.bronze`/
+  `color.bronzeText` first, confirmed via grep no consumer remained
+  before deleting the keys).
+- 51 files: mechanical `amber-{100,200,300,400,500}` → `bronze`/
+  `bronze-text` class rename, opacity suffixes (`/40`, `/[0.05]`, etc.)
+  preserved untouched.
+- ~28 literal-value strays converted: `#fbbf24`→`#b8763e`,
+  `#fde68a`→`#d9a06a`, `rgb(251,191,36)`→`rgb(184,118,62)` and its rgba
+  variants — `oracle.tsx`, both wizard confirm/location/time screens,
+  `PlanetDisambiguation.tsx`, `WheelArrivalContainer.tsx`,
+  `SavedProfileForm.tsx`, `DailyStreakPanel.tsx`, `LunarPhaseCard.tsx`,
+  `MoonGlyph.tsx`, `CapReachedNotice.tsx`, `TopicCards.tsx`,
+  `OracleEntry.tsx`, `StoriesContent.tsx`, `CitySearch.tsx`,
+  `StepIndicator.tsx`, `TimePicker.tsx`.
+- SVG gradient ids and comments referencing the old name renamed for
+  clarity where the underlying color is now actually bronze
+  (`ambient-amber`→`ambient-bronze`, `lunarHeroAmber`→
+  `lunarHeroBronze`, `storiesHeroAmber`→`storiesHeroBronze`,
+  `rail-with-amber-diamond`→`rail-with-bronze-diamond` comment).
+- Full amber-reference sweep after the mechanical pass (per founder's
+  instruction 3) — found and **deliberately left alone**, reported
+  rather than silently converted:
+  - `NatalWheel.tsx`'s `MIDHEAVEN_LINE_COLOR = '#fcd34d'` and its
+    `NatalWheelLegend.tsx` reference — Карта's chart data-viz color
+    (Ascendant/Midheaven line semantics), never the brand accent token,
+    a different hex family (`fcd34d`, not `fbbf24`) even before this
+    batch. Out of scope by design — cool-surface data-viz, not warm
+    brand accent.
+  - `TransitOverviewCard.tsx`'s `STATE_COLOR` map (`amber:
+    'rgba(252,211,77,0.85)'`) and its `tone: 'amber'` type — a
+    self-contained transit-urgency status scheme (indigo/amber/emerald/
+    slate), distinct hex, not a `color.amber`/Tailwind-`amber-*`
+    consumer. First pass mistakenly renamed the `tone` type to
+    `'bronze'` while leaving the `STATE_COLOR` key as `'amber'` — caught
+    before commit (would have been a type error, `'bronze'` not in
+    `keyof typeof STATE_COLOR`), reverted to leave this file's own enum
+    untouched.
+  - Prose comments using "amber" as a plain descriptive word rather than
+    a code reference (`CrystalCard.tsx`, `AspectsList.tsx`,
+    `usePressLift.ts`, `ManifestDiaryContent.tsx`) — left as-is; the
+    code under them already migrated to `bronze` classes in the
+    mechanical pass, the English word in the comment is accurate prose,
+    not a stale reference.
+- `apps/mobile`: `tsc --noEmit` clean. `pnpm run check:all` (strictness,
+  bg-strings, copy-lock, lint-baseline, typecheck both apps, lint, 156
+  tests) exit 0 — no Cyrillic-string changes in this batch, so
+  copy-lock/lint-baseline were unaffected as expected, run anyway per
+  standing discipline.
+- Final grep sweep: zero remaining `amber-{100..500}` classes, zero
+  remaining `#fbbf24`/`#fde68a`/`rgb(251,191,36)` literals, zero
+  remaining `color.amber`/`color.amberText` JS references, zero
+  remaining `amber-stellaeum` anywhere — the only two `amber` hits left
+  in the whole app are this batch's own historical-record comments
+  (`_layout.tsx`'s changelog entry, `tailwind.config.js`'s "was
+  '#fbbf24'" note).
+
+**Not device-tested — founder called this explicitly visual and wants a
+device pass before it counts as done.** Review should focus on whether
+anything deliberately warm went cold or vice versa (a mechanical rename
+can't tell "amber because bronze" from "amber because it meant something
+else" — the two deliberate exclusions above, Карта's Midheaven line and
+the transit-urgency colors, are exactly that distinction applied once
+already).
 
 ---
 

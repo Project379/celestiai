@@ -66,8 +66,8 @@ export function GuideLunarPhasesSection() {
       <View className="mb-10 flex-row flex-wrap" style={{ gap: 24 }}>
         <View style={{ flex: 1, minWidth: '45%' }}>
           <View className="mb-3 flex-row items-center" style={{ gap: 10 }}>
-            <Text className="text-[15px] text-amber-300/90">☽</Text>
-            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-300/90">
+            <Text className="text-[15px] text-bronze/90">☽</Text>
+            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-bronze/90">
               Нарастваща половина
             </Text>
           </View>
@@ -102,10 +102,10 @@ export function GuideLunarPhasesSection() {
       </View>
 
       <View className="mb-4 flex-row items-baseline" style={{ gap: 12 }}>
-        <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-amber-300/90">
+        <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.38em] text-bronze/90">
           Осемте фази
         </Text>
-        <View className="h-px flex-1 bg-amber-300/20" />
+        <View className="h-px flex-1 bg-bronze/20" />
         <Text className="font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-300">
           Изглед и насока
         </Text>
@@ -118,13 +118,13 @@ export function GuideLunarPhasesSection() {
             className="flex-row items-start border-b border-white/[0.05] py-4"
             style={{ gap: 14 }}
           >
-            <View className="mt-0.5 h-[26px] w-[26px] items-center justify-center rounded-full border border-amber-300/25 bg-[#0d0b18]">
-              <Text className="text-[13px] text-amber-200/90">☾</Text>
+            <View className="mt-0.5 h-[26px] w-[26px] items-center justify-center rounded-full border border-bronze/25 bg-[#0d0b18]">
+              <Text className="text-[13px] text-bronze-text/90">☾</Text>
             </View>
             <View className="flex-1">
               <View className="mb-1 flex-row flex-wrap items-baseline" style={{ gap: 10 }}>
                 <Text className="text-[15px] font-semibold text-slate-100">{phase.name}</Text>
-                <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-amber-300/85">
+                <Text className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.28em] text-bronze/85">
                   {phase.task}
                 </Text>
               </View>

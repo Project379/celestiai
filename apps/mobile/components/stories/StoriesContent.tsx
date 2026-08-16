@@ -102,13 +102,13 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
         >
           <Svg width={220} height={220}>
             <Defs>
-              <RadialGradient id="storiesHeroAmber" cx="50%" cy="50%" rx="50%" ry="50%">
-                <Stop offset="0%"  stopColor="rgba(251,191,36,1)" stopOpacity="0.07" />
-                <Stop offset="55%" stopColor="rgba(251,191,36,1)" stopOpacity="0.025" />
+              <RadialGradient id="storiesHeroBronze" cx="50%" cy="50%" rx="50%" ry="50%">
+                <Stop offset="0%"  stopColor="rgba(184, 118, 62,1)" stopOpacity="0.07" />
+                <Stop offset="55%" stopColor="rgba(184, 118, 62,1)" stopOpacity="0.025" />
                 <Stop offset="85%" stopColor="rgba(0,0,0,0)"       stopOpacity="0" />
               </RadialGradient>
             </Defs>
-            <Rect x="0" y="0" width="220" height="220" fill="url(#storiesHeroAmber)" />
+            <Rect x="0" y="0" width="220" height="220" fill="url(#storiesHeroBronze)" />
           </Svg>
         </View>
 
@@ -121,7 +121,7 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
 
         <Text className="mt-5 text-[28px] leading-[1.2] tracking-tight">
           <Text className="font-light text-slate-300">Кратко днес, </Text>
-          <Text className="font-semibold text-amber-200/95">дълго през месеца.</Text>
+          <Text className="font-semibold text-bronze-text/95">дълго през месеца.</Text>
         </Text>
 
         <Text className="mt-5 text-[15.5px] font-light leading-[1.85] text-slate-300">
@@ -134,8 +134,8 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
           </Text>
           <View className="h-[3px] w-[3px] rotate-45 bg-slate-400/80" />
           <View className="flex-row items-center" style={{ gap: 6 }}>
-            <Text className="text-[12px] leading-none text-amber-200/90">☾</Text>
-            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-200/90">
+            <Text className="text-[12px] leading-none text-bronze-text/90">☾</Text>
+            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em] text-bronze-text/90">
               {phase.name}
             </Text>
           </View>
@@ -181,10 +181,10 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
           <>
             <View className="mb-12">
               <View className="flex-row flex-wrap items-center" style={{ gap: 10 }}>
-                <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.34em] text-amber-300/90">
+                <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.34em] text-bronze/90">
                   {arc.sunSign}
                 </Text>
-                <View className="h-[3px] w-[3px] rotate-45 bg-amber-300/60" />
+                <View className="h-[3px] w-[3px] rotate-45 bg-bronze/60" />
                 <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.34em] text-slate-300">
                   {arc.theme}
                 </Text>
@@ -224,13 +224,13 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
             </Text>
             <Pressable
               onPress={() => push('/wizard/date')}
-              className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
+              className="self-start flex-row items-center rounded-full border border-bronze/40 px-5 py-2.5"
               style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 10 })}
             >
-              <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-200">
+              <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-bronze-text">
                 Въведи рождени данни
               </Text>
-              <Text className="font-cinzel text-[10.5px] text-amber-300">›</Text>
+              <Text className="font-cinzel text-[10.5px] text-bronze">›</Text>
             </Pressable>
           </View>
         )}
@@ -248,7 +248,7 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
 function SectionLabel({ text }: { text: string }) {
   return (
     <View className="mb-5 flex-row items-center" style={{ gap: 12 }}>
-      <View className="h-1 w-1 rotate-45 bg-amber-300/80" />
+      <View className="h-1 w-1 rotate-45 bg-bronze/80" />
       <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-200">
         {text}
       </Text>

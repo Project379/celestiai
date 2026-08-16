@@ -36,7 +36,7 @@ export function DeletionPendingBanner() {
         .{' '}
         <Text
           onPress={() => cancelDeletion.mutate()}
-          className="font-medium text-amber-300 underline"
+          className="font-medium text-bronze underline"
         >
           {cancelDeletion.isPending ? 'Отменяме...' : 'Отмени изтриването'}
         </Text>

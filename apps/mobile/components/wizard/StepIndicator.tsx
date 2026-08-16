@@ -46,16 +46,16 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                 className="h-2 w-2 rounded-full"
                 style={{
                   backgroundColor: isActive
-                    ? color.amber
+                    ? color.bronze
                     : isDone
-                      ? 'rgba(251,191,36,0.4)'
+                      ? 'rgba(184, 118, 62,0.4)'
                       : 'rgba(255,255,255,0.06)',
                 }}
               />
               {!isLast && (
                 <View
                   className={`h-px flex-1 ${
-                    isDone ? 'bg-amber-300/40' : 'bg-white/[0.06]'
+                    isDone ? 'bg-bronze/40' : 'bg-white/[0.06]'
                   }`}
                 />
               )}
@@ -65,7 +65,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
       </View>
       <View className="h-px w-full bg-white/[0.05]">
         <View
-          className="h-px bg-amber-300/60"
+          className="h-px bg-bronze/60"
           style={{ width: `${progressPct}%` }}
         />
       </View>

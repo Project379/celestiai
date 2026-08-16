@@ -226,7 +226,7 @@ export default function TwoFactorScreen() {
           )}
 
           {resentNotice && (
-            <Text className="mb-6 text-[13px] leading-[1.6] text-amber-300">
+            <Text className="mb-6 text-[13px] leading-[1.6] text-bronze">
               Изпратихме нов код
             </Text>
           )}
@@ -239,7 +239,7 @@ export default function TwoFactorScreen() {
             disabled={!canSubmit}
             className={`rounded-2xl border py-4 ${
               canSubmit
-                ? 'border-amber-300/40 bg-amber-300/5'
+                ? 'border-bronze/40 bg-bronze/5'
                 : 'border-slate-800/60 bg-slate-900/40'
             }`}
             style={({ pressed }) => pressFeedback(pressed)}
@@ -248,7 +248,7 @@ export default function TwoFactorScreen() {
               {submitting && <ActivityIndicator color="#fcd34d" size="small" />}
               <Text
                 className={`font-cinzel text-[12px] font-semibold uppercase tracking-[0.32em] ${
-                  canSubmit ? 'text-amber-200' : 'text-slate-600'
+                  canSubmit ? 'text-bronze-text' : 'text-slate-600'
                 }`}
               >
                 {submitting ? 'Потвърждаване' : 'Потвърди'}

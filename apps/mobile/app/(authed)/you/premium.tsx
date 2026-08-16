@@ -222,8 +222,8 @@ export default function PremiumScreen() {
                   <Badge tone="amber" label="Отменен" />
                 </View>
 
-                <View className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-500/[0.05] px-4 py-3">
-                  <Text className="text-[14px] text-amber-200">
+                <View className="mb-6 rounded-2xl border border-bronze/20 bg-bronze/[0.05] px-4 py-3">
+                  <Text className="text-[14px] text-bronze-text">
                     Премиум достъпът ти изтича на{' '}
                     <Text className="font-medium">{formatBgDate(subscriptionData.currentPeriodEnd)}</Text>
                     .
@@ -343,7 +343,7 @@ function FeatureList() {
     <View className="mb-6 gap-2.5 border-y border-slate-800/60 py-5">
       {PREMIUM_FEATURES.map((feature) => (
         <View key={feature} className="flex-row items-start gap-2.5">
-          <View className="mt-[9px] h-1 w-1 rotate-45 bg-amber-300/80" />
+          <View className="mt-[9px] h-1 w-1 rotate-45 bg-bronze/80" />
           <Text className="flex-1 text-[14px] leading-5 text-slate-300/90">{feature}</Text>
         </View>
       ))}
@@ -362,10 +362,10 @@ function FreeStateCta() {
           hapticSelect()
           void WebBrowser.openBrowserAsync(url)
         }}
-        className="self-start rounded-full border border-amber-300/40 bg-amber-400/10 px-6 py-3"
+        className="self-start rounded-full border border-bronze/40 bg-bronze/10 px-6 py-3"
         style={({ pressed }) => pressFeedback(pressed)}
       >
-        <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-200">
+        <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-bronze-text">
           Абонирай се на stellaeum.com
         </Text>
       </Pressable>
@@ -381,7 +381,7 @@ function Badge({ tone, label }: { tone: 'neutral' | 'rose' | 'emerald' | 'amber'
     neutral: 'border-slate-700/60 bg-white/[0.03] text-slate-300',
     rose: 'border-rose-400/30 bg-rose-500/10 text-rose-300',
     emerald: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300',
-    amber: 'border-amber-400/30 bg-amber-500/10 text-amber-300',
+    amber: 'border-bronze/30 bg-bronze/10 text-bronze',
   }[tone]
 
   return (

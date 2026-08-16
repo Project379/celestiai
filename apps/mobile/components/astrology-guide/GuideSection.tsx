@@ -19,10 +19,10 @@ export function GuideSectionHeader({
   return (
     <View className="mb-6">
       <View className="mb-3 flex-row items-center" style={{ gap: 12 }}>
-        <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+        <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-bronze/80">
           {numeral}
         </Text>
-        <View className="h-px w-8 bg-amber-300/40" />
+        <View className="h-px w-8 bg-bronze/40" />
         <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-slate-400">
           {eyebrow}
         </Text>
@@ -38,7 +38,7 @@ export function GuideDivider() {
   return (
     <View className="my-10 flex-row items-center justify-center" style={{ gap: 12 }}>
       <View className="h-px flex-1 bg-slate-300/15" />
-      <View className="h-1 w-1 rotate-45 bg-amber-300/80" />
+      <View className="h-1 w-1 rotate-45 bg-bronze/80" />
       <View className="h-px flex-1 bg-slate-300/15" />
     </View>
   )

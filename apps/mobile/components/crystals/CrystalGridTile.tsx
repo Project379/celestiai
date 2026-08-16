@@ -56,7 +56,7 @@ export function CrystalGridTile({
     <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} className="min-w-[46%] flex-1">
       <Animated.View
         className={`items-center rounded-2xl border px-4 pb-4 pt-6 ${
-          highlight ? 'border-amber-300/40 bg-amber-500/[0.04]' : 'border-white/10 bg-white/[0.03]'
+          highlight ? 'border-bronze/40 bg-bronze/[0.04]' : 'border-white/10 bg-white/[0.03]'
         }`}
         style={liftStyle}
       >

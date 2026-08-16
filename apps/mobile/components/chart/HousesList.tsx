@@ -34,11 +34,11 @@ const HOUSE_THEMES: Record<number, string> = {
 export function HousesList({ houses, birthTimeKnown }: HousesListProps) {
   if (!birthTimeKnown) {
     return (
-      <View className="border-l border-amber-300/40 bg-amber-300/[0.05] px-5 py-4">
-        <Text className="mb-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-amber-300/80">
+      <View className="border-l border-bronze/40 bg-bronze/[0.05] px-5 py-4">
+        <Text className="mb-2 font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-bronze/80">
           Забележка
         </Text>
-        <Text className="text-[13px] font-light leading-relaxed text-amber-100/85">
+        <Text className="text-[13px] font-light leading-relaxed text-bronze-text/85">
           Къщите зависят от точното време на раждане. Добави час за пълна карта.
         </Text>
       </View>
@@ -72,7 +72,7 @@ export function HousesList({ houses, birthTimeKnown }: HousesListProps) {
                   suffix) to fit the fixed index column — the section
                   heading above ("12 къщи") already establishes that
                   every row here is a house. */}
-              <Text className="w-10 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.22em] text-amber-300/70">
+              <Text className="w-10 font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.22em] text-bronze/70">
                 {ordinalBg(house.number)}
               </Text>
               <Text className="text-[12.5px] font-light text-slate-300">

@@ -25,7 +25,8 @@ import { hapticSelect } from '@/lib/haptics'
 //      useSafeAreaInsets() anywhere, unlike every other screen (mirrors
 //      the top-inset treatment in commit 6025f58).
 //   2. tabBarActiveTintColor was '#fcd34d', a different amber than
-//      tokens.ts's color.amber ('#fbbf24') — drift, not the shared token.
+//      tokens.ts's color.amber ('#fbbf24') was at the time — drift, not the
+//      shared token. amber has since been retired to color.bronze (Batch 6).
 //   3. Labels used font-cinzel on Cyrillic text — REVISIT-42's exact bug
 //      (Cinzel has zero Cyrillic glyphs, silent fallback) in a surface
 //      that fix never reached.

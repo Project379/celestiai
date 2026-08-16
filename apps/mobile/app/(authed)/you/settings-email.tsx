@@ -210,7 +210,7 @@ export default function SettingsEmailScreen() {
                 }}
                 disabled={!canSubmitEmail}
                 className={`rounded-2xl border py-4 ${
-                  canSubmitEmail ? 'border-amber-300/40 bg-amber-300/5' : 'border-slate-800/60 bg-slate-900/40'
+                  canSubmitEmail ? 'border-bronze/40 bg-bronze/5' : 'border-slate-800/60 bg-slate-900/40'
                 }`}
                 style={({ pressed }) => pressFeedback(pressed)}
               >
@@ -218,7 +218,7 @@ export default function SettingsEmailScreen() {
                   {submitting && <ActivityIndicator color="#fcd34d" size="small" />}
                   <Text
                     className={`font-cinzel text-[12px] font-semibold uppercase tracking-[0.32em] ${
-                      canSubmitEmail ? 'text-amber-200' : 'text-slate-600'
+                      canSubmitEmail ? 'text-bronze-text' : 'text-slate-600'
                     }`}
                   >
                     {submitting ? 'Изпращане' : 'Изпрати код'}
@@ -258,7 +258,7 @@ export default function SettingsEmailScreen() {
               {error && <Text className="mb-6 text-[13px] leading-[1.6] text-rose-400">{error}</Text>}
 
               {needsReverification && (
-                <Text className="mb-6 text-[13px] leading-[1.6] text-amber-300">
+                <Text className="mb-6 text-[13px] leading-[1.6] text-bronze">
                   За тази промяна е нужно да потвърдиш самоличността си наново. Излез от акаунта и влез
                   отново, после опитай пак.
                 </Text>
@@ -271,7 +271,7 @@ export default function SettingsEmailScreen() {
                 }}
                 disabled={!canSubmitCode}
                 className={`rounded-2xl border py-4 ${
-                  canSubmitCode ? 'border-amber-300/40 bg-amber-300/5' : 'border-slate-800/60 bg-slate-900/40'
+                  canSubmitCode ? 'border-bronze/40 bg-bronze/5' : 'border-slate-800/60 bg-slate-900/40'
                 }`}
                 style={({ pressed }) => pressFeedback(pressed)}
               >
@@ -279,7 +279,7 @@ export default function SettingsEmailScreen() {
                   {submitting && <ActivityIndicator color="#fcd34d" size="small" />}
                   <Text
                     className={`font-cinzel text-[12px] font-semibold uppercase tracking-[0.32em] ${
-                      canSubmitCode ? 'text-amber-200' : 'text-slate-600'
+                      canSubmitCode ? 'text-bronze-text' : 'text-slate-600'
                     }`}
                   >
                     {submitting ? 'Потвърждаване' : 'Потвърди'}
@@ -314,10 +314,10 @@ export default function SettingsEmailScreen() {
                   hapticSelect()
                   router.back()
                 }}
-                className="rounded-2xl border border-amber-300/40 bg-amber-300/5 py-4"
+                className="rounded-2xl border border-bronze/40 bg-bronze/5 py-4"
                 style={({ pressed }) => pressFeedback(pressed)}
               >
-                <Text className="text-center font-cinzel text-[12px] font-semibold uppercase tracking-[0.32em] text-amber-200">
+                <Text className="text-center font-cinzel text-[12px] font-semibold uppercase tracking-[0.32em] text-bronze-text">
                   Назад
                 </Text>
               </Pressable>

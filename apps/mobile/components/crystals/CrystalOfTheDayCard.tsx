@@ -126,9 +126,9 @@ export function CrystalOfTheDayCard() {
               Камък на деня
             </Text>
             {streak && streak.current > 0 && (
-              <View className="flex-row items-center rounded-full border border-amber-300/30 bg-amber-400/[0.06] px-3 py-1" style={{ gap: 6 }}>
-                <View className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.28em] text-amber-200">
+              <View className="flex-row items-center rounded-full border border-bronze/30 bg-bronze/[0.06] px-3 py-1" style={{ gap: 6 }}>
+                <View className="h-1.5 w-1.5 rounded-full bg-bronze" />
+                <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.28em] text-bronze-text">
                   {streak.current === 1 ? '1 ден' : `${streak.current} поредни дни`}
                 </Text>
               </View>
@@ -159,9 +159,9 @@ export function CrystalOfTheDayCard() {
               </Text>
 
               {isPremium && collectedToday && (
-                <View className="mt-4 flex-row items-center self-start rounded-full border border-amber-300/30 bg-amber-400/[0.06] px-3.5 py-1.5" style={{ gap: 8 }}>
-                  <View className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                  <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-amber-200">
+                <View className="mt-4 flex-row items-center self-start rounded-full border border-bronze/30 bg-bronze/[0.06] px-3.5 py-1.5" style={{ gap: 8 }}>
+                  <View className="h-1.5 w-1.5 rounded-full bg-bronze" />
+                  <Text className="font-cinzel text-[9.5px] font-semibold uppercase tracking-[0.3em] text-bronze-text">
                     Събран днес
                   </Text>
                 </View>

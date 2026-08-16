@@ -229,7 +229,7 @@ export default function SignUpScreen() {
             disabled={!canSubmit}
             className={`rounded-2xl border py-4 ${
               canSubmit
-                ? 'border-amber-300/40 bg-amber-300/5'
+                ? 'border-bronze/40 bg-bronze/5'
                 : 'border-slate-800/60 bg-slate-900/40'
             }`}
             style={({ pressed }) => pressFeedback(pressed)}
@@ -238,7 +238,7 @@ export default function SignUpScreen() {
               {submitting && <ActivityIndicator color="#fcd34d" size="small" />}
               <Text
                 className={`font-cinzel text-[12px] font-semibold uppercase tracking-[0.32em] ${
-                  canSubmit ? 'text-amber-200' : 'text-slate-600'
+                  canSubmit ? 'text-bronze-text' : 'text-slate-600'
                 }`}
               >
                 {submitting ? 'Създаване' : 'Създай'}
@@ -250,7 +250,7 @@ export default function SignUpScreen() {
             <Text className="text-[13px] text-slate-500">Имаш профил?</Text>
             <Link href={'/sign-in' as never} asChild>
               <Pressable onPress={() => hapticSelect()} style={({ pressed }) => pressFeedback(pressed)}>
-                <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-amber-300">
+                <Text className="font-cinzel text-[10px] uppercase tracking-[0.32em] text-bronze">
                   Влез
                 </Text>
               </Pressable>

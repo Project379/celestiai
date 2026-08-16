@@ -47,7 +47,7 @@ export default function AstrologyGuideScreen() {
           </Text>
           <Text className="text-[28px] leading-[1.15] tracking-tight">
             <Text className="font-light text-slate-300">Какво е </Text>
-            <Text className="font-semibold text-amber-200/95">астрологията?</Text>
+            <Text className="font-semibold text-bronze-text/95">астрологията?</Text>
           </Text>
           <Text className="mt-4 text-[15px] font-light leading-[1.8] text-slate-300">
             Пътеводител от древните вавилонски звездочетци до прецизните алгоритми, с които Stellaeum изчислява твоята натална карта.

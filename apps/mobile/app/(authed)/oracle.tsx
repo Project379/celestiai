@@ -128,20 +128,20 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
             style={{ gap: 12 }}
           >
             <View
-              className="h-1 w-1 bg-amber-300/90"
+              className="h-1 w-1 bg-bronze/90"
               style={{
                 transform: [{ rotate: '45deg' }],
-                shadowColor: 'rgb(251, 191, 36)',
+                shadowColor: 'rgb(184, 118, 62)',
                 shadowOffset: { width: 0, height: 0 },
                 shadowOpacity: 0.7,
                 shadowRadius: 8,
               }}
             />
-            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+            <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-bronze/80">
               Астрологичен оракул
             </Text>
             <View
-              className="h-px flex-1 bg-amber-300/30"
+              className="h-px flex-1 bg-bronze/30"
               style={{ marginLeft: 4 }}
             />
           </View>
@@ -280,10 +280,10 @@ function GeneratingState() {
         </Animated.View>
         <Animated.View style={diamondSpin}>
           <View
-            className="h-2 w-2 bg-amber-300/90"
+            className="h-2 w-2 bg-bronze/90"
             style={{
               transform: [{ rotate: '45deg' }],
-              shadowColor: 'rgb(251, 191, 36)',
+              shadowColor: 'rgb(184, 118, 62)',
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: 0.75,
               shadowRadius: 14,
@@ -292,7 +292,7 @@ function GeneratingState() {
         </Animated.View>
       </View>
       <View className="items-center" style={{ gap: 6 }}>
-        <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
+        <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-bronze/80">
           Stellaeum
         </Text>
         <Text className="text-[14px] font-light leading-relaxed text-slate-400">

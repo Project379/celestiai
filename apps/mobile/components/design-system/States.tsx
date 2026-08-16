@@ -9,7 +9,7 @@ import { color, type } from './tokens'
 export function LoadingState({ status }: { status: string }) {
   return (
     <View style={{ alignItems: 'center', paddingVertical: 32 }}>
-      <ActivityIndicator color={color.amber} size="small" />
+      <ActivityIndicator color={color.bronze} size="small" />
       <Text style={{ ...type.caption, color: color.faint, marginTop: 12 }}>{status}</Text>
     </View>
   )

@@ -10,7 +10,12 @@ module.exports = {
     extend: {
       colors: {
         bg: '#08060f',
-        'amber-stellaeum': '#fbbf24',
+        // Matches components/design-system/tokens.ts's color.bronze/
+        // bronzeText exactly (Batch 6, 2026-08-16) — keep the two in sync if
+        // either changes. amber-stellaeum (was '#fbbf24') retired with it;
+        // had zero class consumers, safe to drop rather than rename.
+        bronze: '#b8763e',
+        'bronze-text': '#d9a06a',
         'violet-stellaeum': '#8b5cf6',
       },
       fontFamily: {

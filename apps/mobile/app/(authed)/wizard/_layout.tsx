@@ -67,7 +67,7 @@ export default function WizardLayout() {
             color: color.text,
             fontSize: 14,
           },
-          headerTintColor: color.amber,
+          headerTintColor: color.bronze,
           headerBackTitle: '',
           contentStyle: { backgroundColor: color.base },
           // B.0g-3 forced-wizard Path 2: persistent skip affordance on every

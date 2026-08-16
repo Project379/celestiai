@@ -101,8 +101,8 @@ export default function CrystalsScreen() {
 
 function PremiumGate({ onPress }: { onPress: () => void }) {
   return (
-    <View className="items-center rounded-3xl border border-amber-300/20 bg-amber-400/[0.03] px-6 py-10">
-      <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-300/90">
+    <View className="items-center rounded-3xl border border-bronze/20 bg-bronze/[0.03] px-6 py-10">
+      <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-bronze/90">
         Премиум функция
       </Text>
       <Text className="mt-4 text-center text-[15px] font-light leading-[1.8] text-slate-300">
@@ -110,10 +110,10 @@ function PremiumGate({ onPress }: { onPress: () => void }) {
       </Text>
       <Pressable
         onPress={onPress}
-        className="mt-6 rounded-full border border-amber-300/40 bg-amber-400/15 px-7 py-3"
+        className="mt-6 rounded-full border border-bronze/40 bg-bronze/15 px-7 py-3"
         style={({ pressed }) => pressFeedback(pressed)}
       >
-        <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-200">
+        <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-bronze-text">
           Научи повече
         </Text>
       </Pressable>
@@ -129,13 +129,13 @@ function MissingChartState({ onPress }: { onPress: () => void }) {
       </Text>
       <Pressable
         onPress={onPress}
-        className="self-start flex-row items-center rounded-full border border-amber-300/40 px-5 py-2.5"
+        className="self-start flex-row items-center rounded-full border border-bronze/40 px-5 py-2.5"
         style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 10 })}
       >
-        <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-amber-200">
+        <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-bronze-text">
           Добави натална карта
         </Text>
-        <Text className="font-cinzel text-[10.5px] text-amber-300">›</Text>
+        <Text className="font-cinzel text-[10.5px] text-bronze">›</Text>
       </Pressable>
     </View>
   )
