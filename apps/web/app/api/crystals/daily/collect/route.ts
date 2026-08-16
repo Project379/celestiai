@@ -1,5 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { collectDailyCrystal } from '@stellaeum/core/crystals/daily-collect'
+import { assertRateLimit } from '@/lib/rate-limit'
+import { ApiError } from '@/lib/auth/guards'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,24 +20,33 @@ export async function POST() {
     return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
-  const result = await collectDailyCrystal(userId)
+  try {
+    await assertRateLimit({ key: `crystals-daily-collect:${userId}`, limit: 10, windowMs: 60_000 })
 
-  if (result.ok) {
-    return Response.json({
-      success: true,
-      crystal: result.data.crystal,
-      alreadyCollected: result.data.alreadyCollected,
-    })
-  }
+    const result = await collectDailyCrystal(userId)
 
-  switch (result.error) {
-    case 'NO_CRYSTAL':
-      return Response.json(
-        { error: 'No crystal available' },
-        { status: 500 },
-      )
-    case 'INTERNAL':
-    default:
-      return Response.json({ error: 'Internal error' }, { status: 500 })
+    if (result.ok) {
+      return Response.json({
+        success: true,
+        crystal: result.data.crystal,
+        alreadyCollected: result.data.alreadyCollected,
+      })
+    }
+
+    switch (result.error) {
+      case 'NO_CRYSTAL':
+        return Response.json(
+          { error: 'No crystal available' },
+          { status: 500 },
+        )
+      case 'INTERNAL':
+      default:
+        return Response.json({ error: 'Internal error' }, { status: 500 })
+    }
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    throw error
   }
 }

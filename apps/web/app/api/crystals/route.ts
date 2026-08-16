@@ -1,5 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { getCrystalsOverview } from '@stellaeum/core/crystals/overview'
+import { assertRateLimit } from '@/lib/rate-limit'
+import { ApiError } from '@/lib/auth/guards'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,25 +18,34 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
-  const url = new URL(req.url)
-  const chartId = url.searchParams.get('chartId')
+  try {
+    await assertRateLimit({ key: `crystals-overview:${userId}`, limit: 30, windowMs: 60_000 })
 
-  const result = await getCrystalsOverview(userId, chartId)
+    const url = new URL(req.url)
+    const chartId = url.searchParams.get('chartId')
 
-  if (result.ok) {
-    return Response.json(result.data)
-  }
+    const result = await getCrystalsOverview(userId, chartId)
 
-  switch (result.error) {
-    case 'PREMIUM_REQUIRED':
-      return Response.json(
-        { error: 'Premium subscription required.', code: 'PREMIUM_REQUIRED' },
-        { status: 403 },
-      )
-    case 'CHART_NOT_FOUND':
-      return Response.json({ error: 'Chart not found' }, { status: 404 })
-    case 'INTERNAL':
-    default:
-      return Response.json({ error: 'Internal error' }, { status: 500 })
+    if (result.ok) {
+      return Response.json(result.data)
+    }
+
+    switch (result.error) {
+      case 'PREMIUM_REQUIRED':
+        return Response.json(
+          { error: 'Premium subscription required.', code: 'PREMIUM_REQUIRED' },
+          { status: 403 },
+        )
+      case 'CHART_NOT_FOUND':
+        return Response.json({ error: 'Chart not found' }, { status: 404 })
+      case 'INTERNAL':
+      default:
+        return Response.json({ error: 'Internal error' }, { status: 500 })
+    }
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    throw error
   }
 }

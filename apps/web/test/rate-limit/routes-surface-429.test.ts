@@ -151,6 +151,36 @@ vi.mock('@/lib/circle/report', () => ({
   }),
 }))
 
+vi.mock('@stellaeum/core/crystals/overview', () => ({
+  getCrystalsOverview: vi.fn(() => {
+    throw new Error('getCrystalsOverview should not be called')
+  }),
+}))
+
+vi.mock('@stellaeum/core/crystals/today', () => ({
+  getCrystalOfTheDay: vi.fn(() => {
+    throw new Error('getCrystalOfTheDay should not be called')
+  }),
+}))
+
+vi.mock('@stellaeum/core/crystals/collect', () => ({
+  collectCrystalRecommendation: vi.fn(() => {
+    throw new Error('collectCrystalRecommendation should not be called')
+  }),
+}))
+
+vi.mock('@stellaeum/core/crystals/daily-collect', () => ({
+  collectDailyCrystal: vi.fn(() => {
+    throw new Error('collectDailyCrystal should not be called')
+  }),
+}))
+
+vi.mock('@stellaeum/core/horoscope/transits', () => ({
+  getTransitsOverview: vi.fn(() => {
+    throw new Error('getTransitsOverview should not be called')
+  }),
+}))
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
@@ -356,6 +386,41 @@ describe('rate-limited routes surface 429, not 500, when assertRateLimit throws'
         params: Promise.resolve({ relationshipId: 'r1' }),
       }),
     )
+  })
+
+  it('GET /api/crystals (Batch 7)', async () => {
+    const { GET } = await import('@/app/api/crystals/route')
+    await expectRateLimited(GET(req('http://localhost/api/crystals?chartId=c1')))
+  })
+
+  it('GET /api/crystals/today (Batch 7)', async () => {
+    const { GET } = await import('@/app/api/crystals/today/route')
+    await expectRateLimited(GET(req('http://localhost/api/crystals/today')))
+  })
+
+  it('POST /api/crystals/collect (Batch 7)', async () => {
+    const { POST } = await import('@/app/api/crystals/collect/route')
+    await expectRateLimited(POST(jsonReq('http://localhost/api/crystals/collect', { recommendationId: 'r1' })))
+  })
+
+  it('POST /api/crystals/daily/collect (Batch 7)', async () => {
+    const { POST } = await import('@/app/api/crystals/daily/collect/route')
+    await expectRateLimited(POST())
+  })
+
+  it('GET /api/crystals/daily-streak (Batch 7)', async () => {
+    const { GET } = await import('@/app/api/crystals/daily-streak/route')
+    await expectRateLimited(GET())
+  })
+
+  it('GET /api/transits/overview (Batch 7)', async () => {
+    const { GET } = await import('@/app/api/transits/overview/route')
+    await expectRateLimited(GET(req('http://localhost/api/transits/overview?chartId=c1')))
+  })
+
+  it('GET /api/user (Batch 7)', async () => {
+    const { GET } = await import('@/app/api/user/route')
+    await expectRateLimited(GET())
   })
 })
 

@@ -1,5 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { getCrystalOfTheDay } from '@stellaeum/core/crystals/today'
+import { assertRateLimit } from '@/lib/rate-limit'
+import { ApiError } from '@/lib/auth/guards'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +29,8 @@ export async function GET() {
   }
 
   try {
+    await assertRateLimit({ key: `crystals-daily-streak:${userId}`, limit: 30, windowMs: 60_000 })
+
     const data = await getCrystalOfTheDay(userId, { includeHistory: true })
     return Response.json({
       streak: data.streak ?? { current: 0, longest: 0, totalDays: 0 },
@@ -34,6 +38,9 @@ export async function GET() {
       today: data.today,
     })
   } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('[api/crystals/daily-streak] error', error)
     return Response.json({ error: 'Internal error' }, { status: 500 })
   }

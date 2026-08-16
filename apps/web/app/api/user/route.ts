@@ -1,5 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { ensureUserRecord } from '@/lib/users/ensure-user'
+import { assertRateLimit } from '@/lib/rate-limit'
+import { ApiError } from '@/lib/auth/guards'
 
 /**
  * GET /api/user
@@ -16,12 +18,24 @@ export async function GET() {
     return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
-  const appUser = await ensureUserRecord(userId)
+  try {
+    // Rate-limit before ensureUserRecord's DB upsert/read — same ordering
+    // lesson Batch 3 fixed elsewhere (gdpr/delete-account, stripe/checkout):
+    // the burst guard has to gate the expensive work, not run after it.
+    await assertRateLimit({ key: `user-get:${userId}`, limit: 60, windowMs: 60_000 })
 
-  return Response.json({
-    userId,
-    sessionId,
-    appUser,
-    timestamp: new Date().toISOString(),
-  })
+    const appUser = await ensureUserRecord(userId)
+
+    return Response.json({
+      userId,
+      sessionId,
+      appUser,
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return Response.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    throw error
+  }
 }

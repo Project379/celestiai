@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-16 (Batch 6 complete — amber→bronze token migration, not yet device-reviewed)
+last-updated: 2026-08-16 (Batch 7 complete — parity-doc corrections + 7-route rate-limit gap closed)
 ---
 
 # Completion Tracker
@@ -1097,10 +1097,52 @@ already).
 
 ### Batch 7 — Parity sweep (non-UI, unblocked)
 
-**Status: not started.** Whatever's left in `MOBILE-WEB-PARITY-GAP.md`
-once Batches 2, 4, and 5 close — smaller now than the founder's original
-draft since Circle/subscription/Oracle/perf/rate-limits are accounted for
-in earlier batches. Re-scope against the parity doc when this batch opens.
+**Status: done (2026-08-16).**
+
+**Scoping, per the estimation-calibration rule above (fresh grep, not the
+parity doc's own claims):** a fork re-verified every `not started`/`in
+progress` row in `MOBILE-WEB-PARITY-GAP.md` against current code. Result:
+most of what the doc still listed as open was already shipped by earlier
+batches and never had its status flipped — 3.4 (Кръг, done Batch 4), 5.6/
+7.1 (subscription management, done Batch 5, duplicate rows), 5.9
+(Ти→Премиум free-state half, done Batch 5). Section 11 (rate-limiting
+coverage) was similarly stale — 8 of its ~15 listed gaps were already
+fixed by Batches 1/5.5 and never updated. All five corrected in place in
+the parity doc (each now cites what actually shipped and where), not
+just noted here.
+
+**One genuine gap found and fixed:** 7 routes with zero rate limiting —
+`crystals/route.ts`, `crystals/today`, `crystals/collect`,
+`crystals/daily/collect`, `crystals/daily-streak`, `transits/overview`,
+`user/route.ts`. Same `assertRateLimit`-first-in-handler pattern as
+Batches 1/5.5. Two things worth recording:
+- `user/route.ts` needed the rate-limit-before-DB-work ordering fix
+  Batch 3 established (`gdpr/delete-account`, `stripe/checkout`) — it
+  called `ensureUserRecord`'s DB upsert with no guard in front of it.
+- `crystals/today` is deliberately open to unauthenticated callers
+  (`getCrystalOfTheDay(userId: string | null, ...)` — today's crystal is
+  public teaser content, same category as a horoscope-of-the-day, not an
+  oversight). Rate-limit key falls back to IP (`getRequestIp`) when
+  there's no session, matching `cities/search`'s dual-key pattern.
+- All 7 added to `test/rate-limit/routes-surface-429.test.ts` (40 tests,
+  was 33) — same discipline as Batch 1: force `assertRateLimit` to throw
+  and assert a clean 429, not a 500, for each. `pnpm run check:all` green
+  (strictness, bg-strings, copy-lock, lint-baseline, typecheck both apps,
+  lint, tests).
+
+**One real gap found and deliberately deferred, not built:** row 1.3
+(Днес premium badge) claimed a stubbed component (`isPremium = false`
+hardcoded, "single-line edit" to wire real data) — **that stub no longer
+exists**, grepped `index.tsx` and got zero hits; Днес was fully rebuilt
+2026-07-22 and the stub didn't survive it. Web still ships this badge.
+Real gap, but building it now means drawing new visual chrome (the old
+stub's markup is gone), not wiring existing chrome to Batch 5's real
+tier data — that's Batch 8 (UI) work, not Batch 7's non-UI scope. Moved,
+not built, doc corrected to say so.
+
+**No founder ruling needed this batch** — nothing ambiguous turned up;
+every open item was either already-done-but-mislabeled, one small
+unambiguous rate-limit gap, or clearly UI-scoped (deferred to Batch 8).
 
 ---
 
