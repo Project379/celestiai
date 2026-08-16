@@ -46,12 +46,42 @@ This is a JS-bundle env var, not a compiled-in native value — changing it
 and restarting `expo start` is enough, no rebuild of the Android dev client
 needed.
 
+**Corrected 2026-08-16 — `apps/mobile/.env.local` had a real RevenueCat
+Test Store key sitting in `apps/web/.env.local` instead, where Metro never
+reads it.** Copied into `apps/mobile/.env.local` (same value for both
+`EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` and `_ANDROID_API_KEY`, matching
+web's file exactly — it's a shared Test Store key, not per-platform).
+**`ERR-MOB-RC-002` should NOT fire on either surface now.** If it does,
+that's a real finding — it means the key isn't reaching the running app
+(stale Metro cache serving the old bundle is the most likely cause; restart
+`expo start` after this env change, a JS-only change doesn't need a native
+rebuild).
+
+**What you should see instead, confirming success rather than inferring
+it from an absence of errors** (all in Metro/Logcat/device console,
+`RevenueCatProvider.tsx`'s own explicit verification logging):
+- `[RevenueCat] configure() called for platform "ios"` (or `"android"`) —
+  logged right after `Purchases.configure()` is called, on both surfaces.
+- `[RevenueCat] isConfigured() -> true` — a read-back of the SDK's own
+  internal state, not just "the function call didn't throw." If this logs
+  `false`, that's a real finding even with no error thrown.
+- After sign-in, `[RevenueCat][VERIFY] logIn() succeeded — Clerk
+  userId="...", created=...` — confirms the Clerk↔RevenueCat identity link
+  actually completed. Cross-check that same userId appears under this
+  exact ID in the RevenueCat dashboard.
+
+**Expected divergence between surfaces — native SDK vs. Expo Go's shim,
+don't chase a difference here on its own:** Expo Go loads RevenueCat's own
+**Browser Mode** shim (its own module-load-time log, `"Expo Go app
+detected. Using RevenueCat in Browser Mode."`, fires before this
+component even mounts) — a mock, not the real SDK. The Android dev client
+is a real native build and loads the actual native RevenueCat SDK against
+this Test Store key instead. **If something errors on Android but works
+cleanly in Expo Go (or vice versa), that's expected surface divergence,
+not a bug to chase** — note it, but the two paths are genuinely different
+code underneath, not the same thing running on two devices.
+
 **Expected failures — do not chase these, they're the correct outcome, not bugs:**
-- `ERR-MOB-RC-002` in logs on **both** surfaces, every launch — RevenueCat
-  configured with a placeholder key (`.env.local` has
-  `REPLACE_WITH_REVENUECAT_*_API_KEY` for both platforms). This is
-  `RevenueCatProvider.tsx`'s own loud-not-silent design; it's supposed to
-  fire until real keys land.
 - **iPhone (Expo Go) only:** `ERR-MOB-PUSH-005` the first time you complete
   an Oracle reading (see step 6) — `getExpoPushTokenAsync` rejects on Expo
   Go by design; it needs the Dev Client. The in-app permission *prompt*
