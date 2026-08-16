@@ -1,6 +1,6 @@
 # Continuity-layer amendment — warm/cool zoning + source-quality mapping
 
-**Status: PROOF ONLY. No rollout.** Supersedes the "continuity layer unchanged" clause of `.planning/research/MOBILE_ALPHA_REDESIGN.md` §4 (line 160) as scoped below. Everything else in that document holds. Halt for founder review after this document + the two proof renders.
+**Status: PROOF ONLY for the wider redesign (motion, navbar, ScreenShell, per-screen zoning) — still not rolled out.** The token-migration slice of this doc (§1's `bronze`/`bronzeText` rows, §3) is the exception: it shipped as Batch 6, 2026-08-16 — see `COMPLETION-TRACKER.md`. Supersedes the "continuity layer unchanged" clause of `.planning/research/MOBILE_ALPHA_REDESIGN.md` §4 (line 160) as scoped below. Everything else in that document holds. Halt for founder review after this document + the two proof renders.
 
 ---
 
@@ -10,12 +10,12 @@ Added to `apps/mobile/components/design-system/tokens.ts` (additive only — not
 
 | Token | Value | Role |
 |---|---|---|
-| `bronze` | `#b8763e` | Replaces amber's accent role, globally, once migrated. Candidate value — refine against real device render before final. |
-| `bronzeText` | `#e0b587` | Bronze's "amberText"-equivalent (labels/text on dark ground). |
+| `bronze` | `#b8763e` | Replaces amber's accent role, globally, once migrated. **Confirmed** — matches every committed mockup's `--bronze` and the value actually shipped. |
+| `bronzeText` | `#d9a06a` | Bronze's "amberText"-equivalent (labels/text on dark ground). **Corrected 2026-08-16 (Batch 6)** from this doc's original candidate value `#e0b587`, which this row itself flagged as provisional and never confirmed against a device render. The mockups (`.planning/design/mockups/*.html`, `--bronze-hi`) are the actual built reference and use `#d9a06a` on every text/label role that value covers — `tokens.ts` now matches. See `COMPLETION-TRACKER.md`'s Batch 6 section for the full divergence writeup, and its "mockup vs. tokens.ts" rule for how this should be handled if it recurs. |
 | `cool` | `#5b8fc7` | New. Instrument accent — Карта, Astrology Guide, other celestial/historic surfaces only. Never on warm surfaces. |
 | `coolText` | `#bcd6ef` | Cool's text-on-dark equivalent. |
 | `starlight` | `#f5f7fc` | New. Cool-surface "light" role — distinct from `color.text` (`#e2e8f0`, a warm-neutral slate used everywhere as body/label color). |
-| `amber` / `amberText` | unchanged | Still live, still consumed by ~60 files. Retained until migration fires (see §3). |
+| `amber` / `amberText` | **deleted** | Migration fired — Batch 6, 2026-08-16. Retired from `tokens.ts` and `tailwind.config.js` (`amber-stellaeum`); every consumer repointed to `bronze`/`bronzeText`. This row described the pre-migration state — see `COMPLETION-TRACKER.md`'s Batch 6 section for what actually shipped. |
 | `violet` | unchanged | Re-confirmed as ambient **ground**, not a competing accent — see R4 re-amendment (§5). |
 
 **Why `cool` is `#5b8fc7`, not a saturated cyan/blue:** `NatalWheel.tsx:355` already draws the Ascendant line in `#22d3ee` — cyan, excluded from the continuity layer in §1.5 specifically because it's data-viz (air-element/Ascendant semantics), not brand. Карта is the cool proof surface, so the new instrument accent sits inches from that existing cyan line. `#5b8fc7` is a desaturated steel-blue (hue ~209°) chosen to sit clearly apart from `#22d3ee` (hue ~187°, fully saturated) so the two don't read as "the same blue, drawn twice" — one is a chart-data marker, the other is the instrument-frame accent. **Open item, not fully closed**: this needs a real side-by-side check on the actual wheel (not just a swatch comparison) before being called final — flagged, not resolved by this document alone.

@@ -73,9 +73,25 @@ product/money/auth/schema/ambiguity" operating model established 2026-08-13.
   DPAs unsigned]`, third-party licensing `[partial — 5 provider TOS reviews
   outstanding]`.
 
----
-
-## 2. End state
+**Standing rules, established during batching (apply going forward, not
+just to the batch that produced them):**
+- **When a design-token source doc (`WARM_COOL_AMENDMENT.md`, etc.) and
+  the committed mockups (`.planning/design/mockups/*.html`) disagree on a
+  color value, the mockups win.** They're the actual built reference; a
+  planning doc's number can go stale (or, per Batch 6, be provisional —
+  its own text called it a "candidate value" and never confirmed). The
+  divergence itself is a finding to report explicitly, not something to
+  silently reconcile — the founder needs to know a value changed on
+  already-approved components, not just that it's now "correct."
+  (Established: Batch 6's `bronzeText` correction, `#e0b587`→`#d9a06a`.)
+- **Estimation calibration: counts derived from a planning doc, not a
+  fresh grep, run low, consistently.** Three instances this session —
+  Batch 2's 6.2 (a web behavior that never existed), Batch 4/4B's Кръг
+  premise going stale underneath the port, and Batch 6's file count (48
+  claimed vs. 52 actual, plus a literal-hex-stray count of "2" vs. the
+  actual ~28, since a classname grep structurally can't find those).
+  Scope every batch against a fresh grep of the current codebase, not a
+  prior scoping doc's number, even a recent one.
 
 Everything technical, every feature, all UI — built, tested, and
 launch-ready. The **only** things remaining once every batch below closes
