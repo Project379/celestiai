@@ -31,6 +31,72 @@ family as the others.
 
 ---
 
+## 0. The seven governing rules (R1–R7)
+
+Ratified in `MOBILE_ALPHA_REDESIGN.md`, sourced from measured structural
+research (Apple Weather, Apple News, Instagram's own creator-facing overlay
+specs, and a direct critique of Co-Star as the named competitor) — not
+opinion. This section states each rule's current, ratified form; the
+research doc itself is retired (see the consolidation note at the bottom of
+this document) but its citations remain in git history if a rule's origin
+is ever worth re-checking.
+
+- **R1 — one dominant element per screen, sized 6–8× the screen's smallest
+  text.** The hero is a glyph or visual element, not text alone — Днес's
+  hero is the moon (≈13.6× the caption size), not the greeting; Карта's
+  hero is the `NatalWheel` itself. A screen's largest *text* tier only
+  needs to reach ~3.5× caption, because the glyph carries the real
+  size-contrast weight (per Apple Weather's own pattern — a hero numeral,
+  not a hero headline).
+- **R2 — max 3–4 distinct type sizes per screen.** `tokens.ts`'s scale
+  (`sub`/`body`/`row`/`caption`, plus the one reserved `eyebrow`) is the
+  budget. A screen mapping every text element onto more than these tiers is
+  over-scale — consolidate to the nearest existing tier rather than adding
+  a new one.
+- **R3 — tracked-caps uppercase is reserved: 0–1 per screen.** One eyebrow/
+  kicker label maximum, never on body-adjacent or long text. Everything
+  else renders plain sentence-case. This is the single biggest lever
+  against the app reading as decorated rather than considered — see the
+  hard rules (§5) for what happens when this budget is respected
+  consistently (no cards, no pill badges, etc.).
+- **R4 — accent color reserved for 1–2 functional roles per screen.** One
+  warm (bronze) or cool role per screen, never both competing, violet
+  always structural rather than a third accent. See §2 for the precise
+  warm/cool/neutral assignment.
+- **R5 — Roman numerals are scoped to exactly ONE surface: the Astrology
+  Guide.** Nowhere else, including a new Batch 8 screen. The numeral's
+  original justification (marking progress through one long
+  editorial document) only applies to the Guide's actual long-form
+  scroll — a dashboard-style screen has no "next section" to progress
+  through, so a numeral there is decoration, not information. (The
+  wizard's step numerals were retired to plain dots for exactly this
+  reason — don't reintroduce numerals as a progress indicator anywhere new
+  without re-litigating this rule explicitly.)
+- **R6 — card/layout shape is chosen by real string length, not assumed
+  length.** A 2-up grid is only for content guaranteed short (≤12–14
+  characters — single words or short phrases). Anything that must hold a
+  full phrase or variable-length data (a lunar-phase name, a book title, a
+  compatibility-report headline) gets a full-width single-column layout
+  instead. Pull the actual longest real Bulgarian string for the slot
+  before choosing a grid, the way Днес/Карта's mockups did — don't assume a
+  string length and discover the wrap on device.
+- **R7 — categorical, not degree.** Covered in full in §5 below (it's a
+  hard rule, not just a sizing guideline) — any lead/payoff or state-change
+  marker needs ≥2 dimensions of difference from its surroundings, ≥1 of
+  them categorical.
+
+**"Converted" means typeface too, not just spacing/R2/R3/R5 compliance —
+a real gap found in this codebase's own history, worth carrying into every
+Batch 8 build verification.** A screen was shipped once with every text
+element correctly spaced, sized, and de-tracked, but rendering in the
+platform system font throughout — because `fontFamily` was never actually
+set on any `<Text>` element, and nothing checked for that specifically. Before
+calling a Batch 8 screen done, verify every `<Text>` site sets `fontFamily`
+either via an explicit `font.*` value or a `type.*` token spread — spacing
+and color token usage alone does not mean the typeface is right.
+
+---
+
 ## 1. Token values
 
 `apps/mobile/components/design-system/tokens.ts` — the only source. Do not
@@ -98,16 +164,40 @@ don't drift into it silently.
 | `mono` | Menlo (iOS) / monospace (Android) | Date/specimen labels (mockup `.label-mark`/`.karta-label`) — bronze mono caption, see §6 |
 | `cinzel` | Cinzel-Regular | **Latin text and Roman numerals ONLY — see the hard rule below.** |
 
-**Cinzel/Cyrillic hard rule, and its actual enforcement status:** Cinzel
-has zero Cyrillic glyphs — using it on Cyrillic text silently falls back to
-a system font, with no visible error. This has already shipped as a real
-bug (tracked as REVISIT-42) and been fixed ad hoc, component-by-component,
-at 6+ confirmed sites (`rhythm.tsx`, `you.tsx`, tab `_layout.tsx`,
-`NatalWheelLegend.tsx`, `PlanetDetail.tsx`, `ManifestDiaryContent.tsx`).
-**There is no central guard preventing this from recurring** — a new
-Batch 8 screen using `font.cinzel` on any Cyrillic string will silently
-reintroduce it. Treat every Cinzel use in a new mockup as something to
-verify by eye against the actual string, not assume safe by convention.
+> ## HARD RULE — CINZEL IS LATIN AND ROMAN NUMERALS ONLY. NEVER CYRILLIC.
+>
+> Cinzel has zero Cyrillic glyphs in its font file (confirmed directly via
+> its cmap, not assumed). Applying it to Cyrillic text does not error, does
+> not warn, does not look broken in the editor or in a static mockup — it
+> silently substitutes a plain system serif at render time. The only way to
+> catch it is to look at the actual rendered string on a real device and
+> know to check.
+>
+> **This bug has already shipped and been fixed six-plus separate times**
+> (tracked as REVISIT-42), at `rhythm.tsx`, `you.tsx`, the tab `_layout.tsx`,
+> `NatalWheelLegend.tsx`, `PlanetDetail.tsx`, `ManifestDiaryContent.tsx`, and
+> — the most recent sighting — inside the Astrology Guide, R5's own
+> designated legitimate home for Cinzel, which wraps real Cyrillic body copy
+> in it anyway. It keeps recurring because each fix has been closed
+> per-surface, not per-codebase. **There is no central guard today.** A new
+> Batch 8 screen reaching for `font.cinzel` can reintroduce this bug with
+> zero warning, on the first paint.
+>
+> **Any Batch 8 mockup or build that uses Cinzel must explicitly state
+> which strings it applies to, and confirm each one is genuinely Latin text
+> or a Roman numeral — never a variable, never a translated label, never
+> anything that could contain a Cyrillic character at runtime.** If there's
+> any doubt whether a string is Cyrillic, it is — check don't assume.
+>
+> **A lint rule could plausibly catch this cheaply** — a rule that flags any
+> JSX text/string literal containing a Cyrillic codepoint (`[Ѐ-ӿ]`)
+> inside a component that also sets `fontFamily: font.cinzel` or applies the
+> `font-cinzel` NativeWind class, similar in shape to the existing
+> `no-new-bg-strings` custom ESLint rule already in this repo
+> (`packages/config/eslint/no-new-bg-strings.cjs`), which shows the pattern
+> for a codepoint-range check is already precedented here. **Not built —
+> this is a decision for the founder to make later, not something to
+> implement now.**
 
 ### Type scale (`type`)
 
@@ -326,3 +416,72 @@ does not resolve the two open flags above (`NavRow`'s unaudited
 function-style Pressable, Cinzel's lack of a central Cyrillic guard) —
 those are real risks to carry into Batch 8 work, not solved by writing
 them down here.
+
+---
+
+## 8. Document consolidation (2026-08-16)
+
+Before this document existed, the same design language was described
+across four separate places — `MOBILE_ALPHA_REDESIGN.md` (research + R1-R7
++ round-by-round implementation history), `WARM_COOL_AMENDMENT.md` (the
+bronze/cool token proposal), `WARM_COOL_BUILD_PLAN.md` (the phased rollout
+plan for that proposal), and this document. Five places describing one
+language is what let `bronzeText`'s superseded value survive as long as it
+did — the mechanism, not a one-off. All three are now retired to
+stub-with-pointer files (same treatment Batch 1 gave six other stale
+stack/architecture docs) — original content stays in git history, not
+deleted. What each held and where it went:
+
+- **`WARM_COOL_AMENDMENT.md` — fully superseded, nothing unique retained
+  outside git history.** It was the original bronze/cool token proposal;
+  everything in it that turned out correct is now in §1-§2 above, sourced
+  from what actually shipped rather than the proposal. Its `bronzeText`
+  value (`#e0b587`) is the one it got wrong — corrected here, per §1.
+- **`WARM_COOL_BUILD_PLAN.md` — fully superseded, split two ways.** Its
+  Phase 0 foundation work (motion hooks, `ScreenShell`, `LeadLine`,
+  `CtaPanel`) is now shipped and documented in §3 above. Its Phase 1a-1d
+  screen-by-screen rollout sequencing is superseded by Batch 8's own order,
+  ratified 2026-08-16 (`COMPLETION-TRACKER.md`) — **a real divergence worth
+  knowing about, not silently dropped**: the build plan's sequencing didn't
+  know Кръг would ship ported-but-undesigned (Batch 4 hadn't happened yet)
+  and scoped it as an ~80 LOC token-conversion job under its original Round
+  D; Batch 8's actual order treats Кръг as the second-highest priority
+  needing a full from-scratch redesign, because that's what it turned out
+  to need. Not a reversed founder decision — an assumption invalidated by
+  a later event (the Кръг port), corrected once the event happened.
+- **`MOBILE_ALPHA_REDESIGN.md` — fully superseded for design-language
+  purposes; its ongoing-value rule content (R1-R7) is now in §0 above,
+  its continuity-layer table in §1-§2.** What it also held, retired along
+  with it rather than migrated, since it's project history rather than
+  design language: the external research citations (Co-Star/Weather/
+  Instagram sourcing behind R1-R7's numbers — still in git history if a
+  rule's origin is ever disputed), the full round-by-round (A-K)
+  implementation/bug-fix log, and REVISIT-42's complete six-sighting
+  history including the tested Chromium-vs-React-Native font-fallback
+  finding. **Two things from it that are NOT design-language and were not
+  otherwise tracked, carried forward explicitly so they aren't lost:**
+  Карта's scroll stutter is a real, confirmed-unfixed performance bug
+  (Fabric-architecture rasterization props confirmed inert on-device, a
+  "view-shot investigation" was the next candidate fix, never built) — this
+  was already in `COMPLETION-TRACKER.md`'s known-open register before this
+  consolidation, cross-checked, no change needed. REVISIT-42's closure
+  condition (a full repo grep for `font-cinzel`/`font-display` returning
+  zero hits outside the Guide's numerals/brand eyebrow) is now stated as
+  this document's own hard rule in §1, not just retired prose.
+
+**Contradiction, not silently resolved — reported per instruction:** the
+retired research doc's own palette line (`Continuity layer unchanged:
+palette (#08060f / #8b5cf6 / #fbbf24)`) and its R4 worked example
+("amber marks exactly one role per screen") both still name amber as
+canonical. This is pre-Batch-6 staleness, not a reversed decision — the
+doc predates the amber-to-bronze migration and was never updated after.
+§1 above is correct and current; the retired doc's palette line is wrong
+as of 2026-08-16 and should be read as historical only, which is exactly
+why it's being retired rather than left live and disagreeing with this
+one.
+
+**End state, per instruction:** this document (the language), the
+designer brief (`DESIGNER_BRIEF_ASSETS.md`, an active commission spec —
+genuinely distinct, not a language definition), and the committed mockups
+in `.planning/design/mockups/` (per-screen specs). Nothing else describes
+the design language going forward.

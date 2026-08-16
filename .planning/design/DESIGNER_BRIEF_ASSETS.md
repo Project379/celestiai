@@ -8,7 +8,7 @@ Standalone brief. You do not need access to the codebase to execute this — eve
 
 ## 0. What this is for
 
-Stellaeum is a Bulgarian-market astrology app with a dark, near-black, mystical-but-restrained visual language (violet + amber as the only two accent colors, everything else near-black/off-white). Right now, 12 of these 28 marks (the zodiac signs) already exist as hand-drawn line art in the app. The other 16 (planets + aspect marks) are currently rendered using standard Unicode astrological symbols in a system font — a placeholder, not a designed mark. This brief replaces all 28 with one consistent hand, drawn by you, so the whole family reads as one considered object instead of "12 designed + 16 borrowed."
+Stellaeum is a Bulgarian-market astrology app with a dark, near-black, mystical-but-restrained visual language (violet + a warm bronze as the two primary accent colors, plus a cool steel-blue reserved for celestial/data surfaces — corrected 2026-08-16, was "amber" — everything else near-black/off-white). Right now, 12 of these 28 marks (the zodiac signs) already exist as hand-drawn line art in the app. The other 16 (planets + aspect marks) are currently rendered using standard Unicode astrological symbols in a system font — a placeholder, not a designed mark. This brief replaces all 28 with one consistent hand, drawn by you, so the whole family reads as one considered object instead of "12 designed + 16 borrowed."
 
 ---
 

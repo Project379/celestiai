@@ -280,6 +280,25 @@ screen was laid out assuming the button would be there.
 - General crash/freeze/unresponsive-UI anywhere — always a finding
   regardless of which batch it traces to.
 
+**NavRow — not a fix, a watch-item.** This is unverified, not known-broken —
+`NavRow.tsx` is working shipped code and is not being touched. Its actual
+footprint is narrower than "used across settings-style rows" — grepped, its
+only real consumer is `States.tsx`'s accent-toned CTA row (the button shown
+in an empty/error state), not a general list-row primitive. It uses the same
+function-style `Pressable` `style` prop pattern that silently dropped
+`flexDirection: 'row'` on three sibling primitives (`CtaPanel`, `Pedestal`,
+`Plaque`) the same day, and was never itself audited for the same bug.
+**What a failure would look like, concretely, if you land on any empty/error
+state with a CTA button (Кръг's empty states in step 5 are the most likely
+place):** the label text and the trailing `›` chevron stacking vertically
+instead of sitting side-by-side in a row, or the row's height/alignment
+looking visibly wrong compared to `you.tsx`'s own menu rows (which don't use
+this component at all, so they're not at risk the same way and make a good
+side-by-side comparison if both are on screen). If it renders as a normal
+horizontal row with the chevron trailing on the right and responds to taps
+correctly, it's fine — the pattern being unaudited doesn't mean it's broken,
+only that nobody's confirmed it isn't.
+
 ---
 
 ## After this pass

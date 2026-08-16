@@ -1262,6 +1262,23 @@ still reintroduce it silently. Every Batch 8 mockup states which
 primitives it reuses and where/why it departs; a genuinely new primitive
 is a flag to raise, not a decision to make silently inside a mockup file.
 
+**Consolidated (2026-08-16), per founder instruction — five documents
+describing one language is the mechanism behind the `bronzeText`
+incident, not a one-off.** `MOBILE_ALPHA_REDESIGN.md`, `WARM_COOL_
+AMENDMENT.md`, and `WARM_COOL_BUILD_PLAN.md` are now retired to
+stub-with-pointer files (same treatment Batch 1 gave six stale stack
+docs) — `DESIGN-LANGUAGE-REFERENCE.md` absorbed everything from them with
+ongoing design-language value, including the full R1-R7 rule text (§0,
+not previously ported) and the "converted means typeface too" checklist
+item. End state, per instruction: the reference (the language), the
+designer brief (the commission — `DESIGNER_BRIEF_ASSETS.md`, corrected in
+the same pass — its intro line still said "amber," fixed to bronze/cool),
+and the committed mockups (per-screen specs). Nothing else. Full
+retirement rationale and the one real divergence it surfaced — the old
+build plan's Кръг sequencing predates the Кръг port and is now wrong, not
+just stale, corrected in Batch 8's own order above — is in the reference
+doc's own §8, not duplicated here.
+
 ---
 
 ## 4. Halt-required register
