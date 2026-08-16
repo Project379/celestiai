@@ -55,7 +55,7 @@ Requirements for MVP web launch. Each maps to roadmap phases.
 - [x] **DAILY-01**: User sees daily horoscope personalized to their chart
 - [x] **DAILY-02**: Horoscope updates each day
 - [x] **DAILY-03**: User can view yesterday's horoscope
-- [x] **DAILY-04**: User receives morning push notification with horoscope (web Web Push delivery live via `cron/daily-horoscope`; mobile Expo push delivery still open — scaffold only, no end-to-end wiring, see `.planning/COMPLETION-TRACKER.md`)
+- [x] **DAILY-04**: User receives morning push notification with horoscope (web Web Push delivery live via `cron/daily-horoscope`; mobile Expo push delivery backend fully built and wired — `push_tokens` table, registration route, cron send with dead-token revocation — corrected 2026-08-16, was stale; what's left is the permission/settings UI, Batch 8, and a real device test, see `.planning/COMPLETION-TRACKER.md`)
 
 ### Payments
 
@@ -181,7 +181,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DAILY-01 | Phase 6 | Complete |
 | DAILY-02 | Phase 6 | Complete |
 | DAILY-03 | Phase 6 | Complete |
-| DAILY-04 | Phase 6 | Complete (web); mobile delivery open, see COMPLETION-TRACKER.md |
+| DAILY-04 | Phase 6 | Complete (web + mobile backend); mobile permission/settings UI open, Batch 8, see COMPLETION-TRACKER.md |
 | PAY-01 | Phase 7 | Complete |
 | PAY-02 | Phase 7 | Complete |
 | PAY-03 | Phase 7 | Complete |
@@ -216,7 +216,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v0.1 requirements: 54 total
 - Mapped to phases: 54
 - Unmapped: 0
-- Complete: 52 of 54; 2 with a known open gap (SEC-06/SEC-08, `crystal_recommendations` RLS — see SECURITY-MODEL.md); DAILY-04 complete on web with mobile delivery still open
+- Complete: 52 of 54; 2 with a known open gap (SEC-06/SEC-08, `crystal_recommendations` RLS — see SECURITY-MODEL.md); DAILY-04 complete on web and mobile backend, mobile permission UI open (Batch 8)
 
 ---
 *Requirements defined: 2026-01-21*

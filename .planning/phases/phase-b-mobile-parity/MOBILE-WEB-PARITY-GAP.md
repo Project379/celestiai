@@ -3,6 +3,18 @@ title: Mobile ↔ Web Parity Gap Inventory
 phase: Phase B (Stream P)
 created: 2026-05-09
 status: living document — single source of truth for Stream P work
+
+**RELIABILITY WARNING, read before trusting any status cell (added
+2026-08-16):** this doc's status column has been wrong five separate times
+in one session — a web behavior described that never existed (Batch 2's
+6.2), a whole section overtaken by a real feature shipping underneath it
+before the doc caught up (Batch 4's Кръг rewrite), a file-count estimate
+off by roughly 14x on one migration's literal-hex strays (Batch 6), and
+five rows (3.4, 5.6, 5.9, 7.1, Section 11) still claiming "not started"
+for work that had already shipped, discovered only when Batch 7 re-checked
+against current code instead of this doc (2026-08-16). **Treat every
+status cell here as a hypothesis to verify against actual code before
+acting on it, never as fact on its own.**
 last-updated: 2026-08-13 — targeted refresh per founder's specific attention list, not an exhaustive re-check of all ~50 rows. Actually re-verified against current code this pass: Section 3 (Кръг — rewritten; web shipped a full Circle backend+UI, `CircleHub.tsx`/Stream K Port 1, superseding the empty-state-vs-empty-state framing this section previously described; `CircleEmptyState.tsx` is now dead code on web), item 2.8 (new — chart-tab tap-select re-render, founder-reported FPS drop, checked against both mobile's and web's `NatalWheel.tsx`), Section 11 (new — API rate-limiting coverage, cross-cutting, not previously tracked here), Section 12 (new — amber→bronze design-token migration sizing, corrected mid-pass after an unverified first draft wrongly took a stale code comment at face value), items 5.6/5.7/5.9/7.1/7.2/7.3 (GDPR deletion UI and subscription/RevenueCat state, re-checked against current settings.tsx/premium.tsx/RevenueCatProvider.tsx — both already-accurate and one refined). **Everything else in Sections 1, 2.1-2.7, 4, 5.1-5.5/5.8, 6, and 7.4-7.9 was NOT re-opened this pass** — those rows carry forward from prior rounds unverified by this refresh; treat their `done` status as [inferred from prior verification], not re-confirmed 2026-08-13.
 
 **Second update, same day — Batch 2 (Oracle parity polish):** Section 6 items 6.2, 6.4, 6.5 shipped; 6.1 investigated and stays open (real technical constraint, not skipped work — see row for detail); Section 8 REVISIT 20/22 statuses corrected to match. Section 6.2 also corrects a stale claim discovered mid-batch — web's Oracle never actually rendered colored sentinels, despite this doc previously saying it did.

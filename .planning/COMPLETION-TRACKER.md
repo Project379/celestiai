@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-16 (Batch 7 complete — parity-doc corrections + 7-route rate-limit gap closed)
+last-updated: 2026-08-16 (device-pass checklist written, real-status sweep, Batch 8 scoped — push-delivery register corrected, no building yet, awaiting founder ruling on Batch 8 order)
 ---
 
 # Completion Tracker
@@ -57,9 +57,12 @@ product/money/auth/schema/ambiguity" operating model established 2026-08-13.
   free-state branch's "subscribe on web" CTA is functional but its target
   URL is an unfilled placeholder blocked on the founder's Vercel fix, see
   halt-required register. **Not yet built on mobile:** the RevenueCat
-  paywall/purchase flow, push notification delivery (scaffold only), the
-  amber→bronze visual-token migration (in progress, up to 48 files still
-  on the old token).
+  paywall/purchase flow (native purchase UI — halt-required) and the
+  push-notification permission/settings UI (Batch 8) — the push *backend*
+  (schema, registration route, cron delivery) is fully built and wired,
+  corrected 2026-08-16, was understated here. Amber→bronze is done
+  (Batch 6, 2026-08-16). This whole bullet is otherwise dated — see
+  Batches 6/7/8 sections below for current state, not this paragraph.
 - **First real device build (2026-08-13) surfaced two real mobile bugs**,
   both since fixed: an infinite `/api/birth-data` request loop after wizard
   completion (stale TanStack Query cache never invalidated after save), and
@@ -1148,16 +1151,94 @@ unambiguous rate-limit gap, or clearly UI-scoped (deferred to Batch 8).
 
 ### Batch 8 — UI phase (iterative)
 
-**Status: not started.** The one thing that doesn't batch the same way as
-the rest — UI work is iterative and needs founder review per-screen, not a
-single decide-and-proceed pass. Roughly eleven screens/surfaces make up
-what's left once the above batches close: the 4 Oracle polish items (if
-any carry visible UI decisions beyond Batch 2's scope), subscription
-status/management screen review, the paywall UI (once ruled on, see
-halt-required below), push-notification permission/settings UI, and ~4
-Кръг screens (hub/list, saved-profile form, invite acceptance, relationship
-report/weather) — including the **Кръг redesign pass** promised in Batch
-4's ruling. Sequence and pace TBD by founder, not pre-planned here.
+**Status: scoped (2026-08-16), not started building.** Doesn't batch like
+the rest — screen-by-screen, founder approves every gate (mockup, then
+build, then device verify), per the process that finally worked for
+Днес/Карта after three earlier rejected attempts. This scoping pass
+corrected the prior "roughly eleven screens" estimate against actual
+mockup inventory and current shipped code, not against this doc's own
+prior guess.
+
+**Mockup inventory** (`.planning/design/mockups/`, 21 files): the
+canonical "v4" set covers 13 screens + navbar (Днес, Карта, Ти, Оракул,
+Ритъм, Guide, Crystals, Recommendations, Lunar diary, Settings, Wizard,
+Auth, Кръг, navbar) — all one dated session. Plus 3 older/secondary files:
+`journal-v1.html` (superseded by `lunar-diary-v4.html`, use the v4),
+`moon-detail-v1.html` (Днес's moon-detail sub-screen, `moon-detail.tsx` is
+real shipped code but its mockup was never refreshed to v4 — quick
+currency check needed, not a full redo), `dnes-povece-detaili-v1.html`
+(v1 only). **No mockup exists at all for:** the Ти→Premium subscription
+screen (Batch 5 built it with none), the paywall/purchase UI, the Днес
+premium badge (small, moved here from Batch 7).
+
+**Token drift: none found.** Every v4 mockup already defines `--bronze:
+#b8763e` / `--bronze-hi:#d9a06a` — the exact value Batch 6 corrected
+`tokens.ts` *toward*. The mockups were never behind Batch 6; they were
+its reference. Only 3 stray prose mentions of "amber" exist, all
+describing an already-superseded first pass, not live styling.
+
+**Functional drift — one real case, `krug-v4.html`.** Its entire content
+is a single empty-state hero moment (two orbs, nothing else) — no
+relationship picker, no saved-profile list/form, no invite flow, no
+connection-space detail, no reports, no weather, no archive.
+`WARM_COOL_BUILD_PLAN.md` §2.4 itself already scoped it as just "two
+orbs." **Verdict, confirmed: background mood reference only, never a
+spec** — exactly the founder's own read. Every real Circle screen needs a
+mockup made from scratch.
+
+**Днес/Карта mockups are not stale — if anything the build history runs
+the other way.** `MOBILE_ALPHA_REDESIGN.md:598` shows the doc's own prior
+text (a 32-40px hero phase-name tier) was corrected *to match*
+`dnes-v4.html`, not the reverse; `tokens.ts`/`MoonGlyph.tsx` still cite
+exact mockup selectors/values in their comments. `BUILD_VERIFICATION_
+GUARDS.md`'s three device-wiring guards are mostly already fixed in the
+reference render — **except Guard 2 (moon brightness), still explicitly
+open, "verify on device"** — a real outstanding check, already covered by
+the Днес step in `DEVICE-PASS-2026-08.md`, not a mockup problem.
+
+**Ти-premium's mockup gap isn't new — it was flagged and never
+closed.** `MOBILE_ALPHA_REDESIGN.md:331` explicitly logged, when P.9/P.11
+were first scoped, that `ti-v4.html` doesn't cover the subscription/
+premium surface and that work shouldn't start "until a mockup exists."
+Batch 5 built the real screen anyway, with none. Same situation Кръг is
+in, smaller.
+
+**Proposed order, evaluated against the founder's own instinct (screens a
+user hits first + screens others depend on, before the long tail) and
+against `WARM_COOL_BUILD_PLAN.md` §3's existing Ти-first proposal:**
+1. **Ти-premium + paywall** — fresh mockups, zero exist. Highest priority
+   by dependency logic, not just recency: it's the money surface, already
+   referenced from three shipped entry points (You-menu, crystals gate,
+   Кръг teaser), and every day without it is a day mobile can't
+   monetize at all. Narrows `WARM_COOL_BUILD_PLAN`'s original "Ти first"
+   reasoning to the two items that actually still need it — the rest of
+   Ти already has a usable `ti-v4.html`.
+2. **Кръг** — fresh mockup needed, zero usable reference (`krug-v4.html`
+   confirmed background-only, above). Largest ported-but-undesigned
+   surface (~2,200 LOC reference), so the gap between functional and
+   designed is largest and most user-visible here.
+3. **Днес premium badge** — trivial, small addition to an already-approved
+   screen. Bundle into whichever of #1/#2's session has room, not its own
+   gate.
+4. **Remaining screens with existing, unchallenged v4 mockups** (Оракул,
+   Ритъм, Guide, Crystals, Recommendations, Lunar diary, Settings, Wizard,
+   Auth) — none blocks anything else; build in whatever order is
+   convenient. This scoping pass didn't line-by-line diff shipped code
+   against all 9 of these the way it did Днес/Карта/Ти/Кръг — spot-check
+   each briefly at build time before treating its mockup as current.
+
+**Fresh-mockup-needed:** Ти-premium, paywall, all Кръг screens.
+**Existing-and-usable:** Днес, Карта (incl. moon-detail — quick currency
+check only), Оракул, Ритъм, Guide, Crystals, Recommendations, Lunar diary
+(`lunar-diary-v4.html`, not the superseded `journal-v1.html`), Settings,
+Wizard, Auth.
+
+**Process, confirmed with the founder (2026-08-16) — do not deviate:**
+mockup designed from scratch as a complete object (never opening the old
+screen's code while designing, never framed as a diff against it) →
+founder approves the mockup → build reads exact values from the committed
+file, not prose or memory → founder verifies on device → only then the
+next screen. One screen at a time.
 
 ---
 
@@ -1246,18 +1327,27 @@ blocked on a different thing (the Vercel deploy, see the entry above) —
 this paywall ruling still gates the eventual *native* purchase path, not
 Batch 5's screen.
 
-### Push notification delivery
+### Push notification delivery — RESOLVED, not actually halt-required
 
-**Decision needed:** confirm the `push_tokens` schema migration scope
-(REVISIT-26) and the registration-endpoint design before building. **Why
-it halts:** requires a schema migration, which is on the founder's explicit
-halt list regardless of how mechanical the rest looks. Mobile already has
-an `expo-notifications` permission scaffold (SR 8.3) — this is specifically
-about the missing end-to-end delivery wiring (token registration → storage
-→ the existing `cron/daily-horoscope` route actually reaching mobile
-devices, not just web Web Push subscribers).
-**Blocks:** `DAILY-04` in `REQUIREMENTS.md` stays partially-complete
-(web-only) until this ships.
+**Correction, Part 2 real-status sweep, 2026-08-16: this register entry was
+stale.** It described a state that no longer matches the code — the thing
+it says needs a founder decision (`push_tokens` schema scope) was already
+decided and shipped, not pending. **[VERIFIED]** `supabase/migrations/
+20260803070000_push_tokens.sql` defines the table (RLS, FK to users,
+unique-per-device). `apps/web/app/api/push/register/route.ts` already
+upserts into it (rate-limited, Batch 5.5 #20). `apps/web/app/api/cron/
+daily-horoscope/route.ts` already sends via `expo-server-sdk`, handles
+`DeviceNotRegistered` receipts, revokes dead tokens. `apps/web/vercel.json`
+already schedules it (`0 6 * * *`). The backend delivery path is fully
+built and wired — this was never a live blocker by the time this entry was
+last read, it just never got flipped when the work shipped.
+
+**What's actually left, and it's Batch 8 (UI) scope, not a halt:** the
+push-notification permission/settings UI (already on Batch 8's list) and a
+real device test of token registration end-to-end — possible now that a
+dev client exists, folded into the device-pass work rather than a separate
+gate. `DAILY-04` in `REQUIREMENTS.md` should be re-checked against this,
+not assumed still partially-complete.
 
 ---
 
