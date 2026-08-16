@@ -1395,10 +1395,14 @@ not assumed still partially-complete.
 Items that can't move regardless of engineering capacity — waiting on
 something outside this repo.
 
+**Vercel is the top entry, moved here 2026-08-16 — it's the single thing
+gating three separate items below it, not a peripheral row.** Read this
+one first.
+
 | Item | Blocks | Owner |
 |---|---|---|
+| **Vercel** (production deploy target) — **hard blocker, confirmed two independent ways, not "not currently blocking" as this row said as of 2026-08-13.** | **`stellaeum.com` returns a direct 404.** The GitHub Deployments API shows 18 checked deployments spanning 2026-07-29 through the commit pushed minutes before this check (`345f4dc`) — **every single one is `state: failure`**, including the newest. This one item is what's actually gating: **(1)** `EXPO_PUBLIC_WEB_APP_URL` — the `/you/premium` free-state "subscribe on web" CTA has no URL to point at. **(2)** the `/you/settings.tsx` hardcoded privacy-policy link — a real **Apple App Store submission rejection** waiting to happen, not just a dead link a user might tap; Apple requires a reachable privacy URL at submission. **(3)** the RevenueCat webhook end-to-end test — can't be exercised against a webhook endpoint that isn't live. Full repo-side diagnostic prep (env var inventory build-time vs. runtime, monorepo/native-module build risks, a read-the-log-against-this-list diagnostic order) is in `.planning/VERCEL-DEPLOY-DIAGNOSTIC.md` — founder is working the dashboard directly, not delegating the fix. | **Founder — real, current, active blocker. Owns the fix, working it now.** |
 | **Apple Developer Program enrollment** | TestFlight provisioning, SR 9 (EAS Dev Client + TestFlight + biometric auth bundle), the soft-launch milestone itself (iOS internal beta can't open without it) | Founder — application/payment step, not automatable |
-| **Vercel** (production deploy target) | **CORRECTED 2026-08-16 — this row was wrong, not just stale.** It said "not currently a hard blocker — web is deployed" as of 2026-08-13; that was never re-verified and doesn't hold. **[VERIFIED via GitHub Deployments API]** checked 18 deployments spanning the full history from 2026-07-29 through the commit pushed minutes before this check (`345f4dc`, this session's own Batch 6/7/docs work) — **every single one has `state: failure`**, including the newest. `stellaeum.com` is not serving the app. This directly un-blocks nothing that was assumed unblocked, and directly blocks three things that were being treated as merely pending a URL fill-in: `EXPO_PUBLIC_WEB_APP_URL` (still `REPLACE_WITH_`, correctly so), the `/you/settings.tsx` privacy-policy 404 (Apple submission blocker, correctly still open), and the RevenueCat webhook end-to-end test. No live URL to hand over — there isn't one. Deploy failures are founder-owned Vercel-project-configuration territory (Root Directory, included-source-files toggle, Node version, env vars in both environments — see the founder's own checklist below), not something fixable from this repo's code. | Founder — real, current, active blocker, not resolved. Every deploy attempt fails; needs founder's direct Vercel dashboard access to diagnose (`npx vercel inspect <deployment-id> --logs` per Vercel's own error message, requires CLI login this session doesn't have) |
 | **LLM model swap (OpenRouter/Llama → BgGPT)** | Nothing currently — deliberately deferred, not gating launch. Would need a controlled quality eval (same prompts/chart/topic, human-rated) before it's even a live decision, not just an engineering swap | Founder — product call on Bulgarian-quality-vs-parameter-count tradeoff, per `AI_PROVIDER_DECISION.md §5` |
 | **Swiss Ephemeris Professional License purchase** | Nothing pre-launch by design — GPL-2.0 path is legally sufficient until the trigger fires. CHF 700 one-time, no retroactive coverage (contract clause 13) once the trigger does fire | Founder — automatic trigger already wired (`[Licensing]`-prefixed warnings on first genuine paying subscriber in both `stripe/subscription.ts` and `revenuecat/webhook-events.ts`); founder must act promptly once it fires, not "eventually" |
 | **Designer assets** (`DESIGNER_BRIEF_ASSETS.md`) | Currently blocks nothing launch-critical — planet/zodiac glyphs render as Unicode placeholders pending real assets; brief itself is unfulfilled, no deliverable exists yet | Whoever the founder commissions; brief is written and ready |
@@ -1410,6 +1414,15 @@ something outside this repo.
 Deliberately not scheduled yet. Recorded so nobody re-proposes these as if
 they were forgotten rather than deferred on purpose.
 
+- **Cinzel-Cyrillic ESLint guard.** Founder ruling 2026-08-16: build it,
+  but not until Batch 8's first new screen exists to test the rule
+  against — "a guard with nothing to guard is untested." Shape already
+  scoped in `DESIGN-LANGUAGE-REFERENCE.md` §1: flag a Cyrillic codepoint
+  (`[Ѐ-ӿ]`) inside a component that also sets `fontFamily: font.cinzel`
+  or the `font-cinzel` NativeWind class, same pattern as the existing
+  `no-new-bg-strings` custom rule (`packages/config/eslint/
+  no-new-bg-strings.cjs`). Trigger: once Batch 8's first screen (Ти-
+  premium or paywall, per the ratified order) is built, not before.
 - **i18n namespaced strings-module migration.** Cyrillic literals currently
   live inline in components rather than a central strings module. Deferred
   — large mechanical migration with low urgency; `STAGE5_PREVENTION.md`'s
