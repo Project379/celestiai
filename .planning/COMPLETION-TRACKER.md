@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-16 (device-pass checklist written, real-status sweep, Batch 8 scoped — push-delivery register corrected, no building yet, awaiting founder ruling on Batch 8 order)
+last-updated: 2026-08-26 (DEVICE PASS PASSED — Batches 1-7 verified on the real Android build and closed out; full technical sweep run against production, see .planning/TECHNICAL-SWEEP-2026-08-26.md; crystal_recommendations RLS and REVISIT-64 Sentry entries corrected as wrong; nothing fixed, awaiting founder ruling on the sweep's findings)
 ---
 
 # Completion Tracker
@@ -18,6 +18,37 @@ is updated at the end of every batch as part of that batch's own report —
 not on request.**
 
 ---
+
+## 0. Open rulings — 2026-08-26 technical sweep
+
+A full technical sweep ran 2026-08-26 across DB/RLS, secrets, auth, cost,
+data integrity, scale, Vercel and RevenueCat, plus a founder-track list.
+**Nothing was fixed; the founder rules on the whole set at once.** Full
+detail with VERIFIED/INFERRED labels: `.planning/TECHNICAL-SWEEP-2026-08-26.md`.
+
+Headline items, so this file is not silently stale on them:
+
+- **CRITICAL** `REVENUECAT_WEBHOOK_SECRET` is byte-identical to the
+  `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` that ships in the app bundle. Also
+  means the webhook has never worked against real traffic. (§2.1)
+- **CRITICAL** `/api/horoscope/generate` has no quota of any kind, and chart
+  creation is uncapped — a free account can chain the two into unbounded paid
+  AI generation. (§4.1–4.2)
+- **HIGH** Premium is entirely unmetered on every AI path; both circle report
+  routes too. (§4.3–4.4)
+- **HIGH** GDPR delete misses `user_crystals` / `user_daily_crystals`
+  entirely, and every delete in the cleanup cron ignores its own error
+  result, which can destroy the retry anchor. (§5.1–5.2)
+- **HIGH** Migration ledger holds 6 rows against 16 repo files, and 14
+  production tables have no CREATE TABLE anywhere. **Do not run
+  `supabase db push`** — it would replay a destructive schema_hardening
+  migration. (§1.4–1.5)
+- **HIGH** Diary list and both crons are unbounded; the web push cron is
+  sequential under a 300s cap. (§6.3–6.4)
+- Web production build **passes locally** (exit 0), so the Vercel failure is
+  environmental; ranked diagnostic order in §7.
+- Section 3 (authorisation) came out clean — no untrusted client IDs, no
+  missing ownership scoping, no unauthenticated path to authenticated data.
 
 ## 1. Context block
 
@@ -40,20 +71,24 @@ product/money/auth/schema/ambiguity" operating model established 2026-08-13.
   delete, diary/lunar-journal, Кръг (relationship compatibility) full
   backend+UI, crystals, recommendations, astrology guide. `REQUIREMENTS.md`
   (refreshed today) has the item-by-item state; two items have a known,
-  scoped gap (`crystal_recommendations` table RLS disabled in production,
-  fix migration written but not applied — not currently exploitable, service-
-  role-only access path).
+  scoped gap. **CORRECTED 2026-08-26:** the long-standing
+  `crystal_recommendations` "RLS disabled in production" entry was WRONG —
+  a direct `pg_class`/`pg_policy` query confirms RLS is enabled with
+  `crystal_recommendations_owner_all` present. Nothing to run. The one real
+  RLS divergence is `rate_limit_buckets` (RLS off; the enable migration
+  `20260803133000` was never applied). See
+  `.planning/TECHNICAL-SWEEP-2026-08-26.md` §1.2–1.3.
 - **Mobile (Expo, v1.0 launch track): most of parity phase shipped.** Днес,
   Карта (with a just-fixed tap-select perf issue), Ритъм + lunar diary, most
   of Ти (crystals, recommendations, guide, GDPR settings), RevenueCat SDK +
   Clerk-identity sync all live. Кръг is functionally complete on mobile as
   of 2026-08-14 (Crush/saved-profiles + Connections/invites/reports/
-  weather, Batch 4 both sub-batches), not yet device-tested; two
+  weather, Batch 4 both sub-batches), device-tested and passed 2026-08-26; two
   check-then-act races found and fixed during the port (invite-accept,
   report-version conflicts — see Batch 4's own sections). Кръг has NOT
   had a design pass — screens match web's structure, not Днес/Карта's
   design language; redesign pass is Batch 8. `/you/premium` subscription
-  status/management (Batch 5) is now built, not yet device-tested — the
+  status/management (Batch 5) is now built and device-tested 2026-08-26 — the
   free-state branch's "subscribe on web" CTA is functional but its target
   URL is an unfilled placeholder blocked on the founder's Vercel fix, see
   halt-required register. **Not yet built on mobile:** the RevenueCat
@@ -181,8 +216,16 @@ chart-tab perf regression, close out documentation hygiene from the
   died mid-task on a session usage cap — neither had made any edits before
   dying (confirmed via `git status` before resuming), so all of the above
   was redone directly rather than resumed from a partial agent state.
-- REVISIT-64 (mobile Sentry events landing in web's `javascript-nextjs`
-  Sentry project) — root cause confirmed: mobile's Sentry init
+- REVISIT-64 — **CORRECTED 2026-08-26. Mobile Sentry events are not landing
+  in web's project; they are not being sent at all.** `apps/mobile/.env.local`
+  defines `NEXT_PUBLIC_SENTRY_DSN`, which Expo never inlines, while
+  `lib/monitoring/sentry.ts` reads `EXPO_PUBLIC_SENTRY_DSN` — so `dsn` is
+  undefined and `Sentry.init` never runs. The mirror-image swap disables
+  web's *browser-side* Sentry too (`apps/web/.env.local` has
+  `EXPO_PUBLIC_SENTRY_DSN` but no `NEXT_PUBLIC_SENTRY_DSN`). The 2026-08-26
+  device pass therefore ran with no crash reporting attached. See
+  `.planning/TECHNICAL-SWEEP-2026-08-26.md` §2.2. Original (superseded)
+  note follows: root cause confirmed: mobile's Sentry init
   (`lib/monitoring/sentry.ts`) only depends on `EXPO_PUBLIC_SENTRY_DSN`,
   and that DSN was created under web's Sentry project. **Not code-fixable
   — needs a founder action**: create a dedicated "react-native" Sentry
@@ -421,10 +464,9 @@ after building, not against the parity doc's premise:**
   `check:all` green locally (strictness, bg-strings, copy-lock,
   lint-baseline, typecheck both apps, lint, all 160 tests) and confirmed
   green on the actual CI run (`31784121821`, `conclusion: success`).
-- **Not device-tested.** Founder verification still outstanding for this
-  sub-batch, same as Batch 1's chart-tap fix — typecheck/lint/tests are
-  necessary but not sufficient evidence for UI correctness on a real
-  device.
+- **DEVICE-TESTED AND PASSED (2026-08-26).** Founder ran the real Android
+  build; this batch verified working. The prior "not device-tested" caveat
+  is retired. See `.planning/TECHNICAL-SWEEP-2026-08-26.md` §0.
 
 **Ruling that constrains this batch, reversed once already — record both
 so nobody re-derives it:**
@@ -656,9 +698,9 @@ against the parity doc:**
   regenerated and diff-verified to contain exactly the new/changed
   literals. `check:all` green locally and confirmed green on the actual
   CI run (`31790951174`, `conclusion: success`).
-- **Not device-tested.** Same standing caveat as every UI batch this
-  session — typecheck/lint/tests are necessary, not sufficient, evidence
-  for real-device correctness.
+- **DEVICE-TESTED AND PASSED (2026-08-26).** Founder ran the real Android
+  build; this batch verified working. The prior "not device-tested" caveat
+  is retired. See `.planning/TECHNICAL-SWEEP-2026-08-26.md` §0.
 
 **Batch 4 status: done, both sub-batches shipped.** Кръг redesign pass
 (promised in Batch 4's original ruling) stays scoped into Batch 8, after
@@ -956,8 +998,9 @@ purchase/paywall half itself stays in the halt-required register.
   `check:all` (strictness, bg-strings, copy-lock, lint-baseline,
   typecheck, lint, 126 web tests + astrology/core suites) passes locally,
   exit 0.
-- **Not device-tested.** Same standing caveat as every UI batch this
-  session.
+- **DEVICE-TESTED AND PASSED (2026-08-26).** Founder ran the real Android
+  build; this batch verified working. The prior "not device-tested" caveat
+  is retired. See `.planning/TECHNICAL-SWEEP-2026-08-26.md` §0.
 
 **Known gap, not built, low priority:** `GET /api/stripe/subscription`
 doesn't return `subscription_provider`, so this screen can't currently
@@ -1088,8 +1131,8 @@ it's a visual change to already-shipped components, not only new ones.
   (`_layout.tsx`'s changelog entry, `tailwind.config.js`'s "was
   '#fbbf24'" note).
 
-**Not device-tested — founder called this explicitly visual and wants a
-device pass before it counts as done.** Review should focus on whether
+**DEVICE-TESTED AND PASSED (2026-08-26)** — the founder's device pass
+covered this batch and it verified working. Review should focus on whether
 anything deliberately warm went cold or vice versa (a mechanical rename
 can't tell "amber because bronze" from "amber because it meant something
 else" — the two deliberate exclusions above, Карта's Midheaven line and
@@ -1150,6 +1193,19 @@ unambiguous rate-limit gap, or clearly UI-scoped (deferred to Batch 8).
 ---
 
 ### Batch 8 — UI phase (iterative)
+
+**ADDED TO SCOPE 2026-08-26 (founder, after the device pass):**
+
+- **`AppLoadingScreen`** (`apps/mobile/components/design-system/AppLoadingScreen.tsx`)
+  — the initial loading animation, the first thing every user sees. Predates
+  the design language entirely. **Needs a fresh mockup**; there is none.
+- **The whole wizard.** `.planning/design/mockups/wizard-v4.html` exists but
+  the shipped screens do not match it. First question for this screen is not
+  "build it" but "is the mockup usable as-is, or does it need redoing?"
+  Note: the *only* VirtualizedList-nesting defect in the app is in the wizard
+  (`CitySearch` inside `location.tsx`'s ScrollView — see
+  `.planning/TECHNICAL-SWEEP-2026-08-26.md` §6.1), so a wizard redesign is the
+  natural place to fix it rather than a separate patch.
 
 **Status: scoped (2026-08-16), not started building.** Doesn't batch like
 the rest — screen-by-screen, founder approves every gate (mockup, then
