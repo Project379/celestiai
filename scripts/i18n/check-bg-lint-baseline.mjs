@@ -113,6 +113,19 @@
  * /api/circle/invites — reusing the two already-approved
  * 'Сесията ти изтече...' / route-specific fallback error strings).
  *
+ * Raised to 1762 on 2026-08-26 (Tier 1 sweep fixes — quota gap, chart cap):
+ * +9, all reviewed, approved copy (see the matching copy-lock.json update
+ * in the same commit). +1 in apps/web/app/api/birth-data/route.ts: the new
+ * CHART_LIMIT_REACHED 429 message. +8 in
+ * apps/web/app/api/horoscope/generate/route.ts: one new message (shared
+ * with oracle/generate's existing quota-cap copy via pluralizeBg) written
+ * once but referenced at two call sites (checkQuotaAvailable's
+ * cap-reached branch and incrementQuotaUsage's race-loss branch) — the
+ * rule counts each cooked segment of the template literal separately, so
+ * one reviewed string duplicated across two branches counts 4 each, same
+ * "moved because the literal now appears twice in the AST" shape as the
+ * 2026-08-14 invite-accept raise above.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -122,7 +135,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1753
+const BASELINE = 1762
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },
