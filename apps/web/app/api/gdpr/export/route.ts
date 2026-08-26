@@ -38,8 +38,19 @@ export async function GET() {
   const spaceIds = [...new Set((membershipRows ?? []).map((row) => row.space_id))]
 
   // Fetch all user data in parallel
-  const [chartsRes, readingsRes, horoscopesRes, diaryRes, spacesRes, membersRes, invitesRes, savedProfilesRes, userRes] =
-    await Promise.all([
+  const [
+    chartsRes,
+    readingsRes,
+    horoscopesRes,
+    diaryRes,
+    spacesRes,
+    membersRes,
+    invitesRes,
+    savedProfilesRes,
+    userRes,
+    userCrystalsRes,
+    userDailyCrystalsRes,
+  ] = await Promise.all([
       supabase.from('charts').select('*').eq('user_id', userId),
       supabase.from('ai_readings').select('*').eq('user_id', userId),
       supabase.from('daily_horoscopes').select('*').eq('user_id', userId),
@@ -53,6 +64,10 @@ export async function GET() {
       supabase.from('connection_invites').select('*').eq('inviter_user_id', userId),
       supabase.from('saved_people_profiles').select('*').eq('user_id', userId),
       supabase.from('users').select('*').eq('clerk_id', userId).single(),
+      // GDPR fix (2026-08-26 sweep #13): these two tables have a user_id
+      // column but were missing from export entirely.
+      supabase.from('user_crystals').select('*').eq('user_id', userId),
+      supabase.from('user_daily_crystals').select('*').eq('user_id', userId),
     ])
 
   const relationshipIds = (spacesRes.data ?? []).map((row) => row.id)
@@ -90,6 +105,8 @@ export async function GET() {
     connectionReports: reportsRes.data ?? [],
     savedProfiles: savedProfilesRes.data ?? [],
     savedProfileReports: savedProfileReportsRes.data ?? [],
+    userCrystals: userCrystalsRes.data ?? [],
+    userDailyCrystals: userDailyCrystalsRes.data ?? [],
   }
 
   after(() => logAuditEvent(userId, 'account.data_export'))

@@ -298,3 +298,51 @@ describe('GET /api/cron/cleanup-deleted-accounts — Clerk-account-orphan fix (B
     expect(body.deleted).toBe(1)
   })
 })
+
+describe('GET /api/cron/cleanup-deleted-accounts — user_crystals / user_daily_crystals (2026-08-26 sweep #6)', () => {
+  it('deletes both crystals tables for the user, scoped by user_id', async () => {
+    let usersCallCount = 0
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'users') {
+        usersCallCount++
+        if (usersCallCount === 1) {
+          const builder: Record<string, unknown> = {}
+          for (const m of ['select', 'not', 'lte']) builder[m] = vi.fn(() => builder)
+          builder.then = (onFulfilled: (v: unknown) => unknown) =>
+            Promise.resolve({ data: [{ id: 'row-1', clerk_id: 'user_crystals_test' }], error: null }).then(
+              onFulfilled,
+            )
+          return builder
+        }
+      }
+      const builder: Record<string, unknown> = {}
+      const methods = ['select', 'eq', 'delete', 'in', 'not', 'lte', 'lt']
+      for (const m of methods) builder[m] = vi.fn(() => builder)
+      builder.then = (onFulfilled: (v: unknown) => unknown) =>
+        Promise.resolve({ data: [], error: null }).then(onFulfilled)
+      return builder
+    })
+
+    const res = await GET(req('test-cron-secret'))
+    const body = await res.json()
+
+    expect(body.deleted).toBe(1)
+    // Pre-fix, this call never existed — the assertion that fails against
+    // the pre-fix route.
+    const crystalsCall = mockSupabase.from.mock.calls.find((c) => c[0] === 'user_crystals')
+    const dailyCrystalsCall = mockSupabase.from.mock.calls.find((c) => c[0] === 'user_daily_crystals')
+    expect(crystalsCall).toBeTruthy()
+    expect(dailyCrystalsCall).toBeTruthy()
+
+    const crystalsCallIndex = mockSupabase.from.mock.calls.findIndex((c) => c[0] === 'user_crystals')
+    const dailyCallIndex = mockSupabase.from.mock.calls.findIndex((c) => c[0] === 'user_daily_crystals')
+    expect(mockSupabase.from.mock.results[crystalsCallIndex].value.eq).toHaveBeenCalledWith(
+      'user_id',
+      'user_crystals_test',
+    )
+    expect(mockSupabase.from.mock.results[dailyCallIndex].value.eq).toHaveBeenCalledWith(
+      'user_id',
+      'user_crystals_test',
+    )
+  })
+})

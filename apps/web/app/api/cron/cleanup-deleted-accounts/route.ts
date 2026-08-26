@@ -166,6 +166,25 @@ export async function GET(req: Request) {
         supabase.from('push_tokens').delete().eq('user_id', clerkId),
       )
 
+      // GDPR fix (2026-08-26 sweep #6): user_crystals and user_daily_crystals
+      // both had a user_id column but no FK to users at all (only to
+      // crystals) and neither appeared anywhere in this cron — a user's
+      // crystal collection and daily-crystal history survived account
+      // deletion permanently. A schema-level FK fix is prepared
+      // (supabase/migrations/20260826140000_user_crystals_fk.sql) but
+      // deliberately not yet applied — it found real orphaned production
+      // rows that need a founder decision first. These explicit deletes
+      // close the code-level gap immediately, independent of that migration.
+      await deleteOrThrow(
+        'user_crystals',
+        supabase.from('user_crystals').delete().eq('user_id', clerkId),
+      )
+
+      await deleteOrThrow(
+        'user_daily_crystals',
+        supabase.from('user_daily_crystals').delete().eq('user_id', clerkId),
+      )
+
       // Delete diary entries (§8.7). Uses the core helper per the
       // §8.7 direction-of-travel ratification — new cascade tables go
       // through packages/core/src/diary/entries.ts rather than inline

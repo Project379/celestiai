@@ -1,0 +1,37 @@
+-- 2026-08-26 sweep findings #6/#13: user_crystals and user_daily_crystals
+-- both carry a user_id column but had no FK to users.clerk_id — their only
+-- FK is to crystals(id). That's the reason a user's crystal collection and
+-- daily-crystal history could survive a GDPR account deletion permanently:
+-- nothing at the database level tied their lifetime to the users row.
+--
+-- NOT SAFE TO APPLY BLINDLY. Verified read-only against production
+-- (2026-08-26): user_crystals has 3 orphaned rows and user_daily_crystals
+-- has 10, ALL belonging to a single clerk_id, user_3CJ6TxYOTVGpGhsznsp3Sevygng
+-- (dated 2026-04-15), which has no matching row in `users` today. That is
+-- exactly the bug this migration exists to close, already having happened
+-- once in production — a user's crystal data outlived their account. Adding
+-- the FK constraint below will FAIL until those orphaned rows are resolved
+-- one way or the other. This migration deliberately does NOT delete them
+-- automatically: deleting real (if orphaned) user data is a production
+-- action requiring a human decision, not something to fold silently into a
+-- schema migration. Founder: decide whether that user's data should be
+-- purged (matching what GDPR deletion should have already done) or the
+-- clerk_id was simply retired/renamed and the row should be re-linked, THEN
+-- run this file. See the sweep doc / COMPLETION-TRACKER.md for the finding.
+--
+-- Once the orphans are resolved, this is the same FK shape already used
+-- for every other user-scoped table (e.g. charts, push_tokens —
+-- 20260413141504_schema_hardening.sql, 20260803070000_push_tokens.sql):
+-- FOREIGN KEY (user_id) REFERENCES public.users(clerk_id) ON DELETE CASCADE.
+
+-- Uncomment and run ONLY after confirming there are zero orphaned rows:
+--   SELECT count(*) FROM user_crystals uc WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.clerk_id = uc.user_id);
+--   SELECT count(*) FROM user_daily_crystals udc WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.clerk_id = udc.user_id);
+--
+-- ALTER TABLE public.user_crystals
+--   ADD CONSTRAINT user_crystals_user_id_fkey
+--   FOREIGN KEY (user_id) REFERENCES public.users(clerk_id) ON DELETE CASCADE;
+--
+-- ALTER TABLE public.user_daily_crystals
+--   ADD CONSTRAINT user_daily_crystals_user_id_fkey
+--   FOREIGN KEY (user_id) REFERENCES public.users(clerk_id) ON DELETE CASCADE;
