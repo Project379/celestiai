@@ -1,5 +1,5 @@
 {
-  "count": 3002,
+  "count": 3003,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -930,6 +930,7 @@
     "apps/web/app/api/circle/relationships/[relationshipId]/weather/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/circle/relationships/route.ts::'Не успяхме да заредим пространствата.'",
     "apps/web/app/api/circle/relationships/route.ts::'Сесията ти изтече. Влез отново.'",
+    "apps/web/app/api/cities/search/route.ts::'Въведи поне 1 символ'",
     "apps/web/app/api/cities/search/route.ts::'Въведи поне 1 символ'",
     "apps/web/app/api/cities/search/route.ts::'Вътрешна грешка'",
     "apps/web/app/api/cities/search/route.ts::'Грешка при търсене'",

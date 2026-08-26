@@ -150,6 +150,12 @@
  * failClosed error path (oracle/generate, horoscope/generate, birth-data
  * create).
  *
+ * Raised to 1756 on 2026-08-26 (Tier 3 #18 — cities/search injection fix):
+ * +1, the existing 'Въведи поне 1 символ' message reused at a second call
+ * site (the new empty-after-sanitization guard) — not new copy, the
+ * literal now appears twice in the AST, same shape as prior raises in
+ * this file's history.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -159,7 +165,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1755
+const BASELINE = 1756
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

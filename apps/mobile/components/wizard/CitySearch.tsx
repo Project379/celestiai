@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
-  FlatList,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -171,13 +171,26 @@ export function CitySearch({ value, onSelect, error }: CitySearchProps) {
               Няма намерени резултати
             </Text>
           ) : (
-            <FlatList
-              data={results}
-              keyExtractor={(c) => c.id}
+            // FIX (2026-08-26 sweep #16): was a FlatList, which nests inside
+            // this component's two host screens' own ScrollView (wizard
+            // location step, and Кръг's "add saved person" form) — React
+            // Native warns on any VirtualizedList ancestor of another
+            // ScrollView, and windowing is lost either way regardless of
+            // the warning. FlatList/virtualization is the wrong tool here
+            // anyway: this dropdown is a small, bounded list (the API
+            // defaults to 20 results, capped visually at maxHeight 280) —
+            // exactly the case where a plain ScrollView + .map() is
+            // correct, not a workaround. `results` stays capped at the
+            // API's own page size, so this never approaches a size where
+            // virtualization would matter.
+            <ScrollView
               keyboardShouldPersistTaps="handled"
               nestedScrollEnabled
-              renderItem={({ item }) => (
+              style={{ maxHeight: 280 }}
+            >
+              {results.map((item) => (
                 <Pressable
+                  key={item.id}
                   onPress={() => handleSelect(item)}
                   className="flex-row items-center justify-between border-b border-white/[0.04] px-5 py-3"
                   style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 12 })}
@@ -195,8 +208,8 @@ export function CitySearch({ value, onSelect, error }: CitySearchProps) {
                     {TYPE_LABELS[item.type]}
                   </Text>
                 </Pressable>
-              )}
-            />
+              ))}
+            </ScrollView>
           )}
         </View>
       )}
