@@ -175,11 +175,21 @@ function arcPath(
 // This narrows the per-tap COST but does not by itself explain the
 // founder-reported "stays at ~30fps until force-quit" persistence — a
 // single expensive re-render, however large, doesn't normally survive past
-// the render that caused it. If frame rate is still depressed after this
-// fix on a real device, that points at something accumulating across taps
-// (e.g. an animated-value/worklet subscription from WheelArrivalContainer
-// or graticuleProps not tearing down) rather than a per-render cost, and
-// needs a profiler session — see the note in COMPLETION-TRACKER.md.
+// the render that caused it.
+//
+// ANSWERED (2026-08-26 sweep #15, inferred mechanism, code fix applied —
+// still needs device verification, no device/emulator in that session):
+// NatalWheelFrame.tsx (rim/bezel/face/graticule) was NOT wrapped in memo
+// the way WheelStaticLayers is here — so it re-rendered on every tap and
+// re-attached the same useAnimatedProps object (graticuleProps) to
+// AnimatedG each time. That's almost certainly both the "Tried to modify
+// key `current` of an object which has been already passed to a worklet"
+// warning AND this frame-rate persistence — an accumulating
+// re-attachment across taps, not a per-render cost. WheelArrivalContainer
+// was ruled out separately: no caller passes `onSettled` into it
+// (chart.tsx renders it with only wheelSize/triggerKey), so that
+// candidate's completion-worklet closure captures nothing. Confirm by
+// re-running the tap sequence on device post-fix.
 const WheelStaticLayers = memo(function WheelStaticLayers({
   center,
   size,

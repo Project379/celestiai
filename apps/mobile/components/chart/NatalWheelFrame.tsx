@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import Animated from 'react-native-reanimated'
 import { Circle, Defs, G, Line, LinearGradient, RadialGradient, Stop } from 'react-native-svg'
 
@@ -16,7 +17,22 @@ const AnimatedG = Animated.createAnimatedComponent(G)
 export const GRATICULE_TICK_DEGREES = Array.from({ length: 12 }, (_, i) => i * 30)
 export const GRATICULE_MAJOR_DEGREES = new Set([30, 90, 150, 210, 270, 330])
 
-export function NatalWheelFrame({
+// FIX (2026-08-26 sweep #15, INFERRED mechanism, code fix applied — device
+// verification still outstanding, no device/emulator available in this
+// session): wrapped in memo() to match its sibling WheelStaticLayers
+// (NatalWheel.tsx), which already gets this treatment. Without it, a
+// planet tap changes selection state in the parent NatalWheel, which
+// re-renders; WheelStaticLayers bails out via memo (the Batch 1 fix), but
+// this component didn't, so it re-rendered and re-attached the same
+// useAnimatedProps object (graticuleProps) to AnimatedG on every tap —
+// the likely source of both the "Tried to modify key `current` of an
+// object which has been already passed to a worklet" warning and the
+// open "~30fps until force-quit" observation at NatalWheel.tsx's header
+// comment. Verify on a real device: memoizing alone should stop the
+// warning and the frame-rate decay across repeated taps; if it doesn't,
+// the mechanism is wrong and needs further investigation, not another
+// blind fix.
+export const NatalWheelFrame = memo(function NatalWheelFrame({
   center,
   size,
   outerRadius,
@@ -130,4 +146,4 @@ export function NatalWheelFrame({
       </AnimatedG>
     </>
   )
-}
+})
