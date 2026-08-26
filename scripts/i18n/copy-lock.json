@@ -1,5 +1,5 @@
 {
-  "count": 3000,
+  "count": 3003,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -889,6 +889,7 @@
     "apps/web/app/api/circle/invites/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/circle/invites/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/circle/invites/route.ts::'Сесията ти изтече. Влез отново.'",
+    "apps/web/app/api/circle/profiles/[profileId]/report/route.ts::'Достигнат е лимитът от доклади за този профил.'",
     "apps/web/app/api/circle/profiles/[profileId]/report/route.ts::'Не успяхме да анализираме профила.'",
     "apps/web/app/api/circle/profiles/[profileId]/report/route.ts::'Не успяхме да анализираме профила.'",
     "apps/web/app/api/circle/profiles/[profileId]/report/route.ts::'Не успяхме да заредим доклада.'",
@@ -913,6 +914,7 @@
     "apps/web/app/api/circle/relationships/[relationshipId]/archive/route.ts::'Пространството не е намерено.'",
     "apps/web/app/api/circle/relationships/[relationshipId]/archive/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/circle/relationships/[relationshipId]/archive/route.ts::'Сесията ти изтече. Влез отново.'",
+    "apps/web/app/api/circle/relationships/[relationshipId]/report/route.ts::'Достигнат е лимитът от доклади за това пространство.'",
     "apps/web/app/api/circle/relationships/[relationshipId]/report/route.ts::'Не успяхме да генерираме доклада.'",
     "apps/web/app/api/circle/relationships/[relationshipId]/report/route.ts::'Не успяхме да генерираме доклада.'",
     "apps/web/app/api/circle/relationships/[relationshipId]/report/route.ts::'Невалидни данни.'",
@@ -1001,6 +1003,7 @@
     "apps/web/app/api/push/subscribe/route.ts::'Грешка при абонирането'",
     "apps/web/app/api/push/subscribe/route.ts::'Невалидна абонаментна информация'",
     "apps/web/app/api/push/subscribe/route.ts::'Сесията ти изтече. Влез отново.'",
+    "apps/web/app/api/push/unsubscribe/route.ts::'Грешка при отписването'",
     "apps/web/app/api/push/unsubscribe/route.ts::'Грешка при отписването'",
     "apps/web/app/api/push/unsubscribe/route.ts::'Невалиден endpoint'",
     "apps/web/app/api/push/unsubscribe/route.ts::'Сесията ти изтече. Влез отново.'",

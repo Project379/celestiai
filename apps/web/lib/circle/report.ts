@@ -19,6 +19,18 @@ const DOMAIN_NAMES_BG: Record<CompatibilityDomainKey, string> = {
   shared_values: 'Споделени ценности',
 }
 
+// 2026-08-26 sweep #5, corrected: these routes generate content from a
+// deterministic template over already-computed compatibility scores — no
+// OpenRouter/LLM call anywhere in this path (buildCompatibilityReportContent
+// / buildSavedProfileFullContent / buildSavedProfileTeaserContent are pure
+// functions). This is NOT an AI-spend control. It caps unbounded
+// version-row growth per pair — each POST inserts a new row and re-runs
+// the Swiss Ephemeris compatibility compute — for storage/compute hygiene,
+// the same shape as birth-data's chart cap. 50 is generous enough that no
+// real user reaches it (a handful of regenerations per relationship over
+// its lifetime) and low enough that a client loop can't fill the table.
+export const MAX_REPORT_VERSIONS_PER_PAIR = 50
+
 function scoreBand(score: number): 'high' | 'mid' | 'low' {
   if (score >= 75) return 'high'
   if (score <= 45) return 'low'

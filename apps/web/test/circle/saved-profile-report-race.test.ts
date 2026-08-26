@@ -24,6 +24,7 @@ vi.mock('@/lib/audit', () => ({
 vi.mock('@/lib/circle/report', () => ({
   buildSavedProfileFullContent: vi.fn(() => ({ mode: 'full', overview: {} })),
   buildSavedProfileTeaserContent: vi.fn(() => ({ mode: 'teaser', overview: {} })),
+  MAX_REPORT_VERSIONS_PER_PAIR: 50,
 }))
 
 vi.mock('@/lib/circle/service', () => ({

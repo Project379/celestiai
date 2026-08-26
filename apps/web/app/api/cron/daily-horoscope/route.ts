@@ -265,13 +265,22 @@ async function sendMobilePush(
 
   const sentTokens = tickets.filter((t) => t.id && !revokedNow.includes(t.token))
   if (sentTokens.length > 0) {
-    await supabase
+    const { error: lastSentError } = await supabase
       .from('push_tokens')
       .update({ last_sent_at: new Date().toISOString() })
       .in(
         'token',
         sentTokens.map((t) => t.token)
       )
+    if (lastSentError) {
+      // Tracking-only column, gets overwritten next successful send — log
+      // for parity with the two checked updates above, not a functional
+      // concern.
+      console.error(
+        '[Cron Daily Horoscope] Failed to update last_sent_at on push_tokens:',
+        lastSentError
+      )
+    }
   }
 
   console.log(

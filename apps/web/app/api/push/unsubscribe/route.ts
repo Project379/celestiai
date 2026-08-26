@@ -31,11 +31,23 @@ export async function POST(req: Request) {
 
     const supabase = createServiceSupabaseClient()
 
-    await supabase
+    // FIX (2026-08-26, follow-up to sweep #7): supabase-js .delete() does
+    // not throw on failure — it returns { error }. This route's entire
+    // purpose is "the user asked to stop receiving push, make it true";
+    // an unchecked delete could silently fail (RLS mismatch, transient
+    // error) while still telling the caller { success: true }, leaving
+    // the subscription live and the user receiving push they were told
+    // they'd stopped.
+    const { error: deleteError } = await supabase
       .from('push_subscriptions')
       .delete()
       .eq('endpoint', endpoint)
       .eq('user_id', userId)
+
+    if (deleteError) {
+      console.error('[Push Unsubscribe] Delete failed:', deleteError)
+      return Response.json({ error: 'Грешка при отписването' }, { status: 500 })
+    }
 
     return Response.json({ success: true })
   } catch (error) {

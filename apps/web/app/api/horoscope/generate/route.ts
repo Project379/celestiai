@@ -302,7 +302,16 @@ export async function POST(req: Request) {
         .eq('date', requestedDate)
         .eq('content', '')
       if (error) {
-        console.error('[Horoscope Generate] Failed to release claim after generation failure:', error)
+        // If this delete itself fails, the empty placeholder row (content:
+        // '') is left in place, and daily_horoscopes_chart_date_unique
+        // blocks any retry from re-claiming (chart_id, date) — the route
+        // would serve an empty "cached" horoscope for the rest of THIS
+        // calendar day (bounded, not permanent — date is part of the
+        // unique key, so tomorrow's claim succeeds regardless).
+        console.error(
+          '[Horoscope Generate] Failed to release claim after generation failure — chart+date stuck at empty content until the date rolls over:',
+          { chartId, date: requestedDate, error },
+        )
       }
       if (claimedPeriodStart) {
         await decrementQuotaUsage(userId!, claimedPeriodStart)
@@ -331,19 +340,27 @@ export async function POST(req: Request) {
         conditions: generationConditions,
       })
 
-      try {
-        await supabase.from('daily_horoscopes').upsert(
-          {
-            chart_id: chartId,
-            user_id: userId,
-            date: requestedDate,
-            content: result.text,
-            model_version: AI_MODEL,
-          },
-          { onConflict: 'chart_id,date' }
-        )
-      } catch (err) {
-        console.error('[Horoscope Generate] Failed to save horoscope:', err)
+      // FIX (2026-08-26, follow-up to sweep #7): this was wrapped in
+      // try/catch, which cannot catch a supabase-js failure — .upsert()
+      // returns { error }, it doesn't throw. The generated content still
+      // reaches the caller below either way; checking here just makes a
+      // silent cache-write failure visible instead of invisible (the
+      // content already returned to the user was never wrong, only
+      // uncached — a later request for the same chart+date would find the
+      // stuck-empty placeholder row and re-serve blank content for the
+      // rest of the day, same bounded shape as releaseClaimOnFailure).
+      const { error: saveError } = await supabase.from('daily_horoscopes').upsert(
+        {
+          chart_id: chartId,
+          user_id: userId,
+          date: requestedDate,
+          content: result.text,
+          model_version: AI_MODEL,
+        },
+        { onConflict: 'chart_id,date' }
+      )
+      if (saveError) {
+        console.error('[Horoscope Generate] Failed to save horoscope:', { chartId, date: requestedDate, error: saveError })
       }
 
       return Response.json({
@@ -367,19 +384,20 @@ export async function POST(req: Request) {
           conditions: generationConditions,
         })
 
-        try {
-          await supabase.from('daily_horoscopes').upsert(
-            {
-              chart_id: chartId,
-              user_id: userId,
-              date: requestedDate,
-              content: text,
-              model_version: AI_MODEL,
-            },
-            { onConflict: 'chart_id,date' }
-          )
-        } catch (err) {
-          console.error('[Horoscope Generate] Failed to save horoscope:', err)
+        // Same fix as the jsonOnly path above — check the returned error
+        // instead of a try/catch that can't catch it.
+        const { error: saveError } = await supabase.from('daily_horoscopes').upsert(
+          {
+            chart_id: chartId,
+            user_id: userId,
+            date: requestedDate,
+            content: text,
+            model_version: AI_MODEL,
+          },
+          { onConflict: 'chart_id,date' }
+        )
+        if (saveError) {
+          console.error('[Horoscope Generate] Failed to save horoscope:', { chartId, date: requestedDate, error: saveError })
         }
       },
       onError: () => {

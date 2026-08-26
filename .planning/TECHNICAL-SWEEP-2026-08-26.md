@@ -425,14 +425,38 @@ output tokens each. A single compromised or scripted premium subscription
 costs far more in inference than it pays in subscription. There is no
 per-period ceiling of any kind for premium on any route.
 
-### 4.4 HIGH — both circle report routes are unmetered
+### 4.4 CORRECTED 2026-08-26 — both circle report routes are unmetered, but "paid generation" was wrong
 
-**VERIFIED.** `circle/relationships/[relationshipId]/report` and
+**Original claim (WRONG, corrected same-day during Tier 2 work):**
+`circle/relationships/[relationshipId]/report` and
 `circle/profiles/[profileId]/report` each gate on the user's tier being
 premium, then generate. Each POST writes a **new version row**
 (next version = baseline + 1), so there is no cache to hit — every call is a
-fresh paid generation. Rate limit is 5/minute. That is 7,200 paid
-compatibility reports per day per premium account, per route.
+~~fresh paid generation~~. Rate limit is 5/minute. ~~That is 7,200 paid
+compatibility reports per day per premium account, per route.~~
+
+**What's actually true, VERIFIED by reading `apps/web/lib/circle/report.ts`
+and both route files in full:** `buildCompatibilityReportContent`,
+`buildSavedProfileFullContent`, and `buildSavedProfileTeaserContent` are
+pure, deterministic functions over an already-computed
+`CompatibilitySummary` — string templates keyed on score bands and domain
+names. **There is no `generateText`/`streamText`/`openrouter` call
+anywhere in this path** (grep-confirmed — zero hits in
+`lib/circle/report.ts` or either route). This finding's "paid generation"
+premise does not hold; it was asserted without checking whether an LLM
+call actually existed on this path, the same class of miss this sweep's
+own §1.2 correction (crystal_recommendations RLS) exists to guard against.
+
+**What the real (smaller) cost is:** each POST still does insert a new
+version row and re-runs `buildSpaceComputation` /
+`buildSavedProfileComputation` (Swiss Ephemeris synastry compute), with
+only the 5/min rate limit as a brake and no cap on total versions — the
+same "rate limit but no hard ceiling" shape birth-data had (finding #3)
+before `MAX_CHARTS_PER_USER`. **Fixed 2026-08-26:** both routes now check
+`baselineVersion >= MAX_REPORT_VERSIONS_PER_PAIR` (50, defined in
+`lib/circle/report.ts`) before running the compute, returning 429. This is
+a storage/compute hygiene cap, not an AI-spend control — there was no
+AI spend on this path to control.
 
 ### 4.5 MEDIUM — the regenerate cooldown resets itself
 

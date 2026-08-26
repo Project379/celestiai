@@ -126,6 +126,15 @@
  * "moved because the literal now appears twice in the AST" shape as the
  * 2026-08-14 invite-accept raise above.
  *
+ * Raised to 1765 on 2026-08-26 (Tier 2 sweep fixes — circle-report version
+ * caps + delete/update error-handling sweep): +3, all reviewed, approved
+ * copy. +2 new strings: the two circle-report version-cap 429 messages
+ * (lib/circle/report.ts's MAX_REPORT_VERSIONS_PER_PAIR, mirroring
+ * birth-data's chart-cap shape). +1 AST-count-only: push/unsubscribe's
+ * existing 'Грешка при отписването' now appears at a second call site
+ * (the newly-checked delete-error branch) — same "literal now appears
+ * twice" shape as prior raises in this file's history, not new copy.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -135,7 +144,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1762
+const BASELINE = 1765
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

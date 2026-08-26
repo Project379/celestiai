@@ -4,7 +4,11 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { ApiError } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { logAuditEvent } from '@/lib/audit'
-import { buildSavedProfileFullContent, buildSavedProfileTeaserContent } from '@/lib/circle/report'
+import {
+  buildSavedProfileFullContent,
+  buildSavedProfileTeaserContent,
+  MAX_REPORT_VERSIONS_PER_PAIR,
+} from '@/lib/circle/report'
 import {
   buildSavedProfileComputation,
   getLatestChartRowForUser,
@@ -105,6 +109,13 @@ export async function POST(
       .limit(1)
       .maybeSingle()
     const baselineVersion = baseline?.version ?? 0
+
+    if (baselineVersion >= MAX_REPORT_VERSIONS_PER_PAIR) {
+      return Response.json(
+        { error: 'Достигнат е лимитът от доклади за този профил.' },
+        { status: 429 },
+      )
+    }
 
     const computed = await buildSavedProfileComputation(userChart, profile, relationshipType)
     const isFull = tier === 'premium'

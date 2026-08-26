@@ -41,6 +41,7 @@ vi.mock('@/lib/audit', () => ({
 
 vi.mock('@/lib/circle/report', () => ({
   buildCompatibilityReportContent: vi.fn(() => ({ overview: {}, domains: {} })),
+  MAX_REPORT_VERSIONS_PER_PAIR: 50,
 }))
 
 vi.mock('@/lib/circle/service', () => ({

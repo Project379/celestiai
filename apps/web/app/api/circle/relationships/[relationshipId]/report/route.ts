@@ -4,7 +4,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { ApiError } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { logAuditEvent } from '@/lib/audit'
-import { buildCompatibilityReportContent } from '@/lib/circle/report'
+import { buildCompatibilityReportContent, MAX_REPORT_VERSIONS_PER_PAIR } from '@/lib/circle/report'
 import {
   buildSpaceComputation,
   getChartById,
@@ -80,6 +80,13 @@ export async function POST(
       .limit(1)
       .maybeSingle()
     const baselineVersion = baseline?.version ?? 0
+
+    if (baselineVersion >= MAX_REPORT_VERSIONS_PER_PAIR) {
+      return Response.json(
+        { error: 'Достигнат е лимитът от доклади за това пространство.' },
+        { status: 429 },
+      )
+    }
 
     const computed = await buildSpaceComputation(resolvedCharts, relationshipType)
     const reportContent = buildCompatibilityReportContent(
