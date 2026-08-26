@@ -1154,3 +1154,37 @@ Per the founder's direction, added to Batch 8's list, not investigated here:
   mockup usable as-is, or does it need redoing? Note that §6.1's only
   VirtualizedList defect is in the wizard, so a wizard redesign is the natural
   place to fix it.
+- **Diary list pagination (§6.3, finding #10) — real fix shape, filed
+  2026-08-26 after a defensive-ceiling-only patch landed
+  (`DIARY_ENTRIES_HARD_CEILING = 2000` in
+  `packages/core/src/diary/entries.ts`).** The ceiling stops a single
+  query from returning truly unbounded data; it does not solve the
+  underlying UX problem, and shouldn't be read as "done." What the real
+  fix needs, once the diary screen's UX is being designed rather than
+  patched:
+  1. **A UX decision first, not an engineering one** — infinite scroll
+     (fetch-more on reaching the list end), a month/calendar view (load
+     one month's entries at a time, matching how a journal is actually
+     browsed), or a hard cutoff (show the last N entries, nothing older
+     in the UI at all). This decision should come from whoever designs
+     the diary/`rhythm/journal` screen, not be reverse-engineered from an
+     API shape.
+  2. **API**: `listDiaryEntries` needs cursor or offset params
+     (`entry_date` + `id` is the natural cursor, matching the existing
+     `.order('entry_date', ...).order('created_at', ...)` sort) once the
+     UX above is chosen — the shape of the cursor should match whatever
+     the UI actually requests (a month range vs. a page-of-N are
+     different query shapes).
+  3. **Client**: `useManifestEntries` (`apps/web/hooks/` and
+     `apps/mobile/hooks/`) currently fetches the whole list once into
+     memory on mount, and `findByDate` scans that in-memory array — this
+     is the part that breaks silently if the API is paginated without a
+     matching client change (older entries would just stop appearing,
+     with no error). `findByDate` needs to become fetch-on-miss (or the
+     UX decision above needs to guarantee the relevant date is always in
+     the loaded window, e.g. a month view where the visible month is
+     always fully loaded).
+  4. **Render**: mobile's `rhythm/journal.tsx` / `ManifestHistory.tsx`
+     render into a plain `ScrollView` with `.map()` — no virtualization.
+     Only matters once real entry counts get large; low priority relative
+     to 1-3 but the natural point to fix it is the same screen redesign.

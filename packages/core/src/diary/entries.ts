@@ -90,6 +90,18 @@ export type DeleteUserDiaryEntriesResult =
  * List the caller's diary entries, newest first.
  * Optional phaseId filter supports the variant-rotation count query in §8.8.
  */
+// 2026-08-26 sweep finding #10, defensive ceiling only — NOT a real fix.
+// The real fix is pagination end-to-end (API cursor params, client
+// fetch-more, findByDate fetching on miss) and belongs with the diary
+// screen's UX design (infinite scroll vs. month view vs. cutoff), not
+// ahead of it — see the write-up filed for the UI phase. This constant
+// exists only so a single query can't return truly unbounded data in the
+// meantime: ~5 years of daily journaling before a real user reaches it,
+// and PostgREST's own default cap (1000) would silently truncate before
+// this ever binds today anyway — this just makes the ceiling explicit
+// and app-controlled rather than incidental to PostgREST's default.
+const DIARY_ENTRIES_HARD_CEILING = 2000
+
 export async function listDiaryEntries(
   userId: string,
   options: { phaseId?: string } = {},
@@ -101,6 +113,7 @@ export async function listDiaryEntries(
     .eq('user_id', userId)
     .order('entry_date', { ascending: false })
     .order('created_at', { ascending: false })
+    .limit(DIARY_ENTRIES_HARD_CEILING)
 
   if (options.phaseId) {
     query = query.eq('phase_id', options.phaseId)
