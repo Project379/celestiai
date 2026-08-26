@@ -201,10 +201,23 @@ async function expectRateLimited(responsePromise: Promise<Response>) {
 }
 
 describe('rate-limited routes surface 429, not 500, when assertRateLimit throws', () => {
+  // 2026-08-26: this is the FIRST dynamic import in this 40-test file, so it
+  // pays the one-time cold Vite transform cost for the whole file's module
+  // graph — under CPU contention (e.g. running inside `check:all` alongside
+  // typecheck, or several Vitest worker threads competing) that cost has
+  // been observed to exceed the repo's default 15s testTimeout here, while
+  // every subsequent test in this file (reusing the already-transformed
+  // graph) stays well under 3s. Reproduced: fails intermittently under full
+  // `pnpm run check:all` load, passes reliably (~1.4-2.5s) both in isolation
+  // and in repeated full-suite `vitest run` passes. Widening this one test's
+  // timeout rather than the file default so a REAL regression in this
+  // specific route still fails fast. If this fires again well past 30s,
+  // that's a genuine perf regression worth investigating, not another
+  // timeout bump.
   it('GET /api/birth-data', async () => {
     const { GET } = await import('@/app/api/birth-data/route')
     await expectRateLimited(GET())
-  })
+  }, 30_000)
 
   it('POST /api/birth-data', async () => {
     const { POST } = await import('@/app/api/birth-data/route')

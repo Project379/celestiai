@@ -22,29 +22,55 @@ not on request.**
 ## 0. Open rulings — 2026-08-26 technical sweep
 
 A full technical sweep ran 2026-08-26 across DB/RLS, secrets, auth, cost,
-data integrity, scale, Vercel and RevenueCat, plus a founder-track list.
-**Nothing was fixed; the founder rules on the whole set at once.** Full
-detail with VERIFIED/INFERRED labels: `.planning/TECHNICAL-SWEEP-2026-08-26.md`.
+data integrity, scale, Vercel and RevenueCat, plus a founder-track list. The
+founder ruled fix-order in two tiers same day. Full detail with
+VERIFIED/INFERRED labels: `.planning/TECHNICAL-SWEEP-2026-08-26.md`.
 
-Headline items, so this file is not silently stale on them:
+**Tier 1 — shipped 2026-08-26** (`eddba71`, `ed5a1fc`, `5bc356b`):
 
-- **CRITICAL** `REVENUECAT_WEBHOOK_SECRET` is byte-identical to the
-  `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` that ships in the app bundle. Also
-  means the webhook has never worked against real traffic. (§2.1)
-- **CRITICAL** `/api/horoscope/generate` has no quota of any kind, and chart
-  creation is uncapped — a free account can chain the two into unbounded paid
-  AI generation. (§4.1–4.2)
-- **HIGH** Premium is entirely unmetered on every AI path; both circle report
-  routes too. (§4.3–4.4)
-- **HIGH** GDPR delete misses `user_crystals` / `user_daily_crystals`
-  entirely, and every delete in the cleanup cron ignores its own error
-  result, which can destroy the retry anchor. (§5.1–5.2)
-- **HIGH** Migration ledger holds 6 rows against 16 repo files, and 14
-  production tables have no CREATE TABLE anywhere. **Do not run
+- **#1 CRITICAL, RevenueCat webhook secret.** `REVENUECAT_WEBHOOK_SECRET` was
+  byte-identical to `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`, a value shipped in
+  the mobile bundle — anyone who unzipped the APK could forge a signed
+  webhook payload and grant themselves premium. **Rotated to a random value
+  local-only, in `apps/web/.env.local` (gitignored, no code change).** State
+  is now safe-but-dead: the webhook will reject all real RevenueCat traffic
+  until the real dashboard signing secret replaces the placeholder — see
+  the RevenueCat row in §5 Blocked-externally, founder-owned.
+- **#2+#3 CRITICAL, chained.** `/api/horoscope/generate` had no quota;
+  chart creation was uncapped — chained, a free account could reach ~7,200
+  unquota'd paid generations/day. **Fixed:** horoscope/generate now shares
+  oracle/generate's monthly quota gate; `createBirthChart` caps at 20
+  charts/user (`CHART_LIMIT_REACHED` → 429). Both proven against pre-fix
+  code (git-stashed, confirmed fail, restored, confirmed pass).
+- **#7 HIGH, cleanup cron swallowing delete errors.** supabase-js doesn't
+  throw on `.delete()` failure — a non-throwing failure let the cron
+  proceed to delete the Clerk account and the `users` row, destroying the
+  Batch 5.5 #4 retry anchor. **Fixed:** every delete in that cron now goes
+  through a `deleteOrThrow` wrapper; `deleteUserDiaryEntries`'s
+  already-correct `ok:false` signal, previously logged and swallowed the
+  same way, now throws too. Proven against pre-fix code the same way.
+
+**Tier 2 — in progress.** #4/#5 (meter premium), #6/#13 (GDPR crystals
+tables + FK), #8 (capture migrations for 16 untracked tables), #14
+(self-resetting regenerate cooldown), #17 (rate limiter fail-closed on
+money routes).
+
+**Tier 3 — not started.** #10–#12, #15, #16, #18–#20 (see sweep doc §0).
+
+**Standing action from this sweep, not tied to one tier:** #7's root cause
+(supabase-js not throwing on `.delete()`/`.update()` failure) is a property
+of the client, not of the one cron it surfaced in — a repo-wide sweep for
+the same unchecked-error shape is running/complete as of the note that
+prompted it; see the entry below once landed.
+
+Still true from the original sweep and unaffected by Tier 1:
+
+- **HIGH** Migration ledger holds 6 rows against 16 repo files, and 16
+  production tables have no CREATE TABLE anywhere (Tier 2 #8). **Do not run
   `supabase db push`** — it would replay a destructive schema_hardening
   migration. (§1.4–1.5)
 - **HIGH** Diary list and both crons are unbounded; the web push cron is
-  sequential under a 300s cap. (§6.3–6.4)
+  sequential under a 300s cap (Tier 3, not yet scheduled). (§6.3–6.4)
 - Web production build **passes locally** (exit 0), so the Vercel failure is
   environmental; ranked diagnostic order in §7.
 - Section 3 (authorisation) came out clean — no untrusted client IDs, no
@@ -1458,6 +1484,7 @@ one first.
 | Item | Blocks | Owner |
 |---|---|---|
 | **Vercel** (production deploy target) — **hard blocker, confirmed two independent ways, not "not currently blocking" as this row said as of 2026-08-13.** | **`stellaeum.com` returns a direct 404.** The GitHub Deployments API shows 18 checked deployments spanning 2026-07-29 through the commit pushed minutes before this check (`345f4dc`) — **every single one is `state: failure`**, including the newest. This one item is what's actually gating: **(1)** `EXPO_PUBLIC_WEB_APP_URL` — the `/you/premium` free-state "subscribe on web" CTA has no URL to point at. **(2)** the `/you/settings.tsx` hardcoded privacy-policy link — a real **Apple App Store submission rejection** waiting to happen, not just a dead link a user might tap; Apple requires a reachable privacy URL at submission. **(3)** the RevenueCat webhook end-to-end test — can't be exercised against a webhook endpoint that isn't live. Full repo-side diagnostic prep (env var inventory build-time vs. runtime, monorepo/native-module build risks, a read-the-log-against-this-list diagnostic order) is in `.planning/VERCEL-DEPLOY-DIAGNOSTIC.md` — founder is working the dashboard directly, not delegating the fix. | **Founder — real, current, active blocker. Owns the fix, working it now.** |
+| **RevenueCat webhook integration + real signing secret** — sweep finding #1 (CRITICAL), Tier 1 fix landed 2026-08-26 but only half-closes it. `REVENUECAT_WEBHOOK_SECRET` in `apps/web/.env.local` was rotated off the forgeable value (it was byte-identical to `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`, shipped in the app bundle) to a random placeholder that has never appeared in any client bundle. **Current state: the webhook is dead, not forgeable** — safer than before, but not working, because the placeholder is not RevenueCat's real signing secret and every real webhook call will 401 at the HMAC check. | Real subscription-state sync from RevenueCat to `users.subscription_tier` — the webhook the placeholder blocks is what `revenuecat/webhook-events.ts` needs to ever run against live traffic. Also blocks the RevenueCat webhook end-to-end test named in the Vercel row above. | **Founder — dashboard-only, not delegable.** In RevenueCat Dashboard → Project Settings → Webhooks: create the webhook integration, toggle HMAC signing on, copy the signing secret it shows once. Set `REVENUECAT_WEBHOOK_SECRET` to that value in `apps/web/.env.local`, and again on Vercel once it deploys (see the Vercel row above) — both locations need the real value, not just one. |
 | **Apple Developer Program enrollment** | TestFlight provisioning, SR 9 (EAS Dev Client + TestFlight + biometric auth bundle), the soft-launch milestone itself (iOS internal beta can't open without it) | Founder — application/payment step, not automatable |
 | **LLM model swap (OpenRouter/Llama → BgGPT)** | Nothing currently — deliberately deferred, not gating launch. Would need a controlled quality eval (same prompts/chart/topic, human-rated) before it's even a live decision, not just an engineering swap | Founder — product call on Bulgarian-quality-vs-parameter-count tradeoff, per `AI_PROVIDER_DECISION.md §5` |
 | **Swiss Ephemeris Professional License purchase** | Nothing pre-launch by design — GPL-2.0 path is legally sufficient until the trigger fires. CHF 700 one-time, no retroactive coverage (contract clause 13) once the trigger does fire | Founder — automatic trigger already wired (`[Licensing]`-prefixed warnings on first genuine paying subscriber in both `stripe/subscription.ts` and `revenuecat/webhook-events.ts`); founder must act promptly once it fires, not "eventually" |
