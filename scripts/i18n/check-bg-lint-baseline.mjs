@@ -135,6 +135,16 @@
  * (the newly-checked delete-error branch) — same "literal now appears
  * twice" shape as prior raises in this file's history, not new copy.
  *
+ * Lowered to 1754 on 2026-08-26 (Tier 2 #4 — premium metering): -11,
+ * progress not drift. oracle/generate and horoscope/generate each
+ * duplicated the quota-cap message across two call sites (checkQuotaAvailable
+ * branch + incrementQuotaUsage race-loss branch), each counted at 4 AST
+ * segments — 8 per route, 16 total. Consolidating both into one shared
+ * quotaCapReachedResponse() in lib/subscriptions/quota.ts collapsed that
+ * to a single definition site (still outside a content-home glob, so
+ * still counted, just once instead of sixteen times) plus the one new
+ * premium-tier string, netting -11.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -144,7 +154,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1765
+const BASELINE = 1754
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

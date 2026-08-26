@@ -1,5 +1,5 @@
 {
-  "count": 3003,
+  "count": 3001,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -974,8 +974,6 @@
     "apps/web/app/api/gdpr/delete-account/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/gdpr/export/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/horoscope/generate/route.ts::'Хороскопът вече се генерира. Опитай отново след малко.'",
-    "apps/web/app/api/horoscope/generate/route.ts::`Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`",
-    "apps/web/app/api/horoscope/generate/route.ts::`Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`",
     "apps/web/app/api/oracle/generate/route.ts::'Грешка при генериране на четенето'",
     "apps/web/app/api/oracle/generate/route.ts::'Грешка при запазване на четенето'",
     "apps/web/app/api/oracle/generate/route.ts::'Картата не е намерена'",
@@ -985,8 +983,6 @@
     "apps/web/app/api/oracle/generate/route.ts::'Невалидна тема. Допустими: general, love, career, health'",
     "apps/web/app/api/oracle/generate/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/oracle/generate/route.ts::'Сесията ти изтече. Влез отново.'",
-    "apps/web/app/api/oracle/generate/route.ts::`Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`",
-    "apps/web/app/api/oracle/generate/route.ts::`Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`",
     "apps/web/app/api/oracle/readings/route.ts::'Грешка при извличане на четенията'",
     "apps/web/app/api/oracle/readings/route.ts::'Грешка при обработка на заявката'",
     "apps/web/app/api/oracle/readings/route.ts::'Картата не е намерена'",
@@ -2017,6 +2013,8 @@
     "apps/web/lib/oracle/chart-to-prompt.ts::`Асцендент: ${ascDeg}°${ascMin.toString().padStart(2, '0')}' ${ascSign}`",
     "apps/web/lib/oracle/chart-to-prompt.ts::`Медиум Цели (MC): ${mcDeg}°${mcMin.toString().padStart(2, '0')}' ${mcSign}`",
     "apps/web/lib/oracle/prompts.ts::`You are Stellaeum - a mystical guide who speaks with elevated, poetic wisdom grounded in the ancient language of the stars. You interpret natal charts with precision and spiritual depth, weaving together celestial influences into a cohesive, personal narrative.\n\nVOICE AND TONE:\n- Write in elevated, lyrical Bulgarian prose with spiritual overtones\n- Use phrases like \"звездите са изтъкали\" (the stars have woven), \"небесните влияния\" (celestial influences), \"твоят космически път\" (your cosmic path)\n- Maintain moderate mysticism: cosmic energy, celestial patterns, spiritual path - grounded in actual chart data\n- Do NOT mention crystals, chakras, or generic new-age clichés\n- Address the person in second person, informal singular (\"ти\" form) throughout — this applies to pronouns, verb endings, and imperatives alike; never use the formal/plural (Вие) verb forms: \"твоят\", \"ти\", \"теб\"\n\nFORMAT:\n- Write 7 to 9 paragraphs\n- Each paragraph should focus on one specific planetary placement, house, or aspect interaction\n- Always cite exact degrees and minutes: \"Твоето Слънце на 15°23' Лъв\" - this precision is essential\n- The reading must feel like a complete consultation, not a list of disconnected facts\n\nLANGUAGE:\n- Generate ALL output entirely in Bulgarian (Cyrillic script)\n- Instructions above are in English for your understanding only - your response must be 100% Bulgarian\n\nSENTINEL MARKERS (critical - follow exactly):\n- When you mention a planet by name in the text, wrap that mention with sentinel markers\n- Format: [planet:KEY]Българско_Наименование[/planet]\n- Use these English keys: sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto, northNode\n- Example of correct usage: \"Твоето [planet:sun]Слънце[/planet] на 15 градуса Лъв ти дарява...\"\n- Apply sentinels EVERY time you mention a planet name - this enables the chart wheel to highlight\n  the corresponding planet as the reader moves through the text\n- Do NOT use sentinels for \"Асцендент\", \"MC\", \"Зодия\", house numbers, or aspect names\n\nREADING FOCUS:`",
+    "apps/web/lib/subscriptions/quota.ts::'Временно не успяваме да генерираме. Опитай отново след малко.'",
+    "apps/web/lib/subscriptions/quota.ts::`Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`",
     "apps/web/lib/validators/chart.ts::'Невалиден идентификатор'",
     "apps/web/lib/validators/diary.ts::'Датата е твърде напред във времето'",
     "apps/web/lib/validators/diary.ts::'Датата трябва да е във формат YYYY-MM-DD'",

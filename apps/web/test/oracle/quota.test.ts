@@ -3,10 +3,15 @@ import { createMockSupabase, type MockSupabase } from '../mocks/supabase'
 import { makeAppUser } from '../mocks/fixtures'
 
 /**
- * Tests lib/subscriptions/quota.ts — the monthly AI-reading cap enforced
- * by /api/oracle/generate. Tests the actual gate logic (premium
- * short-circuit, free-tier availability, atomic race-loss handling,
- * refund-failure logging), not an assumed "quota system" shape.
+ * Tests lib/subscriptions/quota.ts — the monthly AI-reading cap shared by
+ * /api/oracle/generate and /api/horoscope/generate. Tests the actual gate
+ * logic (tier-appropriate limit selection, free-tier availability, atomic
+ * race-loss handling, refund-failure logging), not an assumed "quota
+ * system" shape.
+ *
+ * 2026-08-26 (Tier 2 #4): premium no longer short-circuits — it shares
+ * this exact table/RPC at PREMIUM_MONTHLY_LIMIT instead of
+ * FREE_MONTHLY_LIMIT. See quota.ts's module doc comment for why.
  */
 
 vi.mock('@/lib/supabase/service', () => ({
@@ -19,7 +24,13 @@ vi.mock('@/lib/audit', () => ({
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
-import { checkQuotaAvailable, decrementQuotaUsage, incrementQuotaUsage } from '@/lib/subscriptions/quota'
+import {
+  checkQuotaAvailable,
+  decrementQuotaUsage,
+  incrementQuotaUsage,
+  PREMIUM_MONTHLY_LIMIT,
+  quotaCapReachedResponse,
+} from '@/lib/subscriptions/quota'
 
 let mockSupabase: MockSupabase
 
@@ -30,13 +41,40 @@ beforeEach(() => {
 })
 
 describe('checkQuotaAvailable', () => {
-  it('premium users short-circuit with available:true and never touch subscription_quotas', async () => {
+  it('premium users share the same subscription_quotas gate as free tier, at PREMIUM_MONTHLY_LIMIT instead of FREE_MONTHLY_LIMIT', async () => {
     const user = makeAppUser({ subscription_tier: 'premium' })
+    mockSupabase.push('subscription_quotas', { data: null }) // upsert result, ignored
+    mockSupabase.push('subscription_quotas', {
+      data: { ai_readings_used: 5, ai_readings_limit: PREMIUM_MONTHLY_LIMIT, period_start: '2026-08-01' },
+    })
 
     const status = await checkQuotaAvailable(user)
 
-    expect(status.available).toBe(true)
-    expect(mockSupabase.from).not.toHaveBeenCalled()
+    expect(status).toMatchObject({ available: true, used: 5, limit: PREMIUM_MONTHLY_LIMIT })
+    // The upsert (first 'subscription_quotas' call) must pass the
+    // premium-tier limit explicitly, not rely on the free-tier column
+    // default.
+    const upsertCall = mockSupabase.from.mock.results[0].value
+    expect(upsertCall.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ ai_readings_limit: PREMIUM_MONTHLY_LIMIT }),
+      expect.anything(),
+    )
+  })
+
+  it('premium users are blocked once used reaches PREMIUM_MONTHLY_LIMIT — the safety net actually caps', async () => {
+    const user = makeAppUser({ subscription_tier: 'premium' })
+    mockSupabase.push('subscription_quotas', { data: null })
+    mockSupabase.push('subscription_quotas', {
+      data: {
+        ai_readings_used: PREMIUM_MONTHLY_LIMIT,
+        ai_readings_limit: PREMIUM_MONTHLY_LIMIT,
+        period_start: '2026-08-01',
+      },
+    })
+
+    const status = await checkQuotaAvailable(user)
+
+    expect(status.available).toBe(false)
   })
 
   it('free users with used < limit are available:true', async () => {
@@ -140,5 +178,38 @@ describe('decrementQuotaUsage', () => {
       'system.payment.quota_refund_failed',
       expect.objectContaining({ reason: 'row_not_found' }),
     )
+  })
+})
+
+describe('quotaCapReachedResponse — tier-specific shape (ruled 2026-08-26, Tier 2 #4)', () => {
+  it('free tier: 429, CAP_REACHED code, the cap number IS in the payload — a real, surfaced product limit', async () => {
+    const user = makeAppUser({ subscription_tier: 'free' })
+    const res = quotaCapReachedResponse(user, {
+      available: false,
+      used: 3,
+      limit: 3,
+      periodStart: new Date('2026-08-01'),
+    })
+
+    expect(res.status).toBe(429)
+    const body = await res.json()
+    expect(body.code).toBe('CAP_REACHED')
+    expect(body.cap).toBe(3)
+  })
+
+  it('premium tier: 503, no code, no cap number — must be indistinguishable from a real outage to the client, by design', async () => {
+    const user = makeAppUser({ subscription_tier: 'premium' })
+    const res = quotaCapReachedResponse(user, {
+      available: false,
+      used: PREMIUM_MONTHLY_LIMIT,
+      limit: PREMIUM_MONTHLY_LIMIT,
+      periodStart: new Date('2026-08-01'),
+    })
+
+    expect(res.status).toBe(503)
+    const body = await res.json()
+    expect(body.code).toBeUndefined()
+    expect(body.cap).toBeUndefined()
+    expect(JSON.stringify(body)).not.toMatch(/\d/) // no number anywhere in the payload
   })
 })

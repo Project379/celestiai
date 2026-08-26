@@ -16,8 +16,8 @@ import {
   checkQuotaAvailable,
   decrementQuotaUsage,
   incrementQuotaUsage,
+  quotaCapReachedResponse,
 } from '@/lib/subscriptions/quota'
-import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 
 export const maxDuration = 60
 
@@ -117,37 +117,22 @@ export async function POST(req: Request) {
     // creation (finding #3, now capped in createBirthChart), a free account
     // could reach thousands of unquota'd paid generations/day by creating a
     // fresh chart per request. Reuses the same monthly ai_readings cap as
-    // oracle/generate; premium is unaffected (checkQuotaAvailable
-    // short-circuits for premium per D1 — see Tier 2 for metering premium).
+    // oracle/generate. 2026-08-26 (Tier 2 #4): premium goes through this
+    // too now, at a much higher safety-net limit — see quota.ts's module
+    // doc comment and quotaCapReachedResponse for the tier-specific
+    // response shape (free: 429 + number; premium: 503, invisible by
+    // design).
     const user = await ensureUserRecord(userId)
     const quota = await checkQuotaAvailable(user)
     if (!quota.available) {
-      return Response.json(
-        {
-          error: `Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`,
-          code: 'CAP_REACHED',
-          cap: quota.limit,
-          tier: user.subscription_tier,
-        },
-        { status: 429 }
-      )
+      return quotaCapReachedResponse(user, quota)
     }
 
-    if (user.subscription_tier !== 'premium') {
-      const claim = await incrementQuotaUsage(userId, quota.periodStart)
-      if (!claim.success) {
-        return Response.json(
-          {
-            error: `Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`,
-            code: 'CAP_REACHED',
-            cap: quota.limit,
-            tier: user.subscription_tier,
-          },
-          { status: 429 }
-        )
-      }
-      claimedPeriodStart = quota.periodStart
+    const claim = await incrementQuotaUsage(userId, quota.periodStart)
+    if (!claim.success) {
+      return quotaCapReachedResponse(user, quota)
     }
+    claimedPeriodStart = quota.periodStart
 
     let transitPlanets: Omit<PlanetPosition, 'house'>[]
 

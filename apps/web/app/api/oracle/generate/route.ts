@@ -6,7 +6,6 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
 import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
-import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 import type { ChartData } from '@stellaeum/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
 import { logAuditEvent } from '@/lib/audit'
@@ -15,6 +14,7 @@ import {
   checkQuotaAvailable,
   decrementQuotaUsage,
   incrementQuotaUsage,
+  quotaCapReachedResponse,
 } from '@/lib/subscriptions/quota'
 import { toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
@@ -31,16 +31,21 @@ import { assertRateLimit } from '@/lib/rate-limit'
  * 5. Cache check — return cached reading without quota interaction
  *    (cache hits do NOT count against the monthly cap)
  * 6. Regeneration rate limit (once per day per chart-topic pair)
- * 7. Quota cap-claim (Pattern B, monthly cap from subscription_quotas):
- *    7a. checkQuotaAvailable — premium short-circuits, free reads
- *        the current period row for { used, limit, periodStart }
+ * 7. Quota cap-claim (Pattern B, monthly cap from subscription_quotas).
+ *    2026-08-26 (Tier 2 #4): premium goes through this too now, at a much
+ *    higher safety-net limit (PREMIUM_MONTHLY_LIMIT) — see quota.ts's
+ *    module doc comment for why and quotaCapReachedResponse for the
+ *    tier-specific response shape (free: 429 + number; premium: 503,
+ *    invisible by design).
+ *    7a. checkQuotaAvailable — reads the current period row for
+ *        { used, limit, periodStart }, tier-appropriate limit.
  *    7b. incrementQuotaUsage — atomic conditional UPDATE before Llama
- *        call. Race-loss returns 429 same as cap-reached. Premium skips.
+ *        call. Race-loss treated as cap-reached, same as 7a.
  * 8. Load chart calculation data
  * 9. Build prompts from chart data
  * 10. Stream / generate via OpenRouter / Llama
  * 11. onFinish / await: upsert completed reading into ai_readings
- * 12. On any failure in 10–11: decrementQuotaUsage refund (free tier only)
+ * 12. On any failure in 10–11: decrementQuotaUsage refund (both tiers)
  */
 export const maxDuration = 60
 
@@ -164,39 +169,22 @@ export async function POST(req: Request) {
     //    goes through quota regardless of the regenerate flag — see the
     //    isRegenerationOfExisting fix above.
     if (!isRegenerationOfExisting) {
-      // 7a. Pre-flight quota check. Premium short-circuits with available=true;
-      //     free path reads the current period row for { used, limit, periodStart }.
+      // 7a. Pre-flight quota check. 2026-08-26 (Tier 2 #4): premium no
+      //     longer short-circuits — it shares this exact gate at a much
+      //     higher (safety-net) limit. See quotaCapReachedResponse for the
+      //     tier-specific response shape.
       const quota = await checkQuotaAvailable(user)
       if (!quota.available) {
-        return Response.json(
-          {
-            error: `Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`,
-            code: 'CAP_REACHED',
-            cap: quota.limit,
-            tier: user.subscription_tier,
-          },
-          { status: 429 }
-        )
+        return quotaCapReachedResponse(user, quota)
       }
 
-      // 7b. Atomic cap-claim BEFORE generation. Premium has no quota row
-      //     by D1 — skip the increment. Free tier increments via RPC;
-      //     race-loss (NULL return) is treated as cap-reached.
-      if (user.subscription_tier !== 'premium') {
-        const claim = await incrementQuotaUsage(userId, quota.periodStart)
-        if (!claim.success) {
-          return Response.json(
-            {
-              error: `Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`,
-              code: 'CAP_REACHED',
-              cap: quota.limit,
-              tier: user.subscription_tier,
-            },
-            { status: 429 }
-          )
-        }
-        claimedPeriodStart = quota.periodStart
+      // 7b. Atomic cap-claim BEFORE generation, for both tiers now.
+      //     Race-loss (NULL return) is treated as cap-reached.
+      const claim = await incrementQuotaUsage(userId, quota.periodStart)
+      if (!claim.success) {
+        return quotaCapReachedResponse(user, quota)
       }
+      claimedPeriodStart = quota.periodStart
     }
 
     // 8. Load chart calculation data

@@ -90,6 +90,17 @@ vi.mock('@/lib/subscriptions/quota', () => ({
   decrementQuotaUsage: vi.fn(async () => {
     quotaState.used = Math.max(0, quotaState.used - 1)
   }),
+  // Real implementation branches on tier (free: 429+CAP_REACHED+number,
+  // premium: 503, invisible) — this test only exercises free-tier users
+  // (makeAppUser default), so a fixed free-shaped response is enough to
+  // isolate the route's gating logic, same as its sibling stateful mocks
+  // above isolate quota.ts's own internals (covered by quota.test.ts).
+  quotaCapReachedResponse: vi.fn((user: { subscription_tier: string }, quota: { limit: number }) =>
+    Response.json(
+      { error: 'cap reached (test)', code: 'CAP_REACHED', cap: quota.limit, tier: user.subscription_tier },
+      { status: 429 },
+    ),
+  ),
 }))
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'

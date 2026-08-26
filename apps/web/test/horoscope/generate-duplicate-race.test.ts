@@ -29,6 +29,22 @@ vi.mock('@/lib/audit', () => ({
   logAuditEvent: vi.fn(),
 }))
 
+// This test's subject is the duplicate-paid-call race, not quota — bypass
+// quota entirely (2026-08-26: premium now shares the real quota gate too,
+// so without this the fake supabase would need full subscription_quotas +
+// RPC support it has no reason to model).
+vi.mock('@/lib/subscriptions/quota', () => ({
+  checkQuotaAvailable: vi.fn(async () => ({
+    available: true,
+    used: 0,
+    limit: 300,
+    periodStart: new Date('2026-08-01T00:00:00.000Z'),
+  })),
+  incrementQuotaUsage: vi.fn(async () => ({ success: true, newUsed: 1 })),
+  decrementQuotaUsage: vi.fn(async () => true),
+  quotaCapReachedResponse: vi.fn(() => Response.json({ error: 'cap (test)' }, { status: 429 })),
+}))
+
 vi.mock('@/lib/ai/check-bg-output', () => ({
   checkAndLogGeneration: vi.fn(async () => {}),
 }))
