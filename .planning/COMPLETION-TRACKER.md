@@ -99,7 +99,62 @@ VERIFIED/INFERRED labels: `.planning/TECHNICAL-SWEEP-2026-08-26.md`.
 Every Tier 2 fix proven against pre-fix code (git-stashed, confirmed fail,
 restored, confirmed pass) before landing, same discipline as Tier 1.
 
-**Tier 3 — not started.** #10–#12, #15, #16, #18–#20 (see sweep doc §0).
+**Tier 3 — shipped 2026-08-26** (`18cd9e2`, `97294fe`, `67ab42d`, `df3a411`,
+plus `.env.local` fixes for #12 — local-only, gitignored, not a commit):
+
+- **#12, Sentry dead in both apps.** Both `.env.local` var-name swaps fixed
+  locally. Still open, founder-owned: both apps share one Sentry
+  project/DSN until a dedicated mobile project exists; `apps/mobile/eas.json`
+  has zero Sentry references (production EAS builds have never had a DSN
+  at all); Vercel needs the var in its project env before its first deploy.
+- **#10, diary list unbounded — defensive ceiling only, explicitly not a
+  fix.** `listDiaryEntries` capped at 2000 rows. Real fix (pagination,
+  client fetch-more, findByDate on-miss) needs a UX decision (infinite
+  scroll vs. month view vs. cutoff) that belongs with the diary screen's
+  design — full shape written up in the sweep doc §11 for Batch 8.
+- **#11, both crons unbounded/sequential.** Defensive `.limit()` on all
+  three unbounded selects (push_subscriptions, push_tokens, cleanup's
+  expired-users query). Real throughput fix where safe to make without
+  new state: the web-push send loop switched from fully sequential to
+  batched concurrency (25 at a time) — changes the bottleneck shape from
+  "latency × subscriber count" to "latency × batches." cleanup-deleted-
+  accounts stays sequential — the Clerk-before-users-row ordering needs
+  per-user sequencing to reason about correctly.
+- **#15, Reanimated worklet warning.** `NatalWheelFrame` wasn't wrapped in
+  `memo()` the way its sibling `WheelStaticLayers` is — fixed (mechanical
+  parity). Inferred mechanism per the sweep, not verified — **needs
+  on-device confirmation on the next device pass** (no
+  device/emulator available this session).
+- **#16, VirtualizedList nesting.** `CitySearch`'s `FlatList` (nested in a
+  `ScrollView` at both its mount sites) replaced with a plain
+  `ScrollView` + `.map()` — the dropdown is a small, bounded list (API
+  defaults to 20 results), the case FlatList was never suited for.
+- **#18, PostgREST filter injection + unclamped limit in
+  `cities/search`.** Both fixed: query sanitized to letters/digits/space/
+  hyphen/apostrophe before reaching the `.or()` filter; `limit` clamped
+  to `[1, 100]` with a NaN guard. Caught and fixed a real tooling bug
+  along the way — an unpaired apostrophe in the sanitize regex desynced
+  the copy-lock extractor's naive quote-matching, silently swallowing two
+  unrelated strings later in the same file.
+- **#19, empty crystal_listings/crystal_vendors — not code-fixable.**
+  Confirmed still 0 rows each (re-checked 2026-08-26). This is a content/
+  business-development gap (real vendor partnerships and product data),
+  not a defect — no code change closes it. Founder-owned.
+- **#20, rate_limit_buckets RLS.** Confirmed already applied by the
+  founder directly (per the Tier 1 turn) — `relrowsecurity = true`,
+  verified read-only 2026-08-26. Nothing to do.
+
+Every code-level Tier 3 fix proven against pre-fix code (git-stashed,
+confirmed fail, restored, confirmed pass) the same as Tiers 1–2, except
+#15 (no automated test is possible — a React Native dev-console warning
+and on-device frame rate, not something vitest's DOM-less environment can
+observe) and #19/#20 (not code changes).
+
+**Tier 3 remaining, per the founder's list order: none.** All eight items
+(#10, #11, #12, #15, #16, #18, #19, #20) addressed to the extent each one
+can be — three (#12's EAS/Vercel wiring, #19, and the orphan/capture-
+migration items from Tier 2) are explicitly founder-owned next steps, not
+open engineering work.
 
 Still true, unaffected by Tier 1/2 code fixes — both are prepared
 migrations awaiting founder action, not open findings:
