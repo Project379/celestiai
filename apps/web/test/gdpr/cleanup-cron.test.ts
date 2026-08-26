@@ -107,7 +107,7 @@ describe('GET /api/cron/cleanup-deleted-accounts — batch continues past a sing
         usersCallCount++
         if (usersCallCount === 1) {
           const builder: Record<string, unknown> = {}
-          for (const m of ['select', 'not', 'lte']) builder[m] = vi.fn(() => builder)
+          for (const m of ['select', 'not', 'lte', 'limit']) builder[m] = vi.fn(() => builder)
           builder.then = (onFulfilled: (v: unknown) => unknown) =>
             Promise.resolve({
               data: [
@@ -154,7 +154,7 @@ describe('GET /api/cron/cleanup-deleted-accounts — batch continues past a sing
         usersCallCount++
         if (usersCallCount === 1) {
           const builder: Record<string, unknown> = {}
-          for (const m of ['select', 'not', 'lte']) builder[m] = vi.fn(() => builder)
+          for (const m of ['select', 'not', 'lte', 'limit']) builder[m] = vi.fn(() => builder)
           builder.then = (onFulfilled: (v: unknown) => unknown) =>
             Promise.resolve({ data: [{ id: 'row-1', clerk_id: 'user_1' }], error: null }).then(onFulfilled)
           return builder
@@ -181,7 +181,7 @@ describe('GET /api/cron/cleanup-deleted-accounts — batch continues past a sing
         usersCallCount++
         if (usersCallCount === 1) {
           const builder: Record<string, unknown> = {}
-          for (const m of ['select', 'not', 'lte']) builder[m] = vi.fn(() => builder)
+          for (const m of ['select', 'not', 'lte', 'limit']) builder[m] = vi.fn(() => builder)
           builder.then = (onFulfilled: (v: unknown) => unknown) =>
             Promise.resolve({ data: [{ id: 'row-1', clerk_id: 'user_err' }], error: null }).then(onFulfilled)
           return builder
@@ -228,7 +228,7 @@ describe('GET /api/cron/cleanup-deleted-accounts — Clerk-account-orphan fix (B
       usersCallCount++
       if (usersCallCount === 1) {
         const builder: Record<string, unknown> = {}
-        for (const m of ['select', 'not', 'lte']) builder[m] = vi.fn(() => builder)
+        for (const m of ['select', 'not', 'lte', 'limit']) builder[m] = vi.fn(() => builder)
         builder.then = (onFulfilled: (v: unknown) => unknown) =>
           Promise.resolve({ data: [{ id: 'row-1', clerk_id: clerkId }], error: null }).then(
             onFulfilled,
@@ -307,7 +307,7 @@ describe('GET /api/cron/cleanup-deleted-accounts — user_crystals / user_daily_
         usersCallCount++
         if (usersCallCount === 1) {
           const builder: Record<string, unknown> = {}
-          for (const m of ['select', 'not', 'lte']) builder[m] = vi.fn(() => builder)
+          for (const m of ['select', 'not', 'lte', 'limit']) builder[m] = vi.fn(() => builder)
           builder.then = (onFulfilled: (v: unknown) => unknown) =>
             Promise.resolve({ data: [{ id: 'row-1', clerk_id: 'user_crystals_test' }], error: null }).then(
               onFulfilled,

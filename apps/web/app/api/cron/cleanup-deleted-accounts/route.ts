@@ -53,12 +53,27 @@ export async function GET(req: Request) {
   const supabase = createServiceSupabaseClient()
   const now = new Date().toISOString()
 
+  // 2026-08-26 sweep finding #11, defensive ceiling only — same posture
+  // as the daily-horoscope cron and finding #10's diary cap. Each user's
+  // cascade costs a dozen-plus sequential round trips (deliberately NOT
+  // parallelized — the Clerk-before-users-row ordering this cron depends
+  // on, see the Batch 5.5 #4 comment below, needs per-user sequencing to
+  // reason about correctly; parallelizing across users would be safe in
+  // principle since each user's rows are disjoint, but isn't done here to
+  // keep this fix scoped to "can't blow up," not a concurrency redesign)
+  // under a 60s budget — this just stops a single run from selecting a
+  // pathologically large batch, it does not change today's real
+  // throughput ceiling (maxDuration still caps a run at whatever
+  // sequential processing completes in 60s).
+  const CLEANUP_SELECT_CEILING = 200
+
   // Find users whose grace period has expired
   const { data: usersToDelete, error: fetchError } = await supabase
     .from('users')
     .select('id, clerk_id')
     .not('deletion_scheduled_at', 'is', null)
     .lte('deletion_scheduled_at', now)
+    .limit(CLEANUP_SELECT_CEILING)
 
   if (fetchError) {
     console.error('[Cron Cleanup] Failed to fetch expired accounts:', fetchError)

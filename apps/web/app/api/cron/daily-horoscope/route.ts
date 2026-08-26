@@ -22,6 +22,30 @@ export const maxDuration = 300 // 5 minutes for batch processing
 const MOBILE_TITLE = 'Твоят дневен хороскоп'
 const MOBILE_BODY = 'Новото ти послание от звездите те очаква.'
 
+// 2026-08-26 sweep finding #11, defensive ceiling + throughput fix — NOT
+// full pagination (same "ceiling now, real redesign later" posture as
+// finding #10's diary cap). The two problems this addresses:
+//   1. Unbounded select — neither push_subscriptions nor push_tokens had
+//      a .limit() anywhere; this caps each query explicitly rather than
+//      relying on PostgREST's incidental 1000-row default.
+//   2. Fully sequential sending — the web-push loop below awaited one
+//      send at a time. At realistic ~200ms/send that put a hard ceiling
+//      around 1,500 subscribers before maxDuration killed the function
+//      mid-loop, with no cursor, so the same prefix was served every day
+//      and the tail never got a push. Batched concurrency (below) is a
+//      real throughput fix, not a ceiling — it doesn't just raise the
+//      number, it changes the shape of the bottleneck from "network
+//      latency x subscriber count" to "network latency x batches".
+//      Mobile's Expo path already batches via expo.chunkPushNotifications
+//      and was not resequenced.
+const WEB_PUSH_SELECT_CEILING = 5000
+const PUSH_TOKENS_SELECT_CEILING = 5000
+// Concurrent web-push sends per batch. web-push has no built-in batching
+// API (unlike Expo's SDK), so this is a manual concurrency limit — high
+// enough to meaningfully cut wall-clock time, conservative enough not to
+// look like a burst attack to any single push service's rate limiting.
+const WEB_PUSH_CONCURRENCY = 25
+
 export async function GET(req: Request) {
   // Verify CRON_SECRET to prevent unauthorized execution
   //
@@ -51,6 +75,7 @@ export async function GET(req: Request) {
   const { data: subscriptions, error } = await supabase
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')
+    .limit(WEB_PUSH_SELECT_CEILING)
 
   if (error) {
     console.error('[Cron Daily Horoscope] Failed to fetch subscriptions:', error)
@@ -72,22 +97,37 @@ export async function GET(req: Request) {
   let failed = 0
   const expiredEndpoints: string[] = []
 
-  // Send notification to each subscriber
-  for (const sub of subscriptions) {
-    try {
-      await webpush.sendNotification(
-        {
-          endpoint: sub.endpoint,
-          keys: {
-            p256dh: sub.p256dh,
-            auth: sub.auth,
+  // Send notification to each subscriber, WEB_PUSH_CONCURRENCY at a time
+  // rather than one at a time — see the constant's doc comment above.
+  // Per-subscriber error handling (expired-endpoint detection) is
+  // unchanged; only the await structure changed, from one-at-a-time to
+  // batched-parallel.
+  for (let i = 0; i < subscriptions.length; i += WEB_PUSH_CONCURRENCY) {
+    const batch = subscriptions.slice(i, i + WEB_PUSH_CONCURRENCY)
+    const results = await Promise.allSettled(
+      batch.map((sub) =>
+        webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth,
+            },
           },
-        },
-        payload
+          payload
+        )
       )
-      sent++
-    } catch (err: unknown) {
+    )
+
+    results.forEach((result, idx) => {
+      const sub = batch[idx]
+      if (result.status === 'fulfilled') {
+        sent++
+        return
+      }
+
       failed++
+      const err = result.reason as unknown
 
       // Clean up expired or invalid subscriptions (410 Gone, 404 Not Found)
       const statusCode =
@@ -103,7 +143,7 @@ export async function GET(req: Request) {
           err
         )
       }
-    }
+    })
   }
 
   // Delete expired subscriptions in batch
@@ -143,6 +183,7 @@ async function sendMobilePush(
     .from('push_tokens')
     .select('token')
     .is('revoked_at', null)
+    .limit(PUSH_TOKENS_SELECT_CEILING)
 
   if (error) {
     console.error('[Cron Daily Horoscope] Failed to fetch push_tokens:', error)
