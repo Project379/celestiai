@@ -275,6 +275,15 @@ export async function POST(req: Request) {
         const expiresAt = new Date(generatedAt)
         expiresAt.setDate(expiresAt.getDate() + 7)
 
+        // SECURITY FIX (2026-08-26 sweep #14): a fresh (non-regeneration)
+        // generation must NOT touch last_regenerated_at — omitting it from
+        // the upsert payload leaves the existing column value alone on
+        // conflict (a genuinely new row gets the column's NULL default).
+        // Previously this always wrote `isRegenerationOfExisting ? ... :
+        // null`, so any fresh generation (first-ever, or the 7-day cache
+        // simply expiring) reset the cooldown clock to null — the next
+        // regenerate:true call then found last_regenerated_at falsy and
+        // skipped the 24h cooldown check at step 6 entirely.
         await supabase.from('ai_readings').upsert(
           {
             chart_id: chartId,
@@ -283,7 +292,9 @@ export async function POST(req: Request) {
             content: cleanContent,
             generated_at: generatedAt.toISOString(),
             expires_at: expiresAt.toISOString(),
-            last_regenerated_at: isRegenerationOfExisting ? generatedAt.toISOString() : null,
+            ...(isRegenerationOfExisting
+              ? { last_regenerated_at: generatedAt.toISOString() }
+              : {}),
             model_version: AI_MODEL,
           },
           { onConflict: 'chart_id,topic' }
@@ -333,6 +344,9 @@ export async function POST(req: Request) {
           const expiresAt = new Date(generatedAt)
           expiresAt.setDate(expiresAt.getDate() + 7)
 
+          // See the JSON-path comment above (2026-08-26 sweep #14) — same
+          // fix, same reason: omit last_regenerated_at entirely on a fresh
+          // generation rather than writing null over it.
           await supabase.from('ai_readings').upsert(
             {
               chart_id: chartId,
@@ -341,9 +355,9 @@ export async function POST(req: Request) {
               content: cleanContent,
               generated_at: generatedAt.toISOString(),
               expires_at: expiresAt.toISOString(),
-              last_regenerated_at: isRegenerationOfExisting
-                ? generatedAt.toISOString()
-                : null,
+              ...(isRegenerationOfExisting
+                ? { last_regenerated_at: generatedAt.toISOString() }
+                : {}),
               model_version: AI_MODEL,
             },
             {
