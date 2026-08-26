@@ -147,7 +147,7 @@ describe('GET /api/cron/cleanup-deleted-accounts — batch continues past a sing
     expect(deleteClerkUser).not.toHaveBeenCalledWith('user_fails')
   })
 
-  it('logs (does not throw/abort) when deleteUserDiaryEntries reports ok:false, and still deletes the Clerk account for that user', async () => {
+  it('throws (does not continue to the Clerk/users-row delete) when deleteUserDiaryEntries reports ok:false — 2026-08-26 sweep #7: this was the one delete in the cascade that DID signal failure, and it was previously logged-and-swallowed the same way the non-throwing .delete() calls were, destroying the retry anchor', async () => {
     let usersCallCount = 0
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'users') {
@@ -167,8 +167,50 @@ describe('GET /api/cron/cleanup-deleted-accounts — batch continues past a sing
     const res = await GET(req('test-cron-secret'))
     const body = await res.json()
 
-    expect(body.deleted).toBe(1)
-    expect(deleteClerkUser).toHaveBeenCalledWith('user_1')
+    // Pre-fix, this assertion would fail: deleted would be 1 and Clerk
+    // would have been called despite the diary delete having failed.
+    expect(body.deleted).toBe(0)
+    expect(deleteClerkUser).not.toHaveBeenCalled()
+  })
+
+  it('throws (does not continue past it) when a non-throwing .delete() call returns a populated error field — the core defect: supabase-js .delete() failures do not throw on their own', async () => {
+    let usersCallCount = 0
+    let aiReadingsCallCount = 0
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'users') {
+        usersCallCount++
+        if (usersCallCount === 1) {
+          const builder: Record<string, unknown> = {}
+          for (const m of ['select', 'not', 'lte']) builder[m] = vi.fn(() => builder)
+          builder.then = (onFulfilled: (v: unknown) => unknown) =>
+            Promise.resolve({ data: [{ id: 'row-1', clerk_id: 'user_err' }], error: null }).then(onFulfilled)
+          return builder
+        }
+      }
+      if (table === 'ai_readings') {
+        aiReadingsCallCount++
+        if (aiReadingsCallCount === 1) {
+          const builder: Record<string, unknown> = {}
+          const methods = ['eq', 'delete']
+          for (const m of methods) builder[m] = vi.fn(() => builder)
+          builder.then = (onFulfilled: (v: unknown) => unknown) =>
+            Promise.resolve({
+              data: null,
+              error: { message: 'permission denied for table ai_readings' },
+            }).then(onFulfilled)
+          return builder
+        }
+      }
+      return genericBuilder()
+    })
+
+    const res = await GET(req('test-cron-secret'))
+    const body = await res.json()
+
+    // Pre-fix, this error field was never inspected — the loop would have
+    // sailed past it to delete the Clerk account and the users row.
+    expect(body.deleted).toBe(0)
+    expect(deleteClerkUser).not.toHaveBeenCalled()
   })
 })
 

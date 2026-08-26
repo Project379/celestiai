@@ -11,6 +11,29 @@ import { verifyCronSecret } from '@/lib/auth/cron-secret'
  */
 export const maxDuration = 60
 
+/**
+ * SECURITY/GDPR FIX (2026-08-26 sweep finding #7): supabase-js `.delete()`
+ * does not throw on failure — it returns `{ error }`. Every delete call in
+ * this cron previously ignored that field, so a non-throwing failure (RLS
+ * denial, constraint violation, transient error) was silently treated as
+ * success: the loop proceeded, deleted the Clerk account, and deleted the
+ * `users` row — destroying the Batch 5.5 #4 retry anchor with the user's
+ * data for that table still sitting in Postgres, permanently, keyed to a
+ * Clerk ID that no longer exists. Wrapping every delete in this and
+ * throwing on error routes the failure into the per-user try/catch below,
+ * which stops BEFORE the Clerk/users-row deletes — restoring the retry
+ * anchor the ordering fix assumed a throwing failure would preserve.
+ */
+async function deleteOrThrow(
+  label: string,
+  promise: PromiseLike<{ error: { message?: string } | null }>,
+) {
+  const { error } = await promise
+  if (error) {
+    throw new Error(`${label} delete failed: ${error.message ?? JSON.stringify(error)}`)
+  }
+}
+
 export async function GET(req: Request) {
   // Verify CRON_SECRET to prevent unauthorized execution
   //
@@ -62,44 +85,44 @@ export async function GET(req: Request) {
 
       // Delete data in dependency order
       if (chartIds.length > 0) {
-        await supabase
-          .from('daily_horoscopes')
-          .delete()
-          .in('chart_id', chartIds)
+        await deleteOrThrow(
+          'daily_horoscopes',
+          supabase.from('daily_horoscopes').delete().in('chart_id', chartIds),
+        )
 
-        await supabase
-          .from('chart_calculations')
-          .delete()
-          .in('chart_id', chartIds)
+        await deleteOrThrow(
+          'chart_calculations',
+          supabase.from('chart_calculations').delete().in('chart_id', chartIds),
+        )
       }
 
       // Delete AI readings by user_id
-      await supabase
-        .from('ai_readings')
-        .delete()
-        .eq('user_id', clerkId)
+      await deleteOrThrow(
+        'ai_readings',
+        supabase.from('ai_readings').delete().eq('user_id', clerkId),
+      )
 
       // Delete crush / saved-people reports before profiles
-      await supabase
-        .from('saved_people_reports')
-        .delete()
-        .eq('user_id', clerkId)
+      await deleteOrThrow(
+        'saved_people_reports',
+        supabase.from('saved_people_reports').delete().eq('user_id', clerkId),
+      )
 
-      await supabase
-        .from('saved_people_profiles')
-        .delete()
-        .eq('user_id', clerkId)
+      await deleteOrThrow(
+        'saved_people_profiles',
+        supabase.from('saved_people_profiles').delete().eq('user_id', clerkId),
+      )
 
       // Delete connection-space records where the user participated or initiated
-      await supabase
-        .from('connection_reports')
-        .delete()
-        .eq('generated_by', clerkId)
+      await deleteOrThrow(
+        'connection_reports',
+        supabase.from('connection_reports').delete().eq('generated_by', clerkId),
+      )
 
-      await supabase
-        .from('connection_invites')
-        .delete()
-        .eq('inviter_user_id', clerkId)
+      await deleteOrThrow(
+        'connection_invites',
+        supabase.from('connection_invites').delete().eq('inviter_user_id', clerkId),
+      )
 
       const { data: spaceMemberships } = await supabase
         .from('connection_members')
@@ -108,53 +131,54 @@ export async function GET(req: Request) {
 
       const spaceIds = (spaceMemberships ?? []).map((row: { space_id: string }) => row.space_id)
 
-      await supabase
-        .from('connection_members')
-        .delete()
-        .eq('user_id', clerkId)
+      await deleteOrThrow(
+        'connection_members',
+        supabase.from('connection_members').delete().eq('user_id', clerkId),
+      )
 
       if (spaceIds.length > 0) {
-        await supabase
-          .from('connection_spaces')
-          .delete()
-          .in('id', spaceIds)
-          .eq('created_by_user_id', clerkId)
+        await deleteOrThrow(
+          'connection_spaces',
+          supabase
+            .from('connection_spaces')
+            .delete()
+            .in('id', spaceIds)
+            .eq('created_by_user_id', clerkId),
+        )
       }
 
       // Delete charts
-      await supabase
-        .from('charts')
-        .delete()
-        .eq('user_id', clerkId)
+      await deleteOrThrow('charts', supabase.from('charts').delete().eq('user_id', clerkId))
 
       // Delete push subscriptions (web)
-      await supabase
-        .from('push_subscriptions')
-        .delete()
-        .eq('user_id', clerkId)
+      await deleteOrThrow(
+        'push_subscriptions',
+        supabase.from('push_subscriptions').delete().eq('user_id', clerkId),
+      )
 
       // Delete push tokens (mobile, P.16 / REVISIT-26). Sending push to a
       // deleted account's device is a GDPR problem, not a tidiness one —
       // explicit delete here rather than relying solely on the table's
       // ON DELETE CASCADE FK to users.clerk_id, matching this cron's
       // existing defense-in-depth style for every other cascade above.
-      await supabase
-        .from('push_tokens')
-        .delete()
-        .eq('user_id', clerkId)
+      await deleteOrThrow(
+        'push_tokens',
+        supabase.from('push_tokens').delete().eq('user_id', clerkId),
+      )
 
       // Delete diary entries (§8.7). Uses the core helper per the
       // §8.7 direction-of-travel ratification — new cascade tables go
       // through packages/core/src/diary/entries.ts rather than inline
       // Supabase calls. Helper returns { ok: true } | { ok: false, error,
-      // message }; a false result is logged and the batch continues,
-      // matching the "one failure shouldn't stop the batch" semantic.
+      // message }. FIX (2026-08-26 sweep #7): previously logged-and-
+      // continued on failure — the one place in this cron where a delete
+      // DID signal failure, and it was swallowed the same way the
+      // non-throwing .delete() calls were. Now throws, same as every
+      // other delete in this loop, so the per-user catch below stops
+      // before the Clerk/users-row deletes destroy the retry anchor.
       const diaryResult = await deleteUserDiaryEntries(clerkId)
       if (!diaryResult.ok) {
-        console.error(
-          `[Cron Cleanup] diary_entries delete failed for ${clerkId}:`,
-          diaryResult.message,
-        )
+        throw new Error(`diary_entries delete failed: ${diaryResult.message}`)
       }
 
       // SECURITY/GDPR FIX (2026-08-14, Batch 5.5 #4): Clerk account deleted

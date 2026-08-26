@@ -59,16 +59,19 @@ describe('listBirthCharts', () => {
 
 describe('createBirthChart', () => {
   it('upserts the users row (ignoreDuplicates) before inserting the chart, so a brand-new user does not violate the charts.user_id FK', async () => {
+    // Two 'charts' calls now: the cap count-check first, then the insert.
+    mockSupabase.push('charts', { data: null, error: null, count: 0 })
     mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user-1' } })
 
     await createBirthChart('user-1', VALID_INPUT)
 
     const usersCall = mockSupabase.from.mock.calls.find((c) => c[0] === 'users')
     expect(usersCall).toBeTruthy()
-    // users call must happen before the charts insert call, per the function's
-    // own stated ordering rationale (FK constraint) — not just "was called".
+    // users call must happen before the charts INSERT call specifically (the
+    // last 'charts' call), per the function's own stated ordering rationale
+    // (FK constraint) — the count-check read is allowed to precede it.
     const fromCallOrder = mockSupabase.from.mock.calls.map((c) => c[0])
-    expect(fromCallOrder.indexOf('users')).toBeLessThan(fromCallOrder.indexOf('charts'))
+    expect(fromCallOrder.indexOf('users')).toBeLessThan(fromCallOrder.lastIndexOf('charts'))
   })
 
   it('converts birthDate to a UTC-midnight ISO string, not a locally-parsed date (avoids the classic off-by-one-day bug across timezones)', async () => {
@@ -76,6 +79,9 @@ describe('createBirthChart', () => {
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'charts') {
         return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => Promise.resolve({ count: 0, error: null })),
+          })),
           insert: vi.fn((payload: Record<string, unknown>) => {
             insertedPayload = payload
             return {
@@ -95,11 +101,27 @@ describe('createBirthChart', () => {
   })
 
   it('returns ok:false INSERT_FAILED (not a throw) when the insert errors — the route depends on this to produce a clean Bulgarian error, not an unhandled exception', async () => {
+    mockSupabase.push('charts', { data: null, error: null, count: 0 })
     mockSupabase.push('charts', { data: null, error: { message: 'unique violation' } })
 
     const result = await createBirthChart('user-1', VALID_INPUT)
 
     expect(result).toEqual({ ok: false, error: 'INSERT_FAILED', message: 'unique violation' })
+  })
+
+  it('returns ok:false CHART_LIMIT_REACHED, without ever reaching the insert, once the caller already has MAX_CHARTS_PER_USER charts (2026-08-26 sweep finding #3 — chained with the horoscope quota gap, uncapped chart creation let a free account reach thousands of unquota\'d paid generations/day)', async () => {
+    mockSupabase.push('charts', { data: null, error: null, count: 20 })
+
+    const result = await createBirthChart('user-1', VALID_INPUT)
+
+    expect(result).toEqual({
+      ok: false,
+      error: 'CHART_LIMIT_REACHED',
+      message: 'Chart limit of 20 reached.',
+    })
+    // Only the count-check call happened — no insert, no users upsert.
+    const fromCallOrder = mockSupabase.from.mock.calls.map((c) => c[0])
+    expect(fromCallOrder).toEqual(['charts'])
   })
 })
 

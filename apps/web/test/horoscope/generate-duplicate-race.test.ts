@@ -169,7 +169,7 @@ function createFakeSupabase() {
 
   function genericChain(fixedData: unknown) {
     const chain: Record<string, unknown> = {}
-    const methods = ['select', 'eq', 'single', 'upsert', 'insert']
+    const methods = ['select', 'eq', 'single', 'maybeSingle', 'upsert', 'insert']
     for (const m of methods) chain[m] = vi.fn(() => chain)
     chain.then = (onFulfilled?: (v: unknown) => unknown) =>
       Promise.resolve({ data: fixedData, error: null }).then(onFulfilled)
@@ -178,6 +178,27 @@ function createFakeSupabase() {
 
   const from = vi.fn((table: string) => {
     if (table === 'daily_horoscopes') return makeHoroscopesChain()
+    // Premium so checkQuotaAvailable short-circuits without touching
+    // subscription_quotas or the increment_quota_if_available RPC — this
+    // fake has no RPC support and this test's subject is the duplicate-call
+    // race, not quota (see quota-gate.test.ts for that).
+    if (table === 'users') {
+      return genericChain({
+        id: 'user-row-1',
+        clerk_id: 'user_horoscope_race',
+        subscription_tier: 'premium',
+        subscription_status: 'active',
+        subscription_provider: 'stripe',
+        created_at: null,
+        updated_at: null,
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        subscription_expires_at: null,
+        trial_claimed_at: null,
+        deleted_at: null,
+        deletion_scheduled_at: null,
+      })
+    }
     if (table === 'charts') {
       return genericChain({
         id: 'chart-1',

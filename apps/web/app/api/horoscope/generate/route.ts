@@ -11,6 +11,13 @@ import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
+import { ensureUserRecord } from '@/lib/users/ensure-user'
+import {
+  checkQuotaAvailable,
+  decrementQuotaUsage,
+  incrementQuotaUsage,
+} from '@/lib/subscriptions/quota'
+import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 
 export const maxDuration = 60
 
@@ -19,6 +26,11 @@ export async function POST(req: Request) {
   if (!userId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  // Hoisted so refund paths in the outer catch + stream callbacks can see
+  // it. Set non-null only after a successful cap-claim against a free-tier
+  // row (mirrors apps/web/app/api/oracle/generate/route.ts).
+  let claimedPeriodStart: Date | null = null
 
   try {
     await assertRateLimit({
@@ -97,6 +109,44 @@ export async function POST(req: Request) {
 
     if (requestedDate !== today) {
       return Response.json({ content: null, unavailable: true }, { status: 200 })
+    }
+
+    // SECURITY/COST FIX (2026-08-26 sweep, finding #2): this route called no
+    // quota check of any kind — checkQuotaAvailable/incrementQuotaUsage were
+    // only ever wired into oracle/generate. Chained with uncapped chart
+    // creation (finding #3, now capped in createBirthChart), a free account
+    // could reach thousands of unquota'd paid generations/day by creating a
+    // fresh chart per request. Reuses the same monthly ai_readings cap as
+    // oracle/generate; premium is unaffected (checkQuotaAvailable
+    // short-circuits for premium per D1 — see Tier 2 for metering premium).
+    const user = await ensureUserRecord(userId)
+    const quota = await checkQuotaAvailable(user)
+    if (!quota.available) {
+      return Response.json(
+        {
+          error: `Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`,
+          code: 'CAP_REACHED',
+          cap: quota.limit,
+          tier: user.subscription_tier,
+        },
+        { status: 429 }
+      )
+    }
+
+    if (user.subscription_tier !== 'premium') {
+      const claim = await incrementQuotaUsage(userId, quota.periodStart)
+      if (!claim.success) {
+        return Response.json(
+          {
+            error: `Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`,
+            code: 'CAP_REACHED',
+            cap: quota.limit,
+            tier: user.subscription_tier,
+          },
+          { status: 429 }
+        )
+      }
+      claimedPeriodStart = quota.periodStart
     }
 
     let transitPlanets: Omit<PlanetPosition, 'house'>[]
@@ -228,6 +278,9 @@ export async function POST(req: Request) {
     })
 
     if (claimError) {
+      if (claimedPeriodStart) {
+        await decrementQuotaUsage(userId, claimedPeriodStart)
+      }
       if ((claimError as { code?: string }).code === '23505') {
         return Response.json(
           { error: 'Хороскопът вече се генерира. Опитай отново след малко.' },
@@ -250,6 +303,9 @@ export async function POST(req: Request) {
         .eq('content', '')
       if (error) {
         console.error('[Horoscope Generate] Failed to release claim after generation failure:', error)
+      }
+      if (claimedPeriodStart) {
+        await decrementQuotaUsage(userId!, claimedPeriodStart)
       }
     }
 

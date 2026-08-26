@@ -13,6 +13,7 @@ import { assertRateLimit } from '@/lib/rate-limit'
  * in §10.2; see PRE_LAUNCH_PREREQS.md item 2 for the monitoring rationale):
  *   ERR-BD-001 — POST insert failed (DB write rejected post-validation)
  *   ERR-BD-004 — GET list failed (listBirthCharts threw)
+ *   ERR-BD-005 — POST rejected: caller already has MAX_CHARTS_PER_USER charts
  */
 
 /**
@@ -84,6 +85,15 @@ export async function POST(request: Request) {
 
     const result = await createBirthChart(userId, validation.data)
     if (!result.ok) {
+      if (result.error === 'CHART_LIMIT_REACHED') {
+        return Response.json(
+          {
+            error: 'Достигна лимита за брой рождени карти.',
+            code: 'ERR-BD-005',
+          },
+          { status: 429 },
+        )
+      }
       logServerError('ERR-BD-001', result.error, {
         context: 'POST /api/birth-data insert failed',
         message: result.message,

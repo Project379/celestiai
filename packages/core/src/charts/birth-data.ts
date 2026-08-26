@@ -29,6 +29,14 @@ export interface BirthChartRow {
 export type CreateBirthChartResult =
   | { ok: true; data: BirthChartRow }
   | { ok: false; error: 'INSERT_FAILED'; message: string }
+  | { ok: false; error: 'CHART_LIMIT_REACHED'; message: string }
+
+// A real user needs at most a handful of charts (self, plus a couple of
+// time-uncertainty variants or family members added outside Кръг). This
+// caps chart-creation spam — uncapped, each chart is a fresh cache key
+// that unlocks another paid AI horoscope generation regardless of the
+// account's subscription tier or quota (2026-08-26 sweep, finding #3).
+const MAX_CHARTS_PER_USER = 20
 
 export type BirthChartByIdResult =
   | { ok: true; data: BirthChartRow }
@@ -65,6 +73,28 @@ export async function createBirthChart(
   input: CreateBirthChartInput,
 ): Promise<CreateBirthChartResult> {
   const supabase = createCoreSupabaseClient()
+
+  const { count, error: countError } = await supabase
+    .from('charts')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  if (countError) {
+    console.error('[core/charts/birth-data] chart count check failed:', countError)
+    return {
+      ok: false,
+      error: 'INSERT_FAILED',
+      message: countError.message,
+    }
+  }
+
+  if ((count ?? 0) >= MAX_CHARTS_PER_USER) {
+    return {
+      ok: false,
+      error: 'CHART_LIMIT_REACHED',
+      message: `Chart limit of ${MAX_CHARTS_PER_USER} reached.`,
+    }
+  }
 
   // Ensure the user row exists before inserting a chart (FK constraint)
   await supabase
