@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-26 (DEVICE PASS PASSED — Batches 1-7 verified on the real Android build and closed out; full technical sweep run against production, see .planning/TECHNICAL-SWEEP-2026-08-26.md; crystal_recommendations RLS and REVISIT-64 Sentry entries corrected as wrong; nothing fixed, awaiting founder ruling on the sweep's findings)
+last-updated: 2026-08-26 (Tiers 1 and 2 of the technical sweep shipped same-day — see §0. Device pass PASSED for Batches 1-7 on the real Android build; crystal_recommendations RLS and REVISIT-64 Sentry entries corrected as wrong. Two DB migrations prepared but deliberately not applied — founder-owned, see §5)
 ---
 
 # Completion Tracker
@@ -50,31 +50,66 @@ VERIFIED/INFERRED labels: `.planning/TECHNICAL-SWEEP-2026-08-26.md`.
   already-correct `ok:false` signal, previously logged and swallowed the
   same way, now throws too. Proven against pre-fix code the same way.
 
-**Tier 2 — in progress.** #4/#5 (meter premium), #6/#13 (GDPR crystals
-tables + FK), #8 (capture migrations for 16 untracked tables), #14
-(self-resetting regenerate cooldown), #17 (rate limiter fail-closed on
-money routes).
+**Tier 2 — shipped 2026-08-26** (`fabe1d2`, `e825d7e`, `77c06b4`, `60fb5ab`,
+`2081a20`):
+
+- **#4 HIGH, premium unmetered on every AI path.** Fixed: oracle/generate
+  and horoscope/generate now share one quota gate at
+  `PREMIUM_MONTHLY_LIMIT` (300/month) instead of premium short-circuiting
+  entirely. Deliberately invisible as a safety net, not a product feature
+  — premium hitting it gets a generic 503 (no `CAP_REACHED` code, no
+  number in the payload), indistinguishable from a real outage; free tier
+  keeps its existing 429 + number, since that IS a surfaced product limit.
+  Crossing 200/month alerts via `Sentry.captureMessage` (plain
+  `console.error` would not reach Sentry — this repo's server config has
+  no console-capture integration).
+- **#5 HIGH, corrected — not "unmetered paid generations."** Read
+  `lib/circle/report.ts` in full: both circle report routes build content
+  from a deterministic template over an already-computed compatibility
+  summary — zero `generateText`/`streamText`/`openrouter` calls anywhere
+  in that path. Corrected in the sweep doc §4.4 rather than silently
+  fixed. The real (smaller) cost — an uncapped version row + synastry
+  recompute per POST, only a 5/min rate limit as a brake — got
+  `MAX_REPORT_VERSIONS_PER_PAIR` (50), the same "rate limit but no hard
+  ceiling" gap birth-data had before its chart cap.
+- **#6/#13 HIGH, GDPR crystals tables.** `user_crystals` /
+  `user_daily_crystals` added to both the cleanup cron and GDPR export
+  (code fix, shipped). **FK migration prepared but NOT applied** — see §5
+  Blocked-externally, founder-owned: checking read-only against production
+  before writing it found 3 + 10 real orphaned rows, all one clerk_id with
+  no `users` row, dated 2026-04-15 — this exact bug already having
+  happened once.
+- **#8 HIGH, 16 untracked tables.** Capture migration written
+  (`supabase/migrations/20260826150000_capture_untracked_tables.sql`),
+  extracted from production via read-only queries and self-verified
+  programmatically (every column/type/nullable/default/constraint/index
+  cross-checked — zero missing, zero extra). **NOT applied** — per §1.5's
+  own "do not `db push` blind" warning, this needs
+  `supabase migration repair --status applied 20260826150000`, not a push.
+  Founder-owned; see §5.
+- **#14 MEDIUM, regenerate cooldown resetting itself.** Fixed: a fresh
+  generation now omits `last_regenerated_at` from its upsert instead of
+  writing `null` over it — Postgres `ON CONFLICT DO UPDATE SET` only
+  touches payload columns, so a prior regeneration's timestamp survives.
+- **#17, rate limiter fails open everywhere.** Fixed on the three
+  money-spending paths only (oracle/generate, horoscope/generate,
+  birth-data create) via an opt-in `failClosed` flag on `assertRateLimit`
+  — default unchanged (fail open) everywhere else, per the ruling.
+
+Every Tier 2 fix proven against pre-fix code (git-stashed, confirmed fail,
+restored, confirmed pass) before landing, same discipline as Tier 1.
 
 **Tier 3 — not started.** #10–#12, #15, #16, #18–#20 (see sweep doc §0).
 
-**Standing action from this sweep, not tied to one tier:** #7's root cause
-(supabase-js not throwing on `.delete()`/`.update()` failure) is a property
-of the client, not of the one cron it surfaced in — a repo-wide sweep for
-the same unchecked-error shape is running/complete as of the note that
-prompted it; see the entry below once landed.
+Still true, unaffected by Tier 1/2 code fixes — both are prepared
+migrations awaiting founder action, not open findings:
 
-Still true from the original sweep and unaffected by Tier 1:
-
-- **HIGH** Migration ledger holds 6 rows against 16 repo files, and 16
-  production tables have no CREATE TABLE anywhere (Tier 2 #8). **Do not run
-  `supabase db push`** — it would replay a destructive schema_hardening
-  migration. (§1.4–1.5)
-- **HIGH** Diary list and both crons are unbounded; the web push cron is
-  sequential under a 300s cap (Tier 3, not yet scheduled). (§6.3–6.4)
 - Web production build **passes locally** (exit 0), so the Vercel failure is
   environmental; ranked diagnostic order in §7.
 - Section 3 (authorisation) came out clean — no untrusted client IDs, no
   missing ownership scoping, no unauthenticated path to authenticated data.
+- Diary list and both crons are unbounded; the web push cron is sequential
+  under a 300s cap (Tier 3, not yet scheduled). (§6.3–6.4)
 
 ## 1. Context block
 
@@ -1485,6 +1520,7 @@ one first.
 |---|---|---|
 | **Vercel** (production deploy target) — **hard blocker, confirmed two independent ways, not "not currently blocking" as this row said as of 2026-08-13.** | **`stellaeum.com` returns a direct 404.** The GitHub Deployments API shows 18 checked deployments spanning 2026-07-29 through the commit pushed minutes before this check (`345f4dc`) — **every single one is `state: failure`**, including the newest. This one item is what's actually gating: **(1)** `EXPO_PUBLIC_WEB_APP_URL` — the `/you/premium` free-state "subscribe on web" CTA has no URL to point at. **(2)** the `/you/settings.tsx` hardcoded privacy-policy link — a real **Apple App Store submission rejection** waiting to happen, not just a dead link a user might tap; Apple requires a reachable privacy URL at submission. **(3)** the RevenueCat webhook end-to-end test — can't be exercised against a webhook endpoint that isn't live. Full repo-side diagnostic prep (env var inventory build-time vs. runtime, monorepo/native-module build risks, a read-the-log-against-this-list diagnostic order) is in `.planning/VERCEL-DEPLOY-DIAGNOSTIC.md` — founder is working the dashboard directly, not delegating the fix. | **Founder — real, current, active blocker. Owns the fix, working it now.** |
 | **RevenueCat webhook integration + real signing secret** — sweep finding #1 (CRITICAL), Tier 1 fix landed 2026-08-26 but only half-closes it. `REVENUECAT_WEBHOOK_SECRET` in `apps/web/.env.local` was rotated off the forgeable value (it was byte-identical to `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`, shipped in the app bundle) to a random placeholder that has never appeared in any client bundle. **Current state: the webhook is dead, not forgeable** — safer than before, but not working, because the placeholder is not RevenueCat's real signing secret and every real webhook call will 401 at the HMAC check. | Real subscription-state sync from RevenueCat to `users.subscription_tier` — the webhook the placeholder blocks is what `revenuecat/webhook-events.ts` needs to ever run against live traffic. Also blocks the RevenueCat webhook end-to-end test named in the Vercel row above. | **Founder — dashboard-only, not delegable.** In RevenueCat Dashboard → Project Settings → Webhooks: create the webhook integration, toggle HMAC signing on, copy the signing secret it shows once. Set `REVENUECAT_WEBHOOK_SECRET` to that value in `apps/web/.env.local`, and again on Vercel once it deploys (see the Vercel row above) — both locations need the real value, not just one. |
+| **Two prepared-but-unapplied DB migrations** (Tier 2 #6/#8, 2026-08-26) — `supabase/migrations/20260826140000_user_crystals_fk.sql` (FK on `user_crystals`/`user_daily_crystals` → `users`) and `20260826150000_capture_untracked_tables.sql` (CREATE TABLE capture for the 16 untracked tables, self-verified against production, zero missing/extra). Neither was applied by this session, matching the sweep's own §1.5 "do not `db push` blind" warning. | The FK migration will FAIL as-is: 3 rows in `user_crystals` + 10 in `user_daily_crystals`, all one clerk_id (`user_3CJ6TxYOTVGpGhsznsp3Sevygng`, dated 2026-04-15) with no matching `users` row today — this exact GDPR bug already having happened once, needing a founder decision (purge vs. relink) before the constraint can apply. The capture migration is safe (documentary only) but still needs a human `supabase migration repair` run, not a push. | **Founder.** Capture migration: `supabase migration repair --status applied 20260826150000` once reviewed. FK migration: decide the orphaned user's data first (purge or relink), then run the two `ALTER TABLE` statements (currently commented out in the file) directly. |
 | **Apple Developer Program enrollment** | TestFlight provisioning, SR 9 (EAS Dev Client + TestFlight + biometric auth bundle), the soft-launch milestone itself (iOS internal beta can't open without it) | Founder — application/payment step, not automatable |
 | **LLM model swap (OpenRouter/Llama → BgGPT)** | Nothing currently — deliberately deferred, not gating launch. Would need a controlled quality eval (same prompts/chart/topic, human-rated) before it's even a live decision, not just an engineering swap | Founder — product call on Bulgarian-quality-vs-parameter-count tradeoff, per `AI_PROVIDER_DECISION.md §5` |
 | **Swiss Ephemeris Professional License purchase** | Nothing pre-launch by design — GPL-2.0 path is legally sufficient until the trigger fires. CHF 700 one-time, no retroactive coverage (contract clause 13) once the trigger does fire | Founder — automatic trigger already wired (`[Licensing]`-prefixed warnings on first genuine paying subscriber in both `stripe/subscription.ts` and `revenuecat/webhook-events.ts`); founder must act promptly once it fires, not "eventually" |
