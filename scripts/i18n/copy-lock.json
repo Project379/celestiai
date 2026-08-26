@@ -1,5 +1,5 @@
 {
-  "count": 2997,
+  "count": 3000,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -836,6 +836,7 @@
     "apps/web/app/api/birth-data/[id]/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/birth-data/[id]/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/birth-data/[id]/route.ts::'Сесията ти изтече. Влез отново.'",
+    "apps/web/app/api/birth-data/route.ts::'Достигна лимита за брой рождени карти.'",
     "apps/web/app/api/birth-data/route.ts::'Не успяхме да запазим рождените данни. Опитай отново. Код: ERR-BD-001.'",
     "apps/web/app/api/birth-data/route.ts::'Не успяхме да запазим рождените данни. Опитай отново. Код: ERR-BD-001.'",
     "apps/web/app/api/birth-data/route.ts::'Не успяхме да заредим списъка с рождени данни. Опитай отново. Код: ERR-BD-004.'",
@@ -971,6 +972,8 @@
     "apps/web/app/api/gdpr/delete-account/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/gdpr/export/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/horoscope/generate/route.ts::'Хороскопът вече се генерира. Опитай отново след малко.'",
+    "apps/web/app/api/horoscope/generate/route.ts::`Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`",
+    "apps/web/app/api/horoscope/generate/route.ts::`Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`",
     "apps/web/app/api/oracle/generate/route.ts::'Грешка при генериране на четенето'",
     "apps/web/app/api/oracle/generate/route.ts::'Грешка при запазване на четенето'",
     "apps/web/app/api/oracle/generate/route.ts::'Картата не е намерена'",
