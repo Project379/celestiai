@@ -64,10 +64,16 @@ export async function POST(request: Request) {
   }
 
   try {
+    // failClosed (2026-08-26 sweep #17): chart creation feeds directly into
+    // the horoscope/generate cost chain — each new chart is a fresh quota-
+    // cache key (sweep finding #3). The MAX_CHARTS_PER_USER cap in
+    // createBirthChart throws (not fails open) on its own DB errors, but
+    // this route's burst limiter is still the first line of defense.
     await assertRateLimit({
       key: `birth-data-create:${userId}`,
       limit: 10,
       windowMs: 60_000,
+      failClosed: true,
     })
 
     const body = await request.json()

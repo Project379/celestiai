@@ -145,6 +145,11 @@
  * still counted, just once instead of sixteen times) plus the one new
  * premium-tier string, netting -11.
  *
+ * Raised to 1755 on 2026-08-26 (Tier 2 #17 — rate limiter fail-closed on
+ * money routes): +1, the new 503 message in lib/rate-limit.ts for the
+ * failClosed error path (oracle/generate, horoscope/generate, birth-data
+ * create).
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -154,7 +159,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1754
+const BASELINE = 1755
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

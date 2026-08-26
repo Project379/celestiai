@@ -66,10 +66,16 @@ export async function POST(req: Request) {
     // Burst guard, defense-in-depth alongside the monthly quota cap and the
     // 24h regen cooldown below — neither of those blocks a rapid-fire burst
     // within a single window the way this does.
+    // failClosed (2026-08-26 sweep #17): this route calls a paid OpenRouter
+    // model. A Supabase-degradation fail-open here would remove the burst
+    // brake on a real-money route while the monthly quota cap (which
+    // throws, not fails open, on its own DB errors) is the only other
+    // control left.
     await assertRateLimit({
       key: `oracle-generate:${userId}`,
       limit: 10,
       windowMs: 60_000,
+      failClosed: true,
     })
 
     // 2. Parse and validate body

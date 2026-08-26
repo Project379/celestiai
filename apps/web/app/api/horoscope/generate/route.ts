@@ -33,10 +33,13 @@ export async function POST(req: Request) {
   let claimedPeriodStart: Date | null = null
 
   try {
+    // failClosed (2026-08-26 sweep #17): this route calls a paid OpenRouter
+    // model — same reasoning as oracle/generate.
     await assertRateLimit({
       key: `horoscope-generate:${userId}`,
       limit: 5,
       windowMs: 60_000,
+      failClosed: true,
     })
 
     const body = await req.json()

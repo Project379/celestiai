@@ -82,6 +82,50 @@ describe('assertRateLimit', () => {
       assertRateLimit({ key: 'k', limit: 10, windowMs: 60_000 }),
     ).resolves.toBeUndefined()
   })
+
+  describe('failClosed (2026-08-26 sweep #17)', () => {
+    it('throws a 503 ApiError (not fail-open) when the RPC errors and failClosed:true', async () => {
+      mockSupabase.pushRpc('check_and_increment_rate_limit', {
+        data: null,
+        error: { message: 'connection reset' },
+      })
+
+      const err = await assertRateLimit({
+        key: 'oracle-generate:user_1',
+        limit: 10,
+        windowMs: 60_000,
+        failClosed: true,
+      }).catch((e) => e)
+
+      expect(err).toBeInstanceOf(ApiError)
+      expect((err as InstanceType<typeof ApiError>).status).toBe(503)
+    })
+
+    it('still fails open when failClosed is omitted, even on the same RPC error — the default posture is unchanged', async () => {
+      mockSupabase.pushRpc('check_and_increment_rate_limit', {
+        data: null,
+        error: { message: 'connection reset' },
+      })
+
+      await expect(
+        assertRateLimit({ key: 'k', limit: 10, windowMs: 60_000 }),
+      ).resolves.toBeUndefined()
+    })
+
+    it('still enforces the real limit normally when failClosed:true and the RPC succeeds — this only changes the ERROR-path behavior', async () => {
+      mockSupabase.pushRpc('check_and_increment_rate_limit', { data: 11 })
+
+      const err = await assertRateLimit({
+        key: 'oracle-generate:user_1',
+        limit: 10,
+        windowMs: 60_000,
+        failClosed: true,
+      }).catch((e) => e)
+
+      expect(err).toBeInstanceOf(ApiError)
+      expect((err as InstanceType<typeof ApiError>).status).toBe(429)
+    })
+  })
 })
 
 describe('getRequestIp', () => {
