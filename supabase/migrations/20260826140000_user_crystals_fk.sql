@@ -4,34 +4,55 @@
 -- daily-crystal history could survive a GDPR account deletion permanently:
 -- nothing at the database level tied their lifetime to the users row.
 --
--- NOT SAFE TO APPLY BLINDLY. Verified read-only against production
--- (2026-08-26): user_crystals has 3 orphaned rows and user_daily_crystals
--- has 10, ALL belonging to a single clerk_id, user_3CJ6TxYOTVGpGhsznsp3Sevygng
--- (dated 2026-04-15), which has no matching row in `users` today. That is
--- exactly the bug this migration exists to close, already having happened
--- once in production — a user's crystal data outlived their account. Adding
--- the FK constraint below will FAIL until those orphaned rows are resolved
--- one way or the other. This migration deliberately does NOT delete them
--- automatically: deleting real (if orphaned) user data is a production
--- action requiring a human decision, not something to fold silently into a
--- schema migration. Founder: decide whether that user's data should be
--- purged (matching what GDPR deletion should have already done) or the
--- clerk_id was simply retired/renamed and the row should be re-linked, THEN
--- run this file. See the sweep doc / COMPLETION-TRACKER.md for the finding.
+-- Orphan investigation (2026-08-26), ruled on by the founder same day:
+-- 3 rows in user_crystals and 10 in user_daily_crystals, ALL belonging to
+-- one clerk_id, user_3CJ6TxYOTVGpGhsznsp3Sevygng (dated 2026-04-15), which
+-- has no matching row in `users`. Checked three things before ruling:
+--   1. Clerk API for that user ID directly (not inferred from the missing
+--      join) — 404 resource_not_found. The account does not exist; this
+--      is not a live partially-deleted user.
+--   2. audit_logs for that clerk_id — zero rows. audit_logs' FK to users
+--      is ON DELETE SET NULL, not CASCADE, so a real GDPR deletion run
+--      through this app would have left a null-user_id
+--      account.deletion_requested (or similar) row behind, not erased it.
+--      Its total absence rules out "GDPR flow ran and partially failed"
+--      as the cause — most likely this is manual test-data cleanup that
+--      predates the cleanup cron and audit logging entirely (April, early
+--      in the project), not a broken deletion.
+--   3. The actual row content — both tables hold only derived/generated
+--      data (algorithmically-triggered crystal collections with templated
+--      reason text, and a bare crystal_id+date+timestamp visit log), no
+--      user-authored content in either table.
+-- Ruling: delete the 13 rows (dead account, no live-user risk, nothing a
+-- person wrote), then add the FK so this can't happen silently again.
 --
--- Once the orphans are resolved, this is the same FK shape already used
--- for every other user-scoped table (e.g. charts, push_tokens —
--- 20260413141504_schema_hardening.sql, 20260803070000_push_tokens.sql):
+-- This is the same FK shape already used for every other user-scoped
+-- table (e.g. charts, push_tokens — 20260413141504_schema_hardening.sql,
+-- 20260803070000_push_tokens.sql):
 -- FOREIGN KEY (user_id) REFERENCES public.users(clerk_id) ON DELETE CASCADE.
 
--- Uncomment and run ONLY after confirming there are zero orphaned rows:
+-- Verify before running (expect exactly 3 and 10):
+--   SELECT count(*) FROM user_crystals WHERE user_id = 'user_3CJ6TxYOTVGpGhsznsp3Sevygng';
+--   SELECT count(*) FROM user_daily_crystals WHERE user_id = 'user_3CJ6TxYOTVGpGhsznsp3Sevygng';
+
+DELETE FROM public.user_crystals WHERE user_id = 'user_3CJ6TxYOTVGpGhsznsp3Sevygng';
+DELETE FROM public.user_daily_crystals WHERE user_id = 'user_3CJ6TxYOTVGpGhsznsp3Sevygng';
+
+-- Verify after the deletes (expect 0 orphans in both, confirming no OTHER
+-- orphaned clerk_id slipped in since the 2026-08-26 read-only check):
 --   SELECT count(*) FROM user_crystals uc WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.clerk_id = uc.user_id);
 --   SELECT count(*) FROM user_daily_crystals udc WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.clerk_id = udc.user_id);
---
--- ALTER TABLE public.user_crystals
---   ADD CONSTRAINT user_crystals_user_id_fkey
---   FOREIGN KEY (user_id) REFERENCES public.users(clerk_id) ON DELETE CASCADE;
---
--- ALTER TABLE public.user_daily_crystals
---   ADD CONSTRAINT user_daily_crystals_user_id_fkey
---   FOREIGN KEY (user_id) REFERENCES public.users(clerk_id) ON DELETE CASCADE;
+-- If either is not 0, STOP — do not run the ALTER TABLE statements below
+-- until you've identified what the new orphan is (same three checks as
+-- above: Clerk API, audit_logs, row content).
+
+ALTER TABLE public.user_crystals
+  ADD CONSTRAINT user_crystals_user_id_fkey
+  FOREIGN KEY (user_id) REFERENCES public.users(clerk_id) ON DELETE CASCADE;
+
+ALTER TABLE public.user_daily_crystals
+  ADD CONSTRAINT user_daily_crystals_user_id_fkey
+  FOREIGN KEY (user_id) REFERENCES public.users(clerk_id) ON DELETE CASCADE;
+
+-- Verify after the ALTER TABLEs (expect both constraint names to show up):
+--   SELECT conname FROM pg_constraint WHERE conname IN ('user_crystals_user_id_fkey', 'user_daily_crystals_user_id_fkey');
