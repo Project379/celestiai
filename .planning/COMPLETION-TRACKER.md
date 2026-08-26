@@ -277,25 +277,32 @@ chart-tab perf regression, close out documentation hygiene from the
   died mid-task on a session usage cap — neither had made any edits before
   dying (confirmed via `git status` before resuming), so all of the above
   was redone directly rather than resumed from a partial agent state.
-- REVISIT-64 — **CORRECTED 2026-08-26. Mobile Sentry events are not landing
-  in web's project; they are not being sent at all.** `apps/mobile/.env.local`
-  defines `NEXT_PUBLIC_SENTRY_DSN`, which Expo never inlines, while
-  `lib/monitoring/sentry.ts` reads `EXPO_PUBLIC_SENTRY_DSN` — so `dsn` is
-  undefined and `Sentry.init` never runs. The mirror-image swap disables
-  web's *browser-side* Sentry too (`apps/web/.env.local` has
-  `EXPO_PUBLIC_SENTRY_DSN` but no `NEXT_PUBLIC_SENTRY_DSN`). The 2026-08-26
-  device pass therefore ran with no crash reporting attached. See
-  `.planning/TECHNICAL-SWEEP-2026-08-26.md` §2.2. Original (superseded)
-  note follows: root cause confirmed: mobile's Sentry init
-  (`lib/monitoring/sentry.ts`) only depends on `EXPO_PUBLIC_SENTRY_DSN`,
-  and that DSN was created under web's Sentry project. **Not code-fixable
-  — needs a founder action**: create a dedicated "react-native" Sentry
-  project in the dashboard and set the new DSN as `EXPO_PUBLIC_SENTRY_DSN`
-  in both EAS env (`preview`/`development`) and local `.env.local`.
-- RevenueCat placeholder key, `.env.local` var-name fix
-  (`NEXT_PUBLIC_SENTRY_DSN` → `EXPO_PUBLIC_SENTRY_DSN`), and the
-  `EXPO_PUBLIC_API_BASE` mismatch (192.168.1.4 vs the cleartext-whitelisted
-  10.0.2.2) — founder is applying these directly, not Claude-Code work.
+- REVISIT-64 — **PARTIALLY FIXED 2026-08-26 (Tier 3 #12).** Root cause was
+  the var-name swap: `apps/mobile/.env.local` had `NEXT_PUBLIC_SENTRY_DSN`
+  (mobile's `lib/monitoring/sentry.ts` reads `EXPO_PUBLIC_SENTRY_DSN`, so
+  `dsn` was undefined and `Sentry.init` never ran) while
+  `apps/web/.env.local` had the mirror-image `EXPO_PUBLIC_SENTRY_DSN`
+  (web's `instrumentation-client.ts` reads `NEXT_PUBLIC_SENTRY_DSN`) —
+  browser-side Sentry was dead in both apps; only web *server*-side worked.
+  The 2026-08-26 device pass ran with no crash reporting attached. See
+  `.planning/TECHNICAL-SWEEP-2026-08-26.md` §2.2.
+  **Fixed: both local `.env.local` files now have the correct var name**
+  (both gitignored, so this is dev-only — verified `git status` shows
+  nothing to commit). **Still open, founder-owned:**
+  1. Both apps currently point at the SAME Sentry project/DSN — issue
+     streams will merge until a dedicated mobile project is created in the
+     dashboard and its DSN swapped in.
+  2. `apps/mobile/eas.json` has no Sentry var at all (grepped — zero
+     hits), so production EAS builds have never had a DSN of any kind;
+     `EXPO_PUBLIC_SENTRY_DSN` needs to be added as an EAS secret/env var
+     (`preview` and `development` profiles at minimum) before this fix
+     reaches a real device build, not just local dev.
+  3. Vercel needs `NEXT_PUBLIC_SENTRY_DSN` set in its project env once it
+     deploys — it's build-time inlined, so it must exist before the first
+     successful build, not added after.
+- RevenueCat placeholder key, and the `EXPO_PUBLIC_API_BASE` mismatch
+  (192.168.1.4 vs the cleartext-whitelisted 10.0.2.2) — founder is applying
+  these directly, not Claude-Code work.
 
 **Rulings that constrain this batch:** webhook/cron rate-limit exclusion is
 correct (signature/secret verification is a stronger control) but must be
