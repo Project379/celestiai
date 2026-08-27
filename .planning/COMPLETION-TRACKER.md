@@ -1767,11 +1767,12 @@ they were forgotten rather than deferred on purpose.
   otherwise). **SIWA sits UNTESTED for however long Apple enrolment
   takes** — the native-auth path needs a new dev-client build the founder
   can't produce/test on the current one, and end-to-end config needs the
-  Apple capability + keys. Clerk account-linking: verified 2026-08-27 —
-  Clerk's DEFAULT already links on verified email (Google always verified,
-  Apple relay address is stable per-app). Founder just confirms "Verify
-  at sign-up" ON + linking not set to a stricter non-default, both
-  instances. **Unfixable edge:** Apple "hide my email" user who later
+  Apple capability + keys. Clerk account-linking: verified 2026-08-27 via
+  Clerk docs — email-based linking "is always on" with "no dashboard
+  setting to enable or disable" it (Google always verified, Apple relay
+  address is stable per-app). There is NO account-linking toggle to find
+  or set on either instance; the only lever is "Verify at sign-up" (ON,
+  done). **Unfixable edge:** Apple "hide my email" user who later
   uses Google = two different addresses = two accounts, nothing automatic
   merges them (a future "Connected accounts" screen would let them
   self-serve; not a launch blocker). Open rulings: SIWA

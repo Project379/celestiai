@@ -128,7 +128,7 @@ for email/password + Google + Apple:**
 | Apple user, email shared | Real email. No issue. |
 | Apple user, "Hide My Email" | Clerk receives `xxxxxxxx@privaterelay.appleid.com` — a **real, deliverable, app-unique** address (Apple forwards mail). Won't collide with anything. |
 | Apple user, hidden email **and** no name | `getDisplayName` (`apps/mobile/lib/clerk/displayName.ts`) resolves: `firstName lastName` → **email username** → `'Ти'`. It would show the relay hash (`xxxxxxxx`) as the name. **Cosmetic bug** — fix: when the email host is `privaterelay.appleid.com`, skip the username step and use the `'Ти'` placeholder. One-line change, do it when SIWA lands. |
-| **Account linking** | The real new risk. User signs up with Google (`a@gmail.com`), later uses SIWA and Apple returns the same verified `a@gmail.com`. Clerk's **account-linking setting** decides: auto-link to the existing user (good) vs. create a second user (bad → "why are my charts gone / I can't log in"). **Must set Clerk's "account linking" to link on verified email**, and confirm behaviour on both the dev and (later) production instances. |
+| **Account linking** | User signs up with Google (`a@gmail.com`), later uses SIWA and Apple returns the same verified `a@gmail.com`. Clerk **auto-links to the existing user and signs them in** — this is the wanted behaviour and it is **automatic and unconfigurable**. Clerk's current docs: email-based linking "is always on" with "no dashboard setting to enable or disable" it (source: `guides/configure/auth-strategies/social-connections/account-linking`). ~~Must set Clerk's "account linking" to link on verified email~~ — **corrected 2026-08-27: there is no such setting.** The only real prerequisite is "Verify at sign-up" ON (already done), so a pre-registered unverified email can't hijack a future OAuth login. Nothing to configure on dev or production. |
 
 **Nothing keys on email or assumes it's unique in our code** (VERIFIED —
 grep). Clerk enforces intra-instance email uniqueness itself. The only
@@ -170,7 +170,7 @@ code touch is the `displayName.ts` relay-host guard.
 |---|---|---|
 | Google: Clerk dashboard connection (dev shared creds) | 15 min | — |
 | Google: mobile "Continue with Google" button + `startSSOFlow` + errors | 1–2 d | — |
-| Google: account-linking setting in Clerk (link on verified email) | 15 min | — |
+| ~~Google: account-linking setting in Clerk~~ — **no setting exists**, linking is always on (see §4) | 0 | — |
 | Google: web — confirm prebuilt buttons render (config only) | 0.5 d | — |
 | Google Cloud: OAuth consent screen + Web client (production creds) | 1 h | resolving `/privacy` URL (Vercel) |
 | SIWA: `expo-apple-authentication` config plugin + `app.json` (`usesAppleSignIn`, entitlement) | 0.5 d | — |

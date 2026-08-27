@@ -21,10 +21,11 @@ Six items from the founder's list, researched against our code. Summary
 table first, then the two that need judgement (item 3 hard-delete, item 6
 generated policy) in prose, then item-by-item detail.
 
-The headline: **item 1 (Sign in with Apple) is very likely NOT required
-for us as the app stands**, item 3's "null fields" tip is **wrong** and
-following it would fail *both* regimes, and the real blockers are the
-web-side pages (support URL, `/terms`) that are already on the
+The headline: **item 1 (Sign in with Apple) is a submission blocker** —
+mandatory under Guideline 4.8 now that Google sign-in is a launch feature
+(see the correction note above). Item 3's "null fields" tip is **wrong**
+and following it would fail *both* regimes. The other real blockers are
+the web-side pages (support URL, `/terms`) that are already on the
 founder-track list.
 
 ---
@@ -366,10 +367,19 @@ production instance):**
    sign-up": ON.** This is the security prerequisite for safe
    email-based linking (an attacker mustn't be able to pre-register an
    unverified email to capture a future OAuth login).
-2. **Configure → Authentication → SSO / Social connections → Account
-   linking:** confirm it's set to **link on verified email address**
-   (Clerk's default). Only a stricter non-default setting would break the
-   Google-then-Apple-same-email case.
+2. **There is no "account linking" toggle to find.** Clerk's current docs
+   are explicit: email-based account linking "is always on" and has "no
+   dashboard setting to enable or disable" it. When an OAuth provider
+   returns a **verified** email matching an existing user, Clerk links and
+   signs in — automatically, unconfigurable. That is why the founder could
+   not find it on the SSO connections page: it is not a setting. The only
+   dashboard lever that matters here is step 1 ("Verify at sign-up"),
+   which is the security prerequisite and is already ON. Nothing else to
+   set on dev or production. (The earlier "confirm it's set to link on
+   verified email" wording in this doc and in
+   `AUTH-PROVIDER-EXPANSION-2026-08-27.md` §4 was based on older Clerk
+   behaviour and is superseded — corrected 2026-08-27, source: Clerk docs
+   `guides/configure/auth-strategies/social-connections/account-linking`.)
 
 **When the emails DIFFER — and nothing automatic can fix it.** An Apple
 "Hide My Email" user (`abc123@privaterelay.appleid.com`) who later signs
@@ -442,8 +452,9 @@ person as an existing relay-email account.
   `audit_logs` payment rows (already de-identified) after account
   deletion, given Stripe/Apple retain theirs? If no → prune them in the
   cron.
-- **Clerk dashboard:** confirm "Verify at sign-up" ON and account
-  linking = "link on verified email" (both instances). See §7.
+- **Clerk dashboard:** "Verify at sign-up" is ON (done). Account linking
+  has no toggle — it is always on in Clerk and needs no configuration on
+  either instance. See §7.
 - **SIWA token-revocation failure handling:** best-effort-and-proceed
   (recommended) vs. revoke-or-defer — ruling needed when SIWA is built.
 - **`displayName.ts` relay-host guard** and **Clerk "Connected accounts"
