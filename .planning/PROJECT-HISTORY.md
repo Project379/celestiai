@@ -363,3 +363,48 @@ platforms, the production deploy is finally real, and what stands between
 here and launch is a visual polish pass, the Apple and Google store
 enrolment clock, a privacy policy from a Bulgarian lawyer, and one
 long-postponed decision about which AI model to actually ship.
+
+---
+
+## Postscript — how 27 August actually ended
+
+This document was written mid-afternoon on 27 August, during a stretch
+where the production app was behaving inexplicably: a fix would ship,
+Vercel would say "Ready," and a test request would still fail with the
+old error. Hours went into diagnosing what looked like a third distinct
+bug in the AI path — a careful analysis that concluded the AI provider
+was returning an empty response.
+
+That analysis was wrong, because the thing it was analysing was fake.
+**Vercel's Skew Protection** was routing the browser's requests to a
+deployment that had been loaded *before* the fixes landed — so every
+test was hitting old code. The two earlier fixes (the missing astronomy
+library, the frozen file path) had both worked the first time; the
+"third bug" was just the pre-fix code still being served.
+
+Once Skew Protection was turned off and a clean browser tab was opened,
+`POST /api/horoscope/generate` returned 200 — a real Bulgarian reading,
+computed from a real chart, through the real AI call. Every other page
+and route checked returned 200 as well. **The app works in production.**
+
+The episode is a near-perfect illustration of this document's own "Stop"
+list: *trusting a deploy you haven't exercised through the real path*,
+and *testing everything from one long-lived browser session*. It cost an
+afternoon. It also produced two pieces of genuine hardening that were
+worth keeping (a clean 502-with-retry for the day an AI provider really
+does fail, and error-reporting for a class of 500s that had been
+invisible) — built for a phantom, but aimed at real gaps the phantom
+happened to walk past.
+
+The lasting lesson got written down separately, at the top of
+`VERIFICATION-SURFACE-GAPS.md`: **every observation has a scope, and the
+scope is usually narrower than it looks.** A passing check, a clean
+dashboard, a reproduced error — each tells you something true about a
+small slice of the system, and the mistake is reading a whole-system
+conclusion out of it. That happened three times on 27 August alone.
+
+**End state, 27 August:** feature-complete on web and mobile; production
+deploy real and verified working; remaining before launch — a mobile
+visual-polish pass (Batch 8), the Apple/Google store enrolment clock (not
+yet started, gated on money), a Bulgarian lawyer's privacy policy (brief
+written, not sent), and the AI-model decision (open since April).

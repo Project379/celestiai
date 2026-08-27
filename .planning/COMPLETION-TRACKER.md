@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-27 (Sentry caught a production-breaking bug 1h after going live — sweph/geo-tz/dictionary-bg missing from the deployed function; every compute path 500ing. §0.6: sweph + geo-tz FIXED and verified in production (`e64ef9f`), win32-trace residual risk resolved, `/connect/[token]` 500 resolved as a side effect. §0.7: the `bg-allowlist.txt` read — webpack froze `import.meta.url` to the build machine's path; FIXED (allowlist → bundled data module, parsed Set byte-identical). §0.8: with §0.6+§0.7 off, the route finally runs and hits a THIRD failure — `generateText` gets an empty/non-JSON body from OpenRouter → `ai` SDK `JSON.parse('')` → `SyntaxError` → unhandled 500. `OPENROUTER_API_KEY` confirmed present + well-formed (empty-string theory dead). SHIPPED: `[OPENROUTER-DEBUG]` response-body shim (in the built bundle) + `isUpstreamAiError` classification → clean **502 AI_UPSTREAM_FAILED** with quota refund instead of opaque 500, on both AI routes + `Sentry.captureException` in `toErrorResponse` (closes VSG #9 for 6 routes). +11 tests (206 total), 502 proven against pre-fix. Root cause (Cloudflare IP block / model unavailable / incident) still open — founder deploys, probes, pastes the debug logs. VERIFICATION-SURFACE-GAPS #7 (build-time constant inlining), #8 (ad blocker eats the Sentry tunnel), #9 (`toErrorResponse` returns a 500 Response → Sentry never sees it). New §7: full path-to-launch sequence recorded (Tracks 1–6, auth Phase A/B + enrolment boundary, launch clock, zero-spend week plan). Apple enrolment + Play registration moved to next week (money). Earlier same day: FIRST SUCCESSFUL PRODUCTION DEPLOY — chain turbo.json env allowlist → lazy Stripe → Next.js 15.5.24; audit_logs de-identification, /support page.)
+last-updated: 2026-08-27 LATE (RESOLVED: the app works in production — `POST /api/horoscope/generate` → 200 from a clean tab with Skew Protection OFF, plus every compute route + `/connect/test` friendly page. §0.8's "third failure" was a PHANTOM: skew protection routed every post-fix probe to a deployment pinned before the §0.6/§0.7 fixes, so the logged `SyntaxError` was pre-fix code. §0.6 sweph/geo-tz CLOSED + the win32→linux glob RESOLVED (this time on a live authed compute request vs. a probe from an unknown deployment). §0.8 shim REMOVED; 502 classification + Sentry.captureException KEPT (real gaps). §0.9 = the full post-skew re-verification table. VSG #10 added + the general form ("every observation has a scope, usually narrower than it appears") stated at the top of that doc. PROJECT-HISTORY.md written + postscript on how today ended. Earlier: Sentry caught a production-breaking bug 1h after going live — sweph/geo-tz/dictionary-bg missing from the deployed function; every compute path 500ing. §0.6: sweph + geo-tz FIXED and verified in production (`e64ef9f`), win32-trace residual risk resolved, `/connect/[token]` 500 resolved as a side effect. §0.7: the `bg-allowlist.txt` read — webpack froze `import.meta.url` to the build machine's path; FIXED (allowlist → bundled data module, parsed Set byte-identical). §0.8: NO THIRD FAILURE — it was a phantom. `/api/horoscope/generate` returns **200** from a clean tab with **Skew Protection off**; every probe after the §0.6/§0.7 fixes had been routed by skew to a deployment pinned *before* those fixes, so the `SyntaxError` in the logs was pre-fix code on a stale deployment. Sound reasoning, false observation (VSG #10). Kept: the `isUpstreamAiError` → **502 AI_UPSTREAM_FAILED** + quota refund on both AI routes, and `Sentry.captureException` in `toErrorResponse` — both fix real defects the phantom surfaced. Removed: the `[OPENROUTER-DEBUG]` shim (built for a bug that never existed). All six §0.9 re-verification items now pass against the confirmed-current deployment. VERIFICATION-SURFACE-GAPS #7 (build-time constant inlining), #8 (ad blocker eats the Sentry tunnel), #9 (`toErrorResponse` returns a 500 Response → Sentry never sees it), **#10 (a probe only tests the deployment you're routed to — skew protection can invalidate a whole session of probes)**. New §7: full path-to-launch sequence recorded (Tracks 1–6, auth Phase A/B + enrolment boundary, launch clock, zero-spend week plan). Apple enrolment + Play registration moved to next week (money). Earlier same day: FIRST SUCCESSFUL PRODUCTION DEPLOY — chain turbo.json env allowlist → lazy Stripe → Next.js 15.5.24; audit_logs de-identification, /support page.)
 ---
 
 # Completion Tracker
@@ -198,25 +198,27 @@ migrations awaiting founder action, not open findings:
 
 ## 0.6 PRODUCTION-BREAKING — `sweph` / `geo-tz` / `dictionary-bg` missing from the deployed function (found 2026-08-27)
 
-**Status 2026-08-27 — CODE FIX verified locally; PRODUCTION verification
-NEEDS A CLEAN RE-RUN (Skew Protection was on all day — see §0.9).**
-- **`sweph` — code fix sound** (`.nft.json` lists
-  `sweph/prebuilds/linux-x64/sweph.node` via the include glob). The
-  probes that returned `/api/crystals` 200, `/api/circle/profiles` 200,
-  `/api/transits/overview` 400, `/connect/<token>` friendly page were run
-  from a possibly-pinned browser tab → **re-verify against the confirmed-
-  current deployment.**
-- **`geo-tz` — same:** code fix sound, runtime behavior rode the same
-  probes → re-verify.
+**Status 2026-08-27 — CLOSED, verified against the confirmed-current
+deployment in a clean post-skew session.**
+- **`sweph` — CLOSED.** `POST /api/horoscope/generate` → **200** from a
+  clean tab (Skew Protection off, deployment confirmed current). That
+  route runs a full chart compute, so `sweph` is demonstrably loading in
+  the Lambda. `/chart`, `/circle`, `/rhythm`, `/dashboard` all 200 too.
+- **`geo-tz` — CLOSED.** Same request — `calculateNatalChart` resolves a
+  timezone via `geo-tz` before it can return, and it returned 200.
 - **The win32→linux `outputFileTracingIncludes` glob was honored by
-  Vercel's Linux build — RETRACTED, back to UNVERIFIED.** This was marked
-  "RESOLVED" purely because the probes passed; with skew in play that no
-  longer holds. The local `.nft.json` lists `linux-x64/sweph.node` via
-  the glob, but whether Vercel copied it into the Lambda is exactly what
-  only a live request to the confirmed-current deployment proves. In the
-  §0.9 re-verify list.
-- **`/connect/[token]` invalid-token → friendly page (not 500):** rested
-  on a `/connect/test` browser probe → re-verify.
+  Vercel's Linux build — RESOLVED.** *Why it is resolved this time, and
+  the retraction mattered:* the earlier "RESOLVED" rested on browser
+  probes from an unknown (possibly skew-pinned) deployment — worthless as
+  proof. This one rests on a **live authed compute request that succeeded
+  against a deployment confirmed current in the dashboard.** `sweph` only
+  loads if `prebuilds/linux-x64/sweph.node` is physically in the Lambda,
+  and it only got there via the explicit glob. That is the distinction
+  the retraction was about — same conclusion, real evidence.
+- **`/connect/[token]` invalid-token → friendly page (not 500):**
+  **CLOSED.** `GET /connect/test` in the clean session renders «Поканата
+  не е активна». It was the `sweph` failure all along, not token
+  validation. No separate work.
 - **`dictionary-bg` chain — STILL BROKEN in production.** `POST
   /api/horoscope/generate` still 500s (fired from the Днес page — real
   user path, not a synthetic probe). `/api/oracle/generate` shares the
@@ -345,12 +347,49 @@ halt; tracked so it is not forgotten.
 
 ---
 
-## 0.8 `/api/horoscope/generate` (and `/api/oracle/generate`) 500 — the OpenRouter response isn't JSON (found 2026-08-27, THIRD distinct failure on this route)
+## 0.8 `/api/horoscope/generate` 500 — DIAGNOSED AGAINST STALE EVIDENCE. No such bug. (2026-08-27)
 
-**Status: diagnosed from the Vercel Runtime Logs stack. NOT fixed —
-halted for the founder to check one env value first. This is the third
-failure hiding behind the previous two (missing native module → frozen
-build-machine path → this).**
+**Status: RESOLVED — there was never a third failure.**
+
+`POST /api/horoscope/generate` returns **200** from a clean tab with Skew
+Protection off, against the confirmed-current deployment. It loads
+`dictionary-bg` via `check-bg-output`, calls OpenRouter, and returns a
+real reading. Alongside it, all 200 in the same clean pass: `/dashboard`,
+`/chart`, `/circle`, `/rhythm`, `/you`, `/you/crystals`,
+`/api/oracle/readings`.
+
+**What actually happened:** the §0.6 (`sweph`/`geo-tz`) and §0.7
+(allowlist) fixes both worked. Every probe run *after* them — for hours —
+was routed by **Vercel Skew Protection** to a deployment pinned *before*
+those fixes landed. The `SyntaxError` in the Runtime Logs was the
+**pre-fix code running on a stale deployment** (`bg-speller.mjs`'s
+`readFileSync` on the frozen Windows path, or an equivalent early throw),
+not a live OpenRouter failure. There was no empty response body, no failing
+provider call, no Cloudflare IP block. The whole "Q1/Q2/Q3" analysis below
+reasoned correctly from the stack trace — **the stack trace was false
+evidence.** The lesson is not "the analysis was wrong", it is "the
+observation was". See VERIFICATION-SURFACE-GAPS #10.
+
+**What was built while chasing the phantom, and what stays:**
+- **`[OPENROUTER-DEBUG]` fetch shim** — **REMOVED** (same-day, once §0.8 proved a phantom). Built
+  for a bug that does not exist; logged 2 KB of every AI response.
+- **`isUpstreamAiError` + the 502 `AI_UPSTREAM_FAILED` classification +
+  quota refund** on both AI routes — **KEPT.** Correct regardless: an
+  upstream provider will return garbage eventually, and an opaque 500 that
+  also burns a quota claim is a real defect whether or not it has fired.
+  Proven-against-pre-fix test retained.
+- **`Sentry.captureException` in `toErrorResponse`'s non-`ApiError`
+  branch** — **KEPT.** Six routes being blind to their own 500s
+  (VERIFICATION-SURFACE-GAPS #9) is a real gap independent of today.
+
+Not a wasted session: one thing built for a phantom (removed), two built
+for real problems the phantom happened to surface (kept).
+
+---
+
+**PRESERVED BELOW — the original diagnosis. Sound reasoning; the evidence
+it reasoned from was a stale-deployment stack trace. Kept as the record of
+how a false observation produced a confident wrong conclusion.**
 
 **The stack (Vercel Runtime Logs, not Sentry):**
 ```
@@ -723,40 +762,34 @@ Splitting today's production claims by **how** they were verified:
   local build + tests + proven-against-pre-fix. Never claimed verified in
   prod.
 
-### NEEDS RE-VERIFICATION POST-SKEW — rested only on a browser probe from a possibly-pinned tab
+### VERIFIED POST-SKEW — all six re-run in one clean pass 2026-08-27
 
-Re-run all of these in **one pass from a clean session** (skew off + fresh
-tab, or against the current deployment's own `*.vercel.app` URL):
+Skew Protection disabled, fresh tab, deployment confirmed current. All
+`www.stellaeum.com`, all 200 unless noted:
 
-1. **`sweph` actually loads at runtime in the *current* deployed
-   function.** Was: `/api/crystals` 200, `/api/circle/profiles` 200,
-   `/api/transits/overview` 400 (not 500) — founder browser probes.
-2. **`geo-tz` loads at runtime** — rode the same probes (its import sits
-   right after `sweph`'s in `calculator.ts`, so a passing chart-compute
-   path is the only thing that exercises it).
-3. **The win32→linux `outputFileTracingIncludes` glob was honored by
-   Vercel's Linux build.** ⚠️ This was upgraded to "RESOLVED, not assumed
-   away" in §0.6 **purely because the probes passed** — that upgrade is
-   now **retracted**. The local `.nft.json` lists `linux-x64/sweph.node`
-   via the glob, but whether Vercel copied it into the Lambda is exactly
-   what only a live request to the confirmed-current deployment proves.
-4. **`/connect/[token]` invalid-token → friendly 404 page (not 500).**
-   Was: `/connect/test` rendered "Поканата не е активна" in a browser
-   probe.
-5. **API compute routes load post-fix** — `chart/calculate`,
-   `transits/overview`, `crystals`, `circle/*` returning non-5xx.
-   Founder browser probes.
-6. **`/api/horoscope/generate` — what it actually does on `4f751d2`.**
-   The last probe (identical stale stack, no `[OPENROUTER-DEBUG]`) is the
-   thing that revealed the skew issue; it verified nothing about the
-   current code.
+| # | Claim | Result |
+|---|---|---|
+| 1 | `sweph` loads at runtime in the current function | ✅ `POST /api/horoscope/generate` → 200 (full chart compute) |
+| 2 | `geo-tz` loads at runtime | ✅ same request — `calculateNatalChart` resolves a tz via `geo-tz` before returning |
+| 3 | win32→linux `outputFileTracingIncludes` glob honored by Vercel's Linux build | ✅ by implication — `sweph` only loads if `prebuilds/linux-x64/sweph.node` is physically in the Lambda, and it only got there via the glob. **Evidence this time: a live authed compute request that succeeded against a confirmed-current deployment — not a probe from an unknown one.** That distinction is the whole point of the earlier retraction. |
+| 4 | `/connect/[token]` invalid token → friendly page, not 500 | ✅ `GET /connect/test` renders «Поканата не е активна» |
+| 5 | API compute routes load | ✅ `/chart`, `/circle`, `/rhythm`, `/dashboard`, `/you`, `/you/crystals`, `/api/oracle/readings` all 200 |
+| 6 | `/api/horoscope/generate` on current code | ✅ 200 — loads `sweph` + `geo-tz` + `dictionary-bg`, calls OpenRouter, returns a real reading. **This single result closed 1, 2, 5, 6 and (by implication) 3.** |
 
-**Method for the clean pass:** disable Skew Protection → confirm the
-current Production deployment's commit in the dashboard includes
-`4f751d2` → open a fresh tab (or hit the deployment URL directly) → run
-the §0.6 probe list + a real authed `POST /api/horoscope/generate` with a
-`{chartId}` body. Everything in the "needs re-verification" list either
-confirms in that one pass or produces a fresh, real stack trace.
+**§0.8's "third failure" was a phantom** — the `SyntaxError` in the logs
+was pre-fix code on a skew-pinned stale deployment. See §0.8.
+
+**Still only artifact-verified, not exercised in prod** (not on the list
+above because they were never *claimed* prod-verified — recorded here so
+the boundary stays honest):
+- Server-side Sentry (`SENTRY_DSN`) actually capturing in the Lambda —
+  §0.7 note. `instrumentation.ts` wiring is correct; whether the runtime
+  DSN is set and events arrive is unconfirmed. A deliberate thrown error
+  in a route would confirm it.
+- `/api/oracle/generate` end-to-end (the streaming path) — only
+  `/api/oracle/readings` (the GET) was in the clean pass.
+- The premium free-state CTA and `/support` page rendering correctly —
+  founder was going to probe these; add the result when run.
 
 ## 1. Context block
 
@@ -2711,9 +2744,10 @@ pre-launch that MUST be reverted before the first real users:
   a consistent version mid-rollout — that value returns the moment there
   is real traffic. Re-enable it (12h window is fine) before the closed
   test opens.
-- **Remove the `[OPENROUTER-DEBUG]` shim** in `lib/ai/client.ts` (§0.8) —
-  it `console.error`s response bodies; fine for diagnosis, not for
-  steady-state logs. Removal is one block + one line, noted in the code.
+- ~~Remove the `[OPENROUTER-DEBUG]` shim in `lib/ai/client.ts`~~ —
+  **DONE 2026-08-27**, removed the same day it was added once §0.8 turned
+  out to be a phantom.
 - **Back-out any temporary `console.error(await res.text())` / debug
-  instrumentation** added while chasing §0.8's root cause.
+  instrumentation** — none currently outstanding; keep the habit of
+  listing new ones here.
 - (Add here as more debug-state toggles accumulate.)
