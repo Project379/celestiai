@@ -214,42 +214,49 @@ record-keeper? Grepped `cron/cleanup-deleted-accounts` end to end + the
 dump:
 
 - **`audit_logs` is the one table that survives deletion with
-  user-linked-ish content.** Its FK is `ON DELETE SET NULL`
-  (production-confirmed, sweep §5.3), and it is **not** in the cleanup
-  cron. Payment events are written to it —
-  `payment.subscription_created`, `payment.subscription_cancelled`,
-  `payment.invoice_payment_failed` — and the `payment.invoice_payment_failed`
-  payload **includes `stripeCustomerId`, `stripeInvoiceId`,
-  `stripeSubscriptionId`** (VERIFIED — `lib/stripe/subscription.ts:425-433`,
-  `:461-467`). After deletion the row's `user_id` is nulled but the
-  `stripeCustomerId` in the JSONB is a **re-identification handle back to
-  a person via Stripe**. So `ON DELETE SET NULL` does **not** fully
-  de-identify these rows.
-- **Everything else is clean:** the `users` row (carrying
-  `stripe_customer_id`) is hard-deleted by the cron's last step;
-  `subscription_quotas` has an FK to `users.clerk_id` and cascades on
-  that delete (INFERRED — the sweep grouped it with the `ON DELETE
-  CASCADE` tables and the `schema_hardening` migration text says
-  `CASCADE`; **recommend one `pg_constraint` confdeltype query to
-  confirm 'c' not 'n'**); `processed_webhook_events` (stripe_event_id +
-  type only) and `processed_revenuecat_events` (event_id + type only)
-  carry **no user identifier**; `bg_generation_flags` is explicitly
-  "nothing that ties a row to a person" (its own code comment);
-  `daily_transits` is a global ephemeris cache.
+  user-linked content.** Its FK is `ON DELETE SET NULL` (**VERIFIED
+  against production `pg_constraint` 2026-08-27** —
+  `audit_logs_user_id_users_clerk_id_fk` → `users`, `SET NULL`), and it
+  is **not** in the cleanup cron. `payment.invoice_payment_failed`
+  payloads carried `stripeCustomerId` / `stripeInvoiceId` /
+  `stripeSubscriptionId` and one RevenueCat "unknown app_user_id"
+  ignored-event carried a raw Clerk `user_` id in a `user_id = null`
+  row — all re-identification handles.
+  **FIXED (`edefd47`):** `logAuditEvent` now scrubs the metadata before
+  insert — any id-shaped string (`cus_`/`sub_`/`in_`/… / `user_`)
+  becomes `prefix_…last4`, recursing into nested objects/arrays. Proven
+  against pre-fix code (`test/audit/redact-audit-metadata.test.ts`). New
+  rows are de-identified; **pre-existing rows still hold raw ids** — a
+  one-off backfill `UPDATE` on `audit_logs` is a follow-up (there are
+  ~13 users, so trivially small), or leave it if the accountant answer
+  is "prune the payment rows entirely".
+- **Everything else is clean — VERIFIED against production
+  `pg_constraint` 2026-08-27:** `subscription_quotas_user_id_fkey` →
+  `users` is **`ON DELETE CASCADE`** (was inferred, now confirmed 'c') —
+  cascades cleanly on the users-row delete; `push_tokens` /
+  `push_subscriptions` / `user_crystals` / `user_daily_crystals` are all
+  CASCADE → `users` too (and the cron also deletes them explicitly —
+  belt and suspenders; note the `user_crystals` FK migration the sweep
+  said was "prepared not applied" **is applied in production**).
+  `crystal_recommendations` CASCADEs from `charts`. The `users` row
+  itself (carrying `stripe_customer_id`) is hard-deleted last.
+  `processed_webhook_events` (stripe_event_id + type) and
+  `processed_revenuecat_events` (event_id + type) carry **no user
+  identifier**; `bg_generation_flags` is explicitly person-free (its own
+  comment); `daily_transits` is a global ephemeris cache.
 
-**So the accountant question is now half a code question:** we DO retain
-`audit_logs` payment rows with Stripe IDs past deletion. Two things:
+**So the accountant question is now half a code question:**
 
-1. **Code:** the payment-event audit writer should not persist the full
-   `stripeCustomerId` — log a last-4 or a hash, or have the cron redact
-   those specific JSONB keys for the deleted user's rows. Small change,
-   worth doing so the retained security log is genuinely de-identified.
+1. **Code — DONE (`edefd47`).** `logAuditEvent` de-identifies id-shaped
+   values before insert. Pre-existing rows may still hold raw ids — a
+   one-off `UPDATE` backfill on `audit_logs` (or leave it if the rows get
+   pruned per #2).
 2. **Policy / accountant:** confirm whether BG tax/accounting law
    requires keeping any payment record on our side *at all* (Stripe and
    Apple already retain theirs as separate controllers). If not, the
-   `audit_logs` payment rows can be pruned in the cron too, and there's
-   no carve-out. If yes, keep them **pseudonymised** (per item 1 above)
-   and document the retention basis in the privacy policy.
+   `audit_logs` payment rows can be pruned in the cron too. If yes, they
+   are already pseudonymised — document the retention basis in the
+   privacy policy.
 
 `subscription_quotas` in the GDPR **export** is a separate, already-known
 gap (sweep §5.3 — export omits it); not a deletion issue.
@@ -269,66 +276,176 @@ Not code. Two obligations:
 must show the gated readings by name and carry visible price + period +
 Terms/Privacy links. Fold this into that mockup's requirements.
 
-### 5. Support URL
+### 5. Support page — scoped, buildable this week (once Vercel deploys)
 
-**Required App Store Connect field.** Must resolve to a real, functional
-page — not a placeholder, not "coming soon", not password-protected, not
-a bare `mailto:`.
+**What it is:** a required App Store Connect field that must resolve to a
+real, functional page — not a placeholder, not "coming soon", not
+password-protected, not a bare `mailto:` (a bare mailto "is fragile and
+can fail review" per multiple 2026 support-URL guides).
 
-**Minimum contents (sources: multiple 2026 support-URL guides):** app
-name; one-line description of what the app does; a working contact
-method (a `support@stellaeum.com` address or a form); at least one
-troubleshooting entry (e.g. "restore purchases", "can't sign in",
-"delete my account"). An email *can* be the contact method but must sit
-inside an actual page.
+**Minimum contents:** app name; one-line description; a **working contact
+method**; ≥1 troubleshooting entry. In **Bulgarian** (it's a Bulgarian
+app).
 
-**Cost:** ~half a day once Vercel is live. A single static `/support`
-route on the Next.js app. **Blocked on Vercel**, same as `/privacy` and
-`/terms`.
+**Contact method — recommendation, since there's no support inbox yet:**
+create **`support@stellaeum.com`**. Do **not** put a personal Gmail in
+the App Store Connect support field — it reads as unprofessional and can
+draw reviewer scrutiny. Cheapest correct setup: **Cloudflare Email
+Routing** (free) forwards `support@stellaeum.com` → the founder's
+personal inbox, no mailbox hosting, ~10 minutes — and the domain's DNS
+likely needs to be on Cloudflare for Vercel/Clerk anyway. Alternatives:
+Zoho Mail free tier, or an alias at the domain registrar. Founder action:
+~15 min once the domain DNS is set up.
 
-### 6. Terms + Privacy via Termly
+**The page:** one static Next.js route `/support`, ~half a day, built
+once Vercel deploys. Content: app name, one-line BG description,
+`support@stellaeum.com`, 3–4 FAQ entries (не мога да вляза / възстановяване
+на покупки / изтриване на акаунт / не получавам известия). **Not a Batch
+8 design exercise** — a plain, legible page in the existing web styles.
 
-See the judgement section. Termly Pro+ ≈ $15/mo (annual) is a reasonable
-scaffold + cookie-consent platform. `/terms` can lean on Apple's standard
-EULA. `/privacy` needs a lawyer pass for the birth-data collection, the
-retention period, and the OpenRouter/AI cross-border transfer + named
-sub-processors — a generated template will not produce those sections and
-they are the legally load-bearing ones for this specific app. Confirm
-Termly actually offers Bulgarian (NEEDS-CHECK).
+**Blocks:** the Vercel deploy (now gated on the Next.js upgrade). Founder
+can create `support@` **now**, independent of everything.
+
+### 6. Terms, Privacy, cookie consent — Termly is the wrong tool here
+
+**Termly does NOT support Bulgarian** (VERIFIED — its consent-manager
+language list is Arabic/Danish/Dutch/EN/Finnish/French/German/Greek/
+Hungarian/Icelandic/Italian/Norwegian/Polish/Portuguese/Spanish/Swedish;
+**no Bulgarian**, and the multi-language *policy* generator uses the same
+set and is Pro+ only). An English-only privacy policy + English-only
+cookie banner for a Bulgarian consumer app is a real weakness with the
+**CPDP** (Bulgaria's DPA) and poor UX. **Recommendation: don't pay for
+Termly.**
+
+**`/privacy` — lawyer-gated.** A **Bulgarian-language** policy
+drafted/reviewed by a **Bulgarian data-protection lawyer**. The founder
+already agreed to a lawyer pass for the birth-data + AI-transfer
+sections; extend that to the whole policy in Bulgarian. The
+load-bearing sections a template can't produce: the birth
+date/time/location collection + lawful basis + retention period; the
+OpenRouter/AI processing as a named sub-processor with a US-transfer
+mechanism (SCCs); Stripe / RevenueCat / Apple / Clerk / Supabase as
+named processors; the post-deletion retention of `audit_logs` payment
+rows (if kept — see item 3). **This is genuinely gated on a lawyer, not
+finishable this week.**
+
+**`/terms` — lighter, can ship faster.** Apple's standard EULA covers
+the app-store licence. What must be **ours**: subscription terms (price,
+auto-renewal, cancellation — 3.1.2 wants these in-app *and* on web);
+acceptable-use; limitation of liability; governing law (Bulgaria); and
+an **astrology disclaimer** ("за самопознание и забавление, не е
+професионален съвет"). Template + a **short** Bulgarian-lawyer review is
+enough — it has no data-processing content, so not the deep review
+`/privacy` needs. Buildable within days of the lawyer engagement
+starting.
+
+**Cookie consent — likely NOT needed at launch, and it's gated on the
+analytics decision (still open).** GDPR requires a consent banner only
+for **non-essential** cookies/trackers. Clerk (auth) and Stripe
+(checkout) set strictly-necessary cookies that are **exempt**. If the
+launch decision is **no third-party analytics** (which fits the
+conservative-defaults posture), **no cookie banner is required at all** —
+one less vendor, one less integration, one less legal surface. Revisit
+only if/when analytics is added. **Recommend: ship with no analytics →
+no banner.**
 
 ---
 
-## What actually blocks submission, ranked
+## 7. Account linking — exact Clerk setting, and the relay edge
 
-1. **Sign in with Apple** (item 1) — now mandatory because Google
-   sign-in is a launch feature. SIWA config + testing is blocked on
-   Apple enrolment; client work can start now. See
-   `AUTH-PROVIDER-EXPANSION-2026-08-27.md`.
-2. **Support URL** (item 5) and **`/terms` + resolving `/privacy`**
-   (item 6) — blocked on the Vercel deploy (itself now blocked on the
-   Next.js version-block upgrade — `NEXTJS-UPGRADE-2026-08-27.md`).
-3. **Paywall discloses paid features** (item 4) — a mockup requirement,
-   feeds the next mockup.
-4. Item 2 (deletion discoverability) satisfied as built; item 3
-   (hard-delete) satisfied as built — the tip that prompted it is wrong.
+**The good news:** Clerk does email-based account linking **out of the
+box, and its default is what we want.** When an OAuth provider returns a
+**verified** email matching an existing Clerk user, Clerk **links the
+connection to that user and signs them in** (Google always returns
+verified; Apple verifies too, including the per-app relay address, which
+is stable across sign-ins). An unverified OAuth email triggers a
+verification step first, then links.
+
+**Founder actions in the Clerk dashboard (both dev and, later,
+production instance):**
+1. **User & Authentication → Email, phone, username → Email → "Verify at
+   sign-up": ON.** This is the security prerequisite for safe
+   email-based linking (an attacker mustn't be able to pre-register an
+   unverified email to capture a future OAuth login).
+2. **Configure → Authentication → SSO / Social connections → Account
+   linking:** confirm it's set to **link on verified email address**
+   (Clerk's default). Only a stricter non-default setting would break the
+   Google-then-Apple-same-email case.
+
+**When the emails DIFFER — and nothing automatic can fix it.** An Apple
+"Hide My Email" user (`abc123@privaterelay.appleid.com`) who later signs
+in with Google (`realname@gmail.com`) has **two genuinely different
+addresses**. Clerk has no way to know they're the same person →
+**two separate Clerk users, two `users` rows, two separate sets of
+charts.** Options:
+- **Accept it as a known edge and document it.** A user who deliberately
+  hides their email from Apple, then later tries a different provider,
+  gets a fresh account. Uncommon.
+- **Manual merge on request:** Clerk's API can link a second OAuth
+  connection to an *already-authenticated* user — so a "Connected
+  accounts" screen in `you/settings` (signed-in user adds Google to
+  their Apple account, no email match needed) would let a user
+  self-serve. Not built; a reasonable future addition, not a launch
+  blocker.
+- Support can also merge two users manually via Clerk's backend API if
+  someone complains.
+
+There is **no way to prevent** the split at sign-in time — the sign-in
+screen can't detect that an incoming Google email belongs to the same
+person as an existing relay-email account.
+
+---
+
+## 8. What blocks what — the three unowned items
+
+**Finishable this week (no lawyer):**
+- **`support@stellaeum.com`** — founder creates it now (Cloudflare Email
+  Routing, ~15 min). Independent of everything.
+- **The `/support` page** — ~half a day, built once Vercel deploys.
+- **Google sign-in** — fully buildable now (no Apple, no lawyer); only
+  the Google Cloud OAuth consent screen waits on `/privacy` resolving.
+- **SIWA client work** (config plugin, new dev-client build, button UI)
+  — buildable now; config + testing wait on Apple enrolment.
+- **The `audit_logs` de-identification** — already shipped (`edefd47`).
+
+**Genuinely gated on a lawyer (not this week):**
+- **`/privacy`** — needs a Bulgarian data-protection lawyer for a
+  Bulgarian-language policy. Termly won't do it (no Bulgarian). This is
+  the long pole among the legal items.
+- **`/terms`** — lighter: template + a *short* Bulgarian-lawyer review,
+  no data-processing content. Days after the lawyer engagement starts,
+  not weeks.
+
+**Gated on other decisions:**
+- **Cookie consent** — probably not needed at all (no non-essential
+  cookies if no third-party analytics). Gated on the still-open
+  analytics-vendor decision. Recommend: no analytics at launch → no
+  banner.
+- **Paywall paid-feature disclosure** (item 4) — a requirement on the
+  paywall mockup (the next mockup), not a standalone task.
+
+**Gated on the Vercel deploy** (itself now gated only on the Next.js
+15.5.24 upgrade — awaiting founder go-ahead): `/privacy` resolving,
+`/terms`, `/support`, the Google Cloud consent screen.
 
 ## What needs a founder decision
 
 - ~~Is Google / social sign-in a launch feature?~~ **Ruled: yes.** →
-  SIWA mandatory. Consequence recorded: adding social login is not a
-  free feature — Google ~3 d, SIWA ~5–7 d, and SIWA drags in a new
-  dev-client build + token-revocation-on-delete + a founder ruling on
-  revoke-failure handling (§3 of the auth doc).
-- **Lawyer review for the privacy policy** — yes/no, and which
-  Bulgarian data-protection lawyer.
-- **Accountant question, now narrowed to a specific target:** does BG
-  tax/accounting law require us to keep the `audit_logs` payment rows
-  (or any payment record) on our side after account deletion, given
-  Stripe and Apple retain theirs? If no → prune them in the cron too. If
-  yes → pseudonymise (drop `stripeCustomerId` from the payload) and
-  document the basis.
-- **`audit_logs` payment payload:** ratify stripping `stripeCustomerId`
-  (→ last-4 or hash) from the audit writer regardless of the accountant
-  answer — a retained security log should be de-identified.
+  SIWA mandatory.
+- **Engage a Bulgarian data-protection lawyer** for `/privacy` (whole
+  policy, in Bulgarian) and a short review of `/terms`. This is the
+  critical-path legal item — start it now.
+- **Do NOT buy Termly** (no Bulgarian support) — recommendation, needs
+  ratification.
+- **Analytics at launch: yes/no.** "No" removes the cookie-consent
+  requirement entirely.
+- **Accountant question:** does BG tax/accounting law require keeping the
+  `audit_logs` payment rows (already de-identified) after account
+  deletion, given Stripe/Apple retain theirs? If no → prune them in the
+  cron.
+- **Clerk dashboard:** confirm "Verify at sign-up" ON and account
+  linking = "link on verified email" (both instances). See §7.
 - **SIWA token-revocation failure handling:** best-effort-and-proceed
   (recommended) vs. revoke-or-defer — ruling needed when SIWA is built.
+- **`displayName.ts` relay-host guard** and **Clerk "Connected accounts"
+  screen** — both small, both when SIWA lands.

@@ -1699,20 +1699,20 @@ they were forgotten rather than deferred on purpose.
 - **Load-testing (Scenarios B/C).** Blocked on M4 streaming-endpoint
   extraction per `LOAD_TEST_PLAN.md` — not re-scoped here, carried forward
   as-is from `PRE_LAUNCH_PREREQS.md` item 4.
-- **Next.js version-block upgrade — `.planning/NEXTJS-UPGRADE-2026-08-27.md`.**
-  The `turbo.json` env fix (`83317a6`) unblocked the Turbo compile; Vercel
-  then hard-blocks the deploy on "Vulnerable version of Next.js detected"
-  — `15.2.4` is unpatched for the May + August 2026 security releases.
-  **Minimum version that clears the gate is `15.5.24`** (no patch exists
-  on the 15.2/15.3/15.4 lines — Next maintains only 15.5.x Maintenance
-  LTS and 16.x). That's a **minor jump (15.2 → 15.5), not a patch bump**,
-  so per founder instruction the upgrade is **HALTED pending go-ahead**.
-  Surface is small for this codebase (App Router only, no `next/image`,
-  no server actions, Clerk 6.36.9 peer range already covers 15.5,
-  native-externals config already tested against 15.5.9, React peer
-  unchanged). Recommended steps in §5 of that doc. Our *specific*
-  exposure to the two Aug-2026 criticals is nil (no `next/image`; Linux)
-  — the gate is a blanket version block.
+- **Next.js version-block upgrade — DONE (`15febcb`).**
+  `.planning/NEXTJS-UPGRADE-2026-08-27.md`. `turbo.json` env fix
+  (`83317a6`) unblocked the Turbo compile; Vercel then hard-blocked the
+  deploy on "Vulnerable version of Next.js detected". **Upgraded
+  `next` 15.2.4 → 15.5.24** (minimum that clears the gate — no patch on
+  15.2/15.3/15.4). Verified: `pnpm why react` still 19.1.0 (no
+  movement); local `next build` exit 0 (40 routes + 20 pages, middleware
+  147 kB, native externals intact); `check:all` green, 195 tests. `next
+  lint` prints its 15.5 deprecation warning (not a failure) — migrating
+  it to the ESLint CLI is a pre-Next-16 task. Founder to redeploy.
+  Note: `pnpm add` briefly desyncs `apps/mobile` node_modules from the
+  rewritten lockfile (`eslint-config-expo` jiti peer flip); `pnpm
+  install` reconciles it and CI/Vercel does a clean install so is
+  unaffected.
 - **Auth provider expansion (Google + Sign in with Apple) —
   `.planning/AUTH-PROVIDER-EXPANSION-2026-08-27.md`.** Founder ruled
   2026-08-27: **Google sign-in IS a launch feature**, which makes **SIWA
@@ -1725,24 +1725,60 @@ they were forgotten rather than deferred on purpose.
   Apple enrolment; all client work can start now. Web gets both nearly
   free via Clerk prebuilt components but MUST ship the buttons in the
   same release (a Google-only mobile signup can't log into web
-  otherwise). Open founder rulings: Clerk account-linking = link on
-  verified email; SIWA token-revoke-on-delete failure handling
-  (best-effort-and-proceed recommended); `displayName.ts` relay-host
-  guard. Cost ~Google 3 d + SIWA 5–7 d + ~2 h config.
-- **`audit_logs` payment rows survive account deletion with Stripe IDs
-  in the JSONB.** Verified 2026-08-27 (`APPLE-REVIEW-REQUIREMENTS` §3):
-  `audit_logs` FK is `ON DELETE SET NULL` and it's not in the cleanup
-  cron; `payment.invoice_payment_failed` payloads carry
-  `stripeCustomerId` / `stripeInvoiceId` / `stripeSubscriptionId`, so
-  nulling `user_id` doesn't de-identify them. Everything else in the
-  schema is either hard-deleted, cascades from the `users` row, or
-  carries no user identifier. Two follow-ups: (1) strip
-  `stripeCustomerId` from the audit writer (→ last-4/hash) regardless;
-  (2) accountant question — does BG law require keeping any payment
-  record our side, given Stripe/Apple retain theirs? If no, prune the
-  rows in the cron; if yes, pseudonymise + document. Also confirm
-  `subscription_quotas` FK is `ON DELETE CASCADE` ('c') in production
-  with one `pg_constraint` query.
+  otherwise). **SIWA sits UNTESTED for however long Apple enrolment
+  takes** — the native-auth path needs a new dev-client build the founder
+  can't produce/test on the current one, and end-to-end config needs the
+  Apple capability + keys. Clerk account-linking: verified 2026-08-27 —
+  Clerk's DEFAULT already links on verified email (Google always verified,
+  Apple relay address is stable per-app). Founder just confirms "Verify
+  at sign-up" ON + linking not set to a stricter non-default, both
+  instances. **Unfixable edge:** Apple "hide my email" user who later
+  uses Google = two different addresses = two accounts, nothing automatic
+  merges them (a future "Connected accounts" screen would let them
+  self-serve; not a launch blocker). Open rulings: SIWA
+  token-revoke-on-delete failure handling (best-effort-and-proceed
+  recommended); `displayName.ts` relay-host guard. Cost ~Google 3 d +
+  SIWA 5–7 d + ~2 h config.
+- **Legal / support pages (Apple submission blockers) — scoped
+  2026-08-27 in `APPLE-REVIEW-REQUIREMENTS-2026-08-27.md` §5–§8.**
+  - **`/support` page + `support@stellaeum.com`.** Nothing exists.
+    Founder creates `support@` now (Cloudflare Email Routing, free,
+    ~15 min — NOT a personal Gmail in the App Store field). `/support`
+    page: ~half a day, built once Vercel deploys — plain BG page (app
+    name, description, `support@`, 3–4 FAQ), not a Batch 8 design task.
+  - **`/terms`.** Doesn't exist. Apple's standard EULA covers the
+    licence; ours must add subscription terms (3.1.2: in-app + web),
+    acceptable use, liability, governing law (BG), astrology disclaimer.
+    Template + a SHORT Bulgarian-lawyer review — no data-processing
+    content, ships in days once the lawyer is engaged.
+  - **`/privacy`.** Route exists but content is lawyer-gated — needs a
+    **Bulgarian-language** policy from a **Bulgarian data-protection
+    lawyer** (birth date/time/location + lawful basis + retention; the
+    OpenRouter AI transfer as a named sub-processor + SCCs; all
+    processors named). **The long-pole legal item — start the lawyer
+    engagement now.**
+  - **Termly — do NOT buy (recommendation, needs ratification).**
+    Verified 2026-08-27: **no Bulgarian support** (consent-manager and
+    multi-language policy generator both). English-only policy for a
+    BG consumer app is a CPDP weakness.
+  - **Cookie consent — likely NOT needed at launch.** GDPR requires a
+    banner only for non-essential cookies; Clerk/Stripe cookies are
+    strictly-necessary (exempt). Gated on the still-open analytics-vendor
+    decision. Recommend: no third-party analytics at launch → no banner.
+- **`audit_logs` payment-row de-identification — code DONE (`edefd47`).**
+  `audit_logs` FK is `ON DELETE SET NULL` (verified vs production
+  `pg_constraint` 2026-08-27) so rows outlive the account; payloads
+  carried Stripe `cus_`/`sub_`/`in_` ids + one raw Clerk `user_` id.
+  `logAuditEvent` now scrubs id-shaped values to `prefix_…last4` before
+  insert (shape-based, recursive; proven against pre-fix code, 4 new
+  tests). **Pre-existing rows still hold raw ids — one-off `UPDATE`
+  backfill is a follow-up** (or moot if the rows get pruned). Same query
+  run also VERIFIED: `subscription_quotas`, `push_tokens`,
+  `push_subscriptions`, `user_crystals`, `user_daily_crystals` all
+  `ON DELETE CASCADE` → `users` (and the `user_crystals` FK the sweep
+  said was "prepared not applied" IS applied in production). Open:
+  accountant question — must BG law keep the `audit_logs` payment rows
+  at all? If no, prune them in the cron.
 - **Wizard partial-value (show a chart before the birth-time step).**
   **Design A ruled 2026-08-27** (founder): stateless `POST /api/chart/preview`
   wrapping the existing `calculateNatalChart` pure function + one wizard
