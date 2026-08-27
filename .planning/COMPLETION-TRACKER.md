@@ -1348,22 +1348,34 @@ unambiguous rate-limit gap, or clearly UI-scoped (deferred to Batch 8).
 ### Batch 8 — UI phase (iterative)
 
 **Design research done 2026-08-27 — `.planning/design/DESIGN-RESEARCH-2026-08-27.md`.**
-Audit + craft references + user psychology, before any mockup. Headline
-findings: (1) the shipped mobile core (Днес, Карта, primitives,
-AppLoadingScreen) is clean of the vibe-coded tells; (2) the paywall
-surfaces — `you/premium.tsx` and the web `/pricing` it links to — carry
-nearly the whole list (pills, cards, gradients, orbs, shimmer CTA,
-diamond bullets, Cinzel-on-Cyrillic, Roman numerals, amber holdout);
-(3) **contradiction:** the 4-step wizard collects date+time+place before
-showing any value, which is the shape onboarding research most warns
-against — highest-impact fix is partial value before the time step;
-(4) `faint` `#64748b` is 4.23:1 on `base` — under WCAG AA for the small
-text it's used on; (5) no `prefers-reduced-motion` anywhere; (6) skeletons
-are NOT an automatic win (Viget 2017) — delayed spinner first, bespoke
-per-screen skeletons only where layout is stable. Ranked proposals in §E
-of that doc. The wizard partial-value idea is a product/backend question
-needing a founder ruling before it can be scoped — not a reorder of the
-approved sequence; paywall stays the next mockup.
+Audit + craft references + user psychology. Headline findings: (1) the
+shipped mobile core (Днес, Карта, primitives, AppLoadingScreen) is clean
+of the vibe-coded tells — verified by grep, not concluded from absence;
+(2) the tells cluster in the two surfaces that never got a design pass —
+`you/premium.tsx` and the web `/pricing` it links to (pills, cards,
+gradients, orbs, shimmer CTA, diamond bullets, Cinzel-on-Cyrillic, Roman
+numerals, amber holdout); (3) **contradiction:** the 4-step wizard
+collects date+time+place before showing any value; (4) `faint` `#64748b`
+measured 4.23:1 on `base` — under WCAG AA for the 12px/9.5px type it's
+used on.
+
+**Founder rulings 2026-08-27 (recorded so they can't drift):**
+- **Contrast fix — DONE in `tokens.ts`, `faint` `#64748b` → `#6d7e97`
+  (computed 4.87:1). Highest priority; device-verified BEFORE the paywall
+  mockup, not after.** Background-floor lift not ruled — separate,
+  deferred.
+- **Ти-premium + paywall mockup is next after the contrast verifies —
+  built FROM SCRATCH against DESIGN-LANGUAGE-REFERENCE.md.** `/pricing`
+  not opened during design, read only afterward to check nothing
+  functional was missed. `you/premium.tsx` rebuilt not patched; its
+  Cinzel-on-Cyrillic is a live REVISIT-42 production defect.
+- **Wizard partial-value — NOT ruled. Own investigation, separate from
+  Batch 8 (see the standalone item below). Report before founder
+  decides. Approved mockup order unchanged.**
+- **Skeletons — bespoke + layout-matching per-screen only, never a
+  system.** Viget evidence supports the `States.tsx` caution.
+- **Reduced-motion, delayed spinners, considered empty states — approved
+  in principle, deferred; each attaches to its screen, not a sweep.**
 
 **ADDED TO SCOPE 2026-08-26 (founder, after the device pass):**
 

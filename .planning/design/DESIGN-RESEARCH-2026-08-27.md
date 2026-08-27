@@ -431,7 +431,8 @@ WCAG 2.1 relative-luminance formula, computed from the real hex values in
 | `coolText` | `#bcd6ef` | **13.4 : 1** | pass (AAA) | |
 | `bronzeText` | `#d9a06a` | **8.8 : 1** | pass (AAA) | |
 | `muted` | `#94a3b8` | **7.85 : 1** | pass (AAA) | secondary text — fine |
-| `faint` | `#64748b` | **4.23 : 1** | **FAIL** (passes large-text 3:1 only) | tertiary / caption / eyebrow colour |
+| `faint` (was) | `#64748b` | **4.23 : 1** | **FAIL** (passes large-text 3:1 only) | tertiary / caption / eyebrow colour |
+| `faint` (now) | `#6d7e97` | **4.87 : 1** | pass | corrected 2026-08-27 — see below |
 
 **The finding:** four of five text roles clear AAA comfortably — the "low
 contrast" worry does **not** hold for body copy, which is genuinely
@@ -443,89 +444,77 @@ status line) and `type.eyebrow` (9.5px tracked caps). Sub-AA contrast at
 measured version of "does our dark restraint hurt comprehension": not for
 reading text, yes for the label tier, exactly where type is smallest.
 
-Cheapest fix: nudge `faint` lighter to clear 4.5:1 on `#08060f` — roughly
-`#6b7c94`–`#708096` gets there; needs the same computation to confirm the
-exact value. Independent of any decision about the background floor.
+**Fix — APPLIED 2026-08-27 (founder ruling: highest-priority finding),
+awaiting device verification.** `faint` `#64748b` → `#6d7e97` in
+`tokens.ts`: same slate hue lifted uniformly, **computed 4.87 : 1**
+against `#08060f` (relative-luminance formula, not estimated). Clears AA
+(4.5:1) with a ~0.37 margin, and stays well under `muted`'s 7.85:1 so it
+remains visibly subordinate — not promoted toward body text. A more
+conservative alternative, `#6b7c94` at **4.73 : 1**, keeps even more
+separation from `muted` if the device check shows `#6d7e97` reading too
+close. Token change touches every screen; lands **before** the paywall
+mockup, verified on device first. Independent of any decision about the
+background floor (§7 / §E-8).
 
 ---
 
-## E. Proposed changes — ranked by impact on intuitiveness
+## E. Proposed changes — founder-ruled 2026-08-27
 
-Nothing here abandons the design language or adds a dependency. Ordered by
-how much each moves "can a first-time user get it," not by visual novelty.
+Ruled by the founder after reading the research. Recorded here so the
+decisions cannot drift.
 
-**1. Wizard: show partial value before the birth-time step — PRODUCT
-QUESTION, needs a ruling before it can be scoped. (§C.2)**
-Highest potential impact, but it is not a design change. Rendering "sun
-sign / provisional chart after date + location" requires deciding: what
-the chart engine can compute from partial input, whether a provisional
-chart is persisted or thrown away, and what the flow does if the time
-step is skipped outright. The `approximateTimeRange` branch already in
-`wizard/time.tsx` means the data model already has opinions here. So
-this needs a **scoping answer from you**, not just mockup approval —
-approving "redesign the wizard" without settling it means discovering
-the backend question at build time. The cheap, unambiguous part that
-needs no ruling: make "time unknown → approximate range" a first-class
-visible option on that step rather than a secondary toggle, and add one
-line per field on why it's needed.
+**1. Contrast fix — DONE, awaiting device verification. Highest priority. (§D)**
+`faint` `#64748b` → `#6d7e97` (computed 4.87:1 on `base`, clears AA,
+stays subordinate to `muted`). Applied in `tokens.ts`. **This lands and
+is device-verified BEFORE the paywall mockup**, not after. Fallback
+`#6b7c94` (4.73:1) if `#6d7e97` reads too close to `muted` on device.
+The background-floor idea (lifting `#08060f` to reduce halation) is
+*not* ruled — separate, deferred, not bundled with this.
 
-**2. Paywall: design it from scratch, explicitly not as the web `/pricing` shape. (§A.2.2, §C.1)**
-This is the next actual mockup — and it is already the founder-approved
-next screen (Ти-premium + paywall first).
-No two-cards-in-a-row, no "recommended" badge, no gradient headline, no
-shimmer CTA, no diamond-bullet feature list, no backdrop-blur. One screen,
-one dominant element (per R1), the value stated as prose in the app's
-voice, one `CtaPanel`-class invitation. The comparison that sells premium
-in this category is emotional ("unlock your love / career / health
-reading"), not a feature matrix. This is the next mockup after the wizard
-question is settled.
+**2. Ти-premium + paywall mockup — next, after the contrast fix verifies.
+Built FROM SCRATCH, explicit ruling. (§A.2.1, §A.2.2, §C.1)**
+Designed against `DESIGN-LANGUAGE-REFERENCE.md` as a complete object.
+`PricingContent.tsx` (`/pricing`) is **not opened during design** — read
+only afterwards, to check nothing functional was missed. It carries, and
+the mockup must not inherit: gradient headline text, radial-orb blurs,
+two-cards-with-a-badge, shimmer-sweep CTA, diamond bullets,
+backdrop-blur, Roman numerals outside the Guide, retired amber. One
+screen, one dominant element (R1), value as prose in the app's voice,
+one `CtaPanel`-class invitation — the premium sell in this category is
+emotional (love / career / health reading), not a feature matrix.
+`you/premium.tsx` is **rebuilt, not patched**, in the same screen group;
+its three `font-cinzel`-on-Cyrillic sites are a **live REVISIT-42 defect
+shipped in production**, not merely a design gap.
 
-**3. Rebuild `you/premium.tsx` on the design language. (§A.2.1)**
-It is currently the most off-language shipped screen. Kill the `Badge`
-pills, the `rounded-*` cards, the `bg-rose-600` button, the Tailwind
-colour classes, and the three `font-cinzel`-on-Cyrillic sites. Status
-becomes typographic hierarchy, not tinted plaques; actions become
-`NavRow` / `CtaPanel`. Part of the same Batch 8 paywall/premium screen
-group.
+**3. Wizard partial-value — NOT ruled. Its own investigation, separate
+from Batch 8. Report before the founder decides. (§C.2)**
+Scope: what the chart engine can compute from date + location with no
+birth time; whether a provisional chart persists or is discarded on
+completion; what the data model does with a partial record (and how the
+existing `approximateTimeRange` branch already handles this); the cost.
+The approved mockup order does **not** change — paywall stays next.
 
-**4. Loading polish: delayed spinner + minimum visible time. (§B.1)**
-Add a ~200ms show-delay and ~400ms minimum-visible to `LoadingState` (and
-ideally a shared `useDelayedLoading` hook). Dependency-free, ~20 lines,
-removes the one-frame spinner flash on every fast query. Do this before
-investing in any skeleton.
+**4. Skeletons — ruled: bespoke + layout-matching only, per-screen, never
+generic. Do NOT build a skeleton system. (§B.2)**
+The Viget evidence supports the existing caution in `States.tsx`, it
+does not overturn it. Any skeleton is a per-screen design decision made
+during that screen's own mockup.
 
-**5. Skeletons: only per-screen, only where layout is stable, only if bespoke. (§B.2)**
-Do **not** add a generic skeleton primitive — the evidence says a generic
-one regresses. Candidates where a layout-matching skeleton is worth the
-per-screen design cost: Днес (fixed hero + reading shape), Карта (wheel +
-plaque). Everywhere else, the delayed spinner from item 4 is the answer.
-Decide per screen during its own mockup.
+**5. Reduced-motion, delayed spinners (show-delay + minimum-visible),
+considered empty/first-run states — approved in principle, DEFERRED.
+Each attaches to the screen that needs it, not done as a sweep. (§B.1, §C.5)**
+`prefers-reduced-motion` gating for `useBreathe`/`useSpin`/
+`WheelArrivalContainer`/`AppLoadingScreen`; a `useDelayedLoading`-style
+hook; ritual-priming empty states for Кръг / diary / recommendations —
+all real, none done now.
 
-**6. Considered empty / first-run states for Кръг, diary, recommendations. (§C.5)**
-Treat each empty state as ritual-priming copy + one invitation, designed
-with the screen, not a shared `EmptyState` afterthought. Кръг's empty
-state in particular should teach the compare-in-two-taps loop.
+**6. Web `/pricing` amber/numeral/Cinzel drift — noted, web is Petko's.**
+The only ask on the mobile side: Batch 8 never treats `/pricing` as a
+design reference.
 
-**7. Contrast + background floor. (§C.4, §D)**
-Lift `faint` to clear 4.5:1 (≈`#6b7c94`, confirm by computation). Consider
-lifting `base` from `#08060f` toward `#0d0b16`–`#121016` to reduce
-halation on the serif body text. Both are token-value changes; the second
-touches every screen so it needs a device check. Low effort, real
-comprehension payoff, no aesthetic cost.
-
-**8. `prefers-reduced-motion` support. (§B.1)**
-Gate `useBreathe`, `useSpin`, `WheelArrivalContainer`, and
-`AppLoadingScreen`'s spin on `AccessibilityInfo.isReduceMotionEnabled()`.
-Accessibility correctness; not user-visible for most, required for some.
-
-**9. Kill the amber holdout in web `/pricing`, or at least don't reference it. (§A.4)**
-Web is Petko's; the ask here is only that Batch 8 never treats web
-`/pricing` as a design reference — it is on retired amber, Roman
-numerals, and Cinzel-on-Cyrillic.
-
-**Not proposed** (deliberately): a light mode, a skeleton primitive, any
-new primitive, any motion library, any change to the Днес / Карта
-foundation. The base is the base.
+**Not on the table** (founder ruling stands): a light mode, a generic
+skeleton primitive, any new primitive, any motion library, any change to
+the Днес / Карта foundation.
 
 ---
 

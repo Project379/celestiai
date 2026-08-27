@@ -38,7 +38,15 @@ export const color = {
   rose: '#fb7185',
   text: '#e2e8f0',
   muted: '#94a3b8',
-  faint: '#64748b',
+  // Tertiary/label text. Corrected 2026-08-27 from #64748b, which measured
+  // 4.23:1 against `base` #08060f — under WCAG 2.1 AA (4.5:1 for normal
+  // text) on exactly the smallest type in the system (type.caption 12px,
+  // type.eyebrow 9.5px). #6d7e97 is the same slate hue lifted uniformly:
+  // it measures 4.87:1 against base (computed, not estimated — relative-
+  // luminance formula), clearing AA with margin while staying well below
+  // `muted`'s 7.85:1 so it still reads as subordinate, not body text.
+  // If either of `base`/`faint` changes, re-run the contrast check.
+  faint: '#6d7e97',
 } as const
 
 export const space = {
