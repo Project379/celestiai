@@ -484,11 +484,51 @@ be:**
      pre-hardening `route.ts`: the 502 assertion failed with `expected
      500 to be 502` before the fix was restored.**
 
-**Still open:** the actual root cause (Cloudflare IP block vs. model
-unavailable vs. provider incident) — the founder deploys `4f751d2`, runs
-the probe, and pastes the `[OPENROUTER-DEBUG]` lines from Vercel Runtime
-Logs. The route now returns a clean **502** while this is unresolved
-instead of an opaque 500, and the failure is now in Sentry.
+**2026-08-27 — the `4f751d2` probe came back 500 with the IDENTICAL stack
+(`route.js:34`, `chunks/1349.js:41:7566`) and NO `[OPENROUTER-DEBUG]`
+line. If `4f751d2` were serving it, the shim would have logged and the
+502 classification would have fired. Neither did → the request is not
+being served by `4f751d2`.**
+
+**Cause: Vercel Skew Protection is ENABLED (verified — production HTML
+contains `?dpl=dpl_JChvkyHkhdYi1yT4gXybCDWcS6ry`).** With skew protection
+on, a browser is pinned for the configured window (the founder saw 12h in
+settings) to whatever deployment served its HTML — every `fetch()` from
+that tab, including the Днес page's call to `/api/horoscope/generate`,
+carries `?dpl=<old>` and is routed to the OLD deployment's functions. The
+founder's tab was loaded before the recent deploys, so **every probe run
+from it today may have hit stale functions** — which puts an asterisk on
+the "sweph/geo-tz verified in prod" probe results too (those were still
+independently confirmed by reading the local `.nft.json` trace artifacts,
+so the *code* fixes stand; what is uncertain is which deployment prod is
+actually serving the founder's browser).
+
+**To force the current deployment** (do these before trusting any further
+probe):
+1. **Confirm which commit is current Production.** Vercel → Deployments →
+   the Ready one → its git commit. Confirm it is `49b79ea` / includes
+   `4f751d2`. A docs-only commit on top (`5a4a2c8`, `49b79ea`) still
+   triggers a full rebuild, so it *should* — but confirm, don't assume.
+2. **Hit the deployment's own URL directly.** Each deployment has a unique
+   `*.vercel.app` URL (shown on its dashboard page). A request straight to
+   that URL bypasses skew routing entirely — it targets that deployment's
+   functions. Probe there.
+3. **Browser: fully close every `stellaeum.com` tab, then open a fresh
+   one (or a clean Incognito window).** A plain reload may keep the pin;
+   a fresh document load fetches the current `?dpl`. Then re-probe.
+4. **A fresh `curl` already hits latest** (no prior `dpl`), but the AI
+   path needs a real `__session` cookie + a JSON body with `chartId` —
+   without a body, `req.json()` at `route.ts:45` throws its own
+   `SyntaxError` (empty-body) which the hardening does NOT wrap, so a
+   bodiless curl 500s on every build and tells you nothing.
+5. **Recommendation: turn Skew Protection OFF for the rest of pre-launch.**
+   Its value is protecting real users mid-session during a deploy; with
+   the founder as the only "user" and actively debugging, it only serves
+   stale functions and corrupts every probe. Re-enable before launch.
+
+The route change (`4f751d2`) is verified correct locally — build, the
+compiled bundle carrying `[OPENROUTER-DEBUG]`, +11 tests, 502-proven-
+against-pre-fix. What is unverified is that production is *running* it.
 
 ---
 

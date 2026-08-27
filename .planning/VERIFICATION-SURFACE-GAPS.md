@@ -242,6 +242,38 @@ Response). Related to #6's "an endpoint probe is evidence only for the
 code it runs" — this is the monitoring-side version: **an error monitor is
 evidence only for the errors that reach it, and 'handled' errors don't.**
 
+## 10. Vercel Skew Protection can serve an OLD deployment's functions to a browser that loaded before the deploy
+
+Found 2026-08-27. A probe against a freshly-deployed fix (`4f751d2`) came
+back with a stack trace byte-identical to the pre-fix build and none of
+the new code's side effects (a debug log line, a changed status code).
+Cause: **Skew Protection is enabled** (production HTML contains
+`?dpl=dpl_…` on its asset/action URLs). With it on, Vercel pins a client
+to the deployment that served its HTML for the configured window (12h
+here); every `fetch()` from that page — including the app's own API calls
+— carries `?dpl=<that-deployment>` and is routed to *that deployment's*
+serverless functions, not the current one. A tab left open across a
+deploy keeps hitting the old functions.
+
+Consequence for debugging: **every probe from a long-lived browser tab is
+evidence about whatever deployment that tab is pinned to, which may not be
+the latest.** "I deployed the fix and it still fails" can mean the fix is
+wrong OR the fix isn't being served. They are indistinguishable from the
+response alone. Discriminators: check the current Production deployment's
+commit in the dashboard; hit the deployment's own unique `*.vercel.app`
+URL (bypasses skew routing); or open a clean browser session. A fresh
+`curl` also hits latest (it sends no `dpl`).
+
+Recommendation while the founder is the only user and actively iterating:
+**disable Skew Protection.** It exists to keep real users on a consistent
+version mid-session during a rollout; during solo pre-launch debugging it
+only produces stale-function confusion. Re-enable before real traffic.
+
+Related to #6 and #9: all three are "the thing you observed is not
+evidence about the thing you think." #6 — a probe only exercises the code
+it runs. #9 — a monitor only sees errors that reach it. #10 — a probe only
+tests the deployment you're actually routed to.
+
 ## The underlying pattern across items 1-3 (environment-fidelity gaps)
 
 Convenience/local/cheap verification surfaces (a browser via
