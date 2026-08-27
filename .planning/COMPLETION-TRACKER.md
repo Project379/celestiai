@@ -196,6 +196,61 @@ migrations awaiting founder action, not open findings:
 - Diary list and both crons are unbounded; the web push cron is sequential
   under a 300s cap (Tier 3, not yet scheduled). (§6.3–6.4)
 
+## 0.6 PRODUCTION-BREAKING — `sweph` / `geo-tz` / `dictionary-bg` missing from the deployed function (found 2026-08-27)
+
+**Status: diagnosed, NOT fixed. Founder halted for full-extent report
+before any fix.**
+
+The first production deploy was declared healthy (`/`, `/privacy`,
+`/pricing` all 200; three API routes clean 401). One hour after Sentry
+went live it caught `Error: Cannot find module 'sweph'` on
+`GET /connect/[token]`. The Swiss Ephemeris native module is not present
+in the Vercel serverless function. **Every route whose static import
+graph reaches `@stellaeum/astrology`'s server entry 500s at module
+evaluation.** Verified by probing production 2026-08-27:
+
+| 500 (broken) | Loads OK |
+|---|---|
+| `/api/chart/calculate` | `/api/crystals/today` (200) |
+| `/api/transits/overview` | `/api/crystals/daily-streak` (401) |
+| `/api/crystals` (overview) | `/api/crystals/collect` (405) |
+| `/api/circle/invites`, `/invites/accept`, `/relationships`, `/relationships/*`, `/profiles`, `/profiles/*` (9 of 10 circle route files) | `/api/crystals/daily/collect` (405) |
+| `/connect/[token]` (the reported bug — this, not token validation) | `/api/cron/daily-horoscope` (401 — imports no astrology) |
+| `/api/oracle/generate` (`dictionary-bg` chain, not sweph) | `/api/birth-data` (401 — confirm compute path separately) |
+| `/api/horoscope/generate` (both chains — `dictionary-bg` at module load, dynamic `sweph` at generation) | |
+
+**Root cause (three reinforcing):** (1) `sweph` + `geo-tz` are deps of
+`packages/astrology`, **not** of `apps/web` — `@vercel/nft` traces from
+the app, which never declares them. (2) pnpm isolated `node_modules`, no
+root `.npmrc` hoisting — the packages sit under `.pnpm/` symlinked into
+`packages/astrology/node_modules` only, and nft doesn't reliably cross
+that symlink boundary from `apps/web`. (3) `serverExternalPackages` +
+webpack `config.externals` (both in `next.config.js`) deliberately remove
+them from the webpack graph so webpack's own tracing can't see them
+either, and there is **no `outputFileTracingIncludes`** to force-copy the
+package dirs or their native/asset sidecars (`sweph/*.node`,
+`geo-tz/data/`, `dictionary-bg/*.dic|*.aff`, and the repo-root
+`scripts/i18n/bg-allowlist.txt` that `bg-speller.mjs` reads at module
+scope). `geo-tz` rides the same import as `sweph` (`calculator.ts` →
+`./utils/timezone` → `geo-tz`) so its blast radius is identical; whether
+it *also* fails to trace is masked by `sweph` throwing first. `next build`
+locally resolves all of them through the pnpm symlink graph and proves
+nothing about the Lambda — same "passes locally" gap as the original
+Vercel deploy failure.
+
+**Verification-surface finding:** logged as
+`.planning/VERIFICATION-SURFACE-GAPS.md` #6 — the strongest instance yet.
+Deliberate, real HTTP probes against real production all passed; they just
+never touched a compute path. A 401 proves auth middleware ran, not that
+the handler's module graph is intact.
+
+**Fix not started.** Direction (for when the halt lifts): declare `sweph`
++ `geo-tz` as direct `apps/web` deps; add `outputFileTracingIncludes` for
+all three packages' asset sidecars + `bg-allowlist.txt`; consider a root
+`.npmrc` `node-linker` / `public-hoist-pattern` for the native modules;
+verify by inspecting the built function's `node_modules` (or a preview
+deploy + authed probe of `/api/chart/calculate`), never a local build.
+
 ## 1. Context block
 
 **Product:** Stellaeum AI — a subscription astrology app for the Bulgarian

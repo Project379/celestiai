@@ -92,6 +92,49 @@ gap is specifically post-install, ongoing: `.env.local` now needs the same
 level of trust a production env var would get, not the "it's just local
 dev, close enough" treatment it's had until now.
 
+## 6. HTTP checks of pages that don't compute are not evidence the compute paths work
+
+Found 2026-08-27, ~1 hour after Sentry went live in production. The
+first production deploy in the project's history was declared healthy on
+the basis of: `/` 200, `/privacy` 200, `/pricing` 200, and three API
+routes returning clean structured 401s. All true. All meaningless for the
+question that mattered. The first real Sentry event was
+`Error: Cannot find module 'sweph'` on `GET /connect/[token]` — the Swiss
+Ephemeris native module (and, on the same import, `geo-tz`) is not present
+in the deployed serverless function, so **every route whose static import
+graph reaches `@stellaeum/astrology`'s server entry 500s at module
+evaluation.** Confirmed by probing production: `/api/chart/calculate`,
+`/api/transits/overview`, `/api/crystals`, `/api/circle/*` (9 of 10
+route files), `/connect/[token]`, `/api/oracle/generate`,
+`/api/horoscope/generate` all return 500. The site *looked* fine because
+every page checked was a static render (`/`, `/privacy`, `/pricing`) or an
+auth gate that rejects before the handler body — none of them exercise a
+chart calculation.
+
+Why this is the strongest instance of the pattern so far: the checks that
+passed were not lazy or careless. They were deliberate, they were real
+HTTP requests against real production, and they returned exactly what a
+healthy deploy would return. The 401s in particular *look* like proof the
+route works — the route loaded, ran, and auth-gated. But a Next.js route
+handler with a **static** `import` that fails to resolve throws at module
+evaluation, which for an auth-gated route still happens on first request
+regardless of the 401 — so a 401 only proves the auth middleware ran, not
+that the handler's own module graph is intact. A route that imports a
+broken module *dynamically* (`await import(...)` inside the handler, as
+`/api/horoscope/generate` does for astrology) will even pass a unauthed
+probe and only fail when that specific code path executes.
+
+The rule: **an endpoint probe is evidence only for the code that the probe
+actually runs.** A 200 on a static page says nothing about API routes. A
+401 says nothing about the handler body. A 200 on a handler that
+short-circuits (cache hit, early return) says nothing about the cold path.
+To verify a compute path, you have to hit the compute path — with a real
+authed request that reaches the calculation, against the real deployed
+artifact, or by inspecting the deployed function's `node_modules` for the
+files the code will `require()` at runtime. `pnpm build` locally resolves
+`sweph` through the pnpm symlink graph and proves nothing about what
+`@vercel/nft` traced into the Lambda.
+
 ## The underlying pattern across items 1-3 (environment-fidelity gaps)
 
 Convenience/local/cheap verification surfaces (a browser via
