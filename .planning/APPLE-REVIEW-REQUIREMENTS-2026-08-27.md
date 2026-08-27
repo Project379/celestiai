@@ -2,10 +2,20 @@
 title: Apple App Review requirements — research and scope
 status: research only, build nothing. For founder decisions.
 created: 2026-08-27
+updated: 2026-08-27 — item 1 (Sign in with Apple) FLIPPED from "not applicable" to "BLOCKS SUBMISSION" after the founder ruled Google sign-in IS a launch feature. See the correction note in §1. Item 3 carve-out verified in code — see §3.
 method: Apple guideline text + GDPR Art. 17 text/commentary (web sources cited) checked against our code by grep. Every code claim tagged VERIFIED (grep/read) or NEEDS-CHECK.
 ---
 
 # Apple App Review requirements
+
+> **CORRECTION 2026-08-27:** an earlier version of this doc assessed
+> item 1 (Sign in with Apple) as **"very likely NOT required"** because no
+> social login existed. **The founder then made Google sign-in a launch
+> feature.** Under Guideline 4.8 that makes **Sign in with Apple
+> mandatory** — item 1 is now a **submission blocker**, not "not
+> applicable". Full scope for both providers:
+> `.planning/AUTH-PROVIDER-EXPANSION-2026-08-27.md`. The old assessment
+> is struck through in §1 below, kept visible so nobody re-derives it.
 
 Six items from the founder's list, researched against our code. Summary
 table first, then the two that need judgement (item 3 hard-delete, item 6
@@ -23,7 +33,7 @@ founder-track list.
 
 | # | Requirement | What we have | What's missing | Cost | Submission impact |
 |---|---|---|---|---|---|
-| 1 | **Sign in with Apple** — required *only if* the app offers a third-party/social login (Google, Facebook, etc.) as a primary auth method (Guideline 4.8) | Clerk email + password + 2FA only. **No social login anywhere** (VERIFIED — grep of `apps/mobile/app/(public)/` finds no OAuth/`useOAuth`/Google/Apple). | Nothing, *unless* you add Google/social sign-in — then SIWA becomes mandatory | **£0 now.** If social login is added later: ~2–4 days (Clerk SIWA connection + Apple "Sign In with Apple" capability on the App ID + a native button + token-revocation on delete, see item 3) | **Does not block.** Only becomes a rejection risk if social login ships without SIWA alongside it. |
+| 1 | **Sign in with Apple** — mandatory because we now ship **Google sign-in** as a launch feature (Guideline 4.8) | Clerk email + password + 2FA only. No OAuth code yet. Deps (`@clerk/expo`, `expo-apple-authentication`, `expo-auth-session`, `expo-crypto`, `expo-web-browser`) **already installed**. | Google button + SSO flow (mobile); SIWA native sheet + config plugin + **new dev-client build** + compliant button; token revocation on delete; both providers on the Clerk instance (auto-covers web). | Google ~3 d, SIWA ~5–7 d (split across the Apple-enrolment boundary), + ~2 h dashboard/portal. Full breakdown: `AUTH-PROVIDER-EXPANSION-2026-08-27.md`. | **BLOCKS SUBMISSION.** Shipping Google without SIWA = automatic 4.8 rejection. |
 | 2 | **Account deletion easy to find in-app**, full delete not deactivation (Guideline 5.1.1(v)) | Deletion lives in `you/settings`, runs a real grace-period → hard-delete cron, with a persistent `DeletionPendingBanner` during the grace window (VERIFIED). | Nothing structural. Possibly a discoverability tweak — reviewers expect it reachable in ~1–2 taps from a clearly-labelled Account/Settings area. | ~0–0.5 day (label/placement check during the `you` redesign) | **Does not block** as built. Low rejection risk if the settings entry is clearly labelled "Изтрий акаунт" / "Delete account" and not buried under sub-menus. |
 | 3 | **Deletion should remove personal data** (Apple), **and** satisfy GDPR Art. 17 | Hard-delete cron across ~15 tables + newly-added FK cascades on `user_crystals` / `user_daily_crystals`. `audit_logs` uses `ON DELETE SET NULL`. | Nothing — see the judgement below. The "null fields instead of hard-delete" tip is **incorrect**; our current design is right for both regimes. | £0 (no change). Optional: a documented carve-out for statutory financial-record retention, ~0.5 day of policy writing, no code. | **Does not block.** Following the tip *would* have created a rejection risk (Apple treats "null some fields" as deactivation) and a GDPR gap. |
 | 4 | **Paid features disclosed** in App Store description + screenshots (Guideline 2.3.x / 3.1.2) | Nothing yet — no store listing, and the paywall/premium screens are unbuilt. | Store copy + screenshots that show what's gated; in-app subscription terms visible before purchase (3.1.2). | Copy/screenshot work at submission time; **constrains the paywall mockup** — it must clearly show which readings are premium. | **Rejection risk if ignored.** 3.1.2 is actively enforced on subscription apps. Design input, not code. |
@@ -135,17 +145,22 @@ EU.
 
 ### 1. Sign in with Apple — Guideline 4.8
 
-**VERIFIED:** `apps/mobile/app/(public)/` has `sign-in.tsx`,
-`sign-up.tsx`, `two-factor.tsx`, `verify.tsx` — all Clerk email/password +
-2FA. Grep for `oauth`, `OAuth`, `useOAuth`, `apple`, `google`, `strategy`
-returns only 2FA second-factor logic. **No social login exists.**
+**Now a submission blocker (founder made Google sign-in a launch
+feature).** Full scope — Google + SIWA, cost, dependency order, what can
+be done before Apple enrolment clears, token revocation, Private Relay
+re-verification for three providers, web parity — is its own document:
+**`.planning/AUTH-PROVIDER-EXPANSION-2026-08-27.md`**. Summary: deps are
+already installed; **Google needs no native build** (browser flow), **SIWA
+needs a new dev-client build**; SIWA config + testing is blocked on Apple
+enrolment but all client work can start now; web gets both providers
+almost free via Clerk's prebuilt components.
 
-**Rule:** 4.8 requires SIWA (or an equivalent privacy-preserving login)
-**only if** the app offers a third-party/social login to create or
-authenticate the primary account. An app that uses only its own
-account system (which Clerk email/password is, from Apple's view) is
-**not** required to offer SIWA. Sources: Apple Developer Forums 4.8
-threads; PTKD 4.8 guide.
+~~**Superseded assessment (kept visible):**~~ *4.8 requires SIWA only if
+the app offers a third-party/social login. When this doc was first
+written, `apps/mobile/app/(public)/` was Clerk email/password + 2FA only
+(VERIFIED by grep — no OAuth code), so SIWA was assessed as "not
+applicable". That assessment was correct for that state and is void now
+that Google sign-in is in scope.*
 
 **User-model impact if SIWA is added later:** our model keys entirely on
 `clerk_id` (VERIFIED — every `users` lookup is `.eq('clerk_id', …)`;
@@ -188,10 +203,56 @@ ambiguous sub-menu, and that the whole flow completes in-app (it does).
 
 ### 3. Deletion nulls vs hard-delete
 
-See the judgement section above. **No code change. Keep hard-delete +
-cascades.** Optional: a retention-carve-out paragraph in the privacy
-policy, and an accountant check on whether BG law obliges us to keep any
-payment record on our side (Stripe already retains its own).
+See the judgement section above. **No code change to the hard-delete
+approach. Keep it.**
+
+**Carve-out verified in code 2026-08-27 (was "probable", now confirmed).**
+The founder asked: do we hold ANY transaction/payment record our side
+that survives account deletion, or is Stripe/RevenueCat the sole
+record-keeper? Grepped `cron/cleanup-deleted-accounts` end to end + the
+`schema_hardening` migration + the sweep's production `pg_constraint`
+dump:
+
+- **`audit_logs` is the one table that survives deletion with
+  user-linked-ish content.** Its FK is `ON DELETE SET NULL`
+  (production-confirmed, sweep §5.3), and it is **not** in the cleanup
+  cron. Payment events are written to it —
+  `payment.subscription_created`, `payment.subscription_cancelled`,
+  `payment.invoice_payment_failed` — and the `payment.invoice_payment_failed`
+  payload **includes `stripeCustomerId`, `stripeInvoiceId`,
+  `stripeSubscriptionId`** (VERIFIED — `lib/stripe/subscription.ts:425-433`,
+  `:461-467`). After deletion the row's `user_id` is nulled but the
+  `stripeCustomerId` in the JSONB is a **re-identification handle back to
+  a person via Stripe**. So `ON DELETE SET NULL` does **not** fully
+  de-identify these rows.
+- **Everything else is clean:** the `users` row (carrying
+  `stripe_customer_id`) is hard-deleted by the cron's last step;
+  `subscription_quotas` has an FK to `users.clerk_id` and cascades on
+  that delete (INFERRED — the sweep grouped it with the `ON DELETE
+  CASCADE` tables and the `schema_hardening` migration text says
+  `CASCADE`; **recommend one `pg_constraint` confdeltype query to
+  confirm 'c' not 'n'**); `processed_webhook_events` (stripe_event_id +
+  type only) and `processed_revenuecat_events` (event_id + type only)
+  carry **no user identifier**; `bg_generation_flags` is explicitly
+  "nothing that ties a row to a person" (its own code comment);
+  `daily_transits` is a global ephemeris cache.
+
+**So the accountant question is now half a code question:** we DO retain
+`audit_logs` payment rows with Stripe IDs past deletion. Two things:
+
+1. **Code:** the payment-event audit writer should not persist the full
+   `stripeCustomerId` — log a last-4 or a hash, or have the cron redact
+   those specific JSONB keys for the deleted user's rows. Small change,
+   worth doing so the retained security log is genuinely de-identified.
+2. **Policy / accountant:** confirm whether BG tax/accounting law
+   requires keeping any payment record on our side *at all* (Stripe and
+   Apple already retain theirs as separate controllers). If not, the
+   `audit_logs` payment rows can be pruned in the cron too, and there's
+   no carve-out. If yes, keep them **pseudonymised** (per item 1 above)
+   and document the retention basis in the privacy policy.
+
+`subscription_quotas` in the GDPR **export** is a separate, already-known
+gap (sweep §5.3 — export omits it); not a deletion issue.
 
 ### 4. Paid features disclosed — Guideline 2.3 / 3.1.2
 
@@ -239,21 +300,35 @@ Termly actually offers Bulgarian (NEEDS-CHECK).
 
 ## What actually blocks submission, ranked
 
-1. **Support URL** (item 5) and **`/terms` + resolving `/privacy`**
-   (item 6) — both blocked on the Vercel deploy, which is already the
-   widest blocker on the board.
-2. **Paywall discloses paid features** (item 4) — a mockup requirement,
+1. **Sign in with Apple** (item 1) — now mandatory because Google
+   sign-in is a launch feature. SIWA config + testing is blocked on
+   Apple enrolment; client work can start now. See
+   `AUTH-PROVIDER-EXPANSION-2026-08-27.md`.
+2. **Support URL** (item 5) and **`/terms` + resolving `/privacy`**
+   (item 6) — blocked on the Vercel deploy (itself now blocked on the
+   Next.js version-block upgrade — `NEXTJS-UPGRADE-2026-08-27.md`).
+3. **Paywall discloses paid features** (item 4) — a mockup requirement,
    feeds the next mockup.
-3. **Nothing else.** Item 1 is very likely not applicable; item 2 is
-   satisfied as built; item 3 is satisfied as built and the tip that
-   prompted it is wrong.
+4. Item 2 (deletion discoverability) satisfied as built; item 3
+   (hard-delete) satisfied as built — the tip that prompted it is wrong.
 
 ## What needs a founder decision
 
-- **Is Google / social sign-in a launch feature?** (decides whether item
-  1 exists at all).
+- ~~Is Google / social sign-in a launch feature?~~ **Ruled: yes.** →
+  SIWA mandatory. Consequence recorded: adding social login is not a
+  free feature — Google ~3 d, SIWA ~5–7 d, and SIWA drags in a new
+  dev-client build + token-revocation-on-delete + a founder ruling on
+  revoke-failure handling (§3 of the auth doc).
 - **Lawyer review for the privacy policy** — yes/no, and which
   Bulgarian data-protection lawyer.
-- **Accountant question:** does BG tax/accounting law require us to
-  retain any payment record on our side after account deletion, given
-  Stripe and Apple already retain theirs?
+- **Accountant question, now narrowed to a specific target:** does BG
+  tax/accounting law require us to keep the `audit_logs` payment rows
+  (or any payment record) on our side after account deletion, given
+  Stripe and Apple retain theirs? If no → prune them in the cron too. If
+  yes → pseudonymise (drop `stripeCustomerId` from the payload) and
+  document the basis.
+- **`audit_logs` payment payload:** ratify stripping `stripeCustomerId`
+  (→ last-4 or hash) from the audit writer regardless of the accountant
+  answer — a retained security log should be de-identified.
+- **SIWA token-revocation failure handling:** best-effort-and-proceed
+  (recommended) vs. revoke-or-defer — ruling needed when SIWA is built.

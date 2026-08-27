@@ -1699,6 +1699,50 @@ they were forgotten rather than deferred on purpose.
 - **Load-testing (Scenarios B/C).** Blocked on M4 streaming-endpoint
   extraction per `LOAD_TEST_PLAN.md` — not re-scoped here, carried forward
   as-is from `PRE_LAUNCH_PREREQS.md` item 4.
+- **Next.js version-block upgrade — `.planning/NEXTJS-UPGRADE-2026-08-27.md`.**
+  The `turbo.json` env fix (`83317a6`) unblocked the Turbo compile; Vercel
+  then hard-blocks the deploy on "Vulnerable version of Next.js detected"
+  — `15.2.4` is unpatched for the May + August 2026 security releases.
+  **Minimum version that clears the gate is `15.5.24`** (no patch exists
+  on the 15.2/15.3/15.4 lines — Next maintains only 15.5.x Maintenance
+  LTS and 16.x). That's a **minor jump (15.2 → 15.5), not a patch bump**,
+  so per founder instruction the upgrade is **HALTED pending go-ahead**.
+  Surface is small for this codebase (App Router only, no `next/image`,
+  no server actions, Clerk 6.36.9 peer range already covers 15.5,
+  native-externals config already tested against 15.5.9, React peer
+  unchanged). Recommended steps in §5 of that doc. Our *specific*
+  exposure to the two Aug-2026 criticals is nil (no `next/image`; Linux)
+  — the gate is a blanket version block.
+- **Auth provider expansion (Google + Sign in with Apple) —
+  `.planning/AUTH-PROVIDER-EXPANSION-2026-08-27.md`.** Founder ruled
+  2026-08-27: **Google sign-in IS a launch feature**, which makes **SIWA
+  mandatory** (Guideline 4.8) — now a submission blocker, tracked in
+  `APPLE-REVIEW-REQUIREMENTS-2026-08-27.md` §1 (flipped from "not
+  applicable"). Deps already installed. **Google needs no native build**
+  (browser SSO flow); **SIWA needs a new dev-client build** (config
+  plugin + `ios.usesAppleSignIn`) — flag to founder before starting, it
+  changes the testing loop. SIWA config + end-to-end test blocked on
+  Apple enrolment; all client work can start now. Web gets both nearly
+  free via Clerk prebuilt components but MUST ship the buttons in the
+  same release (a Google-only mobile signup can't log into web
+  otherwise). Open founder rulings: Clerk account-linking = link on
+  verified email; SIWA token-revoke-on-delete failure handling
+  (best-effort-and-proceed recommended); `displayName.ts` relay-host
+  guard. Cost ~Google 3 d + SIWA 5–7 d + ~2 h config.
+- **`audit_logs` payment rows survive account deletion with Stripe IDs
+  in the JSONB.** Verified 2026-08-27 (`APPLE-REVIEW-REQUIREMENTS` §3):
+  `audit_logs` FK is `ON DELETE SET NULL` and it's not in the cleanup
+  cron; `payment.invoice_payment_failed` payloads carry
+  `stripeCustomerId` / `stripeInvoiceId` / `stripeSubscriptionId`, so
+  nulling `user_id` doesn't de-identify them. Everything else in the
+  schema is either hard-deleted, cascades from the `users` row, or
+  carries no user identifier. Two follow-ups: (1) strip
+  `stripeCustomerId` from the audit writer (→ last-4/hash) regardless;
+  (2) accountant question — does BG law require keeping any payment
+  record our side, given Stripe/Apple retain theirs? If no, prune the
+  rows in the cron; if yes, pseudonymise + document. Also confirm
+  `subscription_quotas` FK is `ON DELETE CASCADE` ('c') in production
+  with one `pg_constraint` query.
 - **Wizard partial-value (show a chart before the birth-time step).**
   **Design A ruled 2026-08-27** (founder): stateless `POST /api/chart/preview`
   wrapping the existing `calculateNatalChart` pure function + one wizard
