@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-27 (Sentry caught a production-breaking bug 1h after going live — sweph/geo-tz/dictionary-bg missing from the deployed function; every compute path 500ing. §0.6: sweph + geo-tz FIXED and verified in production (`e64ef9f`), win32-trace residual risk resolved, `/connect/[token]` 500 resolved as a side effect. §0.7: the `bg-allowlist.txt` read (the remaining `/api/horoscope|oracle/generate` 500) — root cause is webpack freezing `import.meta.url` to the build machine's path, NOT file tracing; FIXED (allowlist → bundled data module `bg-allowlist.data.mjs`, parsed Set verified byte-identical), verified locally, awaiting prod probe. Grep sweep for the same shape: one broken instance (fixed), zero others. VERIFICATION-SURFACE-GAPS #7 added (build-time constant inlining freezes bundled-module file paths). New §7: full path-to-launch sequence recorded (Tracks 1–6, auth Phase A/B + enrolment boundary, launch clock, zero-spend week plan). Apple enrolment + Play registration moved to next week (money). Earlier same day: FIRST SUCCESSFUL PRODUCTION DEPLOY — chain turbo.json env allowlist → lazy Stripe → Next.js 15.5.24; audit_logs de-identification, /support page.)
+last-updated: 2026-08-27 (Sentry caught a production-breaking bug 1h after going live — sweph/geo-tz/dictionary-bg missing from the deployed function; every compute path 500ing. §0.6: sweph + geo-tz FIXED and verified in production (`e64ef9f`), win32-trace residual risk resolved, `/connect/[token]` 500 resolved as a side effect. §0.7: the `bg-allowlist.txt` read — webpack froze `import.meta.url` to the build machine's path; FIXED (allowlist → bundled data module, parsed Set byte-identical). §0.8: with §0.6+§0.7 off, the route finally runs and hits a THIRD failure — `generateText` gets an empty body from OpenRouter → `ai` SDK `JSON.parse('')` → unhandled 500. Leading cause: blank `OPENROUTER_API_KEY` in Vercel Production runtime env (missing would throw `LoadAPIKeyError`, not `SyntaxError`). Founder checking. VERIFICATION-SURFACE-GAPS #7 (build-time constant inlining), #8 (ad blocker eats the Sentry tunnel), #9 (`toErrorResponse` returns a 500 Response → Sentry never sees it). New §7: full path-to-launch sequence recorded (Tracks 1–6, auth Phase A/B + enrolment boundary, launch clock, zero-spend week plan). Apple enrolment + Play registration moved to next week (money). Earlier same day: FIRST SUCCESSFUL PRODUCTION DEPLOY — chain turbo.json env allowlist → lazy Stripe → Next.js 15.5.24; audit_logs de-identification, /support page.)
 ---
 
 # Completion Tracker
@@ -344,6 +344,108 @@ halt; tracked so it is not forgotten.
 
 ---
 
+## 0.8 `/api/horoscope/generate` (and `/api/oracle/generate`) 500 — the OpenRouter response isn't JSON (found 2026-08-27, THIRD distinct failure on this route)
+
+**Status: diagnosed from the Vercel Runtime Logs stack. NOT fixed —
+halted for the founder to check one env value first. This is the third
+failure hiding behind the previous two (missing native module → frozen
+build-machine path → this).**
+
+**The stack (Vercel Runtime Logs, not Sentry):**
+```
+POST /api/horoscope/generate → 500, 1.66s
+Failed to generate horoscope. SyntaxError: Unexpected end of JSON input
+  at JSON.parse (<anonymous>)
+  at async u (.next/server/app/api/horoscope/generate/route.js:34:689)
+  at async (.next/server/chunks/1349.js:41:7566)
+```
+
+**Q1 — what is being `JSON.parse`'d:** the OpenRouter HTTP response,
+**inside the `ai` SDK**, not our code. Verified: `chunks/1349.js` contains
+the `ai` package (`streamText`/`generateText`/`ai-sdk` markers). The route
+never calls `JSON.parse` directly — its only JSON parse is `await
+req.json()` at `route.ts:45`, and the Днес client
+(`hooks/useDailyHoroscope.ts:52`) always sends a valid
+`JSON.stringify({ chartId })` body, so that path is fine. The failing
+parse is `@ai-sdk/openai`'s response handler doing `JSON.parse('')` on an
+**empty body** returned by OpenRouter during `await generateText(...)`
+(`route.ts:312`). `JSON.parse('')` is exactly "Unexpected end of JSON
+input".
+
+**Q1 corollary — the 1.66s and the missing OpenRouter entry:** a 70B
+non-streaming generation takes 5–30s; **1.66s means OpenRouter rejected
+the request almost immediately** (auth/edge rejection, not a generation).
+`assertRateLimit` (`route.ts:38`) hits Supabase *before* the AI call —
+that is why Supabase shows in the invocation's External APIs list. The
+OpenRouter fetch **did** happen (a fully-absent key would throw
+`LoadAPIKeyError` before any fetch — see Q2 — and we got a `SyntaxError`
+instead); Vercel's External-APIs panel just doesn't reliably surface a
+fetch that was rejected fast / returned non-2xx. "Not in the panel" ≠ "no
+request made".
+
+**Q2 — is `OPENROUTER_API_KEY` in Vercel Production *runtime* env
+(FOUNDER TO CHECK):** it is in `turbo.json` `build.env` (build-time only,
+same distinction as `SENTRY_DSN`). `lib/ai/client.ts` reads
+`process.env.OPENROUTER_API_KEY` **at module scope** and passes it to
+`createOpenAI({ apiKey })`. Verified against `@ai-sdk/provider-utils@4.0.15`
+`loadApiKey`:
+- key **absent / `undefined`** → `loadApiKey` throws
+  `LoadAPIKeyError: OpenAI API key is missing…`. That is a *different*
+  error than what we see, so the key is **not simply missing**.
+- key **`""` (empty string)** → `typeof "" === "string"` → returned
+  as-is, **no emptiness check** → request goes out with
+  `Authorization: Bearer ` (blank) → OpenRouter / its Cloudflare front
+  rejects fast with an empty or HTML body → `JSON.parse('')` →
+  `SyntaxError`. **This is the shape that matches.**
+- key present but **invalid/revoked** → OpenRouter normally returns a
+  *JSON* 401 → `@ai-sdk/openai` throws `APICallError`, not `SyntaxError`
+  (unless a Cloudflare challenge served non-JSON).
+- **What to check:** not "is it set" but "is the value a real, non-empty
+  OpenRouter key" (prefix `sk-or-v1-`). An empty string or placeholder in
+  the Production env explains the whole thing.
+- Note: `/api/horoscope/generate` has **never completed a successful run
+  in production** — production is 1 day old and was broken by §0.6 then
+  §0.7 the entire time. The AI call has never actually executed in prod.
+  So this is a latent config/resilience gap surfacing now, not a
+  regression.
+
+**Q3 — why an unhandled 500 instead of a handled error (two defects):**
+1. `route.ts:319–322` catches the `generateText` error, runs
+   `releaseClaimOnFailure()`, then **`throw err`** to the outer catch
+   (`route.ts:397`), which calls `toErrorResponse(error, 'Failed to
+   generate horoscope.')`. `toErrorResponse` (`lib/auth/guards.ts:20`)
+   only builds a structured response for `ApiError`; **anything else →
+   bare `500` + generic message + `console.error`**. A provider returning
+   an empty body is a *foreseeable* upstream failure that should be a
+   `502/503` with a retry hint, not an unhandled `500`.
+2. The founder's point: **`generateText` is called with zero resilience** —
+   no retry, no timeout-to-friendly-error, no catch that separates
+   "provider returned garbage" from "our code threw". And the SDK itself
+   `JSON.parse`s the provider response with no empty-body guard (not our
+   line, but our exposure). Every failure here also burns → refunds a
+   quota claim and an INSERT/delete on `daily_horoscopes`.
+
+**Why Sentry had nothing (structural, not a misconfig) — see
+VERIFICATION-SURFACE-GAPS #9:** `toErrorResponse` **catches** the error
+and **returns** a `Response.json(500)`. A returned Response is a normal
+return, not a thrown error, so Next's `onRequestError` /
+`Sentry.captureRequestError` **never fires**. Only the `console.error`
+inside `toErrorResponse` reaches anything — and that goes to Vercel logs,
+not Sentry (the server config has no `console` integration). **All 6
+routes using `toErrorResponse` are Sentry-blind for any non-`ApiError`
+500.** So "no Sentry event for this release" is expected and is not
+evidence server-side Sentry is broken — though whether `SENTRY_DSN` is in
+the Production runtime env is still worth confirming (§0.7).
+
+**No fix until the founder confirms the `OPENROUTER_API_KEY` value.** If it
+is a real key, the diagnosis moves to "OpenRouter incident / model
+`meta-llama/llama-3.3-70b-instruct` unavailable / Cloudflare blocking the
+Lambda IP" and needs the actual OpenRouter response body captured (add a
+temporary `console.error(await response.text())` shim, or check
+OpenRouter's dashboard activity log for the failed request).
+
+---
+
 ## 0.7 `bg-allowlist.txt` read fails in production — webpack freezes `import.meta.url` at build time (found 2026-08-27, part of §0.6)
 
 **Status: FIX APPLIED + verified locally 2026-08-27 (`<this commit>`).
@@ -422,6 +524,15 @@ Next-rendered error.
 already — sweph fix (real, verified) then allowlist fix (real, unverified
 in prod). The third must be driven by the actual current stack trace, not
 by another inference.**
+
+**UPDATE 2026-08-27: current stack trace obtained from Vercel Runtime
+Logs. §0.6 (sweph/geo-tz) and §0.7 (allowlist) are BOTH confirmed working
+— the route now loads and runs. The third failure is diagnosed in §0.8
+below: `generateText` receives an empty body from OpenRouter, the `ai` SDK
+does `JSON.parse('')`, `SyntaxError` propagates to an unhandled 500.
+Leading cause: `OPENROUTER_API_KEY` in Vercel Production runtime env is
+blank/empty (a fully-missing key throws a distinct `LoadAPIKeyError`
+instead). Founder to check the value before any fix.**
 
 ---
 

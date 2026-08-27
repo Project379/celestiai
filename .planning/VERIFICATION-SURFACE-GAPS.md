@@ -213,6 +213,35 @@ one is that **the human's own diagnostic instrument is filtered**, so
 "I checked and it's fine" carries a hidden asterisk for anything the
 filter touches.
 
+## 9. A handled error that returns a 500 Response is invisible to Sentry — "no event" ≠ "no error"
+
+Found 2026-08-27 chasing the §0.8 `/api/horoscope/generate` 500. The error
+was in Vercel Runtime Logs within seconds; Sentry had nothing for the
+release. That is not a Sentry misconfiguration — it is structural:
+
+- Next.js reports route errors to Sentry via `onRequestError`
+  (`instrumentation.ts` exports `Sentry.captureRequestError`). That hook
+  fires **only for errors that propagate uncaught out of the handler.**
+- `apps/web/lib/auth/guards.ts`'s `toErrorResponse(error, msg)` **catches**
+  the error and **returns** `Response.json({ error: msg }, { status: 500 })`
+  for anything that isn't an `ApiError`. A returned Response is a normal
+  return — nothing is thrown — so `onRequestError` never sees it.
+- Its only telemetry is a `console.error` inside `toErrorResponse`, and
+  `sentry.server.config.ts` has no console-capture integration, so that
+  goes to Vercel logs and nowhere else.
+- Six routes use `toErrorResponse` (`cities/search`, `horoscope/generate`,
+  `oracle/generate`, `stripe/{cancel,checkout,portal}`). Every non-`ApiError`
+  500 in any of them is Sentry-blind.
+
+The trap: treating "the Sentry dashboard is clean" as "production is
+healthy." Sentry only sees what is *thrown*; anything a route catches and
+turns into a 4xx/5xx Response — which is most deliberate error handling —
+is not there. For a real picture you need Vercel Runtime Logs (or a
+wrapper that explicitly `Sentry.captureException`s before returning the
+Response). Related to #6's "an endpoint probe is evidence only for the
+code it runs" — this is the monitoring-side version: **an error monitor is
+evidence only for the errors that reach it, and 'handled' errors don't.**
+
 ## The underlying pattern across items 1-3 (environment-fidelity gaps)
 
 Convenience/local/cheap verification surfaces (a browser via
