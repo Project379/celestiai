@@ -1772,7 +1772,13 @@ they were forgotten rather than deferred on purpose.
   setting to enable or disable" it (Google always verified, Apple relay
   address is stable per-app). There is NO account-linking toggle to find
   or set on either instance; the only lever is "Verify at sign-up" (ON,
-  done). **Unfixable edge:** Apple "hide my email" user who later
+  done). **Why archived docs disagree:** earlier Clerk builds exposed an
+  account-linking mode/strictness setting in the dashboard, and
+  `APPLE-REVIEW-REQUIREMENTS` §7 + `AUTH-PROVIDER-EXPANSION` §4/§6 (pre
+  2026-08-27 revisions) told the founder to "confirm it's set to link on
+  verified email." That setting no longer exists — linking is now
+  unconditional. If an archived planning doc says to check it, this note
+  is why it's wrong. **Unfixable edge:** Apple "hide my email" user who later
   uses Google = two different addresses = two accounts, nothing automatic
   merges them (a future "Connected accounts" screen would let them
   self-serve; not a launch blocker). Open rulings: SIWA
