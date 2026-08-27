@@ -1,7 +1,8 @@
 ---
 title: Wizard partial-value — feasibility investigation
-status: investigation only. No ruling made. For founder decision.
+status: DESIGN A RULED 2026-08-27. Build deferred to the wizard mockup. See the ruling block below.
 created: 2026-08-27
+updated: 2026-08-27
 context: DESIGN-RESEARCH-2026-08-27.md §C.2 found the 4-step wizard collects
   date + location + time before showing any value — the shape onboarding
   research most warns against. Founder ruling: scope it as its own
@@ -20,6 +21,55 @@ it has always accepted an unknown birth time. The only real work is a
 stateless way to call it, and one product decision about whether a
 half-finished chart is allowed to exist as a row. There is a clean design
 that needs no migration and no change to the wizard-completion gate.**
+
+---
+
+## RULING — 2026-08-27 (founder)
+
+**Design A.** Stateless `POST /api/chart/preview` wrapping the existing
+`calculateNatalChart` pure function, plus one wizard screen state. **No
+schema change, no migration, no change to the wizard-completion gate.**
+
+**Design B is rejected** — cross-session "finish later" is not a need
+anyone has asked for, and A does not block B if it ever appears.
+
+**Build is deferred to the wizard mockup.** Not now. The paywall stays
+the next mockup. The four §4 decisions get answered as a batch when the
+wizard mockup comes up, not piecemeal.
+
+### ⚠ TRAP — carry this forward prominently if Design B is ever revisited
+
+**The forced-wizard gate keys on row existence, not completeness.**
+`apps/mobile/app/(authed)/_layout.tsx:31–40` fires the redirect only
+while `useFirstChart().data === null`. Persist a provisional chart row at
+the date+location step and `firstChart.data` goes non-null — **the wizard
+is silently marked complete** and the user is never pushed back to add
+their birth time. They land on Днес built from a noon-placeholder chart.
+Design B therefore also costs a gate rework and an abandoned-row sweep.
+Design A exists to sidestep exactly this. Also mirrored in
+`COMPLETION-TRACKER.md` §6 so a fresh session sees it without opening this
+file.
+
+### Three things the implementer must get right (at mockup time, not now)
+
+1. **The noon-local convention must be visible to the user.** A
+   provisional chart is computed at noon local time (§1), so adding a
+   real birth time will visibly change the Ascendant, the houses, and
+   possibly the Moon sign. If that change is unexplained it reads as the
+   app having been wrong. Propose the framing when the wizard screen is
+   designed — e.g. the teaser explicitly says "your rising sign and
+   houses need your exact birth time; this is your sign layer, which
+   doesn't."
+2. **Rate-limit `/api/chart/preview`.** It runs a real ephemeris
+   compute. **Confirmed 2026-08-27:** the wizard sits *behind* auth —
+   `AuthedLayout` redirects unauthenticated users to `/sign-in` before
+   any wizard screen renders — so a preview call made mid-wizard is an
+   authenticated request. Build the route as a normal `auth()` +
+   `assertRateLimit` handler, identical posture to `/api/chart/calculate`.
+   It must **not** ship as a public/unauthenticated endpoint; if a future
+   change moves any part of the wizard ahead of auth, this becomes the
+   most exposed compute endpoint in the app.
+3. **Answer the four §4 decisions as a batch** with the wizard mockup.
 
 ---
 
@@ -167,8 +217,10 @@ at the smallest possible surface.
 
 ## 4. What still needs a founder decision
 
-1. **Go / no-go on Design A** (or B, if there's a cross-session
-   "finish later" intent I'm not seeing).
+Item 1 is ruled (Design A — see the ruling block up top). Items 2–4 are
+answered as a batch when the wizard mockup is designed, not now.
+
+1. ~~Go / no-go on Design A~~ — **ruled: Design A.**
 2. **Teaser content:** Sun + planetary signs only? Include the Moon with
    a "provisional" mark, or omit it? Show the provisional wheel
    graphically, or just a sign list?

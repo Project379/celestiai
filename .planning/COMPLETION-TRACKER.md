@@ -1699,3 +1699,34 @@ they were forgotten rather than deferred on purpose.
 - **Load-testing (Scenarios B/C).** Blocked on M4 streaming-endpoint
   extraction per `LOAD_TEST_PLAN.md` — not re-scoped here, carried forward
   as-is from `PRE_LAUNCH_PREREQS.md` item 4.
+- **Wizard partial-value (show a chart before the birth-time step).**
+  **Design A ruled 2026-08-27** (founder): stateless `POST /api/chart/preview`
+  wrapping the existing `calculateNatalChart` pure function + one wizard
+  screen state. **No schema change, no migration, no change to the
+  wizard-completion gate.** Full investigation:
+  `.planning/WIZARD-PARTIAL-VALUE-INVESTIGATION-2026-08-27.md`. Build is
+  **deferred to the wizard mockup**, not now; paywall stays the next
+  mockup. Three things the implementer must get right, and one trap:
+  1. **TRAP for anyone who later reaches for Design B (persist a
+     provisional row):** `apps/mobile/app/(authed)/_layout.tsx:31–40`'s
+     forced-wizard redirect keys on `useFirstChart().data === null` —
+     row *existence*, not completeness. A persisted half-chart silently
+     marks the wizard done and the user is never pushed back to finish.
+     Design B therefore also costs a gate rework + an abandoned-row
+     sweep. Design A exists specifically to avoid this. Do not "just
+     save the provisional chart" without reading this.
+  2. The **noon-local convention must be visible to the user**, not
+     silent — a provisional chart is computed at noon local time, so
+     adding a real birth time changes the Ascendant / houses / possibly
+     the Moon. If that change is unexplained it reads as the app being
+     wrong. Framing to be proposed with the wizard screen mockup.
+  3. **Rate-limit `/api/chart/preview`** — it runs a real ephemeris
+     compute. Confirmed 2026-08-27: the wizard sits **behind** auth
+     (`AuthedLayout` redirects unauthenticated users to `/sign-in`), so
+     a preview route called mid-wizard is an authenticated call and
+     should be a normal `auth()` + `assertRateLimit` route, same as
+     `/api/chart/calculate`. Keep it that way — it must **not** ship as
+     a public/unauthenticated endpoint.
+  4. Answer the **four §4 decisions** in the investigation doc as a
+     batch when the wizard mockup comes up (teaser content, Moon
+     handling, wheel vs. sign-list, time-step framing) — not piecemeal.
