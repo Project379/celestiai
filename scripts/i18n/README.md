@@ -24,8 +24,8 @@ caught all 4 genuine garbled tokens produced by the current placeholder model
   confirmed directly against its API, not assumed; see the earlier investigation).
 - **Whether a flagged word is a real domain term or an actual typo.** The
   checker cannot tell "Асцендент" (real astrology term) from a genuine
-  misspelling — that's why `bg-allowlist.txt` exists, and why it's explicitly
-  a human-curated list, not something inferred automatically.
+  misspelling — that's why `bg-allowlist.data.mjs` exists, and why it's
+  explicitly a human-curated list, not something inferred automatically.
 
 Register/grammar/calque review stays a human pass. Green here means "no
 non-words found," nothing more.
@@ -40,8 +40,8 @@ non-words found," nothing more.
   know (astrology jargon, "имейл", productive "по-X" comparative forms),
   not actual typos. Wiring a check with that much noise into a required CI
   gate would just get ignored or ratchet down over time; it needs a real
-  triage pass into `bg-allowlist.txt` first (down to 339 after the first
-  mechanical pass — see that file's own header for what's still
+  triage pass into `bg-allowlist.data.mjs` first (down to 339 after the
+  first mechanical pass — see that file's own header for what's still
   uncategorized). That triage is a human judgment call (real word vs.
   typo), not something to guess at automatically.
 - `node scripts/i18n/check-bg-generated.mjs <samples.json>` — checks
@@ -71,9 +71,17 @@ and `.planning/i18n/MODEL_CAPABILITY_LOG.md`.
   stems, e.g. съсредоточ-?). Read-only, service-role key, default 30-day
   window.
 
-## `bg-allowlist.txt`
+## `bg-allowlist.data.mjs`
 
 Starter list only, seeded from the highest-frequency/least-ambiguous flags
 in the first run. Growing it correctly requires reviewing each remaining
 flagged word and deciding real-word-add-here vs. actual-typo-fix-at-source
 — that review has not been done exhaustively and shouldn't be assumed done.
+
+Was `bg-allowlist.txt` (read via `readFileSync` at module scope in
+`bg-speller.mjs`) until 2026-08-27. Converted to a bundled data module
+after that `readFileSync` 500'd in production — webpack freezes
+`import.meta.url` to the build machine's absolute path, so the read target
+was wrong on Vercel regardless of file tracing (see
+`COMPLETION-TRACKER.md` §0.7). Edit `bg-allowlist.data.mjs` directly; it is
+now the source of truth. One string per array entry, case-sensitive.

@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-27 (Sentry caught a production-breaking bug 1h after going live — sweph/geo-tz/dictionary-bg missing from the deployed function; every compute path 500ing. §0.6: sweph + geo-tz FIXED and verified in production (`e64ef9f`), win32-trace residual risk resolved, `/connect/[token]` 500 resolved as a side effect. §0.7: dictionary-bg chain still broken — root cause is webpack freezing `import.meta.url` at build time, NOT file tracing; fix chosen (allowlist → code module), pending founder go-ahead. New §7: full path-to-launch sequence recorded (Tracks 1–6, auth Phase A/B + enrolment boundary, launch clock, zero-spend week plan). Apple enrolment + Play registration moved to next week (money). Earlier same day: FIRST SUCCESSFUL PRODUCTION DEPLOY — chain turbo.json env allowlist → lazy Stripe → Next.js 15.5.24; audit_logs de-identification, /support page.)
+last-updated: 2026-08-27 (Sentry caught a production-breaking bug 1h after going live — sweph/geo-tz/dictionary-bg missing from the deployed function; every compute path 500ing. §0.6: sweph + geo-tz FIXED and verified in production (`e64ef9f`), win32-trace residual risk resolved, `/connect/[token]` 500 resolved as a side effect. §0.7: the `bg-allowlist.txt` read (the remaining `/api/horoscope|oracle/generate` 500) — root cause is webpack freezing `import.meta.url` to the build machine's path, NOT file tracing; FIXED (allowlist → bundled data module `bg-allowlist.data.mjs`, parsed Set verified byte-identical), verified locally, awaiting prod probe. Grep sweep for the same shape: one broken instance (fixed), zero others. VERIFICATION-SURFACE-GAPS #7 added (build-time constant inlining freezes bundled-module file paths). New §7: full path-to-launch sequence recorded (Tracks 1–6, auth Phase A/B + enrolment boundary, launch clock, zero-spend week plan). Apple enrolment + Play registration moved to next week (money). Earlier same day: FIRST SUCCESSFUL PRODUCTION DEPLOY — chain turbo.json env allowlist → lazy Stripe → Next.js 15.5.24; audit_logs de-identification, /support page.)
 ---
 
 # Completion Tracker
@@ -346,8 +346,38 @@ halt; tracked so it is not forgotten.
 
 ## 0.7 `bg-allowlist.txt` read fails in production — webpack freezes `import.meta.url` at build time (found 2026-08-27, part of §0.6)
 
-**Status: root cause CONFIRMED from the build artifact (not a guess, not
-Sentry-dependent). Fix chosen, NOT applied — pending founder go-ahead.**
+**Status: FIX APPLIED + verified locally 2026-08-27 (`<this commit>`).
+AWAITING PRODUCTION PROBE — re-run `POST /api/horoscope/generate` and
+`POST /api/oracle/generate` on the deploy; both must stop 500ing.**
+
+**What shipped:**
+- `scripts/i18n/bg-allowlist.txt` (276 unique entries) → converted to
+  `scripts/i18n/bg-allowlist.data.mjs` (`export const BG_ALLOWLIST = [...]`),
+  provenance comments preserved. **Verified: the parsed Set is byte-for-byte
+  identical to the old `loadAllowlist()` output — 276 words, zero
+  duplicates, `in-txt-not-mjs: []`, `in-mjs-not-txt: []` (content compared,
+  not just size).**
+- `bg-speller.mjs` now `import { BG_ALLOWLIST }` + `new Set(BG_ALLOWLIST)`;
+  the `readFileSync` + `dirname`/`resolve`/`fileURLToPath` imports removed.
+- `next.config.js`: the now-dead `bg-allowlist.txt` entry removed from
+  `outputFileTracingIncludes` (sweph/geo-tz/dictionary-bg globs stay).
+- Docs updated: `scripts/i18n/README.md`, this file.
+- **Grep sweep for the same shape — see the dedicated finding below. One
+  broken instance (this one), zero others, one same-shape-but-shimmed
+  pattern noted.**
+
+**Verified locally:** `next build` exit 0; the compiled chunk
+`4585.js` no longer contains `bg-allowlist` or the frozen
+`file:///C:/Users/...` path, and `BG_ALLOWLIST` / `Асцендент` are now
+inlined as bundled data; the `.nft.json` for `oracle/generate` +
+`horoscope/generate` no longer references `scripts/` or `bg-allowlist.txt`;
+`check:bg-strings` PASS (the CI consumer, same allowlist behaviour);
+195/195 web tests; typecheck clean; bg-lint-baseline + error-code checks
+PASS.
+
+---
+
+**Original diagnosis:**
 
 `POST /api/horoscope/generate` and `POST /api/oracle/generate` 500 at
 module evaluation. Both statically import `@/lib/ai/check-bg-output` →
@@ -397,27 +427,21 @@ mechanism above, confirmed. (Could not pull programmatically — the
 `SENTRY_AUTH_TOKEN` in `.env.local` is a `sntrys_` source-map-upload
 token with no `event:read` scope. See §6 "Sentry read token".)
 
-**Fix (chosen, pending go-ahead) — eliminate the runtime file read:**
-convert `scripts/i18n/bg-allowlist.txt` (314 lines, ~264 words + comments)
-into a code module `scripts/i18n/bg-allowlist.data.mjs`
-(`export const BG_ALLOWLIST = [ ... ]`), and have `bg-speller.mjs`
-`import { BG_ALLOWLIST }` + `new Set(BG_ALLOWLIST)` instead of
-`readFileSync`. Webpack then bundles it as data — no `fs`, no
-`import.meta.url`, no tracing dependency; works identically under `node`
-(CI: `check:bg-strings`, `check-bg-generated.mjs`) and under webpack
-(runtime). Verify by comparing the resulting Set size to the old
-`loadAllowlist()` output. Remove the now-dead `bg-allowlist.txt` glob from
-`next.config.js` `outputFileTracingIncludes` in the same change (the
-`dictionary-bg` and `sweph`/`geo-tz` globs stay). This also answers the
-founder's design question: **yes — the allowlist belongs with the code
-that reads it, as code. The coupling (a production route reading a file
-from `scripts/i18n/` — a tooling directory — at module scope) was the
-defect; tracing was always the wrong lever.**
-
-**Also to do in that change:** `bg-speller.mjs` still has the unused
-`readFileSync`/`dirname`/`fileURLToPath` imports to drop, and the `README`
-+ `STAGE5_PREVENTION.md` references to `bg-allowlist.txt` need a one-line
-"now `bg-allowlist.data.mjs`" note.
+**Fix (APPLIED) — eliminated the runtime file read:**
+`scripts/i18n/bg-allowlist.txt` → `scripts/i18n/bg-allowlist.data.mjs`
+(`export const BG_ALLOWLIST = [ ... ]`, provenance comments kept);
+`bg-speller.mjs` does `import { BG_ALLOWLIST }` + `new Set(BG_ALLOWLIST)`,
+with the `readFileSync`/`dirname`/`resolve`/`fileURLToPath` imports
+removed. Webpack bundles it as data — no `fs`, no `import.meta.url`, no
+tracing dependency; works identically under `node` (CI: `check:bg-strings`
+PASS) and under webpack (runtime). The dead `bg-allowlist.txt` glob is
+gone from `next.config.js` (`dictionary-bg` / `sweph` / `geo-tz` globs
+stay). `scripts/i18n/README.md` updated; `STAGE5_PREVENTION.md` left as
+the historical record it is. This also answers the founder's design
+question: **yes — the allowlist belongs with the code that reads it, as
+code. The coupling (a production route reading a file from `scripts/i18n/`
+— a tooling directory — at module scope) was the defect; tracing was
+always the wrong lever.**
 
 ## 1. Context block
 

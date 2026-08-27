@@ -30,10 +30,15 @@ const nextConfig = {
   //     at runtime (only the require()'d *.index.json traces automatically).
   //   - dictionary-bg: index.js reads index.aff/index.dic via
   //     fs.readFile(new URL(..., import.meta.url)) — nft's URL-asset
-  //     heuristic is unreliable under externalization.
-  //   - scripts/i18n/bg-allowlist.txt: read with readFileSync(__dirname)
-  //     at module scope by bg-speller.mjs (the LLM-Bulgarian safety net),
-  //     which lives outside apps/web.
+  //     heuristic is unreliable under externalization. Works because
+  //     dictionary-bg is in serverExternalPackages, so webpack does NOT
+  //     bundle it and its import.meta.url stays real at runtime.
+  // (The bg-speller.mjs allowlist was ALSO here until 2026-08-27 — removed
+  //  because tracing could never fix it: webpack bundles bg-speller.mjs
+  //  and freezes its import.meta.url to the build machine's path, so the
+  //  readFileSync target was wrong regardless of what got copied. The
+  //  list is now a bundled data module, scripts/i18n/bg-allowlist.data.mjs.
+  //  See COMPLETION-TRACKER.md §0.7.)
   outputFileTracingIncludes: {
     '/api/**/*': [
       '../../node_modules/sweph/prebuilds/linux-*/**/*',
@@ -49,7 +54,6 @@ const nextConfig = {
       '../../node_modules/.pnpm/geo-tz@*/node_modules/geo-tz/data/**/*',
       '../../node_modules/.pnpm/dictionary-bg@*/node_modules/dictionary-bg/index.aff',
       '../../node_modules/.pnpm/dictionary-bg@*/node_modules/dictionary-bg/index.dic',
-      '../../scripts/i18n/bg-allowlist.txt',
     ],
     '/connect/[token]/**/*': [
       '../../node_modules/sweph/prebuilds/linux-*/**/*',

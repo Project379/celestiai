@@ -135,6 +135,52 @@ files the code will `require()` at runtime. `pnpm build` locally resolves
 `sweph` through the pnpm symlink graph and proves nothing about what
 `@vercel/nft` traced into the Lambda.
 
+## 7. Build-time constant inlining freezes a bundled module's runtime file paths to the build machine
+
+Found 2026-08-27, same outage as #6 but a distinct mechanism. After
+`sweph`/`geo-tz` were fixed, `POST /api/horoscope/generate` and
+`/api/oracle/generate` kept 500ing. `scripts/i18n/bg-speller.mjs` computes
+its allowlist path at module scope as
+`resolve(dirname(fileURLToPath(import.meta.url)), 'bg-allowlist.txt')`. It
+is **bundled** by webpack for the Next.js server build (not in
+`serverExternalPackages`), and reading the built chunk
+(`.next/server/chunks/4585.js`) showed webpack had replaced
+`import.meta.url` with a **literal absolute string** —
+`"file:///C:/Users/ntone/Desktop/sub-project/scripts/i18n/bg-speller.mjs"`,
+the build machine's path. At runtime the code therefore did
+`readFileSync("C:/Users/.../bg-allowlist.txt")` → ENOENT on Vercel's Linux
+filesystem. **This fails regardless of build OS** — a Vercel-built bundle
+freezes `/vercel/path0/...` (the build workspace), which also does not
+exist in the Lambda runtime (`/var/task/...`).
+
+This is a **third distinct class**, after "module not traced" (#6 for
+`sweph`) and "sidecar asset not copied" (#6 for `geo-tz`'s `.geo.dat` /
+`dictionary-bg`'s `.aff`/`.dic`). It is the only one where **the file
+being present proves nothing** — `outputFileTracingIncludes` copied
+`bg-allowlist.txt` into the function correctly; the code just never looked
+there, because the path it computed was frozen at build time. Trace
+inspection (the fix for #6) does not catch this; you have to read the
+bundled chunk for an inlined build-machine path, or hit the code path in
+production.
+
+Asymmetry worth remembering: the **same file** does
+`createRequire(import.meta.url)('sweph')` for native-module resolution and
+that **works**, because Next.js specifically shims `createRequire` from
+`import.meta.url` for this documented native-module case. `import.meta.url`
+used for module *resolution* is handled; used to build a path for
+*reading an asset* is not. `packages/astrology/src/{calculator,transit,
+utils/julian-day}.ts` all use the `createRequire(import.meta.url)` form
+and are verified working in production — same shape, different outcome.
+
+The rule: **any `import.meta.url` / `__dirname` / `process.cwd()` used to
+locate a file for `readFileSync`/`readFile` at module scope in code that
+webpack bundles is broken on Vercel and invisible until it 500s.** The fix
+is not tracing — it is to remove the runtime file read entirely (inline
+the data as a bundled module: `bg-allowlist.txt` → `bg-allowlist.data.mjs`
+exporting a constant). Grep for the shape before trusting a deploy;
+2026-08-27's sweep found exactly one broken instance (this one) and one
+same-shape-but-shimmed pattern (the `createRequire` trio).
+
 ## The underlying pattern across items 1-3 (environment-fidelity gaps)
 
 Convenience/local/cheap verification surfaces (a browser via

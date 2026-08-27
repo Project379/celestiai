@@ -8,25 +8,19 @@
 // syntax, or register problems are invisible to this and are not what it
 // claims to catch. See docs/i18n note (bg-spellcheck README) for the
 // explicit "what this cannot catch" statement.
-import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import dictionary from 'dictionary-bg'
 import nspell from 'nspell'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const ALLOWLIST_PATH = resolve(__dirname, 'bg-allowlist.txt')
+import { BG_ALLOWLIST } from './bg-allowlist.data.mjs'
 
-function loadAllowlist() {
-  const raw = readFileSync(ALLOWLIST_PATH, 'utf8')
-  return new Set(
-    raw
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l && !l.startsWith('#')),
-  )
-}
-const ALLOWLIST = loadAllowlist()
+// The allowlist was `readFileSync('bg-allowlist.txt')` at module scope
+// until 2026-08-27. When webpack bundles this file for the Next.js server
+// build it freezes `import.meta.url` to the BUILD machine's absolute path,
+// so the runtime read became `readFileSync('C:/Users/.../bg-allowlist.txt')`
+// and 500'd in production (ENOENT on Vercel's Linux fs). A bundled data
+// module has no filesystem access and nothing to trace. See
+// COMPLETION-TRACKER.md §0.7 and VERIFICATION-SURFACE-GAPS.md #7.
+const ALLOWLIST = new Set(BG_ALLOWLIST)
 
 // "по-" (comparative: по-долу, по-силна, по-малко) and "най-" (superlative:
 // най-добра, най-силен) + adjective/adverb are productive Bulgarian
