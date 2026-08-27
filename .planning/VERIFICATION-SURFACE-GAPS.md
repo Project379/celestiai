@@ -1,5 +1,27 @@
 # Verification-surface gaps
 
+**The one lesson, stated plainly: every observation has a scope, and the
+scope is usually narrower than it appears.** A check tells you something
+true — but only about the exact thing it exercised, which is almost always
+less than you read into the green result. This session made the point
+three times in three different shapes:
+
+- **#6** — a probe only tests the *code it runs*. A 200 on a static page,
+  or a 401 from an auth gate, says nothing about the handler body or the
+  compute path behind it.
+- **#9** — a monitor only sees the *errors that reach it*. An error a
+  route catches and turns into a returned 500 Response never reaches
+  Sentry; "the dashboard is clean" is not "production is healthy".
+- **#10** — a probe only tests the *deployment you are routed to*. With
+  skew protection on, a browser tab can keep hitting an old deployment's
+  functions for hours after a fix ships; "deployed the fix, still fails"
+  and "the fix isn't being served" look identical from the response.
+
+Before trusting any green result, name what it actually exercised, and
+treat everything outside that scope as still unverified.
+
+---
+
 Running list of "the thing you can check easily is not the thing that
 decides" — cases where a cheap, local, or convenient check can pass while
 the real target environment fails, or vice versa. Distinct from

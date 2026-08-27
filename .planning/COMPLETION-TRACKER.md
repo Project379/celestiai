@@ -198,24 +198,25 @@ migrations awaiting founder action, not open findings:
 
 ## 0.6 PRODUCTION-BREAKING — `sweph` / `geo-tz` / `dictionary-bg` missing from the deployed function (found 2026-08-27)
 
-**Status 2026-08-27 after production probes on `e64ef9f`:**
-- **`sweph` — CLOSED, verified in production.** `/api/crystals` 200,
-  `/api/circle/profiles` 200, `/api/transits/overview` 400 (validation, not
-  module load), `/connect/<token>` renders the friendly "Поканата не е
-  активна" page. Every route that was 500ing on `Cannot find module
-  'sweph'` now loads.
-- **`geo-tz` — CLOSED, verified.** Rode the same fix; the compute paths
-  that resolve a timezone now respond.
-- **The win32-vs-linux residual risk — RESOLVED, not assumed away.** The
-  local `.nft.json` named `win32-x64/sweph.node` because it was generated
-  on Windows; `linux-x64/sweph.node` shipped **only** via the explicit
-  `outputFileTracingIncludes` glob. The production probes passing is the
-  proof that glob resolved correctly on Vercel's Linux build. This caveat
-  is closed — do not reopen it.
-- **`/connect/[token]` HTTP 500 on an invalid token (the separately-logged
-  bug) — RESOLVED by this same fix.** It was the `sweph` failure all
-  along, not token validation. `GET /connect/test` now renders the
-  friendly page. No separate work needed.
+**Status 2026-08-27 — CODE FIX verified locally; PRODUCTION verification
+NEEDS A CLEAN RE-RUN (Skew Protection was on all day — see §0.9).**
+- **`sweph` — code fix sound** (`.nft.json` lists
+  `sweph/prebuilds/linux-x64/sweph.node` via the include glob). The
+  probes that returned `/api/crystals` 200, `/api/circle/profiles` 200,
+  `/api/transits/overview` 400, `/connect/<token>` friendly page were run
+  from a possibly-pinned browser tab → **re-verify against the confirmed-
+  current deployment.**
+- **`geo-tz` — same:** code fix sound, runtime behavior rode the same
+  probes → re-verify.
+- **The win32→linux `outputFileTracingIncludes` glob was honored by
+  Vercel's Linux build — RETRACTED, back to UNVERIFIED.** This was marked
+  "RESOLVED" purely because the probes passed; with skew in play that no
+  longer holds. The local `.nft.json` lists `linux-x64/sweph.node` via
+  the glob, but whether Vercel copied it into the Lambda is exactly what
+  only a live request to the confirmed-current deployment proves. In the
+  §0.9 re-verify list.
+- **`/connect/[token]` invalid-token → friendly page (not 500):** rested
+  on a `/connect/test` browser probe → re-verify.
 - **`dictionary-bg` chain — STILL BROKEN in production.** `POST
   /api/horoscope/generate` still 500s (fired from the Днес page — real
   user path, not a synthetic probe). `/api/oracle/generate` shares the
@@ -687,6 +688,75 @@ question: **yes — the allowlist belongs with the code that reads it, as
 code. The coupling (a production route reading a file from `scripts/i18n/`
 — a tooling directory — at module scope) was the defect; tracing was
 always the wrong lever.**
+
+---
+
+## 0.9 Re-verify list — today's "confirmed in production" claims audited against skew (2026-08-27)
+
+Skew Protection was on all day (§0.8). Every probe run from the founder's
+long-lived browser tab may have hit a stale deployment, not the latest.
+Splitting today's production claims by **how** they were verified:
+
+### STANDS — verified by reading an artifact or a fresh `curl` (no pinned-tab dependency)
+
+- **`sweph` / `geo-tz` / `dictionary-bg` assets are traced into the
+  function** — read from the per-route `.nft.json` in the local build
+  (`sweph/prebuilds/linux-x64/sweph.node`, `geo-tz/data/*.geo.dat`,
+  `dictionary-bg/index.{aff,dic}` all listed). Local artifact. The *code*
+  fix is sound.
+- **Allowlist fix** — compiled `chunks/4585.js` no longer contains the
+  frozen `file:///C:/…` path; `BG_ALLOWLIST` inlined; `.nft.json` for the
+  AI routes no longer references `scripts/`. Local artifact.
+- **`/`, `/privacy`, `/pricing` return 200** — re-hit with a fresh `curl`
+  this session (fresh curl sends no `dpl`, so it reaches latest).
+- **Vercel deployment reached "Ready" / Production** — dashboard state,
+  not a probe.
+- **Web browser Sentry SDK is inlined in the production bundle** —
+  re-verified 2026-08-27 with a **fresh curl**: prod HTML carries
+  `sentry-trace` + `baggage` meta tags; `main-app-50f12ad7….js` contains
+  a real DSN (`o4511290988429312.ingest…sentry.io/4511290989805648`).
+  (Whether events actually *leave the founder's browser* is still
+  unverified — ad blocker, VSG #8 — but that was never the claim.)
+- **Skew Protection is enabled** — prod HTML contains `?dpl=dpl_…` on
+  fresh curl.
+- **The `4f751d2` hardening** (502 classification, shim, +11 tests) —
+  local build + tests + proven-against-pre-fix. Never claimed verified in
+  prod.
+
+### NEEDS RE-VERIFICATION POST-SKEW — rested only on a browser probe from a possibly-pinned tab
+
+Re-run all of these in **one pass from a clean session** (skew off + fresh
+tab, or against the current deployment's own `*.vercel.app` URL):
+
+1. **`sweph` actually loads at runtime in the *current* deployed
+   function.** Was: `/api/crystals` 200, `/api/circle/profiles` 200,
+   `/api/transits/overview` 400 (not 500) — founder browser probes.
+2. **`geo-tz` loads at runtime** — rode the same probes (its import sits
+   right after `sweph`'s in `calculator.ts`, so a passing chart-compute
+   path is the only thing that exercises it).
+3. **The win32→linux `outputFileTracingIncludes` glob was honored by
+   Vercel's Linux build.** ⚠️ This was upgraded to "RESOLVED, not assumed
+   away" in §0.6 **purely because the probes passed** — that upgrade is
+   now **retracted**. The local `.nft.json` lists `linux-x64/sweph.node`
+   via the glob, but whether Vercel copied it into the Lambda is exactly
+   what only a live request to the confirmed-current deployment proves.
+4. **`/connect/[token]` invalid-token → friendly 404 page (not 500).**
+   Was: `/connect/test` rendered "Поканата не е активна" in a browser
+   probe.
+5. **API compute routes load post-fix** — `chart/calculate`,
+   `transits/overview`, `crystals`, `circle/*` returning non-5xx.
+   Founder browser probes.
+6. **`/api/horoscope/generate` — what it actually does on `4f751d2`.**
+   The last probe (identical stale stack, no `[OPENROUTER-DEBUG]`) is the
+   thing that revealed the skew issue; it verified nothing about the
+   current code.
+
+**Method for the clean pass:** disable Skew Protection → confirm the
+current Production deployment's commit in the dashboard includes
+`4f751d2` → open a fresh tab (or hit the deployment URL directly) → run
+the §0.6 probe list + a real authed `POST /api/horoscope/generate` with a
+`{chartId}` body. Everything in the "needs re-verification" list either
+confirms in that one pass or produces a fresh, real stack trace.
 
 ## 1. Context block
 
@@ -2628,3 +2698,22 @@ Account -> Auth Tokens) or an **Organization Auth Token** with those
 scopes, store it as a separate env var (e.g. `SENTRY_READ_TOKEN`) so it is
 not conflated with the upload token, and keep it out of `turbo.json` /
 Vercel (local-diagnosis only). Not launch-blocking; do it when convenient.
+
+### 7.7 Before real traffic — flip-these-back checklist
+
+Things deliberately set to a debugging-friendly state during solo
+pre-launch that MUST be reverted before the first real users:
+
+- **Re-enable Vercel Skew Protection.** Turned OFF 2026-08-27 because,
+  with the founder as the only user and actively deploying-then-probing,
+  its only effect was pinning the browser to stale functions and
+  corrupting every probe (§0.9, VSG #10). It exists to keep real users on
+  a consistent version mid-rollout — that value returns the moment there
+  is real traffic. Re-enable it (12h window is fine) before the closed
+  test opens.
+- **Remove the `[OPENROUTER-DEBUG]` shim** in `lib/ai/client.ts` (§0.8) —
+  it `console.error`s response bodies; fine for diagnosis, not for
+  steady-state logs. Removal is one block + one line, noted in the code.
+- **Back-out any temporary `console.error(await res.text())` / debug
+  instrumentation** added while chasing §0.8's root cause.
+- (Add here as more debug-state toggles accumulate.)
