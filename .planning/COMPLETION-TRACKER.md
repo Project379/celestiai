@@ -198,8 +198,58 @@ migrations awaiting founder action, not open findings:
 
 ## 0.6 PRODUCTION-BREAKING — `sweph` / `geo-tz` / `dictionary-bg` missing from the deployed function (found 2026-08-27)
 
-**Status: diagnosed, NOT fixed. Founder halted for full-extent report
-before any fix.**
+**Status: FIX APPLIED + trace-verified locally 2026-08-27 (this commit).
+AWAITING PRODUCTION CONFIRMATION — not closed until an authed probe of a
+real compute path passes against the deploy. Founder runs that probe.**
+
+**The fix (one pass, all three packages):**
+- `sweph` (`2.10.0-11`) and `geo-tz` (`^8.1.6`) added as **direct
+  `apps/web` dependencies** (they were transitive via `@stellaeum/astrology`
+  only). This is the root fix for cause (1)/(2) — `@vercel/nft` now
+  resolves `require('sweph')` / `require('geo-tz')` from the app root
+  through the pnpm symlink `apps/web/node_modules/{sweph,geo-tz}`.
+- `next.config.js`: `outputFileTracingRoot` set explicitly to the
+  monorepo root (Vercel auto-detection is unreliable in a pnpm
+  workspace), plus `outputFileTracingIncludes` keyed on `/api/**/*` and
+  `/connect/[token]/**/*` force-copying every runtime sidecar with
+  **platform-independent globs** (`linux-*`, both the clean
+  `node_modules/<pkg>` symlink path and the `.pnpm` store path):
+  `sweph/prebuilds/linux-*/**` (+ `index.js`/`index.mjs`), `node-gyp-build/**`,
+  `geo-tz/data/**` (the `*.geo.dat` files `find-1970.js` opens via
+  `fs.openSync` — only the `require()`'d `*.index.json` traced
+  automatically), `dictionary-bg/index.aff` + `index.dic` (loaded via
+  `fs.readFile(new URL(..., import.meta.url))`), and the repo-root
+  `scripts/i18n/bg-allowlist.txt` (`readFileSync(__dirname)` at module
+  scope in `bg-speller.mjs`).
+- `serverExternalPackages` + the webpack `externals` hook **kept as-is** —
+  still correct not to bundle native code; the fix is purely additive.
+- **Not done:** the root `.npmrc` `node-linker`/`public-hoist-pattern`
+  option — the direct-dep + `outputFileTracingIncludes` approach made it
+  unnecessary and it would have hoisting side-effects across the whole
+  workspace.
+
+**Local verification (trace-artifact inspection, not "build passed"):**
+`next build` exit 0; then the per-route `.nft.json` files were read
+directly. `api/chart/calculate/route`, `connect/[token]/page`,
+`api/crystals/route`, `api/circle/**`, `api/oracle/generate/route`,
+`api/horoscope/generate/route` all now list
+`sweph/prebuilds/linux-x64/sweph.node` (+ `linux-arm64`),
+`sweph/index.js` + `node-gyp-build`,
+`geo-tz/data/timezones-1970.geojson.geo.dat` + `.index.json`,
+`dictionary-bg/index.aff` + `index.dic`, and `bg-allowlist.txt`. Before
+the fix nft did not resolve even `sweph/index.js` from these routes.
+195/195 web tests, typecheck clean.
+
+**Residual risk that only the deploy can close:** the local `.nft.json`
+is generated on win32; the auto-traced binary it names is
+`win32-x64/sweph.node`. The explicit `outputFileTracingIncludes` globs are
+what guarantee `linux-x64/sweph.node` ships (confirmed present in the
+local trace via those globs). Vercel's Linux build should resolve the same
+literal relative globs — but this is exactly the "local build is not the
+deploy" gap, so **the fix is not closed until the production probe below
+passes.**
+
+**Original diagnosis (kept for the record):**
 
 The first production deploy was declared healthy (`/`, `/privacy`,
 `/pricing` all 200; three API routes clean 401). One hour after Sentry
@@ -244,12 +294,32 @@ Deliberate, real HTTP probes against real production all passed; they just
 never touched a compute path. A 401 proves auth middleware ran, not that
 the handler's module graph is intact.
 
-**Fix not started.** Direction (for when the halt lifts): declare `sweph`
-+ `geo-tz` as direct `apps/web` deps; add `outputFileTracingIncludes` for
-all three packages' asset sidecars + `bg-allowlist.txt`; consider a root
-`.npmrc` `node-linker` / `public-hoist-pattern` for the native modules;
-verify by inspecting the built function's `node_modules` (or a preview
-deploy + authed probe of `/api/chart/calculate`), never a local build.
+**PRODUCTION PROBE TO RUN (founder, after this deploys) — the fix is not
+closed until this passes:** one authed request per compute path. Signed
+in, from the browser devtools console on `www.stellaeum.com` (cookies ride
+along), or with a copied `__session` cookie via curl:
+- `GET /api/chart/calculate?chartId=<own chart id>` → expect 200 with
+  chart JSON (or a clean 404 `CHART_NOT_FOUND` for a bad id — **not** 500)
+- `GET /api/transits/overview` → 200
+- `GET /api/crystals` → 200 (premium) or 403 (free) — not 500
+- `GET /api/circle/profiles` → 200 `[]` or list — not 500
+- `POST /api/oracle/generate` with a real `{chartId, topic}` → streams —
+  not 500
+- `POST /api/horoscope/generate` → 200 — not 500
+- `GET /connect/<any string>` while signed in → the friendly "Поканата не
+  е активна" page, **not** 500
+If any still 500, pull the Sentry event — the module name in
+`Cannot find module 'X'` says which glob missed, and the fix is adding
+that one path to `outputFileTracingIncludes`.
+
+**Deploy smoke test — SCOPED, not built (owned item, see §6).** This bug
+existed because nothing exercises a compute path after a deploy. Scope: a
+script (`scripts/smoke/post-deploy.mjs`) that takes a base URL + a test
+`__session` cookie (a dedicated seeded test user), fires the seven probes
+above, asserts none return 5xx, exits non-zero on any failure. Wire it as
+a Vercel **Deploy Hook** / post-deploy GitHub Action against the
+production URL, and/or a manual `pnpm smoke:prod`. Not built now per the
+halt; tracked so it is not forgotten.
 
 ## 1. Context block
 
@@ -1921,3 +1991,52 @@ they were forgotten rather than deferred on purpose.
   4. Answer the **four §4 decisions** in the investigation doc as a
      batch when the wizard mockup comes up (teaser content, Moon
      handling, wheel vs. sign-list, time-step framing) — not piecemeal.
+
+- **Post-deploy smoke test — OWNED, scoped 2026-08-27, not built.** After
+  every production deploy, one authed request per compute path (chart
+  calculate, transits overview, crystals overview, one circle route, both
+  AI routes, `/connect/<token>`), asserting no 5xx. Exists because the
+  2026-08-27 `sweph`/`geo-tz`/`dictionary-bg` outage (§0.6) was invisible
+  to page-level checks — every static page and auth gate returned exactly
+  what a healthy deploy would. Scope: `scripts/smoke/post-deploy.mjs`
+  taking a base URL + a seeded test user's `__session` cookie; wired as a
+  Vercel Deploy Hook / post-deploy GitHub Action + a manual
+  `pnpm smoke:prod`. **Must not depend on anyone remembering to curl
+  things.** Owner: engineering (Claude Code) once the §0.6 fix is
+  confirmed in production.
+
+- **Mobile has ZERO automated tests — OWNED, scoped 2026-08-27.** `pnpm
+  test` = 195 tests, **all `@stellaeum/web`** (`apps/web/test/**`, vitest).
+  `apps/mobile` has no test runner configured, no test files, no
+  `test` script. Every mobile guarantee to date is device-pass + code
+  read only. For an end state described as "built and tested" this is a
+  real gap that was never explicitly owned. Scope (not a decision to make
+  silently — founder confirms shape): (a) unit-level — the pure hooks and
+  lib helpers (`lib/config/webAppUrl.ts`, `lib/clerk/displayName.ts`, the
+  Кръг hooks' cache logic, `lib/haptics`) under vitest + React Testing
+  Library, mirroring the web setup; (b) NOT full RN render/e2e (Detox/
+  Maestro) at launch — disproportionate pre-users, revisit post-launch.
+  Smallest useful first slice: the auth-error mapping in `sign-in.tsx` /
+  `sign-up.tsx` and the `getWebAppUrl` placeholder guard, both of which
+  are logic with branches and both of which have shipped bugs before.
+  Owner: engineering; sequence after the §0.6 fix and the Google button,
+  before Batch 8's later screens.
+
+## Correction — Кръг mobile is functionally ported (parity-doc error #6)
+
+`.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md` §3
+still describes `apps/mobile/app/(authed)/(tabs)/circle.tsx` as a
+"70 LOC ... original empty-state placeholder ... three static Pressable
+cards with no onPress." **That is stale — verified against code
+2026-08-27.** Actual: `circle.tsx` is **432 LOC**, plus
+`circle/new-connection.tsx` (152), `circle/new.tsx` (46),
+`components/circle/{ConnectionSpaceDetailPanel,SavedProfileDetailPanel,
+SavedProfileForm}.tsx` (~970 LOC combined), and **13 hooks** under
+`apps/mobile/hooks/use*` hitting `/api/circle/*` (`useConnectionSpaces`,
+`useCreateInvite`, `useSavedProfiles`, `useGenerateConnectionReport`,
+`useAnalyzeSavedProfile`, `useArchiveSpace`, …) plus
+`lib/circle/{inviteLinks,types}.ts`. Batch 4 sub-batches A + B did this.
+**Кръг mobile's remaining work is design only** (Batch 8 fresh mockups),
+not functional. This is the sixth documented instance of that doc's
+status column being wrong — treat every cell there as a hypothesis
+(its own header says so).

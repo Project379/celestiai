@@ -34,6 +34,7 @@
     "dictionary-bg": "^2.0.0",
     "expo-server-sdk": "^7.0.0",
     "framer-motion": "^12.38.0",
+    "geo-tz": "^8.1.6",
     "lucide-react": "^0.574.0",
     "nativewind": "^4.1.23",
     "next": "15.5.24",
@@ -43,6 +44,7 @@
     "react-hook-form": "^7.71.1",
     "react-native-css-interop": "^0.1.22",
     "stripe": "^20.3.1",
+    "sweph": "2.10.0-11",
     "swr": "^2.4.1",
     "web-push": "^3.6.7",
     "zod": "^4.3.6"

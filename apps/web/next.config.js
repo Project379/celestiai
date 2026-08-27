@@ -1,8 +1,74 @@
+const path = require('path')
 const { withSentryConfig } = require('@sentry/nextjs')
+
+// Monorepo root (this file lives in apps/web). Set explicitly so
+// output-file tracing has a stable, predictable root on Vercel — its
+// auto-detection is unreliable in a pnpm workspace and was part of why
+// sweph/geo-tz/dictionary-bg went missing from the deployed function
+// (2026-08-27, tracker §0.6). outputFileTracingIncludes globs below are
+// written relative to THIS file's directory (apps/web), per Next docs.
+const MONOREPO_ROOT = path.join(__dirname, '../..')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  outputFileTracingRoot: MONOREPO_ROOT,
+  // The externalized native/asset packages (see serverExternalPackages
+  // below) are require()'d at runtime, not bundled — so @vercel/nft must
+  // physically copy them, plus their sidecar binaries/data, into every
+  // serverless function that can reach them. nft's automatic tracing
+  // misses these in a pnpm monorepo when the package is a transitive dep
+  // of a workspace package (sweph/geo-tz are deps of @stellaeum/astrology,
+  // not of apps/web) and when assets are loaded via fs at runtime rather
+  // than require(). Both the clean apps/web/node_modules/<pkg> symlink
+  // path (present once the package is a direct dep — see package.json) and
+  // the .pnpm store path are listed; redundant globs are harmless.
+  //   - sweph: prebuilt .node binary under prebuilds/<platform>-<arch>/
+  //     (prebuildify/node-gyp-build layout), resolved by
+  //     require('node-gyp-build')(__dirname). Linux x64 is the Lambda.
+  //   - geo-tz: dist/find-1970.js opens ../data/*.geo.dat via fs.openSync
+  //     at runtime (only the require()'d *.index.json traces automatically).
+  //   - dictionary-bg: index.js reads index.aff/index.dic via
+  //     fs.readFile(new URL(..., import.meta.url)) — nft's URL-asset
+  //     heuristic is unreliable under externalization.
+  //   - scripts/i18n/bg-allowlist.txt: read with readFileSync(__dirname)
+  //     at module scope by bg-speller.mjs (the LLM-Bulgarian safety net),
+  //     which lives outside apps/web.
+  outputFileTracingIncludes: {
+    '/api/**/*': [
+      '../../node_modules/sweph/prebuilds/linux-*/**/*',
+      '../../node_modules/sweph/*.js',
+      '../../node_modules/sweph/*.mjs',
+      '../../node_modules/geo-tz/data/**/*',
+      '../../node_modules/dictionary-bg/index.aff',
+      '../../node_modules/dictionary-bg/index.dic',
+      '../../node_modules/.pnpm/sweph@*/node_modules/sweph/prebuilds/linux-*/**/*',
+      '../../node_modules/.pnpm/sweph@*/node_modules/sweph/*.js',
+      '../../node_modules/.pnpm/sweph@*/node_modules/sweph/*.mjs',
+      '../../node_modules/.pnpm/node-gyp-build@*/node_modules/node-gyp-build/**/*',
+      '../../node_modules/.pnpm/geo-tz@*/node_modules/geo-tz/data/**/*',
+      '../../node_modules/.pnpm/dictionary-bg@*/node_modules/dictionary-bg/index.aff',
+      '../../node_modules/.pnpm/dictionary-bg@*/node_modules/dictionary-bg/index.dic',
+      '../../scripts/i18n/bg-allowlist.txt',
+    ],
+    '/connect/[token]/**/*': [
+      '../../node_modules/sweph/prebuilds/linux-*/**/*',
+      '../../node_modules/sweph/*.js',
+      '../../node_modules/sweph/*.mjs',
+      '../../node_modules/geo-tz/data/**/*',
+      '../../node_modules/.pnpm/sweph@*/node_modules/sweph/prebuilds/linux-*/**/*',
+      '../../node_modules/.pnpm/sweph@*/node_modules/sweph/*.js',
+      '../../node_modules/.pnpm/sweph@*/node_modules/sweph/*.mjs',
+      '../../node_modules/.pnpm/node-gyp-build@*/node_modules/node-gyp-build/**/*',
+      '../../node_modules/.pnpm/geo-tz@*/node_modules/geo-tz/data/**/*',
+    ],
+  },
+  transpilePackages: [
+    'nativewind',
+    'react-native-css-interop',
+    '@stellaeum/astrology',
+    '@stellaeum/core',
+  ],
   transpilePackages: [
     'nativewind',
     'react-native-css-interop',
