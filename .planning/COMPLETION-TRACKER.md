@@ -1369,9 +1369,16 @@ used on.
   not opened during design, read only afterward to check nothing
   functional was missed. `you/premium.tsx` rebuilt not patched; its
   Cinzel-on-Cyrillic is a live REVISIT-42 production defect.
-- **Wizard partial-value — NOT ruled. Own investigation, separate from
-  Batch 8 (see the standalone item below). Report before founder
-  decides. Approved mockup order unchanged.**
+- **Wizard partial-value — NOT ruled. Investigation DONE 2026-08-27:
+  `.planning/WIZARD-PARTIAL-VALUE-INVESTIGATION-2026-08-27.md`.** Finding:
+  `calculateNatalChart` already fully supports an unknown birth time
+  (noon-local convention, always has). Recommended path (Design A) is a
+  stateless `POST /api/chart/preview` wrapping the existing pure function
+  + one wizard screen state — no schema change, no migration, no change
+  to the wizard-completion gate. Persisting a provisional row (Design B)
+  is much larger: needs a migration + gate rework + abandoned-row sweep.
+  Four founder decisions listed in §4 of that doc. Approved mockup order
+  unchanged — paywall stays next.
 - **Skeletons — bespoke + layout-matching per-screen only, never a
   system.** Viget evidence supports the `States.tsx` caution.
 - **Reduced-motion, delayed spinners, considered empty states — approved
