@@ -443,7 +443,7 @@ exposed and set as Config not Secret, neither of which is the cause). So
 the empty-string theory is dead. Next step is the raw OpenRouter response
 body, not more inference.
 
-**SHIPPED alongside the diagnosis (`<commit>`) — the shim + the two
+**SHIPPED alongside the diagnosis (`4f751d2`) — the shim + the two
 hardening items, all correct regardless of what the body turns out to
 be:**
 1. **`[OPENROUTER-DEBUG]` fetch shim** in `lib/ai/client.ts` — a custom
@@ -485,7 +485,7 @@ be:**
      500 to be 502` before the fix was restored.**
 
 **Still open:** the actual root cause (Cloudflare IP block vs. model
-unavailable vs. provider incident) — the founder deploys `<commit>`, runs
+unavailable vs. provider incident) — the founder deploys `4f751d2`, runs
 the probe, and pastes the `[OPENROUTER-DEBUG]` lines from Vercel Runtime
 Logs. The route now returns a clean **502** while this is unresolved
 instead of an opaque 500, and the failure is now in Sentry.
