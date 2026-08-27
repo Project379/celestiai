@@ -103,10 +103,40 @@ restored, confirmed pass) before landing, same discipline as Tier 1.
 plus `.env.local` fixes for #12 — local-only, gitignored, not a commit):
 
 - **#12, Sentry dead in both apps.** Both `.env.local` var-name swaps fixed
-  locally. Still open, founder-owned: both apps share one Sentry
-  project/DSN until a dedicated mobile project exists; `apps/mobile/eas.json`
-  has zero Sentry references (production EAS builds have never had a DSN
-  at all); Vercel needs the var in its project env before its first deploy.
+  locally. **2026-08-27: assessed for what code/config could be wired in
+  advance — answer is nothing.** `apps/mobile/lib/monitoring/sentry.ts`
+  already reads `EXPO_PUBLIC_SENTRY_DSN` and guards `Sentry.init` on it
+  being truthy; `@sentry/react-native` config plugin is already in
+  `app.json`; `logError.ts` already tags events. The remaining work is
+  100% Sentry-dashboard + EAS-env, all founder-owned:
+  1. Create a **React Native** project in org `celestia-ul`, suggested
+     slug `stellaeum-mobile`. Bring back: the new **DSN** and the
+     **project slug**.
+  2. Set `EXPO_PUBLIC_SENTRY_DSN` = new DSN as an **EAS environment
+     variable** (dashboard, visibility plain — it's a public DSN),
+     scoped to development + preview + production. Also replace the value
+     in `apps/mobile/.env.local` (currently holds the *web* project's
+     Next.js-platform DSN — mobile events landing there are
+     mis-platformed, no RN release health).
+  3. **Not** adding an `env` block to `eas.json` — there is nothing to
+     wire. `sentry.ts` already reads the right var and guards on it, the
+     plugin is already in `app.json`, and Expo now recommends
+     dashboard-managed env vars over `eas.json` `env` (dashboard values
+     take precedence anyway). An empty placeholder in `eas.json` would
+     just add a second place to look for one value, with no benefit. Set
+     the DSN in the EAS dashboard only.
+  4. Source-map upload is a **separate follow-up, not a blocker**: needs
+     `SENTRY_ORG=celestia-ul` + `SENTRY_PROJECT=stellaeum-mobile` +
+     `SENTRY_AUTH_TOKEN` in the EAS env. The existing `sntrys_…` token in
+     `apps/web/.env.local` is org-scoped for `celestia-ul` and should
+     cover a new project in the same org (INFERRED — not verified against
+     the token's actual scopes). Without these the build still succeeds;
+     stack traces are just minified.
+  5. `apps/web/.env.local` has `SENTRY_PROJECT=javascript-nextjs` — after
+     the split, rename that project to `stellaeum-web` (cosmetic) or
+     leave it; web is unaffected by the mobile project.
+  6. Vercel still needs `NEXT_PUBLIC_SENTRY_DSN` in its project env
+     before its first deploy (build-time inlined).
 - **#10, diary list unbounded — defensive ceiling only, explicitly not a
   fix.** `listDiaryEntries` capped at 2000 rows. Real fix (pagination,
   client fetch-more, findByDate on-miss) needs a UX decision (infinite
@@ -1316,6 +1346,24 @@ unambiguous rate-limit gap, or clearly UI-scoped (deferred to Batch 8).
 ---
 
 ### Batch 8 — UI phase (iterative)
+
+**Design research done 2026-08-27 — `.planning/design/DESIGN-RESEARCH-2026-08-27.md`.**
+Audit + craft references + user psychology, before any mockup. Headline
+findings: (1) the shipped mobile core (Днес, Карта, primitives,
+AppLoadingScreen) is clean of the vibe-coded tells; (2) the paywall
+surfaces — `you/premium.tsx` and the web `/pricing` it links to — carry
+nearly the whole list (pills, cards, gradients, orbs, shimmer CTA,
+diamond bullets, Cinzel-on-Cyrillic, Roman numerals, amber holdout);
+(3) **contradiction:** the 4-step wizard collects date+time+place before
+showing any value, which is the shape onboarding research most warns
+against — highest-impact fix is partial value before the time step;
+(4) `faint` `#64748b` is 4.23:1 on `base` — under WCAG AA for the small
+text it's used on; (5) no `prefers-reduced-motion` anywhere; (6) skeletons
+are NOT an automatic win (Viget 2017) — delayed spinner first, bespoke
+per-screen skeletons only where layout is stable. Ranked proposals in §E
+of that doc. The wizard partial-value idea is a product/backend question
+needing a founder ruling before it can be scoped — not a reorder of the
+approved sequence; paywall stays the next mockup.
 
 **ADDED TO SCOPE 2026-08-26 (founder, after the device pass):**
 
