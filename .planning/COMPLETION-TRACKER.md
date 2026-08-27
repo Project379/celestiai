@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-27 (FIRST SUCCESSFUL PRODUCTION DEPLOY — www.stellaeum.com live; Vercel out of blocked-externally, Apple privacy-URL blocker closed. Chain: turbo.json env allowlist → lazy Stripe → Next.js 15.5.24. Also shipped: audit_logs de-identification, /support page, lazy Stripe. New docs: NEXTJS-UPGRADE, AUTH-PROVIDER-EXPANSION, APPLE-REVIEW-REQUIREMENTS, PRIVACY-POLICY-LAWYER-BRIEF, LLM-PROVIDER-DECISION. Web browser Sentry verified live for the first time.)
+last-updated: 2026-08-27 (Sentry caught a production-breaking bug 1h after going live — sweph/geo-tz/dictionary-bg missing from the deployed function; every compute path 500ing. §0.6: sweph + geo-tz FIXED and verified in production (`e64ef9f`), win32-trace residual risk resolved, `/connect/[token]` 500 resolved as a side effect. §0.7: dictionary-bg chain still broken — root cause is webpack freezing `import.meta.url` at build time, NOT file tracing; fix chosen (allowlist → code module), pending founder go-ahead. New §7: full path-to-launch sequence recorded (Tracks 1–6, auth Phase A/B + enrolment boundary, launch clock, zero-spend week plan). Apple enrolment + Play registration moved to next week (money). Earlier same day: FIRST SUCCESSFUL PRODUCTION DEPLOY — chain turbo.json env allowlist → lazy Stripe → Next.js 15.5.24; audit_logs de-identification, /support page.)
 ---
 
 # Completion Tracker
@@ -198,9 +198,30 @@ migrations awaiting founder action, not open findings:
 
 ## 0.6 PRODUCTION-BREAKING — `sweph` / `geo-tz` / `dictionary-bg` missing from the deployed function (found 2026-08-27)
 
-**Status: FIX APPLIED + trace-verified locally 2026-08-27 (this commit).
-AWAITING PRODUCTION CONFIRMATION — not closed until an authed probe of a
-real compute path passes against the deploy. Founder runs that probe.**
+**Status 2026-08-27 after production probes on `e64ef9f`:**
+- **`sweph` — CLOSED, verified in production.** `/api/crystals` 200,
+  `/api/circle/profiles` 200, `/api/transits/overview` 400 (validation, not
+  module load), `/connect/<token>` renders the friendly "Поканата не е
+  активна" page. Every route that was 500ing on `Cannot find module
+  'sweph'` now loads.
+- **`geo-tz` — CLOSED, verified.** Rode the same fix; the compute paths
+  that resolve a timezone now respond.
+- **The win32-vs-linux residual risk — RESOLVED, not assumed away.** The
+  local `.nft.json` named `win32-x64/sweph.node` because it was generated
+  on Windows; `linux-x64/sweph.node` shipped **only** via the explicit
+  `outputFileTracingIncludes` glob. The production probes passing is the
+  proof that glob resolved correctly on Vercel's Linux build. This caveat
+  is closed — do not reopen it.
+- **`/connect/[token]` HTTP 500 on an invalid token (the separately-logged
+  bug) — RESOLVED by this same fix.** It was the `sweph` failure all
+  along, not token validation. `GET /connect/test` now renders the
+  friendly page. No separate work needed.
+- **`dictionary-bg` chain — STILL BROKEN in production.** `POST
+  /api/horoscope/generate` still 500s (fired from the Днес page — real
+  user path, not a synthetic probe). `/api/oracle/generate` shares the
+  import and is broken identically (not probed yet, but same chunk). Root
+  cause is NOT file tracing — see the dedicated section below. Fix
+  pending founder go-ahead on approach.
 
 **The fix (one pass, all three packages):**
 - `sweph` (`2.10.0-11`) and `geo-tz` (`^8.1.6`) added as **direct
@@ -320,6 +341,83 @@ above, asserts none return 5xx, exits non-zero on any failure. Wire it as
 a Vercel **Deploy Hook** / post-deploy GitHub Action against the
 production URL, and/or a manual `pnpm smoke:prod`. Not built now per the
 halt; tracked so it is not forgotten.
+
+---
+
+## 0.7 `bg-allowlist.txt` read fails in production — webpack freezes `import.meta.url` at build time (found 2026-08-27, part of §0.6)
+
+**Status: root cause CONFIRMED from the build artifact (not a guess, not
+Sentry-dependent). Fix chosen, NOT applied — pending founder go-ahead.**
+
+`POST /api/horoscope/generate` and `POST /api/oracle/generate` 500 at
+module evaluation. Both statically import `@/lib/ai/check-bg-output` →
+`scripts/i18n/bg-speller.mjs`, which is **bundled** by webpack (it is not
+in `serverExternalPackages` — only `dictionary-bg` is). `bg-speller.mjs`
+computes its allowlist path as
+`resolve(dirname(fileURLToPath(import.meta.url)), 'bg-allowlist.txt')` at
+module scope.
+
+**The smoking gun — `apps/web/.next/server/chunks/4585.js` contains
+literally:**
+
+```
+(0,g.fileURLToPath)("file:///C:/Users/ntone/Desktop/sub-project/scripts/i18n/bg-speller.mjs")
+```
+
+Webpack replaced `import.meta.url` with a **hard-coded absolute `file://`
+URL of the build machine**. At runtime the code does
+`readFileSync("C:/Users/ntone/Desktop/sub-project/scripts/i18n/bg-allowlist.txt")`
+→ ENOENT on Vercel's Linux filesystem. `outputFileTracingIncludes` copied
+`bg-allowlist.txt` into the function correctly — but the code never looks
+there; it looks at the frozen Windows path. **On Vercel's own Linux build
+the frozen path would be `/vercel/path0/...` (the build workspace), which
+also does not exist in the Lambda runtime (`/var/task/...`) — so this
+fails regardless of build OS. Tracing cannot fix it.** This is a *third*
+mechanism, distinct from the two "fragile asset" cases named in §0.6
+(missing-file and `new URL(import.meta.url)` resolution) — here the file
+is present and the resolution logic is sound; webpack's build-time
+`import.meta.url` inlining is what breaks it.
+
+**Why `dictionary-bg` (same file, same chain) is NOT broken:** it is in
+`serverExternalPackages`, so webpack does **not** bundle it — its own
+`index.js` runs un-transformed from `node_modules/dictionary-bg/` in the
+Lambda, its `new URL('index.aff', import.meta.url)` resolves against the
+real file location, and the `outputFileTracingIncludes` glob put
+`index.aff`/`index.dic` right next to it. The externalization that made it
+*look* fragile is what protects it. `bg-speller.mjs` gets bundled;
+`dictionary-bg` doesn't — that asymmetry is the whole story.
+
+**Sentry confirmation (for the founder, independent of the above):**
+sentry.io → org `celestia-ul` → project `javascript-nextjs` → Issues →
+filter `is:unresolved`, look for the `/api/horoscope/generate` issue.
+Open it → latest event → the exception should be `ENOENT: no such file or
+directory, open '.../bg-allowlist.txt'` with the path in the message. If
+the path starts `C:\Users\ntone\...` that is the frozen-build-path
+mechanism above, confirmed. (Could not pull programmatically — the
+`SENTRY_AUTH_TOKEN` in `.env.local` is a `sntrys_` source-map-upload
+token with no `event:read` scope. See §6 "Sentry read token".)
+
+**Fix (chosen, pending go-ahead) — eliminate the runtime file read:**
+convert `scripts/i18n/bg-allowlist.txt` (314 lines, ~264 words + comments)
+into a code module `scripts/i18n/bg-allowlist.data.mjs`
+(`export const BG_ALLOWLIST = [ ... ]`), and have `bg-speller.mjs`
+`import { BG_ALLOWLIST }` + `new Set(BG_ALLOWLIST)` instead of
+`readFileSync`. Webpack then bundles it as data — no `fs`, no
+`import.meta.url`, no tracing dependency; works identically under `node`
+(CI: `check:bg-strings`, `check-bg-generated.mjs`) and under webpack
+(runtime). Verify by comparing the resulting Set size to the old
+`loadAllowlist()` output. Remove the now-dead `bg-allowlist.txt` glob from
+`next.config.js` `outputFileTracingIncludes` in the same change (the
+`dictionary-bg` and `sweph`/`geo-tz` globs stay). This also answers the
+founder's design question: **yes — the allowlist belongs with the code
+that reads it, as code. The coupling (a production route reading a file
+from `scripts/i18n/` — a tooling directory — at module scope) was the
+defect; tracing was always the wrong lever.**
+
+**Also to do in that change:** `bg-speller.mjs` still has the unused
+`readFileSync`/`dirname`/`fileURLToPath` imports to drop, and the `README`
++ `STAGE5_PREVENTION.md` references to `bg-allowlist.txt` need a one-line
+"now `bg-allowlist.data.mjs`" note.
 
 ## 1. Context block
 
@@ -2040,3 +2138,217 @@ SavedProfileForm}.tsx` (~970 LOC combined), and **13 hooks** under
 not functional. This is the sixth documented instance of that doc's
 status column being wrong — treat every cell there as a hypothesis
 (its own header says so).
+
+---
+
+## 7. Path to launch — full sequence (recorded 2026-08-27)
+
+Written down because it previously lived only in a session and would be
+lost on a context clear. Supersedes the scattered auth/UI notes above
+where they conflict. Re-verify any code claim against the tree.
+
+### 7.1 The launch clock — three wall-clock items, none shortened by code
+
+Launch is not gated on the engineering queue. It is gated on three
+founder-owned items that consume calendar time regardless of what is
+built:
+
+| Clock | Duration once started | Start date |
+|---|---|---|
+| **Apple Developer enrolment** | Days (Individual) to weeks (Organization — needs a D-U-N-S number, the long pole). The Individual-vs-Organization choice is the first fork. | **NEXT WEEK** — costs money the founder does not have this week |
+| **Google Play registration -> closed testing** | Registration + **hard 14-day** closed test with >=12 testers, counted from when a signed build is uploaded | **NEXT WEEK** — same money constraint |
+| **Bulgarian data-protection lawyer** — `/privacy` (long pole) + short `/terms` review | Weeks: engagement + drafting + founder review. Brief is written (`PRIVACY-POLICY-LAWYER-BRIEF-2026-08-27.md`). Also needs Petko's LLM-provider decision to fill the AI section. | **THIS WEEK** — the email costs nothing |
+
+**Timeline read:** if all three start on schedule and engineering runs in
+parallel, launch is ~4-6 weeks out. Serialised (finish Batch 8, then
+start the clocks) it is that plus the whole Batch 8 duration.
+
+### 7.2 What the one-week slip on Apple + Play actually moves
+
+Apple enrolment and Play registration slipping from "this week" to "next
+week" (money):
+
+**Slips by ~1 week:**
+- Store submission and therefore the Play 14-day closed-test window ->
+  **launch date moves ~1 week later.** This is the binding effect.
+- SIWA end-to-end config/testing (already gated on Apple enrolment).
+
+**Does NOT slip:**
+- Anything in Batch 8 — mockup -> approve -> build -> device-verify runs
+  on founder-review cycles, not money.
+- The Google button and everything in Tracks 4 and 5 (all zero-spend).
+- Legal readiness — the pole there is the **lawyer's** turnaround, not
+  enrolment; the engagement email goes this week regardless.
+- The 0.6 / 0.7 production fixes.
+
+**Therefore the week is genuinely free** to spend on engineering that
+would otherwise be critical-path — the Google button, Track 4, Track 5,
+the 0.7 fix — rather than on Batch 8's long tail, which can wait without
+moving the launch date.
+
+### 7.3 Zero-spend plan for THIS week, ordered
+
+0. **0.7 fix** — `bg-allowlist.txt` -> code module. Unblocks
+   `/api/horoscope/generate` + `/api/oracle/generate` in production.
+   First, on founder go-ahead. **[me, free]**
+1. **Lawyer email** — send `PRIVACY-POLICY-LAWYER-BRIEF-2026-08-27.md`.
+   Starts the longest legal clock. **[founder, free]**
+2. **`support@stellaeum.com`** — Cloudflare Email Routing, ~15 min.
+   **[founder, free]**
+3. **Track 5 env values** — `NEXT_PUBLIC_APP_URL` in Vercel ->
+   `https://www.stellaeum.com`; `EXPO_PUBLIC_WEB_APP_URL` in
+   `apps/mobile/.env.local` + EAS env. Small, was blocked on Vercel (now
+   resolved). **[me + founder, free]**
+4. **Google button** — Track 1 Phase A (see 7.4). ~2 days, device-testable
+   on the current dev client. **[me, free]**
+5. **Track 4 loose ends** as time allows — the two prepared migrations,
+   `subscription_quotas` export gap, `audit_logs` id backfill. All small,
+   all free. **[me, free]**
+
+**Next week, when money is available:** Apple enrolment (decide
+Individual vs Organization first), Google Play registration + line up 12
+testers.
+
+### 7.4 Auth work — Phase A (now) vs Phase B (after Apple enrolment)
+
+Deps already installed: `@clerk/expo ^3.2.4`, `expo-auth-session`,
+`expo-apple-authentication`, `expo-dev-client`, `expo-web-browser` (the
+last already in `app.json` plugins). No `expo-apple-authentication`
+plugin, no `ios.usesAppleSignIn` — verified 2026-08-27. Account linking:
+no Clerk toggle exists, it is always on; only "Verify at sign-up" (ON,
+done) matters — see 6 and `APPLE-REVIEW-REQUIREMENTS 7`.
+
+**Phase A — no Apple enrolment needed, all doable now:**
+- A1. Google connection on the Clerk **dev** instance — reportedly already
+  enabled on the shared credentials; confirm. ~0. **[me]**
+- A2. Mobile "Continue with Google" button + `useSSO`/`startSSOFlow` +
+  `setActive(createdSessionId)` + Bulgarian error mapping (mirror the
+  `ERROR_MESSAGES` maps in `sign-in.tsx`). ~1-2 d. **Device-testable on
+  the current dev client — browser SSO needs no native build.** **[me]**
+- A3. `displayName.ts` relay-host guard (skip the email-username step when
+  the host is `privaterelay.appleid.com`). ~15 min. **[me]**
+- A4. SIWA client code — `expo-apple-authentication` config plugin +
+  `ios.usesAppleSignIn` in `app.json`, native Apple-sheet flow, token
+  handoff to Clerk (`oauth_token_apple`), the compliant
+  `<AppleAuthentication.AppleAuthenticationButton>`. ~2-3 d of code.
+  **Writable now, NOT testable — needs the new build (A5) + Phase B.**
+  **[me]**
+- A5. New dev-client build with the Apple plugin. Changes the founder's
+  testing loop — flag before starting A4. **[me + founder]**
+
+**=== APPLE ENROLMENT BOUNDARY ===**
+
+**Phase B — only after enrolment clears:**
+- B1. Developer portal: "Sign In with Apple" capability on
+  `com.stellaeum.app`; Services ID; `.p8` key + Key ID + Team ID. ~45 min.
+  **[founder]**
+- B2. Paste those into Clerk's Apple connection. ~15 min. **[me + founder]**
+- B3. End-to-end SIWA test on the new dev-client build. ~0.5 d.
+  **[me + founder]**
+- B4. Token-revocation-on-delete in `cron/cleanup-deleted-accounts` —
+  best-effort revoke + Sentry alert (recommended ruling), client-secret
+  JWT signing server-side, `.p8` as a Vercel secret + a `turbo.json`
+  `build.env` entry. ~1-1.5 d. **[me, needs the .p8 from B1]**
+
+**Gates "Google is shipped" regardless of client code:** the founder's own
+Google Cloud OAuth client + consent screen (needs the resolving privacy
+URL — have it now); and **web must render the Google button in the same
+release as mobile** (a Google-only mobile signup cannot log into web
+otherwise). Web is near-zero via Clerk's prebuilt `<SignIn/>` once the
+connection exists on the **production** Clerk instance — but that is a
+Vercel deploy plus the Clerk production instance setup (DNS on the domain,
+now resolving).
+
+### 7.5 Tracks 1-6 — the full dependency sequence
+
+Tags: **[me-free]** = no external dependency, do any time - **[me-coupled]**
+= no external dependency but sequenced behind another internal item -
+**[external]** = blocked on money / Apple / Play / lawyer / Petko.
+
+**Track 1 — Auth** (detail in 7.4)
+- Phase A1-A5 — **[me-free]** (A4/A5 writable now, SIWA untestable)
+- Phase B1-B4 — **[external]** (Apple enrolment)
+- Google production OAuth client + consent screen — **[external]** (founder
+  + needs Clerk production instance)
+- Web Google/Apple buttons + Clerk production instance — **[me-coupled]**
+  (Vercel deploy; must ship same release as mobile Google)
+
+**Track 2 — Batch 8 UI** (screen-by-screen, founder gate at every step)
+- Device-check the contrast fix (`#6d7e97` at 12px / 9.5px) — **[me-free]**,
+  the thing blocking Batch 8 start
+- Ti-premium + paywall mockup -> approve -> build -> verify — **[me-free]**
+  (fresh mockups, zero exist)
+- Krug — fresh mockups every screen (`krug-v4.html` is mood-only), build
+  against the already-ported functionality (see the "Krug mobile is
+  functionally ported" correction above) — **[me-free]**, design only
+- Dnes premium badge — trivial, bundle into another session — **[me-free]**
+- Remaining screens with usable v4 mockups (Orakul, Ritam, Guide,
+  Crystals, Recommendations, Lunar diary, Settings, Auth) — **[me-free]**
+- Wizard — mockup currency check, then build; includes `POST
+  /api/chart/preview` (Design A, wraps existing `calculateNatalChart`;
+  route does not exist yet) + the one VirtualizedList-nesting fix —
+  **[me-free]**
+- AppLoadingScreen — needs a mockup from scratch — **[me-free]**
+- Cinzel-Cyrillic ESLint guard — after Batch 8's first screen exists —
+  **[me-coupled]**
+
+**Track 3 — Money path**
+- Item 16: **native RevenueCat purchase-call layer** —
+  `RevenueCatProvider.tsx` is `configure()` + identity only; zero
+  `getOfferings`/`purchasePackage`/`CustomerInfo`/paywall anywhere in
+  mobile. Real engineering, no external dependency, but **coupled to the
+  paywall mockup** -> lands with Batch 8's first screen, not before.
+  ~3-4 d + tests. **[me-coupled]**
+- Item 17: **RevenueCat webhook signing secret** — still a random
+  placeholder, so subscription state never syncs to
+  `users.subscription_tier`. RevenueCat dashboard, ~15 min, then an e2e
+  webhook test. A finished paywall grants nothing server-side until this
+  is real, but item 16 can be built before it. **[external]** (founder,
+  dashboard — but free; do it any time)
+
+**Track 4 — Backend loose ends** (all **[me-free]**, all small)
+- Two prepared DB migrations (`user_crystals` FK + orphan cleanup;
+  capture 16 untracked tables via `migration repair` — never `db push`)
+- `subscription_quotas` missing from GDPR export
+- `audit_logs` pre-existing-rows id backfill `UPDATE` (or moot if the
+  accountant says prune)
+- Mobile test suite — see 6 "Mobile has ZERO automated tests"
+- ~~`/connect/[token]` 500~~ — **RESOLVED by the 0.6 fix**, it was the
+  `sweph` failure, not token validation. No separate work.
+
+**Track 5 — Env values** (all **[me-free]**, ~5 min each; were blocked on
+Vercel, now unblocked)
+- `NEXT_PUBLIC_APP_URL` in Vercel -> `https://www.stellaeum.com`
+- `EXPO_PUBLIC_WEB_APP_URL` in `apps/mobile/.env.local` + EAS env
+
+**Track 6 — External, founder-owned**
+- Apple enrolment — **[external]**, NEXT WEEK (money)
+- Google Play registration + 12 testers + 14-day closed test —
+  **[external]**, NEXT WEEK (money); the 14-day wall is the true critical
+  path
+- Bulgarian privacy lawyer — **[external]**, email THIS WEEK (free); brief
+  ready
+- Accountant — controller legal entity + `audit_logs` payment-row
+  retention — **[external]**
+- Petko's LLM-provider decision — **[external]**, blocks the privacy
+  policy's AI section + the 300/mo premium-cap re-derivation
+- `support@stellaeum.com` — **[me-free / founder]**, THIS WEEK, 15 min
+- App icon + designer assets (glyphs are Unicode placeholders now) —
+  **[external]**
+- Termly — **[me]** decision: don't buy (no Bulgarian). Needs ratification.
+
+### 7.6 Sentry read token — noted, not urgent
+
+The `SENTRY_AUTH_TOKEN` in `apps/web/.env.local` is a `sntrys_...`
+org-scoped token provisioned for **source-map upload only**. It returns
+`You do not have permission` on the Issues and Events APIs (tried both
+`sentry.io` and the `de.sentry.io` EU region — the org is EU-hosted per
+the token's `region_url`). Consequence: every production error diagnosis
+currently depends on the founder screenshotting or pasting from the Sentry
+dashboard. A **read token** for programmatic diagnosis needs, at minimum,
+scopes **`event:read`** and **`project:read`** (add **`org:read`** to
+enumerate projects). Create it as a Sentry **User Auth Token** (Settings ->
+Account -> Auth Tokens) or an **Organization Auth Token** with those
+scopes, store it as a separate env var (e.g. `SENTRY_READ_TOKEN`) so it is
+not conflated with the upload token, and keep it out of `turbo.json` /
+Vercel (local-diagnosis only). Not launch-blocking; do it when convenient.
