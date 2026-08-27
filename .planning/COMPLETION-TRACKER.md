@@ -1753,10 +1753,14 @@ they were forgotten rather than deferred on purpose.
     content, ships in days once the lawyer is engaged.
   - **`/privacy`.** Route exists but content is lawyer-gated — needs a
     **Bulgarian-language** policy from a **Bulgarian data-protection
-    lawyer** (birth date/time/location + lawful basis + retention; the
-    OpenRouter AI transfer as a named sub-processor + SCCs; all
-    processors named). **The long-pole legal item — start the lawyer
-    engagement now.**
+    lawyer**. **Scoping brief written 2026-08-27:
+    `.planning/PRIVACY-POLICY-LAWYER-BRIEF-2026-08-27.md`** (Part A =
+    GDPR section inventory reconstructed w/o Termly; Part B = verified
+    app-specific facts incl. the exact OpenRouter payload — derived chart
+    text only, no name/DOB/location/identifiers sent; §15 = the 10
+    decisions the policy turns on). Hand this to the lawyer. **Long-pole
+    legal item — start the engagement now.** Founder still to confirm:
+    controller entity, Supabase project region, minimum age (14 in BG).
   - **Termly — do NOT buy (recommendation, needs ratification).**
     Verified 2026-08-27: **no Bulgarian support** (consent-manager and
     multi-language policy generator both). English-only policy for a

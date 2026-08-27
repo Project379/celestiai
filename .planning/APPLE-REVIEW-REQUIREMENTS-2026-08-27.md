@@ -318,16 +318,15 @@ cookie banner for a Bulgarian consumer app is a real weakness with the
 Termly.**
 
 **`/privacy` — lawyer-gated.** A **Bulgarian-language** policy
-drafted/reviewed by a **Bulgarian data-protection lawyer**. The founder
-already agreed to a lawyer pass for the birth-data + AI-transfer
-sections; extend that to the whole policy in Bulgarian. The
-load-bearing sections a template can't produce: the birth
-date/time/location collection + lawful basis + retention period; the
-OpenRouter/AI processing as a named sub-processor with a US-transfer
-mechanism (SCCs); Stripe / RevenueCat / Apple / Clerk / Supabase as
-named processors; the post-deletion retention of `audit_logs` payment
-rows (if kept — see item 3). **This is genuinely gated on a lawyer, not
-finishable this week.**
+drafted/reviewed by a **Bulgarian data-protection lawyer**. **The
+scoping brief to hand the lawyer is written:
+`.planning/PRIVACY-POLICY-LAWYER-BRIEF-2026-08-27.md`** — Part A is the
+standard GDPR section inventory (reconstructed, no Termly), Part B is the
+verified account of what the app actually does (data inventory, the exact
+OpenRouter payload, `bg_generation_flags`, payments, `audit_logs`
+post-scrub, push/Sentry/IP, Кръг third-party birth data), and §15 lists
+the 10 decisions the policy's content turns on. **Genuinely gated on the
+lawyer, not finishable this week.**
 
 **`/terms` — lighter, can ship faster.** Apple's standard EULA covers
 the app-store licence. What must be **ours**: subscription terms (price,
