@@ -1,9 +1,82 @@
 ---
 title: Vercel Deploy Diagnostic — repo-side prep
-status: prepared 2026-08-16 while founder works the Vercel dashboard directly. Repo-side facts only — nothing here was verified against an actual Vercel build log (no dashboard access this session). Read the log against this list; don't assume any single item is the cause without checking.
+status: ROOT CAUSE CONFIRMED 2026-08-27 from the actual build log. §3 (module-scope Stripe) was right, with a layer on top: Turborepo strict env mode filtered the secrets out of `next build`. turbo.json fix applied (`83317a6`). See the resolution block below.
 ---
 
 # Vercel deploy diagnostic
+
+---
+
+## RESOLUTION — 2026-08-27 (build log in hand)
+
+The founder pulled the real build log. Error at line 1451:
+`Error: Neither apiKey nor config.authenticator provided` →
+`Failed to collect page data for /api/stripe/cancel`. Immediately after,
+Turborepo's own warning that 16 env vars are **set on the Vercel project
+but missing from `turbo.json`**, so they "WILL NOT be available to your
+application."
+
+**Chain:** Turborepo 2.x defaults to **strict env mode** — a task only
+receives env vars declared in `env`/`globalEnv` (plus framework-inferred
+ones). `turbo.json` declared none. So `next build` ran with no
+`STRIPE_SECRET_KEY`, and `lib/stripe/client.ts:11`'s **module-scope**
+`new Stripe(process.env.STRIPE_SECRET_KEY!)` threw during Next's
+page-data collection → whole build fails. §3 below correctly identified
+the Stripe construction; what it couldn't see without the log was *why*
+the var was absent despite being set in Vercel.
+
+**Fix applied (`83317a6`):** added the 14 non-public vars that
+`apps/web` + `packages/{core,astrology}` + `next.config.js` +
+`sentry.*.config.ts` actually read to `turbo.json`'s `build.env`. List is
+**grep-derived from code**, not copied from the Vercel warning:
+`DATABASE_URL` (repo scripts/diagnostics only — never the web runtime or
+build, VERIFIED by grep) and `EXPO_PUBLIC_API_BASE` (a mobile var that
+should not be in the web env at all) are **deliberately excluded** even
+though the warning names them. `NEXT_PUBLIC_*` are **not** listed —
+Turborepo's Next.js framework inference passes them through automatically
+(confirmed: the Vercel warning listed zero `NEXT_PUBLIC_*` despite many
+being set). Validated with
+`turbo run build --filter=@stellaeum/web --dry` — the 14 vars resolve on
+`@stellaeum/web#build`, `Framework = nextjs`.
+
+**Still open — module-scope Stripe (recommendation, not yet done):**
+`lib/stripe/client.ts` constructs Stripe at import time, so a
+missing/rotated/renamed key is a **build failure** (whole site, all 40
+routes) rather than a **runtime 500** (4 `/api/stripe/*` routes).
+`lib/ai/client.ts:16` is also module-scope but `createOpenAI` does **not**
+throw on an undefined key (auth deferred to request), so it survives the
+build — Stripe is the **only** true build-breaker (VERIFIED by grep for
+top-level `new`/`createClient`/`createOpenAI`; everything else is a
+factory function or a harmless `Intl.DateTimeFormat`). Recommend a lazy
+getter — same pattern as `lib/supabase/service.ts`'s
+`createServiceSupabaseClient()`, which throws only when *called*. ~5-line
+change, no behaviour change when the key is present, downgrades the
+failure mode from catastrophic to local. **Env list is necessary
+(nothing deploys without it); lazy init is resilience (so the next env
+slip is a contained incident).** Held for founder ruling.
+
+**Supabase CLI `ENOENT` in the same log — verdict: NOISE, not the cause.**
+`supabase` is a **root `devDependencies`** entry (`"supabase": "^2.92.1"`)
+with a `"supabase": "supabase"` passthrough script. **Nothing in the web
+app imports it** (VERIFIED — grep). Under pnpm 9 with no `.npmrc`
+`onlyBuiltDependencies`, the CLI's postinstall (which downloads a
+platform binary) is blocked by default, so pnpm then can't create the
+`.bin` shim for a binary that was never fetched → the `ENOENT`. pnpm
+**warns and continues**; the build got well past install and died on
+Stripe. Not fatal for the web build. Clean-up options if the log noise
+is unwanted: (a) leave it — it's a warning; (b) move `supabase` out of
+the dependency graph Vercel installs (it's a local dev tool) — but that
+breaks `pnpm supabase …` locally; (c) `.npmrc` `onlyBuiltDependencies`
+allowlisting it so the postinstall runs. Recommend (a) for now;
+revisit only if a future Vercel setting makes install fail on script
+errors.
+
+**Next:** redeploy on `83317a6` and read the log again. If the Stripe
+error is gone, §3's turbo.json layer was the whole build-phase blocker.
+§2's install-phase risks (workspace visibility, sweph native build) are
+still unverified and would surface next if present.
+
+---
 
 18 deployments checked via the GitHub Deployments API span 2026-07-29
 through today, every one `state: failure`. This is everything gatherable
