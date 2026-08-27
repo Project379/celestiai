@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import {
   ensureUserRecord,
@@ -25,6 +26,15 @@ export function toErrorResponse(error: unknown, fallbackMessage: string) {
     )
   }
 
+  // A non-ApiError reaching here is an unexpected 500. Because we CATCH it
+  // and RETURN a Response (rather than letting it throw), Next's
+  // onRequestError / Sentry.captureRequestError never fires — so without
+  // this line these 500s are invisible in Sentry and only land in Vercel
+  // logs (which have no console-capture integration). See
+  // VERIFICATION-SURFACE-GAPS.md #9. Capture explicitly here so the
+  // failures most likely to happen (external-service calls in the 6 routes
+  // that use this helper) are actually monitored.
+  Sentry.captureException(error, { extra: { fallbackMessage } })
   console.error(fallbackMessage, error)
   return Response.json({ error: fallbackMessage }, { status: 500 })
 }

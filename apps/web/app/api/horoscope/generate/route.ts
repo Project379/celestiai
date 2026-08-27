@@ -2,15 +2,15 @@ import { auth } from '@clerk/nextjs/server'
 import { generateText, streamText } from 'ai'
 import type { TransitAspect } from '@stellaeum/astrology'
 import type { PlanetPosition } from '@stellaeum/astrology/client'
-import { AI_MODEL, openrouter } from '@/lib/ai/client'
+import { AI_MODEL, isUpstreamAiError, openrouter } from '@/lib/ai/client'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { logAuditEvent } from '@/lib/audit'
 import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
 import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { toErrorResponse } from '@/lib/auth/guards'
-import { assertRateLimit } from '@/lib/rate-limit'
+import { ApiError, toErrorResponse } from '@/lib/auth/guards'
+import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 import { ensureUserRecord } from '@/lib/users/ensure-user'
 import {
   checkQuotaAvailable,
@@ -318,6 +318,13 @@ export async function POST(req: Request) {
         })
       } catch (err) {
         await releaseClaimOnFailure()
+        // An upstream provider failure (non-JSON body → SDK SyntaxError,
+        // network drop, 5xx) is not our bug — surface it as a deliberate
+        // 502 with a retry hint instead of an opaque 500. releaseClaim
+        // above already refunded the quota + deleted the placeholder row.
+        if (isUpstreamAiError(err)) {
+          throw new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED')
+        }
         throw err
       }
 

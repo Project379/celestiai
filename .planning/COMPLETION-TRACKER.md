@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-27 (Sentry caught a production-breaking bug 1h after going live — sweph/geo-tz/dictionary-bg missing from the deployed function; every compute path 500ing. §0.6: sweph + geo-tz FIXED and verified in production (`e64ef9f`), win32-trace residual risk resolved, `/connect/[token]` 500 resolved as a side effect. §0.7: the `bg-allowlist.txt` read — webpack froze `import.meta.url` to the build machine's path; FIXED (allowlist → bundled data module, parsed Set byte-identical). §0.8: with §0.6+§0.7 off, the route finally runs and hits a THIRD failure — `generateText` gets an empty body from OpenRouter → `ai` SDK `JSON.parse('')` → unhandled 500. Leading cause: blank `OPENROUTER_API_KEY` in Vercel Production runtime env (missing would throw `LoadAPIKeyError`, not `SyntaxError`). Founder checking. VERIFICATION-SURFACE-GAPS #7 (build-time constant inlining), #8 (ad blocker eats the Sentry tunnel), #9 (`toErrorResponse` returns a 500 Response → Sentry never sees it). New §7: full path-to-launch sequence recorded (Tracks 1–6, auth Phase A/B + enrolment boundary, launch clock, zero-spend week plan). Apple enrolment + Play registration moved to next week (money). Earlier same day: FIRST SUCCESSFUL PRODUCTION DEPLOY — chain turbo.json env allowlist → lazy Stripe → Next.js 15.5.24; audit_logs de-identification, /support page.)
+last-updated: 2026-08-27 (Sentry caught a production-breaking bug 1h after going live — sweph/geo-tz/dictionary-bg missing from the deployed function; every compute path 500ing. §0.6: sweph + geo-tz FIXED and verified in production (`e64ef9f`), win32-trace residual risk resolved, `/connect/[token]` 500 resolved as a side effect. §0.7: the `bg-allowlist.txt` read — webpack froze `import.meta.url` to the build machine's path; FIXED (allowlist → bundled data module, parsed Set byte-identical). §0.8: with §0.6+§0.7 off, the route finally runs and hits a THIRD failure — `generateText` gets an empty/non-JSON body from OpenRouter → `ai` SDK `JSON.parse('')` → `SyntaxError` → unhandled 500. `OPENROUTER_API_KEY` confirmed present + well-formed (empty-string theory dead). SHIPPED: `[OPENROUTER-DEBUG]` response-body shim (in the built bundle) + `isUpstreamAiError` classification → clean **502 AI_UPSTREAM_FAILED** with quota refund instead of opaque 500, on both AI routes + `Sentry.captureException` in `toErrorResponse` (closes VSG #9 for 6 routes). +11 tests (206 total), 502 proven against pre-fix. Root cause (Cloudflare IP block / model unavailable / incident) still open — founder deploys, probes, pastes the debug logs. VERIFICATION-SURFACE-GAPS #7 (build-time constant inlining), #8 (ad blocker eats the Sentry tunnel), #9 (`toErrorResponse` returns a 500 Response → Sentry never sees it). New §7: full path-to-launch sequence recorded (Tracks 1–6, auth Phase A/B + enrolment boundary, launch clock, zero-spend week plan). Apple enrolment + Play registration moved to next week (money). Earlier same day: FIRST SUCCESSFUL PRODUCTION DEPLOY — chain turbo.json env allowlist → lazy Stripe → Next.js 15.5.24; audit_logs de-identification, /support page.)
 ---
 
 # Completion Tracker
@@ -437,12 +437,58 @@ routes using `toErrorResponse` are Sentry-blind for any non-`ApiError`
 evidence server-side Sentry is broken — though whether `SENTRY_DSN` is in
 the Production runtime env is still worth confirming (§0.7).
 
-**No fix until the founder confirms the `OPENROUTER_API_KEY` value.** If it
-is a real key, the diagnosis moves to "OpenRouter incident / model
-`meta-llama/llama-3.3-70b-instruct` unavailable / Cloudflare blocking the
-Lambda IP" and needs the actual OpenRouter response body captured (add a
-temporary `console.error(await response.text())` shim, or check
-OpenRouter's dashboard activity log for the failed request).
+**KEY CONFIRMED PRESENT + WELL-FORMED 2026-08-27** (`sk-or-v1-b62c…`, 73
+chars, correct prefix; founder rotating it anyway — it was screenshot-
+exposed and set as Config not Secret, neither of which is the cause). So
+the empty-string theory is dead. Next step is the raw OpenRouter response
+body, not more inference.
+
+**SHIPPED alongside the diagnosis (`<commit>`) — the shim + the two
+hardening items, all correct regardless of what the body turns out to
+be:**
+1. **`[OPENROUTER-DEBUG]` fetch shim** in `lib/ai/client.ts` — a custom
+   `fetch` passed to `createOpenAI` that `console.error`s the outgoing
+   `model=` plus the response `status` / `content-type` / first 2 KB of
+   body, via `res.clone()` so the SDK still gets an intact stream. Dated,
+   loud prefix, explicit REMOVAL note (delete the block + the
+   `fetch: debugFetch` line). **Confirmed present in the built server
+   bundle** (`chunks/4585.js`), so it will log in production. `AI_MODEL`
+   is a hardcoded constant (`meta-llama/llama-3.3-70b-instruct`) — not
+   env-configurable — confirmed inlined in the build; the shim logs the
+   actual outgoing value too.
+2. **Upstream-vs-ours error classification** — `isUpstreamAiError(err)` in
+   `lib/ai/client.ts` (raw `SyntaxError` → true; fetch/network
+   `TypeError` → true; `ai` SDK `APICallError`/`RetryError` by name →
+   true; `LoadAPIKeyError` deliberately **false** — a blank key is our
+   bug, "retry shortly" would be a lie). Both `horoscope/generate` and
+   `oracle/generate` `jsonOnly` catch blocks now: refund the quota claim,
+   then if `isUpstreamAiError` → `ApiError(502, RETRY_LATER_MESSAGE,
+   'AI_UPSTREAM_FAILED')` (reuses `lib/rate-limit.ts`'s already-reviewed
+   retry copy, now exported as `RETRY_LATER_MESSAGE` — net-zero new
+   Cyrillic literals, baseline unchanged at 1772); anything else still
+   500s. Oracle also nulls `claimedPeriodStart` in that branch so the
+   outer catch can't double-refund.
+3. **`Sentry.captureException` in `toErrorResponse`'s non-`ApiError`
+   branch** (`lib/auth/guards.ts`) — closes the VERIFICATION-SURFACE-GAPS
+   #9 blind spot for all 6 routes that use the helper. `ApiError` (the
+   deliberate 4xx/5xx path, incl. the new 502) is NOT captured.
+4. **Tests (206 total, +11):**
+   - `test/ai/upstream-error.test.ts` — `isUpstreamAiError` truth table.
+   - `test/auth/to-error-response.test.ts` — proves `captureException`
+     fires for a non-`ApiError` 500 and does NOT for an `ApiError` (the
+     "verify with a deliberate error" the founder asked for).
+   - `test/horoscope/generate-upstream-failure.test.ts` — an SDK
+     `SyntaxError` now yields **502 `AI_UPSTREAM_FAILED`** (not an opaque
+     500) **and** `decrementQuotaUsage` fires (refund proven, not
+     assumed); a non-upstream `TypeError` still 500s. **Proven against
+     pre-hardening `route.ts`: the 502 assertion failed with `expected
+     500 to be 502` before the fix was restored.**
+
+**Still open:** the actual root cause (Cloudflare IP block vs. model
+unavailable vs. provider incident) — the founder deploys `<commit>`, runs
+the probe, and pastes the `[OPENROUTER-DEBUG]` lines from Vercel Runtime
+Logs. The route now returns a clean **502** while this is unresolved
+instead of an opaque 500, and the failure is now in Sentry.
 
 ---
 
@@ -2273,18 +2319,25 @@ they were forgotten rather than deferred on purpose.
      batch when the wizard mockup comes up (teaser content, Moon
      handling, wheel vs. sign-list, time-step framing) — not piecemeal.
 
-- **Post-deploy smoke test — OWNED, scoped 2026-08-27, not built.** After
-  every production deploy, one authed request per compute path (chart
-  calculate, transits overview, crystals overview, one circle route, both
-  AI routes, `/connect/<token>`), asserting no 5xx. Exists because the
-  2026-08-27 `sweph`/`geo-tz`/`dictionary-bg` outage (§0.6) was invisible
-  to page-level checks — every static page and auth gate returned exactly
-  what a healthy deploy would. Scope: `scripts/smoke/post-deploy.mjs`
-  taking a base URL + a seeded test user's `__session` cookie; wired as a
-  Vercel Deploy Hook / post-deploy GitHub Action + a manual
-  `pnpm smoke:prod`. **Must not depend on anyone remembering to curl
-  things.** Owner: engineering (Claude Code) once the §0.6 fix is
-  confirmed in production.
+- **Post-deploy smoke test — OWNED, scoped 2026-08-27, PRIORITY RAISED
+  2026-08-27, not built.** After every production deploy, one authed
+  request per compute path (chart calculate, transits overview, crystals
+  overview, one circle route, both AI routes, `/connect/<token>`),
+  asserting no 5xx. **Founder raised this up the queue after
+  `/api/horoscope/generate` failed three separate ways in one session
+  (§0.6 missing module → §0.7 frozen build path → §0.8 empty upstream
+  body), each one invisible until the previous came off.** That is the
+  argument: page-level checks and even a first authed probe kept passing
+  while a core route was dead. Scope: `scripts/smoke/post-deploy.mjs`
+  taking a base URL + a seeded test user's `__session` cookie; assert no
+  5xx on any probe; wired as a Vercel Deploy Hook / post-deploy GitHub
+  Action + a manual `pnpm smoke:prod`. For the AI routes, "no 5xx" now
+  includes accepting a **502 `AI_UPSTREAM_FAILED`** as a *known* state to
+  report-but-not-fail-on until §0.8's root cause is closed (else the smoke
+  test just red-flags the same known issue every run). **Must not depend
+  on anyone remembering to curl things.** Owner: engineering (Claude
+  Code); next in the queue after §0.8's root cause is identified from the
+  `[OPENROUTER-DEBUG]` logs.
 
 - **Mobile has ZERO automated tests — OWNED, scoped 2026-08-27.** `pnpm
   test` = 195 tests, **all `@stellaeum/web`** (`apps/web/test/**`, vitest).

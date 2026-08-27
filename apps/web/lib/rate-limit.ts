@@ -1,6 +1,15 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { ApiError } from '@/lib/auth/guards'
 
+/**
+ * Reviewed Bulgarian for a transient "we couldn't process it, try again
+ * shortly" failure. Shared so the rate-limiter's 503 and the AI-upstream
+ * 502 (lib/ai/client.ts / oracle+horoscope generate) speak with one
+ * voice instead of drifting into two near-identical strings.
+ */
+export const RETRY_LATER_MESSAGE =
+  'Временно не успяваме да обработим заявката. Опитай отново след малко.'
+
 interface RateLimitOptions {
   key: string
   limit: number
@@ -56,7 +65,7 @@ export async function assertRateLimit({ key, limit, windowMs, failClosed }: Rate
   if (error) {
     if (failClosed) {
       console.error(`[RateLimit] Check failed for money-spending key "${key}", failing CLOSED:`, error)
-      throw new ApiError(503, 'Временно не успяваме да обработим заявката. Опитай отново след малко.', 'RATE_LIMIT_UNAVAILABLE')
+      throw new ApiError(503, RETRY_LATER_MESSAGE, 'RATE_LIMIT_UNAVAILABLE')
     }
     console.error(`[RateLimit] Check failed for key "${key}", failing open:`, error)
     return

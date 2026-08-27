@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { generateText, streamText } from 'ai'
-import { AI_MODEL, openrouter } from '@/lib/ai/client'
+import { AI_MODEL, isUpstreamAiError, openrouter } from '@/lib/ai/client'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
@@ -16,8 +16,8 @@ import {
   incrementQuotaUsage,
   quotaCapReachedResponse,
 } from '@/lib/subscriptions/quota'
-import { toErrorResponse } from '@/lib/auth/guards'
-import { assertRateLimit } from '@/lib/rate-limit'
+import { ApiError, toErrorResponse } from '@/lib/auth/guards'
+import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 
 /**
  * POST /api/oracle/generate
@@ -302,6 +302,16 @@ export async function POST(req: Request) {
       } catch (err) {
         if (claimedPeriodStart) {
           await decrementQuotaUsage(userId, claimedPeriodStart)
+          claimedPeriodStart = null // outer catch must not double-refund
+        }
+        // Upstream provider failure (non-JSON body → SDK SyntaxError,
+        // network drop, 5xx) → deliberate 502 + retry hint, not an opaque
+        // 500. Anything else is our bug and stays a 500.
+        if (isUpstreamAiError(err)) {
+          return toErrorResponse(
+            new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED'),
+            'AI upstream failure',
+          )
         }
         console.error('[Oracle Generate] Failed to save reading:', err)
         return Response.json(
