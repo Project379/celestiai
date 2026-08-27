@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-26 (Tiers 1 and 2 of the technical sweep shipped same-day — see §0. Device pass PASSED for Batches 1-7 on the real Android build; crystal_recommendations RLS and REVISIT-64 Sentry entries corrected as wrong. Two DB migrations prepared but deliberately not applied — founder-owned, see §5)
+last-updated: 2026-08-27 (FIRST SUCCESSFUL PRODUCTION DEPLOY — www.stellaeum.com live; Vercel out of blocked-externally, Apple privacy-URL blocker closed. Chain: turbo.json env allowlist → lazy Stripe → Next.js 15.5.24. Also shipped: audit_logs de-identification, /support page, lazy Stripe. New docs: NEXTJS-UPGRADE, AUTH-PROVIDER-EXPANSION, APPLE-REVIEW-REQUIREMENTS, PRIVACY-POLICY-LAWYER-BRIEF, LLM-PROVIDER-DECISION. Web browser Sentry verified live for the first time.)
 ---
 
 # Completion Tracker
@@ -1641,17 +1641,56 @@ not assumed still partially-complete.
 Items that can't move regardless of engineering capacity — waiting on
 something outside this repo.
 
-**Vercel is the top entry, moved here 2026-08-16 — it's the single thing
-gating three separate items below it, not a peripheral row.** Read this
-one first.
+**Vercel: RESOLVED 2026-08-27.** First successful production deployment in
+the project's history — `www.stellaeum.com` live (Status Ready,
+Environment Production, 3m29s), custom domains assigned, `stellaeum.com`
+→ `www` redirect working. The chain that fixed it: `turbo.json` env
+allowlist (`83317a6`) → lazy Stripe client (`008d189`) → **Next.js
+15.2.4 → 15.5.24** (`15febcb`), which cleared Vercel's "Vulnerable
+version of Next.js detected" deploy gate. Verified live 2026-08-27:
+`/` 200, `/privacy` 200 (**Apple privacy-URL submission blocker CLOSED**),
+`/pricing` 200; `/api/user` `/api/stripe/status` `/api/cities/search`
+all return clean structured **401** (routes load, run, auth-gate — the
+lazy-Stripe failure mode works; no 500s); web browser Sentry verified
+**live** for the first time (DSN inlined in `main-app-*.js`, `sentry-*`
+meta tags in prod HTML, `/monitoring` tunnel configured — a no-op'd
+Sentry would produce none of these).
 
-| Item | Blocks | Owner |
-|---|---|---|
-| **Vercel** (production deploy target) — **hard blocker, confirmed two independent ways, not "not currently blocking" as this row said as of 2026-08-13.** | **`stellaeum.com` returns a direct 404.** The GitHub Deployments API shows 18 checked deployments spanning 2026-07-29 through the commit pushed minutes before this check (`345f4dc`) — **every single one is `state: failure`**, including the newest. This one item is what's actually gating: **(1)** `EXPO_PUBLIC_WEB_APP_URL` — the `/you/premium` free-state "subscribe on web" CTA has no URL to point at. **(2)** the `/you/settings.tsx` hardcoded privacy-policy link — a real **Apple App Store submission rejection** waiting to happen, not just a dead link a user might tap; Apple requires a reachable privacy URL at submission. **(3)** the RevenueCat webhook end-to-end test — can't be exercised against a webhook endpoint that isn't live. Full repo-side diagnostic prep (env var inventory build-time vs. runtime, monorepo/native-module build risks, a read-the-log-against-this-list diagnostic order) is in `.planning/VERCEL-DEPLOY-DIAGNOSTIC.md` — founder is working the dashboard directly, not delegating the fix. | **Founder — real, current, active blocker. Owns the fix, working it now.** |
-| **RevenueCat webhook integration + real signing secret** — sweep finding #1 (CRITICAL), Tier 1 fix landed 2026-08-26 but only half-closes it. `REVENUECAT_WEBHOOK_SECRET` in `apps/web/.env.local` was rotated off the forgeable value (it was byte-identical to `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`, shipped in the app bundle) to a random placeholder that has never appeared in any client bundle. **Current state: the webhook is dead, not forgeable** — safer than before, but not working, because the placeholder is not RevenueCat's real signing secret and every real webhook call will 401 at the HMAC check. | Real subscription-state sync from RevenueCat to `users.subscription_tier` — the webhook the placeholder blocks is what `revenuecat/webhook-events.ts` needs to ever run against live traffic. Also blocks the RevenueCat webhook end-to-end test named in the Vercel row above. | **Founder — dashboard-only, not delegable.** In RevenueCat Dashboard → Project Settings → Webhooks: create the webhook integration, toggle HMAC signing on, copy the signing secret it shows once. Set `REVENUECAT_WEBHOOK_SECRET` to that value in `apps/web/.env.local`, and again on Vercel once it deploys (see the Vercel row above) — both locations need the real value, not just one. |
+**What the deploy unblocks** (was all "stuck on Vercel"):
+- **`EXPO_PUBLIC_WEB_APP_URL`** — founder to set `= https://www.stellaeum.com`
+  in `apps/mobile/.env.local` (dev) **and** EAS env (builds). The
+  `/you/premium` free-state CTA guard (`lib/config/webAppUrl.ts`) returns
+  the real URL once set → `FreeStateCta` renders (currently hidden by the
+  `REPLACE_WITH_` placeholder check). No committed code change — it's an
+  `EXPO_PUBLIC_` env var.
+- **`NEXT_PUBLIC_APP_URL` in Vercel** — must be `https://www.stellaeum.com`,
+  not the `?? 'http://localhost:3000'` fallback. Used by
+  `stripe/checkout` + `stripe/portal` (success/cancel redirect URLs) and
+  `circle/invites` (the `${appUrl}/connect/${token}` invite link). If
+  still localhost in Vercel, production checkout redirects to localhost
+  and Кръг invite links are broken.
+- **Privacy URL** for the Apple submission form — `/privacy` resolves.
+- **`/terms` + `/support`** — now buildable (were blocked on the deploy).
+  `/support` **shipped 2026-08-27** (`71ba344`) — live on next deploy.
+- **RevenueCat webhook end-to-end test** — a live HTTPS webhook endpoint
+  now exists (still needs the real signing secret, see the row below).
+- **Clerk production instance** — needs DNS records on the domain, which
+  now resolves.
+- **Google Cloud OAuth consent screen** — needs a resolving homepage +
+  privacy URL, now available.
+- **`/connect/[token]` invite-acceptance page** — the mobile Кръг invite
+  flow's web landing page. **BUG found 2026-08-27:** an invalid/unknown
+  token returns **HTTP 500**, not a friendly 404 / "invalid invite" page
+  (`curl /connect/test` → 500). A user with a stale link, or a reviewer
+  poking the URL, hits a raw error. Not urgent (happy path needs a real
+  token to test) but a rough edge to fix — logged here so it isn't lost.
+
+The repo-side diagnostic (`.planning/VERCEL-DEPLOY-DIAGNOSTIC.md`) has
+the full root-cause chain in its resolution block.
+| **RevenueCat webhook integration + real signing secret** — sweep finding #1 (CRITICAL), Tier 1 fix landed 2026-08-26 but only half-closes it. `REVENUECAT_WEBHOOK_SECRET` in `apps/web/.env.local` was rotated off the forgeable value (byte-identical to `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`, shipped in the app bundle) to a random placeholder never in any client bundle. **Current state: the webhook is dead, not forgeable** — safer, but not working: the placeholder isn't RevenueCat's real signing secret and every real webhook call 401s at the HMAC check. **Vercel now deployed (2026-08-27), so the end-to-end test is finally possible — this is now fully founder-actionable, no remaining blocker.** | Real subscription-state sync from RevenueCat to `users.subscription_tier` (`revenuecat/webhook-events.ts` against live traffic) + the end-to-end test. | **Founder — dashboard-only.** RevenueCat Dashboard → Project Settings → Webhooks: create the integration, toggle HMAC signing on, copy the signing secret (shown once). Set `REVENUECAT_WEBHOOK_SECRET` to that value in `apps/web/.env.local` **and** in the Vercel project env — both. Then fire a test event at `https://www.stellaeum.com/api/webhooks/revenuecat` and confirm it 200s + syncs. |
 | **Two prepared DB migrations** (Tier 2 #6/#8, 2026-08-26) — `supabase/migrations/20260826140000_user_crystals_fk.sql` (delete 13 orphaned rows, then FK `user_crystals`/`user_daily_crystals` → `users`) and `20260826150000_capture_untracked_tables.sql` (CREATE TABLE capture for the 16 untracked tables, self-verified against production, zero missing/extra). Neither was applied by this session, matching the sweep's own §1.5 "do not `db push` blind" warning. | **Orphan ruling made 2026-08-26 — delete, then add the FK.** Three checks before ruling, not inferred from the missing join alone: (1) Clerk API for `user_3CJ6TxYOTVGpGhsznsp3Sevygng` directly — 404, account genuinely gone, not a live partially-deleted user; (2) `audit_logs` for that clerk_id — zero rows, and since that table's FK to `users` is `ON DELETE SET NULL` not `CASCADE`, a real GDPR deletion run through the app would have left a null-`user_id` row behind rather than none at all, ruling out "deletion partially failed" as the cause (most likely pre-cron manual test data, dated 2026-04-15); (3) both tables hold only derived/generated content, nothing user-authored. **The general move worth repeating: absence of a SPECIFIC expected artifact (the null-user_id audit row a real deletion would leave) rules out a SPECIFIC cause more reliably than absence-of-evidence in general does.** Migration file now contains the DELETE + verification queries followed by the ADD CONSTRAINT statements. | **Founder — ready to run.** FK migration: run as one file (DELETE → verify 0 orphans → ALTER TABLE → verify constraints exist), verification queries inline. Capture migration: `supabase migration repair --status applied 20260826150000` once reviewed — see the exact command sequence given alongside this ruling for why repair, not push, and what order matters. |
 | **Apple Developer Program enrollment** | TestFlight provisioning, SR 9 (EAS Dev Client + TestFlight + biometric auth bundle), the soft-launch milestone itself (iOS internal beta can't open without it) | Founder — application/payment step, not automatable |
-| **LLM model swap (OpenRouter/Llama → BgGPT)** | Nothing currently — deliberately deferred, not gating launch. Would need a controlled quality eval (same prompts/chart/topic, human-rated) before it's even a live decision, not just an engineering swap | Founder — product call on Bulgarian-quality-vs-parameter-count tradeoff, per `AI_PROVIDER_DECISION.md §5` |
+| **LLM provider decision** — full criteria + integration scoping in `.planning/LLM-PROVIDER-DECISION-2026-08-27.md`. Open for weeks; **now on the critical path** because two things depend on the *provider* (not just the model): **(1)** the privacy policy's AI sub-processor + third-country-transfer + retention section — the lawyer brief (`PRIVACY-POLICY-LAWYER-BRIEF-2026-08-27.md` §4) is written vendor-agnostic with `[[AI PROVIDER]]` / `[[JURISDICTION]]` placeholders, but the policy can't ship until they're filled; **(2)** the 300/month premium safety-net cap, derived from Llama 3.3 70B pricing, must be re-derived on swap. Decision criteria: Bulgarian quality (test on real prompts via `bg-speller.mjs`), $/call at ~1.25k-in/1.75k-out, single-company-vs-router (→ sub-processor list shape), retention/training terms in writing, **EU-hosted-or-not** (EU hosting removes the whole Chapter V transfer section). **Integration scoped and it is NOT a project:** verified `lib/ai/client.ts` is the single source of truth, two consumers use the provider-agnostic Vercel AI SDK — an OpenAI-compatible provider is a ~3-line change, a first-party `@ai-sdk/*` provider is ~10-20 lines + one dependency in that one file, routes unchanged either way. | The privacy policy (long-pole legal item) and the premium cap number. Not launch-blocking on its own but blocks the policy. | **Co-founder (web) — researching, has not reported back. Owner named so this stops being an open-ended note.** |
 | **Swiss Ephemeris Professional License purchase** | Nothing pre-launch by design — GPL-2.0 path is legally sufficient until the trigger fires. CHF 700 one-time, no retroactive coverage (contract clause 13) once the trigger does fire | Founder — automatic trigger already wired (`[Licensing]`-prefixed warnings on first genuine paying subscriber in both `stripe/subscription.ts` and `revenuecat/webhook-events.ts`); founder must act promptly once it fires, not "eventually" |
 | **Designer assets** (`DESIGNER_BRIEF_ASSETS.md`) | Currently blocks nothing launch-critical — planet/zodiac glyphs render as Unicode placeholders pending real assets; brief itself is unfulfilled, no deliverable exists yet | Whoever the founder commissions; brief is written and ready |
 
@@ -1741,11 +1780,17 @@ they were forgotten rather than deferred on purpose.
   SIWA 5–7 d + ~2 h config.
 - **Legal / support pages (Apple submission blockers) — scoped
   2026-08-27 in `APPLE-REVIEW-REQUIREMENTS-2026-08-27.md` §5–§8.**
-  - **`/support` page + `support@stellaeum.com`.** Nothing exists.
-    Founder creates `support@` now (Cloudflare Email Routing, free,
-    ~15 min — NOT a personal Gmail in the App Store field). `/support`
-    page: ~half a day, built once Vercel deploys — plain BG page (app
-    name, description, `support@`, 3–4 FAQ), not a Batch 8 design task.
+  - **`/support` page — SHIPPED 2026-08-27 (`71ba344`), live on next
+    deploy.** Plain static route, Bulgarian (informal ти), matches
+    `/privacy`'s structure/styles (not Batch 8). App name, one-line
+    description, `support@stellaeum.com`, four FAQ (не мога да вляза /
+    възстановяване на покупки / изтриване на акаунт / не получавам
+    известия), link to `/privacy`. BG copy through the checks;
+    bg-lint-baseline 1756 → 1772. Also fixed: `/privacy` had
+    `support@stellaeum.app` (wrong TLD) in two places → `.com`.
+    **Founder:** create `support@stellaeum.com` via Cloudflare Email
+    Routing (free, ~15 min — NOT a personal Gmail in the App Store
+    field).
   - **`/terms`.** Doesn't exist. Apple's standard EULA covers the
     licence; ours must add subscription terms (3.1.2: in-app + web),
     acceptable use, liability, governing law (BG), astrology disclaimer.
