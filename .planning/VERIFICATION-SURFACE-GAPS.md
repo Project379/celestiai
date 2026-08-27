@@ -181,6 +181,38 @@ exporting a constant). Grep for the shape before trusting a deploy;
 2026-08-27's sweep found exactly one broken instance (this one) and one
 same-shape-but-shimmed pattern (the `createRequire` trio).
 
+## 8. The founder's own browser is not a reliable observation post for client-side telemetry (ad blocker eats the Sentry tunnel)
+
+Found 2026-08-27 while chasing the §0.7 production error. The founder's
+browser Sentry console showed `net::ERR_BLOCKED_BY_CLIENT` on requests to
+`/monitoring` — the same-origin Sentry tunnel route (`tunnelRoute:
+'/monitoring'` in `next.config.js`, configured specifically to get *past*
+`connect-src` CSP and ad blockers). An ad blocker with a broad
+"analytics/telemetry" filter list matches `/monitoring` anyway and drops
+it. **Consequence: client-side Sentry events from the founder's own
+sessions may never leave the browser.** Anything "verified working"
+client-side by watching the founder's browser — an error not appearing, a
+capture "succeeding", a page "not throwing" — is unreliable evidence,
+because the transport is being blocked locally and silently.
+
+This does **not** affect server-side events from API routes (those go
+`Sentry.init({ dsn: SENTRY_DSN })` → `sentry.io` directly from the Lambda,
+no browser involved) — but it does mean:
+- Client-side error monitoring cannot be validated from the founder's
+  primary browser. Use a clean browser / private window with no
+  extensions, or a different device/network, or check server-side.
+- If a client-side bug is "not in Sentry", that is not evidence it did not
+  happen — check whether the tunnel is being blocked first.
+- The earlier "web browser Sentry verified live" note (COMPLETION-TRACKER
+  §5) was verified by *inspecting the production bundle* (DSN inlined,
+  `sentry-trace` meta tags present), not by confirming events actually
+  arrive — which, from the founder's browser, they may not.
+
+Distinct from items 1–7: those are build/environment fidelity gaps. This
+one is that **the human's own diagnostic instrument is filtered**, so
+"I checked and it's fine" carries a hidden asterisk for anything the
+filter touches.
+
 ## The underlying pattern across items 1-3 (environment-fidelity gaps)
 
 Convenience/local/cheap verification surfaces (a browser via

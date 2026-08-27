@@ -375,6 +375,54 @@ inlined as bundled data; the `.nft.json` for `oracle/generate` +
 195/195 web tests; typecheck clean; bg-lint-baseline + error-code checks
 PASS.
 
+**PRODUCTION CONFIRMATION IS BLOCKED ON GETTING THE CURRENT ERROR
+(2026-08-27).** The two Sentry events pulled so far are both release
+`2df6aeb71509…` — a build that **predates every fix in this section**
+(`c9dc9c1`, `e64ef9f`, `8031ee5` all come after `2df6aeb`). They are the
+*original* errors (`Cannot find module 'sweph'` on `/connect/[token]`;
+ENOENT in `bg-speller.mjs:26` `loadAllowlist` — code deleted in
+`8031ee5`), not the current one. The founder's fresh 500 repro was on
+Vercel deploy `dpl_EvjecA4vGGHgqBm7QZvDiYp8fzTe`; we do not yet know which
+commit that deploy built, nor whether a current-release event exists.
+
+**Sentry `release` = the full git commit SHA** (verified: `withSentryConfig`
+in `next.config.js` sets no explicit `release`, so `@sentry/nextjs`
+auto-detects the build SHA; the stale events prove the format). Current
+fix SHAs to filter by:
+- `e64ef9fdbc16c40dfcb70e58b0d4f9961cc4c333` (sweph/geo-tz fix)
+- `8031ee56bcff7a8902c579ef3528320a8bf770bb` (allowlist fix — current HEAD)
+- Sentry UI truncates to 12: `e64ef9fdbc16`, `8031ee56bcff`.
+
+**Un-verified gap this exposed:** server-side Sentry (`SENTRY_DSN`,
+unprefixed, read at runtime by `sentry.server.config.ts`) has **never
+been confirmed live in production**. §5's "web browser Sentry verified
+live" was about `NEXT_PUBLIC_SENTRY_DSN` (a different var, inlined in the
+client bundle). `SENTRY_DSN` is in `turbo.json` `build.env` (build-time
+only — that does NOT put it in the Lambda runtime env); it must also be
+set in Vercel → Project Settings → Environment Variables → Production for
+`Sentry.init` to be anything but a no-op in the function. If it is
+missing, **no API-route 500 has ever reached Sentry** and the "stale
+events" are simply the last ones the *client* SDK managed to send.
+`instrumentation.ts` correctly exports
+`onRequestError = Sentry.captureRequestError`, so the wiring is right —
+the question is purely whether the runtime DSN is set.
+
+**Capture routes if the current release has no Sentry event** (see the
+report for the full walkthrough): (1) confirm `SENTRY_DSN` in Vercel
+Production runtime env; (2) **Vercel Runtime Logs** for deploy
+`dpl_EvjecA4v…`, path `/api/horoscope/generate` — a module-eval throw
+(`const ALLOWLIST = loadAllowlist()` at top level) can fault *before* the
+request handler and surface as a raw Vercel `FUNCTION_INVOCATION_FAILED` /
+`500` that `onRequestError` never sees, but Vercel's runtime always logs
+it. The generic `filename="500"`, `Content-Length: 2303` page the earlier
+probes returned is consistent with a Vercel-level 500, not a
+Next-rendered error.
+
+**No further fix until the current error is in hand. Two failed attempts
+already — sweph fix (real, verified) then allowlist fix (real, unverified
+in prod). The third must be driven by the actual current stack trace, not
+by another inference.**
+
 ---
 
 **Original diagnosis:**
