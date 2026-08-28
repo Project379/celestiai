@@ -20,9 +20,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
  * block was extracted into sendWebPush() with its own try/catch so a
  * malformed VAPID key (Sentry, release f3e2feb) — or any web-transport
  * failure — degrades only web push and the mobile Expo push still runs.
- * The last test in this file covers that isolation and was confirmed to
- * FAIL against the pre-extraction route (setVapidDetails threw straight
- * out of the handler, mobile never ran) before the fix was restored.
+ * "a failing VAPID config degrades web push only" covers that isolation
+ * and was confirmed to FAIL against the pre-extraction route
+ * (setVapidDetails threw straight out of the handler, mobile never ran).
+ *
+ * 2026-08-28 (same day): expired-subscription sweep extended past 404/410
+ * to the VAPID-rotation case. A 401/403 per endpoint means the push
+ * service rejected our VAPID JWT for that subscription — a stale
+ * application-server-key binding, which the old code counted as `failed`
+ * forever and never cleaned up. It is now swept, BUT only behind a
+ * sibling-success guard: if zero sends succeeded this run, the keypair
+ * itself is the suspect and deleting anything would wipe live rows to
+ * mask a config error — so nothing is deleted and it pages. The
+ * "batch-wide 401/403 ... deletes NOTHING" test is the dangerous
+ * direction; it was confirmed to FAIL against a build with the guard
+ * removed (naive `statusCode === 403 → delete` wipes every subscription).
  */
 
 vi.mock('@/lib/auth/cron-secret', () => ({
@@ -81,15 +93,32 @@ function makeSubscriptions(n: number) {
   }))
 }
 
+/**
+ * Fake supabase-js chain. `deletedEndpoints` accumulates every value
+ * passed to `.in('endpoint', […])` on a `push_subscriptions` builder that
+ * had `.delete()` called on it — so a test can assert exactly which
+ * endpoints (if any) were swept.
+ */
 function makeFakeSupabase(
   subscriptions: ReturnType<typeof makeSubscriptions>,
   tokenRows: { token: string }[] = [],
 ) {
+  const deletedEndpoints: string[] = []
+
   const from = vi.fn((table: string) => {
     if (table === 'push_subscriptions') {
       const builder: Record<string, unknown> = {}
-      const methods = ['select', 'limit', 'delete', 'in']
-      for (const m of methods) builder[m] = vi.fn(() => builder)
+      let deleteMode = false
+      builder.select = vi.fn(() => builder)
+      builder.limit = vi.fn(() => builder)
+      builder.delete = vi.fn(() => {
+        deleteMode = true
+        return builder
+      })
+      builder.in = vi.fn((_col: string, vals: unknown) => {
+        if (deleteMode && Array.isArray(vals)) deletedEndpoints.push(...vals)
+        return builder
+      })
       builder.then = (onFulfilled: (v: unknown) => unknown) =>
         Promise.resolve({ data: subscriptions, error: null }).then(onFulfilled)
       return builder
@@ -109,13 +138,14 @@ function makeFakeSupabase(
       Promise.resolve({ data: [], error: null }).then(onFulfilled)
     return builder
   })
-  return { from }
+  return { from, deletedEndpoints }
 }
 
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: vi.fn(),
 }))
 
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { GET } from '@/app/api/cron/daily-horoscope/route'
 
@@ -158,7 +188,7 @@ describe('GET /api/cron/daily-horoscope — web-push batched concurrency (2026-0
     expect(elapsed).toBeLessThan(800)
   })
 
-  it('still tracks per-subscriber failures and expired-endpoint cleanup correctly under concurrency', async () => {
+  it('still tracks per-subscriber failures and 410-expired cleanup correctly under concurrency', async () => {
     const subscriptions = makeSubscriptions(3)
     sendNotification
       .mockResolvedValueOnce(undefined)
@@ -173,9 +203,10 @@ describe('GET /api/cron/daily-horoscope — web-push batched concurrency (2026-0
 
     expect(body.web.sent).toBe(1)
     expect(body.web.failed).toBe(2)
-
-    const deleteCall = fake.from.mock.calls.find((c) => c[0] === 'push_subscriptions')
-    expect(deleteCall).toBeTruthy()
+    expect(body.web.expired).toBe(1)
+    // Only the 410 endpoint is swept; the transient failure is left alone.
+    expect(fake.deletedEndpoints).toEqual([subscriptions[1].endpoint])
+    expect(body.web.error).toBeUndefined()
   })
 
   it('a failing VAPID config degrades web push only — the mobile Expo push still runs', async () => {
@@ -201,5 +232,58 @@ describe('GET /api/cron/daily-horoscope — web-push batched concurrency (2026-0
     // …and the mobile transport still ran.
     expect(sendPushNotificationsAsync).toHaveBeenCalled()
     expect(body.mobile).toBeDefined()
+  })
+
+  it('a single 401/403 alongside successful sends is a stale key binding — that one endpoint is swept', async () => {
+    const subscriptions = makeSubscriptions(3)
+    sendNotification
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(Object.assign(new Error('Forbidden'), { statusCode: 403 }))
+      .mockResolvedValueOnce(undefined)
+
+    const fake = makeFakeSupabase(subscriptions)
+    vi.mocked(createServiceSupabaseClient).mockReturnValue(fake as never)
+
+    const res = await GET(req())
+    const body = await res.json()
+
+    expect(body.web.sent).toBe(2)
+    expect(body.web.failed).toBe(1)
+    expect(body.web.expired).toBe(1)
+    expect(fake.deletedEndpoints).toEqual([subscriptions[1].endpoint])
+    expect(body.web.error).toBeUndefined()
+    expect(vi.mocked(Sentry.captureException)).not.toHaveBeenCalled()
+  })
+
+  it('batch-wide 401/403 with ZERO successful sends deletes NOTHING and pages (sibling-success guard)', async () => {
+    // The dangerous direction. A naive `statusCode === 403 → delete` rule
+    // wipes the entire push_subscriptions table the next time a VAPID key
+    // is misconfigured — a failure mode we just lived through. Confirmed
+    // to FAIL (deletedEndpoints non-empty, no Sentry call) against a build
+    // with the guard removed before restoring it.
+    const subscriptions = makeSubscriptions(4)
+    sendNotification.mockRejectedValue(
+      Object.assign(new Error('Forbidden'), { statusCode: 403 }),
+    )
+
+    const fake = makeFakeSupabase(subscriptions)
+    vi.mocked(createServiceSupabaseClient).mockReturnValue(fake as never)
+
+    const res = await GET(req())
+    const body = await res.json()
+
+    expect(body.web.sent).toBe(0)
+    expect(body.web.failed).toBe(4)
+    expect(body.web.expired).toBe(0)
+    expect(fake.deletedEndpoints).toEqual([]) // nothing swept
+    expect(body.web.error).toBe('vapid-keypair-suspected-misconfig')
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          reason: 'vapid-keypair-suspected-misconfig',
+        }),
+      }),
+    )
   })
 })
