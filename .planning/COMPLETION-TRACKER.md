@@ -387,6 +387,43 @@ for real problems the phantom happened to surface (kept).
 
 ---
 
+**2026-08-28 follow-up — a bodiless-probe `SyntaxError`, the 4th thing on this route.**
+The founder ran a bodiless `fetch()` at `POST /api/horoscope/generate` to
+verify an unrelated fix. `await req.json()` on an empty body threw
+`SyntaxError: Unexpected end of JSON input` (`route.ts:45`), which reached
+`toErrorResponse` and — because §0.8 KEPT the `Sentry.captureException` in
+that path — produced a **High-priority Sentry alert with nothing marking
+it as self-generated**. Diagnosed from the stack: `undici.parseJSONFromBytes`
+frames = it is parsing the *incoming request body*, not an AI response;
+release 5a4a2c8, Brave/Windows. Confirmed the founder's own probe.
+
+This is the **fourth distinct thing chased on this one route, and the
+second that was never a real defect** (first: the §0.8 phantom above). The
+route has been correct since §0.7 landed. What kept producing "errors" was
+probing and skew, not the handler.
+
+Two outcomes:
+1. **Small real fix — DONE 2026-08-28.** A malformed/absent request body is
+   a client error and should be a `400`, not an unhandled `500` that pages
+   Sentry at High. Added `readJsonBody(req)` to `lib/auth/guards.ts`
+   (`try req.json() / catch → throw ApiError(400, 'Невалидна заявка',
+   'INVALID_BODY')`), applied to all 8 routes that called `req.json()`
+   unguarded (`horoscope/generate`, `oracle/generate`, `circle/invites`,
+   `circle/invites/accept`, `circle/profiles`, `push/{subscribe,register,
+   unsubscribe}`). The `ApiError` lands in `toErrorResponse`'s structured
+   branch — no `Sentry.captureException`. Left deliberately alone:
+   `stripe/cancel` (missing body is *intentionally optional* there — it
+   reads `body?.reason`); `crystals/collect` + the two `circle/*/report`
+   routes (already `.catch(() => …)`); `stripe/checkout` (already wrapped).
+2. **Deferred, pre-launch — probe traffic must be identifiable at the
+   monitor.** This alert was indistinguishable from a real user hitting a
+   broken endpoint. Fine now (founder is the only traffic), a triage
+   problem once there are real users. Belongs in the post-deploy smoke
+   test's scoping (PRE_LAUNCH_PREREQS item 2), which will generate exactly
+   this shape on every deploy. Tracked as VERIFICATION-SURFACE-GAPS **#11**.
+
+---
+
 **PRESERVED BELOW — the original diagnosis. Sound reasoning; the evidence
 it reasoned from was a stale-deployment stack trace. Kept as the record of
 how a false observation produced a confident wrong conclusion.**
@@ -2481,6 +2518,49 @@ they were forgotten rather than deferred on purpose.
   on anyone remembering to curl things.** Owner: engineering (Claude
   Code); next in the queue after §0.8's root cause is identified from the
   `[OPENROUTER-DEBUG]` logs.
+  - **2026-08-28 — scope additions + hard design requirements from the VAPID-cron incident.**
+    Scope addition:
+    - **The scheduled jobs are in scope, not just request routes.** The
+      `daily-horoscope` cron threw on every 06:00 UTC run since Web Push
+      shipped (malformed `VAPID_PRIVATE_KEY` → `setVapidDetails` throw) and
+      nothing surfaced it until server-side Sentry went live weeks later.
+      That is the one-sentence case for this whole item, sharpened: **a
+      scheduled job that fails silently is invisible by construction** — no
+      user is watching it, and it has no caller to return an error to. The
+      smoke test hits both cron paths (`daily-horoscope`,
+      `cleanup-deleted-accounts`) with the Production `CRON_SECRET` bearer
+      and asserts 200 + a sane body (`web`/`mobile` tallies present, no
+      `error` field). This is now the pre-launch mechanism for cron
+      observability — **PRE_LAUNCH_PREREQS item 2's "cron observability
+      deferred post-launch" line is overturned as of 2026-08-28, not merely
+      contested** (a contested deferral is still a deferral, and we now have
+      a concrete weeks-long silent failure). Sentry Crons / heartbeat
+      remains the better long-term shape and can replace this later; it is
+      no longer a reason to ship launch with zero cron coverage.
+
+    Two hard requirements of the smoke test's **design** — if it ships
+    without either, it is a net negative:
+    1. **Probe traffic MUST be identifiable at the monitor.** The smoke
+       test deliberately generates error-shaped traffic on every deploy (a
+       malformed body → 400, a 502 `AI_UPSTREAM_FAILED`, a cron hit).
+       Without a marker, each run pages exactly like a real user outage, and
+       once real users exist a probe failure and a user failure are the
+       same Sentry event — we would have built a machine for generating
+       indistinguishable false alarms. Requirement: every smoke request
+       carries `x-stellaeum-probe: 1` (or a dedicated synthetic user / DSN
+       env), and `beforeSend` in `sentry.server.config.ts` tags or drops
+       it. Ship the `beforeSend` filter and the header **together**, in the
+       same change as the smoke script. Tracked as VERIFICATION-SURFACE-GAPS
+       #11 (a requirement of this item, not a note attached to it).
+    2. **The response MUST carry a build/version marker** so a probe can
+       tell *which deployment answered it* from the response body alone —
+       e.g. `x-stellaeum-build: <VERCEL_GIT_COMMIT_SHA>` header, or a
+       `build` field in each JSON response. 2026-08-28's cron probe returned
+       the pre-refactor `{sent, failed, mobile}` shape, which by accident
+       revealed it had hit a stale deployment — the smoke test should give
+       that signal on purpose, not by luck. This is the direct fix for the
+       Skew Protection episode (VSG #10): "did the fix deploy" becomes
+       answerable without dashboard archaeology.
 
 - **Mobile has ZERO automated tests — OWNED, scoped 2026-08-27.** `pnpm
   test` = 195 tests, **all `@stellaeum/web`** (`apps/web/test/**`, vitest).

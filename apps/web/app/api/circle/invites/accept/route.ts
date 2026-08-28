@@ -13,7 +13,7 @@ import {
 } from '@/lib/circle/service'
 import type { ConnectionInviteRow } from '@/lib/circle/types'
 import { hashInviteToken } from '@/lib/circle/token'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, readJsonBody } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 
 const acceptInviteSchema = z.object({
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     // burst guard has passed.
     const supabase = createServiceSupabaseClient()
 
-    const parsed = acceptInviteSchema.safeParse(await req.json())
+    const parsed = acceptInviteSchema.safeParse(await readJsonBody(req))
     if (!parsed.success) {
       return Response.json({ error: 'Невалидна покана.' }, { status: 400 })
     }

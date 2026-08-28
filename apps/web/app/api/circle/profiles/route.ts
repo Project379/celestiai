@@ -3,7 +3,7 @@ import { createBirthDataSchema } from '@stellaeum/core/charts/schemas'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { listSavedProfilesForUser } from '@/lib/circle/service'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, readJsonBody } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 
 export async function GET() {
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       windowMs: 60_000,
     })
 
-    const body = await req.json()
+    const body = await readJsonBody(req)
     const validation = createBirthDataSchema.safeParse(body)
     if (!validation.success) {
       const fieldErrors: Record<string, string[]> = {}

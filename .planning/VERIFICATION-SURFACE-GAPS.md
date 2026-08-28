@@ -296,6 +296,44 @@ evidence about the thing you think." #6 — a probe only exercises the code
 it runs. #9 — a monitor only sees errors that reach it. #10 — a probe only
 tests the deployment you're actually routed to.
 
+## 11. A synthetic probe's error is indistinguishable in the monitor from a real user's
+
+Found 2026-08-28. While verifying the §0.6/§0.7 allowlist fixes, the
+founder ran a bodiless `fetch()` at `POST /api/horoscope/generate`.
+`await req.json()` on an empty body throws `SyntaxError: Unexpected end of
+JSON input`, which reached `toErrorResponse` and — now that #9's fix wired
+`Sentry.captureException` into that path — produced a **High-priority
+Sentry alert** carrying no marker that it was self-generated. It reads
+exactly like a real user hitting a broken endpoint. This is the fourth
+distinct thing chased on this one route, and the second that was never a
+real product defect (the first: §0.8's phantom, a stale-deployment stack
+trace). The route itself has been fine since §0.7; what kept generating
+"errors" was probing and skew.
+
+Two gaps here, related but separate:
+- **Monitoring cannot tell test traffic from real traffic.** Today the
+  only person generating traffic is the founder, so every alert is
+  self-inflicted and this is merely noise. Once there are real users, a
+  probe-driven alert and a user-driven alert are the same event, and
+  triage will waste time on synthetic ones — or, worse, learn to ignore
+  the category that also contains real failures.
+- **The fix belongs before the traffic starts, as a build requirement —
+  not a follow-up.** Probe/smoke traffic must be identifiable at the
+  monitor: a header (`x-stellaeum-probe: 1`), a query param, or a
+  dedicated synthetic user/DSN environment — something `beforeSend` in
+  `sentry.server.config.ts` can tag or drop. The post-deploy smoke test
+  (COMPLETION-TRACKER "Post-deploy smoke test" item) generates exactly
+  this error-shaped traffic on every deploy, so **identifiability is a
+  hard requirement of that item's design**: ship the `beforeSend` filter
+  and the probe marker in the same change as the smoke script, or the
+  smoke test is a machine for manufacturing indistinguishable false
+  alarms.
+
+Distinct from #6/#9/#10: those are "the observation's scope is narrower
+than it looks." This one is "the observation's *origin* is invisible" —
+the monitor faithfully recorded a real error; it just can't say the error
+was manufactured.
+
 ## The underlying pattern across items 1-3 (environment-fidelity gaps)
 
 Convenience/local/cheap verification surfaces (a browser via

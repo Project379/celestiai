@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, readJsonBody } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 
 const VALID_PLATFORMS = ['ios', 'android'] as const
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       windowMs: 60_000,
     })
 
-    const body = await req.json()
+    const body = await readJsonBody(req)
     const { token, platform, deviceId } = body as {
       token?: string
       platform?: string

@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, readJsonBody } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       windowMs: 60_000,
     })
 
-    const body = await req.json()
+    const body = await readJsonBody(req)
     const { endpoint } = body as { endpoint?: string }
 
     if (!endpoint || typeof endpoint !== 'string') {

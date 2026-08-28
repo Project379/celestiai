@@ -9,7 +9,7 @@ import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
 import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { ApiError, toErrorResponse } from '@/lib/auth/guards'
+import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 import { ensureUserRecord } from '@/lib/users/ensure-user'
 import {
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       failClosed: true,
     })
 
-    const body = await req.json()
+    const body = await readJsonBody(req)
     const { chartId } = body as { chartId?: string }
 
     if (!chartId || typeof chartId !== 'string') {

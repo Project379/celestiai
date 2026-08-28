@@ -39,6 +39,27 @@ export function toErrorResponse(error: unknown, fallbackMessage: string) {
   return Response.json({ error: fallbackMessage }, { status: 500 })
 }
 
+/**
+ * Parses a JSON request body, turning a missing / empty / malformed body
+ * into a structured 400 instead of letting `req.json()`'s SyntaxError
+ * ("Unexpected end of JSON input") bubble up. On the routes that funnel
+ * their catch into `toErrorResponse`, that SyntaxError hits the
+ * non-`ApiError` branch — an unhandled 500 plus `Sentry.captureException`,
+ * i.e. a client sending a bad body pages us at High severity (see
+ * COMPLETION-TRACKER §0.8, the bodiless-fetch probe). A bad body is a
+ * client error. Throw this from inside the route's existing try: the
+ * `ApiError` lands in the structured-400 branch and does NOT capture to
+ * Sentry. Message reuses the Bulgarian string `stripe/checkout` already
+ * returns for this exact case.
+ */
+export async function readJsonBody(req: Request): Promise<unknown> {
+  try {
+    return await req.json()
+  } catch {
+    throw new ApiError(400, 'Невалидна заявка', 'INVALID_BODY')
+  }
+}
+
 export async function requireAppUser(): Promise<{
   userId: string
   user: AppUser

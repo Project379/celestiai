@@ -16,7 +16,7 @@ import {
   incrementQuotaUsage,
   quotaCapReachedResponse,
 } from '@/lib/subscriptions/quota'
-import { ApiError, toErrorResponse } from '@/lib/auth/guards'
+import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 
 /**
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     })
 
     // 2. Parse and validate body
-    const body = await req.json()
+    const body = await readJsonBody(req)
     const { chartId, topic, regenerate } = body as {
       chartId?: string
       topic?: string

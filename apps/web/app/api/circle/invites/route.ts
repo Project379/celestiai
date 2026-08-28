@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { createInviteToken, hashInviteToken } from '@/lib/circle/token'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, readJsonBody } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 import {
   getLatestChartRowForUser,
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       windowMs: 60_000,
     })
 
-    const parsed = createInviteSchema.safeParse(await req.json())
+    const parsed = createInviteSchema.safeParse(await readJsonBody(req))
     if (!parsed.success) {
       return Response.json({ error: 'Невалидни данни' }, { status: 400 })
     }

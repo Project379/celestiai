@@ -122,10 +122,10 @@ convention may differ from this structuring. -->
 - **Право на възражение** *(чл. 21)* — можеш да възразиш срещу обработване, основано на легитимен интерес.
 - **Право да подадеш жалба** — пред Комисията за защита на личните данни (КЗЛД) на адрес `kzld.bg`, ако смяташ, че обработваме данните ти неправомерно.
 
-**Как да упражниш тези права:** засега изпрати заявка на support@stellaeum.app — обработваме отговор в законовия срок до един месец. Автоматичен интерфейс за изтегляне и заявка за изтриване предстои в следваща версия на приложението.
+**Как да упражниш тези права:** засега изпрати заявка на support@stellaeum.com — обработваме отговор в законовия срок до един месец. Автоматичен интерфейс за изтегляне и заявка за изтриване предстои в следваща версия на приложението.
 
 <!-- COUNSEL-REVIEW: Once §11.2 ships /privacy-settings UI (post Phase A
-mobile scaffolding), the "support@stellaeum.app" path becomes a
+mobile scaffolding), the "support@stellaeum.com" path becomes a
 fallback. The text should be updated then. Until then, this is the
 current truth. -->
 
@@ -149,7 +149,7 @@ defers this decision to Item 1. -->
 
 За въпроси относно обработването на личните ти данни, заявки по ОРЗД или сигнали за съмнение за нарушение, пиши ни на:
 
-**support@stellaeum.app**
+**support@stellaeum.com**
 
 <!-- COUNSEL-REVIEW: GDPR Art. 37 thresholds for mandatory DPO
 appointment (Длъжностно лице по защита на данните, ДЛЗД) likely not
