@@ -2183,6 +2183,103 @@ build plan's Кръг sequencing predates the Кръг port and is now wrong, no
 just stale, corrected in Batch 8's own order above — is in the reference
 doc's own §8, not duplicated here.
 
+### Simultaneous-launch parity — recorded as a deliberate choice, 2026-08-28
+
+**Founder ruling (2026-08-28):** web and mobile launch simultaneously with
+the **same feature set** — one product, not a mobile subset and a web
+superset. Parity is the bar; a cut-scope launch test was explicitly
+rejected. This entry records that choice **with its cost stated**, per
+instruction, and separates the two readings of "parity" because they price
+very differently.
+
+**Two bars — BOTH now in force, one with a carve-out:**
+- **Feature/capability parity** (ruled, in force): every user-facing
+  capability exists on both platforms at launch. This is what the
+  MOBILE-WEB-PARITY-GAP inventory has always tracked, one direction
+  (web→mobile).
+- **Visual/design-language parity — RULED YES, 2026-08-28, with one
+  explicit carve-out.** The seven Batch 8 screens with real web
+  counterparts (`/rhythm`, the Oracle panel, `/you/guide`,
+  `/you/crystals`, `/you/recommendations`, `/rhythm/journal`,
+  `/birth-data`) get the **same design pass on both platforms**. Batch 8
+  is knowingly a double-build phase; the founder is accepting that cost.
+
+**SETTINGS AND AUTH ARE EXEMPT FROM VISUAL PARITY — this is the decision,
+not an oversight.** Web uses Clerk's hosted `<UserButton>` / `<SignIn>`
+UI. Building custom web auth/settings screens to match the mobile design
+language is a large, security-sensitive detour for aesthetic consistency,
+and Clerk's hosted UI is a hard boundary. **Accepted divergence:** web
+keeps Clerk's look for auth and account/settings; mobile keeps its
+hand-rolled screens (`sign-in`, `sign-up`, `verify`, `two-factor`,
+`settings`, `settings-email/-name/-password`). A later pass must not
+silently re-expand visual parity to cover these — the exemption is
+deliberate and is recorded here so it survives context loss. The
+notifications row (§6) is still designed once as a cross-platform spec —
+it is a content control inside settings, not the Clerk-hosted chrome, so
+the exemption does not cover it.
+
+**Cost of the choice, stated:**
+1. **Ongoing tax on every future feature.** Every new capability is now
+   built twice and gated twice before either platform can ship it. The
+   platforms gate each other: mobile cannot launch a feature web lacks,
+   and vice versa, for the life of the product (or until the bar is
+   formally relaxed).
+2. **Batch 8 is a double-build phase (ruled, accepted).** Of the nine
+   Batch 8 screens with existing v4 mockups (Оракул, Ритъм, Guide,
+   Crystals, Recommendations, Lunar diary, Settings, Wizard, Auth),
+   **seven get the same design pass on both platforms** (`/rhythm`,
+   Oracle panel, `/you/guide`, `/you/crystals`, `/you/recommendations`,
+   `/rhythm/journal`, and the wizard's web equivalent `/birth-data`).
+   **Settings and Auth are exempt** — see the carve-out above. The
+   doubling is **not uniform**:
+   - **Днес premium badge inverts — this is MOBILE work under the bar.**
+     Web already ships the badge (`DashboardContent.tsx`, `isPremium =
+     subscriptionTier !== 'free'`); mobile lost its stub in the
+     2026-07-22 Днес rebuild (parity-doc item 1.3). It is already on
+     Batch 8's list (#3, "Днес premium badge") — confirmed on the correct
+     side: mobile builds it, web is done.
+   - **The mobile paywall mockup IS the spec for Petko's `/pricing`
+     redesign.** The mobile paywall is ruled built-from-scratch without
+     opening `/pricing`; `/pricing` and `you/premium.tsx` are the two
+     surfaces DESIGN-RESEARCH-2026-08-27 flagged as carrying every
+     vibe-coded tell. So the from-scratch mobile paywall mockup becomes
+     the de-facto design spec Petko's `/pricing` rebuild follows —
+     **stated in his handoff**, otherwise two paywalls get designed
+     independently and neither matches.
+3. **Two open design decisions now gate a web screen too, not just
+   mobile:** the unruled WIZARD-PARTIAL-VALUE decision (wizard ↔
+   `/birth-data`), and the push-notification permission control (§6 ruling
+   already says "same control, designed once, built twice").
+
+**Direction-B gaps (mobile has, web lacks) that a same-on-both bar
+converts into web work:**
+- **Oracle sentinel colours** — web's Oracle `ReadingStream.tsx` strips
+  sentinels; mobile renders them (parity-doc 6.2). One component, in
+  Petko's tree. (Web's Днес `HoroscopeStream.tsx` already colours them —
+  the gap is Oracle-specific, not web-wide.)
+- **`/connect/[token]` deep link** — mobile deliberately opens the invite
+  link in the recipient's browser (documented decision in `circle.tsx`),
+  no native handler despite `scheme: "stellaeum"` in `app.json`.
+- **`/support`** — web has a support page (added with the first deploy);
+  mobile has no in-app support link anywhere. Apple review needs a support
+  URL as metadata regardless.
+- Hand-rolled mobile auth sub-screens (`two-factor`, `verify`,
+  `settings-email/-name/-password`) exist because Clerk RN `<UserProfile>`
+  is unloadable in Expo Go (parity-doc 5.7) — no web counterpart as custom
+  screens; web gets these from Clerk.
+
+**Verification basis:** web route list and mobile screen list are
+code-verified (`find` over `apps/web/app` and `apps/mobile/app`); the
+per-screen "needs a design pass" status is doc-sourced (Batch 8 scoping +
+DESIGN-RESEARCH-2026-08-27) and carries that doc's own reliability caveat
+— spot-check each against shipped code at mockup time.
+
+**Next action:** the Batch 8 plan needs Petko's seven web screens folded in
+and re-sequenced with him (`/rhythm`, Oracle panel, `/you/guide`,
+`/you/crystals`, `/you/recommendations`, `/rhythm/journal`, `/birth-data`),
+each following the mobile mockup for that screen as its spec. Settings and
+Auth stay out per the carve-out.
+
 ---
 
 ## 4. Halt-required register
