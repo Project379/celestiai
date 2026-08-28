@@ -2029,6 +2029,32 @@ used on.
   `.planning/TECHNICAL-SWEEP-2026-08-26.md` §6.1), so a wizard redesign is the
   natural place to fix it rather than a separate patch.
 
+**ADDED TO SCOPE 2026-08-28 (founder ruling — push opt-in split, see §6):**
+
+- **A "notifications" row in Settings — BOTH platforms — designed as part
+  of the settings screen's Batch 8 pass (`settings-v4.html`).** Recorded
+  now so it is not missed when the mockup is worked. Rationale: "Manage my
+  notifications" is something users go looking for, not something they
+  should have to catch in a transient banner. A banner is fine as an
+  *additional* prompt; it is not acceptable as the *only* route.
+  - **Web:** re-mount `PushNotificationBanner.tsx` (complete, currently
+    imported by nothing — unmounted as collateral damage in `d230a3f`),
+    but the settings row is the canonical home, not `/dashboard`. Banner
+    optional and secondary.
+  - **Mobile:** worse than a missing feature — a real UX defect. The only
+    trigger today is a one-time `Alert` after the first Oracle reading,
+    with an AsyncStorage flag (`stellaeum.notifications.prompted.v1`) that
+    never re-fires. Anyone who taps "Не сега" is permanently locked out of
+    notifications with no in-app path back. `you/settings.tsx` needs a real
+    toggle that reads current OS permission state and can re-request /
+    deep-link to OS settings.
+  - **Parity implication (open question the founder flagged):** web has a
+    working-but-unmounted banner; mobile has an incidental one-time prompt.
+    Neither matches the other. Under the same-on-both bar they need the
+    *same* control, designed once and built twice — another case where
+    parity is more work than the tracker's screen count implies. Feed this
+    into the Batch 8 settings mockup as a single cross-platform spec.
+
 **Status: scoped (2026-08-16), not started building.** Doesn't batch like
 the rest — screen-by-screen, founder approves every gate (mockup, then
 build, then device verify), per the process that finally worked for
@@ -2599,8 +2625,12 @@ they were forgotten rather than deferred on purpose.
     `push_subscriptions` can only be populated by re-mounting that
     component (one line) or building a new control. Until then the entire
     web push path is server-only with no way for a user to subscribe.
-    Founder decision needed: re-mount on a reachable screen (Днес /
-    dashboard is the obvious home), or a dedicated notifications control.
+    **Founder ruling 2026-08-28:** the canonical home is a notifications
+    row in Settings, both platforms, designed in the Batch 8 settings pass
+    — re-mounting the banner is fine as an additional prompt but not as the
+    only route. Full ruling + parity note in the Batch 8 "ADDED TO SCOPE
+    2026-08-28" block. Also VERIFICATION-SURFACE-GAPS #12 (nothing caught
+    the unmount because every gate tests code that runs, not reachability).
     No Claude UI work until asked.
   - **Mobile push permission flow exists and is reachable, but only fires
     incidentally.** `maybePromptPushPermission` (`apps/mobile/lib/
@@ -2615,7 +2645,11 @@ they were forgotten rather than deferred on purpose.
     APNs delivery) is blocked on Apple Developer enrolment (APNs
     credentials) and needs a real iOS build — see §5 Blocked-externally.
     The permission *scaffold* is code-complete (SR 8.3); the reachable,
-    manageable opt-in and the real-device verification are not.
+    manageable opt-in and the real-device verification are not. **Founder
+    ruling 2026-08-28:** the one-shot-prompt-with-no-way-back is a UX
+    defect, not just a missing feature — a real notifications toggle in
+    `you/settings.tsx` is Batch 8 scope (see the "ADDED TO SCOPE
+    2026-08-28" block).
 
 ## Correction — Кръг mobile is functionally ported (parity-doc error #6)
 

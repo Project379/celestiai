@@ -334,6 +334,63 @@ than it looks." This one is "the observation's *origin* is invisible" —
 the monitor faithfully recorded a real error; it just can't say the error
 was manufactured.
 
+## 12. Every gate tests code that runs; none tests whether a user can reach it
+
+Found 2026-08-28. Web push notifications: `PushNotificationBanner.tsx` is
+a complete, styled subscribe/unsubscribe control. It was mounted on
+`/dashboard` in `fd15199`, then its `import` and `<PushNotificationBanner />`
+render were both deleted in `d230a3f` ("style: editorial front-end
+overhaul across web app") — the same commit that restyled the component
+file, so the unmount was collateral damage from an aesthetic pass, not a
+product decision. The whole web-push feature went offline. **Nothing
+flagged it.** The API routes (`/api/push/subscribe` has its own ownership
+test), `public/sw.js`, the `daily-horoscope` cron web branch — all still
+green. Typecheck checks the orphaned file in isolation and passes. Unit
+tests import it directly and pass. Lint, `check:copy-lock`, the build —
+all green. The feature was 100% correct and 0% reachable, and every gate
+we have said "fine."
+
+This is a new gap class, not a variant of the others. #6/#9/#10/#11 are
+about an observation's *scope* or *origin*. This one: **we verify that
+code does the right thing when it runs, and never that it runs at all in
+a place a user can get to.** A unit test's whole job is to invoke the
+module directly — it structurally cannot notice that production never
+does.
+
+**Feasibility of a cheap check — assessed, not built:**
+
+- **(a) Unimported / unreferenced modules — cheaply detectable, worth
+  doing.** `knip` (best for a TS monorepo; models Next app-router
+  `page.tsx`/`route.ts`/`layout.tsx` as graph roots) or `ts-prune` /
+  `eslint-plugin-import`'s `no-unused-modules`. Any of them run in CI
+  would have flagged `PushNotificationBanner.tsx` the day `d230a3f`
+  landed — it became a file with one export that nothing imports.
+  One-time cost is the config + triaging the initial baseline (monorepos
+  always carry intentional-but-unimported files: scripts, generated code,
+  type barrels, config). Low ongoing cost. This is the 80/20 and the only
+  part of this gap that automates cleanly.
+- **(b) Imported but never rendered** (dead conditional, `{false && …}`,
+  a branch that can't execute) — **not cheaply automatable.** Undecidable
+  statically in the general case; the available heuristics are weak and
+  noisy.
+- **(c) Route exists but nothing navigates to it** — **partially
+  possible as an advisory sweep, not a gate.** Diff the set of
+  `app/**/page.tsx` routes against every `href=` / `<Link>` / `router.push(`
+  string literal. Noisy on dynamic hrefs, redirect-only routes, and
+  intentionally direct-URL-only pages (deep links, email links) — output
+  is a triage list, never pass/fail.
+- **(d) "A real user can reach and operate this feature"** (respecting
+  auth, tier, feature flags, empty states, an actual interactive control
+  in the DOM) — **not static-checkable at all.** This is what E2E/UAT is
+  for. The fix is process, not tooling: `BROWSER_CHECKLIST.md` and the
+  UAT harness must carry an explicit "can a user reach and toggle X" line
+  for each user-facing feature, rather than assuming reachability once the
+  code exists. The banner is the proof that assumption fails silently.
+
+Recommendation: adopt (a) as a CI gate; treat (c) as an optional periodic
+advisory; make (d) an explicit checklist obligation per feature. Do not
+attempt (b).
+
 ## The underlying pattern across items 1-3 (environment-fidelity gaps)
 
 Convenience/local/cheap verification surfaces (a browser via
