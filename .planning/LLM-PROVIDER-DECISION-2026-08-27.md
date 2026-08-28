@@ -139,3 +139,89 @@ For the shortlist (2–3 candidates):
 
 Then: pick, fill `[[AI PROVIDER]]` / `[[JURISDICTION]]` in the lawyer
 brief, re-derive the premium cap, and make the `client.ts` change.
+
+---
+
+## Premium cap re-derivation (gate 2) — analysis only, 2026-08-28
+
+**No code change. No decision made in code.** The swap is not shipped; this
+is the number-work the founder asked for so the 300/month cap can be judged
+against Petko's recommended default (`google/gemini-3.7-flash`) before it
+lands. Petko still owns the swap and the final ruling.
+
+### Inputs
+
+- **Cap:** `PREMIUM_MONTHLY_LIMIT = 300` (`apps/web/lib/subscriptions/quota.ts:25`),
+  shared by `oracle/generate` + `horoscope/generate`. Alert at 200
+  (`PREMIUM_ALERT_THRESHOLD`). Daily horoscope and regenerations are
+  exempt from the quota, so 300 = user-initiated Oracle readings +
+  on-demand horoscope generations per calendar month.
+- **Original basis:** Llama 3.3 70B at OpenRouter routing, **$0.0006–$0.002
+  per call**.
+- **Gemini 3.7 Flash, current OpenRouter price:** ≈ $356 per 100k
+  generations at 2k in / 1.5k out → **$0.0036 per call**. Research flags
+  this as **currently ~75% off and explicitly not guaranteed**.
+- **List price** (discount removed): $0.0036 ÷ 0.25 = **$0.0144 per call**
+  — 4× the current price. This is the figure to plan against, per the
+  research's own warning.
+- **Subscription price:** €9,99/mo, or €99,99/yr (annual effective ≈
+  €8,33/mo) — Phase 7 settled on EUR. USD→EUR at ≈ 0.93: $0.0144 ≈
+  **€0.0133 per call**.
+
+### Cost per premium user per month, at the cap
+
+| Pricing regime | €/call | 300 calls | % of €9,99/mo | % of €8,33/mo (annual) |
+|---|---|---|---|---|
+| Llama 3.3 70B (cap's original basis) | €0.0006–€0.0019 | €0.17–€0.56 | 2–6% | 2–7% |
+| Gemini 3.7 Flash — current (75% off) | €0.0033 | **€1.00** | ~10% | ~12% |
+| Gemini 3.7 Flash — **LIST price** | €0.0133 | **€4.00** | **~40%** | **~48%** |
+| GPT-5.4-mini (quality fallback) | not quoted in brief — assume ≥ Gemini list; any cap must hold here too | | | |
+
+### Reading
+
+**At Llama prices, 300 is a pure circuit breaker.** It exists to catch a
+runaway client or a compromised account — a number no legitimate user
+reaches (300/month = 10 generations every single day). Whether it were 300
+or 3,000 would not move the P&L. That is the regime the cap was designed
+in.
+
+**At Gemini list price, 300 stops being only a circuit breaker and becomes
+a margin input.** €4.00/user/month at the cap is ~40% of monthly
+subscription revenue (~48% against the annual effective rate), before
+Stripe fees, hosting, the Swiss Ephemeris licence, and support. The
+*average* premium user will not hit 300 — average cost sits far below the
+cap — but the cap is what bounds the expensive tail, and at 4× the
+per-call price that tail is 4× more costly. A cohort of 5–10% power users
+near the cap now meaningfully shifts blended COGS per premium user.
+
+**So: 300 is still a safety net at the discounted price (~10% of revenue —
+noticeable but tolerable). At list price it is a real bill.** Planning
+against the promotional price is the trap the research is warning about.
+
+### Options (for Petko's ruling, not decided here)
+
+1. **Keep 300** — defensible only if the swap lands on the discounted
+   price *and* the business accepts re-visiting the moment the discount
+   moves. Fragile.
+2. **Re-set to ~150/month** (5/day; alert at 100) — still far above any
+   genuine use, halves the tail to ~€2.00/user/month (~20% of revenue) at
+   list price, stays invisible to real users.
+3. **Decouple the two jobs the number is doing** — keep a high abuse cap
+   (300–500, circuit-breaker only) and add a separate per-user *cost*
+   alert at a spend threshold, so the number that defends margin is not
+   the same number that defends against a leaked key. Cleanest, slightly
+   more work.
+4. Whatever the number: **derive it at list price**, and confirm it also
+   holds at the **GPT-5.4-mini fallback** price — the fallback path must
+   not blow the budget the primary path was sized for.
+
+### Cross-references to update when the swap ships
+
+- `COMPLETION-TRACKER.md` Tier 2 #4 (the cap's rationale text still says
+  "derived from Llama 3.3 70B pricing").
+- `MODEL_CAPABILITY_LOG.md` — EuroEval baseline table added 2026-08-28;
+  add the measured post-swap flag-rate delta.
+- The lawyer brief's `[[AI PROVIDER]]` / `[[JURISDICTION]]` stay unfilled
+  until the swap is shipped and ruled on — a recommendation exists, it is
+  **not yet decided in code** (noted in
+  `PRIVACY-POLICY-LAWYER-BRIEF-2026-08-27.md`).

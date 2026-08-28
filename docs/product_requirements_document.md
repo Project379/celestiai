@@ -27,7 +27,7 @@
 -   **The "Oracle" Engine**:
     -   **Context Injection**: Planetary aspects interpreted with a tone that respects local cultural wisdom (supportive, insightful, not overly "pop-astrology").
     -   **Precision Citing**: The AI MUST reference the exact degrees and minutes (e.g., "Sun at 14°32' Leo") to ground the advice in data.
-    -   **Language**: Native-level Bulgarian text generation via Gemini/GPT-5.
+    -   **Language**: Native-level Bulgarian text generation. *(Model, current truth 2026-08-28: `meta-llama/llama-3.3-70b-instruct` via OpenRouter — a placeholder with weak Bulgarian, not "native-level" yet. Swap to `gemini-3.7-flash` / `gpt-5.4-mini` fallback recommended, not decided in code — `.planning/LLM-PROVIDER-DECISION-2026-08-27.md`.)*
 
 ### 3.3. User Experience & Interface
 -   **Visual Style**: "Cosmic Glassmorphism". Deep dark backgrounds, suitable for modern OLED screens favored in 2026.

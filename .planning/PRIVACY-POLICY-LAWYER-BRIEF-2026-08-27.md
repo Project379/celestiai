@@ -180,6 +180,15 @@ deletion (see §10).
 > as settled.** If the final provider is **EU-hosted**, the
 > third-country-transfer analysis in 4c falls away entirely — flag that
 > in your draft as a conditional.
+>
+> **Status update 2026-08-28:** the co-founder's evaluation now has a
+> *recommendation* — `google/gemini-3.7-flash` as production default,
+> `openai/gpt-5.4-mini` as quality fallback — but it is **not yet decided
+> in code**. Production still runs the Llama 3.3 70B placeholder. The
+> placeholders stay unfilled until the swap is actually shipped and ruled
+> on; a policy naming a provider we have not deployed would be worse than
+> one with an honest placeholder. Do not fill `[[AI PROVIDER]]` /
+> `[[JURISDICTION]]` on the strength of the recommendation alone.
 
 ### 4a. What we compute and store (provider-independent)
 

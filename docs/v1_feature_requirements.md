@@ -29,7 +29,7 @@ Status tags: `DONE` (shipped), `BUILD` (new), `UPGRADE` (exists but needs work),
 | Auth | Clerk | 6.36.9 | `@clerk/nextjs`, bgBG localization |
 | DB | Supabase + Drizzle ORM | 2.49.1 / 0.40.0 | PostgreSQL, RLS, 8 migrations |
 | Styling | Tailwind 3.4 + NativeWind 4 | — | CSS variables, cosmic theme |
-| AI | Vercel AI SDK | 6.0.86 | `@ai-sdk/google` (Gemini 2.5 Flash) |
+| AI | Vercel AI SDK | 6.0.86 | `@ai-sdk/openai` client pointed at **OpenRouter**; model `meta-llama/llama-3.3-70b-instruct` (placeholder, weak Bulgarian). `@ai-sdk/google` is a dead dep. Swap recommended (`gemini-3.7-flash` / `gpt-5.4-mini`), not decided in code — `.planning/LLM-PROVIDER-DECISION-2026-08-27.md` |
 | Payments | Stripe | 20.3.1 | API v2026-01-28.clover |
 | Astrology | sweph | 2.10.3-4 | Native Node.js Swiss Ephemeris bindings |
 | Validation | Zod | 4.3.6 | v4 syntax (`{ error }` not `{ message }`) |
@@ -309,8 +309,8 @@ pnpm add next-intl -w --filter @stellaeum/web
 4. Cache key: `(chart_id, partner_chart_id, 'synastry')`
 
 **Model Fallback (`AI-14`):**
-1. Install `@ai-sdk/openai` as fallback provider
-2. Wrap `streamText()` in try/catch — on Gemini failure, retry with GPT-5
+1. `@ai-sdk/openai` is already installed and is the *primary* client (pointed at OpenRouter, not OpenAI) — see the model note in §Tech Stack
+2. Wrap `streamText()` in try/catch — retry on the fallback model (per `.planning/LLM-PROVIDER-DECISION-2026-08-27.md`, the recommended pair is `google/gemini-3.7-flash` primary / `openai/gpt-5.4-mini` fallback, both via OpenRouter; not yet decided in code)
 3. Log which model served each reading in `ai_readings.metadata`
 
 ### 4.3 Reading Archive (`AI-12`)

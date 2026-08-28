@@ -98,7 +98,7 @@ These features are live and working. No action needed unless marked UPGRADE.
 
 ### 1.6 AI Oracle Readings `SHIPPED` `USER` `GROWTH`
 
-**What it does:** Users request an AI-generated reading about their chart. The AI (Google Gemini 2.5 Flash) receives the user's full chart data — every planet position, house placement, and aspect — and generates a personalized, multi-paragraph interpretation. It cites specific degree positions (e.g., "Your Sun at 14°32' Leo in the 5th house..."). Readings stream in real-time so users see text appearing word by word.
+**What it does:** Users request an AI-generated reading about their chart. The AI (see model note below) receives the user's full chart data — every planet position, house placement, and aspect — and generates a personalized, multi-paragraph interpretation. It cites specific degree positions (e.g., "Your Sun at 14°32' Leo in the 5th house..."). Readings stream in real-time so users see text appearing word by word.
 
 **Four reading topics:**
 | Topic | Access |
@@ -112,7 +112,9 @@ Free users attempting a premium topic see a blurred teaser with an upgrade promp
 
 **Why it matters:** This is the core monetization lever. The general reading proves value; locked topics drive upgrades. Personalization (citing exact degrees) differentiates from generic horoscope apps.
 
-**Tech:** Vercel AI SDK v6 `streamText()`, `@ai-sdk/google` (Gemini 2.5 Flash), cached in `ai_readings` table with 7-day expiry. Routes: `/api/oracle/generate`, `/api/oracle/readings`, `/api/oracle/teaser`.
+**Tech:** Vercel AI SDK `streamText()`, cached in `ai_readings` table with 7-day expiry. Routes: `/api/oracle/generate`, `/api/oracle/readings`, `/api/oracle/teaser`.
+
+> **AI model — current truth (2026-08-28), corrects doc-vs-code drift:** this doc previously said `@ai-sdk/google` (Gemini 2.5 Flash). **Never wired.** Production runs `meta-llama/llama-3.3-70b-instruct` via OpenRouter, using `@ai-sdk/openai` as a generic OpenAI-compatible client (`apps/web/lib/ai/client.ts`) — a placeholder with known-weak Bulgarian. `@ai-sdk/google` is a dead dependency in `apps/web/package.json` with zero imports. A swap to `google/gemini-3.7-flash` / `openai/gpt-5.4-mini` fallback is recommended but not decided in code — see `.planning/LLM-PROVIDER-DECISION-2026-08-27.md`.
 
 ---
 

@@ -832,9 +832,11 @@ the boundary stays honest):
 
 **Product:** Stellaeum AI — a subscription astrology app for the Bulgarian
 market. Swiss Ephemeris precision (`sweph`, native, GPL-2.0-pinned) +
-AI-generated readings (OpenRouter, Llama 3.3 70B — not Gemini/GPT-5 as
-CLAUDE.md's header still says; that line is stale and should be corrected
-next time CLAUDE.md is touched). Web (Next.js 15) and mobile (Expo SDK 54,
+AI-generated readings (OpenRouter, Llama 3.3 70B — a placeholder; swap to
+`gemini-3.7-flash` / `gpt-5.4-mini` recommended, not decided in code, see
+`.planning/LLM-PROVIDER-DECISION-2026-08-27.md`). CLAUDE.md's header and
+the `docs/` specs were corrected for this drift 2026-08-28. Web (Next.js 15)
+and mobile (Expo SDK 54,
 Solito) share ~90% of code via `packages/core`, `packages/astrology`.
 
 **Who works on it:** one founder (Toni), doing product/design/business calls

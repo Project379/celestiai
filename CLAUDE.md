@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Stellaeum AI** is a subscription-based astrology application for the Bulgarian market. It combines Swiss Ephemeris astronomical precision with AI-powered readings (via Gemini/GPT-5), serving Web, iOS, and Android from a single codebase.
+**Stellaeum AI** is a subscription-based astrology application for the Bulgarian market. It combines Swiss Ephemeris astronomical precision with AI-powered readings, serving Web, iOS, and Android from a single codebase.
+
+> **AI model — current truth (2026-08-28):** production runs `meta-llama/llama-3.3-70b-instruct` via **OpenRouter**, using the Vercel AI SDK's `@ai-sdk/openai` as a generic OpenAI-compatible client (`apps/web/lib/ai/client.ts`). This is an explicit placeholder with known-weak Bulgarian output — do not add prompt workarounds or post-processing for it. A swap to `google/gemini-3.7-flash` (default) / `openai/gpt-5.4-mini` (fallback) is **recommended but not yet decided in code**; see `.planning/LLM-PROVIDER-DECISION-2026-08-27.md`. Any doc that says readings run "via Gemini" or "via GPT-5" is stale drift.
 
 ## Tech Stack
 
