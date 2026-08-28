@@ -2579,6 +2579,44 @@ they were forgotten rather than deferred on purpose.
   Owner: engineering; sequence after the §0.6 fix and the Google button,
   before Batch 8's later screens.
 
+- **Push notification opt-in — WEB has no user-reachable subscribe control;
+  MOBILE prompt is incidental-only. Found 2026-08-28 after the VAPID cron
+  fixes.** The two transports are on different tracks and were being
+  conflated:
+  - **Web push has NO Apple dependency and is otherwise shippable today.**
+    Server side is complete and verified: `/api/push/subscribe` +
+    `/api/push/unsubscribe` (tested), `public/sw.js` service worker,
+    `NEXT_PUBLIC_VAPID_PUBLIC_KEY` inlined, the `daily-horoscope` cron web
+    branch confirmed working in prod on `d151f5a`. **The gap is the opt-in
+    UI.** `apps/web/components/horoscope/PushNotificationBanner.tsx` is a
+    complete, styled subscribe/unsubscribe control — but it is imported by
+    nothing. Git history: it was mounted on `/dashboard`
+    (`DashboardContent.tsx`, gated on `birthChart`) in `fd15199`, then the
+    `<PushNotificationBanner />` render **and** its import were deleted in
+    `d230a3f` ("style: editorial front-end overhaul across web app") — the
+    same commit restyled the component file, so the unmount looks
+    incidental to the aesthetic pass, not a deliberate product call. Net:
+    `push_subscriptions` can only be populated by re-mounting that
+    component (one line) or building a new control. Until then the entire
+    web push path is server-only with no way for a user to subscribe.
+    Founder decision needed: re-mount on a reachable screen (Днес /
+    dashboard is the obvious home), or a dedicated notifications control.
+    No Claude UI work until asked.
+  - **Mobile push permission flow exists and is reachable, but only fires
+    incidentally.** `maybePromptPushPermission` (`apps/mobile/lib/
+    notifications/`) is wired to `oracle.tsx`'s `onFreshGeneration` — it
+    prompts once, ever (AsyncStorage flag `stellaeum.notifications.
+    prompted.v1`), after the user's first successful Oracle reading. FF
+    `EXPO_PUBLIC_FF_PUSH` defaults on. There is **no explicit
+    "notifications" toggle** anywhere — `you/settings.tsx` has only
+    name/email/password rows — so a user who declines or misses the
+    one-shot prompt has no in-app way back. End-to-end verification
+    (system prompt → `getExpoPushTokenAsync` → `/api/push/register` →
+    APNs delivery) is blocked on Apple Developer enrolment (APNs
+    credentials) and needs a real iOS build — see §5 Blocked-externally.
+    The permission *scaffold* is code-complete (SR 8.3); the reachable,
+    manageable opt-in and the real-device verification are not.
+
 ## Correction — Кръг mobile is functionally ported (parity-doc error #6)
 
 `.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md` §3
