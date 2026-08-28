@@ -387,9 +387,14 @@ does.
   for each user-facing feature, rather than assuming reachability once the
   code exists. The banner is the proof that assumption fails silently.
 
-Recommendation: adopt (a) as a CI gate; treat (c) as an optional periodic
-advisory; make (d) an explicit checklist obligation per feature. Do not
-attempt (b).
+**Disposition (founder, 2026-08-28):** (a) adopted as an owned engineering
+CI gate — `knip`, Next app-router roots — deferred, not now; the one-time
+baseline triage is the stated cost. Tracked in COMPLETION-TRACKER §6
+("Unimported-module / reachability CI gate — OWNED"). (b) skipped
+entirely. (c) optional advisory only if someone asks — not built. (d)
+written into `.planning/phases/m3-uat/BROWSER_CHECKLIST.md` as a
+per-feature `[must-exercise]` "can a user reach and operate this"
+obligation.
 
 ## The underlying pattern across items 1-3 (environment-fidelity gaps)
 

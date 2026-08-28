@@ -2651,6 +2651,28 @@ they were forgotten rather than deferred on purpose.
     `you/settings.tsx` is Batch 8 scope (see the "ADDED TO SCOPE
     2026-08-28" block).
 
+- **Unimported-module / reachability CI gate — OWNED, scoped 2026-08-28,
+  not now.** Adopt `knip` as a CI check with Next app-router entry points
+  (`app/**/{page,layout,route,default,loading,error,not-found}.tsx`,
+  `instrumentation*.ts`, `middleware.ts`, `sentry.*.config.ts`, config
+  files, `scripts/**`) declared as roots, so a component/module that
+  nothing reaches from a real entry point fails the build. Rationale +
+  the full "why not (b)/(c)/(d)" reasoning: VERIFICATION-SURFACE-GAPS #12.
+  This is the automatable slice of the reachability gap — it would have
+  caught `PushNotificationBanner.tsx` the day `d230a3f` orphaned it.
+  **Stated one-time cost: baseline triage.** A monorepo this size will
+  surface a first-run list mixing real dead code with intentional-but-
+  unreferenced files (generated code, type-only barrels, scripts invoked
+  by name, EAS/Expo config, test fixtures); each needs a keep/delete call
+  and a `knip.json` `ignore` entry or deletion before the gate can go
+  red-on-new. Budget that as the bulk of the work, not the wiring.
+  Explicitly **not** in scope: dead-conditional render detection (#12 (b),
+  undecidable — skip); route-with-no-nav-path sweep (#12 (c), optional
+  advisory only if someone asks). Real user-reachability (#12 (d)) is
+  handled by the per-feature obligation now in
+  `.planning/phases/m3-uat/BROWSER_CHECKLIST.md`, not by tooling. Owner:
+  engineering; no fixed sequence — slots into any CI-hardening pass.
+
 ## Correction — Кръг mobile is functionally ported (parity-doc error #6)
 
 `.planning/phases/phase-b-mobile-parity/MOBILE-WEB-PARITY-GAP.md` §3
