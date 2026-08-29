@@ -334,6 +334,23 @@ than it looks." This one is "the observation's *origin* is invisible" —
 the monitor faithfully recorded a real error; it just can't say the error
 was manufactured.
 
+**Reinforced 2026-08-29 — mobile, not just web.** Four Sentry issues from
+the founder's own emulator/device testing of the Google sign-in build, all
+`environment: development`, all High priority, none self-marking as test
+traffic: two ignorable (a Test-Store RevenueCat 401, Expo's own dev
+launcher crashing on its error screen), two real (a foreground ANR, and
+`logError` capturing a non-Error object — see COMPLETION-TRACKER §7.9).
+Mobile has no equivalent of a `beforeSend` probe filter or a dedicated
+synthetic-user tag at all — this gap was scoped as a web/API concern
+(`sentry.server.config.ts`) and mobile dev-session noise was never in
+scope for the fix. The founder is currently the only source of *any*
+mobile traffic, so every mobile alert today is this same problem. Extend
+the identifiability requirement to `apps/mobile/lib/monitoring/sentry.ts`
+before mobile has real users: an explicit `environment` tag is already
+present as a starting point, but "development" vs "production" does not
+distinguish founder QA from an actual early tester's device once both run
+dev builds against the same backend.
+
 ## 12. Every gate tests code that runs; none tests whether a user can reach it
 
 Found 2026-08-28. Web push notifications: `PushNotificationBanner.tsx` is

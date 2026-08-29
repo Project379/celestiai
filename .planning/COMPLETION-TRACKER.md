@@ -2687,22 +2687,24 @@ they were forgotten rather than deferred on purpose.
        Skew Protection episode (VSG #10): "did the fix deploy" becomes
        answerable without dashboard archaeology.
 
-- **Mobile has ZERO automated tests — OWNED, scoped 2026-08-27.** `pnpm
-  test` = 195 tests, **all `@stellaeum/web`** (`apps/web/test/**`, vitest).
-  `apps/mobile` has no test runner configured, no test files, no
-  `test` script. Every mobile guarantee to date is device-pass + code
-  read only. For an end state described as "built and tested" this is a
-  real gap that was never explicitly owned. Scope (not a decision to make
-  silently — founder confirms shape): (a) unit-level — the pure hooks and
-  lib helpers (`lib/config/webAppUrl.ts`, `lib/clerk/displayName.ts`, the
-  Кръг hooks' cache logic, `lib/haptics`) under vitest + React Testing
-  Library, mirroring the web setup; (b) NOT full RN render/e2e (Detox/
-  Maestro) at launch — disproportionate pre-users, revisit post-launch.
-  Smallest useful first slice: the auth-error mapping in `sign-in.tsx` /
-  `sign-up.tsx` and the `getWebAppUrl` placeholder guard, both of which
-  are logic with branches and both of which have shipped bugs before.
-  Owner: engineering; sequence after the §0.6 fix and the Google button,
-  before Batch 8's later screens.
+- **Mobile has ZERO automated tests — OWNED, scoped 2026-08-27. First slice
+  landed 2026-08-29 (Google sign-in build).** Scope confirmed: (a)
+  unit-level — pure hooks and lib helpers under vitest, mirroring web's
+  setup; (b) NOT full RN render/e2e (Detox/Maestro) at launch —
+  disproportionate pre-users, revisit post-launch. Added `apps/mobile/
+  vitest.config.ts` (same shape as `apps/web/vitest.config.ts`: `@/` alias,
+  `test/**/*.test.ts`, node environment) and `"test": "vitest run"` in
+  `apps/mobile/package.json`, wired into root `check:all` via the existing
+  `pnpm run test` → `turbo run test` fan-out (no separate gate needed —
+  turbo already runs any workspace's `test` script if present). First real
+  test: `apps/mobile/test/clerk/displayName.test.ts`, 5 cases covering the
+  Apple-private-relay guard added in the same change (see Google sign-in
+  entry below) — proved red against the pre-guard `displayName.ts` via
+  `git stash` before restoring the fix, per standing discipline. `pnpm run
+  check:all` green end-to-end with mobile's tests included (exit 0).
+  Remaining from the original scope (`lib/config/webAppUrl.ts`, the Кръг
+  hooks' cache logic, `lib/haptics`) not yet covered — this slice only
+  added tests for code touched in this change, not a retroactive sweep.
 
 - **Push notification opt-in — WEB has no user-reachable subscribe control;
   MOBILE prompt is incidental-only. Found 2026-08-28 after the VAPID cron
@@ -3024,3 +3026,148 @@ pre-launch that MUST be reverted before the first real users:
   instrumentation** — none currently outstanding; keep the habit of
   listing new ones here.
 - (Add here as more debug-state toggles accumulate.)
+
+### 7.8 Google sign-in (mobile) — built 2026-08-29
+
+`useSSO` from `@clerk/expo` (legacy `useSignIn`/`useSignUp` under the
+hood, throw-based, does not compose with the Future API's `finalize()` —
+confirmed from installed source, not docs). New `lib/clerk/oauth.ts`
+wraps `startSSOFlow({ strategy: 'oauth_google' })` with an explicit
+`redirectUrl` (`stellaeum://sso-callback`, via `AuthSession.makeRedirectUri`)
+rather than the SDK default, so the Clerk-allowlisted value is provably
+what's in code. Dismissing the browser sheet (`authSessionResult.type`
+`'cancel'`/`'dismiss'`) is treated as a no-op, not an error — it has no
+Clerk error code. `app/(public)/sso-callback.tsx` added as a safety-net
+route: `openAuthSessionAsync` resolves the promise itself, but if the OS
+also fires the redirect as a normal expo-router deep link, this keeps the
+user off an "Unmatched Route" screen while `(public)/_layout.tsx`'s
+existing `isSignedIn` redirect takes over.
+
+Error mapping refactored: `lib/clerk/errorMessages.ts` now exports
+`resolveClerkError(err, messages)` — the lookup logic shared across every
+screen's own key→string map (Future-API value errors and legacy thrown
+errors both handled, never falls through to Clerk's raw English) — plus
+a new `OAUTH_ERROR_MESSAGES` map. Per-screen maps in `sign-in.tsx` /
+`sign-up.tsx` kept byte-identical; only the duplicate inline
+lookup-function bodies were collapsed to call the shared helper. The
+no-name edge (Google omits firstName/lastName, transfer `signUp.create`
+fails required-field validation, or `signUp.status === 'missing_requirements'`
+on return) maps to a message telling the user to sign up with email/password
+instead, not a dead end.
+
+**Pre-existing defect found, not created, by this refactor:** the original
+`sign-in.tsx`/`sign-up.tsx` `getErrorMessage` had no `logError` call at
+all — an unmapped Clerk code fell through to `e.message`, so the user saw
+raw English text, but nothing ever reached Sentry. That gap was invisible
+because the English fallthrough was itself the only signal anything was
+wrong, and nobody was watching for it. Collapsing both screens onto
+`resolveClerkError` (which intentionally never falls through to raw
+English, to stop the leak) would have made it strictly worse — an
+unmapped code now shows the generic Bulgarian string with nothing behind
+it to notice or map from. Caught before commit; fixed by adding
+`logError('ERR-AUTH-SIGNIN'/'ERR-AUTH-SIGNUP', err)` at the point
+`resolveClerkError` returns `undefined`, on all three touched call sites
+(`oauth.ts`, `sign-in.tsx`, `sign-up.tsx`). `verify.tsx` has the identical
+original shape — same missing `logError`, not touched in this change,
+left open. Same class as the RevenueCat non-Error-object finding below:
+a defect that sat silent until a new code path ran through it.
+
+Two `getDisplayName` (`lib/clerk/displayName.ts`) fixes shipped alongside,
+solving different problems:
+- **Permanent guard:** Apple Private Relay addresses
+  (`a1b2c3d4e5@privaterelay.appleid.com`, SIWA's "Hide My Email") never
+  reach the email-username fallback — host check is `=== 'appleid.com'`
+  or `.appleid.com` suffix, not a bare substring match. An earlier draft
+  using `.endsWith('appleid.com')` on the full email would have
+  false-positived on `notappleid.com`; caught before commit — but the
+  sharper reason it must stay an exact host/subdomain match, not
+  `includes()`/`endsWith()` on the email string, is that a substring
+  check matches an attacker-registered domain containing the string,
+  e.g. `foo@privaterelay.appleid.com.evil.tld` — that domain is not
+  Apple's, and display-name spoofing from it should not get free rein.
+  The reasoning is recorded in `displayName.ts` itself, not just here —
+  this is exactly the kind of check someone "simplifies" back to
+  `includes()` later without reading a commit message first. Google
+  rarely triggers the no-name path at all since Google returns names;
+  SIWA (next, blocked on Apple Developer enrolment) would hit it
+  immediately and permanently.
+- **Transient guard:** one `clerk.user?.reload()` in `oauth.ts` right
+  after `setActive`, closing the window where Clerk populates
+  firstName/lastName from the external account asynchronously on
+  transfer — without it, a legitimate user could briefly see their email
+  username as their name right after sign-in.
+
+First mobile test suite landed in the same change — see §"Mobile has ZERO
+automated tests" above for the vitest setup; the test itself
+(`test/clerk/displayName.test.ts`, 5 cases) is the relay guard, proved red
+against pre-fix code before being trusted.
+
+**Copy-lock / lint-baseline:** `copy-lock.json` regenerated, diff
+contained exactly the new/changed literals (2 Google button labels, 4
+`OAUTH_ERROR_MESSAGES` strings) plus a de-dup of the pre-existing
+catch-all string's occurrence count (the refactor removed a redundant
+`e.message || nested?.message ||` fallthrough that had it appearing
+twice per file). Lint baseline `1772 → 1778` (+6, matches exactly).
+`pnpm run check:all` green end-to-end, exit 0.
+
+**Not yet done / still open from the build order:** device verification
+of the actual OAuth round-trip — blocked on the founder confirming the
+`stellaeum://sso-callback` allowlist in Clerk → Native Applications and
+that Google is enabled on the instance the dev client points at. Nothing
+above is device-tested; typecheck/lint/test-clean is the only
+verification this session could perform.
+
+### 7.9 Sentry triage from first Google-button emulator/device testing — 2026-08-29
+
+Four High-priority Sentry issues, `environment: development`, from the
+founder's own testing of §7.8. See VERIFICATION-SURFACE-GAPS #11
+reinforcement — none of these self-identify as test traffic.
+
+**Ignored, correctly:**
+- `ERR-MOB-RC-004` on both platforms — RevenueCat `logIn()` rejection,
+  iPhone breadcrumb confirms `POST /v1/subscribers/identify [401]`. Known
+  Test Store limitation (§ RevenueCatProvider.tsx's own REVISIT-62
+  verification-checkpoint comments), not a code defect.
+- `NullPointerException: null cannot be cast to non-null type
+  DevLauncherController` — Expo's own dev launcher crashing on its error
+  screen. Their bug, dev-client-only, not reachable in a production build.
+
+**Fixed in this change:**
+- **`logError` was passing non-Error values straight to
+  `Sentry.captureException`**, so a plain rejection object (RevenueCat's
+  `{code, info, message}` shape, from the `ERR-MOB-RC-004` `.catch()`
+  above) arrived in Sentry as "Object captured as exception with keys:
+  code, info, message" — ungroupable, no stack trace, message useless.
+  This is a general defect in the shared helper
+  (`apps/mobile/lib/monitoring/logError.ts`), not specific to RevenueCat —
+  every non-Error rejection anywhere in the app degrades the same way;
+  RevenueCat's was just the first one to run through a path that actually
+  threw a plain object instead of an `Error`. Fixed by wrapping any
+  non-Error `err` in a real `Error` before capture (preserving the
+  original value as `extra.originalValue`), so Sentry always gets a
+  message and a stack. Same shape as the defects found in §7.8 above and
+  the RevenueCat-Expo-Go-detection pattern documented in
+  `RevenueCatProvider.tsx`'s own header comment: invisible until
+  something new ran through the path.
+
+**Open, not fixed — needs the actual stack trace:**
+- **Foreground ANR, level FATAL, Android emulator, mechanism
+  `AppExitInfo`, fingerprint `foreground-anr`.** Device class "low", 4
+  processors, 3.8 GiB. Static code read (this session, no Sentry read
+  access — `SENTRY_AUTH_TOKEN` is upload-only per §7.6) ruled out the
+  obvious candidates without finding the blocker: `NatalWheel.tsx`'s
+  planet-position collision pass is a 4-pass loop over ~10-13 planets
+  behind its own `useMemo`, not expensive; every `AsyncStorage` call in
+  the app (`useDailyHoroscope`, `useDailyReveal`, `inviteLinks`,
+  `useStoryList`, `maybePromptPushPermission`) is awaited, none
+  synchronous; `useDailyHoroscope`'s only `JSON.parse` is on a small
+  cached payload; `RevenueCatProvider`'s `configure()`/`logIn()`/`logOut()`
+  are all async/Promise-based; Swiss Ephemeris WASM runs server-side only
+  per this repo's architecture, never in the mobile bundle. None of that
+  rules out a genuine main-thread block — it only says the likely
+  candidates named in the request don't show one on inspection. Needs the
+  actual thread stack trace from the Sentry event (not available to this
+  session) to localize. May be emulator-only — a 4-core/"low" device class
+  hits Android's ANR threshold a real phone wouldn't — but founder's own
+  framing stands: "may be" is not "is"; the iPhone session is the
+  comparison point once the button itself is verified.
