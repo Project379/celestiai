@@ -16,6 +16,11 @@ import {
   incrementQuotaUsage,
   quotaCapReachedResponse,
 } from '@/lib/subscriptions/quota'
+import {
+  claimFreeOracleReading,
+  freeOracleGateResponse,
+  releaseFreeOracleReading,
+} from '@/lib/subscriptions/free-oracle'
 import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 
@@ -23,29 +28,28 @@ import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
  * POST /api/oracle/generate
  * Streams an AI-generated natal chart reading via OpenRouter / Llama.
  *
- * Flow (post-B.0f-2 quota refactor 2026-05-10):
+ * TIER (frozen definition 2026-09-01):
+ *  - FREE: ONE `general` reading for the LIFETIME of the account
+ *    (users.free_oracle_used_at, apps/web/lib/subscriptions/free-oracle.ts).
+ *    love/career/health are premium; regenerate is premium.
+ *  - PREMIUM: all four topics, regenerate (24h cooldown/topic), and a
+ *    300/month safety-net cap via subscription_quotas (invisible by
+ *    design — see quota.ts). subscription_quotas is now Oracle-only; the
+ *    daily horoscope no longer shares it.
+ *
+ * Flow:
  * 1. Auth check
  * 2. Parse & validate body (chartId, topic, regenerate)
- * 3. Ensure app-user row + read AppUser shape
+ * 3. Ensure app-user row + read AppUser shape (tier)
  * 4. Chart ownership verification
  * 5. Cache check — return cached reading without quota interaction
- *    (cache hits do NOT count against the monthly cap)
- * 6. Regeneration rate limit (once per day per chart-topic pair)
- * 7. Quota cap-claim (Pattern B, monthly cap from subscription_quotas).
- *    2026-08-26 (Tier 2 #4): premium goes through this too now, at a much
- *    higher safety-net limit (PREMIUM_MONTHLY_LIMIT) — see quota.ts's
- *    module doc comment for why and quotaCapReachedResponse for the
- *    tier-specific response shape (free: 429 + number; premium: 503,
- *    invisible by design).
- *    7a. checkQuotaAvailable — reads the current period row for
- *        { used, limit, periodStart }, tier-appropriate limit.
- *    7b. incrementQuotaUsage — atomic conditional UPDATE before Llama
- *        call. Race-loss treated as cap-reached, same as 7a.
- * 8. Load chart calculation data
- * 9. Build prompts from chart data
- * 10. Stream / generate via OpenRouter / Llama
- * 11. onFinish / await: upsert completed reading into ai_readings
- * 12. On any failure in 10–11: decrementQuotaUsage refund (both tiers)
+ * 6. Tier gates: premium-only topic, premium-only regenerate
+ * 7. Regeneration rate limit (once per day per chart-topic pair)
+ * 8. Claim: premium → monthly quota cap-claim; free → lifetime marker claim
+ * 9. Load chart calculation data
+ * 10. Build prompts from chart data
+ * 11. Stream / generate via OpenRouter / Llama
+ * 12. On failure: refund the claim (both tiers)
  */
 export const maxDuration = 60
 
@@ -58,19 +62,29 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
-  // Hoisted so refund paths in the outer catch + stream callbacks can see it.
-  // Set non-null only after a successful cap-claim against a free-tier row.
+  // Hoisted so refund paths in the outer catch + stream callbacks can see
+  // them. Set non-null / true only after a successful cap-claim.
   let claimedPeriodStart: Date | null = null
+  let claimedFreeOracle = false
+
+  // Single refund entry point for the synchronous setup paths. The stream
+  // callbacks capture their own copies below (they run after this function
+  // has returned) so they don't call this.
+  async function refundClaim() {
+    if (claimedPeriodStart) {
+      await decrementQuotaUsage(userId!, claimedPeriodStart)
+      claimedPeriodStart = null
+    }
+    if (claimedFreeOracle) {
+      await releaseFreeOracleReading(userId!)
+      claimedFreeOracle = false
+    }
+  }
 
   try {
-    // Burst guard, defense-in-depth alongside the monthly quota cap and the
-    // 24h regen cooldown below — neither of those blocks a rapid-fire burst
-    // within a single window the way this does.
-    // failClosed (2026-08-26 sweep #17): this route calls a paid OpenRouter
-    // model. A Supabase-degradation fail-open here would remove the burst
-    // brake on a real-money route while the monthly quota cap (which
-    // throws, not fails open, on its own DB errors) is the only other
-    // control left.
+    // Burst guard, defense-in-depth alongside the caps and the 24h regen
+    // cooldown below. failClosed (2026-08-26 sweep #17): this route calls a
+    // paid OpenRouter model.
     await assertRateLimit({
       key: `oracle-generate:${userId}`,
       limit: 10,
@@ -102,11 +116,9 @@ export async function POST(req: Request) {
     const jsonOnly = url.searchParams.get('format') === 'json'
     const supabase = createServiceSupabaseClient()
 
-    // 3. Ensure app-user row + read AppUser shape. Replaces the prior raw
-    //    upsert + tier-read; ensureUserRecord handles brand-new-user
-    //    creation idempotently and returns the AppUser shape that the
-    //    quota helpers expect.
+    // 3. Ensure app-user row + read AppUser shape (tier).
     const user = await ensureUserRecord(userId)
+    const isPremium = user.subscription_tier === 'premium'
 
     // 4. Chart ownership verification
     const { data: chart, error: chartError } = await supabase
@@ -123,7 +135,9 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 403 })
     }
 
-    // 5. Cache check — return cached reading without quota interaction
+    // 5. Cache check — return cached reading without any quota / gate
+    //    interaction (a reading already generated stays viewable even if
+    //    the user's tier has since changed).
     const now = new Date().toISOString()
     const { data: existingReading } = await supabase
       .from('ai_readings')
@@ -142,19 +156,21 @@ export async function POST(req: Request) {
     }
 
     // SECURITY FIX (2026-08-14, Batch 5.5 #1): `regenerate` must only exempt
-    // quota when there is an actual existing reading being regenerated — the
-    // B.0f-2-fix-1 exemption was gated on the client-supplied `regenerate`
-    // flag alone, not on `existingReading` truthiness. Since `existingReading`
-    // is only populated for a non-expired cache hit, a free-tier user sending
-    // regenerate:true for any chart/topic with no live cached reading (never
-    // generated, or past the 7-day TTL) skipped both the 24h cooldown below
-    // AND the quota check/claim entirely — unlimited free paid AI calls. The
-    // fix: treat this as a real "regeneration" (quota-exempt, cooldown-gated)
-    // only when existingReading is present; otherwise it's functionally a
-    // fresh generation and must go through quota like any other.
+    // quota when there is an actual existing reading being regenerated.
     const isRegenerationOfExisting = Boolean(regenerate && existingReading)
 
-    // 6. Regeneration rate limit — once per day per chart-topic pair
+    // 6. Tier gates (frozen definition 2026-09-01). Both use
+    //    `code: 'CAP_REACHED'` so the existing client mapping routes them
+    //    to the conversion surface; `reason` picks the copy.
+    if (!isPremium && validatedTopic !== 'general') {
+      return freeOracleGateResponse('premium_topic')
+    }
+    if (!isPremium && isRegenerationOfExisting) {
+      return freeOracleGateResponse('premium_regenerate')
+    }
+
+    // 7. Regeneration rate limit — once per day per chart-topic pair
+    //    (premium only reaches here; free is blocked at step 6).
     if (isRegenerationOfExisting && existingReading?.last_regenerated_at) {
       const lastRegen = new Date(existingReading.last_regenerated_at)
       const hoursElapsed =
@@ -167,33 +183,33 @@ export async function POST(req: Request) {
       }
     }
 
-    // 7. Quota cap-claim (Pattern B). Regenerations of an existing, live
-    //    cached reading are exempt per B.0f-2-fix-1 ratification — they fall
-    //    through directly to the chart-load step, no checkQuotaAvailable, no
-    //    incrementQuotaUsage. The 24-hour regenerate rate-limit at step 6
-    //    still applies. Anything else (no existing reading to regenerate)
-    //    goes through quota regardless of the regenerate flag — see the
-    //    isRegenerationOfExisting fix above.
+    // 8. Claim before generation. Regenerations of an existing live cached
+    //    reading are exempt from both claims (premium-only path).
     if (!isRegenerationOfExisting) {
-      // 7a. Pre-flight quota check. 2026-08-26 (Tier 2 #4): premium no
-      //     longer short-circuits — it shares this exact gate at a much
-      //     higher (safety-net) limit. See quotaCapReachedResponse for the
-      //     tier-specific response shape.
-      const quota = await checkQuotaAvailable(user)
-      if (!quota.available) {
-        return quotaCapReachedResponse(user, quota)
+      if (isPremium) {
+        // 8a. Premium — monthly safety-net cap (invisible by design).
+        const quota = await checkQuotaAvailable(user)
+        if (!quota.available) {
+          return quotaCapReachedResponse(user, quota)
+        }
+        const claim = await incrementQuotaUsage(userId, quota.periodStart)
+        if (!claim.success) {
+          return quotaCapReachedResponse(user, quota)
+        }
+        claimedPeriodStart = quota.periodStart
+      } else {
+        // 8b. Free — one `general` reading, lifetime. Atomic conditional
+        //     UPDATE on users.free_oracle_used_at. `claimed: false` means
+        //     it has already been spent.
+        const claim = await claimFreeOracleReading(userId)
+        if (!claim.claimed) {
+          return freeOracleGateResponse('free_used')
+        }
+        claimedFreeOracle = true
       }
-
-      // 7b. Atomic cap-claim BEFORE generation, for both tiers now.
-      //     Race-loss (NULL return) is treated as cap-reached.
-      const claim = await incrementQuotaUsage(userId, quota.periodStart)
-      if (!claim.success) {
-        return quotaCapReachedResponse(user, quota)
-      }
-      claimedPeriodStart = quota.periodStart
     }
 
-    // 8. Load chart calculation data
+    // 9. Load chart calculation data
     const { data: calculation, error: calcError } = await supabase
       .from('chart_calculations')
       .select(
@@ -204,16 +220,14 @@ export async function POST(req: Request) {
 
     if (calcError || !calculation) {
       // Refund the cap-claim — no generation will happen.
-      if (claimedPeriodStart) {
-        await decrementQuotaUsage(userId, claimedPeriodStart)
-      }
+      await refundClaim()
       return Response.json(
         { error: 'Натална карта не е изчислена. Изчисли картата първо.' },
         { status: 404 }
       )
     }
 
-    // 9. Build prompts
+    // 10. Build prompts
     const chartData: ChartData = {
       planets: calculation.planet_positions as ChartData['planets'],
       houses: calculation.house_cusps as ChartData['houses'],
@@ -240,12 +254,7 @@ export async function POST(req: Request) {
       })),
     }
 
-    // 10a. Mobile path — non-streaming JSON response. Mirrors the
-    //      ?format=json branch in /api/horoscope/generate added in
-    //      sub-round 5.3 (REVISIT-TRIGGERS item 20 logs the streaming
-    //      polish for mobile). react-native-sse is finicky on iOS so
-    //      mobile collects the full text and renders once. Web's
-    //      streaming path stays untouched below.
+    // 11a. Mobile path — non-streaming JSON response.
     if (jsonOnly) {
       try {
         const result = await generateText({
@@ -270,14 +279,8 @@ export async function POST(req: Request) {
         expiresAt.setDate(expiresAt.getDate() + 7)
 
         // SECURITY FIX (2026-08-26 sweep #14): a fresh (non-regeneration)
-        // generation must NOT touch last_regenerated_at — omitting it from
-        // the upsert payload leaves the existing column value alone on
-        // conflict (a genuinely new row gets the column's NULL default).
-        // Previously this always wrote `isRegenerationOfExisting ? ... :
-        // null`, so any fresh generation (first-ever, or the 7-day cache
-        // simply expiring) reset the cooldown clock to null — the next
-        // regenerate:true call then found last_regenerated_at falsy and
-        // skipped the 24h cooldown check at step 6 entirely.
+        // generation must NOT touch last_regenerated_at — omit it from the
+        // upsert so the existing value survives on conflict.
         await supabase.from('ai_readings').upsert(
           {
             chart_id: chartId,
@@ -300,13 +303,9 @@ export async function POST(req: Request) {
           generatedAt: generatedAt.toISOString(),
         })
       } catch (err) {
-        if (claimedPeriodStart) {
-          await decrementQuotaUsage(userId, claimedPeriodStart)
-          claimedPeriodStart = null // outer catch must not double-refund
-        }
-        // Upstream provider failure (non-JSON body → SDK SyntaxError,
-        // network drop, 5xx) → deliberate 502 + retry hint, not an opaque
-        // 500. Anything else is our bug and stays a 500.
+        await refundClaim()
+        // Upstream provider failure → deliberate 502 + retry hint, not an
+        // opaque 500. Anything else is our bug and stays a 500.
         if (isUpstreamAiError(err)) {
           return toErrorResponse(
             new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED'),
@@ -321,11 +320,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // 10b. Web path — stream via OpenRouter / meta-llama/llama-3.3-70b-instruct.
-    //      Refund hook captured as a const for closure clarity (the let above
-    //      is also visible, but const here documents that callbacks won't be
-    //      racing further mutation).
+    // 11b. Web path — stream via OpenRouter. Capture the refund handles as
+    //      consts: the callbacks run after this function returns, so they
+    //      must not depend on the mutable `let`s (which refundClaim clears).
     const refundPeriodStart = claimedPeriodStart
+    const refundFreeOracle = claimedFreeOracle
     const result = streamText({
       model: openrouter(AI_MODEL),
       system: systemPrompt,
@@ -348,9 +347,6 @@ export async function POST(req: Request) {
           const expiresAt = new Date(generatedAt)
           expiresAt.setDate(expiresAt.getDate() + 7)
 
-          // See the JSON-path comment above (2026-08-26 sweep #14) — same
-          // fix, same reason: omit last_regenerated_at entirely on a fresh
-          // generation rather than writing null over it.
           await supabase.from('ai_readings').upsert(
             {
               chart_id: chartId,
@@ -373,38 +369,33 @@ export async function POST(req: Request) {
           if (refundPeriodStart) {
             await decrementQuotaUsage(userId, refundPeriodStart)
           }
+          if (refundFreeOracle) {
+            await releaseFreeOracleReading(userId)
+          }
         }
       },
 
       onError: ({ error }) => {
         console.error('[Oracle Generate] Stream error:', error)
         if (refundPeriodStart) {
-          // Fire-and-forget; decrementQuotaUsage swallows its own errors
-          // and audits via system.payment.quota_refund_failed when needed.
+          // Fire-and-forget; both refund helpers swallow their own errors.
           void decrementQuotaUsage(userId, refundPeriodStart)
+        }
+        if (refundFreeOracle) {
+          void releaseFreeOracleReading(userId)
         }
       },
     })
 
     // result.consumeStream() drains the LLM stream server-side regardless of
-    // client connection state. Guarantees onFinish fires (persisting the
-    // reading to ai_readings cache) even when the user navigates away
-    // mid-stream. Combined with no abortSignal: the upstream Llama call also
-    // runs to completion, so a fully-formed cached reading is available on
-    // user retry. Trade: slot consumed on abort, but content remains
-    // available via cache for the user to revisit. Documented Vercel AI SDK
-    // pattern. The jsonOnly path inherits the same semantics automatically
-    // via the await + no-abortSignal pattern (server-side await completes
-    // regardless of client disconnect; no consumeStream equivalent needed
-    // for non-streaming generateText). See B.0f-2-fix-2 close note.
+    // client connection state — guarantees onFinish fires (persisting the
+    // reading) even when the user navigates away mid-stream.
     result.consumeStream()
 
     return result.toTextStreamResponse()
   } catch (error) {
-    // Setup error before stream returned. If we already cap-claimed, refund.
-    if (claimedPeriodStart) {
-      await decrementQuotaUsage(userId, claimedPeriodStart)
-    }
+    // Setup error before stream returned. If we already claimed, refund.
+    await refundClaim()
     return toErrorResponse(error, 'Грешка при генериране на четенето')
   }
 }

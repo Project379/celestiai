@@ -156,6 +156,20 @@
  * literal now appears twice in the AST, same shape as prior raises in
  * this file's history.
  *
+ * Raised to 1800 on 2026-09-01 (frozen tier definition — Oracle gates):
+ * +22 across the Oracle conversion surface. New reviewed user-facing copy
+ * for the free-tier Oracle boundaries the frozen definition introduces
+ * (one `general` reading lifetime; love/career/health + regenerate are
+ * premium): apps/{web,mobile}/components/oracle/CapReachedNotice.tsx (the
+ * reason-branched title/sub pairs + CTA-adjacent lines, mirrored web and
+ * mobile so counted twice), apps/{web,mobile}/components/oracle/
+ * TopicCards.tsx (the ' (заключено)' accessibility suffix, matching web
+ * TopicCard.tsx's existing use), and apps/web/lib/subscriptions/
+ * free-oracle.ts (the three server-side gate messages). Informal ти,
+ * through check:bg-strings and copy-lock. Deliberate raise — the strings
+ * still want a founder/bulgarian-skill register pass (flagged in the
+ * change report), same as any new batch of app copy.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -165,7 +179,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1778
+const BASELINE = 1800
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

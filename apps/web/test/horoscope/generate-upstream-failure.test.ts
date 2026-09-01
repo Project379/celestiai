@@ -8,18 +8,20 @@ import { createMockSupabase, type MockSupabase } from '../mocks/supabase'
  * which produced an opaque **500** — indistinguishable from "our route is
  * broken".
  *
- * This test proves the two guarantees the founder asked for:
- *   1. an upstream failure now returns a deliberate **502** with the
- *      AI_UPSTREAM_FAILED code and a retry-hint message;
- *   2. the quota claim is actually REFUNDED on that path (decrementQuotaUsage
- *      fires) — not merely assumed.
+ * This test proves the upstream failure now returns a deliberate **502**
+ * with the AI_UPSTREAM_FAILED code and a retry-hint message, and that a
+ * genuine bug in our own code still 500s.
+ *
+ * NOTE (2026-09-01): the earlier "refunds the quota claim" assertion was
+ * removed — the frozen tier definition makes Днес fully free, so this
+ * route no longer touches `subscription_quotas` and has nothing to refund.
+ * The placeholder-row release (releaseClaimOnFailure) is still exercised
+ * by generate-duplicate-race.test.ts.
  *
  * Standing discipline (prove-it-fails): run against the pre-hardening
  * route.ts (the `catch (err) { await releaseClaimOnFailure(); throw err }`
- * with no isUpstreamAiError branch) and confirm assertion 1 FAILS with
- * `expected 500 to be 502` before restoring the fix. Assertion 2 (refund)
- * passes pre-fix too — releaseClaimOnFailure already refunded — which is
- * why it is worth pinning: the hardening must not regress it.
+ * with no isUpstreamAiError branch) and confirm the 502 assertion FAILS
+ * with `expected 500 to be 502` before restoring the fix.
  */
 
 vi.mock('@clerk/nextjs/server', () => ({
@@ -28,24 +30,6 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: vi.fn(),
-}))
-
-vi.mock('@/lib/users/ensure-user', () => ({
-  ensureUserRecord: vi.fn(async () => ({
-    id: 'user-row-1',
-    clerk_id: 'user_upstream_fail',
-    subscription_tier: 'free',
-    subscription_status: 'inactive',
-    subscription_provider: 'stripe',
-    created_at: null,
-    updated_at: null,
-    stripe_customer_id: null,
-    stripe_subscription_id: null,
-    subscription_expires_at: null,
-    trial_claimed_at: null,
-    deleted_at: null,
-    deletion_scheduled_at: null,
-  })),
 }))
 
 vi.mock('@/lib/rate-limit', async (importOriginal) => {
@@ -76,23 +60,8 @@ vi.mock('@stellaeum/astrology', () => ({
 
 // The failure under test: OpenRouter returned a non-JSON body → the ai SDK
 // threw a raw SyntaxError out of generateText.
-const { generateText, decrementQuotaUsage } = vi.hoisted(() => ({
-  generateText: vi.fn(),
-  decrementQuotaUsage: vi.fn(),
-}))
+const { generateText } = vi.hoisted(() => ({ generateText: vi.fn() }))
 vi.mock('ai', () => ({ generateText, streamText: vi.fn() }))
-
-vi.mock('@/lib/subscriptions/quota', () => ({
-  checkQuotaAvailable: vi.fn(async () => ({
-    available: true,
-    used: 0,
-    limit: 50,
-    periodStart: new Date('2026-08-01T00:00:00.000Z'),
-  })),
-  incrementQuotaUsage: vi.fn(async () => ({ success: true, newUsed: 1 })),
-  decrementQuotaUsage,
-  quotaCapReachedResponse: vi.fn(),
-}))
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { POST } from '@/app/api/horoscope/generate/route'
@@ -134,7 +103,6 @@ beforeEach(() => {
   vi.mocked(createServiceSupabaseClient).mockReturnValue(mockSupabase as never)
   // Default: OpenRouter returned a non-JSON body → raw SyntaxError.
   generateText.mockRejectedValue(new SyntaxError('Unexpected end of JSON input'))
-  decrementQuotaUsage.mockResolvedValue(true)
 })
 
 describe('POST /api/horoscope/generate — upstream provider failure (§0.8)', () => {
@@ -149,16 +117,6 @@ describe('POST /api/horoscope/generate — upstream provider failure (§0.8)', (
     expect(body.code).toBe('AI_UPSTREAM_FAILED')
     expect(typeof body.error).toBe('string')
     expect(body.error.length).toBeGreaterThan(0)
-  })
-
-  it('refunds the quota claim on the upstream-failure path', async () => {
-    seed('chart-2')
-    await POST(makeRequest('chart-2'))
-    expect(decrementQuotaUsage).toHaveBeenCalledTimes(1)
-    expect(decrementQuotaUsage).toHaveBeenCalledWith(
-      'user_upstream_fail',
-      new Date('2026-08-01T00:00:00.000Z'),
-    )
   })
 
   it('still 500s for a genuine bug in our own code (not every throw is "upstream")', async () => {

@@ -50,6 +50,27 @@ CHF 700 pre-launch is cash-flow pressure at a stage where every CHF matters; pos
 
 ---
 
+## 2. Ритъм — transit correlation across journal entries (premium feature)
+
+**Status:** `[deferred]`
+**Deferred:** 2026-09-01 (founder amendment to the frozen tier definition — `.planning/TIER-DEFINITION-2026-09-01.md` §3, amendment 2).
+**Current state:** does not exist. Ритъм (the lunar journal) is **fully free** — unlimited entries, moon-phase prompts, history, Markdown export. No premium layer, no tier gate.
+
+**What it would be:** a premium-only view that relates a user's journal entries to the astrological transits that were active on the day each entry was written — e.g. "you tend to write about endings under Saturn transits", or a timeline overlay of entries against transit events.
+
+**Why deferred:** it is the single largest net-new build in the frozen tier definition (~1.5–2.5 weeks for a deterministic version, more if AI-assisted), it has **no product spec**, and an AI-assisted version would feed user-written free text to the LLM for the first time anywhere in the app — a new privacy and content-safety surface. Not worth blocking launch on.
+
+**Build scope when picked up (from TIER-DEFINITION-2026-09-01.md §3):**
+
+1. **Data capture** — at entry-write time, compute + store the active transits for that date against the user's natal chart (`buildTransitOverview` / `calculateTransitAspects` already exist server-side). New JSONB column on the diary table or a sibling table + a migration. ~0.5–1 day.
+2. **Backfill** — existing entries have no transit snapshot; compute retroactively from stored `date` + the user's chart. ~0.5 day.
+3. **The correlation** — undefined; needs a design pass. Deterministic (bucket entries by active transit) ~2–3 days; AI-summarised ~1 week + prompt + the new safety surface.
+4. **UI** — premium-only section on the Ритъм screen, both platforms, with a locked-state treatment for free. ~2–3 days.
+
+**Trigger:** post-launch, once there is a premium user base and a product decision on what "correlation" surfaces. No automated trigger.
+
+---
+
 ## Trail (completed upgrades)
 
 *Empty. Move entries here after upgrade ships.*

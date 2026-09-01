@@ -14,6 +14,7 @@ import { useBackButtonVisibility } from '@/components/design-system/useBackButto
 import { usePing, useSpin } from '@/components/design-system/motion'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useOracleReading } from '@/hooks/useOracleReading'
+import { useSubscription } from '@/hooks/useSubscription'
 import { useApiClient } from '@/lib/api/client'
 import { maybePromptPushPermission } from '@/lib/notifications/maybePromptPushPermission'
 
@@ -61,6 +62,11 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
   const router = useRouter()
   const navigation = useNavigation()
   const { apiFetch } = useApiClient()
+  // Frozen tier definition (2026-09-01): free = one `general` reading,
+  // lifetime. Drives the padlock on the topic cards. The server route is
+  // the gate — a locked tap comes back as CAP_REACHED / premium_topic.
+  const { data: subscription } = useSubscription()
+  const isPremium = subscription?.tier === 'premium'
   const {
     savedReadings,
     activeTopic,
@@ -153,6 +159,7 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
               activeTopic={activeTopic}
               savedReadings={savedReadings}
               onTopicSelect={selectTopic}
+              isPremium={isPremium}
             />
             <View className="mt-10 items-center">
               <Text className="text-center text-[15px] font-light leading-7 text-slate-400">
@@ -205,7 +212,10 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
             {isGenerating && <GeneratingState />}
 
             {!isGenerating && generationError?.kind === 'cap-reached' && (
-              <CapReachedNotice cap={generationError.cap} />
+              <CapReachedNotice
+                cap={generationError.cap}
+                reason={generationError.reason}
+              />
             )}
 
             {!isGenerating && generationError?.kind === 'generic' && (

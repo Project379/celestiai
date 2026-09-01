@@ -7,23 +7,29 @@ interface TopicCardsProps {
   activeTopic: string | null
   savedReadings: Record<string, SavedReading>
   onTopicSelect: (topic: OracleTopic) => void
+  /**
+   * Frozen tier definition (2026-09-01): free = one `general` reading for
+   * the account lifetime. love / career / health are premium. When false,
+   * those three cards render the padlock affordance. The padlock is a
+   * hint only — tapping a locked card still calls /api/oracle/generate,
+   * which returns `code: 'CAP_REACHED'` + `reason: 'premium_topic'` and
+   * the panel shows the conversion surface. The server route is the gate.
+   */
+  isPremium: boolean
 }
 
 const ALL_TOPICS: OracleTopic[] = ['general', 'love', 'career', 'health']
 
 /**
  * Grid of four Oracle topic cards: Личност, Любов, Кариера, Здраве.
- *
- * All topics are available to any authed user. Free tier is gated by
- * a monthly generation cap from subscription_quotas, enforced server-
- * side at /api/oracle/generate rather than per-topic lock icons on the
- * card grid. Cap-reached surfacing happens in the generate flow, not
- * here.
+ * `general` is always available; the other three are premium (shown
+ * locked for free users, per the frozen tier definition).
  */
 export function TopicCards({
   activeTopic,
   savedReadings,
   onTopicSelect,
+  isPremium,
 }: TopicCardsProps) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -31,6 +37,10 @@ export function TopicCards({
         const { label, icon } = TOPIC_META[topic]
         const isActive = activeTopic === topic
         const hasSavedReading = Boolean(savedReadings[topic])
+        // A previously-generated reading stays viewable even for a free
+        // user whose access has since changed — don't lock a card that
+        // has content behind it.
+        const isLocked = !isPremium && topic !== 'general' && !hasSavedReading
 
         return (
           <TopicCard
@@ -38,7 +48,7 @@ export function TopicCards({
             topic={topic}
             label={label}
             icon={icon}
-            isLocked={false}
+            isLocked={isLocked}
             isActive={isActive}
             hasSavedReading={hasSavedReading}
             onClick={() => onTopicSelect(topic)}

@@ -11,26 +11,38 @@ import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
-import { ensureUserRecord } from '@/lib/users/ensure-user'
-import {
-  checkQuotaAvailable,
-  decrementQuotaUsage,
-  incrementQuotaUsage,
-  quotaCapReachedResponse,
-} from '@/lib/subscriptions/quota'
 
 export const maxDuration = 60
 
+/**
+ * POST /api/horoscope/generate — the daily "Днес" reading.
+ *
+ * TIER (frozen definition 2026-09-01): Днес is FULLY FREE for every authed
+ * user, every day, with no monthly cap. This route deliberately does NOT
+ * touch `subscription_quotas` — that counter is now Oracle-only
+ * (apps/web/lib/subscriptions/quota.ts). Until 2026-09-01 this route shared
+ * the free tier's 3/month `subscription_quotas` cap with oracle/generate,
+ * which meant a free user's daily horoscope died after three distinct days
+ * in a month (2026-08-26 sweep #4 wired premium through it too). That
+ * coupling is removed.
+ *
+ * The remaining brakes on paid generation here are STRUCTURAL, not a quota:
+ *   - assertRateLimit: 5/min per user, failClosed (a money-spending route).
+ *   - `daily_horoscopes` UNIQUE(chart_id, date): the pre-generation INSERT
+ *     claim below means at most ONE generation per chart per calendar day —
+ *     a repeat request for the same chart+date is a cache hit.
+ *   - createBirthChart caps a user at 20 charts (2026-08-26 sweep #3).
+ * Combined ceiling: 20 charts x 1/day = 20 paid generations per user per
+ * day, structurally — not scriptable past that the way the pre-#3 uncapped
+ * chart-creation loop was. If that ceiling ever needs lowering, it belongs
+ * as its own horoscope-scoped counter, NOT by re-coupling to the Oracle
+ * quota.
+ */
 export async function POST(req: Request) {
   const { userId } = await auth()
   if (!userId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  // Hoisted so refund paths in the outer catch + stream callbacks can see
-  // it. Set non-null only after a successful cap-claim against a free-tier
-  // row (mirrors apps/web/app/api/oracle/generate/route.ts).
-  let claimedPeriodStart: Date | null = null
 
   try {
     // failClosed (2026-08-26 sweep #17): this route calls a paid OpenRouter
@@ -113,29 +125,6 @@ export async function POST(req: Request) {
     if (requestedDate !== today) {
       return Response.json({ content: null, unavailable: true }, { status: 200 })
     }
-
-    // SECURITY/COST FIX (2026-08-26 sweep, finding #2): this route called no
-    // quota check of any kind — checkQuotaAvailable/incrementQuotaUsage were
-    // only ever wired into oracle/generate. Chained with uncapped chart
-    // creation (finding #3, now capped in createBirthChart), a free account
-    // could reach thousands of unquota'd paid generations/day by creating a
-    // fresh chart per request. Reuses the same monthly ai_readings cap as
-    // oracle/generate. 2026-08-26 (Tier 2 #4): premium goes through this
-    // too now, at a much higher safety-net limit — see quota.ts's module
-    // doc comment and quotaCapReachedResponse for the tier-specific
-    // response shape (free: 429 + number; premium: 503, invisible by
-    // design).
-    const user = await ensureUserRecord(userId)
-    const quota = await checkQuotaAvailable(user)
-    if (!quota.available) {
-      return quotaCapReachedResponse(user, quota)
-    }
-
-    const claim = await incrementQuotaUsage(userId, quota.periodStart)
-    if (!claim.success) {
-      return quotaCapReachedResponse(user, quota)
-    }
-    claimedPeriodStart = quota.periodStart
 
     let transitPlanets: Omit<PlanetPosition, 'house'>[]
 
@@ -257,6 +246,10 @@ export async function POST(req: Request) {
     // overwritten by the real upsert below once generation finishes; a
     // generation failure deletes the claim so a retry isn't permanently
     // blocked by an empty placeholder row.
+    //
+    // NOTE (2026-09-01): this INSERT claim is ALSO the effective per-day
+    // ceiling now that the monthly quota is gone — one row per (chart_id,
+    // date), so one paid generation per chart per day. Do not remove it.
     const { error: claimError } = await supabase.from('daily_horoscopes').insert({
       chart_id: chartId,
       user_id: userId,
@@ -266,9 +259,6 @@ export async function POST(req: Request) {
     })
 
     if (claimError) {
-      if (claimedPeriodStart) {
-        await decrementQuotaUsage(userId, claimedPeriodStart)
-      }
       if ((claimError as { code?: string }).code === '23505') {
         return Response.json(
           { error: 'Хороскопът вече се генерира. Опитай отново след малко.' },
@@ -301,9 +291,6 @@ export async function POST(req: Request) {
           { chartId, date: requestedDate, error },
         )
       }
-      if (claimedPeriodStart) {
-        await decrementQuotaUsage(userId!, claimedPeriodStart)
-      }
     }
 
     if (jsonOnly) {
@@ -321,7 +308,7 @@ export async function POST(req: Request) {
         // An upstream provider failure (non-JSON body → SDK SyntaxError,
         // network drop, 5xx) is not our bug — surface it as a deliberate
         // 502 with a retry hint instead of an opaque 500. releaseClaim
-        // above already refunded the quota + deleted the placeholder row.
+        // above already deleted the placeholder row.
         if (isUpstreamAiError(err)) {
           throw new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED')
         }
