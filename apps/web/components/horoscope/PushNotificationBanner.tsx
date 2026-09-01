@@ -29,6 +29,11 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
  * - Subscribed: "Сутрешните известия са включени" + "Изключи" button
  * - Denied: "Известията са блокирани в браузъра" (no button)
  * - Unsupported: renders nothing
+ *
+ * STELLAEUM_PLACEHOLDER: PUSH-ORPHAN — this component is imported by
+ * nothing (dead on web), and mobile has no equivalent settings toggle at
+ * all. The Web Push backend + cron exist; the user-facing control does
+ * not. See .planning/PLACEHOLDERS.md.
  */
 export function PushNotificationBanner() {
   const [supported, setSupported] = useState(false)

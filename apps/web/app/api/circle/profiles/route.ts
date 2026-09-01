@@ -88,8 +88,12 @@ export async function POST(req: Request) {
     }
 
     if (!data) {
+      // Authority for the free-tier cap. The client also renders a locked
+      // "add profile" affordance from `data.tier` so a free user does not
+      // normally reach this — `code` lets any caller distinguish the tier
+      // cap from other 403s. (tier item 5, Кръг)
       return Response.json(
-        { error: 'Без Premium можеш да пазиш само един crush профил.' },
+        { error: 'Без Premium можеш да пазиш само един crush профил.', code: 'PREMIUM_REQUIRED' },
         { status: 403 },
       )
     }

@@ -41,8 +41,10 @@ export async function POST(
 
     const tier = await getUserTier(userId)
     if (tier !== 'premium') {
+      // Authority for the gate. The client renders a locked affordance
+      // from tier so a free user does not normally reach this. (tier item 5)
       return Response.json(
-        { error: 'Само Premium потребители могат да генерират нов доклад.' },
+        { error: 'Само Premium потребители могат да генерират нов доклад.', code: 'PREMIUM_REQUIRED' },
         { status: 403 },
       )
     }

@@ -113,9 +113,35 @@ vi.mock('@/lib/subscriptions/free-oracle', async (importActual) => {
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { generateText } from 'ai'
 import { incrementQuotaUsage } from '@/lib/subscriptions/quota'
-import { POST } from '@/app/api/oracle/generate/route'
+import { NEVER_EXPIRES_AT, POST } from '@/app/api/oracle/generate/route'
 
 let mockSupabase: MockSupabase
+
+/**
+ * Wrap createServiceSupabaseClient's return so every ai_readings upsert
+ * payload is recorded. Uses the untouched mockSupabase.from underneath
+ * (no self-spy → no recursion). Call at the top of a test, after
+ * beforeEach has re-seeded the default mockReturnValue.
+ */
+function captureAiReadingsUpserts(): Array<Record<string, unknown>> {
+  const payloads: Array<Record<string, unknown>> = []
+  vi.mocked(createServiceSupabaseClient).mockReturnValue({
+    from: (table: string) => {
+      const builder = mockSupabase.from(table) as Record<string, unknown> & {
+        upsert: (p: Record<string, unknown>, o?: unknown) => unknown
+      }
+      if (table === 'ai_readings') {
+        const realUpsert = builder.upsert
+        builder.upsert = (p, o) => {
+          payloads.push(p)
+          return realUpsert(p, o)
+        }
+      }
+      return builder
+    },
+  } as never)
+  return payloads
+}
 
 function seedChartAndNoCache(topic = 'general') {
   mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_tier_gate_test' } })
@@ -244,5 +270,78 @@ describe('POST /api/oracle/generate — PREMIUM tier (frozen definition 2026-09-
     const res = await POST(req({ chartId: 'chart-1', topic: 'general', regenerate: true }))
 
     expect(res.status).toBe(200)
+  })
+})
+
+/**
+ * The free lifetime `general` reading must stay readable forever — both
+ * the route's step-5 cache check and GET /api/oracle/readings filter
+ * `expires_at > now`, so it is written with a far-future sentinel.
+ *
+ * Prove-red (git stash push apps/web/app/api/oracle/generate/route.ts):
+ * against the pre-fix route every reading got generatedAt + 7 days, so
+ *   - "free general -> expires_at is NEVER_EXPIRES_AT" FAILS
+ *   - "non-expiring row stays non-expiring on premium regenerate" FAILS
+ * The premium-topic case ("~7 days, not the sentinel") already passed.
+ */
+describe('POST /api/oracle/generate — reading expiry (2026-09-01)', () => {
+  it('writes the free `general` reading with a non-expiring sentinel', async () => {
+    const upserts = captureAiReadingsUpserts()
+    seedChartAndNoCache('general')
+
+    const res = await POST(req({ chartId: 'chart-1', topic: 'general' }))
+
+    expect(res.status).toBe(200)
+    expect(upserts).toHaveLength(1)
+    expect(upserts[0]!.expires_at).toBe(NEVER_EXPIRES_AT)
+  })
+
+  it('writes a premium topic reading with the 7-day cache window, not the sentinel', async () => {
+    userState.tier = 'premium'
+    const upserts = captureAiReadingsUpserts()
+    seedChartAndNoCache('love')
+
+    const res = await POST(req({ chartId: 'chart-1', topic: 'love' }))
+
+    expect(res.status).toBe(200)
+    expect(upserts).toHaveLength(1)
+    expect(upserts[0]!.expires_at).not.toBe(NEVER_EXPIRES_AT)
+    const days =
+      (new Date(upserts[0]!.expires_at as string).getTime() - Date.now()) /
+      (1000 * 60 * 60 * 24)
+    expect(days).toBeGreaterThan(6.9)
+    expect(days).toBeLessThan(7.1)
+  })
+
+  it('keeps a non-expiring row non-expiring when a premium user regenerates it', async () => {
+    userState.tier = 'premium'
+    const upserts = captureAiReadingsUpserts()
+    mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_tier_gate_test' } })
+    mockSupabase.push('ai_readings', {
+      data: {
+        id: 'reading-1',
+        content: 'old',
+        generated_at: '2026-05-01T00:00:00.000Z',
+        expires_at: NEVER_EXPIRES_AT,
+        last_regenerated_at: '2026-05-01T00:00:00.000Z',
+      },
+    })
+    mockSupabase.push('chart_calculations', {
+      data: {
+        planet_positions: [{ planet: 'sun', sign: 'aries', house: 1, longitude: 0 }],
+        house_cusps: [],
+        aspects: [],
+        ascendant: 0,
+        mc: 0,
+        birth_time_known: true,
+      },
+    })
+    mockSupabase.push('ai_readings', { data: null })
+
+    const res = await POST(req({ chartId: 'chart-1', topic: 'general', regenerate: true }))
+
+    expect(res.status).toBe(200)
+    expect(upserts).toHaveLength(1)
+    expect(upserts[0]!.expires_at).toBe(NEVER_EXPIRES_AT)
   })
 })

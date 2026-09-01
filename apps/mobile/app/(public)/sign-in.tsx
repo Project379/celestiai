@@ -1,6 +1,7 @@
 import { useAuth, useSignIn } from '@clerk/expo'
+import * as AppleAuthentication from 'expo-apple-authentication'
 import { Link, useRouter } from 'expo-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { pressFeedback } from '@/components/design-system/tokens'
 import { resolveClerkError } from '@/lib/clerk/errorMessages'
-import { useGoogleSignIn } from '@/lib/clerk/oauth'
+import { useAppleSignIn, useGoogleSignIn } from '@/lib/clerk/oauth'
 import { hapticInvite, hapticSelect } from '@/lib/haptics'
 import { logError } from '@/lib/monitoring/logError'
 
@@ -38,6 +39,7 @@ export default function SignInScreen() {
   const { isLoaded } = useAuth()
   const { signIn } = useSignIn()
   const { signInWithGoogle } = useGoogleSignIn()
+  const { signInWithApple } = useAppleSignIn()
   const router = useRouter()
 
   const [email, setEmail] = useState('')
@@ -45,6 +47,18 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [googleSubmitting, setGoogleSubmitting] = useState(false)
+  const [appleSubmitting, setAppleSubmitting] = useState(false)
+  // Gate the Apple button on the real native check, not just Platform.OS:
+  // isAvailableAsync is false in Expo Go and on iOS < 13. Android never
+  // sets it true. Apple's HIG: show the button only where SIWA works.
+  const [appleAuthAvailable, setAppleAuthAvailable] = useState(false)
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return
+    AppleAuthentication.isAvailableAsync()
+      .then(setAppleAuthAvailable)
+      .catch(() => setAppleAuthAvailable(false))
+  }, [])
 
   const handleGoogleSignIn = async () => {
     if (googleSubmitting) return
@@ -60,6 +74,23 @@ export default function SignInScreen() {
       // 'cancelled': user dismissed the sheet — no error, nothing to do
     } finally {
       setGoogleSubmitting(false)
+    }
+  }
+
+  const handleAppleSignIn = async () => {
+    if (appleSubmitting) return
+    setError(null)
+    setAppleSubmitting(true)
+    try {
+      const result = await signInWithApple()
+      if (result.status === 'error') {
+        setError(result.message)
+      } else if (result.status === 'success') {
+        router.replace('/')
+      }
+      // 'cancelled': user dismissed the sheet — no error, nothing to do
+    } finally {
+      setAppleSubmitting(false)
     }
   }
 
@@ -225,6 +256,38 @@ export default function SignInScreen() {
               </Text>
             </View>
           </Pressable>
+
+          {/* Sign in with Apple — iOS only, and only where the native check
+              passes. Apple's HIG governs the button's look: we set an
+              approved style (WHITE — highest contrast on the near-black bg),
+              type (SIGN_IN), and a 16px corner radius to match the app's
+              rounded-2xl controls. No further restyling is permitted and a
+              custom button would fail App Review (Guideline 4.8). The label
+              text is rendered by Apple's native component in the device
+              locale.
+              STELLAEUM_PLACEHOLDER: SIWA-BG-LABEL — whether that native
+              label renders Bulgarian or falls back to English on a
+              bg-locale device is unverifiable without a device build
+              (Phase A has no build). Twin button in sign-up.tsx. See
+              .planning/PLACEHOLDERS.md. */}
+          {Platform.OS === 'ios' && appleAuthAvailable && (
+            <View className="mt-4">
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={
+                  AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+                }
+                buttonStyle={
+                  AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                }
+                cornerRadius={16}
+                style={{ width: '100%', height: 52 }}
+                onPress={() => {
+                  hapticSelect()
+                  handleAppleSignIn()
+                }}
+              />
+            </View>
+          )}
 
           <View className="mt-10 flex-row items-center justify-center gap-2">
             <Text className="text-[13px] text-slate-500">Нямаш профил?</Text>

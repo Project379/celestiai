@@ -8,6 +8,7 @@ import { ReadingStream } from './ReadingStream'
 import { CapReachedNotice } from './CapReachedNotice'
 import { TOPIC_META, type OracleTopic } from './TopicCard'
 import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
+import { AI_GENERATED_DISCLOSURE_BG } from '@/lib/legal/compliance-copy'
 
 interface OraclePanelGlobalProps {
   chartId: string | null
@@ -171,6 +172,11 @@ function OraclePanel({ chartId, isPremium }: { chartId: string; isPremium: boole
                     )}
                   </p>
                 )}
+                {/* EU AI Act Art. 50 — AI-generated content disclosure,
+                    visible before any reading is shown. */}
+                <p className="mt-2 font-display text-[11px] text-slate-500">
+                  {AI_GENERATED_DISCLOSURE_BG}
+                </p>
               </div>
 
               <button

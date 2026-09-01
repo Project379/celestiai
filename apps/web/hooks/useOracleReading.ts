@@ -183,6 +183,21 @@ export function useOracleReading(chartId: string) {
           return
         }
 
+        // A live reading already exists → the route short-circuits before
+        // streaming (route.ts step 5) and returns JSON, not a text stream.
+        // Happens when a topic is (re)generated while its saved reading is
+        // still loading client-side. Render it as a finished reading rather
+        // than piping the JSON envelope into the completion buffer.
+        if ((res.headers.get('content-type') ?? '').includes('application/json')) {
+          const data = await res.json().catch(() => null)
+          if (data && typeof data.content === 'string') {
+            setCompletion(data.content)
+            void fetchSavedReadings()
+            return
+          }
+          throw new Error('Unexpected JSON response from /api/oracle/generate')
+        }
+
         if (!res.body) {
           throw new Error('Empty response body from /api/oracle/generate')
         }
@@ -216,7 +231,7 @@ export function useOracleReading(chartId: string) {
         }
       }
     },
-    [chartId],
+    [chartId, fetchSavedReadings],
   )
 
   return {

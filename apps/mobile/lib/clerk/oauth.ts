@@ -1,4 +1,5 @@
 import { useClerk, useSSO } from '@clerk/expo'
+import { useSignInWithApple } from '@clerk/expo/apple'
 import * as AuthSession from 'expo-auth-session'
 
 import { logError } from '@/lib/monitoring/logError'
@@ -11,10 +12,20 @@ const SSO_REDIRECT_URL = AuthSession.makeRedirectUri({ path: 'sso-callback' })
 
 const CATCH_ALL = 'Нещо се обърка. Опитай отново.'
 
-export type GoogleSignInResult =
+/**
+ * Shared result contract for every social-sign-in hook in this module, so
+ * the call site can swap providers without branching. `cancelled` is a
+ * control-flow branch (user dismissed the sheet), never surfaced as an
+ * error and never logged.
+ */
+export type OAuthSignInResult =
   | { status: 'success' }
   | { status: 'cancelled' }
   | { status: 'error'; message: string }
+
+/** @deprecated use OAuthSignInResult — kept so existing imports don't break. */
+export type GoogleSignInResult = OAuthSignInResult
+export type AppleSignInResult = OAuthSignInResult
 
 export function useGoogleSignIn() {
   const { startSSOFlow } = useSSO()
@@ -56,4 +67,85 @@ export function useGoogleSignIn() {
   }
 
   return { signInWithGoogle }
+}
+
+/**
+ * `useAppleSignIn` — the iOS-native "Sign in with Apple" counterpart of
+ * `useGoogleSignIn`, interchangeable at the call site (same
+ * `OAuthSignInResult` contract, same `success` / `cancelled` / `error`
+ * branches, same "log the raw error, show the mapped Bulgarian message").
+ *
+ * DELIBERATE API DEVIATION (2026-09-01): the brief specified
+ * `AppleAuthentication.signInAsync()` → `startSSOFlow({ strategy:
+ * 'oauth_apple', identityToken })`. `@clerk/expo@3.2.4`'s `startSSOFlow`
+ * has no `identityToken` parameter — `StartSSOFlowParams`
+ * (node_modules/@clerk/expo/dist/hooks/useSSO.d.ts:3-14) is only
+ * `{ redirectUrl?, unsafeMetadata?, authSessionOptions? }` plus the
+ * strategy union. This Clerk version ships the native-token handoff as
+ * `useSignInWithApple` on the `@clerk/expo/apple` subpath: internally it
+ * calls `AppleAuthentication.signInAsync({ requestedScopes: [FULL_NAME,
+ * EMAIL], nonce })`, then `signIn.create({ strategy: 'oauth_token_apple',
+ * token: identityToken })`, and manages the sign-in↔sign-up transfer
+ * (node_modules/@clerk/expo/dist/hooks/useSignInWithApple.ios.js). Same
+ * mechanism the brief describes — native sheet, native ID-token to Clerk,
+ * NOT the browser SSO flow — via the supported entry point.
+ *
+ * Availability: this hook resolves to a stub on Android / non-iOS whose
+ * function THROWS only when called (useSignInWithApple.js), so calling
+ * the hook unconditionally is safe and keeps hook order stable. On iOS
+ * `startAppleAuthenticationFlow` itself calls
+ * `AppleAuthentication.isAvailableAsync()` and throws if unavailable
+ * (Expo Go, iOS < 13). The screens still gate the BUTTON on
+ * `Platform.OS === 'ios' && isAvailableAsync()` so the throw path is
+ * unreachable in practice — see sign-in.tsx / sign-up.tsx.
+ *
+ * Cancel contract (must match `useGoogleSignIn`): Clerk's native Apple
+ * flow catches the user-cancel (`ERR_REQUEST_CANCELED` from
+ * `signInAsync`) internally and RETURNS `{ createdSessionId: null }` with
+ * no throw — so `!createdSessionId` here means cancel (or Clerk not yet
+ * loaded), both non-errors → `{ status: 'cancelled' }`, exactly like
+ * Google's `authSessionResult.type === 'cancel' | 'dismiss'` branch.
+ * Genuine failures throw and land in the catch. The catch also
+ * defensively re-checks for `ERR_REQUEST_CANCELED` in case a future Clerk
+ * version stops swallowing it — a dismissed sheet must never reach
+ * `logError` or show red text.
+ */
+export function useAppleSignIn() {
+  const { startAppleAuthenticationFlow } = useSignInWithApple()
+  const clerk = useClerk()
+
+  async function signInWithApple(): Promise<AppleSignInResult> {
+    try {
+      const { createdSessionId, setActive } = await startAppleAuthenticationFlow()
+
+      if (!createdSessionId || !setActive) {
+        return { status: 'cancelled' }
+      }
+
+      await setActive({ session: createdSessionId })
+      // Mirror the Google hook: Clerk populates firstName/lastName from the
+      // Apple credential asynchronously on transfer, so one reload closes
+      // the window where getDisplayName could read an empty name.
+      await clerk.user?.reload()
+      return { status: 'success' }
+    } catch (err) {
+      if (isAppleCancel(err)) {
+        return { status: 'cancelled' }
+      }
+      logError('ERR-AUTH-APPLE-SSO', err)
+      return { status: 'error', message: resolveClerkError(err, OAUTH_ERROR_MESSAGES) ?? CATCH_ALL }
+    }
+  }
+
+  return { signInWithApple }
+}
+
+/** `expo-apple-authentication` raises a CodedError with this code on user cancel. */
+function isAppleCancel(err: unknown): boolean {
+  return (
+    !!err &&
+    typeof err === 'object' &&
+    'code' in err &&
+    (err as { code?: unknown }).code === 'ERR_REQUEST_CANCELED'
+  )
 }

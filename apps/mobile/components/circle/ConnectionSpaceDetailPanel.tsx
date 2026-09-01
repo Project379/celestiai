@@ -4,8 +4,26 @@ import { Alert, BackHandler, Pressable, ScrollView, Text, View } from 'react-nat
 import type { CompatibilityDomainKey, RelationshipType } from '@stellaeum/core/relationships/types'
 import type { CircleSpaceView } from '@/lib/circle/types'
 import { font, pressFeedback } from '@/components/design-system/tokens'
+import { LockBadge, TierGateLoading } from '@/components/tier/PremiumLock'
+import { KRUG_INVITE_LOCKED, KRUG_REPORT_LOCKED } from '@/lib/tier/locked-copy'
 import { hapticSelect } from '@/lib/haptics'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
+
+/** Compact locked affordance for the button row. (tier item 5, Кръг) */
+function LockedPill({ label }: { label: string }) {
+  return (
+    <View
+      className="flex-row items-center rounded-full border border-white/15 bg-black/20 px-4 py-2"
+      style={{ gap: 8 }}
+      accessibilityRole="text"
+    >
+      <LockBadge size={12} />
+      <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+        {label}
+      </Text>
+    </View>
+  )
+}
 
 const TYPE_LABELS: Record<RelationshipType, string> = {
   romantic: 'Романтична',
@@ -49,6 +67,7 @@ function Eyebrow({ children, className }: { children: string; className: string 
  */
 export function ConnectionSpaceDetailPanel({
   view,
+  isPremium,
   isGenerating,
   isArchiving,
   onGenerateReport,
@@ -56,6 +75,11 @@ export function ConnectionSpaceDetailPanel({
   onClose,
 }: {
   view: CircleSpaceView | null
+  /**
+   * Free tier (tier item 5): report + invite actions render locked.
+   * `undefined` → tier still loading, render the neutral pending pill.
+   */
+  isPremium: boolean | undefined
   isGenerating: boolean
   isArchiving: boolean
   onGenerateReport: () => void
@@ -124,33 +148,43 @@ export function ConnectionSpaceDetailPanel({
           </View>
 
           <View className="mb-6 flex-row flex-wrap" style={{ gap: 10 }}>
-            {space.member_count >= 2 && (
-              <Pressable
-                disabled={isGenerating}
-                onPress={onGenerateReport}
-                className="rounded-full border border-bronze/35 px-4 py-2"
-                style={({ pressed }) => ({ ...pressFeedback(pressed), opacity: isGenerating ? 0.5 : pressed ? 0.6 : 1 })}
-              >
-                <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-bronze-text">
-                  {isGenerating ? 'Генериране...' : latestReport ? 'Регенерирай доклада' : 'Генерирай доклад'}
-                </Text>
-              </Pressable>
-            )}
-            {space.relationship_type !== 'romantic' && (
-              <Pressable
-                onPress={() => {
-                  hapticSelect()
-                  onClose()
-                  push({ pathname: '/circle/new-connection', params: { relationshipType: space.relationship_type, existingSpaceId: space.id } })
-                }}
-                className="rounded-full border border-violet-300/30 px-4 py-2"
-                style={({ pressed }) => pressFeedback(pressed)}
-              >
-                <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-100">
-                  Покани още човек
-                </Text>
-              </Pressable>
-            )}
+            {space.member_count >= 2 &&
+              (isPremium === undefined ? (
+                <TierGateLoading variant="pill" />
+              ) : isPremium ? (
+                <Pressable
+                  disabled={isGenerating}
+                  onPress={onGenerateReport}
+                  className="rounded-full border border-bronze/35 px-4 py-2"
+                  style={({ pressed }) => ({ ...pressFeedback(pressed), opacity: isGenerating ? 0.5 : pressed ? 0.6 : 1 })}
+                >
+                  <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-bronze-text">
+                    {isGenerating ? 'Генериране...' : latestReport ? 'Регенерирай доклада' : 'Генерирай доклад'}
+                  </Text>
+                </Pressable>
+              ) : (
+                <LockedPill label={KRUG_REPORT_LOCKED} />
+              ))}
+            {space.relationship_type !== 'romantic' &&
+              (isPremium === undefined ? (
+                <TierGateLoading variant="pill" />
+              ) : isPremium ? (
+                <Pressable
+                  onPress={() => {
+                    hapticSelect()
+                    onClose()
+                    push({ pathname: '/circle/new-connection', params: { relationshipType: space.relationship_type, existingSpaceId: space.id } })
+                  }}
+                  className="rounded-full border border-violet-300/30 px-4 py-2"
+                  style={({ pressed }) => pressFeedback(pressed)}
+                >
+                  <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-100">
+                    Покани още човек
+                  </Text>
+                </Pressable>
+              ) : (
+                <LockedPill label={KRUG_INVITE_LOCKED} />
+              ))}
             <Pressable
               disabled={isArchiving}
               onPress={confirmArchive}

@@ -9,7 +9,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.stellaeum.app"
+      "bundleIdentifier": "com.stellaeum.app",
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.stellaeum.app"
@@ -31,6 +32,7 @@
       ],
       "expo-secure-store",
       "expo-web-browser",
+      "expo-apple-authentication",
       "@react-native-community/datetimepicker",
       "@sentry/react-native",
       "expo-font",

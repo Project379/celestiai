@@ -8,9 +8,12 @@ export const dynamic = 'force-dynamic'
 /**
  * GET /api/crystals?chartId=...
  *
- * Thin wrapper over @stellaeum/core getCrystalsOverview(). Premium-only.
- * Core handles the lazy recommendation generation + duplicate cleanup
- * that keeps the collection flow consistent on every read.
+ * Thin wrapper over @stellaeum/core getCrystalsOverview(). Returns 200 for
+ * every authed user (tier item 5, 2026-09-01): free tier gets the catalog
+ * grid with `locked: true` and empty collection/recommendations so the
+ * client can render it locked; premium gets the full personalised payload
+ * (`locked: false`), including the lazy recommendation generation +
+ * duplicate cleanup. `collect` + recommendation writes stay premium-only.
  */
 export async function GET(req: Request) {
   const { userId } = await auth()
@@ -31,11 +34,6 @@ export async function GET(req: Request) {
     }
 
     switch (result.error) {
-      case 'PREMIUM_REQUIRED':
-        return Response.json(
-          { error: 'Premium subscription required.', code: 'PREMIUM_REQUIRED' },
-          { status: 403 },
-        )
       case 'CHART_NOT_FOUND':
         return Response.json({ error: 'Chart not found' }, { status: 404 })
       case 'INTERNAL':

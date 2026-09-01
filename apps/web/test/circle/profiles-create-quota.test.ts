@@ -75,7 +75,11 @@ describe('POST /api/circle/profiles — RPC-backed quota claim (Batch 5.5 #3)', 
     )
   })
 
-  it('returns 403 with the existing quota message when the RPC returns null (free tier, quota exhausted)', async () => {
+  it('returns 403 with the quota message AND code PREMIUM_REQUIRED when the RPC returns null (free tier, quota exhausted)', async () => {
+    // tier item 5 (Кръг): the client renders a locked "add profile"
+    // affordance from `data.tier` so a free user does not normally reach
+    // this — but the server 403 stays the authority, and `code` lets any
+    // caller distinguish the tier cap from other 403s.
     mockSupabase.pushRpc('create_saved_profile_if_allowed', { data: null })
 
     const res = await POST(makeRequest())
@@ -83,6 +87,7 @@ describe('POST /api/circle/profiles — RPC-backed quota claim (Batch 5.5 #3)', 
 
     expect(res.status).toBe(403)
     expect(body.error).toBe('Без Premium можеш да пазиш само един crush профил.')
+    expect(body.code).toBe('PREMIUM_REQUIRED')
   })
 
   it('returns 500 when the RPC itself errors', async () => {

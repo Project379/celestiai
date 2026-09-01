@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation'
 import type { BirthData } from '@stellaeum/core/charts/schemas'
 import type { CompatibilityDomainKey, RelationshipType } from '@stellaeum/core/relationships/types'
 import { SavedProfileForm } from '@/components/circle/SavedProfileForm'
+import { PremiumLock, LockBadge } from '@/components/tier/PremiumLock'
+import {
+  KRUG_SECOND_PROFILE_LOCKED,
+  KRUG_INVITE_LOCKED,
+  KRUG_REPORT_LOCKED,
+} from '@/lib/tier/locked-copy'
 import type {
   CircleDashboardData,
   CircleSpaceView,
@@ -13,6 +19,22 @@ import type {
   ConnectionReportSection,
   SavedProfileReportContent,
 } from '@/lib/circle/types'
+
+/**
+ * Compact locked affordance for a button row — a padlock + short label
+ * where a premium user would see an action button. (tier item 5, Кръг)
+ */
+function LockedAction({ label }: { label: string }) {
+  return (
+    <span
+      role="note"
+      className="inline-flex items-center gap-2 rounded-full border border-slate-200/15 bg-black/20 px-4 py-2 font-cinzel text-[10px] uppercase tracking-[0.28em] text-slate-400"
+    >
+      <LockBadge />
+      {label}
+    </span>
+  )
+}
 
 const DOMAIN_LABELS: Record<CompatibilityDomainKey, string> = {
   emotional_resonance: 'Емоционален резонанс',
@@ -404,14 +426,18 @@ export function CircleHub({ data }: { data: CircleDashboardData }) {
                   }
                   className="w-full rounded-2xl border border-slate-200/10 bg-black/20 px-4 py-3 text-sm text-slate-100 outline-none placeholder:text-slate-500"
                 />
-                <button
-                  type="button"
-                  disabled={isPending || (relationshipType === 'romantic' && Boolean(romanticSpace))}
-                  onClick={() => handleCreateInvite()}
-                  className="rounded-full border border-violet-300/35 bg-violet-500/10 px-5 py-2.5 font-cinzel text-[10px] uppercase tracking-[0.3em] text-violet-100 disabled:opacity-50"
-                >
-                  {isPending ? 'Създаване...' : 'Създай покана'}
-                </button>
+                {data.tier === 'premium' ? (
+                  <button
+                    type="button"
+                    disabled={isPending || (relationshipType === 'romantic' && Boolean(romanticSpace))}
+                    onClick={() => handleCreateInvite()}
+                    className="rounded-full border border-violet-300/35 bg-violet-500/10 px-5 py-2.5 font-cinzel text-[10px] uppercase tracking-[0.3em] text-violet-100 disabled:opacity-50"
+                  >
+                    {isPending ? 'Създаване...' : 'Създай покана'}
+                  </button>
+                ) : (
+                  <LockedAction label={KRUG_INVITE_LOCKED} />
+                )}
                 {relationshipType === 'romantic' && romanticSpace && (
                   <p className="text-sm leading-7 text-slate-400">
                     Вече имаш активна романтична връзка. Можеш да създаваш само приятелски, работни или семейни пространства допълнително.
@@ -577,32 +603,38 @@ export function CircleHub({ data }: { data: CircleDashboardData }) {
                   </div>
 
                   <div className="mt-8 flex flex-wrap gap-3">
-                    {data.tier === 'premium' && selectedSpace.space.member_count >= 2 && (
-                      <button
-                        type="button"
-                        disabled={isPending}
-                        onClick={handleGenerateReport}
-                        className="rounded-full border border-amber-300/30 px-4 py-2 font-cinzel text-[10px] uppercase tracking-[0.28em] text-amber-100 disabled:opacity-50"
-                      >
-                        {isPending ? 'Генериране...' : selectedSpace.latestReport ? 'Регенерирай доклада' : 'Генерирай доклад'}
-                      </button>
-                    )}
-                    {data.tier === 'premium' && selectedSpace.space.relationship_type !== 'romantic' && (
-                      <button
-                        type="button"
-                        disabled={isPending}
-                        onClick={() =>
-                          handleCreateInvite(
-                            selectedSpace.space.id,
-                            selectedSpace.space.relationship_type,
-                            selectedSpace.space.label,
-                          )
-                        }
-                        className="rounded-full border border-violet-300/30 px-4 py-2 font-cinzel text-[10px] uppercase tracking-[0.28em] text-violet-100 disabled:opacity-50"
-                      >
-                        Покани още човек
-                      </button>
-                    )}
+                    {selectedSpace.space.member_count >= 2 &&
+                      (data.tier === 'premium' ? (
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={handleGenerateReport}
+                          className="rounded-full border border-amber-300/30 px-4 py-2 font-cinzel text-[10px] uppercase tracking-[0.28em] text-amber-100 disabled:opacity-50"
+                        >
+                          {isPending ? 'Генериране...' : selectedSpace.latestReport ? 'Регенерирай доклада' : 'Генерирай доклад'}
+                        </button>
+                      ) : (
+                        <LockedAction label={KRUG_REPORT_LOCKED} />
+                      ))}
+                    {selectedSpace.space.relationship_type !== 'romantic' &&
+                      (data.tier === 'premium' ? (
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() =>
+                            handleCreateInvite(
+                              selectedSpace.space.id,
+                              selectedSpace.space.relationship_type,
+                              selectedSpace.space.label,
+                            )
+                          }
+                          className="rounded-full border border-violet-300/30 px-4 py-2 font-cinzel text-[10px] uppercase tracking-[0.28em] text-violet-100 disabled:opacity-50"
+                        >
+                          Покани още човек
+                        </button>
+                      ) : (
+                        <LockedAction label={KRUG_INVITE_LOCKED} />
+                      ))}
                     <button
                       type="button"
                       disabled={isPending}
@@ -740,7 +772,14 @@ export function CircleHub({ data }: { data: CircleDashboardData }) {
             </div>
 
             <div className="mt-7">
-              <SavedProfileForm isSubmitting={isPending} onSubmit={handleCreateSavedProfile} />
+              {data.tier !== 'premium' && data.savedProfiles.length >= 1 ? (
+                <PremiumLock
+                  title={KRUG_SECOND_PROFILE_LOCKED.title}
+                  sub={KRUG_SECOND_PROFILE_LOCKED.sub}
+                />
+              ) : (
+                <SavedProfileForm isSubmitting={isPending} onSubmit={handleCreateSavedProfile} />
+              )}
             </div>
           </article>
 

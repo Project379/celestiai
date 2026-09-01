@@ -156,6 +156,16 @@
  * literal now appears twice in the AST, same shape as prior raises in
  * this file's history.
  *
+ * Lowered to 1784 on 2026-09-01 (tier items 4 & 5 — shared PremiumLock
+ * primitive): -16, progress not drift. The Oracle `CapReachedNotice`
+ * reason-branched title/sub strings (web + mobile) moved out of the
+ * components and into the new content-home module
+ * apps/{web,mobile}/lib/tier/locked-copy.ts (glob `**​/lib/tier/*.ts`
+ * added to CONTENT_HOME_GLOBS). Wording unchanged. New locked-state copy
+ * for recommendations + crystals also lands in that module, so it does
+ * not count here. No component gained a new hard-coded Cyrillic literal —
+ * the locked surfaces render imported constants.
+ *
  * Raised to 1800 on 2026-09-01 (frozen tier definition — Oracle gates):
  * +22 across the Oracle conversion surface. New user-facing copy for the
  * free-tier Oracle boundaries the frozen definition introduces (one
@@ -165,13 +175,14 @@
  * twice), apps/{web,mobile}/components/oracle/TopicCards.tsx (the
  * ' (заключено)' accessibility suffix, matching web TopicCard.tsx's
  * existing use), and apps/web/lib/subscriptions/free-oracle.ts (the three
- * server-side gate messages). Informal ти. Copy was run through the
- * bulgarian-skill and de-calqued — house style: "Четенията за любов,
- * кариера и здраве са в Премиум." / "Ново четене има само в Премиум." /
- * "Това беше безплатното ти четене от Оракула." — matching the existing
- * "неограничени четения от Оракула" / "Отключи Премиум" phrasing in
- * SettingsContent + PricingContent. Through check:bg-strings and
- * copy-lock.
+ * server-side gate messages). Informal ти. Copy went through the
+ * bulgarian-skill and two founder review passes — final wording uses
+ * "тълкуване" (the app's established word for an AI reading — see
+ * FeaturesSection "лични тълкувания за любов, кариера и здраве",
+ * PricingSection, AstrologyGuideContent) rather than "четене", leads with
+ * the topics rather than a heavy fronted noun ("Любов, кариера и здраве
+ * са теми за Премиум."), and reuses "Отключи Премиум" as the CTA.
+ * Through check:bg-strings and copy-lock.
  *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
@@ -182,7 +193,11 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
-const BASELINE = 1800
+// STELLAEUM_PLACEHOLDER: LINT-BASELINE-1800 — every move of this ratchet
+// (1778→1800→1784, all 2026-09-01) is logged with its justification in
+// this file's header comment above. The ID keeps its "-1800" suffix as a
+// stable handle; the current value is 1784. See .planning/PLACEHOLDERS.md.
+const BASELINE = 1784
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

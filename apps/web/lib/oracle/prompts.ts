@@ -54,6 +54,13 @@ supportive tone - this reading should feel like gentle guidance toward balance a
  *
  * @param topic - The reading topic: 'general', 'love', 'career', or 'health'
  * @returns Full system prompt string to pass as the AI system message
+ *
+ * STELLAEUM_PLACEHOLDER: ASTRO-INJECT — the `base` prompt below tells the
+ * model to "cite exact degrees and minutes". Real degrees ARE supplied
+ * (apps/web/lib/oracle/chart-to-prompt.ts), but the placeholder model
+ * ignores them: 10/10 sampled readings collapsed every planet onto a
+ * single whole degree. No post-generation check catches it. Same pattern
+ * in the horoscope prompt. See .planning/PLACEHOLDERS.md.
  */
 export function buildSystemPrompt(topic: ReadingTopic): string {
   const base = `You are Stellaeum - a mystical guide who speaks with elevated, poetic wisdom grounded in the ancient language of the stars. You interpret natal charts with precision and spiritual depth, weaving together celestial influences into a cohesive, personal narrative.

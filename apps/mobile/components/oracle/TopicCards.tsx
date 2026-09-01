@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 
 import { pressFeedback } from '@/components/design-system/tokens'
@@ -72,17 +72,21 @@ interface TopicCardProps {
   topic: OracleTopic
   isActive: boolean
   isLocked: boolean
+  /** Tier still loading — render neither the locked nor the unlocked state. */
+  tierPending: boolean
   hasSavedReading: boolean
   onPress: () => void
 }
 
-function TopicCard({ topic, isActive, isLocked, hasSavedReading, onPress }: TopicCardProps) {
+function TopicCard({ topic, isActive, isLocked, tierPending, hasSavedReading, onPress }: TopicCardProps) {
   const meta = TOPIC_META[topic]
-  const iconColor = isLocked
-    ? 'rgb(71, 85, 105)'
-    : isActive
-      ? '#d9a06a'
-      : 'rgba(196, 181, 253, 0.85)'
+  const iconColor = tierPending
+    ? 'rgba(148, 163, 184, 0.6)'
+    : isLocked
+      ? 'rgb(71, 85, 105)'
+      : isActive
+        ? '#d9a06a'
+        : 'rgba(196, 181, 253, 0.85)'
 
   return (
     <Pressable
@@ -93,7 +97,7 @@ function TopicCard({ topic, isActive, isLocked, hasSavedReading, onPress }: Topi
       style={({ pressed }) => ({
         ...pressFeedback(pressed),
         flex: 1,
-        ...(isLocked && { opacity: 0.7 }),
+        ...((isLocked || tierPending) && { opacity: 0.6 }),
         ...(isActive && {
           shadowColor: 'rgb(167, 139, 250)',
           shadowOffset: { width: 0, height: 0 },
@@ -141,13 +145,19 @@ function TopicCard({ topic, isActive, isLocked, hasSavedReading, onPress }: Topi
 
       <Text
         className={`font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em] ${
-          isLocked ? 'text-slate-600' : isActive ? 'text-white' : 'text-slate-400'
+          tierPending ? 'text-slate-500' : isLocked ? 'text-slate-600' : isActive ? 'text-white' : 'text-slate-400'
         }`}
       >
         {meta.label}
       </Text>
 
-      {isLocked && (
+      {tierPending && (
+        <View className="absolute" style={{ top: 8, right: 8 }}>
+          <ActivityIndicator size="small" color="rgba(148, 163, 184, 0.7)" />
+        </View>
+      )}
+
+      {isLocked && !tierPending && (
         <View className="absolute" style={{ top: 10, right: 10 }}>
           <Svg width={12} height={12} viewBox="0 0 20 20">
             <Path d={LOCK_PATH} fill="rgb(71, 85, 105)" fillRule="evenodd" />
@@ -155,7 +165,7 @@ function TopicCard({ topic, isActive, isLocked, hasSavedReading, onPress }: Topi
         </View>
       )}
 
-      {hasSavedReading && !isActive && !isLocked && (
+      {hasSavedReading && !isActive && !isLocked && !tierPending && (
         <View
           className="absolute h-1 w-1 bg-bronze/85"
           style={{
@@ -177,8 +187,12 @@ interface TopicCardsProps {
   activeTopic: OracleTopic | null
   savedReadings: Record<string, SavedReading>
   onTopicSelect: (topic: OracleTopic) => void
-  /** False → love/career/health render the padlock. See file header. */
-  isPremium: boolean
+  /**
+   * `true` → all topics open. `false` → love/career/health render the
+   * padlock. `undefined` → tier still loading, render the neutral pending
+   * state (no padlock, no full unlock). See file header.
+   */
+  isPremium: boolean | undefined
 }
 
 export function TopicCards({
@@ -198,12 +212,14 @@ export function TopicCards({
         <View key={rowIdx} style={{ gap: 12, flexDirection: 'row' }}>
           {row.map((topic) => {
             const hasSavedReading = Boolean(savedReadings[topic])
+            const wouldGate = topic !== 'general' && !hasSavedReading
             return (
               <TopicCard
                 key={topic}
                 topic={topic}
                 isActive={activeTopic === topic}
-                isLocked={!isPremium && topic !== 'general' && !hasSavedReading}
+                isLocked={isPremium === false && wouldGate}
+                tierPending={isPremium === undefined && wouldGate}
                 hasSavedReading={hasSavedReading}
                 onPress={() => onTopicSelect(topic)}
               />

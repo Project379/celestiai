@@ -5,11 +5,15 @@ import type { CatalogRow } from '@stellaeum/core/crystals/queries'
 
 import { CrystalGem, type GemVariant } from './CrystalGem'
 import { pressFeedback } from '@/components/design-system/tokens'
+import { LockBadge } from '@/components/tier/PremiumLock'
+import { CRYSTALS_COLLECT_LOCKED } from '@/lib/tier/locked-copy'
 
 interface CrystalDetailPanelProps {
   crystal: CatalogRow | null
   reason?: string | null
   canCollect?: boolean
+  /** Free tier (tier item 5): show the collect button as a locked affordance. */
+  collectLocked?: boolean
   collecting?: boolean
   onCollect?: () => void
   onClose: () => void
@@ -56,6 +60,7 @@ export function CrystalDetailPanel({
   crystal,
   reason,
   canCollect,
+  collectLocked,
   collecting,
   onCollect,
   onClose,
@@ -163,7 +168,7 @@ export function CrystalDetailPanel({
               </Text>
             </View>
 
-            {canCollect && (
+            {canCollect && !collectLocked && (
               <Pressable
                 onPress={onCollect}
                 disabled={collecting}
@@ -177,6 +182,19 @@ export function CrystalDetailPanel({
                   {collecting ? 'Събира се...' : 'Събери в колекцията'}
                 </Text>
               </Pressable>
+            )}
+
+            {collectLocked && (
+              <View
+                className="mt-6 w-full flex-row items-center justify-center rounded-full border border-white/10 bg-white/[0.02] px-6 py-4"
+                style={{ gap: 8 }}
+                accessibilityState={{ disabled: true }}
+              >
+                <LockBadge />
+                <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  {CRYSTALS_COLLECT_LOCKED}
+                </Text>
+              </View>
             )}
           </View>
         </ScrollView>

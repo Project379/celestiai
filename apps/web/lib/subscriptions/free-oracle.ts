@@ -110,11 +110,11 @@ export type FreeOracleGateReason = 'free_used' | 'premium_topic' | 'premium_rege
 export function freeOracleGateResponse(reason: FreeOracleGateReason): Response {
   const messages: Record<FreeOracleGateReason, string> = {
     free_used:
-      'Това беше безплатното ти четене от Оракула. С Премиум получаваш неограничени четения по всички теми.',
+      'Това беше безплатното ти тълкуване от Оракула. С Премиум получаваш неограничени тълкувания по всички теми.',
     premium_topic:
-      'Четенията за любов, кариера и здраве са в Премиум. Личностното четене остава безплатно.',
+      'Любов, кариера и здраве са теми за Премиум. Личностното тълкуване остава безплатно.',
     premium_regenerate:
-      'Ново четене има само в Премиум.',
+      'Ново тълкуване има само в Премиум.',
   }
 
   return Response.json(

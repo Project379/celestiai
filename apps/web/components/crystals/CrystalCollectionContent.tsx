@@ -10,6 +10,8 @@ import {
 } from './CrystalDetailPanel'
 import type { GemVariant } from './CrystalGem'
 import { DailyStreakPanel } from './DailyStreakPanel'
+import { PremiumLock } from '@/components/tier/PremiumLock'
+import { CRYSTALS_LOCKED } from '@/lib/tier/locked-copy'
 
 interface CrystalRow {
   id: string
@@ -59,12 +61,15 @@ interface CrystalState {
   collection: UserCrystalRow[]
   recommendations: RecommendationRow[]
   lunarPhase: { id: string; name: string; latin: string; illumination: number }
+  /** Free tier (tier item 5): grid is browsable, collection features locked. */
+  locked: boolean
 }
 
 type Tab = 'windows' | 'discovered' | 'daily' | 'all'
 
 interface CrystalCollectionContentProps {
-  chartId: string
+  /** null for a free user with no chart — the API ignores it in that case. */
+  chartId: string | null
 }
 
 export function CrystalCollectionContent({
@@ -81,9 +86,10 @@ export function CrystalCollectionContent({
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/crystals?chartId=${chartId}`, {
-        cache: 'no-store',
-      })
+      const res = await fetch(
+        chartId ? `/api/crystals?chartId=${chartId}` : '/api/crystals',
+        { cache: 'no-store' },
+      )
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as {
           error?: string
@@ -102,6 +108,14 @@ export function CrystalCollectionContent({
   useEffect(() => {
     void load()
   }, [load])
+
+  const locked = state?.locked ?? false
+
+  // Free tier only ever sees the catalog grid — the collection-driven tabs
+  // (Прозорци / Твои камъни / Дневна серия) are premium.
+  useEffect(() => {
+    if (locked) setTab('all')
+  }, [locked])
 
   const discoveredIds = useMemo(() => {
     if (!state) return new Set<string>()
@@ -217,12 +231,14 @@ export function CrystalCollectionContent({
     (r) => !discoveredIds.has(r.crystal_id)
   ).length
 
-  const tabs: { id: Tab; label: string; count?: number }[] = [
-    { id: 'windows', label: 'Прозорци', count: pendingRecsCount },
-    { id: 'discovered', label: 'Твои камъни', count: state.collection.length },
-    { id: 'daily', label: 'Дневна серия' },
-    { id: 'all', label: 'Каталог', count: state.catalog.length },
-  ]
+  const tabs: { id: Tab; label: string; count?: number }[] = locked
+    ? [{ id: 'all', label: 'Каталог', count: state.catalog.length }]
+    : [
+        { id: 'windows', label: 'Прозорци', count: pendingRecsCount },
+        { id: 'discovered', label: 'Твои камъни', count: state.collection.length },
+        { id: 'daily', label: 'Дневна серия' },
+        { id: 'all', label: 'Каталог', count: state.catalog.length },
+      ]
 
   return (
     <div className="relative">
@@ -248,6 +264,12 @@ export function CrystalCollectionContent({
           />
         ))}
       </div>
+
+      {locked && (
+        <div className="mb-10">
+          <PremiumLock title={CRYSTALS_LOCKED.title} sub={CRYSTALS_LOCKED.sub} />
+        </div>
+      )}
 
       {tab === 'windows' && pendingRecsCount === 0 && (
         <div className="mb-10 rounded-2xl border border-white/10 bg-white/[0.02] px-6 py-10 text-center">
@@ -299,7 +321,8 @@ export function CrystalCollectionContent({
       <CrystalDetailPanel
         crystal={selectedDetail}
         reason={selectedRec?.reason_text_bg ?? selectedRec?.reason_text_en ?? null}
-        canCollect={Boolean(selectedRec && !selectedIsDiscovered)}
+        canCollect={!locked && Boolean(selectedRec && !selectedIsDiscovered)}
+        collectLocked={locked}
         collecting={collecting}
         onCollect={handleCollect}
         onClose={() => setSelectedSlug(null)}

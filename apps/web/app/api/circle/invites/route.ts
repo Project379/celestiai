@@ -72,8 +72,10 @@ export async function POST(req: Request) {
 
     const tier = await getUserTier(userId)
     if (tier !== 'premium') {
+      // Authority for the gate. The client renders a locked affordance
+      // from tier so a free user does not normally reach this. (tier item 5)
       return Response.json(
-        { error: 'Само Premium потребители могат да изпращат покани за връзка.' },
+        { error: 'Само Premium потребители могат да изпращат покани за връзка.', code: 'PREMIUM_REQUIRED' },
         { status: 403 },
       )
     }

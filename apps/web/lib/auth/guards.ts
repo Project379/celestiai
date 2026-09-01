@@ -34,6 +34,12 @@ export function toErrorResponse(error: unknown, fallbackMessage: string) {
   // VERIFICATION-SURFACE-GAPS.md #9. Capture explicitly here so the
   // failures most likely to happen (external-service calls in the 6 routes
   // that use this helper) are actually monitored.
+  //
+  // STELLAEUM_PLACEHOLDER: CAUGHT-500S — this capture only covers routes
+  // that funnel through toErrorResponse. Routes that build a bare
+  // `Response.json(…, { status: 500 })` in their own catch (e.g. the
+  // Oracle generate route's save-failure path) still reach Sentry through
+  // nothing. See .planning/PLACEHOLDERS.md.
   Sentry.captureException(error, { extra: { fallbackMessage } })
   console.error(fallbackMessage, error)
   return Response.json({ error: fallbackMessage }, { status: 500 })

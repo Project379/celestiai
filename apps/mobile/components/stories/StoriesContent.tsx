@@ -9,7 +9,9 @@ import {
 } from '@stellaeum/core/stories/catalog'
 
 import { RecommendationCard } from './RecommendationCard'
+import { PremiumLock, TierGateLoading } from '@/components/tier/PremiumLock'
 import { pressFeedback } from '@/components/design-system/tokens'
+import { RECS_MONTHLY_LOCKED } from '@/lib/tier/locked-copy'
 import { useStoryList } from '@/hooks/useStoryList'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 
@@ -36,6 +38,12 @@ const BG_MONTH_YEAR = new Intl.DateTimeFormat('bg-BG', {
 
 interface StoriesContentProps {
   sunSign: string | null
+  /**
+   * Free tier (tier item 4): daily pick stays open, monthly arc is locked.
+   * `undefined` → tier still loading, monthly arc shows the neutral pending
+   * treatment (neither locked nor unlocked).
+   */
+  isPremium?: boolean | undefined
 }
 
 /**
@@ -53,7 +61,9 @@ interface StoriesContentProps {
  * conversion; this surface stays product-honest about the dependency
  * rather than running a sample-preview conversion loop.
  */
-export function StoriesContent({ sunSign }: StoriesContentProps) {
+export function StoriesContent({ sunSign, isPremium }: StoriesContentProps) {
+  const tierPending = isPremium === undefined
+  const monthlyLocked = isPremium === false
   const { push } = useGuardedNavigation()
   const [phase, setPhase] = useState<LunarPhase>(() => getLunarPhase())
   const [now, setNow] = useState(() => new Date())
@@ -177,7 +187,19 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
           <View className="h-px flex-1 bg-slate-300/15" />
         </View>
 
-        {arc && isLoaded && (
+        {tierPending && isLoaded && (
+          <View className="mb-8">
+            <TierGateLoading variant="block" />
+          </View>
+        )}
+
+        {monthlyLocked && isLoaded && (
+          <View className="mb-8">
+            <PremiumLock title={RECS_MONTHLY_LOCKED.title} sub={RECS_MONTHLY_LOCKED.sub} />
+          </View>
+        )}
+
+        {arc && isLoaded && !tierPending && (
           <>
             <View className="mb-12">
               <View className="flex-row flex-wrap items-center" style={{ gap: 10 }}>
@@ -202,6 +224,7 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
                   status={getStatus(arc.primary.id)}
                   onStatusChange={(s) => setStatus(arc.primary.id, s)}
                   variant="monthly"
+                  locked={monthlyLocked}
                 />
               </View>
               <View>
@@ -211,6 +234,7 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
                   status={getStatus(arc.companion.id)}
                   onStatusChange={(s) => setStatus(arc.companion.id, s)}
                   variant="monthly"
+                  locked={monthlyLocked}
                 />
               </View>
             </View>

@@ -6,18 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Stellaeum AI** is a subscription-based astrology application for the Bulgarian market. It combines Swiss Ephemeris astronomical precision with AI-powered readings, serving Web, iOS, and Android from a single codebase.
 
-> **AI model — current truth (2026-08-28):** production runs `meta-llama/llama-3.3-70b-instruct` via **OpenRouter**, using the Vercel AI SDK's `@ai-sdk/openai` as a generic OpenAI-compatible client (`apps/web/lib/ai/client.ts`). This is an explicit placeholder with known-weak Bulgarian output — do not add prompt workarounds or post-processing for it. A swap to `google/gemini-3.7-flash` (default) / `openai/gpt-5.4-mini` (fallback) is **recommended but not yet decided in code**; see `.planning/LLM-PROVIDER-DECISION-2026-08-27.md`. Any doc that says readings run "via Gemini" or "via GPT-5" is stale drift.
+> **AI model:** this file does not restate model status. See `.planning/SYSTEM-MAP.md` §4 for the current AI truth — which model runs, via which provider/client, and what is and isn't checked on its output — and `.planning/PLACEHOLDERS.md` LLM-MODEL for provider-swap status. The output is a known-weak placeholder: do not add prompt workarounds or post-processing for it.
 
 ## Tech Stack
 
 - **Monorepo**: Turborepo
 - **Universal Framework**: Solito (Next.js 15 + Expo SDK 52)
 - **Auth**: Clerk (handles Web cookies + Native tokens/biometrics)
-- **Database**: Supabase (PostgreSQL + Realtime)
+- **Database**: Supabase (PostgreSQL) — used as plain managed Postgres; Realtime/Storage/Edge Functions are not used
 - **ORM**: Drizzle ORM
 - **Styling**: NativeWind v4
 - **Visualization**: react-native-svg (mobile), D3.js-driven SVG (web) — corrected 2026-08-04; no Skia dependency exists in the app, and web's chart renders to SVG, not Canvas. See CHECKPOINT-2026-08-04.md §2.
-- **Astrology Engine**: swisseph-wasm (Swiss Ephemeris)
+- **Astrology Engine**: native `sweph` (Swiss Ephemeris via N-API bindings), server-side only — not `swisseph-wasm`
 - **Payments**: Stripe (web) + RevenueCat (mobile IAP)
 
 ## Monorepo Structure
@@ -29,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   └── app/api/  # API routes (astrology calculations, webhooks)
 │   └── mobile/       # Expo app
 ├── packages/
-│   ├── astrology/    # Swiss Ephemeris wrapper (swisseph-wasm)
+│   ├── astrology/    # Swiss Ephemeris wrapper (native sweph)
 │   └── db/           # Shared Drizzle ORM schema + Supabase client
 ```
 
@@ -42,7 +42,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Key Architecture Decisions
 
-- Heavy WASM calculations (Swiss Ephemeris) run server-side via API routes, not in mobile bundle
+- Heavy Swiss Ephemeris calculations (native `sweph`) run server-side via API routes, not in the mobile bundle
 - Clerk JWT Templates configured for Supabase RLS
 - Stripe/RevenueCat webhooks update `users.subscription_tier`
 - 90% code sharing between web and mobile via Solito

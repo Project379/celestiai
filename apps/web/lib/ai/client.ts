@@ -13,6 +13,10 @@ import { createOpenAI } from '@ai-sdk/openai'
 // changes, and would mask whether a new model actually fixes anything.
 export const AI_MODEL = 'meta-llama/llama-3.3-70b-instruct'
 
+// STELLAEUM_PLACEHOLDER: LLM-FAILOVER — one provider (OpenRouter), no
+// retry and no alternate-provider fallback wired behind this client. A 5xx
+// mid-generation is turned into a deliberate 502 (isUpstreamAiError below)
+// but nothing recovers it. See .planning/PLACEHOLDERS.md.
 export const openrouter = createOpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY,

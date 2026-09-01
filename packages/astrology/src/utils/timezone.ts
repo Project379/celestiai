@@ -35,7 +35,11 @@ export function localTimeToUTC(
   // Look up timezone from coordinates
   const timezones = findTimezone(lat, lon)
   if (!timezones || timezones.length === 0 || timezones[0] === undefined) {
-    // Fallback: treat as UTC if timezone cannot be determined
+    // Fallback: treat as UTC if timezone cannot be determined.
+    // STELLAEUM_PLACEHOLDER: ASTRO-TIMEZONE — the BG timezone/DST path
+    // through here (and getUTCOffsetMinutes below) was never validated
+    // against real Bulgarian birth locations; the April ephemeris
+    // validation covered planet math only. See .planning/PLACEHOLDERS.md.
     const fallbackParts = localTime.split(':').map(Number)
     if (fallbackParts.length < 2) {
       throw new Error(`Invalid localTime: expected HH:MM, got "${localTime}"`)

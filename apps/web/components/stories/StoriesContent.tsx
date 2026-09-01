@@ -8,6 +8,8 @@ import { getDailyForPhase, getMonthlyArcForSign, MONTHLY_BY_SIGN } from '@stella
 import { useStoryList } from '@/hooks/useStoryList'
 import type { RecommendationStatus } from '@stellaeum/core/stories/types'
 import { RecommendationCard } from './RecommendationCard'
+import { PremiumLock } from '@/components/tier/PremiumLock'
+import { RECS_MONTHLY_LOCKED } from '@/lib/tier/locked-copy'
 
 const KIND_SECTION_LABEL: Record<'book' | 'film' | 'series' | 'episode' | 'story', string> = {
   book: 'Книга за месеца',
@@ -46,9 +48,12 @@ const fadeUp = {
 
 interface StoriesContentProps {
   sunSign: string | null
+  /** Free tier (tier item 4): daily pick stays open, monthly arc is locked. */
+  isPremium?: boolean
 }
 
-export function StoriesContent({ sunSign }: StoriesContentProps) {
+export function StoriesContent({ sunSign, isPremium = false }: StoriesContentProps) {
+  const monthlyLocked = !isPremium
   const [phase, setPhase] = useState<LunarPhase>(() => getLunarPhase())
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
@@ -161,6 +166,12 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
           <span className="h-px flex-1 bg-gradient-to-r from-slate-300/25 via-slate-300/8 to-transparent" />
         </div>
 
+        {monthlyLocked && isLoaded && (
+          <div className="mb-8">
+            <PremiumLock title={RECS_MONTHLY_LOCKED.title} sub={RECS_MONTHLY_LOCKED.sub} />
+          </div>
+        )}
+
         {arc && isLoaded && (
           <>
             {/* Theme intro — open flow, hairline-led, no box */}
@@ -183,6 +194,7 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
                   status={getStatus(arc.primary.id)}
                   onStatusChange={s => setStatus(arc.primary.id, s)}
                   variant="monthly"
+                  locked={monthlyLocked}
                 />
               </div>
               <div>
@@ -192,6 +204,7 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
                   status={getStatus(arc.companion.id)}
                   onStatusChange={s => setStatus(arc.companion.id, s)}
                   variant="monthly"
+                  locked={monthlyLocked}
                 />
               </div>
             </div>
@@ -202,6 +215,7 @@ export function StoriesContent({ sunSign }: StoriesContentProps) {
           <MonthlyPreviewWithoutChart
             getStatus={getStatus}
             setStatus={setStatus}
+            locked={monthlyLocked}
           />
         )}
       </motion.section>
@@ -239,9 +253,11 @@ function SectionLabel({ text }: { text: string }) {
 function MonthlyPreviewWithoutChart({
   getStatus,
   setStatus,
+  locked = false,
 }: {
   getStatus: (id: string) => RecommendationStatus
   setStatus: (id: string, status: RecommendationStatus) => void
+  locked?: boolean
 }) {
   const sample = MONTHLY_BY_SIGN['Лъв']
   if (!sample) return null
@@ -271,6 +287,7 @@ function MonthlyPreviewWithoutChart({
             status={getStatus(sample.primary.id)}
             onStatusChange={s => setStatus(sample.primary.id, s)}
             variant="monthly"
+            locked={locked}
           />
         </div>
         <div>
@@ -280,6 +297,7 @@ function MonthlyPreviewWithoutChart({
             status={getStatus(sample.companion.id)}
             onStatusChange={s => setStatus(sample.companion.id, s)}
             variant="monthly"
+            locked={locked}
           />
         </div>
       </div>

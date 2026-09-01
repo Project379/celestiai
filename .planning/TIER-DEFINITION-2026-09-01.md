@@ -66,8 +66,9 @@ the gate/test suite run green this session.
 | 3 | **Oracle topic gating** — `love`/`career`/`health` premium, at the route AND the UI | **DONE** (VERIFIED). Route: free + non-`general` → 429 `CAP_REACHED` / `reason: premium_topic`, before any claim or generation. Free regenerate → `reason: premium_regenerate`. UI: `TopicCards` (web + mobile) render the padlock for the three topics when not premium (tap still hits the route — the route is the gate). Tests in `test/oracle/tier-gates.test.ts` + `generate-quota-bypass.test.ts`, proved red against the pre-change route. |
 | 4 | **Recommendations gating** — one visible, rest locked | **NOT DONE** — see §11. Scoped, not built. |
 | 5 | **Locked-state consistency** — one shared component across all locations | **PARTIAL** — the Oracle surfaces (topic padlock, conversion notice) are done and consistent between web and mobile. The other ~7 non-Oracle surfaces (crystals grid, Кръг, recommendations) and the single shared component are **NOT DONE** — see §11. |
-| 6 | **Conversion surface** — fix copy, add CTA, reach it from a locked-topic tap | **DONE for Oracle** (VERIFIED). `CapReachedNotice` (web + mobile) reworded per `reason`; lifetime wording replaces "this month / next month". Web CTA **"Отключи Премиум" → `/pricing`** (reusing the existing button label from PricingContent/SettingsContent). Mobile has **no CTA button** — blocked on the RevenueCat native paywall (documented in the component). A locked-topic tap and a spent free reading both route here. **Bulgarian copy run through the `bulgarian-skill`** and de-calqued — e.g. "Четенята за любов, кариера и здраве са в Премиум.", "Ново четене има само в Премиум.", "Това беше безплатното ти четене от Оракула." — matched to the existing "неограничени четения от Оракула" / "Отключи Премиум" house phrasing. |
+| 6 | **Conversion surface** — fix copy, add CTA, reach it from a locked-topic tap | **DONE for Oracle** (VERIFIED). `CapReachedNotice` (web + mobile) reworded per `reason`; lifetime wording replaces "this month / next month". Web CTA **"Отключи Премиум" → `/pricing`** (reusing the existing button label from PricingContent/SettingsContent). Mobile has **no CTA button** — blocked on the RevenueCat native paywall (documented in the component). A locked-topic tap and a spent free reading both route here. **Bulgarian copy run through the `bulgarian-skill`** and de-calqued over two founder-review passes — final wording uses "тълкуване" (the app's established word for an AI reading — cf. FeaturesSection / PricingSection / AstrologyGuideContent) rather than "четене", and leads with the topics instead of a fronted noun: "Любов, кариера и здраве са теми за Премиум.", "Ново тълкуване има само в Премиум.", "Това беше безплатното ти тълкуване от Оракула." CTA reuses "Отключи Премиум". |
 | 7 | **Reversal / existing-access report** | **DONE** — see §9 (rewritten) and §12 (live-data check). |
+| 8 | **Free lifetime `general` reading must never expire** | **DONE** (VERIFIED). Root cause: `apps/web/app/api/oracle/generate/route.ts` wrote `expires_at = generatedAt + 7d` for *every* reading; both the route's step-5 cache check and `GET /api/oracle/readings` filter `expires_at > now`, so after 7 days the free tier's one reading became unfetchable (row retained — no expiry-based DELETE exists anywhere; only `cron/cleanup-deleted-accounts` deletes `ai_readings`, and only for deleted accounts). Fix: `resolveReadingExpiry()` — free + `general` → `NEVER_EXPIRES_AT` sentinel (`2999-12-31…`, exported); every other reading keeps the 7-day window; a row already at the sentinel stays there across a tier change (free→premium→free churn). Display order needed no change — both platforms already prefer a saved reading over `CapReachedNotice` on topic-tap (web `OraclePanelGlobal.tsx:65-75`, mobile `useOracleReading.ts:198-211`); the cap notice only renders on a 429 from an actual generate/regenerate. One web-only defect fixed alongside: `useOracleReading.ts` `generateReading` treated the cache-hit JSON 200 (route step 5) as a text stream and would render the JSON envelope — now branches on `content-type`. Tests: 3 cases in `test/oracle/tier-gates.test.ts`, proved red against the pre-fix route. |
 
 ---
 
@@ -341,9 +342,8 @@ is not a conversion surface.**
 
 - Same component, same text, **same absence of any CTA**. Comment: *"No
   transactional CTA — the upgrade path lands when RevenueCat ships in P.15."*
-- Mobile has no purchase flow at all (RevenueCat paywall unbuilt), and the
-  web `/pricing` fallback link is currently gated behind an unfilled env
-  var.
+- Placeholder status: see `.planning/PLACEHOLDERS.md` PAYWALL-MOBILE and
+  APP-URL-MOBILE.
 
 **So, to make "end of the free Oracle reading" an actual conversion point,
 the work is:**
@@ -355,10 +355,9 @@ the work is:**
 2. **Add the CTA.**
    - Web: a button to `/pricing` (or an inline checkout). This is
      buildable now — Stripe checkout exists.
-   - Mobile: blocked on the RevenueCat native paywall (a separate
-     halt-required item) — until then the honest fallback is a link to web
-     `/pricing`, which itself needs `EXPO_PUBLIC_WEB_APP_URL` set and the
-     web sign-in→checkout redirect verified.
+   - Mobile: the honest interim is a link to web `/pricing` with the
+     sign-in→checkout redirect verified. Blockers: see
+     `.planning/PLACEHOLDERS.md` PAYWALL-MOBILE and APP-URL-MOBILE.
 3. **Also surface it at topic-tap.** Under the frozen definition a free
    user tapping `love` / `career` / `health` should hit the same conversion
    surface immediately (they never had those), not only after spending
@@ -425,9 +424,8 @@ the work is:**
 
 **Blocked / external (not new to this definition, but on the path):**
 
-- Mobile conversion CTA is blocked on the RevenueCat native paywall
-  (halt-required item) and, as an interim, on `EXPO_PUBLIC_WEB_APP_URL` +
-  the web sign-in→checkout redirect.
+- Mobile conversion CTA — blockers: see `.planning/PLACEHOLDERS.md`
+  PAYWALL-MOBILE and APP-URL-MOBILE.
 - Any AI-assisted version of the Ритъм correlation feature inherits the
   content-safety gap and the "user free text reaches the LLM for the first
   time" privacy surface from the system map.
@@ -473,9 +471,9 @@ COMMENT ON COLUMN public.users.free_oracle_used_at IS '…';
 Additive, nullable, no default — every existing row gets NULL. Non-locking
 on Postgres for a nullable column with no default. No data migration.
 
-**Apply path (the ledger is unreconciled — `supabase db push` is
-forbidden, it would replay 13 unrecorded migrations including a live
-`DROP COLUMN`):**
+**Apply path** (`supabase db push` is unsafe here — see
+`.planning/PLACEHOLDERS.md` MIGRATIONS; use the direct-`ALTER`-then-
+`migration repair` route below)**:**
 
 1. Run the `ALTER TABLE` **directly** against production — Supabase
    dashboard SQL editor, or a direct `psql` / connection with
@@ -564,6 +562,33 @@ consistent web↔mobile, but they are bespoke. Remaining:
   returns nothing for them. So in practice this user already has no
   viewable Oracle content, and the change removes a *latent* ability, not
   a live one.
+  - **UPDATE (item 8, expiry fix):** the four rows still physically exist —
+    nothing deletes on expiry (only `cron/cleanup-deleted-accounts` ever
+    deletes `ai_readings`, and only for accounts flagged for deletion).
+    **INFERRED, not re-verified:** the 2026-09-01 audit recorded these as
+    "generated 2026-05-10"; it did not re-read `generated_at` /
+    `last_regenerated_at`. Because `free_oracle_used_at` doesn't exist
+    (gate unenforced) and the pre-item-8 route allowed free regenerate, a
+    regenerate after expiry *could* have upserted fresh content over the
+    May text with `generated_at = now`. So: **restorable to the original
+    May content only if `generated_at` is still 2026-05-10**; if it is
+    later, the May text is gone (no history table — GDPR export reads the
+    live row only) and only the newer content is restorable. Confirm with:
+    `SELECT topic, generated_at, last_regenerated_at, expires_at FROM
+    public.ai_readings WHERE user_id =
+    'user_3DXG2tiu13Ft180WlWCZnvzjsIe';`
+  - Restore (the **`general`** row only — `love`/`career`/`health` would
+    hand a free account premium-topic content, a founder call):
+    `UPDATE public.ai_readings SET expires_at = '2999-12-31T00:00:00.000Z'
+    WHERE user_id = 'user_3DXG2tiu13Ft180WlWCZnvzjsIe' AND topic = 'general';`
+    The literal **must** equal `NEVER_EXPIRES_AT` in
+    `apps/web/app/api/oracle/generate/route.ts` — changing the constant
+    orphans hand-run SQL.
+  - Independently of any restore: once the item-2 migration lands this
+    user's `free_oracle_used_at` is NULL, so they can generate a fresh
+    lifetime `general` reading regardless. The item-8 fix is **go-forward
+    only** — `resolveReadingExpiry` runs at upsert time; no existing row's
+    `expires_at` is rewritten.
 - **No reading is deleted or hidden.** The route's cache-check path
   (`existingReading && !regenerate` → return it) is tier-blind, so any
   still-live reading — including a premium-topic one generated before a

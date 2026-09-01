@@ -331,4 +331,15 @@ export const BG_ALLOWLIST = [
   "Линкът",
   "синастрия",
 
+  // Compliance batch (2026-09-01) — standard Bulgarian legal/consumer-law
+  // abbreviations, used in the site footer's trader identification and the
+  // pricing-page disclosures. Not typos; the general dictionary lacks
+  // acronyms.
+  //   ЕИК — Единен идентификационен код (company registration number)
+  //   ДДС — Данък върху добавената стойност (VAT)
+  //   КЗП — Комисия за защита на потребителите (consumer-protection authority)
+  "ЕИК",
+  "ДДС",
+  "КЗП",
+
 ]

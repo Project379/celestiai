@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { PricingToggle } from '@/components/upgrade/PricingToggle'
+import { AI_GENERATED_DISCLOSURE_BG } from '@/lib/legal/compliance-copy'
 
 interface PricingContentProps {
   currentTier: string
@@ -271,16 +272,35 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
         </motion.article>
       </div>
 
-      {/* Footer note */}
-      <motion.p
+      {/* Footer note + legal / consumer-law disclosures */}
+      <motion.div
         initial="hidden"
         animate="visible"
         variants={fadeUp}
         custom={4}
-        className="mt-14 text-center font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-600"
+        className="mt-14 space-y-3 text-center"
       >
-        Сигурно плащане чрез Stripe · Прекрати по всяко време
-      </motion.p>
+        <p className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-600">
+          Сигурно плащане чрез Stripe
+        </p>
+        <p className="mx-auto max-w-xl font-display text-[12px] leading-relaxed text-slate-500">
+          Цената е с включен ДДС. Абонаментът се подновява автоматично, докато
+          не го прекратиш. Можеш да прекратиш по всяко време от настройките на
+          абонамента си или през клиентския портал на Stripe.
+        </p>
+        <p className="font-display text-[12px] text-slate-500">
+          {AI_GENERATED_DISCLOSURE_BG}
+        </p>
+        <p className="font-display text-[12px] text-slate-500">
+          <Link href="/terms" className="underline transition-colors hover:text-amber-300">
+            Условия за ползване
+          </Link>
+          <span className="mx-2 text-slate-700" aria-hidden>·</span>
+          <Link href="/privacy" className="underline transition-colors hover:text-amber-300">
+            Политика за поверителност
+          </Link>
+        </p>
+      </motion.div>
     </div>
   )
 }

@@ -19,6 +19,23 @@ not on request.**
 
 ---
 
+## SUBMISSION BLOCKER — mobile is non-submittable to the App Store right now
+
+**Open since 2026-08-29 (Google sign-in shipped), closes only when SIWA
+Phase B completes.** Guideline 4.8: shipping Google sign-in as a launch
+feature makes Sign in with Apple **mandatory**, not optional. The mobile
+build cannot be submitted to App Store review until SIWA is live
+end-to-end. This is a hard gate, not a footnote — see
+`APPLE-REVIEW-REQUIREMENTS-2026-08-27.md` §1 for the ruling and
+`AUTH-PROVIDER-EXPANSION-2026-08-27.md` / §7.4 below for the Phase A/B
+split. Phase A (client code, config plugin, `app.json`) does not need
+Apple enrolment and can ship now; Phase B (capability, keys, Clerk config,
+end-to-end device test) is blocked on Apple Developer enrolment, which is
+next week's money item. **Do not reach "ready to submit" and discover
+this** — it closes only after B1-B3 below are done and device-verified.
+
+---
+
 ## 0. Open rulings — 2026-08-26 technical sweep
 
 A full technical sweep ran 2026-08-26 across DB/RLS, secrets, auth, cost,
@@ -32,10 +49,11 @@ VERIFIED/INFERRED labels: `.planning/TECHNICAL-SWEEP-2026-08-26.md`.
   byte-identical to `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`, a value shipped in
   the mobile bundle — anyone who unzipped the APK could forge a signed
   webhook payload and grant themselves premium. **Rotated to a random value
-  local-only, in `apps/web/.env.local` (gitignored, no code change).** State
-  is now safe-but-dead: the webhook will reject all real RevenueCat traffic
-  until the real dashboard signing secret replaces the placeholder — see
-  the RevenueCat row in §5 Blocked-externally, founder-owned.
+  local-only, in `apps/web/.env.local` (gitignored, no code change).** The
+  webhook will reject all real RevenueCat traffic until the real dashboard
+  signing secret is set (placeholder status: see `.planning/PLACEHOLDERS.md`
+  RC-WEBHOOK-SECRET; also the RevenueCat row in §5 Blocked-externally,
+  founder-owned).
 - **#2+#3 CRITICAL, chained.** `/api/horoscope/generate` had no quota;
   chart creation was uncapped — chained, a free account could reach ~7,200
   unquota'd paid generations/day. **Fixed:** horoscope/generate now shares
@@ -109,15 +127,22 @@ plus `.env.local` fixes for #12 — local-only, gitignored, not a commit):
   being truthy; `@sentry/react-native` config plugin is already in
   `app.json`; `logError.ts` already tags events. The remaining work is
   100% Sentry-dashboard + EAS-env, all founder-owned:
-  1. Create a **React Native** project in org `celestia-ul`, suggested
-     slug `stellaeum-mobile`. Bring back: the new **DSN** and the
-     **project slug**.
-  2. Set `EXPO_PUBLIC_SENTRY_DSN` = new DSN as an **EAS environment
-     variable** (dashboard, visibility plain — it's a public DSN),
-     scoped to development + preview + production. Also replace the value
-     in `apps/mobile/.env.local` (currently holds the *web* project's
-     Next.js-platform DSN — mobile events landing there are
-     mis-platformed, no RN release health).
+  1. ~~Create a **React Native** project in org `celestia-ul`, suggested
+     slug `stellaeum-mobile`.~~ **DONE — confirmed 2026-08-31** via the
+     Sentry API (`SENTRY_READ_TOKEN`): org `celestia-ul` has a project
+     `stellaeum-mobile` (id `4511981481885776`, platform `react-native`),
+     separate from `javascript-nextjs` (id `4511290989805648`). The
+     §7.9 ANR issue and the other three §7.9 events all landed in
+     `stellaeum-mobile`, correctly platformed.
+  2. `apps/mobile/.env.local`'s `EXPO_PUBLIC_SENTRY_DSN` **already points
+     at the `stellaeum-mobile` project** (confirmed 2026-08-31 by reading
+     the file — its DSN's project-id segment matches `4511981481885776`,
+     not the web project's). The note below (mobile events landing in the
+     web project, mis-platformed) is **stale** — that was true before
+     this was fixed, not now. **Still unconfirmed:** whether the EAS
+     **environment variable** (as opposed to the local `.env.local`) also
+     carries this DSN — that determines what a real dev/preview/production
+     build sends, and only the founder can check the EAS dashboard.
   3. **Not** adding an `env` block to `eas.json` — there is nothing to
      wire. `sentry.ts` already reads the right var and guards on it, the
      plugin is already in `app.json`, and Expo now recommends
@@ -832,10 +857,10 @@ the boundary stays honest):
 
 **Product:** Stellaeum AI — a subscription astrology app for the Bulgarian
 market. Swiss Ephemeris precision (`sweph`, native, GPL-2.0-pinned) +
-AI-generated readings (OpenRouter, Llama 3.3 70B — a placeholder; swap to
-`gemini-3.7-flash` / `gpt-5.4-mini` recommended, not decided in code, see
-`.planning/LLM-PROVIDER-DECISION-2026-08-27.md`). CLAUDE.md's header and
-the `docs/` specs were corrected for this drift 2026-08-28. Web (Next.js 15)
+AI-generated readings (OpenRouter, Llama 3.3 70B). CLAUDE.md's header and
+the `docs/` specs were corrected for this drift 2026-08-28. Current AI
+truth: SYSTEM-MAP §4; provider-swap status: see `.planning/PLACEHOLDERS.md`
+LLM-MODEL. Web (Next.js 15)
 and mobile (Expo SDK 54,
 Solito) share ~90% of code via `packages/core`, `packages/astrology`.
 
@@ -870,9 +895,11 @@ product/money/auth/schema/ambiguity" operating model established 2026-08-13.
   design language; redesign pass is Batch 8. `/you/premium` subscription
   status/management (Batch 5) is now built and device-tested 2026-08-26 — the
   free-state branch's "subscribe on web" CTA is functional but its target
-  URL is an unfilled placeholder blocked on the founder's Vercel fix, see
-  halt-required register. **Not yet built on mobile:** the RevenueCat
-  paywall/purchase flow (native purchase UI — halt-required) and the
+  URL is unset (placeholder status: see `.planning/PLACEHOLDERS.md`
+  APP-URL-MOBILE; ruling in the halt-required register). **Not yet built on
+  mobile:** the RevenueCat paywall/purchase flow (native purchase UI —
+  halt-required; placeholder status: see `.planning/PLACEHOLDERS.md`
+  PAYWALL-MOBILE) and the
   push-notification permission/settings UI (Batch 8) — the push *backend*
   (schema, registration route, cron delivery) is fully built and wired,
   corrected 2026-08-16, was understated here. Amber→bronze is done
@@ -883,13 +910,10 @@ product/money/auth/schema/ambiguity" operating model established 2026-08-13.
   completion (stale TanStack Query cache never invalidated after save), and
   a chart-tab FPS drop on planet tap (unmemoized static SVG layers
   re-rendering on every selection change — see Batch 1 below for both).
-- **Pre-launch gates not yet clear** (see `.planning/PRE_LAUNCH_PREREQS.md`
-  for full detail, not duplicated here): telemetry/analytics `[not started]`,
-  browser UAT sign-off `[not started]`, load-testing `[blocked on M4]`, AI
-  provider fallback strategy `[not started, founder product call]`, GDPR/
-  privacy `[partial — no cookie consent banner, no /terms route, processor
-  DPAs unsigned]`, third-party licensing `[partial — 5 provider TOS reviews
-  outstanding]`.
+- **Pre-launch gates not yet clear.** Full detail and per-gate status:
+  `.planning/PRE_LAUNCH_PREREQS.md` (not duplicated here). The register
+  tracks the code-side items: `.planning/PLACEHOLDERS.md` COOKIE-CONSENT,
+  TERMS, DPA-CONTRACTS, ANALYTICS-VENDOR, LLM-FAILOVER.
 
 **Standing rules, established during batching (apply going forward, not
 just to the batch that produced them):**
@@ -917,10 +941,11 @@ should be:
 
 - Apple Developer Program enrollment and anything gated on it (TestFlight
   provisioning, SR 9 biometric auth bundle).
-- Compliance/legal items: cookie consent banner, `/terms` route, signed
-  processor DPAs (Clerk/Supabase/Stripe/OpenRouter TOS reviews), the Swiss
-  Ephemeris Professional License purchase (deferred by design until the
-  first genuine paying subscriber, not a launch blocker).
+- Compliance/legal items — cookie consent, `/terms`, signed processor
+  DPAs (Clerk/Supabase/Stripe/OpenRouter TOS reviews), the Swiss Ephemeris
+  Professional License purchase. Per-item status: see
+  `.planning/PLACEHOLDERS.md` COOKIE-CONSENT, TERMS, DPA-CONTRACTS,
+  SE-LICENCE (rollup in `PRE_LAUNCH_PREREQS.md` PLP-7).
 
 Every batch below is scoped and judged against this bar — a batch is not
 "done" if it ships code but leaves something that isn't Apple/compliance
@@ -2287,7 +2312,10 @@ Auth stay out per the carve-out.
 ## 4. Halt-required register
 
 Items pulled out of batching because they need a founder ruling before any
-implementation work starts.
+implementation work starts. This section owns the **ruling narrative and
+history**; one-line current status + owner for the placeholder items it
+covers (PAYWALL-MOBILE, PROD-CREDS, RC-WEBHOOK-SECRET, APP-URL-MOBILE)
+lives in `.planning/PLACEHOLDERS.md`.
 
 ### Кръг invite UI (Batch 4 sub-batch B) — RATIFIED 2026-08-14
 
@@ -2484,9 +2512,10 @@ they were forgotten rather than deferred on purpose.
   second-provider failover), not something to decide unilaterally, so it
   sits here until ruled rather than being silently folded into a batch.
 - **Cookie consent banner / `/terms` route / signed processor DPAs.**
-  `PRE_LAUNCH_PREREQS.md` item 7 — genuinely open, not started. Depends
-  partly on item 1 (telemetry vendor decision, since a chosen analytics
-  tool determines what needs consent).
+  `PRE_LAUNCH_PREREQS.md` item 7. Cookie consent depends partly on item 1
+  (a chosen analytics tool determines what needs consent). Per-item
+  status: see `.planning/PLACEHOLDERS.md` COOKIE-CONSENT, TERMS,
+  DPA-CONTRACTS.
 - **Telemetry/analytics vendor decision** (`PRE_LAUNCH_PREREQS.md` item 1).
   PostHog was the prior candidate but was never installed — no vendor
   decision has actually been ratified. Not batched because it's a founder
@@ -2685,7 +2714,8 @@ they were forgotten rather than deferred on purpose.
        revealed it had hit a stale deployment — the smoke test should give
        that signal on purpose, not by luck. This is the direct fix for the
        Skew Protection episode (VSG #10): "did the fix deploy" becomes
-       answerable without dashboard archaeology.
+       answerable without dashboard archaeology. Tracked in the register:
+       `.planning/PLACEHOLDERS.md` BUILD-SHA (this item is its spec).
 
 - **Mobile has ZERO automated tests — OWNED, scoped 2026-08-27. First slice
   landed 2026-08-29 (Google sign-in build).** Scope confirmed: (a)
@@ -2953,12 +2983,11 @@ Tags: **[me-free]** = no external dependency, do any time - **[me-coupled]**
   mobile. Real engineering, no external dependency, but **coupled to the
   paywall mockup** -> lands with Batch 8's first screen, not before.
   ~3-4 d + tests. **[me-coupled]**
-- Item 17: **RevenueCat webhook signing secret** — still a random
-  placeholder, so subscription state never syncs to
-  `users.subscription_tier`. RevenueCat dashboard, ~15 min, then an e2e
-  webhook test. A finished paywall grants nothing server-side until this
-  is real, but item 16 can be built before it. **[external]** (founder,
-  dashboard — but free; do it any time)
+- Item 17: **RevenueCat webhook signing secret** — RevenueCat dashboard,
+  ~15 min, then an e2e webhook test. A finished paywall grants nothing
+  server-side until this is real, but item 16 can be built before it.
+  Status: see `.planning/PLACEHOLDERS.md` RC-WEBHOOK-SECRET. **[external]**
+  (founder, dashboard — but free; do it any time)
 
 **Track 4 — Backend loose ends** (all **[me-free]**, all small)
 - Two prepared DB migrations (`user_crystals` FK + orphan cleanup;
@@ -3012,13 +3041,12 @@ Vercel (local-diagnosis only). Not launch-blocking; do it when convenient.
 Things deliberately set to a debugging-friendly state during solo
 pre-launch that MUST be reverted before the first real users:
 
-- **Re-enable Vercel Skew Protection.** Turned OFF 2026-08-27 because,
-  with the founder as the only user and actively deploying-then-probing,
+- **Re-enable Vercel Skew Protection** before the closed test opens (12h
+  window is fine). It was turned off for solo pre-launch debugging, where
   its only effect was pinning the browser to stale functions and
-  corrupting every probe (§0.9, VSG #10). It exists to keep real users on
-  a consistent version mid-rollout — that value returns the moment there
-  is real traffic. Re-enable it (12h window is fine) before the closed
-  test opens.
+  corrupting every probe (§0.9, VSG #10). Status + target state (ON before
+  real traffic, paired with a build-SHA marker): see
+  `.planning/PLACEHOLDERS.md` SKEW-PROTECT and BUILD-SHA.
 - ~~Remove the `[OPENROUTER-DEBUG]` shim in `lib/ai/client.ts`~~ —
   **DONE 2026-08-27**, removed the same day it was added once §0.8 turned
   out to be a phantom.
@@ -3110,12 +3138,22 @@ catch-all string's occurrence count (the refactor removed a redundant
 twice per file). Lint baseline `1772 → 1778` (+6, matches exactly).
 `pnpm run check:all` green end-to-end, exit 0.
 
-**Not yet done / still open from the build order:** device verification
-of the actual OAuth round-trip — blocked on the founder confirming the
-`stellaeum://sso-callback` allowlist in Clerk → Native Applications and
-that Google is enabled on the instance the dev client points at. Nothing
-above is device-tested; typecheck/lint/test-clean is the only
-verification this session could perform.
+**DEVICE-VERIFIED 2026-08-31 (Android emulator) — happy path, both cancel
+paths, all clean.** `stellaeum://sso-callback` allowlisted in Clerk →
+Native Applications; Google confirmed enabled on the dev-client's Clerk
+instance. Account picker appears, picking an account returns a session,
+lands authed. Sheet-swipe-away and in-sheet Cancel both resolve as no-ops
+(no red error, button re-enabled) — matches the `'cancel'`/`'dismiss'`
+no-op design in `lib/clerk/oauth.ts`. Only errors observed were the known
+`ERR-MOB-RC-004` RevenueCat Test Store noise (§7.9), not auth defects.
+
+**NOT yet verified — do not treat as covered:**
+- **iPhone / Expo Go.** Only the Android emulator has been device-tested.
+  iOS may hit different `AuthSession`/redirect behavior; untested.
+- **Account-linking case** — an existing password account signing in with
+  Google on the same email, to confirm Clerk links rather than
+  duplicating the user. Test plan step 4, not yet run.
+- **Airplane-mode / offline error path** (test plan step 5) — not yet run.
 
 ### 7.9 Sentry triage from first Google-button emulator/device testing — 2026-08-29
 
@@ -3150,11 +3188,11 @@ reinforcement — none of these self-identify as test traffic.
   `RevenueCatProvider.tsx`'s own header comment: invisible until
   something new ran through the path.
 
-**Open, not fixed — needs the actual stack trace:**
+**Still open — Sentry read access confirmed the thread dump exists but is
+not usable for localization (2026-08-31, via `SENTRY_READ_TOKEN`):**
 - **Foreground ANR, level FATAL, Android emulator, mechanism
   `AppExitInfo`, fingerprint `foreground-anr`.** Device class "low", 4
-  processors, 3.8 GiB. Static code read (this session, no Sentry read
-  access — `SENTRY_AUTH_TOKEN` is upload-only per §7.6) ruled out the
+  processors, 3.8 GiB. Static code read (prior session) ruled out the
   obvious candidates without finding the blocker: `NatalWheel.tsx`'s
   planet-position collision pass is a 4-pass loop over ~10-13 planets
   behind its own `useMemo`, not expensive; every `AsyncStorage` call in
@@ -3163,11 +3201,27 @@ reinforcement — none of these self-identify as test traffic.
   synchronous; `useDailyHoroscope`'s only `JSON.parse` is on a small
   cached payload; `RevenueCatProvider`'s `configure()`/`logIn()`/`logOut()`
   are all async/Promise-based; Swiss Ephemeris WASM runs server-side only
-  per this repo's architecture, never in the mobile bundle. None of that
-  rules out a genuine main-thread block — it only says the likely
-  candidates named in the request don't show one on inspection. Needs the
-  actual thread stack trace from the Sentry event (not available to this
-  session) to localize. May be emulator-only — a 4-core/"low" device class
-  hits Android's ANR threshold a real phone wouldn't — but founder's own
-  framing stands: "may be" is not "is"; the iPhone session is the
-  comparison point once the button itself is verified.
+  per this repo's architecture, never in the mobile bundle.
+  **2026-08-31, pulled the actual event (`sentry.io` org `celestia-ul`,
+  project `stellaeum-mobile`, issue 143611866, event `b5662c31…`) via the
+  read token: the `threads` entry enumerates 82 threads with full frames,
+  but NONE is named `main`, none is flagged `crashed: true` or
+  `main: true`, and the top-level `exception` entry has `threadId: null`
+  and `stacktrace: null`.** So the actual UI/main thread — the one that
+  would show what blocked it — is simply absent from this event's thread
+  dump. This is a known limitation of Sentry Android's `AppExitInfo`
+  mechanism: on Android 11+ it reconstructs ANR reports from the OS's own
+  exit-info record, and if the OS didn't retain a full trace at capture
+  time (or Sentry's SDK couldn't attach to it), the report still lists
+  every live thread (names/states) but the one thread that actually
+  matters can come back frameless or missing entirely. **This is not
+  "needs more digging" — it's a data gap the emulator's ANR report
+  doesn't have.** Conclusion: this specific Sentry event cannot localize
+  the block. Two ways forward, not attempted yet: (a) reproduce on a real
+  device / higher-spec emulator and see if a subsequent ANR event carries
+  a populated `main` thread (some OS versions retain the trace more
+  reliably); (b) treat the "low"/4-core device class as the leading
+  suspect per the founder's original framing — a real phone may simply
+  not hit Android's ANR threshold at all, in which case this closes by
+  disappearing rather than by being fixed. Not ruling that in yet either —
+  "may be" is still not "is".

@@ -22,6 +22,11 @@ export type GenerationConditions = Record<string, unknown>
  * fire-and-forget (`void checkAndLogGeneration(...)`) after the response has
  * already been returned/streamed to the client. A failure in this function
  * must never affect generation; all errors are swallowed after logging.
+ *
+ * STELLAEUM_PLACEHOLDER: LLM-GUARDRAILS — this spell-check is the ONLY
+ * automated inspection of model output. There is no content-safety /
+ * moderation layer on Oracle or horoscope text (also in
+ * apps/web/app/api/horoscope/generate/route.ts). See .planning/PLACEHOLDERS.md.
  */
 export async function checkAndLogGeneration({
   source,

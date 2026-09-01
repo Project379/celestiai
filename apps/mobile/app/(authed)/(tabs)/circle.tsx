@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Alert, Pressable, Share, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Pressable, Share, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { RelationshipType } from '@stellaeum/core/relationships/types'
 import { ConnectionSpaceDetailPanel } from '@/components/circle/ConnectionSpaceDetailPanel'
 import { SavedProfileDetailPanel } from '@/components/circle/SavedProfileDetailPanel'
+import { PremiumLock, LockBadge, TierGateLoading } from '@/components/tier/PremiumLock'
+import { KRUG_SECOND_PROFILE_LOCKED, KRUG_INVITE_LOCKED } from '@/lib/tier/locked-copy'
 import { font, pressFeedback } from '@/components/design-system/tokens'
 import { ApiError } from '@/lib/api/client'
 import { hapticSelect } from '@/lib/haptics'
@@ -20,6 +22,7 @@ import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { usePendingInvites } from '@/hooks/usePendingInvites'
 import { useSavedProfileReport } from '@/hooks/useSavedProfileReport'
 import { useSavedProfiles } from '@/hooks/useSavedProfiles'
+import { useSubscription } from '@/hooks/useSubscription'
 
 // Systemic navbar-clearance rule (2026-07-27, audit) — see rhythm.tsx's
 // matching comment; same flat-120 gap found and fixed here.
@@ -68,6 +71,15 @@ export default function CircleScreen() {
   const { data: firstChart } = useFirstChart()
 
   const { data: profiles } = useSavedProfiles()
+  const { data: subscription, isError: subscriptionError } = useSubscription()
+  // Tri-state: undefined while the tier query is in flight, so the gated
+  // affordances show a neutral pending treatment instead of flashing a
+  // padlock at a premium user. Hard error → free experience (server 403s
+  // stay the authority).
+  const isPremium =
+    subscription === undefined && !subscriptionError
+      ? undefined
+      : subscription?.tier === 'premium'
   const deleteProfileMutation = useDeleteSavedProfile()
   const analyzeMutation = useAnalyzeSavedProfile()
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null)
@@ -210,21 +222,36 @@ export default function CircleScreen() {
         {firstChart === undefined || !dataResolved ? null : firstChart === null ? (
           <ChartGate />
         ) : !hasAnyData ? (
-          <EmptyState onSelect={openCreateFlow} />
+          <EmptyState onSelect={openCreateFlow} isPremium={isPremium} />
         ) : surface === 'crush' ? (
           <View style={{ gap: 12 }}>
             <View className="mb-2 flex-row items-center justify-between">
               <Text className="text-[22px] font-light leading-[1.3] text-slate-100">Запазени профили</Text>
-              <Pressable
-                onPress={() => push('/circle/new')}
-                className="rounded-full border border-rose-300/35 px-4 py-2"
-                style={({ pressed }) => pressFeedback(pressed)}
-              >
-                <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-rose-100">
-                  + Нов профил
-                </Text>
-              </Pressable>
+              {(isPremium === true || (profiles?.length ?? 0) < 1) && (
+                <Pressable
+                  onPress={() => push('/circle/new')}
+                  className="rounded-full border border-rose-300/35 px-4 py-2"
+                  style={({ pressed }) => pressFeedback(pressed)}
+                >
+                  <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-rose-100">
+                    + Нов профил
+                  </Text>
+                </Pressable>
+              )}
             </View>
+
+            {/* tier item 5: free user with their one profile sees the limit
+                stated up front, not a 403 after filling the form. Neutral
+                pending block while the tier query is still in flight. */}
+            {isPremium === undefined && (profiles?.length ?? 0) >= 1 && (
+              <TierGateLoading variant="block" />
+            )}
+            {isPremium === false && (profiles?.length ?? 0) >= 1 && (
+              <PremiumLock
+                title={KRUG_SECOND_PROFILE_LOCKED.title}
+                sub={KRUG_SECOND_PROFILE_LOCKED.sub}
+              />
+            )}
 
             {profiles && profiles.length === 0 && (
               <Text className="text-[13px] leading-6 text-slate-500">Все още няма запазен crush профил.</Text>
@@ -247,15 +274,30 @@ export default function CircleScreen() {
             <View style={{ gap: 12 }}>
               <View className="mb-2 flex-row items-center justify-between">
                 <Text className="text-[22px] font-light leading-[1.3] text-slate-100">Твоите пространства</Text>
-                <Pressable
-                  onPress={() => push({ pathname: '/circle/new-connection', params: { relationshipType: 'friendship' } })}
-                  className="rounded-full border border-violet-300/35 px-4 py-2"
-                  style={({ pressed }) => pressFeedback(pressed)}
-                >
-                  <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-100">
-                    + Нова връзка
-                  </Text>
-                </Pressable>
+                {isPremium === undefined ? (
+                  <TierGateLoading variant="pill" />
+                ) : isPremium ? (
+                  <Pressable
+                    onPress={() => push({ pathname: '/circle/new-connection', params: { relationshipType: 'friendship' } })}
+                    className="rounded-full border border-violet-300/35 px-4 py-2"
+                    style={({ pressed }) => pressFeedback(pressed)}
+                  >
+                    <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-100">
+                      + Нова връзка
+                    </Text>
+                  </Pressable>
+                ) : (
+                  <View
+                    className="flex-row items-center rounded-full border border-white/15 bg-black/20 px-4 py-2"
+                    style={{ gap: 8 }}
+                    accessibilityRole="text"
+                  >
+                    <LockBadge size={12} />
+                    <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                      {KRUG_INVITE_LOCKED}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {spaces && spaces.length === 0 && (
@@ -353,6 +395,7 @@ export default function CircleScreen() {
 
       <ConnectionSpaceDetailPanel
         view={selectedSpaceView}
+        isPremium={isPremium}
         isGenerating={generateReportMutation.isPending}
         isArchiving={archiveMutation.isPending}
         onGenerateReport={handleGenerateReport}
@@ -400,7 +443,13 @@ function ChartGate() {
  * wired now — Партньор/Приятел pre-select a relationship type for the
  * invite-creation screen, Crush opens the saved-profile form.
  */
-function EmptyState({ onSelect }: { onSelect: (kind: RelationKind) => void }) {
+function EmptyState({
+  onSelect,
+  isPremium,
+}: {
+  onSelect: (kind: RelationKind) => void
+  isPremium: boolean | undefined
+}) {
   return (
     <>
       <Text className="mb-10 text-[22px] font-light leading-[1.3] text-slate-100">
@@ -408,18 +457,54 @@ function EmptyState({ onSelect }: { onSelect: (kind: RelationKind) => void }) {
       </Text>
 
       <View className="mb-8 gap-3">
-        {KINDS.map((kind) => (
-          <Pressable
-            key={kind.key}
-            onPress={() => onSelect(kind)}
-            className={`rounded-2xl border ${kind.border} ${kind.tint} px-5 py-6`}
-            style={({ pressed }) => pressFeedback(pressed)}
-          >
-            <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-semibold uppercase tracking-[0.3em] text-slate-100">
-              {kind.label}
-            </Text>
-          </Pressable>
-        ))}
+        {KINDS.map((kind) => {
+          // Партньор / Приятел open the connection-invite flow, which is
+          // premium (tier item 5). Crush → the one free saved profile.
+          const gated = kind.key !== 'crush'
+          const tierPending = gated && isPremium === undefined
+          const locked = gated && isPremium === false
+          if (tierPending) {
+            return (
+              <View
+                key={kind.key}
+                className={`flex-row items-center rounded-2xl border ${kind.border} ${kind.tint} px-5 py-6`}
+                style={{ gap: 10 }}
+              >
+                <ActivityIndicator size="small" color="rgba(148, 163, 184, 0.7)" />
+                <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  {kind.label}
+                </Text>
+              </View>
+            )
+          }
+          if (locked) {
+            return (
+              <View
+                key={kind.key}
+                className={`flex-row items-center rounded-2xl border ${kind.border} ${kind.tint} px-5 py-6`}
+                style={{ gap: 10 }}
+                accessibilityRole="text"
+              >
+                <LockBadge size={13} />
+                <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-semibold uppercase tracking-[0.3em] text-slate-400">
+                  {kind.label} · {KRUG_INVITE_LOCKED}
+                </Text>
+              </View>
+            )
+          }
+          return (
+            <Pressable
+              key={kind.key}
+              onPress={() => onSelect(kind)}
+              className={`rounded-2xl border ${kind.border} ${kind.tint} px-5 py-6`}
+              style={({ pressed }) => pressFeedback(pressed)}
+            >
+              <Text style={{ fontFamily: font.bodyMedium }} className="text-[12px] font-semibold uppercase tracking-[0.3em] text-slate-100">
+                {kind.label}
+              </Text>
+            </Pressable>
+          )
+        })}
       </View>
 
       <Pressable onPress={() => onSelect(KINDS[2])}>
