@@ -157,18 +157,21 @@
  * this file's history.
  *
  * Raised to 1800 on 2026-09-01 (frozen tier definition — Oracle gates):
- * +22 across the Oracle conversion surface. New reviewed user-facing copy
- * for the free-tier Oracle boundaries the frozen definition introduces
- * (one `general` reading lifetime; love/career/health + regenerate are
+ * +22 across the Oracle conversion surface. New user-facing copy for the
+ * free-tier Oracle boundaries the frozen definition introduces (one
+ * `general` reading lifetime; love/career/health + regenerate are
  * premium): apps/{web,mobile}/components/oracle/CapReachedNotice.tsx (the
- * reason-branched title/sub pairs + CTA-adjacent lines, mirrored web and
- * mobile so counted twice), apps/{web,mobile}/components/oracle/
- * TopicCards.tsx (the ' (заключено)' accessibility suffix, matching web
- * TopicCard.tsx's existing use), and apps/web/lib/subscriptions/
- * free-oracle.ts (the three server-side gate messages). Informal ти,
- * through check:bg-strings and copy-lock. Deliberate raise — the strings
- * still want a founder/bulgarian-skill register pass (flagged in the
- * change report), same as any new batch of app copy.
+ * reason-branched title/sub pairs, mirrored web and mobile so counted
+ * twice), apps/{web,mobile}/components/oracle/TopicCards.tsx (the
+ * ' (заключено)' accessibility suffix, matching web TopicCard.tsx's
+ * existing use), and apps/web/lib/subscriptions/free-oracle.ts (the three
+ * server-side gate messages). Informal ти. Copy was run through the
+ * bulgarian-skill and de-calqued — house style: "Четенията за любов,
+ * кариера и здраве са в Премиум." / "Ново четене има само в Премиум." /
+ * "Това беше безплатното ти четене от Оракула." — matching the existing
+ * "неограничени четения от Оракула" / "Отключи Премиум" phrasing in
+ * SettingsContent + PricingContent. Through check:bg-strings and
+ * copy-lock.
  *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */

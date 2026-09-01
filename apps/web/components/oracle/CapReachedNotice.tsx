@@ -28,23 +28,23 @@ export function CapReachedNotice({ cap, reason }: CapReachedNoticeProps) {
     switch (reason) {
       case 'premium_topic':
         return {
-          title: 'Тази тема е част от Премиум.',
-          sub: 'Безплатно получаваш едно четене за Личност. Премиум отваря Любов, Кариера и Здраве.',
+          title: 'Четенията за любов, кариера и здраве са в Премиум.',
+          sub: 'Личностното четене остава безплатно.',
         }
       case 'premium_regenerate':
         return {
-          title: 'Повторното генериране е част от Премиум.',
-          sub: 'С Премиум можеш да поискаш ново четене по всяко време.',
+          title: 'Ново четене има само в Премиум.',
+          sub: 'С Премиум получаваш ново четене, когато поискаш.',
         }
       case 'free_used':
         return {
-          title: 'Използва безплатното си четене от Оракула.',
-          sub: 'Премиум отваря всички теми, повторното генериране и месечни четения.',
+          title: 'Това беше безплатното ти четене от Оракула.',
+          sub: 'С Премиум получаваш неограничени четения по всички теми.',
         }
       default:
         return {
-          title: `Изчерпа ${cap} безплатни четения за момента.`,
-          sub: 'Премиум премахва ограничението.',
+          title: `Достигна лимита от ${cap} безплатни четения.`,
+          sub: 'Премиум го премахва.',
         }
     }
   })()
@@ -75,7 +75,7 @@ export function CapReachedNotice({ cap, reason }: CapReachedNoticeProps) {
           href="/pricing"
           className="rounded-full border border-amber-300/40 bg-gradient-to-b from-amber-400/20 to-amber-500/5 px-7 py-2.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-200 transition-colors hover:border-amber-200 hover:bg-amber-400/15"
         >
-          Разгледай Премиум
+          Отключи Премиум
         </Link>
       </div>
     </div>
