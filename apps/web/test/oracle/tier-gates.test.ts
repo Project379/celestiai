@@ -113,7 +113,8 @@ vi.mock('@/lib/subscriptions/free-oracle', async (importActual) => {
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { generateText } from 'ai'
 import { incrementQuotaUsage } from '@/lib/subscriptions/quota'
-import { NEVER_EXPIRES_AT, POST } from '@/app/api/oracle/generate/route'
+import { POST } from '@/app/api/oracle/generate/route'
+import { NEVER_EXPIRES_AT } from '@/lib/oracle/expiry'
 
 let mockSupabase: MockSupabase
 

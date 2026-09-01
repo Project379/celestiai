@@ -582,7 +582,7 @@ consistent web↔mobile, but they are bespoke. Remaining:
     `UPDATE public.ai_readings SET expires_at = '2999-12-31T00:00:00.000Z'
     WHERE user_id = 'user_3DXG2tiu13Ft180WlWCZnvzjsIe' AND topic = 'general';`
     The literal **must** equal `NEVER_EXPIRES_AT` in
-    `apps/web/app/api/oracle/generate/route.ts` — changing the constant
+    `apps/web/lib/oracle/expiry.ts` — changing the constant
     orphans hand-run SQL.
   - Independently of any restore: once the item-2 migration lands this
     user's `free_oracle_used_at` is NULL, so they can generate a fresh

@@ -13,8 +13,9 @@
     "check:bg-lint-baseline": "node scripts/i18n/check-bg-lint-baseline.mjs",
     "check:error-codes": "node scripts/check-error-code-collisions.mjs",
     "check:placeholders": "node scripts/check-placeholders.mjs",
+    "check:build": "turbo run build",
     "i18n:update-copy-lock": "node scripts/i18n/generate-copy-lock.mjs",
-    "check:all": "pnpm run check:strictness && pnpm run check:bg-strings && pnpm run check:copy-lock && pnpm run check:bg-lint-baseline && pnpm run check:error-codes && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run check:placeholders",
+    "check:all": "pnpm run check:strictness && pnpm run check:bg-strings && pnpm run check:copy-lock && pnpm run check:bg-lint-baseline && pnpm run check:error-codes && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run check:placeholders && pnpm run check:build",
     "supabase": "supabase"
   },
   "devDependencies": {

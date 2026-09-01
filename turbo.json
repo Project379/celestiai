@@ -1,5 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
+  "//": "globalPassThroughEnv: vars that exist in the deploy environment (Vercel project settings) but are NOT build inputs — they must reach task processes without polluting the cache key. [verified] DATABASE_URL is read only by apps/web/scripts/diagnostics/*.mjs (manual `node --env-file=.env.local` runs); nothing in `next build` or any request path reads it (the app reaches Postgres via @supabase/supabase-js with NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY). [verified] EXPO_PUBLIC_API_BASE is read only by apps/mobile/lib/api/client.ts; apps/web never reads it and apps/mobile has no build task, so it belongs in neither `build.env` — it is listed here only to quiet the Vercel warning and is trivially droppable. [inferred] listing both here silences the Vercel 'set but missing from turbo.json' warning (that warning only surfaces on a Vercel build; not reproduced locally). [verified] NEXT_PUBLIC_* is NOT listed anywhere because Turbo's nextjs framework inference already includes it for @stellaeum/web#build — a NEXT_PUBLIC_PROBE var showed up under 'Inferred Env Vars Values' in `turbo run build --dry`.",
+  "globalPassThroughEnv": ["DATABASE_URL", "EXPO_PUBLIC_API_BASE"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
