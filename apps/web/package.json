@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:oracle-gate9": "vitest run --config vitest.gate9.config.ts",
     "diag:drift": "node --env-file=.env.local scripts/diagnostics/audit-schema-drift.mjs",
     "diag:hand-applied-schema": "node --env-file=.env.local scripts/diagnostics/audit-hand-applied-schema.mjs",
     "diag:probe-column": "node --env-file=.env.local scripts/diagnostics/probe-column-type.mjs",
