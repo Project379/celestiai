@@ -216,10 +216,32 @@ export const ASPECT_DEFINITIONS: AspectDefinition[] = [
 export const HOUSE_SYSTEM_PLACIDUS = 'P'
 
 /**
- * Default time when birth time is unknown (noon)
- * Astrological convention to minimize maximum error
+ * Default time when birth time is unknown and no approximate range was
+ * given (noon). Astrological convention to minimize maximum error.
  */
 export const DEFAULT_UNKNOWN_TIME = '12:00'
+
+/**
+ * Midpoint local time for each approximate birth-time range. Used when the
+ * exact time is unknown but the user picked a window — a 3-hour-max error
+ * beats the up-to-9-hour error of always assuming noon, and in particular
+ * keeps the Moon (and often the Ascendant) in the right sign far more
+ * often. Keys match `approximateTimeRanges` in
+ * `packages/core/src/charts/schemas.ts`:
+ *   morning   06:00-12:00 -> 09:00
+ *   afternoon 12:00-18:00 -> 15:00
+ *   evening   18:00-24:00 -> 21:00
+ *   night     00:00-06:00 -> 03:00
+ * The angles and houses are still approximate — the "unknown time"
+ * disclaimer continues to apply — but the estimate is now materially
+ * narrower than a blind noon.
+ */
+export const APPROX_TIME_RANGE_MIDPOINT: Record<string, string> = {
+  morning: '09:00',
+  afternoon: '15:00',
+  evening: '21:00',
+  night: '03:00',
+}
 
 /**
  * Bulgarian disclaimer for unknown birth time

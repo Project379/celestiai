@@ -95,7 +95,7 @@ export async function getCrystalsOverview(
       const { data: chart } = await supabase
         .from('charts')
         .select(
-          'id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude',
+          'id, user_id, birth_date, birth_time, birth_time_known, approximate_time_range, latitude, longitude',
         )
         .eq('id', chartId)
         .single()
@@ -121,6 +121,7 @@ export async function getCrystalsOverview(
           lat: chart.latitude,
           lon: chart.longitude,
           birthTimeKnown: chart.birth_time_known,
+          approximateTimeRange: chart.approximate_time_range,
         })
         natalPlanets = chartData.planets
       }

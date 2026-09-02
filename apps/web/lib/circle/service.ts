@@ -285,6 +285,7 @@ export async function ensureChartCalculation(chart: ChartRow): Promise<ChartData
     lat: chart.latitude,
     lon: chart.longitude,
     birthTimeKnown: chart.birth_time_known,
+    approximateTimeRange: chart.approximate_time_range,
   })
 
   await supabase.from('chart_calculations').upsert(
@@ -356,6 +357,7 @@ export async function buildSavedProfileComputation(
     lat: savedProfile.latitude,
     lon: savedProfile.longitude,
     birthTimeKnown: savedProfile.birth_time_known,
+    approximateTimeRange: savedProfile.approximate_time_range,
   })
 
   const compatibilitySummary = calculateCompatibilitySummary(
