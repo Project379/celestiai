@@ -7,8 +7,16 @@ import {
   ZODIAC_SIGNS_BG,
 } from '@stellaeum/astrology/client'
 import { NATAL_ADJ, RETROGRADE_ADJ, TRANSITING_ADJ, agreeAdjective } from '@stellaeum/core/i18n/bg-grammar'
+import { placeholderKey } from '@stellaeum/core/oracle/planet-parser'
 import type { TransitOverview } from './transit-analysis'
 import { transitOverviewToPromptText } from './transit-analysis'
+
+/** "24°06'" — whole degrees within the sign + zero-padded arc-minutes. */
+function formatDegMin(signDegree: number): string {
+  const degrees = Math.floor(signDegree)
+  const minutes = Math.floor((signDegree - degrees) * 60)
+  return `${degrees}°${minutes.toString().padStart(2, '0')}'`
+}
 
 interface NatalCalculationData {
   planet_positions: PlanetPosition[]
@@ -93,4 +101,46 @@ export function transitAndNatalToPromptText(
   }
 
   return lines.join('\n')
+}
+
+/**
+ * Deterministic placeholder map for a daily horoscope (Astrology Phase 2,
+ * Part 3). Same contract as the Oracle's buildOraclePlaceholderValues:
+ * the model emits tokens instead of writing figures, the server
+ * substitutes real values here.
+ *
+ * Keys (via `placeholderKey`):
+ *   pos:<planet> | pos:asc | pos:mc  -> natal position  "24°06' Близнаци"
+ *   house:<planet>                   -> natal house       "дом 9"
+ *   tpos:<planet>                    -> transit position  "12°41' Овен"
+ *   taspect:<transit>-<natal>        -> transit->natal aspect "квадрат (орб 1.2°)"
+ */
+export function buildHoroscopePlaceholderValues(
+  transitPlanets: Omit<PlanetPosition, 'house'>[],
+  natalCalculation: NatalCalculationData,
+  transitAspects: TransitAspect[],
+): Record<string, string> {
+  const values: Record<string, string> = {}
+
+  for (const p of natalCalculation.planet_positions ?? []) {
+    const signName = ZODIAC_SIGNS_BG[p.sign as ZodiacSign] ?? p.sign
+    values[placeholderKey('pos', p.planet)] = `${formatDegMin(p.signDegree)} ${signName}`
+    values[placeholderKey('house', p.planet)] = `дом ${p.house}`
+  }
+  // Ascendant = 1st-house cusp, MC = 10th.
+  values[placeholderKey('house', 'asc')] = 'дом 1'
+  values[placeholderKey('house', 'mc')] = 'дом 10'
+
+  for (const p of transitPlanets) {
+    const signName = ZODIAC_SIGNS_BG[p.sign as ZodiacSign] ?? p.sign
+    values[placeholderKey('tpos', p.planet)] = `${formatDegMin(p.signDegree)} ${signName}`
+  }
+
+  for (const a of transitAspects) {
+    const aspectName = (ASPECTS_BG[a.aspect as AspectType] ?? a.aspect).toLowerCase()
+    values[placeholderKey('taspect', `${a.transitPlanet}-${a.natalPlanet}`)] =
+      `${aspectName} (орб ${a.orb.toFixed(1)}°)`
+  }
+
+  return values
 }
