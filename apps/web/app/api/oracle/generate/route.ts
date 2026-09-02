@@ -1,12 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
-import { generateText, streamText } from 'ai'
+import { generateText } from 'ai'
 import { AI_MODEL, isUpstreamAiError, openrouter } from '@/lib/ai/client'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
-import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
+import { buildOraclePlaceholderValues, chartToPromptText } from '@/lib/oracle/chart-to-prompt'
+import { validateReading, type ReadingValidationResult } from '@/lib/ai/validate-reading'
 import { resolveReadingExpiry } from '@/lib/oracle/expiry'
-import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
 import type { ChartData } from '@stellaeum/astrology/client'
 import type { ReadingTopic } from '@/lib/oracle/prompts'
 import { logAuditEvent } from '@/lib/audit'
@@ -124,8 +124,6 @@ export async function POST(req: Request) {
     }
 
     const validatedTopic = topic as ReadingTopic
-    const url = new URL(req.url)
-    const jsonOnly = url.searchParams.get('format') === 'json'
     const supabase = createServiceSupabaseClient()
 
     // 3. Ensure app-user row + read AppUser shape (tier).
@@ -239,7 +237,7 @@ export async function POST(req: Request) {
       )
     }
 
-    // 10. Build prompts
+    // 10. Build prompts + deterministic placeholder map
     const chartData: ChartData = {
       planets: calculation.planet_positions as ChartData['planets'],
       houses: calculation.house_cusps as ChartData['houses'],
@@ -251,6 +249,7 @@ export async function POST(req: Request) {
 
     const systemPrompt = buildSystemPrompt(validatedTopic)
     const chartPromptText = chartToPromptText(chartData)
+    const placeholderValues = buildOraclePlaceholderValues(chartData)
 
     logAuditEvent(userId, 'data.ai_reading', { chartId, topic: validatedTopic })
 
@@ -266,153 +265,127 @@ export async function POST(req: Request) {
       })),
     }
 
-    // 11a. Mobile path — non-streaming JSON response.
-    if (jsonOnly) {
-      try {
-        const result = await generateText({
-          model: openrouter(AI_MODEL),
-          system: systemPrompt,
-          prompt: chartPromptText,
-          temperature: 0.85,
-          maxOutputTokens: 2000,
-        })
-
-        const cleanContent = stripSentinels(result.text)
-
-        void checkAndLogGeneration({
-          source: 'oracle',
-          model: AI_MODEL,
-          text: cleanContent,
-          conditions: generationConditions,
-        })
-
-        const generatedAt = new Date()
-        const expiresAt = resolveReadingExpiry(generatedAt, {
-          isPremium,
-          topic: validatedTopic,
-          previousExpiresAt: existingReading?.expires_at ?? null,
-        })
-
-        // SECURITY FIX (2026-08-26 sweep #14): a fresh (non-regeneration)
-        // generation must NOT touch last_regenerated_at — omit it from the
-        // upsert so the existing value survives on conflict.
-        await supabase.from('ai_readings').upsert(
-          {
-            chart_id: chartId,
-            user_id: userId,
-            topic: validatedTopic,
-            content: cleanContent,
-            generated_at: generatedAt.toISOString(),
-            expires_at: expiresAt,
-            ...(isRegenerationOfExisting
-              ? { last_regenerated_at: generatedAt.toISOString() }
-              : {}),
-            model_version: AI_MODEL,
-          },
-          { onConflict: 'chart_id,topic' }
-        )
-
-        return Response.json({
-          content: cleanContent,
-          cached: false,
-          generatedAt: generatedAt.toISOString(),
-        })
-      } catch (err) {
-        await refundClaim()
-        // Upstream provider failure → deliberate 502 + retry hint, not an
-        // opaque 500. Anything else is our bug and stays a 500.
-        if (isUpstreamAiError(err)) {
-          return toErrorResponse(
-            new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED'),
-            'AI upstream failure',
-          )
-        }
-        console.error('[Oracle Generate] Failed to save reading:', err)
-        return Response.json(
-          { error: 'Грешка при запазване на четенето' },
-          { status: 500 }
-        )
-      }
+    // 11. Generate + validate before display.
+    //
+    // The Oracle no longer streams. The pre-display validator
+    // (lib/ai/validate-reading.ts) must see the whole reading — script
+    // purity, placeholder substitution and word count cannot be judged
+    // token-by-token — so a full generateText call replaces the old
+    // streamText path. The client already accepts a JSON `{ content }`
+    // envelope (hooks/useOracleReading.ts handled it for the
+    // already-cached short-circuit), so this needs no client change.
+    //
+    // On a validation failure we regenerate ONCE inside the same claim
+    // (no second quota charge); a second failure refunds the claim and
+    // returns a user-visible retry error rather than shipping broken text.
+    async function generateRaw(): Promise<string> {
+      const result = await generateText({
+        model: openrouter(AI_MODEL),
+        system: systemPrompt,
+        prompt: chartPromptText,
+        temperature: 0.85,
+        maxOutputTokens: 2000,
+      })
+      return result.text
     }
 
-    // 11b. Web path — stream via OpenRouter. Capture the refund handles as
-    //      consts: the callbacks run after this function returns, so they
-    //      must not depend on the mutable `let`s (which refundClaim clears).
-    const refundPeriodStart = claimedPeriodStart
-    const refundFreeOracle = claimedFreeOracle
-    const result = streamText({
-      model: openrouter(AI_MODEL),
-      system: systemPrompt,
-      prompt: chartPromptText,
-      temperature: 0.85,
-      maxOutputTokens: 2000,
-
-      // onFinish: upsert completed reading into ai_readings
-      onFinish: async ({ text }) => {
-        try {
-          const cleanContent = stripSentinels(text)
-
-          void checkAndLogGeneration({
-            source: 'oracle',
-            model: AI_MODEL,
-            text: cleanContent,
-            conditions: generationConditions,
+    // finalContent keeps planet sentinels (stored + returned so the client
+    // cross-highlights the wheel); finalPlainText is the sentinel-free
+    // form fed to the spell-check logger.
+    let finalContent: string | null = null
+    let finalPlainText = ''
+    let lastValidation: ReadingValidationResult | null = null
+    try {
+      for (let attempt = 1; attempt <= 2 && finalContent === null; attempt++) {
+        const raw = await generateRaw()
+        const validation = validateReading(raw, placeholderValues, {
+          minWords: 400,
+          maxWords: 700,
+        })
+        lastValidation = validation
+        if (validation.ok) {
+          finalContent = validation.content
+          finalPlainText = validation.text
+        } else {
+          console.error('[Oracle Generate] reading rejected by validator', {
+            attempt,
+            code: validation.code,
+            detail: validation.detail,
           })
-          const generatedAt = new Date()
-          const expiresAt = resolveReadingExpiry(generatedAt, {
-            isPremium,
-            topic: validatedTopic,
-            previousExpiresAt: existingReading?.expires_at ?? null,
-          })
+        }
+      }
+    } catch (err) {
+      await refundClaim()
+      if (isUpstreamAiError(err)) {
+        return toErrorResponse(
+          new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED'),
+          'AI upstream failure',
+        )
+      }
+      console.error('[Oracle Generate] generation threw:', err)
+      return Response.json(
+        { error: 'Грешка при генериране на четенето' },
+        { status: 500 },
+      )
+    }
 
-          await supabase.from('ai_readings').upsert(
-            {
-              chart_id: chartId,
-              user_id: userId,
-              topic: validatedTopic,
-              content: cleanContent,
-              generated_at: generatedAt.toISOString(),
-              expires_at: expiresAt,
-              ...(isRegenerationOfExisting
-                ? { last_regenerated_at: generatedAt.toISOString() }
-                : {}),
-              model_version: AI_MODEL,
-            },
-            {
-              onConflict: 'chart_id,topic',
-            }
-          )
-        } catch (err) {
-          console.error('[Oracle Generate] Failed to save reading:', err)
-          if (refundPeriodStart) {
-            await decrementQuotaUsage(userId, refundPeriodStart)
-          }
-          if (refundFreeOracle) {
-            await releaseFreeOracleReading(userId)
-          }
-        }
-      },
+    if (finalContent === null) {
+      await refundClaim()
+      const failCode =
+        lastValidation && !lastValidation.ok ? lastValidation.code : 'UNKNOWN'
+      return toErrorResponse(
+        new ApiError(502, RETRY_LATER_MESSAGE, 'AI_OUTPUT_INVALID'),
+        `Oracle output failed validation twice (${failCode})`,
+      )
+    }
 
-      onError: ({ error }) => {
-        console.error('[Oracle Generate] Stream error:', error)
-        if (refundPeriodStart) {
-          // Fire-and-forget; both refund helpers swallow their own errors.
-          void decrementQuotaUsage(userId, refundPeriodStart)
-        }
-        if (refundFreeOracle) {
-          void releaseFreeOracleReading(userId)
-        }
-      },
+    void checkAndLogGeneration({
+      source: 'oracle',
+      model: AI_MODEL,
+      text: finalPlainText,
+      conditions: generationConditions,
     })
 
-    // result.consumeStream() drains the LLM stream server-side regardless of
-    // client connection state — guarantees onFinish fires (persisting the
-    // reading) even when the user navigates away mid-stream.
-    result.consumeStream()
+    const generatedAt = new Date()
+    const expiresAt = resolveReadingExpiry(generatedAt, {
+      isPremium,
+      topic: validatedTopic,
+      previousExpiresAt: existingReading?.expires_at ?? null,
+    })
 
-    return result.toTextStreamResponse()
+    // SECURITY FIX (2026-08-26 sweep #14): a fresh (non-regeneration)
+    // generation must NOT touch last_regenerated_at — omit it from the
+    // upsert so the existing value survives on conflict.
+    const { error: saveError } = await supabase.from('ai_readings').upsert(
+      {
+        chart_id: chartId,
+        user_id: userId,
+        topic: validatedTopic,
+        content: finalContent,
+        generated_at: generatedAt.toISOString(),
+        expires_at: expiresAt,
+        ...(isRegenerationOfExisting
+          ? { last_regenerated_at: generatedAt.toISOString() }
+          : {}),
+        model_version: AI_MODEL,
+      },
+      { onConflict: 'chart_id,topic' },
+    )
+    if (saveError) {
+      console.error('[Oracle Generate] Failed to save reading:', {
+        chartId,
+        topic: validatedTopic,
+        error: saveError,
+      })
+    }
+
+    return Response.json({
+      content: finalContent,
+      cached: false,
+      generatedAt: generatedAt.toISOString(),
+    })
   } catch (error) {
-    // Setup error before stream returned. If we already claimed, refund.
+    // Setup error before the response was returned. If we already claimed, refund.
     await refundClaim()
     return toErrorResponse(error, 'Грешка при генериране на четенето')
   }

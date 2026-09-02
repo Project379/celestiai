@@ -64,6 +64,10 @@ vi.mock('@/lib/horoscope/transit-analysis', () => ({
 
 vi.mock('@/lib/horoscope/transit-to-prompt', () => ({
   transitAndNatalToPromptText: vi.fn(() => 'prompt text'),
+  buildHoroscopePlaceholderValues: vi.fn(() => ({})),
+}))
+vi.mock('@/lib/ai/validate-reading', () => ({
+  validateReading: vi.fn((raw: string) => ({ ok: true, text: raw, content: raw, wordCount: 90 })),
 }))
 
 vi.mock('@stellaeum/astrology', () => ({

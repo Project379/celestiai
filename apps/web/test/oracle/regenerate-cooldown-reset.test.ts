@@ -91,6 +91,16 @@ vi.mock('@/lib/oracle/prompts', () => ({
 
 vi.mock('@/lib/oracle/chart-to-prompt', () => ({
   chartToPromptText: vi.fn(() => 'chart prompt text'),
+  buildOraclePlaceholderValues: vi.fn(() => ({})),
+}))
+
+vi.mock('@/lib/ai/validate-reading', () => ({
+  validateReading: vi.fn((raw: string) => ({
+    ok: true,
+    text: raw,
+    content: raw,
+    wordCount: 500,
+  })),
 }))
 
 vi.mock('@stellaeum/core/oracle/planet-parser', () => ({
