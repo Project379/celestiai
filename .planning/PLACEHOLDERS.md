@@ -64,8 +64,8 @@ resolved 2026-09-01.)
 | ID | Description | Type | Owner | Blocks | Status | Resolved-date | Location |
 |---|---|---|---|---|---|---|---|
 | LLM-GUARDRAILS | Zero content-safety layer on Oracle/horoscope output (also `apps/web/app/api/horoscope/generate/route.ts`) | CODE | Toni | Launch | OPEN | | apps/web/lib/ai/check-bg-output.ts |
-| ASTRO-TIMEZONE | Bulgarian timezone/DST path unverified; April validation covered the ephemeris, not BG birth locations | CODE | CC | Launch | OPEN | | packages/astrology/src/utils/timezone.ts |
-| ASTRO-INJECT | Model writes its own degrees/orbs; 10/10 readings collapse every planet to one degree (also horoscope prompts) | CODE | CC | Launch | OPEN | | apps/web/lib/oracle/prompts.ts |
+| ASTRO-TIMEZONE | Bulgarian timezone/DST path — was unverified; Phase 1 diagnosis confirmed the 4 core BG charts convert correctly and found a DST-boundary bug (probe sampled the offset on the wrong side of a transition). Phase 2 rewrote `localTimeToUTC` with round-trip disambiguation (ambiguous fall-back hour → earlier occurrence + flag; spring-forward gap → forward shift + flag) and added `packages/astrology/test/timezone-dst.test.ts` (10 cases, incl. the 4 regression guards). geo-tz only resolves the zone name; offsets come from historically-aware ICU. Closes ephemeris-validation doc-drift #7. | CODE | CC | Launch | RESOLVED | 2026-09-02 | packages/astrology/src/utils/timezone.ts |
+| ASTRO-INJECT | Model wrote its own degrees/signs/houses/orbs — Phase 1 found this UNSTABLE run-to-run (not reliably broken), so it could not be regression-tested. Phase 2 removed the ability entirely: both system prompts now forbid figures and require `[pos:]`/`[house:]`/`[aspect:]`/`[tpos:]`/`[taspect:]` tokens; the server substitutes real chart values (`buildOraclePlaceholderValues` / `buildHoroscopePlaceholderValues`) and a pre-display validator (`apps/web/lib/ai/validate-reading.ts`) rejects any model-authored digit, unresolved token, non-Bulgarian glyph, unbalanced sentinel or out-of-range length, regenerating once then failing visibly. Oracle + daily horoscope no longer stream. Gate 9 (`apps/web/scripts/oracle-gate9.mjs`) is the manual regression harness. | CODE | CC | Launch | RESOLVED | 2026-09-02 | apps/web/lib/oracle/prompts.ts |
 | PAYWALL-MOBILE | RevenueCat native paywall not built; no mobile CTA anywhere | CODE | CC | Store submission | OPEN | | apps/mobile/components/oracle/CapReachedNotice.tsx |
 | MIGRATIONS | 13 unrecorded migrations, 3 orphaned ledger rows, one with a live DROP COLUMN (`supabase/migrations/20260413141504_schema_hardening.sql`) | CODE | CC | Any schema change | OPEN | | — |
 | SCHEMA-UNTRACKED | 16 Drizzle-era tables with no CREATE TABLE; production schema unreproducible from repo (partly captured by `20260826150000_capture_untracked_tables.sql`) | CODE | CC | Staging env | OPEN | | — |
@@ -156,8 +156,6 @@ before any launch or submission.
 | ID | Type | Owner | Enforced by gate? |
 |---|---|---|---|
 | LLM-GUARDRAILS | CODE | Toni | yes (marker present) |
-| ASTRO-TIMEZONE | CODE | CC | yes |
-| ASTRO-INJECT | CODE | CC | yes |
 | 2FA-BUG | CODE | CC | yes |
 | ENTITY-NAME | CODE | Toni | yes (marker present — placeholder footer values, 2026-09-01) |
 | PROD-CREDS | CONFIG | Toni | **no — manual** |
