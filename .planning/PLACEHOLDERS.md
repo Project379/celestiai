@@ -57,9 +57,11 @@ keeps the register's truth in one file.
 
 ## Register
 
-42 OPEN rows + 7 RESOLVED rows = 49 total. (The brief's "43 rows" counts
-the OPEN block only; BUILD-SHA added and TIER-ITEM-4 / TIER-ITEM-5
-resolved 2026-09-01.)
+43 OPEN rows + 9 RESOLVED rows = 52 total, per `check-placeholders`'s own
+count (the prior "42 OPEN + 7 RESOLVED" line in this file had already
+drifted from the table before this edit — not corrected further here,
+since re-auditing that drift is out of scope for this pass). LLM-MODEL-
+SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL added 2026-09-03.
 
 | ID | Description | Type | Owner | Blocks | Status | Resolved-date | Location |
 |---|---|---|---|---|---|---|---|
@@ -112,6 +114,9 @@ resolved 2026-09-01.)
 | VERCEL-PLAN | Confirmed not Hobby | CONFIG | Toni | — | RESOLVED | 2026-09-01 | n/a |
 | LLM-MODEL | Provider decided; Petko implementing | DECISION | Petko | — | RESOLVED | 2026-09-01 | n/a |
 | KRUG-TEASER | Free users keep the teaser as the locked state | DECISION | Toni | — | RESOLVED | 2026-09-01 | n/a |
+| LLM-MODEL-SWAP | LLM-MODEL (decision) is RESOLVED but the implementation has not landed — production still calls `meta-llama/llama-3.3-70b-instruct` (SYSTEM-MAP §4). Gate 9 on the widened 300-800-word band still shows an ~80% first-pass rate (see PROJECT.md/handoff for the 2026-09-03 run), driven by foreign-script injection and hallucinated aspects — a known-weak-model ceiling, not a bug in the validator. The app cannot reliably ship Oracle/horoscope readings on this model | CODE | Petko | Launch | OPEN | | apps/web/lib/ai/client.ts |
+| GATE9-PHRASE-REPETITION | Gate 9 (2026-09-03 run, 300-800-word band): the model writes "твоят [planet] на" as a stock opening in 6-8 of 10 readings per run, and separately gets Слънце's grammatical gender wrong ("твоят Слънце" instead of neuter "твоето Слънце") in most of those — confirmed model-only, no static Bulgarian string in the codebase has the wrong-gender form (`packages/astrology/src/constants.ts` already encodes `PLANETS_BG_GENDER.sun = 'neut'` correctly; it just is not consulted by the prompt). Not fixable by prompt engineering per this file's header ruling — blocked on the model swap | CODE | Petko | Launch quality bar | OPEN | | — |
+| CHART-CALC-BACKFILL | `6b1a25d` (2026-09-02) made `calculateNatalChart` use the stated birth-time window's midpoint for unknown-time charts instead of always assuming noon, but existing `chart_calculations` rows computed before that commit still hold the old 12:00 estimate — those users see a chart calculated at the wrong assumed time until the row is invalidated/recalculated. No backfill script exists yet | CODE | CC | Data accuracy for existing accounts | OPEN | | — |
 
 ---
 
@@ -135,6 +140,8 @@ list — its "locations" were all docs, matching EN-LOCALE's shape.)
 | BUILD-SHA | Absence of a version marker in HTTP responses / build metadata. No middleware header, no `/api/version` route — nothing to mark. |
 | ANR | Android runtime symptom, not a code line. Investigation item. |
 | COOKIE-CONSENT | Absence of a consent mechanism. Conditional on ANALYTICS-VENDOR — no code until a vendor is picked. |
+| GATE9-PHRASE-REPETITION | Model-output symptom (a stock phrase and a grammar error the model produces), not a line of code — the prompt already models correct gender by example and there is no per-planet gender lookup to wire in without prompt-engineering a placeholder model, which this file's header ruling says not to do. |
+| CHART-CALC-BACKFILL | The gap is a backfill script that doesn't exist yet — nothing in the repo to mark until one is written. |
 
 **Finding:** 9 of the 27 OPEN CODE entries have no code location. Markers
 were placed for the other **18**. (Was 13 of 29 → 12 of 28 when DOC-DRIFT
@@ -164,6 +171,9 @@ before any launch or submission.
 | ANALYTICS-VENDOR | DECISION | Toni | **no — manual** |
 | PRIVACY-REVIEW | EXTERNAL | Lawyer | **no — manual** |
 | DPA-CONTRACTS | EXTERNAL | Toni | **no — manual** |
+| LLM-MODEL-SWAP | CODE | Petko | yes (marker present) |
+| GATE9-PHRASE-REPETITION | CODE | Petko | **no — no code location, symptom only** |
+| CHART-CALC-BACKFILL | CODE | CC | **no — no code location, script not written** |
 
 ### Blocks: Store submission
 

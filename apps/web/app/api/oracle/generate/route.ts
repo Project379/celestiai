@@ -63,7 +63,11 @@ import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
  * 11. Stream / generate via OpenRouter / Llama
  * 12. On failure: refund the claim (both tiers)
  */
-export const maxDuration = 60
+// 300s = the Vercel Pro ceiling. Two sequential generateText calls (the
+// regenerate-once path) at ~20-40s each, plus validation and DB writes,
+// comfortably fit; 60s did not leave headroom for a slow upstream attempt
+// followed by a retry.
+export const maxDuration = 300
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
 
@@ -299,8 +303,13 @@ export async function POST(req: Request) {
       for (let attempt = 1; attempt <= 2 && finalContent === null; attempt++) {
         const raw = await generateRaw()
         const validation = validateReading(raw, placeholderValues, {
-          minWords: 400,
-          maxWords: 700,
+          // 300-800: derived from the FORMAT rule (7-9 paragraphs) in
+          // lib/oracle/prompts.ts at ~35-90 words/paragraph, not from an
+          // arbitrary figure. Gate 9 found 400-700 rejected several good
+          // readings (365, 736, 772 words) on length alone — see
+          // .planning/PLACEHOLDERS.md ASTRO-INJECT / SYSTEM-MAP §4.
+          minWords: 300,
+          maxWords: 800,
         })
         lastValidation = validation
         if (validation.ok) {

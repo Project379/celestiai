@@ -11,6 +11,9 @@ import { createOpenAI } from '@ai-sdk/openai'
 // prompt workarounds, retries, or post-processing to compensate for its
 // output quality; that work becomes dead weight the moment this constant
 // changes, and would mask whether a new model actually fixes anything.
+// STELLAEUM_PLACEHOLDER: LLM-MODEL-SWAP — decision resolved, implementation
+// not landed; the app cannot reliably serve readings on this model. See
+// .planning/PLACEHOLDERS.md.
 export const AI_MODEL = 'meta-llama/llama-3.3-70b-instruct'
 
 // STELLAEUM_PLACEHOLDER: LLM-FAILOVER — one provider (OpenRouter), no

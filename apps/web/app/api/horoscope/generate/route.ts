@@ -16,7 +16,11 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 
-export const maxDuration = 60
+// 300s = the Vercel Pro ceiling. Two sequential generateText calls (the
+// regenerate-once path) at ~10-25s each for the shorter horoscope prompt,
+// plus validation and DB writes, comfortably fit; 60s did not leave
+// headroom for a slow upstream attempt followed by a retry.
+export const maxDuration = 300
 
 /**
  * POST /api/horoscope/generate — the daily "Днес" reading.

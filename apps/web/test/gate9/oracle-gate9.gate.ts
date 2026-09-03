@@ -11,7 +11,7 @@
  *     - the model wrote no digit / degree of its own
  *     - SCRIPT PURITY — no CJK / Hangul / Greek / other non-Bulgarian glyph
  *     - planet sentinels balanced
- *     - word count 400-700
+ *     - word count 300-800
  *   (Degree/sign/house/orb correctness is guaranteed *by construction* now
  *    that the figures come from substitution, so it is not re-asserted —
  *    the checks above are the ones that can still fail.)
@@ -117,7 +117,7 @@ describe('Gate 9 — Oracle output on the live placeholder model', () => {
     )
     FIXTURE.charts.forEach((chart, idx) => {
       const raw = raws[idx] ?? ''
-      const v = validateReading(raw, chart.placeholderValues, { minWords: 400, maxWords: 700 })
+      const v = validateReading(raw, chart.placeholderValues, { minWords: 300, maxWords: 800 })
       results.push({
         id: chart.meta.id,
         city: chart.meta.city,
