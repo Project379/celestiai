@@ -99,6 +99,7 @@ broken client bundle (undefined values baked in):
 | `NEXT_PUBLIC_APP_URL` | Stripe redirect URLs — defaults to `http://localhost:3000` in `.env.example`; **check this is actually set to the real prod URL in Vercel, not left at the example default** |
 | `NEXT_PUBLIC_SENTRY_DSN` | Client-side Sentry |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Web Push |
+| `NEXT_PUBLIC_POSTHOG_KEY` / `_HOST` | PostHog analytics (client init in `components/analytics/PostHogProvider.tsx`, AND the server-side `signup completed` capture in `lib/analytics/server-capture.ts` — `NEXT_PUBLIC_*` reads are build-time-inlined everywhere they appear, not just in client components) — missing either silently disables analytics rather than failing the build (see PostHogProvider.tsx's own guard) |
 
 **Build-time, Sentry-plugin-specific (read by `withSentryConfig` in
 `next.config.js`, not app code):**

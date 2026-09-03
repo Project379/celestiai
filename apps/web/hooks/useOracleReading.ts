@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import posthog from 'posthog-js'
 
 /**
  * Shape of a saved AI reading returned from GET /api/oracle/readings
@@ -55,8 +56,11 @@ export type GenerationError = CapReachedError | GenericGenerationError
  * (error path) and ReadableStream (success path) based on status.
  *
  * @param chartId - The chart UUID to generate readings for
+ * @param isPremium - Drives the "free Oracle reading generated" event
+ *                     below: only free-tier, freshly-generated (not
+ *                     cache-hit) readings fire it.
  */
-export function useOracleReading(chartId: string) {
+export function useOracleReading(chartId: string, isPremium = false) {
   const [savedReadings, setSavedReadings] = useState<
     Record<string, SavedReading>
   >({})
@@ -192,6 +196,15 @@ export function useOracleReading(chartId: string) {
           const data = await res.json().catch(() => null)
           if (data && typeof data.content === 'string') {
             setCompletion(data.content)
+            // "free Oracle reading generated" — only a genuinely fresh
+            // generation (data.cached === false) for a free-tier user;
+            // never a cache-hit re-render (route.ts step-5 short-circuit,
+            // which also returns this same JSON envelope with cached:
+            // true) and never a premium reading. Bare event, no topic
+            // text or reading content attached.
+            if (!isPremium && data.cached === false) {
+              posthog.capture('free Oracle reading generated')
+            }
             void fetchSavedReadings()
             return
           }

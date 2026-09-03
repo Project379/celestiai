@@ -57,11 +57,10 @@ keeps the register's truth in one file.
 
 ## Register
 
-43 OPEN rows + 9 RESOLVED rows = 52 total, per `check-placeholders`'s own
-count (the prior "42 OPEN + 7 RESOLVED" line in this file had already
-drifted from the table before this edit — not corrected further here,
-since re-auditing that drift is out of scope for this pass). LLM-MODEL-
-SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL added 2026-09-03.
+41 OPEN rows + 11 RESOLVED rows = 52 total, per `check-placeholders`'s own
+count. LLM-MODEL-SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL
+added 2026-09-03 (PostHog hardening pass); COOKIE-CONSENT and
+ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day.
 
 | ID | Description | Type | Owner | Blocks | Status | Resolved-date | Location |
 |---|---|---|---|---|---|---|---|
@@ -88,7 +87,7 @@ SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL added 2026-09-03.
 | OAUTH-COPY-GOOGLE | form_param_missing / oauth_access_denied / external_account_exists say "Google" but fire for Apple too | CODE | Toni | Store submission | OPEN | | apps/mobile/lib/clerk/errorMessages.ts |
 | ANR | Android ANR, no usable main-thread data; emulator device class is the leading suspect | CODE | CC | — | OPEN | | — |
 | DOC-DRIFT | CLAUDE.md "Realtime" line; stale COMPETITOR_ANALYSIS and FEATURES docs. Retyped CODE→DECISION 2026-09-01: all three locations are docs and the work is "decide the current truth, then write it" — same shape as EN-LOCALE | DECISION | CC | — | OPEN | | n/a |
-| COOKIE-CONSENT | No consent mechanism; needed only if third-party analytics ships | CODE | CC | EU traffic | OPEN | | — |
+| COOKIE-CONSENT | RESOLVED 2026-09-03: PostHog (the analytics that made this row live, see ANALYTICS-VENDOR) is configured cookieless — `persistence: 'memory'` at `apps/web/components/analytics/PostHogProvider.tsx:71` and `apps/mobile/lib/analytics/posthog.ts:31` means neither platform ever writes a cookie/localStorage/AsyncStorage-persisted analytics identity. This is CONFIG-verified (the option is posthog-js's own documented storage-mode enum, not a workaround) but NOT live-browser-verified — the claude-in-chrome extension was unavailable in the session that made this change, so `document.cookie` / Application > Storage were never inspected empirically in a running app. Do that check before treating this as fully closed; re-open this row if it turns up a cookie. If persistence is ever changed off `'memory'` on either file, re-open regardless | CODE | CC | EU traffic | RESOLVED | 2026-09-03 | apps/web/components/analytics/PostHogProvider.tsx |
 | TERMS | `/terms` route exists as a placeholder only (compliance batch 2026-09-01) — body is not lawyer-reviewed; linked from checkout + pricing + footer | CODE | Lawyer | Store submission | OPEN | | apps/web/app/terms/page.tsx |
 | WITHDRAWAL-COPY | CRD immediate-performance / 14-day-withdrawal consent wording now shipped at Stripe Checkout (`custom_text`), still not lawyer-reviewed (compliance batch 2026-09-01) | CODE | Lawyer | Web payments | OPEN | | apps/web/lib/legal/compliance-copy.ts |
 | AI-ACT-COPY | Article 50 disclosure now shown on Oracle (web+mobile), daily horoscope (web+mobile) and pricing (compliance batch 2026-09-01); wording not lawyer-reviewed; other AI surfaces still unaudited | CODE | Lawyer | Already overdue | OPEN | | apps/web/lib/legal/compliance-copy.ts |
@@ -102,11 +101,11 @@ SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL added 2026-09-03.
 | EAS-SENTRY-DSN | EAS env var carrying the mobile Sentry DSN unconfirmed | CONFIG | Toni | — | OPEN | | n/a |
 | MOON-PARITY | Moon detail is mobile-only; violates the parity ruling | DECISION | Toni | Launch | OPEN | | n/a |
 | PRICE-BASIS | €9.99 in the LLM decision doc vs €6.99 on the live pricing page | DECISION | Toni | Paywall | OPEN | | n/a |
-| ANALYTICS-VENDOR | None chosen; decides whether cookie consent is needed | DECISION | Toni | Launch | OPEN | | n/a |
+| ANALYTICS-VENDOR | PostHog Cloud EU chosen 2026-09-03 — cookieless (memory persistence), five events only (signup completed, birth data submitted, chart first viewed, free Oracle reading generated, subscription started), no autocapture/session replay/heatmaps/surveys/feature flags/experiments. This resolves the cookie-consent question this row existed to answer — see COOKIE-CONSENT | DECISION | Toni | Launch | RESOLVED | 2026-09-03 | n/a |
 | EN-LOCALE | English deferred; FEATURES.md still claims BG+EN | DECISION | Toni | — | OPEN | | n/a |
 | LLM-RETENTION | Zero-data-retention status on the chosen provider unknown | EXTERNAL | Petko | Privacy policy | OPEN | | n/a |
 | PRIVACY-REVIEW | Privacy policy content is a placeholder, not lawyer-reviewed | EXTERNAL | Lawyer | Launch | OPEN | | n/a |
-| DPA-CONTRACTS | Processor DPAs unsigned: Clerk, Supabase, Stripe, OpenRouter, Sentry | EXTERNAL | Toni | Launch | OPEN | | n/a |
+| DPA-CONTRACTS | Processor DPAs unsigned: Clerk, Supabase, Stripe, OpenRouter, Sentry, PostHog (added 2026-09-03) | EXTERNAL | Toni | Launch | OPEN | | n/a |
 | SE-LICENCE | CHF 700 Swiss Ephemeris Professional; triggers on first paying subscriber; deferral reasoning undocumented | EXTERNAL | Toni | First subscriber | OPEN | | n/a |
 | DESIGN-ASSETS | Placeholder icon/logo; IP assignment email sent, reply pending | EXTERNAL | Designer | Store submission | OPEN | | n/a |
 | FREE-TIER | Frozen 2026-09-01 | DECISION | Toni | — | RESOLVED | 2026-09-01 | n/a |
@@ -139,16 +138,16 @@ list — its "locations" were all docs, matching EN-LOCALE's shape.)
 | SMOKE-TEST | Absence of a post-deploy script. No `scripts/*smoke*`, no workflow step. |
 | BUILD-SHA | Absence of a version marker in HTTP responses / build metadata. No middleware header, no `/api/version` route — nothing to mark. |
 | ANR | Android runtime symptom, not a code line. Investigation item. |
-| COOKIE-CONSENT | Absence of a consent mechanism. Conditional on ANALYTICS-VENDOR — no code until a vendor is picked. |
 | GATE9-PHRASE-REPETITION | Model-output symptom (a stock phrase and a grammar error the model produces), not a line of code — the prompt already models correct gender by example and there is no per-planet gender lookup to wire in without prompt-engineering a placeholder model, which this file's header ruling says not to do. |
 | CHART-CALC-BACKFILL | The gap is a backfill script that doesn't exist yet — nothing in the repo to mark until one is written. |
 
-**Finding:** 9 of the 27 OPEN CODE entries have no code location. Markers
-were placed for the other **18**. (Was 13 of 29 → 12 of 28 when DOC-DRIFT
-was retyped DECISION → 13 of 29 when BUILD-SHA was added → 9 of 29 when the
-2026-09-01 compliance batch gave TERMS, ENTITY-NAME, AI-ACT-COPY and
-WITHDRAWAL-COPY real code markers → 9 of 27 when TIER-ITEM-4 and
-TIER-ITEM-5 resolved.)
+**Finding:** 8 of the OPEN CODE entries have no code location (was 9 before
+2026-09-03: COOKIE-CONSENT resolved with a real marker-free Location
+citation, removing it from this list; GATE9-PHRASE-REPETITION and
+CHART-CALC-BACKFILL added to it the same day, net -1). Historical count
+chain (see prior entries in this file's git history for the full
+derivation) ended at 9 of 27 after TIER-ITEM-4/5 resolved 2026-09-01; this
+is the next link.
 
 ---
 
@@ -168,7 +167,6 @@ before any launch or submission.
 | PROD-CREDS | CONFIG | Toni | **no — manual** |
 | SUPABASE-PLAN | CONFIG | Toni | **no — manual** |
 | MOON-PARITY | DECISION | Toni | **no — manual** |
-| ANALYTICS-VENDOR | DECISION | Toni | **no — manual** |
 | PRIVACY-REVIEW | EXTERNAL | Lawyer | **no — manual** |
 | DPA-CONTRACTS | EXTERNAL | Toni | **no — manual** |
 | LLM-MODEL-SWAP | CODE | Petko | yes (marker present) |
