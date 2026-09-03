@@ -10,7 +10,7 @@ import { createMockSupabase, type MockSupabase } from '../mocks/supabase'
  * could loop POST /api/birth-data to mint a fresh chart, then POST
  * /api/horoscope/generate for it — each new chart is a fresh (chart_id,
  * date) cache key the existing daily_horoscopes cache can't dedupe, so
- * every chart unlocked another full-price OpenRouter call with nothing
+ * every chart unlocked another paid AI call with nothing
  * capping the total.
  *
  * This test proves the fix (checkQuotaAvailable/incrementQuotaUsage wired
@@ -61,7 +61,7 @@ vi.mock('@/lib/ai/check-bg-output', () => ({
 
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
-  openrouter: vi.fn(() => 'fake-model-instance'),
+  gemini: vi.fn((model: string) => `fake-model-instance:${model}`),
 }))
 
 vi.mock('@/lib/horoscope/prompts', () => ({
@@ -90,7 +90,11 @@ vi.mock('@stellaeum/astrology', () => ({
 }))
 
 vi.mock('ai', () => ({
-  generateText: vi.fn(async () => ({ text: 'a generated horoscope' })),
+  generateText: vi.fn(async () => ({
+    output: { content: 'a generated horoscope' },
+    text: '',
+  })),
+  Output: { object: vi.fn((options) => options) },
   streamText: vi.fn(),
 }))
 
@@ -130,6 +134,7 @@ vi.mock('@/lib/subscriptions/quota', () => ({
 }))
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { generateText } from 'ai'
 import { POST } from '@/app/api/horoscope/generate/route'
 
 let mockSupabase: MockSupabase
@@ -224,6 +229,77 @@ describe('POST /api/horoscope/generate — quota gate (2026-08-26 sweep #2, chai
     const res = await POST(makeRequest('chart-cached'))
 
     expect(res.status).toBe(200)
+    expect(quotaState.used).toBe(0)
+  })
+
+  it('makes one provider request with retries disabled and removes leaked self-talk', async () => {
+    seedRouteQueries('chart-single-call')
+    vi.mocked(generateText).mockResolvedValueOnce({
+      output: {
+        content: 'Финален български хороскоп. \\*(Wait, let us construct carefully.)\\*',
+      },
+      text: '',
+    } as never)
+
+    const res = await POST(makeRequest('chart-single-call'))
+
+    expect(res.status).toBe(200)
+    await expect(res.json()).resolves.toMatchObject({
+      content: 'Финален български хороскоп.',
+    })
+    expect(generateText).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(generateText).mock.calls[0]?.[0]).toMatchObject({
+      maxRetries: 0,
+      model: 'fake-model-instance:fake-model',
+      providerOptions: {
+        google: {
+          thinkingConfig: { includeThoughts: false, thinkingLevel: 'low' },
+        },
+      },
+    })
+  })
+
+  it('returns a retryable 503 and refunds quota after the single Gemini call fails', async () => {
+    seedRouteQueries('chart-overloaded')
+    const overload = Object.assign(new Error('high demand'), {
+      isRetryable: true,
+      statusCode: 503,
+    })
+    vi.mocked(generateText).mockRejectedValueOnce(overload)
+
+    const res = await POST(makeRequest('chart-overloaded'))
+
+    expect(res.status).toBe(503)
+    expect(res.headers.get('Retry-After')).toBe('30')
+    await expect(res.json()).resolves.toMatchObject({
+      code: 'AI_TEMPORARILY_UNAVAILABLE',
+    })
+    expect(generateText).toHaveBeenCalledTimes(1)
+    expect(quotaState.used).toBe(0)
+  })
+
+  it('treats an empty claim row as in-progress without consuming quota or calling Gemini', async () => {
+    mockSupabase.push('charts', {
+      data: {
+        id: 'chart-generating',
+        user_id: 'user_free_horoscope_quota',
+        birth_date: '2000-01-01',
+        birth_time: '12:00',
+        birth_time_known: true,
+        latitude: 42.7,
+        longitude: 23.3,
+      },
+    })
+    mockSupabase.push('daily_horoscopes', {
+      data: { content: '', generated_at: '2026-09-01T00:00:00.000Z' },
+    })
+
+    const res = await POST(makeRequest('chart-generating'))
+
+    expect(res.status).toBe(202)
+    expect(res.headers.get('Retry-After')).toBe('3')
+    await expect(res.json()).resolves.toMatchObject({ generating: true })
+    expect(generateText).not.toHaveBeenCalled()
     expect(quotaState.used).toBe(0)
   })
 })

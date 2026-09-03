@@ -117,4 +117,4 @@ The Moshier-vs-SE-files empirical-precision-floor check described in `packages/a
 
 Third-party dependencies whose licenses are standard permissive (MIT, ISC, Apache-2.0) and do not require explicit analysis are not enumerated here. This file records only dependencies whose license choice is a load-bearing decision or non-trivial to verify.
 
-**Pending founder review** (not automatable): Clerk TOS, Supabase TOS, Stripe TOS, OpenRouter TOS. These are service-provider Terms of Service, not software licenses, but compose with GDPR obligations (see `.planning/PRE_LAUNCH_PREREQS.md` item 7). Tracked in `.planning/PRE_LAUNCH_PREREQS.md` item 9.
+**Pending founder review** (not automatable): Clerk TOS, Supabase TOS, Stripe TOS, Google Gemini API terms. These are service-provider Terms of Service, not software licenses, but compose with GDPR obligations (see `.planning/PRE_LAUNCH_PREREQS.md` item 7). Tracked in `.planning/PRE_LAUNCH_PREREQS.md` item 9.

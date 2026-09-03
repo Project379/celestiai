@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * 2026-08-26 sweep finding #5, corrected: these routes generate report
- * CONTENT from a deterministic template (no OpenRouter/LLM call — see
+ * CONTENT from a deterministic template (no external LLM call — see
  * lib/circle/report.ts), so this is not an AI-spend control. What was
  * genuinely uncapped: version rows per space, each triggering a real Swiss
  * Ephemeris compatibility compute, with only a 5/min rate limit as a brake

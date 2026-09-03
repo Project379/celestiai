@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
-import { generateText, streamText } from 'ai'
-import { AI_MODEL, openrouter } from '@/lib/ai/client'
+import { ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
+import { aiTemporarilyUnavailableResponse, isTransientAIError } from '@/lib/ai/errors'
+import { generateFinalText } from '@/lib/ai/generate-final-text'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
@@ -21,7 +22,7 @@ import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
  * POST /api/oracle/generate
- * Streams an AI-generated natal chart reading via OpenRouter / Llama.
+ * Generates and persists an AI natal-chart reading via Google Gemini.
  *
  * Flow (post-B.0f-2 quota refactor 2026-05-10):
  * 1. Auth check
@@ -39,17 +40,19 @@ import { assertRateLimit } from '@/lib/rate-limit'
  *    invisible by design).
  *    7a. checkQuotaAvailable — reads the current period row for
  *        { used, limit, periodStart }, tier-appropriate limit.
- *    7b. incrementQuotaUsage — atomic conditional UPDATE before Llama
+ *    7b. incrementQuotaUsage — atomic conditional UPDATE before the Gemini
  *        call. Race-loss treated as cap-reached, same as 7a.
  * 8. Load chart calculation data
  * 9. Build prompts from chart data
- * 10. Stream / generate via OpenRouter / Llama
- * 11. onFinish / await: upsert completed reading into ai_readings
+ * 10. Generate a structured final response via Google Gemini
+ * 11. Upsert the completed reading into ai_readings
  * 12. On any failure in 10–11: decrementQuotaUsage refund (both tiers)
  */
 export const maxDuration = 60
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
+export const ORACLE_GENERATION_RATE_LIMIT = 5
+export const ORACLE_GENERATION_RATE_WINDOW_MS = 60_000
 
 export async function POST(req: Request) {
   // 1. Auth check
@@ -58,23 +61,23 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
-  // Hoisted so refund paths in the outer catch + stream callbacks can see it.
-  // Set non-null only after a successful cap-claim against a free-tier row.
+  // Hoisted so both generation and setup failures can refund the cap-claim.
+  // Set non-null only after a successful cap-claim.
   let claimedPeriodStart: Date | null = null
 
   try {
     // Burst guard, defense-in-depth alongside the monthly quota cap and the
     // 24h regen cooldown below — neither of those blocks a rapid-fire burst
     // within a single window the way this does.
-    // failClosed (2026-08-26 sweep #17): this route calls a paid OpenRouter
+    // failClosed (2026-08-26 sweep #17): this route calls a paid Gemini
     // model. A Supabase-degradation fail-open here would remove the burst
     // brake on a real-money route while the monthly quota cap (which
     // throws, not fails open, on its own DB errors) is the only other
     // control left.
     await assertRateLimit({
       key: `oracle-generate:${userId}`,
-      limit: 10,
-      windowMs: 60_000,
+      limit: ORACLE_GENERATION_RATE_LIMIT,
+      windowMs: ORACLE_GENERATION_RATE_WINDOW_MS,
       failClosed: true,
     })
 
@@ -240,158 +243,76 @@ export async function POST(req: Request) {
       })),
     }
 
-    // 10a. Mobile path — non-streaming JSON response. Mirrors the
-    //      ?format=json branch in /api/horoscope/generate added in
-    //      sub-round 5.3 (REVISIT-TRIGGERS item 20 logs the streaming
-    //      polish for mobile). react-native-sse is finicky on iOS so
-    //      mobile collects the full text and renders once. Web's
-    //      streaming path stays untouched below.
-    if (jsonOnly) {
-      try {
-        const result = await generateText({
-          model: openrouter(AI_MODEL),
-          system: systemPrompt,
-          prompt: chartPromptText,
-          temperature: 0.85,
-          maxOutputTokens: 2000,
-        })
+    // 10. Buffer a structured final response before exposing it. This keeps
+    // model self-talk out of the Oracle UI and makes a clean model fallback
+    // possible: 3.7 is attempted once, then 3.6 once only for transient
+    // provider failures. No request abort signal is forwarded, so closing the
+    // panel or navigating away does not cancel generation or persistence.
+    try {
+      const { model: servedModel, text } = await generateFinalText({
+        system: systemPrompt,
+        prompt: chartPromptText,
+        maxOutputTokens: 900,
+        fallbackModel: ORACLE_FALLBACK_MODEL,
+      })
 
-        const cleanContent = stripSentinels(result.text)
+      const cleanContent = stripSentinels(text)
+      void checkAndLogGeneration({
+        source: 'oracle',
+        model: servedModel,
+        text: cleanContent,
+        conditions: generationConditions,
+      })
 
-        void checkAndLogGeneration({
-          source: 'oracle',
-          model: AI_MODEL,
-          text: cleanContent,
-          conditions: generationConditions,
-        })
+      const generatedAt = new Date()
+      const expiresAt = new Date(generatedAt)
+      expiresAt.setDate(expiresAt.getDate() + 7)
+      const { error: saveError } = await supabase.from('ai_readings').upsert(
+        {
+          chart_id: chartId,
+          user_id: userId,
+          topic: validatedTopic,
+          content: cleanContent,
+          generated_at: generatedAt.toISOString(),
+          expires_at: expiresAt.toISOString(),
+          ...(isRegenerationOfExisting
+            ? { last_regenerated_at: generatedAt.toISOString() }
+            : {}),
+          model_version: servedModel,
+        },
+        { onConflict: 'chart_id,topic' },
+      )
+      if (saveError) throw saveError
 
-        const generatedAt = new Date()
-        const expiresAt = new Date(generatedAt)
-        expiresAt.setDate(expiresAt.getDate() + 7)
-
-        // SECURITY FIX (2026-08-26 sweep #14): a fresh (non-regeneration)
-        // generation must NOT touch last_regenerated_at — omitting it from
-        // the upsert payload leaves the existing column value alone on
-        // conflict (a genuinely new row gets the column's NULL default).
-        // Previously this always wrote `isRegenerationOfExisting ? ... :
-        // null`, so any fresh generation (first-ever, or the 7-day cache
-        // simply expiring) reset the cooldown clock to null — the next
-        // regenerate:true call then found last_regenerated_at falsy and
-        // skipped the 24h cooldown check at step 6 entirely.
-        await supabase.from('ai_readings').upsert(
-          {
-            chart_id: chartId,
-            user_id: userId,
-            topic: validatedTopic,
-            content: cleanContent,
-            generated_at: generatedAt.toISOString(),
-            expires_at: expiresAt.toISOString(),
-            ...(isRegenerationOfExisting
-              ? { last_regenerated_at: generatedAt.toISOString() }
-              : {}),
-            model_version: AI_MODEL,
-          },
-          { onConflict: 'chart_id,topic' }
-        )
-
+      if (jsonOnly) {
         return Response.json({
           content: cleanContent,
           cached: false,
           generatedAt: generatedAt.toISOString(),
         })
-      } catch (err) {
-        if (claimedPeriodStart) {
-          await decrementQuotaUsage(userId, claimedPeriodStart)
-        }
-        console.error('[Oracle Generate] Failed to save reading:', err)
-        return Response.json(
-          { error: 'Грешка при запазване на четенето' },
-          { status: 500 }
-        )
       }
+
+      return new Response(text, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'X-AI-Model': servedModel,
+        },
+      })
+    } catch (err) {
+      if (claimedPeriodStart) {
+        await decrementQuotaUsage(userId, claimedPeriodStart)
+      }
+      if (isTransientAIError(err)) {
+        return aiTemporarilyUnavailableResponse()
+      }
+      console.error('[Oracle Generate] Failed to generate or save reading:', err)
+      return Response.json(
+        { error: 'Грешка при генериране на четенето' },
+        { status: 500 },
+      )
     }
-
-    // 10b. Web path — stream via OpenRouter / meta-llama/llama-3.3-70b-instruct.
-    //      Refund hook captured as a const for closure clarity (the let above
-    //      is also visible, but const here documents that callbacks won't be
-    //      racing further mutation).
-    const refundPeriodStart = claimedPeriodStart
-    const result = streamText({
-      model: openrouter(AI_MODEL),
-      system: systemPrompt,
-      prompt: chartPromptText,
-      temperature: 0.85,
-      maxOutputTokens: 2000,
-
-      // onFinish: upsert completed reading into ai_readings
-      onFinish: async ({ text }) => {
-        try {
-          const cleanContent = stripSentinels(text)
-
-          void checkAndLogGeneration({
-            source: 'oracle',
-            model: AI_MODEL,
-            text: cleanContent,
-            conditions: generationConditions,
-          })
-          const generatedAt = new Date()
-          const expiresAt = new Date(generatedAt)
-          expiresAt.setDate(expiresAt.getDate() + 7)
-
-          // See the JSON-path comment above (2026-08-26 sweep #14) — same
-          // fix, same reason: omit last_regenerated_at entirely on a fresh
-          // generation rather than writing null over it.
-          await supabase.from('ai_readings').upsert(
-            {
-              chart_id: chartId,
-              user_id: userId,
-              topic: validatedTopic,
-              content: cleanContent,
-              generated_at: generatedAt.toISOString(),
-              expires_at: expiresAt.toISOString(),
-              ...(isRegenerationOfExisting
-                ? { last_regenerated_at: generatedAt.toISOString() }
-                : {}),
-              model_version: AI_MODEL,
-            },
-            {
-              onConflict: 'chart_id,topic',
-            }
-          )
-        } catch (err) {
-          console.error('[Oracle Generate] Failed to save reading:', err)
-          if (refundPeriodStart) {
-            await decrementQuotaUsage(userId, refundPeriodStart)
-          }
-        }
-      },
-
-      onError: ({ error }) => {
-        console.error('[Oracle Generate] Stream error:', error)
-        if (refundPeriodStart) {
-          // Fire-and-forget; decrementQuotaUsage swallows its own errors
-          // and audits via system.payment.quota_refund_failed when needed.
-          void decrementQuotaUsage(userId, refundPeriodStart)
-        }
-      },
-    })
-
-    // result.consumeStream() drains the LLM stream server-side regardless of
-    // client connection state. Guarantees onFinish fires (persisting the
-    // reading to ai_readings cache) even when the user navigates away
-    // mid-stream. Combined with no abortSignal: the upstream Llama call also
-    // runs to completion, so a fully-formed cached reading is available on
-    // user retry. Trade: slot consumed on abort, but content remains
-    // available via cache for the user to revisit. Documented Vercel AI SDK
-    // pattern. The jsonOnly path inherits the same semantics automatically
-    // via the await + no-abortSignal pattern (server-side await completes
-    // regardless of client disconnect; no consumeStream equivalent needed
-    // for non-streaming generateText). See B.0f-2-fix-2 close note.
-    result.consumeStream()
-
-    return result.toTextStreamResponse()
   } catch (error) {
-    // Setup error before stream returned. If we already cap-claimed, refund.
+    // Setup error before generation. If we already cap-claimed, refund.
     if (claimedPeriodStart) {
       await decrementQuotaUsage(userId, claimedPeriodStart)
     }

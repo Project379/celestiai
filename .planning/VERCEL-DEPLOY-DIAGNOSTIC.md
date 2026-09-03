@@ -116,7 +116,7 @@ that needs them, not at build time, EXCEPT one case flagged in §3):**
 |---|---|
 | `CLERK_SECRET_KEY` | Clerk server SDK |
 | `SUPABASE_SERVICE_ROLE_KEY` | `lib/supabase/service.ts` — lazy, guarded (throws a clean error if missing, doesn't crash the build) |
-| `OPENROUTER_API_KEY` | AI generation (Oracle, daily horoscope) |
+| `GEMINI_API_KEY` | AI generation (Oracle, daily horoscope) |
 | `CRON_SECRET` | Cron route auth |
 | `VAPID_PRIVATE_KEY` | Web Push send |
 | `STRIPE_SECRET_KEY` | **NOT lazy — see §3, this is the strongest lead** |

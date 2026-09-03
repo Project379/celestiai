@@ -82,7 +82,8 @@ vi.mock('@/lib/ai/check-bg-output', () => ({
 
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
-  openrouter: vi.fn(() => 'fake-model-instance'),
+  ORACLE_FALLBACK_MODEL: 'fake-oracle-fallback-model',
+  gemini: vi.fn(() => 'fake-model-instance'),
 }))
 
 vi.mock('@/lib/oracle/prompts', () => ({
@@ -98,7 +99,11 @@ vi.mock('@stellaeum/core/oracle/planet-parser', () => ({
 }))
 
 vi.mock('ai', () => ({
-  generateText: vi.fn(async () => ({ text: 'a generated reading' })),
+  generateText: vi.fn(async () => ({
+    output: { content: 'a generated reading' },
+    text: '',
+  })),
+  Output: { object: vi.fn((options) => options) },
   streamText: vi.fn(),
 }))
 

@@ -14,11 +14,11 @@ import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 //
 // 300/month is ~10x realistic heavy usage (4 oracle topics with occasional
 // regenerate, plus a cached-once-daily horoscope) — no genuine paying user
-// should ever reach it. Basis: OpenRouter's Llama 3.3 70B pricing at time of
-// writing (default/cheapest routing ~$0.10/$0.32 per 1M in/out tokens; a
-// mid-tier provider ~$0.5/$0.8) against this app's ~1-1.5k input / up to
-// 2000 output tokens per generation puts worst-case scripted abuse at
-// roughly $0.20-$0.60/month in OpenRouter spend per compromised account.
+// should ever reach it. Basis: Google Gemini 3.7 Flash pricing at time of
+// writing against this app's ~1-1.5k input / up to 2,000 output tokens per
+// generation. Thinking usage and actual completion length affect the final
+// amount, but the 300-call cap keeps exposure bounded to a few dollars per
+// compromised account.
 // Re-derive this number if AI_MODEL (apps/web/lib/ai/client.ts) ever
 // changes — the arithmetic it's based on changes with it.
 export const FREE_MONTHLY_LIMIT = 3

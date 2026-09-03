@@ -49,7 +49,8 @@ vi.mock('@/lib/ai/check-bg-output', () => ({
 
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
-  openrouter: vi.fn(() => AI_MOCK_MODEL),
+  ORACLE_FALLBACK_MODEL: 'fake-oracle-fallback-model',
+  gemini: vi.fn(() => AI_MOCK_MODEL),
 }))
 
 vi.mock('@/lib/oracle/prompts', () => ({
@@ -65,7 +66,11 @@ vi.mock('@stellaeum/core/oracle/planet-parser', () => ({
 }))
 
 vi.mock('ai', () => ({
-  generateText: vi.fn(async () => ({ text: 'a generated reading' })),
+  generateText: vi.fn(async () => ({
+    output: { content: 'a generated reading' },
+    text: '',
+  })),
+  Output: { object: vi.fn((options) => options) },
   streamText: vi.fn(),
 }))
 
@@ -104,7 +109,12 @@ vi.mock('@/lib/subscriptions/quota', () => ({
 }))
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { POST } from '@/app/api/oracle/generate/route'
+import { assertRateLimit } from '@/lib/rate-limit'
+import {
+  ORACLE_GENERATION_RATE_LIMIT,
+  ORACLE_GENERATION_RATE_WINDOW_MS,
+  POST,
+} from '@/app/api/oracle/generate/route'
 
 let mockSupabase: MockSupabase
 
@@ -147,6 +157,22 @@ beforeEach(() => {
 })
 
 describe('POST /api/oracle/generate — regenerate:true quota bypass (Batch 5.5 #1)', () => {
+  it('limits Oracle generation to five requests per user per minute', async () => {
+    seedRouteQueries()
+
+    const res = await POST(makeRequest())
+
+    expect(res.status).toBe(200)
+    expect(ORACLE_GENERATION_RATE_LIMIT).toBe(5)
+    expect(ORACLE_GENERATION_RATE_WINDOW_MS).toBe(60_000)
+    expect(assertRateLimit).toHaveBeenCalledWith({
+      key: 'oracle-generate:user_free_bypass_test',
+      limit: 5,
+      windowMs: 60_000,
+      failClosed: true,
+    })
+  })
+
   it('consumes quota on every regenerate:true call when there is no existing cached reading, and blocks once the free-tier cap is reached', async () => {
     // Pre-fix, this loop would return 200 on every single call — regenerate
     // skipped checkQuotaAvailable/incrementQuotaUsage entirely whenever
