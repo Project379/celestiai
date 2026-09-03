@@ -57,7 +57,7 @@ keeps the register's truth in one file.
 
 ## Register
 
-48 OPEN rows + 12 RESOLVED rows = 60 total, per `check-placeholders`'s own
+49 OPEN rows + 13 RESOLVED rows = 62 total, per `check-placeholders`'s own
 count. LLM-MODEL-SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL
 added 2026-09-03 (PostHog hardening pass); COOKIE-CONSENT and
 ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day. GEMINI-API-TIER and
@@ -68,7 +68,9 @@ pass). LLM-RETENTION-EEA, GEMINI-EU-REGION, GEMINI-MODEL-AGE and
 THINKING-TOKEN-COST added 2026-09-03 (Gemini cost/rate-limit report
 follow-up); DPA-CONTRACTS updated the same day (OpenRouter → Google).
 REGEN-QUOTA-EXEMPT added 2026-09-04 (regenerate-exemption follow-up —
-ratified, kept as-is, documented for visibility).
+ratified, kept as-is, documented for visibility). DEVICE-SUPPORT-FLOOR
+added RESOLVED and DEVICE-PASS-STALE added OPEN the same day (minimum
+device support policy).
 
 | ID | Description | Type | Owner | Blocks | Status | Resolved-date | Location |
 |---|---|---|---|---|---|---|---|
@@ -128,6 +130,8 @@ ratified, kept as-is, documented for visibility).
 | GEMINI-EU-REGION | Added 2026-09-03: no EU-region pinning exists on the Gemini call — `generativelanguage.googleapis.com` is Google's global endpoint, and `lib/ai/client.ts`'s `createGoogleGenerativeAI` call has no region/location parameter to mark. `LLM-PROVIDER-DECISION-2026-08-27.md` criterion 5 treats "single direct provider" and "EU-hosted" as two separate questions; this branch answers the first (Google, one entity) but not the second — the privacy policy's third-country-transfer (Chapter V) analysis still applies | CODE | Toni | Privacy policy | OPEN | | — |
 | GEMINI-MODEL-AGE | Added 2026-09-03: `gemini-3.7-flash` (released 2026-08-13) and `gemini-3.6-flash` (released 2026-07-21) were 3-6 weeks old at the time of the model swap, per `ai.google.dev/gemini-api/docs/deprecations` — neither has an announced shutdown date, and `gemini-3.7-flash` appears under a "Stable" (not `-latest` rolling-alias) listing, which is good for reproducibility, but both models carry very little production track record anywhere. A quality/stability risk independent of cost or quota | DECISION | Petko | Launch quality bar | OPEN | | n/a |
 | REGEN-QUOTA-EXEMPT | Ratified, not a defect — founder-confirmed 2026-09-04. `oracle/generate` step 8 exempts regenerations of an existing cached reading from `PREMIUM_MONTHLY_LIMIT`, gated only by the 10/min burst limiter and the 24h-per-chart-topic cooldown at step 7 (B.0f-2-fix-1, 2026-05-10; reaffirmed as the frozen tier spec in TIER-DEFINITION-2026-09-01.md). Ceiling: 4 topics x 20 charts (MAX_CHARTS_PER_USER) = up to 80 quota-free regenerations/premium-user/day, never touching the 300 cap or its Sentry alert at 200. Cost: a single day at the full 80-slot ceiling ≈ €0.18, ≈3.6% of a subscriber's entire month of €4.95 net revenue — rising to ≈7% once Gemini's list price doubles 2027-01-01 (see the Gemini cost report). Logged here so this is read as an accepted, sized cost surface rather than rediscovered as a surprise | CODE | Toni | — | OPEN | | apps/web/lib/subscriptions/quota.ts |
+| DEVICE-SUPPORT-FLOOR | RESOLVED 2026-09-04: written policy at `.planning/DEVICE-SUPPORT-POLICY.md` — install floor iOS 17 / Android 11 (API 30), set via `expo-build-properties` in `apps/mobile/app.json`; separate design floor 360x780 CSS px (not iPhone SE). Bulgaria-verified via Statcounter (Android 75.85% / iOS 24.14%, Aug 2026): excludes ≈0% of iOS, ≈5.5% of the total Bulgarian mobile market on Android (the "10 and below" bucket). The 360x780 design floor and the "SE is under 1-2% of this market" figure are proxy inference from global reporting, not Bulgaria-verified — flagged as such in the doc. Supersedes the iPhone SE reference used in the 2026-09-03 layout measurement | DECISION | Toni | — | RESOLVED | 2026-09-04 | apps/mobile/app.json |
+| DEVICE-PASS-STALE | `DEVICE-PASS-2026-08.md` tested a Pixel 8 emulator and an iPhone 12 Pro Max — both predate DEVICE-SUPPORT-FLOOR and sit nowhere near the 360x780 design floor it establishes. Needs re-running against a 360x780-class device (or simulator/emulator set to those dimensions) before launch, to catch layout issues the large-device pass couldn't surface. Not re-run as part of this session — explicitly deferred | CODE | CC | Launch | OPEN | | — |
 | ORACLE-WORD-BAND | Oracle's post-generation word-count band was widened from the Llama-era 300-800 words to 100-250, based on Gate 9 measuring live Gemini output at 126-164 words across 11 live samples (6 in the run documented at `apps/web/app/api/oracle/generate/route.ts`'s WORD-COUNT BAND comment, plus 5 more from a prior session) — see that comment for the derivation. Re-verify against a larger Gate 9 sample once GEMINI-API-TIER is resolved and a full 10-for-10 run is possible; 11 samples is not enough to trust the band long-term | CODE | CC | Launch quality bar | OPEN | | apps/web/app/api/oracle/generate/route.ts |
 | GATE9-PHRASE-REPETITION | Llama-era baseline (last full run): "твоят [planet] на" as a stock opening in 6-8 of 10 readings, with Слънце's grammatical gender wrong ("твоят Слънце" instead of neuter "твоето Слънце") in most of those. On Gemini, a prior session's partial run saw the related "твоята/твоето [planet] на" construction in 4-6 of 10 readings — close enough to the SENTINEL MARKERS example in `prompts.ts` (which opened its example sentence with "Твоето [planet:sun]Слънце[/planet] на …") to suspect the model was copying the example's sentence-opening shape rather than following the instruction, the same failure the three removed example phrases caused. 2026-09-03 (this session): both oracle and horoscope prompt files' sentinel examples were rewritten to demonstrate the token syntax mid-clause instead of as a reusable sentence opener (see `apps/web/lib/oracle/prompts.ts` and `apps/web/lib/horoscope/prompts.ts`). The hypothesis is UNTESTED, not confirmed or refuted: three follow-up Gate 9 runs against the rewritten prompts each returned 0 of 10 successful generations (GEMINI-API-TIER quota exhaustion), so there is no post-rewrite output to check for the phrase. Confirmed model-only either way — no static Bulgarian string in the codebase has the wrong-gender form (`packages/astrology/src/constants.ts` already encodes `PLANETS_BG_GENDER.sun = 'neut'` correctly; it just is not consulted by the prompt) | CODE | Petko | Launch quality bar | OPEN | | — |
 | CHART-CALC-BACKFILL | `6b1a25d` (2026-09-02) made `calculateNatalChart` use the stated birth-time window's midpoint for unknown-time charts instead of always assuming noon, but existing `chart_calculations` rows computed before that commit still hold the old 12:00 estimate — those users see a chart calculated at the wrong assumed time until the row is invalidated/recalculated. No backfill script exists yet | CODE | CC | Data accuracy for existing accounts | OPEN | | — |
@@ -157,16 +161,18 @@ list — its "locations" were all docs, matching EN-LOCALE's shape.)
 | GATE9-PHRASE-REPETITION | Model-output symptom (a stock phrase and a grammar error the model produces), not a line of code — the prompt already models correct gender by example and there is no per-planet gender lookup to wire in without prompt-engineering a placeholder model, which this file's header ruling says not to do. |
 | CHART-CALC-BACKFILL | The gap is a backfill script that doesn't exist yet — nothing in the repo to mark until one is written. |
 | GEMINI-EU-REGION | Absence finding — no region parameter exists in `createGoogleGenerativeAI({ apiKey })`; there is no line to comment on the lack of a parameter that was never there. |
+| DEVICE-PASS-STALE | Process/testing gap, not a line of code — the device pass is a manual QA session logged in a doc, not something a code comment can mark. |
 
-**Finding:** 9 of the OPEN CODE entries have no code location (was 9 before
-2026-09-03: COOKIE-CONSENT resolved with a real marker-free Location
-citation, removing it from this list; GATE9-PHRASE-REPETITION and
-CHART-CALC-BACKFILL added to it the same day, net -1; GEMINI-API-TIER and
-GEMINI-MODEL-AGE are CONFIG/DECISION-type, not CODE, so they do not affect
-this count; GEMINI-EU-REGION added the same follow-up session, net +1).
-Historical count chain (see prior entries in this file's git history for
-the full derivation) ended at 9 of 27 after TIER-ITEM-4/5 resolved
-2026-09-01; this is the next link.
+**Finding:** 10 of the OPEN CODE entries have no code location (was 9
+before 2026-09-03: COOKIE-CONSENT resolved with a real marker-free
+Location citation, removing it from this list; GATE9-PHRASE-REPETITION
+and CHART-CALC-BACKFILL added to it the same day, net -1; GEMINI-API-TIER
+and GEMINI-MODEL-AGE are CONFIG/DECISION-type, not CODE, so they do not
+affect this count; GEMINI-EU-REGION added the same follow-up session,
+net +1; DEVICE-PASS-STALE added 2026-09-04, net +1). Historical count
+chain (see prior entries in this file's git history for the full
+derivation) ended at 9 of 27 after TIER-ITEM-4/5 resolved 2026-09-01; this
+is the next link.
 
 ---
 
@@ -193,6 +199,7 @@ before any launch or submission.
 | ORACLE-WORD-BAND | CODE | CC | yes (marker present) |
 | GATE9-PHRASE-REPETITION | CODE | Petko | **no — no code location, symptom only** |
 | CHART-CALC-BACKFILL | CODE | CC | **no — no code location, script not written** |
+| DEVICE-PASS-STALE | CODE | CC | **no — no code location, manual QA gap** |
 
 ### Blocks: Store submission
 

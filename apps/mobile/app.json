@@ -40,7 +40,11 @@
       [
         "expo-build-properties",
         {
+          "ios": {
+            "deploymentTarget": "17.0"
+          },
           "android": {
+            "minSdkVersion": 30,
             "packagingOptions": {
               "exclude": ["META-INF/versions/9/OSGI-INF/MANIFEST.MF"]
             }

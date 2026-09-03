@@ -827,22 +827,32 @@ function firstPlanetOf(chunks: SentinelChunk[]): Planet | null {
 // the takeaway, not another influence, so it stays visually distinct from
 // the influence segments rather than reading as one more of them).
 //
-// MOBILE-ALPHA-REDESIGN v3, Step 2 (reading length) — STALE as of the
-// Gemini port (2d87ea3/f34f09f): this comment used to say the prompt
-// targets 400-550 characters, 2 paragraphs, and fits on-screen with no
-// scroll needed. It doesn't anymore. The daily-horoscope prompt
-// (apps/web/lib/horoscope/prompts.ts) now targets 600-850 characters,
-// 3 paragraphs — and measurement against this screen's real styles
-// (HOROSCOPE_BODY_STYLE, ScreenShell chrome, the tab bar) shows NEITHER
-// 600 nor 850 chars fits one screen without scrolling, on the smallest
-// supported device or a mainstream one — see the Gemini cost/rate-limit
-// report, item 3. A shorter FORMAT target (~420 chars) is proposed to
-// close this gap but had not landed as of 2026-09-04; re-check this
-// comment once it does. EXPAND_THRESHOLD_CHARS below is still a variance
-// safety net, not a routine control — it now fires on any reading at or
-// near the current 600-850 target, not just outliers, until the FORMAT
-// change lands. See REVISIT 57 (daily-reading length re-verification
-// against production model).
+// MOBILE-ALPHA-REDESIGN v3, Step 2 (reading length) — UPDATED 2026-09-04.
+// The daily-horoscope prompt (apps/web/lib/horoscope/prompts.ts) now
+// targets 420-450 characters, 3 paragraphs, 3-4 sentences (cut down from
+// a 600-850/3-paragraph target that briefly replaced the original
+// 400-550/2-paragraph one during the Gemini port, 2d87ea3/f34f09f, and
+// didn't fit on-screen at any device size — see the Gemini cost/
+// rate-limit report, item 3).
+//
+// Re-measured against DEVICE-SUPPORT-POLICY.md's 360x780 design floor
+// (not iPhone SE — see that doc for why), analytically (no on-device/
+// simulator render was available either time): 420-450 chars is CLOSE
+// but, on the central estimate, still ~2-3 lines (~65-95px) over one
+// screen including this screen's header block, the AI disclosure, and
+// the "Плъзни надолу" hint below the reading — it is not a confirmed
+// fit. At the most favorable plausible character-width assumption it's
+// within ~1 line (~35px). A target around 350-390 characters would fit
+// with real margin at this floor; 420-450 was chosen as a smaller,
+// approved cut from 600-850, not as a value confirmed to fit exactly.
+// Re-verify on a real 360x780-class device before treating this as
+// solved — see the DEVICE-PASS-STALE register row.
+//
+// EXPAND_THRESHOLD_CHARS below is still a variance safety net, not a
+// routine control, at roughly the same proportional headroom above the
+// new target (2x its upper bound) as it had above the old one. See
+// REVISIT 57 (daily-reading length re-verification against production
+// model).
 const EXPAND_THRESHOLD_CHARS = 900
 
 // Opener/development paragraph block — shared by both the single-paragraph
