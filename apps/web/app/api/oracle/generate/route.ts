@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
-import { generateText } from 'ai'
-import { AI_MODEL, isUpstreamAiError, openrouter } from '@/lib/ai/client'
+import { AI_MODEL, isUpstreamAiError, ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
+import { aiTemporarilyUnavailableResponse, isTransientAIError } from '@/lib/ai/errors'
+import { generateFinalText } from '@/lib/ai/generate-final-text'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
@@ -27,7 +28,7 @@ import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 
 /**
  * POST /api/oracle/generate
- * Streams an AI-generated natal chart reading via OpenRouter / Llama.
+ * Generates and validates an AI natal chart reading via Google Gemini.
  *
  * TIER (frozen definition 2026-09-01):
  *  - FREE: ONE `general` reading for the LIFETIME of the account
@@ -60,13 +61,36 @@ import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
  * 8. Claim: premium → monthly quota cap-claim; free → lifetime marker claim
  * 9. Load chart calculation data
  * 10. Build prompts from chart data
- * 11. Stream / generate via OpenRouter / Llama
+ * 11. Generate (Gemini, with same-provider transient fallback) + validate
  * 12. On failure: refund the claim (both tiers)
+ *
+ * RETRY SHAPE (11), reconciled from change-ai-to-bulgarian-fluent onto the
+ * injection/validation layer — two independent retry axes composed, not
+ * multiplied:
+ *   - generateFinalText() (lib/ai/generate-final-text.ts) owns the
+ *     TRANSPORT axis: one call to AI_MODEL (Gemini 3.7), and — only on a
+ *     transient/upstream failure — one fallback call to
+ *     ORACLE_FALLBACK_MODEL (Gemini 3.6). At most 2 model calls per
+ *     generateFinalText() invocation. It also runs sanitizeFinalAIOutput()
+ *     internally before returning text, so the caller always sees
+ *     reasoning-leakage-stripped output.
+ *   - The `for (attempt 1..2)` loop below owns the QUALITY axis: a
+ *     validateReading() failure (bad word count, script impurity, a
+ *     model-authored digit, an unresolved token) retries the WHOLE
+ *     generateFinalText() call once, same shape.
+ * Worst case: 2 quality attempts x 2 model calls each = 4 model calls. If
+ * generateFinalText() itself throws all the way through (both its own
+ * calls failed), that exception breaks the attempt loop immediately — it
+ * is NOT retried a second time by the quality loop, so 4 is a hard
+ * ceiling, not just a typical case. Each observed Gemini call in this
+ * environment (Gate 9 tooling, INFERRED from the equivalent Llama runs
+ * this environment can measure) has run well under 60s; even a generous
+ * 40s/call estimate puts 4 sequential calls at ~160s, comfortably inside
+ * the 300s ceiling below with headroom for validation + DB writes.
  */
-// 300s = the Vercel Pro ceiling. Two sequential generateText calls (the
-// regenerate-once path) at ~20-40s each, plus validation and DB writes,
-// comfortably fit; 60s did not leave headroom for a slow upstream attempt
-// followed by a retry.
+// 300s = the Vercel Pro ceiling. Worst case is 4 sequential model calls
+// (see the RETRY SHAPE note above) plus validation and DB writes; 60s did
+// not leave headroom for even a single transient-failure retry.
 export const maxDuration = 300
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
@@ -269,47 +293,44 @@ export async function POST(req: Request) {
       })),
     }
 
-    // 11. Generate + validate before display.
+    // 11. Generate + validate before display. See the RETRY SHAPE comment
+    // above the maxDuration export for the composed retry axes.
     //
-    // The Oracle no longer streams. The pre-display validator
-    // (lib/ai/validate-reading.ts) must see the whole reading — script
-    // purity, placeholder substitution and word count cannot be judged
-    // token-by-token — so a full generateText call replaces the old
-    // streamText path. The client already accepts a JSON `{ content }`
-    // envelope (hooks/useOracleReading.ts handled it for the
-    // already-cached short-circuit), so this needs no client change.
-    //
-    // On a validation failure we regenerate ONCE inside the same claim
-    // (no second quota charge); a second failure refunds the claim and
-    // returns a user-visible retry error rather than shipping broken text.
-    async function generateRaw(): Promise<string> {
-      const result = await generateText({
-        model: openrouter(AI_MODEL),
-        system: systemPrompt,
-        prompt: chartPromptText,
-        temperature: 0.85,
-        maxOutputTokens: 2000,
-      })
-      return result.text
-    }
-
-    // finalContent keeps planet sentinels (stored + returned so the client
-    // cross-highlights the wheel); finalPlainText is the sentinel-free
-    // form fed to the spell-check logger.
+    // WORD-COUNT BAND (100-250): derived from the FORMAT rule in
+    // lib/oracle/prompts.ts. Gemini's FORMAT section (ported from
+    // change-ai-to-bulgarian-fluent) targets 800-1200 CHARACTERS across 6-8
+    // sentences — much shorter than the 7-9 PARAGRAPH target the OLD
+    // 300-800-word band was derived from (Llama). CORRECTED 2026-09-03
+    // after Gate 9 measured live Gemini output: an earlier version of this
+    // comment claimed 300-800 "does not reject" the new shorter target —
+    // that was wrong, and unverified when written. Live Gate 9 output
+    // (6 successful generations, one run) measured 126-164 words — EVERY
+    // ONE of them below the old 300 floor, i.e. the old band would have
+    // rejected 100% of real Gemini readings and driven the free-tier
+    // Oracle to its regenerate-twice-then-fail-visibly path on every
+    // request. 100-250 gives headroom on both sides of the observed
+    // 126-164 range at the same proportional generosity as the original
+    // band. Re-verify against a larger Gate 9 sample before trusting this
+    // long-term — six generations is a small sample.
     let finalContent: string | null = null
     let finalPlainText = ''
+    let servedModel: string = AI_MODEL
     let lastValidation: ReadingValidationResult | null = null
     try {
       for (let attempt = 1; attempt <= 2 && finalContent === null; attempt++) {
-        const raw = await generateRaw()
-        const validation = validateReading(raw, placeholderValues, {
-          // 300-800: derived from the FORMAT rule (7-9 paragraphs) in
-          // lib/oracle/prompts.ts at ~35-90 words/paragraph, not from an
-          // arbitrary figure. Gate 9 found 400-700 rejected several good
-          // readings (365, 736, 772 words) on length alone — see
-          // .planning/PLACEHOLDERS.md ASTRO-INJECT / SYSTEM-MAP §4.
-          minWords: 300,
-          maxWords: 800,
+        const { model, text } = await generateFinalText({
+          system: systemPrompt,
+          prompt: chartPromptText,
+          maxOutputTokens: 900,
+          fallbackModel: ORACLE_FALLBACK_MODEL,
+        })
+        servedModel = model
+        // `text` is already sanitizeFinalAIOutput()-cleaned by
+        // generateFinalText — validateReading sees the reasoning-leakage-
+        // stripped text, per the ordering this reconciliation requires.
+        const validation = validateReading(text, placeholderValues, {
+          minWords: 100,
+          maxWords: 250,
         })
         lastValidation = validation
         if (validation.ok) {
@@ -318,6 +339,7 @@ export async function POST(req: Request) {
         } else {
           console.error('[Oracle Generate] reading rejected by validator', {
             attempt,
+            model: servedModel,
             code: validation.code,
             detail: validation.detail,
           })
@@ -325,6 +347,14 @@ export async function POST(req: Request) {
       }
     } catch (err) {
       await refundClaim()
+      // isTransientAIError first — the more specific, chain-aware
+      // classifier (also used inside generateFinalText to decide the
+      // fallback-model switch). A transient failure that ALSO exhausted
+      // generateFinalText's own fallback lands here with a distinct 503,
+      // not lumped into the generic 502 below.
+      if (isTransientAIError(err)) {
+        return aiTemporarilyUnavailableResponse()
+      }
       if (isUpstreamAiError(err)) {
         return toErrorResponse(
           new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED'),
@@ -350,7 +380,7 @@ export async function POST(req: Request) {
 
     void checkAndLogGeneration({
       source: 'oracle',
-      model: AI_MODEL,
+      model: servedModel,
       text: finalPlainText,
       conditions: generationConditions,
     })
@@ -376,7 +406,7 @@ export async function POST(req: Request) {
         ...(isRegenerationOfExisting
           ? { last_regenerated_at: generatedAt.toISOString() }
           : {}),
-        model_version: AI_MODEL,
+        model_version: servedModel,
       },
       { onConflict: 'chart_id,topic' },
     )

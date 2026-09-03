@@ -26,7 +26,6 @@ import { makeAppUser } from '../mocks/fixtures'
  * unchanged isRegenerationOfExisting logic.
  */
 
-const AI_MOCK_MODEL = 'fake-model-instance'
 const userState = vi.hoisted(() => ({ tier: 'premium' as 'free' | 'premium' }))
 
 vi.mock('@clerk/nextjs/server', () => ({
@@ -52,7 +51,7 @@ vi.mock('@/lib/audit', () => ({ logAuditEvent: vi.fn() }))
 vi.mock('@/lib/ai/check-bg-output', () => ({ checkAndLogGeneration: vi.fn(async () => {}) }))
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
-  openrouter: vi.fn(() => AI_MOCK_MODEL),
+  ORACLE_FALLBACK_MODEL: 'fake-fallback-model',
   isUpstreamAiError: vi.fn(() => false),
 }))
 vi.mock('@/lib/oracle/prompts', () => ({ buildSystemPrompt: vi.fn(() => 'system prompt') }))
@@ -64,9 +63,8 @@ vi.mock('@/lib/ai/validate-reading', () => ({
   validateReading: vi.fn((raw: string) => ({ ok: true, text: raw, content: raw, wordCount: 500 })),
 }))
 vi.mock('@stellaeum/core/oracle/planet-parser', () => ({ stripSentinels: vi.fn((t: string) => t) }))
-vi.mock('ai', () => ({
-  generateText: vi.fn(async () => ({ text: 'a generated reading' })),
-  streamText: vi.fn(),
+vi.mock('@/lib/ai/generate-final-text', () => ({
+  generateFinalText: vi.fn(async () => ({ model: 'fake-model', text: 'a generated reading' })),
 }))
 
 const quotaState = vi.hoisted(() => ({ used: 0, limit: 3 }))

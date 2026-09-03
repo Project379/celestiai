@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockSupabase, type MockSupabase } from '../mocks/supabase'
 
 /**
- * COMPLETION-TRACKER §0.8. When OpenRouter returns a non-JSON / empty body
- * the `ai` SDK throws a raw `SyntaxError` out of `generateText`. Before the
+ * COMPLETION-TRACKER §0.8. When the provider returns a non-JSON / empty
+ * body the `ai` SDK throws a raw `SyntaxError` out of `generateText`. Before the
  * hardening, `/api/horoscope/generate` re-threw it to `toErrorResponse`,
  * which produced an opaque **500** — indistinguishable from "our route is
  * broken".
@@ -62,10 +62,18 @@ vi.mock('@stellaeum/astrology', () => ({
   calculateTransitAspects: vi.fn(() => []),
 }))
 
-// The failure under test: OpenRouter returned a non-JSON body → the ai SDK
-// threw a raw SyntaxError out of generateText.
-const { generateText } = vi.hoisted(() => ({ generateText: vi.fn() }))
-vi.mock('ai', () => ({ generateText, streamText: vi.fn() }))
+// @/lib/ai/client is deliberately NOT mocked here (same as before this
+// reconciliation) — this test exercises the REAL isUpstreamAiError, which
+// route.ts still imports from there unchanged.
+//
+// The failure under test: the provider returned a non-JSON body → the ai
+// SDK threw a raw SyntaxError, which generateFinalText lets propagate
+// uncaught to the caller (no fallbackModel configured, so there is nothing
+// for it to retry into). generateFinalText's OWN retry behavior is a
+// separate concern, covered by test/ai/generate-final-text.test.ts — this
+// file only tests the route's error -> HTTP-status mapping.
+const { generateFinalText } = vi.hoisted(() => ({ generateFinalText: vi.fn() }))
+vi.mock('@/lib/ai/generate-final-text', () => ({ generateFinalText }))
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { POST } from '@/app/api/horoscope/generate/route'
@@ -106,7 +114,7 @@ beforeEach(() => {
   mockSupabase = createMockSupabase()
   vi.mocked(createServiceSupabaseClient).mockReturnValue(mockSupabase as never)
   // Default: OpenRouter returned a non-JSON body → raw SyntaxError.
-  generateText.mockRejectedValue(new SyntaxError('Unexpected end of JSON input'))
+  generateFinalText.mockRejectedValue(new SyntaxError('Unexpected end of JSON input'))
 })
 
 describe('POST /api/horoscope/generate — upstream provider failure (§0.8)', () => {
@@ -124,7 +132,7 @@ describe('POST /api/horoscope/generate — upstream provider failure (§0.8)', (
   })
 
   it('still 500s for a genuine bug in our own code (not every throw is "upstream")', async () => {
-    generateText.mockRejectedValueOnce(new TypeError("Cannot read properties of undefined (reading 'x')"))
+    generateFinalText.mockRejectedValueOnce(new TypeError("Cannot read properties of undefined (reading 'x')"))
     seed('chart-3')
     const res = await POST(makeRequest('chart-3'))
     expect(res.status).toBe(500)
