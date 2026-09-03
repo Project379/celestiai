@@ -1,11 +1,38 @@
 ---
 title: LLM provider decision — criteria and integration scoping
-status: BLOCKED-EXTERNALLY. Owner: co-founder (web). Open for weeks; now on the critical path for the privacy policy.
+status: DECIDED-AND-IMPLEMENTED. Gemini 3.7 Flash via the direct Google Gemini API, implemented 2026-09-01.
 created: 2026-08-27
 gates: (1) the privacy policy's AI sub-processor + third-country-transfer section — cannot be finalised until the provider and its jurisdiction are known; (2) the 300/month premium safety-net cap, which was derived from Llama 3.3 70B pricing and must be re-derived on any swap.
 ---
 
 # LLM provider decision
+
+## Implementation decision — 2026-09-01
+
+The production model is now **Gemini 3.7 Flash** (`gemini-3.7-flash`)
+through Google's direct Gemini API and the Vercel AI SDK Google provider.
+Both the Oracle and daily-horoscope generation routes share the centralized
+provider in `apps/web/lib/ai/client.ts`. OpenRouter/Llama and its SDK
+dependency have been removed. Every model call uses `maxRetries: 0` so the
+SDK cannot silently multiply API requests. The daily horoscope makes exactly
+one Gemini 3.7 request and has no model fallback. Oracle first makes one
+Gemini 3.7 request and, only when that call fails with a transient provider
+error (408, 429, retryable, or 5xx), makes one fallback request to
+**Gemini 3.6 Flash** (`gemini-3.6-flash`). Non-transient errors do not trigger
+the fallback.
+
+Both routes request native structured output and suppress returned thinking.
+Oracle buffers the complete result before showing it, allowing the application
+to expose only sanitized final Bulgarian text and to avoid mixing a partial
+3.7 answer with a 3.6 fallback answer. The server does not forward the browser
+abort signal to Gemini, so generation and persistence can finish after the
+user closes the Oracle panel or navigates away.
+
+The analysis below is retained as the decision record that led to the swap.
+Any sentence describing OpenRouter/Llama as the "current" implementation is
+historical as of 2026-09-01. The privacy-policy processor section, Google
+terms/DPA review, production `GEMINI_API_KEY`, and quota cost-envelope update
+remain launch follow-ups.
 
 ## Why this is now urgent, not just "the model swap"
 

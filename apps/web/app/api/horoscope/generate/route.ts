@@ -1,9 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
-import { generateText, streamText } from 'ai'
+import { streamText } from 'ai'
 import type { TransitAspect } from '@stellaeum/astrology'
 import type { PlanetPosition } from '@stellaeum/astrology/client'
-import { AI_MODEL, isUpstreamAiError, openrouter } from '@/lib/ai/client'
+import { AI_MODEL, gemini, isUpstreamAiError } from '@/lib/ai/client'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
+import { aiTemporarilyUnavailableResponse, isTransientAIError } from '@/lib/ai/errors'
+import { sanitizeFinalAIOutput } from '@/lib/ai/final-output'
+import { generateFinalText, GEMINI_FINAL_ONLY_OPTIONS } from '@/lib/ai/generate-final-text'
 import { logAuditEvent } from '@/lib/audit'
 import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
@@ -45,7 +48,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    // failClosed (2026-08-26 sweep #17): this route calls a paid OpenRouter
+    // failClosed (2026-08-26 sweep #17): this route calls a paid Gemini
     // model — same reasoning as oracle/generate.
     await assertRateLimit({
       key: `horoscope-generate:${userId}`,
@@ -68,6 +71,7 @@ export async function POST(req: Request) {
     const url = new URL(req.url)
     const dateParam = url.searchParams.get('date')
     const jsonOnly = url.searchParams.get('format') === 'json'
+    const statusOnly = url.searchParams.get('statusOnly') === '1'
     let requestedDate = today
 
     if (dateParam) {
@@ -114,12 +118,33 @@ export async function POST(req: Request) {
       .eq('date', requestedDate)
       .single()
 
-    if (cachedHoroscope) {
+    if (cachedHoroscope?.content?.trim()) {
+      const content = sanitizeFinalAIOutput(cachedHoroscope.content)
       return Response.json({
-        content: cachedHoroscope.content,
+        content,
         cached: true,
         generatedAt: cachedHoroscope.generated_at,
       })
+    }
+
+    if (cachedHoroscope) {
+      return Response.json(
+        { content: null, generating: true },
+        { status: 202, headers: { 'Retry-After': '3' } },
+      )
+    }
+
+    // Cache polling must never initiate another paid generation. A normal
+    // request may claim a missing chart+date; a status-only request only
+    // reports that the prior background work no longer has a live claim.
+    if (statusOnly) {
+      return Response.json(
+        {
+          code: 'HOROSCOPE_GENERATION_NOT_FOUND',
+          error: 'Генерирането не завърши. Опитай отново, когато си готов.',
+        },
+        { status: 404 },
+      )
     }
 
     if (requestedDate !== today) {
@@ -294,17 +319,18 @@ export async function POST(req: Request) {
     }
 
     if (jsonOnly) {
-      let result
+      let generation
       try {
-        result = await generateText({
-          model: openrouter(AI_MODEL),
+        generation = await generateFinalText({
           system: systemPrompt,
           prompt: promptText,
-          temperature: 0.85,
           maxOutputTokens: 1500,
         })
       } catch (err) {
         await releaseClaimOnFailure()
+        if (isTransientAIError(err)) {
+          return aiTemporarilyUnavailableResponse()
+        }
         // An upstream provider failure (non-JSON body → SDK SyntaxError,
         // network drop, 5xx) is not our bug — surface it as a deliberate
         // 502 with a retry hint instead of an opaque 500. releaseClaim
@@ -315,10 +341,12 @@ export async function POST(req: Request) {
         throw err
       }
 
+      const { model: servedModel, text } = generation
+
       void checkAndLogGeneration({
         source: 'horoscope',
-        model: AI_MODEL,
-        text: result.text,
+        model: servedModel,
+        text,
         conditions: generationConditions,
       })
 
@@ -336,8 +364,8 @@ export async function POST(req: Request) {
           chart_id: chartId,
           user_id: userId,
           date: requestedDate,
-          content: result.text,
-          model_version: AI_MODEL,
+          content: text,
+          model_version: servedModel,
         },
         { onConflict: 'chart_id,date' }
       )
@@ -346,23 +374,29 @@ export async function POST(req: Request) {
       }
 
       return Response.json({
-        content: result.text,
+        content: text,
         cached: false,
         generatedAt: new Date().toISOString(),
       })
     }
 
     const result = streamText({
-      model: openrouter(AI_MODEL),
+      model: gemini(AI_MODEL),
       system: systemPrompt,
       prompt: promptText,
-      temperature: 0.85,
       maxOutputTokens: 1500,
+      providerOptions: { google: GEMINI_FINAL_ONLY_OPTIONS },
       onFinish: async ({ text }) => {
+        const finalText = sanitizeFinalAIOutput(text)
+        if (!finalText) {
+          await releaseClaimOnFailure()
+          return
+        }
+
         void checkAndLogGeneration({
           source: 'horoscope',
           model: AI_MODEL,
-          text,
+          text: finalText,
           conditions: generationConditions,
         })
 
@@ -373,7 +407,7 @@ export async function POST(req: Request) {
             chart_id: chartId,
             user_id: userId,
             date: requestedDate,
-            content: text,
+            content: finalText,
             model_version: AI_MODEL,
           },
           { onConflict: 'chart_id,date' }

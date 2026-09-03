@@ -53,14 +53,19 @@ vi.mock('@/lib/audit', () => ({ logAuditEvent: vi.fn() }))
 vi.mock('@/lib/ai/check-bg-output', () => ({ checkAndLogGeneration: vi.fn(async () => {}) }))
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
-  openrouter: vi.fn(() => AI_MOCK_MODEL),
+  ORACLE_FALLBACK_MODEL: 'fake-oracle-fallback-model',
+  gemini: vi.fn(() => AI_MOCK_MODEL),
   isUpstreamAiError: vi.fn(() => false),
 }))
 vi.mock('@/lib/oracle/prompts', () => ({ buildSystemPrompt: vi.fn(() => 'system prompt') }))
 vi.mock('@/lib/oracle/chart-to-prompt', () => ({ chartToPromptText: vi.fn(() => 'chart prompt text') }))
 vi.mock('@stellaeum/core/oracle/planet-parser', () => ({ stripSentinels: vi.fn((t: string) => t) }))
 vi.mock('ai', () => ({
-  generateText: vi.fn(async () => ({ text: 'a generated reading' })),
+  generateText: vi.fn(async () => ({
+    output: { content: 'a generated reading' },
+    text: '',
+  })),
+  Output: { object: vi.fn((options) => options) },
   streamText: vi.fn(),
 }))
 

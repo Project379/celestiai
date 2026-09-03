@@ -18,18 +18,17 @@ import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 // counter at all.
 //
 // PREMIUM_MONTHLY_LIMIT: 2026-08-26 sweep #4 (Tier 2) — premium was
-// entirely unmetered on every AI path; the 10/min burst limiter was its
+// entirely unmetered on every AI path; the burst limiter was its
 // only brake, so a scripted premium account could reach ~14,400
 // generations/day. This is a SAFETY NET, not a product feature — see
 // checkQuotaAvailable's premium branch below for why it must stay
 // invisible to the user (503, no CAP_REACHED code, no number in the
 // response). 300/month is ~10x realistic heavy usage (4 oracle topics
 // with occasional regenerate) — no genuine paying user should reach it.
-// Basis: OpenRouter's Llama 3.3 70B pricing at time of writing
-// (default/cheapest routing ~$0.10/$0.32 per 1M in/out tokens; a mid-tier
-// provider ~$0.5/$0.8) against this app's ~1-1.5k input / up to 2000
-// output tokens per generation puts worst-case scripted abuse at roughly
-// $0.20-$0.60/month in OpenRouter spend per compromised account.
+// Basis: Gemini 3.7 Flash Standard pricing and a representative Oracle
+// request of ~1.3k input tokens with at most 900 configured output tokens.
+// Even the configured-output ceiling keeps 300 successful calls below a
+// few dollars per compromised account; actual short readings cost less.
 // Re-derive this number if AI_MODEL (apps/web/lib/ai/client.ts) ever
 // changes — the arithmetic it's based on changes with it.
 export const FREE_MONTHLY_LIMIT = 3

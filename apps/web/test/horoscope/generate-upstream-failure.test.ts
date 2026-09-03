@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockSupabase, type MockSupabase } from '../mocks/supabase'
 
 /**
- * COMPLETION-TRACKER §0.8. When OpenRouter returns a non-JSON / empty body
+ * COMPLETION-TRACKER §0.8. When the AI provider returns a non-JSON / empty body
  * the `ai` SDK throws a raw `SyntaxError` out of `generateText`. Before the
  * hardening, `/api/horoscope/generate` re-threw it to `toErrorResponse`,
  * which produced an opaque **500** — indistinguishable from "our route is
@@ -58,10 +58,20 @@ vi.mock('@stellaeum/astrology', () => ({
   calculateTransitAspects: vi.fn(() => []),
 }))
 
-// The failure under test: OpenRouter returned a non-JSON body → the ai SDK
+vi.mock('@/lib/ai/client', () => ({
+  AI_MODEL: 'fake-model',
+  gemini: vi.fn(() => 'fake-model-instance'),
+  isUpstreamAiError: vi.fn((error: unknown) => error instanceof SyntaxError),
+}))
+
+// The failure under test: the provider returned a non-JSON body → the ai SDK
 // threw a raw SyntaxError out of generateText.
 const { generateText } = vi.hoisted(() => ({ generateText: vi.fn() }))
-vi.mock('ai', () => ({ generateText, streamText: vi.fn() }))
+vi.mock('ai', () => ({
+  generateText,
+  Output: { object: vi.fn((options) => options) },
+  streamText: vi.fn(),
+}))
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { POST } from '@/app/api/horoscope/generate/route'
@@ -101,7 +111,7 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {})
   mockSupabase = createMockSupabase()
   vi.mocked(createServiceSupabaseClient).mockReturnValue(mockSupabase as never)
-  // Default: OpenRouter returned a non-JSON body → raw SyntaxError.
+  // Default: the provider returned a non-JSON body → raw SyntaxError.
   generateText.mockRejectedValue(new SyntaxError('Unexpected end of JSON input'))
 })
 

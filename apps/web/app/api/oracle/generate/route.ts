@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
-import { generateText, streamText } from 'ai'
-import { AI_MODEL, isUpstreamAiError, openrouter } from '@/lib/ai/client'
+import { isUpstreamAiError, ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
+import { aiTemporarilyUnavailableResponse, isTransientAIError } from '@/lib/ai/errors'
+import { generateFinalText } from '@/lib/ai/generate-final-text'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
 import { chartToPromptText } from '@/lib/oracle/chart-to-prompt'
@@ -27,7 +28,7 @@ import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 
 /**
  * POST /api/oracle/generate
- * Streams an AI-generated natal chart reading via OpenRouter / Llama.
+ * Generates and persists an AI natal-chart reading via Google Gemini.
  *
  * TIER (frozen definition 2026-09-01):
  *  - FREE: ONE `general` reading for the LIFETIME of the account
@@ -60,12 +61,15 @@ import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
  * 8. Claim: premium → monthly quota cap-claim; free → lifetime marker claim
  * 9. Load chart calculation data
  * 10. Build prompts from chart data
- * 11. Stream / generate via OpenRouter / Llama
+ * 11. Generate structured final output via Gemini 3.7, with an Oracle-only
+ *     Gemini 3.6 fallback for transient provider failures
  * 12. On failure: refund the claim (both tiers)
  */
 export const maxDuration = 60
 
 const VALID_TOPICS: ReadingTopic[] = ['general', 'love', 'career', 'health']
+export const ORACLE_GENERATION_RATE_LIMIT = 5
+export const ORACLE_GENERATION_RATE_WINDOW_MS = 60_000
 
 export async function POST(req: Request) {
   // 1. Auth check
@@ -74,14 +78,13 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })
   }
 
-  // Hoisted so refund paths in the outer catch + stream callbacks can see
-  // them. Set non-null / true only after a successful cap-claim.
+  // Hoisted so both generation and setup failures can refund either kind of
+  // claim. Set non-null / true only after a successful claim.
   let claimedPeriodStart: Date | null = null
   let claimedFreeOracle = false
 
-  // Single refund entry point for the synchronous setup paths. The stream
-  // callbacks capture their own copies below (they run after this function
-  // has returned) so they don't call this.
+  // Single idempotent refund entry point for setup, generation, and save
+  // failures. It covers both premium monthly claims and free lifetime claims.
   async function refundClaim() {
     if (claimedPeriodStart) {
       await decrementQuotaUsage(userId!, claimedPeriodStart)
@@ -96,11 +99,11 @@ export async function POST(req: Request) {
   try {
     // Burst guard, defense-in-depth alongside the caps and the 24h regen
     // cooldown below. failClosed (2026-08-26 sweep #17): this route calls a
-    // paid OpenRouter model.
+    // paid Gemini model.
     await assertRateLimit({
       key: `oracle-generate:${userId}`,
-      limit: 10,
-      windowMs: 60_000,
+      limit: ORACLE_GENERATION_RATE_LIMIT,
+      windowMs: ORACLE_GENERATION_RATE_WINDOW_MS,
       failClosed: true,
     })
 
@@ -266,153 +269,79 @@ export async function POST(req: Request) {
       })),
     }
 
-    // 11a. Mobile path — non-streaming JSON response.
-    if (jsonOnly) {
-      try {
-        const result = await generateText({
-          model: openrouter(AI_MODEL),
-          system: systemPrompt,
-          prompt: chartPromptText,
-          temperature: 0.85,
-          maxOutputTokens: 2000,
-        })
+    // 11. Buffer a structured final response before exposing it. This keeps
+    // model self-talk out of the Oracle UI and makes a clean model fallback
+    // possible: 3.7 is attempted once, then 3.6 once only for transient
+    // provider failures. No request abort signal is forwarded, so closing the
+    // panel or navigating away does not cancel generation or persistence.
+    try {
+      const { model: servedModel, text } = await generateFinalText({
+        system: systemPrompt,
+        prompt: chartPromptText,
+        maxOutputTokens: 900,
+        fallbackModel: ORACLE_FALLBACK_MODEL,
+      })
 
-        const cleanContent = stripSentinels(result.text)
+      const cleanContent = stripSentinels(text)
+      void checkAndLogGeneration({
+        source: 'oracle',
+        model: servedModel,
+        text: cleanContent,
+        conditions: generationConditions,
+      })
 
-        void checkAndLogGeneration({
-          source: 'oracle',
-          model: AI_MODEL,
-          text: cleanContent,
-          conditions: generationConditions,
-        })
-
-        const generatedAt = new Date()
-        const expiresAt = resolveReadingExpiry(generatedAt, {
-          isPremium,
+      const generatedAt = new Date()
+      const expiresAt = resolveReadingExpiry(generatedAt, {
+        isPremium,
+        topic: validatedTopic,
+        previousExpiresAt: existingReading?.expires_at ?? null,
+      })
+      const { error: saveError } = await supabase.from('ai_readings').upsert(
+        {
+          chart_id: chartId,
+          user_id: userId,
           topic: validatedTopic,
-          previousExpiresAt: existingReading?.expires_at ?? null,
-        })
+          content: cleanContent,
+          generated_at: generatedAt.toISOString(),
+          expires_at: expiresAt,
+          ...(isRegenerationOfExisting
+            ? { last_regenerated_at: generatedAt.toISOString() }
+            : {}),
+          model_version: servedModel,
+        },
+        { onConflict: 'chart_id,topic' },
+      )
+      if (saveError) throw saveError
 
-        // SECURITY FIX (2026-08-26 sweep #14): a fresh (non-regeneration)
-        // generation must NOT touch last_regenerated_at — omit it from the
-        // upsert so the existing value survives on conflict.
-        await supabase.from('ai_readings').upsert(
-          {
-            chart_id: chartId,
-            user_id: userId,
-            topic: validatedTopic,
-            content: cleanContent,
-            generated_at: generatedAt.toISOString(),
-            expires_at: expiresAt,
-            ...(isRegenerationOfExisting
-              ? { last_regenerated_at: generatedAt.toISOString() }
-              : {}),
-            model_version: AI_MODEL,
-          },
-          { onConflict: 'chart_id,topic' }
-        )
-
+      if (jsonOnly) {
         return Response.json({
           content: cleanContent,
           cached: false,
           generatedAt: generatedAt.toISOString(),
         })
-      } catch (err) {
-        await refundClaim()
-        // Upstream provider failure → deliberate 502 + retry hint, not an
-        // opaque 500. Anything else is our bug and stays a 500.
-        if (isUpstreamAiError(err)) {
-          return toErrorResponse(
-            new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED'),
-            'AI upstream failure',
-          )
-        }
-        console.error('[Oracle Generate] Failed to save reading:', err)
-        return Response.json(
-          { error: 'Грешка при запазване на четенето' },
-          { status: 500 }
+      }
+
+      return new Response(text, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'X-AI-Model': servedModel,
+        },
+      })
+    } catch (err) {
+      await refundClaim()
+      if (isTransientAIError(err)) {
+        return aiTemporarilyUnavailableResponse()
+      }
+      if (isUpstreamAiError(err)) {
+        return toErrorResponse(
+          new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED'),
+          'AI upstream failure',
         )
       }
+      return toErrorResponse(err, 'Грешка при генериране на четенето')
     }
-
-    // 11b. Web path — stream via OpenRouter. Capture the refund handles as
-    //      consts: the callbacks run after this function returns, so they
-    //      must not depend on the mutable `let`s (which refundClaim clears).
-    const refundPeriodStart = claimedPeriodStart
-    const refundFreeOracle = claimedFreeOracle
-    const result = streamText({
-      model: openrouter(AI_MODEL),
-      system: systemPrompt,
-      prompt: chartPromptText,
-      temperature: 0.85,
-      maxOutputTokens: 2000,
-
-      // onFinish: upsert completed reading into ai_readings
-      onFinish: async ({ text }) => {
-        try {
-          const cleanContent = stripSentinels(text)
-
-          void checkAndLogGeneration({
-            source: 'oracle',
-            model: AI_MODEL,
-            text: cleanContent,
-            conditions: generationConditions,
-          })
-          const generatedAt = new Date()
-          const expiresAt = resolveReadingExpiry(generatedAt, {
-            isPremium,
-            topic: validatedTopic,
-            previousExpiresAt: existingReading?.expires_at ?? null,
-          })
-
-          await supabase.from('ai_readings').upsert(
-            {
-              chart_id: chartId,
-              user_id: userId,
-              topic: validatedTopic,
-              content: cleanContent,
-              generated_at: generatedAt.toISOString(),
-              expires_at: expiresAt,
-              ...(isRegenerationOfExisting
-                ? { last_regenerated_at: generatedAt.toISOString() }
-                : {}),
-              model_version: AI_MODEL,
-            },
-            {
-              onConflict: 'chart_id,topic',
-            }
-          )
-        } catch (err) {
-          console.error('[Oracle Generate] Failed to save reading:', err)
-          if (refundPeriodStart) {
-            await decrementQuotaUsage(userId, refundPeriodStart)
-          }
-          if (refundFreeOracle) {
-            await releaseFreeOracleReading(userId)
-          }
-        }
-      },
-
-      onError: ({ error }) => {
-        console.error('[Oracle Generate] Stream error:', error)
-        if (refundPeriodStart) {
-          // Fire-and-forget; both refund helpers swallow their own errors.
-          void decrementQuotaUsage(userId, refundPeriodStart)
-        }
-        if (refundFreeOracle) {
-          void releaseFreeOracleReading(userId)
-        }
-      },
-    })
-
-    // result.consumeStream() drains the LLM stream server-side regardless of
-    // client connection state — guarantees onFinish fires (persisting the
-    // reading) even when the user navigates away mid-stream.
-    result.consumeStream()
-
-    return result.toTextStreamResponse()
   } catch (error) {
-    // Setup error before stream returned. If we already claimed, refund.
+    // Setup error before generation. Refund either claim type exactly once.
     await refundClaim()
     return toErrorResponse(error, 'Грешка при генериране на четенето')
   }

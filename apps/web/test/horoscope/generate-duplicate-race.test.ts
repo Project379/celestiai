@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * Batch 5.5 finding #5: /api/horoscope/generate read the cache, and if
- * absent, proceeded straight to a paid OpenRouter call with no exclusivity
+ * absent, proceeded straight to a paid AI call with no exclusivity
  * between the read and the (much later) write — only the final upsert was
  * deduplicated (onConflict), not the AI call itself. Two concurrent
  * requests for the same chart+date both saw no cache and both paid for a
@@ -51,7 +51,8 @@ vi.mock('@/lib/ai/check-bg-output', () => ({
 
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
-  openrouter: vi.fn(() => 'fake-model-instance'),
+  gemini: vi.fn(() => 'fake-model-instance'),
+  isUpstreamAiError: vi.fn(() => false),
 }))
 
 vi.mock('@/lib/horoscope/prompts', () => ({
@@ -88,8 +89,9 @@ vi.mock('ai', () => ({
     // concurrent second request would reach this point too if the claim
     // step didn't block it first.
     await new Promise((resolve) => setTimeout(resolve, 10))
-    return { text: 'a generated horoscope' }
+    return { output: { content: 'a generated horoscope' }, text: '' }
   }),
+  Output: { object: vi.fn((options) => options) },
   streamText: vi.fn(),
 }))
 

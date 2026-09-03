@@ -1,13 +1,12 @@
 # AI Provider — Decision Trail
 
 **Written:** 2026-04-20
-**SUPERSEDED FOR THE FORWARD DECISION (2026-08-28):** this doc's ground-truth
-finding still holds — production is and has been `meta-llama/llama-3.3-70b-instruct`
-via OpenRouter, never Gemini, never BgGPT. But the *forward* provider decision
-now lives in `.planning/LLM-PROVIDER-DECISION-2026-08-27.md` (co-founder-owned;
-recommends `google/gemini-3.7-flash` default / `openai/gpt-5.4-mini` fallback,
-not yet decided in code). The BgGPT deferral below is unchanged.
-**Status:** Current reality documented. BgGPT deferral confirmed. Reversal story told honestly because the planning doc, recent memory, and actual code had been out of sync for long enough that documenting the mismatch is part of the point.
+**Status:** Superseded on 2026-09-01 by the implemented Gemini 3.7 Flash
+decision in `.planning/LLM-PROVIDER-DECISION-2026-08-27.md`. This file remains
+the historical record of the pre-swap OpenRouter/Llama implementation and the
+earlier BgGPT deferral. Statements below that call OpenRouter/Llama the
+"current" provider are accurate only for the period they document, not for
+the current code.
 **Epistemic tags:** `[verified]` / `[inferred]` / `[planned]` / `[assumed]` / `[open]`. Sub-claims get their own tag when they make a different claim than parent.
 
 ---
