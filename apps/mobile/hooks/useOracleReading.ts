@@ -4,6 +4,7 @@ import * as Haptics from 'expo-haptics'
 
 import { ApiError, useApiClient } from '@/lib/api/client'
 import { useFeatureFlag } from '@/hooks/useFeatureFlag'
+import { posthog } from '@/lib/analytics/posthog'
 
 export type OracleTopic = 'general' | 'love' | 'career' | 'health'
 
@@ -62,6 +63,13 @@ interface UseOracleReadingOptions {
    * deliberate moment to ask for push permission.
    */
   onFreshGeneration?: () => void
+  /**
+   * Tri-state tier, mirrored from the caller (oracle.tsx's `useSubscription`
+   * read) — `undefined` while the tier query is still in flight. The
+   * "free Oracle reading generated" PostHog event only fires when this is
+   * the confirmed `false`, never on `undefined` (unknown tier) or `true`.
+   */
+  isPremium?: boolean
 }
 
 /**
@@ -124,9 +132,15 @@ export function useOracleReading(
       })
       return raw as GenerateResponse
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: savedReadingsKey })
       options?.onFreshGeneration?.()
+      // "free Oracle reading generated" — only a genuinely fresh
+      // generation (not the server's cache-hit short-circuit) for a
+      // confirmed free-tier user. Bare event: no topic, no content.
+      if (options?.isPremium === false && data.cached === false) {
+        posthog?.capture('free Oracle reading generated')
+      }
     },
     onError: (err) => {
       // Cap-reached is an expected, informational state (a soft limit,

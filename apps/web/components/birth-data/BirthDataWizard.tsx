@@ -5,6 +5,7 @@ import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import posthog from 'posthog-js'
 import { birthDataSchema, type BirthData } from '@stellaeum/core/charts/schemas'
 import { DateStep } from './DateStep'
 import { TimeStep } from './TimeStep'
@@ -96,6 +97,9 @@ export function BirthDataWizard() {
         const error = await response.json()
         throw new Error(error.error || 'Грешка при запазване')
       }
+
+      // Bare event — no birth date/time/place, no name, no coordinates.
+      posthog.capture('birth data submitted')
 
       router.push('/dashboard')
       router.refresh()

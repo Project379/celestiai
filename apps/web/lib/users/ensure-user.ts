@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+import { captureServerEvent } from '@/lib/analytics/server-capture'
 
 export type SubscriptionTier = 'free' | 'premium'
 export type SubscriptionStatus =
@@ -82,6 +83,9 @@ export async function ensureUserRecord(clerkUserId: string): Promise<AppUser> {
 
   if (!insertError && createdUser) {
     console.log(`[Users] Created app user row for ${clerkUserId}`)
+    // Exactly-once by construction: only the caller that wins this INSERT
+    // (not the 23505-race loser below) reaches here. See server-capture.ts.
+    await captureServerEvent('signup completed', clerkUserId)
     return toAppUser(createdUser)
   }
 

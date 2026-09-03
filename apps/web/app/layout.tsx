@@ -4,6 +4,7 @@ import { bgBG } from '@clerk/localizations'
 import { dark } from '@clerk/themes'
 import { Manrope, Inter, Cinzel } from 'next/font/google'
 import { SiteFooter } from '@/components/layout/SiteFooter'
+import { PostHogProvider } from '@/components/analytics/PostHogProvider'
 import './globals.css'
 
 const manrope = Manrope({
@@ -85,8 +86,10 @@ export default function RootLayout({
           className="min-h-screen bg-background text-foreground antialiased font-body"
           suppressHydrationWarning
         >
-          {children}
-          <SiteFooter />
+          <PostHogProvider>
+            {children}
+            <SiteFooter />
+          </PostHogProvider>
         </body>
       </html>
     </ClerkProvider>

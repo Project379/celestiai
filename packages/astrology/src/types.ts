@@ -101,6 +101,14 @@ export interface ChartInput {
   lon: number
   /** Whether the birth time is known */
   birthTimeKnown: boolean
+  /**
+   * When `birthTimeKnown` is false: the approximate window the user
+   * picked ('morning' | 'afternoon' | 'evening' | 'night'), or null/omitted
+   * if they gave nothing. Drives the midpoint-time estimate in
+   * `calculateNatalChart` (see `APPROX_TIME_RANGE_MIDPOINT`). Ignored when
+   * the exact time is known.
+   */
+  approximateTimeRange?: string | null
 }
 
 /**

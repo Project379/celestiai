@@ -52,7 +52,7 @@ function OraclePanel({ chartId, isPremium }: { chartId: string; isPremium: boole
     setActiveTopic,
     generateReading,
     fetchSavedReadings,
-  } = useOracleReading(chartId)
+  } = useOracleReading(chartId, isPremium)
 
   const [isOpen, setIsOpen] = useState(false)
 

@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import posthog from 'posthog-js'
 
 interface SuccessContentProps {
   initialTier: string
@@ -50,6 +51,26 @@ export function SuccessContent({ initialTier }: SuccessContentProps) {
     }, POLL_INTERVAL_MS)
 
     return () => clearInterval(intervalId)
+  }, [uiState, sessionId])
+
+  // "subscription started" — fires exactly once per Stripe checkout
+  // session, keyed by `session_id` from the checkout `success_url`
+  // (stripe/checkout/route.ts). Guards against: (a) the webhook winning
+  // the race so the page loads already-activated (uiState starts
+  // 'activated', skipping the poll effect above entirely — this effect
+  // still catches it), and (b) a bookmarked/revisited success URL
+  // re-firing the event on a later visit. No event fires if `session_id`
+  // is missing (direct navigation with no real checkout behind it).
+  useEffect(() => {
+    if (uiState !== 'activated' || !sessionId || typeof window === 'undefined') return
+    const key = `ph_sub_started_${sessionId}`
+    try {
+      if (window.localStorage.getItem(key)) return
+      window.localStorage.setItem(key, '1')
+    } catch {
+      // Storage unavailable — fall through and fire anyway.
+    }
+    posthog.capture('subscription started')
   }, [uiState, sessionId])
 
   return (

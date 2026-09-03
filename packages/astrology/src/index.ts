@@ -37,6 +37,7 @@ export type {
 
 // Constants
 export {
+  APPROX_TIME_RANGE_MIDPOINT,
   ASPECT_DEFINITIONS,
   ASPECTS_BG,
   ASPECTS_BG_GENDER,

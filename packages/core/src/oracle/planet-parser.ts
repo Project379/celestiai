@@ -57,6 +57,97 @@ export function stripSentinels(text: string): string {
 }
 
 /**
+ * Deterministic-injection placeholder tokens (Astrology Phase 2, Part 3).
+ *
+ * The LLM is a known-weak placeholder that cannot be trusted to transcribe
+ * numbers from its prompt — Phase 1 found degree citation UNSTABLE
+ * run-to-run, so it cannot even be regression-tested. Instead of asking
+ * the model to copy figures, we forbid it from writing any figure and make
+ * it emit a token; we substitute the real value from `chartData` here,
+ * server-side, before the reading is shown.
+ *
+ * Token grammar (case-sensitive keys):
+ *   [pos:KEY]        natal position  -> "24°06' Близнаци"     KEY: planet | asc | mc
+ *   [house:KEY]      natal house     -> "дом 9"               KEY: planet
+ *   [aspect:A-B]     natal aspect    -> "тригон (орб 2.3°)"   A,B: planet, order-insensitive
+ *   [tpos:KEY]       transit position (daily horoscope only)  KEY: planet
+ *   [taspect:T-N]    transit->natal aspect (horoscope only), T then N
+ *
+ * A token whose value is not supplied is a bug in the value map or a
+ * hallucinated reference by the model — either way it throws. It never
+ * substitutes an empty string.
+ */
+const PLACEHOLDER_RE = /\[(pos|house|aspect|tpos|taspect):([a-zA-Z][a-zA-Z-]*)\]/g
+
+export class PlaceholderSubstitutionError extends Error {
+  constructor(
+    message: string,
+    readonly token: string,
+  ) {
+    super(message)
+    this.name = 'PlaceholderSubstitutionError'
+  }
+}
+
+/**
+ * Canonical map key for a token. The planet portion is lowercased so the
+ * model's casing does not matter (`[pos:Sun]`, `[pos:sun]`, `[pos:northNode]`
+ * all normalise). `aspect:` / `taspect:` pair keys are hyphen-split; the
+ * order-insensitive `aspect:` kind is additionally sorted so
+ * `[aspect:moon-sun]` and `[aspect:sun-moon]` resolve to one entry.
+ */
+export function placeholderKey(kind: string, rawKey: string): string {
+  const lowered = rawKey.toLowerCase()
+  if (kind === 'aspect') {
+    const parts = lowered.split('-')
+    if (parts.length === 2) {
+      return `aspect:${[...parts].sort().join('-')}`
+    }
+  }
+  return `${kind}:${lowered}`
+}
+
+/**
+ * Replace every [pos:|house:|aspect:|tpos:|taspect:] token in `text` with
+ * its value from `values` (keyed as `placeholderKey` produces). Planet
+ * sentinels ([planet:KEY]…[/planet]) are left untouched — run
+ * `stripSentinels` after this. Throws `PlaceholderSubstitutionError` on any
+ * token with no value.
+ */
+export function substitutePlaceholders(
+  text: string,
+  values: Record<string, string>,
+): string {
+  const re = new RegExp(PLACEHOLDER_RE.source, 'g')
+  return text.replace(re, (match, kind: string, rawKey: string) => {
+    const key = placeholderKey(kind, rawKey)
+    const value = values[key]
+    if (value === undefined || value === '') {
+      throw new PlaceholderSubstitutionError(
+        `Unresolved placeholder ${match} (key "${key}") — the model referenced ` +
+          `data not in the chart, or the value map is incomplete.`,
+        match,
+      )
+    }
+    return value
+  })
+}
+
+/**
+ * List the placeholder tokens present in `text`, as raw `match` strings.
+ * Used by the pre-display validator to confirm none survive substitution.
+ */
+export function findPlaceholderTokens(text: string): string[] {
+  const re = new RegExp(PLACEHOLDER_RE.source, 'g')
+  const found: string[] = []
+  let m: RegExpExecArray | null
+  while ((m = re.exec(text)) !== null) {
+    if (m[0] !== undefined) found.push(m[0])
+  }
+  return found
+}
+
+/**
  * One parsed chunk from `parseSentinels`. Either a plain text run (no
  * `planet`) or a planet mention (`planet` = lowercase English key, `text`
  * = the Bulgarian inner text that was between the markers).

@@ -57,7 +57,13 @@ vi.mock('@/lib/ai/client', () => ({
   isUpstreamAiError: vi.fn(() => false),
 }))
 vi.mock('@/lib/oracle/prompts', () => ({ buildSystemPrompt: vi.fn(() => 'system prompt') }))
-vi.mock('@/lib/oracle/chart-to-prompt', () => ({ chartToPromptText: vi.fn(() => 'chart prompt text') }))
+vi.mock('@/lib/oracle/chart-to-prompt', () => ({
+  chartToPromptText: vi.fn(() => 'chart prompt text'),
+  buildOraclePlaceholderValues: vi.fn(() => ({})),
+}))
+vi.mock('@/lib/ai/validate-reading', () => ({
+  validateReading: vi.fn((raw: string) => ({ ok: true, text: raw, content: raw, wordCount: 500 })),
+}))
 vi.mock('@stellaeum/core/oracle/planet-parser', () => ({ stripSentinels: vi.fn((t: string) => t) }))
 vi.mock('ai', () => ({
   generateText: vi.fn(async () => ({ text: 'a generated reading' })),

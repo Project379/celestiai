@@ -70,6 +70,7 @@ export async function calculateChartForUser(
         lat: chart.latitude,
         lon: chart.longitude,
         birthTimeKnown: chart.birth_time_known,
+        approximateTimeRange: chart.approximate_time_range,
       })
 
       const { error: insertError } = await supabase

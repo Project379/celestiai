@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Text, useWindowDimensions, View } from 'react-native'
 import { useUser } from '@clerk/expo'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { ZODIAC_SIGNS_BG } from '@stellaeum/astrology/client'
 import type { PlanetPosition, PointData, ZodiacSign } from '@stellaeum/astrology/client'
@@ -18,6 +19,7 @@ import { color, font } from '@/components/design-system/tokens'
 import { useChart } from '@/hooks/useChart'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
+import { posthog } from '@/lib/analytics/posthog'
 import { getDisplayName } from '@/lib/clerk/displayName'
 
 /**
@@ -76,6 +78,32 @@ export default function ChartScreen() {
   const [selection, setSelection] = useState<PlanetSelection | null>(null)
 
   const wheelSize = Math.min(width * WHEEL_FRAME_RATIO, 600)
+
+  // "chart first viewed" — fires once EVER per chart, not once per visit.
+  // AsyncStorage (mobile's own storage, not PostHog's — PostHogProvider
+  // uses persistence: 'memory') just remembers which chart ids this
+  // device has already reported; holds no PII.
+  const chartId = firstChart.data?.id
+  const hasChartData = Boolean(chart.data)
+  useEffect(() => {
+    if (!chartId || !hasChartData) return
+    let cancelled = false
+    const key = `ph_chart_viewed_${chartId}`
+    void (async () => {
+      try {
+        const seen = await AsyncStorage.getItem(key)
+        if (seen || cancelled) return
+        await AsyncStorage.setItem(key, '1')
+      } catch {
+        // Storage unavailable — fall through and fire anyway rather than
+        // silently never reporting a first view.
+      }
+      if (!cancelled) posthog?.capture('chart first viewed')
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [chartId, hasChartData])
 
   // useCallback so this stays referentially stable across re-renders —
   // NatalWheel is memoized (see its own header note) and this is one of

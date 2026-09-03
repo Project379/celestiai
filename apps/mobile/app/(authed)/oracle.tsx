@@ -96,6 +96,7 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
     onFreshGeneration: () => {
       void maybePromptPushPermission(apiFetch)
     },
+    isPremium,
   })
 
   // Custom header back: when a topic reading is open, the screen renders

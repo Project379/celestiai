@@ -1,18 +1,26 @@
 import { auth } from '@clerk/nextjs/server'
-import { generateText, streamText } from 'ai'
+import { generateText } from 'ai'
 import type { TransitAspect } from '@stellaeum/astrology'
 import type { PlanetPosition } from '@stellaeum/astrology/client'
 import { AI_MODEL, isUpstreamAiError, openrouter } from '@/lib/ai/client'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
+import { validateReading, type ReadingValidationResult } from '@/lib/ai/validate-reading'
 import { logAuditEvent } from '@/lib/audit'
 import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
-import { transitAndNatalToPromptText } from '@/lib/horoscope/transit-to-prompt'
+import {
+  buildHoroscopePlaceholderValues,
+  transitAndNatalToPromptText,
+} from '@/lib/horoscope/transit-to-prompt'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 
-export const maxDuration = 60
+// 300s = the Vercel Pro ceiling. Two sequential generateText calls (the
+// regenerate-once path) at ~10-25s each for the shorter horoscope prompt,
+// plus validation and DB writes, comfortably fit; 60s did not leave
+// headroom for a slow upstream attempt followed by a retry.
+export const maxDuration = 300
 
 /**
  * POST /api/horoscope/generate — the daily "Днес" reading.
@@ -67,7 +75,9 @@ export async function POST(req: Request) {
 
     const url = new URL(req.url)
     const dateParam = url.searchParams.get('date')
-    const jsonOnly = url.searchParams.get('format') === 'json'
+    // `format=json` is still accepted for URL compatibility but no longer
+    // switches behaviour — the route always returns a validated JSON
+    // envelope now (see the generation block below).
     let requestedDate = today
 
     if (dateParam) {
@@ -94,7 +104,7 @@ export async function POST(req: Request) {
     const { data: chart, error: chartError } = await supabase
       .from('charts')
       .select(
-        'id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude'
+        'id, user_id, birth_date, birth_time, birth_time_known, approximate_time_range, latitude, longitude'
       )
       .eq('id', chartId)
       .single()
@@ -167,6 +177,7 @@ export async function POST(req: Request) {
         lat: chart.latitude,
         lon: chart.longitude,
         birthTimeKnown: chart.birth_time_known,
+        approximateTimeRange: chart.approximate_time_range,
       })
 
       const { data: insertedCalculation, error: insertError } = await supabase
@@ -212,6 +223,11 @@ export async function POST(req: Request) {
       calculation,
       transitAspects,
       transitOverview
+    )
+    const placeholderValues = buildHoroscopePlaceholderValues(
+      transitPlanets,
+      calculation,
+      transitAspects,
     )
 
     logAuditEvent(userId, 'data.horoscope_generation', {
@@ -293,101 +309,102 @@ export async function POST(req: Request) {
       }
     }
 
-    if (jsonOnly) {
-      let result
-      try {
-        result = await generateText({
-          model: openrouter(AI_MODEL),
-          system: systemPrompt,
-          prompt: promptText,
-          temperature: 0.85,
-          maxOutputTokens: 1500,
-        })
-      } catch (err) {
-        await releaseClaimOnFailure()
-        // An upstream provider failure (non-JSON body → SDK SyntaxError,
-        // network drop, 5xx) is not our bug — surface it as a deliberate
-        // 502 with a retry hint instead of an opaque 500. releaseClaim
-        // above already deleted the placeholder row.
-        if (isUpstreamAiError(err)) {
-          throw new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED')
-        }
-        throw err
-      }
-
-      void checkAndLogGeneration({
-        source: 'horoscope',
-        model: AI_MODEL,
-        text: result.text,
-        conditions: generationConditions,
+    // Generate + validate before display. The daily horoscope no longer
+    // streams: the pre-display validator (lib/ai/validate-reading.ts) — in
+    // particular SCRIPT PURITY and placeholder substitution — has to see
+    // the whole text. Both callers already POST `format=json` and read a
+    // `{ content }` envelope, so no client change is needed. On a
+    // validation failure we regenerate ONCE (the daily_horoscopes INSERT
+    // claim already caps this to one paid slot per chart per day), then
+    // fail visibly rather than persist broken output.
+    async function generateRaw(): Promise<string> {
+      const r = await generateText({
+        model: openrouter(AI_MODEL),
+        system: systemPrompt,
+        prompt: promptText,
+        temperature: 0.85,
+        maxOutputTokens: 1500,
       })
+      return r.text
+    }
 
-      // FIX (2026-08-26, follow-up to sweep #7): this was wrapped in
-      // try/catch, which cannot catch a supabase-js failure — .upsert()
-      // returns { error }, it doesn't throw. The generated content still
-      // reaches the caller below either way; checking here just makes a
-      // silent cache-write failure visible instead of invisible (the
-      // content already returned to the user was never wrong, only
-      // uncached — a later request for the same chart+date would find the
-      // stuck-empty placeholder row and re-serve blank content for the
-      // rest of the day, same bounded shape as releaseClaimOnFailure).
-      const { error: saveError } = await supabase.from('daily_horoscopes').upsert(
-        {
-          chart_id: chartId,
-          user_id: userId,
-          date: requestedDate,
-          content: result.text,
-          model_version: AI_MODEL,
-        },
-        { onConflict: 'chart_id,date' }
-      )
-      if (saveError) {
-        console.error('[Horoscope Generate] Failed to save horoscope:', { chartId, date: requestedDate, error: saveError })
+    let finalContent: string | null = null
+    let finalPlainText = ''
+    let lastValidation: ReadingValidationResult | null = null
+    try {
+      for (let attempt = 1; attempt <= 2 && finalContent === null; attempt++) {
+        const raw = await generateRaw()
+        // 400-550 chars over 3 short lines -> roughly 45-110 words. Bounds
+        // kept loose; script purity + placeholder integrity are the load-
+        // bearing checks for this surface.
+        const validation = validateReading(raw, placeholderValues, {
+          minWords: 30,
+          maxWords: 160,
+        })
+        lastValidation = validation
+        if (validation.ok) {
+          finalContent = validation.content
+          finalPlainText = validation.text
+        } else {
+          console.error('[Horoscope Generate] reading rejected by validator', {
+            attempt,
+            code: validation.code,
+            detail: validation.detail,
+          })
+        }
       }
+    } catch (err) {
+      await releaseClaimOnFailure()
+      if (isUpstreamAiError(err)) {
+        throw new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED')
+      }
+      throw err
+    }
 
-      return Response.json({
-        content: result.text,
-        cached: false,
-        generatedAt: new Date().toISOString(),
+    if (finalContent === null) {
+      await releaseClaimOnFailure()
+      const failCode =
+        lastValidation && !lastValidation.ok ? lastValidation.code : 'UNKNOWN'
+      console.error('[Horoscope Generate] output failed validation twice', {
+        chartId,
+        date: requestedDate,
+        code: failCode,
+      })
+      throw new ApiError(502, RETRY_LATER_MESSAGE, 'AI_OUTPUT_INVALID')
+    }
+
+    void checkAndLogGeneration({
+      source: 'horoscope',
+      model: AI_MODEL,
+      text: finalPlainText,
+      conditions: generationConditions,
+    })
+
+    // .upsert() returns { error }, it does not throw — check it explicitly
+    // so a silent cache-write failure is visible.
+    const { error: saveError } = await supabase.from('daily_horoscopes').upsert(
+      {
+        chart_id: chartId,
+        user_id: userId,
+        date: requestedDate,
+        content: finalContent,
+        model_version: AI_MODEL,
+      },
+      { onConflict: 'chart_id,date' },
+    )
+    if (saveError) {
+      console.error('[Horoscope Generate] Failed to save horoscope:', {
+        chartId,
+        date: requestedDate,
+        error: saveError,
       })
     }
 
-    const result = streamText({
-      model: openrouter(AI_MODEL),
-      system: systemPrompt,
-      prompt: promptText,
-      temperature: 0.85,
-      maxOutputTokens: 1500,
-      onFinish: async ({ text }) => {
-        void checkAndLogGeneration({
-          source: 'horoscope',
-          model: AI_MODEL,
-          text,
-          conditions: generationConditions,
-        })
-
-        // Same fix as the jsonOnly path above — check the returned error
-        // instead of a try/catch that can't catch it.
-        const { error: saveError } = await supabase.from('daily_horoscopes').upsert(
-          {
-            chart_id: chartId,
-            user_id: userId,
-            date: requestedDate,
-            content: text,
-            model_version: AI_MODEL,
-          },
-          { onConflict: 'chart_id,date' }
-        )
-        if (saveError) {
-          console.error('[Horoscope Generate] Failed to save horoscope:', { chartId, date: requestedDate, error: saveError })
-        }
-      },
-      onError: () => {
-        void releaseClaimOnFailure()
-      },
+    return Response.json({
+      content: finalContent,
+      cached: false,
+      generatedAt: new Date().toISOString(),
     })
-
-    return result.toTextStreamResponse()
   } catch (error) {
     return toErrorResponse(error, 'Failed to generate horoscope.')
   }

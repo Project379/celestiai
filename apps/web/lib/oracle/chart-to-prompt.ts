@@ -1,9 +1,14 @@
 /**
- * Chart data to textual prompt serializer
+ * Chart data to textual prompt serializer + deterministic placeholder map.
  *
- * Converts a ChartData object into a structured textual representation
- * suitable for inclusion in an AI prompt. The AI model reads this text
- * to understand the user's natal chart before generating a reading.
+ * `chartToPromptText` converts a ChartData object into the structured
+ * Bulgarian text the model reads to understand the chart.
+ *
+ * `buildOraclePlaceholderValues` produces the token -> real-value map the
+ * server substitutes into the model's output (Astrology Phase 2, Part 3).
+ * The model is instructed to never write a degree/sign/house/orb itself
+ * and to emit tokens instead; every figure the reader sees comes from
+ * this map, not from the model.
  *
  * Output format (Bulgarian labels, English planet/sign names for consistency
  * with sentinel keys):
@@ -24,10 +29,22 @@ import type { ChartData, PlanetPosition, AspectData } from '@stellaeum/astrology
 import { PLANETS_BG, PLANETS_BG_GENDER, ZODIAC_SIGNS_BG, ASPECTS_BG } from '@stellaeum/astrology/client'
 import type { Planet, ZodiacSign, AspectType } from '@stellaeum/astrology/client'
 import { RETROGRADE_ADJ, agreeAdjective } from '@stellaeum/core/i18n/bg-grammar'
+import { placeholderKey } from '@stellaeum/core/oracle/planet-parser'
+
+/**
+ * "24°06'" — whole degrees within the sign + arc-minutes, zero-padded.
+ * Shared by the placeholder map and the prompt serializer so a position
+ * renders the same in both.
+ */
+function formatDegMin(signDegree: number): string {
+  const degrees = Math.floor(signDegree)
+  const minutes = Math.floor((signDegree - degrees) * 60)
+  return `${degrees}°${minutes.toString().padStart(2, '0')}'`
+}
 
 /**
  * Formats a planet position as a human-readable line in Bulgarian.
- * Example: "Слънце: 15° Лъв, дом 5 (ретроградно)"
+ * Example: "Слънце: 15°23' Лъв, дом 5 (ретроградно)"
  */
 function formatPlanetLine(position: PlanetPosition): string {
   const planetName = PLANETS_BG[position.planet as Planet] ?? position.planet
@@ -95,4 +112,45 @@ export function chartToPromptText(chartData: ChartData): string {
   }
 
   return lines.join('\n')
+}
+
+/**
+ * Build the deterministic placeholder map for an Oracle reading.
+ *
+ * Keys (via `placeholderKey`):
+ *   pos:<planet> | pos:asc | pos:mc  -> "24°06' Близнаци"
+ *   house:<planet>                   -> "дом 9"
+ *   aspect:<a>-<b>  (a,b sorted)     -> "тригон (орб 0.8°)"
+ *
+ * The model may reference any of these; anything it references that is not
+ * here throws at substitution time rather than rendering blank.
+ */
+export function buildOraclePlaceholderValues(
+  chartData: ChartData,
+): Record<string, string> {
+  const values: Record<string, string> = {}
+
+  for (const p of chartData.planets) {
+    const signName = ZODIAC_SIGNS_BG[p.sign as ZodiacSign] ?? p.sign
+    values[placeholderKey('pos', p.planet)] = `${formatDegMin(p.signDegree)} ${signName}`
+    values[placeholderKey('house', p.planet)] = `дом ${p.house}`
+  }
+
+  const ascSign = ZODIAC_SIGNS_BG[chartData.ascendant.sign as ZodiacSign] ?? chartData.ascendant.sign
+  values[placeholderKey('pos', 'asc')] = `${formatDegMin(chartData.ascendant.degree)} ${ascSign}`
+  const mcSign = ZODIAC_SIGNS_BG[chartData.mc.sign as ZodiacSign] ?? chartData.mc.sign
+  values[placeholderKey('pos', 'mc')] = `${formatDegMin(chartData.mc.degree)} ${mcSign}`
+  // The Ascendant is the 1st-house cusp and the MC the 10th — accept
+  // [house:asc] / [house:mc] rather than reject an astrologically sound
+  // reference the model keeps reaching for.
+  values[placeholderKey('house', 'asc')] = 'дом 1'
+  values[placeholderKey('house', 'mc')] = 'дом 10'
+
+  for (const a of chartData.aspects) {
+    const aspectName = (ASPECTS_BG[a.aspect as AspectType] ?? a.aspect).toLowerCase()
+    values[placeholderKey('aspect', `${a.planet1}-${a.planet2}`)] =
+      `${aspectName} (орб ${a.orb.toFixed(1)}°)`
+  }
+
+  return values
 }

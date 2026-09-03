@@ -41,7 +41,9 @@ export async function getTransitsOverview(
 
     const { data: chart, error: chartError } = await supabase
       .from('charts')
-      .select('id, user_id, birth_date, birth_time, birth_time_known, latitude, longitude')
+      .select(
+        'id, user_id, birth_date, birth_time, birth_time_known, approximate_time_range, latitude, longitude',
+      )
       .eq('id', chartId)
       .single()
 
@@ -66,6 +68,7 @@ export async function getTransitsOverview(
         lat: chart.latitude,
         lon: chart.longitude,
         birthTimeKnown: chart.birth_time_known,
+        approximateTimeRange: chart.approximate_time_range,
       })
 
       const { data: insertedCalculation, error: insertError } = await supabase

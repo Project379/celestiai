@@ -20,6 +20,7 @@ const require = createRequire(import.meta.url)
 const sweph = require('sweph') as typeof import('sweph')
 
 import {
+  APPROX_TIME_RANGE_MIDPOINT,
   DEFAULT_UNKNOWN_TIME,
   HOUSE_SYSTEM_PLACIDUS,
   PLANET_IDS,
@@ -157,15 +158,19 @@ export function calculateNatalChart(input: ChartInput): ChartData {
     )
     jd = getJulianDayUTC(input.date, utcHours, dayOffset)
   } else {
-    // Unknown birth time: use noon *local* time at the birth location, then
-    // convert to UTC.  This is the correct Swiss Ephemeris convention — using
-    // noon at the birth location minimises the maximum error for slow-moving
-    // planets.  Noon UTC would introduce up to several hours of error for
-    // locations far from Greenwich, potentially placing the Moon in the wrong
-    // sign.
+    // Unknown birth time: use a *local* time at the birth location, then
+    // convert to UTC (never noon UTC — that is up to several hours of error
+    // for locations far from Greenwich and can place the Moon in the wrong
+    // sign). If the user picked an approximate window, use its midpoint —
+    // a ~3h-max error instead of the up-to-9h error of a blind noon. Else
+    // fall back to noon local, the classic minimise-maximum-error default.
+    const unknownLocalTime =
+      (input.approximateTimeRange &&
+        APPROX_TIME_RANGE_MIDPOINT[input.approximateTimeRange]) ||
+      DEFAULT_UNKNOWN_TIME
     const { utcHours, dayOffset } = localTimeToUTC(
       input.date,
-      DEFAULT_UNKNOWN_TIME,
+      unknownLocalTime,
       input.lat,
       input.lon
     )

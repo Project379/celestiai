@@ -19,6 +19,7 @@ import type {
 import { pressFeedback } from '@/components/design-system/tokens'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import type { FirstChartSummary } from '@/hooks/useFirstChart'
+import { posthog } from '@/lib/analytics/posthog'
 import { ApiError, useApiClient } from '@/lib/api/client'
 import { hapticInvite, hapticSelect } from '@/lib/haptics'
 
@@ -112,6 +113,9 @@ export default function WizardConfirmScreen() {
         birth_date: created.birth_date,
         birth_time_known: created.birth_time_known,
       })
+
+      // Bare event — no birth date/time/place, no name, no coordinates.
+      posthog?.capture('birth data submitted')
 
       router.replace('/')
     } catch (e) {

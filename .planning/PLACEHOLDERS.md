@@ -57,15 +57,16 @@ keeps the register's truth in one file.
 
 ## Register
 
-42 OPEN rows + 7 RESOLVED rows = 49 total. (The brief's "43 rows" counts
-the OPEN block only; BUILD-SHA added and TIER-ITEM-4 / TIER-ITEM-5
-resolved 2026-09-01.)
+41 OPEN rows + 11 RESOLVED rows = 52 total, per `check-placeholders`'s own
+count. LLM-MODEL-SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL
+added 2026-09-03 (PostHog hardening pass); COOKIE-CONSENT and
+ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day.
 
 | ID | Description | Type | Owner | Blocks | Status | Resolved-date | Location |
 |---|---|---|---|---|---|---|---|
 | LLM-GUARDRAILS | Zero content-safety layer on Oracle/horoscope output (also `apps/web/app/api/horoscope/generate/route.ts`) | CODE | Toni | Launch | OPEN | | apps/web/lib/ai/check-bg-output.ts |
-| ASTRO-TIMEZONE | Bulgarian timezone/DST path unverified; April validation covered the ephemeris, not BG birth locations | CODE | CC | Launch | OPEN | | packages/astrology/src/utils/timezone.ts |
-| ASTRO-INJECT | Model writes its own degrees/orbs; 10/10 readings collapse every planet to one degree (also horoscope prompts) | CODE | CC | Launch | OPEN | | apps/web/lib/oracle/prompts.ts |
+| ASTRO-TIMEZONE | Bulgarian timezone/DST path — was unverified; Phase 1 diagnosis confirmed the 4 core BG charts convert correctly and found a DST-boundary bug (probe sampled the offset on the wrong side of a transition). Phase 2 rewrote `localTimeToUTC` with round-trip disambiguation (ambiguous fall-back hour → earlier occurrence + flag; spring-forward gap → forward shift + flag) and added `packages/astrology/test/timezone-dst.test.ts` (10 cases, incl. the 4 regression guards). geo-tz only resolves the zone name; offsets come from historically-aware ICU. Closes ephemeris-validation doc-drift #7. | CODE | CC | Launch | RESOLVED | 2026-09-02 | packages/astrology/src/utils/timezone.ts |
+| ASTRO-INJECT | Model wrote its own degrees/signs/houses/orbs — Phase 1 found this UNSTABLE run-to-run (not reliably broken), so it could not be regression-tested. Phase 2 removed the ability entirely: both system prompts now forbid figures and require `[pos:]`/`[house:]`/`[aspect:]`/`[tpos:]`/`[taspect:]` tokens; the server substitutes real chart values (`buildOraclePlaceholderValues` / `buildHoroscopePlaceholderValues`) and a pre-display validator (`apps/web/lib/ai/validate-reading.ts`) rejects any model-authored digit, unresolved token, non-Bulgarian glyph, unbalanced sentinel or out-of-range length, regenerating once then failing visibly. Oracle + daily horoscope no longer stream. Gate 9 (`apps/web/scripts/oracle-gate9.mjs`) is the manual regression harness. | CODE | CC | Launch | RESOLVED | 2026-09-02 | apps/web/lib/oracle/prompts.ts |
 | PAYWALL-MOBILE | RevenueCat native paywall not built; no mobile CTA anywhere | CODE | CC | Store submission | OPEN | | apps/mobile/components/oracle/CapReachedNotice.tsx |
 | MIGRATIONS | 13 unrecorded migrations, 3 orphaned ledger rows, one with a live DROP COLUMN (`supabase/migrations/20260413141504_schema_hardening.sql`) | CODE | CC | Any schema change | OPEN | | — |
 | SCHEMA-UNTRACKED | 16 Drizzle-era tables with no CREATE TABLE; production schema unreproducible from repo (partly captured by `20260826150000_capture_untracked_tables.sql`) | CODE | CC | Staging env | OPEN | | — |
@@ -86,7 +87,7 @@ resolved 2026-09-01.)
 | OAUTH-COPY-GOOGLE | form_param_missing / oauth_access_denied / external_account_exists say "Google" but fire for Apple too | CODE | Toni | Store submission | OPEN | | apps/mobile/lib/clerk/errorMessages.ts |
 | ANR | Android ANR, no usable main-thread data; emulator device class is the leading suspect | CODE | CC | — | OPEN | | — |
 | DOC-DRIFT | CLAUDE.md "Realtime" line; stale COMPETITOR_ANALYSIS and FEATURES docs. Retyped CODE→DECISION 2026-09-01: all three locations are docs and the work is "decide the current truth, then write it" — same shape as EN-LOCALE | DECISION | CC | — | OPEN | | n/a |
-| COOKIE-CONSENT | No consent mechanism; needed only if third-party analytics ships | CODE | CC | EU traffic | OPEN | | — |
+| COOKIE-CONSENT | RESOLVED 2026-09-03: PostHog (the analytics that made this row live, see ANALYTICS-VENDOR) is configured cookieless — `persistence: 'memory'` at `apps/web/components/analytics/PostHogProvider.tsx:71` and `apps/mobile/lib/analytics/posthog.ts:31` means neither platform ever writes a cookie/localStorage/AsyncStorage-persisted analytics identity. This is CONFIG-verified (the option is posthog-js's own documented storage-mode enum, not a workaround) but NOT live-browser-verified — the claude-in-chrome extension was unavailable in the session that made this change, so `document.cookie` / Application > Storage were never inspected empirically in a running app. Do that check before treating this as fully closed; re-open this row if it turns up a cookie. If persistence is ever changed off `'memory'` on either file, re-open regardless | CODE | CC | EU traffic | RESOLVED | 2026-09-03 | apps/web/components/analytics/PostHogProvider.tsx |
 | TERMS | `/terms` route exists as a placeholder only (compliance batch 2026-09-01) — body is not lawyer-reviewed; linked from checkout + pricing + footer | CODE | Lawyer | Store submission | OPEN | | apps/web/app/terms/page.tsx |
 | WITHDRAWAL-COPY | CRD immediate-performance / 14-day-withdrawal consent wording now shipped at Stripe Checkout (`custom_text`), still not lawyer-reviewed (compliance batch 2026-09-01) | CODE | Lawyer | Web payments | OPEN | | apps/web/lib/legal/compliance-copy.ts |
 | AI-ACT-COPY | Article 50 disclosure now shown on Oracle (web+mobile), daily horoscope (web+mobile) and pricing (compliance batch 2026-09-01); wording not lawyer-reviewed; other AI surfaces still unaudited | CODE | Lawyer | Already overdue | OPEN | | apps/web/lib/legal/compliance-copy.ts |
@@ -100,11 +101,11 @@ resolved 2026-09-01.)
 | EAS-SENTRY-DSN | EAS env var carrying the mobile Sentry DSN unconfirmed | CONFIG | Toni | — | OPEN | | n/a |
 | MOON-PARITY | Moon detail is mobile-only; violates the parity ruling | DECISION | Toni | Launch | OPEN | | n/a |
 | PRICE-BASIS | €9.99 in the LLM decision doc vs €6.99 on the live pricing page | DECISION | Toni | Paywall | OPEN | | n/a |
-| ANALYTICS-VENDOR | None chosen; decides whether cookie consent is needed | DECISION | Toni | Launch | OPEN | | n/a |
+| ANALYTICS-VENDOR | PostHog Cloud EU chosen 2026-09-03 — cookieless (memory persistence), five events only (signup completed, birth data submitted, chart first viewed, free Oracle reading generated, subscription started), no autocapture/session replay/heatmaps/surveys/feature flags/experiments. This resolves the cookie-consent question this row existed to answer — see COOKIE-CONSENT | DECISION | Toni | Launch | RESOLVED | 2026-09-03 | n/a |
 | EN-LOCALE | English deferred; FEATURES.md still claims BG+EN | DECISION | Toni | — | OPEN | | n/a |
 | LLM-RETENTION | Zero-data-retention status on the chosen provider unknown | EXTERNAL | Petko | Privacy policy | OPEN | | n/a |
 | PRIVACY-REVIEW | Privacy policy content is a placeholder, not lawyer-reviewed | EXTERNAL | Lawyer | Launch | OPEN | | n/a |
-| DPA-CONTRACTS | Processor DPAs unsigned: Clerk, Supabase, Stripe, OpenRouter, Sentry | EXTERNAL | Toni | Launch | OPEN | | n/a |
+| DPA-CONTRACTS | Processor DPAs unsigned: Clerk, Supabase, Stripe, OpenRouter, Sentry, PostHog (added 2026-09-03) | EXTERNAL | Toni | Launch | OPEN | | n/a |
 | SE-LICENCE | CHF 700 Swiss Ephemeris Professional; triggers on first paying subscriber; deferral reasoning undocumented | EXTERNAL | Toni | First subscriber | OPEN | | n/a |
 | DESIGN-ASSETS | Placeholder icon/logo; IP assignment email sent, reply pending | EXTERNAL | Designer | Store submission | OPEN | | n/a |
 | FREE-TIER | Frozen 2026-09-01 | DECISION | Toni | — | RESOLVED | 2026-09-01 | n/a |
@@ -112,6 +113,9 @@ resolved 2026-09-01.)
 | VERCEL-PLAN | Confirmed not Hobby | CONFIG | Toni | — | RESOLVED | 2026-09-01 | n/a |
 | LLM-MODEL | Provider decided; Petko implementing | DECISION | Petko | — | RESOLVED | 2026-09-01 | n/a |
 | KRUG-TEASER | Free users keep the teaser as the locked state | DECISION | Toni | — | RESOLVED | 2026-09-01 | n/a |
+| LLM-MODEL-SWAP | LLM-MODEL (decision) is RESOLVED but the implementation has not landed — production still calls `meta-llama/llama-3.3-70b-instruct` (SYSTEM-MAP §4). Gate 9 on the widened 300-800-word band still shows an ~80% first-pass rate (see PROJECT.md/handoff for the 2026-09-03 run), driven by foreign-script injection and hallucinated aspects — a known-weak-model ceiling, not a bug in the validator. The app cannot reliably ship Oracle/horoscope readings on this model | CODE | Petko | Launch | OPEN | | apps/web/lib/ai/client.ts |
+| GATE9-PHRASE-REPETITION | Gate 9 (2026-09-03 run, 300-800-word band): the model writes "твоят [planet] на" as a stock opening in 6-8 of 10 readings per run, and separately gets Слънце's grammatical gender wrong ("твоят Слънце" instead of neuter "твоето Слънце") in most of those — confirmed model-only, no static Bulgarian string in the codebase has the wrong-gender form (`packages/astrology/src/constants.ts` already encodes `PLANETS_BG_GENDER.sun = 'neut'` correctly; it just is not consulted by the prompt). Not fixable by prompt engineering per this file's header ruling — blocked on the model swap | CODE | Petko | Launch quality bar | OPEN | | — |
+| CHART-CALC-BACKFILL | `6b1a25d` (2026-09-02) made `calculateNatalChart` use the stated birth-time window's midpoint for unknown-time charts instead of always assuming noon, but existing `chart_calculations` rows computed before that commit still hold the old 12:00 estimate — those users see a chart calculated at the wrong assumed time until the row is invalidated/recalculated. No backfill script exists yet | CODE | CC | Data accuracy for existing accounts | OPEN | | — |
 
 ---
 
@@ -134,14 +138,16 @@ list — its "locations" were all docs, matching EN-LOCALE's shape.)
 | SMOKE-TEST | Absence of a post-deploy script. No `scripts/*smoke*`, no workflow step. |
 | BUILD-SHA | Absence of a version marker in HTTP responses / build metadata. No middleware header, no `/api/version` route — nothing to mark. |
 | ANR | Android runtime symptom, not a code line. Investigation item. |
-| COOKIE-CONSENT | Absence of a consent mechanism. Conditional on ANALYTICS-VENDOR — no code until a vendor is picked. |
+| GATE9-PHRASE-REPETITION | Model-output symptom (a stock phrase and a grammar error the model produces), not a line of code — the prompt already models correct gender by example and there is no per-planet gender lookup to wire in without prompt-engineering a placeholder model, which this file's header ruling says not to do. |
+| CHART-CALC-BACKFILL | The gap is a backfill script that doesn't exist yet — nothing in the repo to mark until one is written. |
 
-**Finding:** 9 of the 27 OPEN CODE entries have no code location. Markers
-were placed for the other **18**. (Was 13 of 29 → 12 of 28 when DOC-DRIFT
-was retyped DECISION → 13 of 29 when BUILD-SHA was added → 9 of 29 when the
-2026-09-01 compliance batch gave TERMS, ENTITY-NAME, AI-ACT-COPY and
-WITHDRAWAL-COPY real code markers → 9 of 27 when TIER-ITEM-4 and
-TIER-ITEM-5 resolved.)
+**Finding:** 8 of the OPEN CODE entries have no code location (was 9 before
+2026-09-03: COOKIE-CONSENT resolved with a real marker-free Location
+citation, removing it from this list; GATE9-PHRASE-REPETITION and
+CHART-CALC-BACKFILL added to it the same day, net -1). Historical count
+chain (see prior entries in this file's git history for the full
+derivation) ended at 9 of 27 after TIER-ITEM-4/5 resolved 2026-09-01; this
+is the next link.
 
 ---
 
@@ -156,16 +162,16 @@ before any launch or submission.
 | ID | Type | Owner | Enforced by gate? |
 |---|---|---|---|
 | LLM-GUARDRAILS | CODE | Toni | yes (marker present) |
-| ASTRO-TIMEZONE | CODE | CC | yes |
-| ASTRO-INJECT | CODE | CC | yes |
 | 2FA-BUG | CODE | CC | yes |
 | ENTITY-NAME | CODE | Toni | yes (marker present — placeholder footer values, 2026-09-01) |
 | PROD-CREDS | CONFIG | Toni | **no — manual** |
 | SUPABASE-PLAN | CONFIG | Toni | **no — manual** |
 | MOON-PARITY | DECISION | Toni | **no — manual** |
-| ANALYTICS-VENDOR | DECISION | Toni | **no — manual** |
 | PRIVACY-REVIEW | EXTERNAL | Lawyer | **no — manual** |
 | DPA-CONTRACTS | EXTERNAL | Toni | **no — manual** |
+| LLM-MODEL-SWAP | CODE | Petko | yes (marker present) |
+| GATE9-PHRASE-REPETITION | CODE | Petko | **no — no code location, symptom only** |
+| CHART-CALC-BACKFILL | CODE | CC | **no — no code location, script not written** |
 
 ### Blocks: Store submission
 

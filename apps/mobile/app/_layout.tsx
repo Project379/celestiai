@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 import { RevenueCatProvider } from '@/lib/purchases/RevenueCatProvider'
+import { PostHogProvider } from '@/lib/analytics/PostHogProvider'
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
 
@@ -62,20 +63,22 @@ export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <RevenueCatProvider>
-        <QueryClientProvider client={queryClient}>
-          <SafeAreaProvider>
-            <StatusBar style="light" />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: '#08060f' },
-              }}
-            >
-              <Stack.Screen name="(authed)" />
-              <Stack.Screen name="(public)" />
-            </Stack>
-          </SafeAreaProvider>
-        </QueryClientProvider>
+        <PostHogProvider>
+          <QueryClientProvider client={queryClient}>
+            <SafeAreaProvider>
+              <StatusBar style="light" />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: '#08060f' },
+                }}
+              >
+                <Stack.Screen name="(authed)" />
+                <Stack.Screen name="(public)" />
+              </Stack>
+            </SafeAreaProvider>
+          </QueryClientProvider>
+        </PostHogProvider>
       </RevenueCatProvider>
     </ClerkProvider>
   )

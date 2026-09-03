@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import posthog from 'posthog-js'
 import { useChart } from '@/hooks/useChart'
 import dynamic from 'next/dynamic'
 import { NatalWheelLegend } from './NatalWheelLegend'
@@ -60,6 +61,25 @@ export function ChartView({
   subscriptionTier = 'free',
 }: ChartViewProps) {
   const { chart, isLoading, error } = useChart(chartId)
+
+  // "chart first viewed" — fires once EVER per chart, not once per visit.
+  // localStorage (not memory-only, unlike PostHog's own persistence — see
+  // PostHogProvider.tsx) is the app's own storage, used only to remember
+  // which chart ids this browser has already reported; it holds no PII
+  // and is unrelated to the cookieless-PostHog decision.
+  useEffect(() => {
+    if (isLoading || error || !chart || typeof window === 'undefined') return
+    const key = `ph_chart_viewed_${chartId}`
+    try {
+      if (window.localStorage.getItem(key)) return
+      window.localStorage.setItem(key, '1')
+    } catch {
+      // Storage unavailable (private mode, quota) — fall through and fire
+      // anyway rather than silently never reporting a first view.
+    }
+    posthog.capture('chart first viewed')
+  }, [chartId, chart, isLoading, error])
+
   const [activeView, setActiveView] = useState<'chart' | 'reference'>('chart')
   const [activeSection, setActiveSection] = useState<ChartSection>('essence')
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null)
