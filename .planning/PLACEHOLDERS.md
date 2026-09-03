@@ -57,12 +57,14 @@ keeps the register's truth in one file.
 
 ## Register
 
-43 OPEN rows + 11 RESOLVED rows = 54 total, per `check-placeholders`'s own
+43 OPEN rows + 12 RESOLVED rows = 55 total, per `check-placeholders`'s own
 count. LLM-MODEL-SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL
 added 2026-09-03 (PostHog hardening pass); COOKIE-CONSENT and
 ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day. GEMINI-API-TIER and
 ORACLE-WORD-BAND added 2026-09-03 (sentinel-example / Gate 9 follow-up on
-`gemini/rebased-onto-injection`).
+`gemini/rebased-onto-injection`). STRIPE-TOS-URL added 2026-09-03 and
+OAUTH-COPY-GOOGLE flipped OPEN → RESOLVED the same day (OAuth de-Googling
+pass).
 
 | ID | Description | Type | Owner | Blocks | Status | Resolved-date | Location |
 |---|---|---|---|---|---|---|---|
@@ -86,7 +88,7 @@ ORACLE-WORD-BAND added 2026-09-03 (sentinel-example / Gate 9 follow-up on
 | LINT-BASELINE-1800 | Ratchet has moved 1778→1800→1784→1785 (2026-09-01 through 2026-09-03); each move logged with justification in the script header. ID keeps its "-1800" suffix as a stable handle; current value 1785 | CODE | CC | — | OPEN | | scripts/i18n/check-bg-lint-baseline.mjs |
 | SIWA-BG-LABEL | Apple button may render English on bg-locale devices; unverifiable until a device build (twin at `apps/mobile/app/(public)/sign-up.tsx`) | CODE | CC | Store submission | OPEN | | apps/mobile/app/(public)/sign-in.tsx |
 | APPLE-ERROR-CODES | Real oauth_token_apple codes unmappable until a device sign-in; revisit from Sentry after Phase B | CODE | CC | — | OPEN | | apps/mobile/lib/clerk/errorMessages.ts |
-| OAUTH-COPY-GOOGLE | form_param_missing / oauth_access_denied / external_account_exists say "Google" but fire for Apple too | CODE | Toni | Store submission | OPEN | | apps/mobile/lib/clerk/errorMessages.ts |
+| OAUTH-COPY-GOOGLE | RESOLVED 2026-09-03: form_param_missing / oauth_access_denied / external_account_exists rewritten provider-neutral (wording approved by Toni) — no longer say "Google". `oauth_email_domain_reserved_by_saml` was already neutral and untouched | CODE | Toni | Store submission | RESOLVED | 2026-09-03 | apps/mobile/lib/clerk/errorMessages.ts |
 | ANR | Android ANR, no usable main-thread data; emulator device class is the leading suspect | CODE | CC | — | OPEN | | — |
 | DOC-DRIFT | CLAUDE.md "Realtime" line; stale COMPETITOR_ANALYSIS and FEATURES docs. Retyped CODE→DECISION 2026-09-01: all three locations are docs and the work is "decide the current truth, then write it" — same shape as EN-LOCALE | DECISION | CC | — | OPEN | | n/a |
 | COOKIE-CONSENT | RESOLVED 2026-09-03: PostHog (the analytics that made this row live, see ANALYTICS-VENDOR) is configured cookieless — `persistence: 'memory'` at `apps/web/components/analytics/PostHogProvider.tsx:71` and `apps/mobile/lib/analytics/posthog.ts:31` means neither platform ever writes a cookie/localStorage/AsyncStorage-persisted analytics identity. This is CONFIG-verified (the option is posthog-js's own documented storage-mode enum, not a workaround) but NOT live-browser-verified — the claude-in-chrome extension was unavailable in the session that made this change, so `document.cookie` / Application > Storage were never inspected empirically in a running app. Do that check before treating this as fully closed; re-open this row if it turns up a cookie. If persistence is ever changed off `'memory'` on either file, re-open regardless | CODE | CC | EU traffic | RESOLVED | 2026-09-03 | apps/web/components/analytics/PostHogProvider.tsx |
@@ -101,6 +103,7 @@ ORACLE-WORD-BAND added 2026-09-03 (sentinel-example / Gate 9 follow-up on
 | SKEW-PROTECT | Vercel Skew Protection off — while off, a browser can mix JS chunks / API routes across deployments mid-session. Target state: ON before real traffic, **paired with** BUILD-SHA — ON on its own makes a session pinned to a stale deployment indistinguishable from an undeployed fix | CONFIG | Toni | Real traffic | OPEN | | n/a |
 | SUPABASE-PLAN | Free tier pauses on inactivity | CONFIG | Toni | Launch | OPEN | | n/a |
 | EAS-SENTRY-DSN | EAS env var carrying the mobile Sentry DSN unconfirmed | CONFIG | Toni | — | OPEN | | n/a |
+| STRIPE-TOS-URL | Stripe is sandbox-only until the company is registered, so the Terms of Service URL cannot be set on the live account; `consent_collection: { terms_of_service: 'required' }` in the checkout route has never been exercised against a real Stripe session. Resolves when the live account has the URL set and one real checkout has completed | CONFIG | Toni | Revenue | OPEN | | n/a |
 | MOON-PARITY | Moon detail is mobile-only; violates the parity ruling | DECISION | Toni | Launch | OPEN | | n/a |
 | PRICE-BASIS | €9.99 in the LLM decision doc vs €6.99 on the live pricing page | DECISION | Toni | Paywall | OPEN | | n/a |
 | ANALYTICS-VENDOR | PostHog Cloud EU chosen 2026-09-03 — cookieless (memory persistence), five events only (signup completed, birth data submitted, chart first viewed, free Oracle reading generated, subscription started), no autocapture/session replay/heatmaps/surveys/feature flags/experiments. This resolves the cookie-consent question this row existed to answer — see COOKIE-CONSENT | DECISION | Toni | Launch | RESOLVED | 2026-09-03 | n/a |
@@ -186,7 +189,6 @@ before any launch or submission.
 |---|---|---|---|
 | PAYWALL-MOBILE | CODE | CC | yes |
 | SIWA-BG-LABEL | CODE | CC | yes |
-| OAUTH-COPY-GOOGLE | CODE | Toni | yes |
 | TERMS | CODE | Lawyer | yes (marker present — placeholder route, 2026-09-01) |
 | DESIGN-ASSETS | EXTERNAL | Designer | **no — manual** |
 

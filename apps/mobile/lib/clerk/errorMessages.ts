@@ -47,10 +47,7 @@ export function resolveClerkError(err: unknown, messages: Record<string, string>
  * validation (Clerk Dashboard "Require first and last name" is ON) — give the
  * user something to DO, not a dead end. This is common for Apple: Apple only
  * returns fullName on the FIRST authorization for a given Apple ID, so every
- * reinstall / re-sign-in hits it. NOTE: form_param_missing, oauth_access_denied
- * and external_account_exists fire for BOTH providers but their wording still
- * says "Google" — de-Googling that copy is a founder copy call, left untouched
- * here to keep this change scoped to Apple-specific codes.
+ * reinstall / re-sign-in hits it.
  *
  * Apple error codes were reviewed for a bespoke entry and none needs one:
  *   - ERR_REQUEST_CANCELED (expo-apple-authentication) — never reaches here.
@@ -69,17 +66,17 @@ export function resolveClerkError(err: unknown, messages: Record<string, string>
  *     revisit trigger: add the real ones once Phase B produces them.
  *     STELLAEUM_PLACEHOLDER: APPLE-ERROR-CODES — see .planning/PLACEHOLDERS.md.
  *
- * STELLAEUM_PLACEHOLDER: OAUTH-COPY-GOOGLE — form_param_missing,
- * oauth_access_denied and external_account_exists fire for Apple too
- * (resolveClerkError keys only on the code) but the strings below still say
- * "Google". De-Googling that copy is a founder call, left untouched.
- * See .planning/PLACEHOLDERS.md.
+ * form_param_missing, oauth_access_denied and external_account_exists are
+ * provider-agnostic Clerk codes (resolveClerkError keys only on the code) —
+ * de-Googled 2026-09-03 now that SIWA fires them too. See OAUTH-COPY-GOOGLE
+ * in .planning/PLACEHOLDERS.md (RESOLVED) for the prior "Google"-only
+ * wording this replaced.
  */
 export const OAUTH_ERROR_MESSAGES: Record<string, string> = {
-  form_param_missing: 'Google не сподели име с нас. Регистрирай се с имейл и парола вместо това.',
-  oauth_access_denied: 'Достъпът през Google беше отказан.',
+  form_param_missing: 'Не получихме име от избрания начин за вход. Регистрирай се с имейл и парола вместо това.',
+  oauth_access_denied: 'Достъпът през избрания профил беше отказан.',
   oauth_email_domain_reserved_by_saml: 'Този имейл изисква друг начин за вход.',
-  external_account_exists: 'Вече има профил, свързан с този Google имейл.',
+  external_account_exists: 'Вече има профил, свързан с този имейл.',
 }
 
 export function getClerkErrorMessage(err: unknown): string {
