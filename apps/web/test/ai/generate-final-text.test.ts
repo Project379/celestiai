@@ -78,4 +78,61 @@ describe('generateFinalText', () => {
 
     expect(generateText).toHaveBeenCalledTimes(1)
   })
+
+  it('logs the raw Gemini usage counts (and only the counts) on a successful generation', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.mocked(generateText).mockResolvedValueOnce({
+      output: { content: 'Финален текст' },
+      providerMetadata: {
+        google: {
+          usageMetadata: {
+            promptTokenCount: 1234,
+            candidatesTokenCount: 56,
+            thoughtsTokenCount: 78,
+            totalTokenCount: 1368,
+          },
+        },
+      },
+    } as never)
+
+    await generateFinalText(request)
+
+    expect(logSpy).toHaveBeenCalledWith(
+      '[AI usage]',
+      JSON.stringify({
+        model: 'gemini-primary',
+        promptTokenCount: 1234,
+        candidatesTokenCount: 56,
+        thoughtsTokenCount: 78,
+        totalTokenCount: 1368,
+      }),
+    )
+    // No prompt/response content or user identifiers in the logged payload.
+    const loggedPayload = logSpy.mock.calls[0]?.[1] as string
+    expect(loggedPayload).not.toContain('Финален текст')
+
+    logSpy.mockRestore()
+  })
+
+  it('logs nulls instead of throwing when providerMetadata is absent', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.mocked(generateText).mockResolvedValueOnce({
+      output: { content: 'Финален текст' },
+    } as never)
+
+    await expect(generateFinalText(request)).resolves.toBeDefined()
+
+    expect(logSpy).toHaveBeenCalledWith(
+      '[AI usage]',
+      JSON.stringify({
+        model: 'gemini-primary',
+        promptTokenCount: null,
+        candidatesTokenCount: null,
+        thoughtsTokenCount: null,
+        totalTokenCount: null,
+      }),
+    )
+
+    logSpy.mockRestore()
+  })
 })
