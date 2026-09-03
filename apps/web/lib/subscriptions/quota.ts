@@ -23,8 +23,23 @@ import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 // generations/day. This is a SAFETY NET, not a product feature — see
 // checkQuotaAvailable's premium branch below for why it must stay
 // invisible to the user (503, no CAP_REACHED code, no number in the
-// response). 300/month is ~10x realistic heavy usage (4 oracle topics
-// with occasional regenerate) — no genuine paying user should reach it.
+// response). 300/month is ~10x realistic heavy usage of FRESH generations
+// (4 oracle topics, occasional new-chart/new-topic reads) — no genuine
+// paying user should reach it on that path alone.
+//
+// STELLAEUM_PLACEHOLDER: REGEN-QUOTA-EXEMPT — ratified, not a defect; see
+// .planning/PLACEHOLDERS.md.
+// This counter does NOT bound regenerate. `oracle/generate`'s step 8
+// exempts regenerations of an existing cached reading from both the
+// check and the claim below — deliberately, per B.0f-2-fix-1
+// (2026-05-10) and reaffirmed as the frozen tier spec
+// (TIER-DEFINITION-2026-09-01.md: "regenerate ... quota-exempt"). A
+// premium user can draw up to 80 quota-free regenerations/day (4 topics
+// x 20 charts, MAX_CHARTS_PER_USER), gated only by the 10/min burst
+// limiter and the 24h-per-chart-topic regen cooldown at step 7 — see
+// REGEN-QUOTA-EXEMPT in .planning/PLACEHOLDERS.md for the cost this
+// actually allows.
+//
 // Basis: Gemini 3.7 Flash Standard pricing and a representative Oracle
 // request of ~1.3k input tokens with at most 900 configured output tokens.
 // Even the configured-output ceiling keeps 300 successful calls below a

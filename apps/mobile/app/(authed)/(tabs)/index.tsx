@@ -827,14 +827,21 @@ function firstPlanetOf(chunks: SentinelChunk[]): Planet | null {
 // the takeaway, not another influence, so it stays visually distinct from
 // the influence segments rather than reading as one more of them).
 //
-// MOBILE-ALPHA-REDESIGN v3, Step 2 (reading length): the daily-horoscope
-// prompt now targets 400-550 characters, 2 paragraphs (apps/web/lib/
-// horoscope/prompts.ts) — a genuine "text from a friend" reading fits
-// on-screen with no scroll needed. This threshold is a variance safety
-// net, not a routine control: it sits well above the new target so it
-// only fires on outliers (a model that ignores the length instruction,
-// or a legacy reading generated under the old 4-6 paragraph prompt still
-// cached for today). See REVISIT 57 (daily-reading length re-verification
+// MOBILE-ALPHA-REDESIGN v3, Step 2 (reading length) — STALE as of the
+// Gemini port (2d87ea3/f34f09f): this comment used to say the prompt
+// targets 400-550 characters, 2 paragraphs, and fits on-screen with no
+// scroll needed. It doesn't anymore. The daily-horoscope prompt
+// (apps/web/lib/horoscope/prompts.ts) now targets 600-850 characters,
+// 3 paragraphs — and measurement against this screen's real styles
+// (HOROSCOPE_BODY_STYLE, ScreenShell chrome, the tab bar) shows NEITHER
+// 600 nor 850 chars fits one screen without scrolling, on the smallest
+// supported device or a mainstream one — see the Gemini cost/rate-limit
+// report, item 3. A shorter FORMAT target (~420 chars) is proposed to
+// close this gap but had not landed as of 2026-09-04; re-check this
+// comment once it does. EXPAND_THRESHOLD_CHARS below is still a variance
+// safety net, not a routine control — it now fires on any reading at or
+// near the current 600-850 target, not just outliers, until the FORMAT
+// change lands. See REVISIT 57 (daily-reading length re-verification
 // against production model).
 const EXPAND_THRESHOLD_CHARS = 900
 
