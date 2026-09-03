@@ -3,26 +3,34 @@ import { createMockSupabase, type MockSupabase } from '../mocks/supabase'
 import { makeAppUser } from '../mocks/fixtures'
 
 /**
- * Batch 5.5 finding #1 (HIGH, the most serious finding of the security
- * sweep): `regenerate:true` skipped BOTH the 24h cooldown AND the quota
- * check/claim whenever no live cached reading existed for that chart+topic
- * (never generated, or past the 7-day TTL) — a free-tier user could send
- * regenerate:true for any owned chart x 4 topics and get unlimited paid AI
- * generations with zero quota consumption, repeatable forever.
+ * Batch 5.5 finding #1 (HIGH): `regenerate:true` skipped BOTH the 24h
+ * cooldown AND the quota check/claim whenever no live cached reading
+ * existed — a user could send regenerate:true for any owned chart x topic
+ * and get unlimited paid AI generations with zero quota consumption.
  *
- * This test proves the fix (isRegenerationOfExisting gating the quota
- * exemption on existingReading truthiness, not on the raw regenerate flag)
- * by exercising the exact free-tier repeat-regenerate scenario end-to-end
- * against the real route handler. Per standing discipline, this test was
- * run against the pre-fix route.ts (regenerate flag used directly instead
- * of isRegenerationOfExisting) and confirmed to FAIL before the fix was
- * restored — see the commit message for the confirmation.
+ * Fix: `isRegenerationOfExisting = Boolean(regenerate && existingReading)`
+ * gates the quota exemption on there actually being a reading to
+ * regenerate.
+ *
+ * Frozen tier definition (2026-09-01): regenerate is now PREMIUM-only, so
+ * this test's subject moved from a free user to a premium user — premium
+ * is the tier that CAN regenerate and therefore the tier where the
+ * anti-bypass invariant still has to hold. Plus a new assertion that a
+ * FREE user's regenerate is blocked outright (CAP_REACHED /
+ * premium_regenerate) before any quota interaction.
+ *
+ * Prove-red: run with
+ *   git stash push apps/web/app/api/oracle/generate/route.ts
+ * "free regenerate -> blocked" then FAILS (pre-change: free regenerate
+ * allowed). The premium anti-bypass assertions still describe the
+ * unchanged isRegenerationOfExisting logic.
  */
 
 const AI_MOCK_MODEL = 'fake-model-instance'
+const userState = vi.hoisted(() => ({ tier: 'premium' as 'free' | 'premium' }))
 
 vi.mock('@clerk/nextjs/server', () => ({
-  auth: vi.fn(async () => ({ userId: 'user_free_bypass_test' })),
+  auth: vi.fn(async () => ({ userId: 'user_bypass_test' })),
 }))
 
 vi.mock('@/lib/supabase/service', () => ({
@@ -31,40 +39,26 @@ vi.mock('@/lib/supabase/service', () => ({
 
 vi.mock('@/lib/users/ensure-user', () => ({
   ensureUserRecord: vi.fn(async () =>
-    makeAppUser({ clerk_id: 'user_free_bypass_test', subscription_tier: 'free' })
+    makeAppUser({ clerk_id: 'user_bypass_test', subscription_tier: userState.tier }),
   ),
 }))
 
 vi.mock('@/lib/rate-limit', () => ({
   assertRateLimit: vi.fn(async () => {}),
+  RETRY_LATER_MESSAGE: 'retry later',
 }))
 
-vi.mock('@/lib/audit', () => ({
-  logAuditEvent: vi.fn(),
-}))
-
-vi.mock('@/lib/ai/check-bg-output', () => ({
-  checkAndLogGeneration: vi.fn(async () => {}),
-}))
-
+vi.mock('@/lib/audit', () => ({ logAuditEvent: vi.fn() }))
+vi.mock('@/lib/ai/check-bg-output', () => ({ checkAndLogGeneration: vi.fn(async () => {}) }))
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
   ORACLE_FALLBACK_MODEL: 'fake-oracle-fallback-model',
   gemini: vi.fn(() => AI_MOCK_MODEL),
+  isUpstreamAiError: vi.fn(() => false),
 }))
-
-vi.mock('@/lib/oracle/prompts', () => ({
-  buildSystemPrompt: vi.fn(() => 'system prompt'),
-}))
-
-vi.mock('@/lib/oracle/chart-to-prompt', () => ({
-  chartToPromptText: vi.fn(() => 'chart prompt text'),
-}))
-
-vi.mock('@stellaeum/core/oracle/planet-parser', () => ({
-  stripSentinels: vi.fn((text: string) => text),
-}))
-
+vi.mock('@/lib/oracle/prompts', () => ({ buildSystemPrompt: vi.fn(() => 'system prompt') }))
+vi.mock('@/lib/oracle/chart-to-prompt', () => ({ chartToPromptText: vi.fn(() => 'chart prompt text') }))
+vi.mock('@stellaeum/core/oracle/planet-parser', () => ({ stripSentinels: vi.fn((t: string) => t) }))
 vi.mock('ai', () => ({
   generateText: vi.fn(async () => ({
     output: { content: 'a generated reading' },
@@ -74,39 +68,40 @@ vi.mock('ai', () => ({
   streamText: vi.fn(),
 }))
 
-// Stateful quota mock — mirrors the real RPC's behavior (atomic
-// check-and-increment up to `limit`, race-loss/cap-reached returns
-// success:false) closely enough to prove the ROUTE's gating logic, without
-// re-testing quota.ts's own internals (already covered by quota.test.ts).
 const quotaState = vi.hoisted(() => ({ used: 0, limit: 3 }))
-
 vi.mock('@/lib/subscriptions/quota', () => ({
   checkQuotaAvailable: vi.fn(async () => ({
     available: quotaState.used < quotaState.limit,
     used: quotaState.used,
     limit: quotaState.limit,
-    periodStart: new Date('2026-08-01T00:00:00.000Z'),
+    periodStart: new Date('2026-09-01T00:00:00.000Z'),
   })),
   incrementQuotaUsage: vi.fn(async () => {
-    if (quotaState.used >= quotaState.limit) return { success: false }
+    if (quotaState.used >= quotaState.limit) return { success: false, newUsed: null }
     quotaState.used += 1
-    return { success: true }
+    return { success: true, newUsed: quotaState.used }
   }),
   decrementQuotaUsage: vi.fn(async () => {
     quotaState.used = Math.max(0, quotaState.used - 1)
+    return true
   }),
-  // Real implementation branches on tier (free: 429+CAP_REACHED+number,
-  // premium: 503, invisible) — this test only exercises free-tier users
-  // (makeAppUser default), so a fixed free-shaped response is enough to
-  // isolate the route's gating logic, same as its sibling stateful mocks
-  // above isolate quota.ts's own internals (covered by quota.test.ts).
-  quotaCapReachedResponse: vi.fn((user: { subscription_tier: string }, quota: { limit: number }) =>
-    Response.json(
-      { error: 'cap reached (test)', code: 'CAP_REACHED', cap: quota.limit, tier: user.subscription_tier },
-      { status: 429 },
-    ),
+  quotaCapReachedResponse: vi.fn(() =>
+    Response.json({ error: 'cap reached (test)', code: 'CAP_REACHED', cap: 3 }, { status: 429 }),
   ),
 }))
+
+const claimSpy = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/subscriptions/free-oracle', async (importActual) => {
+  const actual = await importActual<typeof import('@/lib/subscriptions/free-oracle')>()
+  return {
+    ...actual,
+    claimFreeOracleReading: vi.fn(async () => {
+      claimSpy()
+      return { claimed: true, columnMissing: false }
+    }),
+    releaseFreeOracleReading: vi.fn(async () => {}),
+  }
+})
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { assertRateLimit } from '@/lib/rate-limit'
@@ -118,27 +113,35 @@ import {
 
 let mockSupabase: MockSupabase
 
-function seedRouteQueries() {
-  // 4. Chart ownership — always the caller's own chart.
-  mockSupabase.push('charts', {
-    data: { id: 'chart-1', user_id: 'user_free_bypass_test' },
-  })
-  // 5. Cache check — no existing reading. This is the exact condition the
-  // bypass exploited: no live cache means existingReading is undefined.
-  mockSupabase.push('ai_readings', { data: null })
-  // 8. Chart calculation load — must succeed to reach the AI-generation step.
+function seedNoExistingReading() {
+  mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_bypass_test' } })
+  mockSupabase.push('ai_readings', { data: null }) // cache check — nothing
   mockSupabase.push('chart_calculations', {
     data: {
       planet_positions: [{ planet: 'sun', sign: 'aries', house: 1, longitude: 0 }],
-      house_cusps: [],
-      aspects: [],
-      ascendant: 0,
-      mc: 0,
-      birth_time_known: true,
+      house_cusps: [], aspects: [], ascendant: 0, mc: 0, birth_time_known: true,
     },
   })
-  // Final ai_readings upsert — its return value is ignored by the route,
-  // queued only so the FIFO queue for this table doesn't underflow.
+  mockSupabase.push('ai_readings', { data: null }) // final upsert — ignored
+}
+
+function seedLiveExistingReading() {
+  mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_bypass_test' } })
+  mockSupabase.push('ai_readings', {
+    data: {
+      id: 'reading-1',
+      content: 'old content',
+      generated_at: '2026-08-01T00:00:00.000Z',
+      expires_at: '2026-12-20T00:00:00.000Z',
+      last_regenerated_at: '2026-08-01T00:00:00.000Z',
+    },
+  })
+  mockSupabase.push('chart_calculations', {
+    data: {
+      planet_positions: [{ planet: 'sun', sign: 'aries', house: 1, longitude: 0 }],
+      house_cusps: [], aspects: [], ascendant: 0, mc: 0, birth_time_known: true,
+    },
+  })
   mockSupabase.push('ai_readings', { data: null })
 }
 
@@ -151,14 +154,15 @@ function makeRequest() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  userState.tier = 'premium'
   quotaState.used = 0
   mockSupabase = createMockSupabase()
   vi.mocked(createServiceSupabaseClient).mockReturnValue(mockSupabase as never)
 })
 
-describe('POST /api/oracle/generate — regenerate:true quota bypass (Batch 5.5 #1)', () => {
+describe('POST /api/oracle/generate — regenerate:true quota bypass (Batch 5.5 #1, premium)', () => {
   it('limits Oracle generation to five requests per user per minute', async () => {
-    seedRouteQueries()
+    seedNoExistingReading()
 
     const res = await POST(makeRequest())
 
@@ -166,66 +170,48 @@ describe('POST /api/oracle/generate — regenerate:true quota bypass (Batch 5.5 
     expect(ORACLE_GENERATION_RATE_LIMIT).toBe(5)
     expect(ORACLE_GENERATION_RATE_WINDOW_MS).toBe(60_000)
     expect(assertRateLimit).toHaveBeenCalledWith({
-      key: 'oracle-generate:user_free_bypass_test',
+      key: 'oracle-generate:user_bypass_test',
       limit: 5,
       windowMs: 60_000,
       failClosed: true,
     })
   })
 
-  it('consumes quota on every regenerate:true call when there is no existing cached reading, and blocks once the free-tier cap is reached', async () => {
-    // Pre-fix, this loop would return 200 on every single call — regenerate
-    // skipped checkQuotaAvailable/incrementQuotaUsage entirely whenever
-    // existingReading was absent, so quotaState.used would stay 0 forever
-    // and the 4th call (limit=3) would never be blocked.
+  it('consumes quota on every regenerate:true call when there is no existing cached reading, and blocks once the cap is reached', async () => {
     for (let i = 0; i < quotaState.limit; i++) {
-      seedRouteQueries()
+      seedNoExistingReading()
       const res = await POST(makeRequest())
       expect(res.status).toBe(200)
     }
-
     expect(quotaState.used).toBe(quotaState.limit)
 
-    // The (limit + 1)th regenerate:true call, still with no existing
-    // reading, must now be blocked — this is the assertion that fails
-    // against the pre-fix code (pre-fix: 200, unlimited).
-    seedRouteQueries()
+    seedNoExistingReading()
     const blockedRes = await POST(makeRequest())
     expect(blockedRes.status).toBe(429)
     const body = await blockedRes.json()
     expect(body.code).toBe('CAP_REACHED')
   })
 
-  it('does not consume quota when regenerating an existing, live cached reading — the legitimate B.0f-2-fix-1 exemption still works', async () => {
-    mockSupabase.push('charts', {
-      data: { id: 'chart-1', user_id: 'user_free_bypass_test' },
-    })
-    // A live cached reading exists, last regenerated far enough in the past
-    // to clear the 24h cooldown.
-    mockSupabase.push('ai_readings', {
-      data: {
-        id: 'reading-1',
-        content: 'old content',
-        generated_at: '2026-08-01T00:00:00.000Z',
-        expires_at: '2026-08-20T00:00:00.000Z',
-        last_regenerated_at: '2026-08-01T00:00:00.000Z',
-      },
-    })
-    mockSupabase.push('chart_calculations', {
-      data: {
-        planet_positions: [{ planet: 'sun', sign: 'aries', house: 1, longitude: 0 }],
-        house_cusps: [],
-        aspects: [],
-        ascendant: 0,
-        mc: 0,
-        birth_time_known: true,
-      },
-    })
-    mockSupabase.push('ai_readings', { data: null })
+  it('does not consume quota when regenerating an existing, live cached reading — the legitimate exemption still works', async () => {
+    seedLiveExistingReading()
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    expect(quotaState.used).toBe(0)
+  })
+})
+
+describe('POST /api/oracle/generate — regenerate is premium-only (frozen definition 2026-09-01)', () => {
+  it('blocks a FREE user regenerate with CAP_REACHED / premium_regenerate, no quota or lifetime-marker interaction', async () => {
+    userState.tier = 'free'
+    seedLiveExistingReading()
 
     const res = await POST(makeRequest())
 
-    expect(res.status).toBe(200)
+    expect(res.status).toBe(429)
+    const body = await res.json()
+    expect(body.code).toBe('CAP_REACHED')
+    expect(body.reason).toBe('premium_regenerate')
     expect(quotaState.used).toBe(0)
+    expect(claimSpy).not.toHaveBeenCalled()
   })
 })

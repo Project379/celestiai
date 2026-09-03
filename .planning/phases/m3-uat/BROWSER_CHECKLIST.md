@@ -27,6 +27,20 @@ The harness does NOT cover, and these items remain browser-only:
 
 ---
 
+## Feature reachability — per-feature obligation `[must-exercise]`
+
+**Why this exists:** on 2026-08-28 the entire web push-notification feature was found offline — `PushNotificationBanner.tsx` was a complete, working component that had been unmounted from `/dashboard` as collateral damage in an aesthetic-pass commit (`d230a3f`). Every automated gate stayed green: the API routes, the service worker, the cron, the component's own unit test. Nothing verifies that a feature is *reachable*, only that its code is correct when invoked. See `VERIFICATION-SURFACE-GAPS.md` #12. A `knip` unimported-module CI gate (owned engineering item) will catch the fully-orphaned case; it will not catch a component that is imported but rendered behind a dead condition, or a screen with no navigation path. That residue is a manual obligation here.
+
+**The obligation:** for every user-facing feature, a human confirms in a real browser session, starting from a signed-in user on the landing/dashboard with no prior knowledge of routes:
+
+1. **Reach it.** There is a visible, discoverable path — a nav item, a button, a link, a settings row — that a user without the URL could follow to the feature. "You can get there by typing the route" does not count.
+2. **Operate it.** The primary control renders and responds — the toggle flips, the form submits, the action completes — for the tier/permission state the feature is meant for, and degrades sanely for states it isn't (empty, denied, free-tier).
+3. **Return to it.** If the feature has an on/off or opt-in/opt-out nature (notifications, subscriptions, connections), there is an in-app path back to change the decision. A one-time prompt with no settings equivalent fails this point.
+
+Run this whenever a screen is added, a screen is restyled, or a navigation/layout component changes — restyle commits are the specific risk. Maintain the feature list alongside this checklist; a feature with no line here is an untested feature, not an absent concern.
+
+---
+
 ## Stripe session_id survives the sign-in bounce `[must-exercise]`
 
 **Why browser-only:** The fix in `531c9f8` routes `/subscription/success?session_id=…` through Clerk middleware so `auth.protect()` produces `/sign-in?redirect_url=<url-encoded original URL>` and the `session_id` query param round-trips through the sign-in flow. The programmatic harness can confirm the middleware fires (`x-clerk-auth-status: signed-out`) but **cannot observe the `redirect_url` value** because Clerk dev mode protect-rewrites rather than redirecting when no `__clerk_db_jwt` cookie exists. Verifying the round-trip requires a real browser that Clerk has issued a dev-browser cookie to.

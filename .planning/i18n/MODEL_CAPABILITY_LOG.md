@@ -56,3 +56,34 @@ Sample-based — we know these things happen, we don't yet know how often across
 real traffic. That's what the runtime safety net (`bg_generation_flags` table)
 is for: a measured per-day baseline, and an immediate before/after signal
 when the model swaps.
+
+---
+
+## External benchmark — EuroEval Bulgarian (added 2026-08-28)
+
+From Petko's LLM-swap research (co-founder-owned workstream; recommendation
+made, **not yet decided in code** — production still runs Llama 3.3 70B).
+EuroEval Bulgarian track, **lower rank is better**:
+
+| Model | Rank | Knowledge | Reading comprehension |
+|---|---|---|---|
+| Gemini 3 Flash Preview | 1.32 | 80.16 | 65.83 |
+| GPT-5.4 Mini (high) | 1.38 | 78.05 | 70.53 |
+| **Llama 3.3 70B (current, production)** | **2.61** | **21.51** | **22.35** |
+
+**Why this belongs in this log:** the reading-comprehension score — **22.35
+for the current model against 65–70 for both swap candidates** — is the
+numerical form of the failure modes recorded above. The non-word stem
+garbling (`съсредоточ-`), the mid-token script collapse (`сеiyan`,
+`интUITIВNA`), and the Russian drift we have been logging are what a ~22
+reading-comprehension score produces in practice. This is the baseline the
+swap gets measured against: `bg_generation_flags` volume gives the internal
+before/after; this table gives the external one. Improvement should be
+**measured** post-swap (flag rate drop, benchmark re-check), not assumed
+from the rank alone.
+
+**Tooling for the measured comparison:** `scripts/i18n/bg-speller.mjs` gives
+an objective non-word count; this log holds Llama's qualitative baseline;
+the comparison should run real natal charts across all four Oracle topics
+with sentinel-compliance checked (exact degrees, Cyrillic, sentinel
+markers). Full protocol in Petko's validation handoff (`.planning/research/`).

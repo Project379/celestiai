@@ -1,64 +1,28 @@
-import { Text, View } from 'react-native'
+import type { CapReachedReason } from '@/hooks/useOracleReading'
+import { PremiumLock } from '@/components/tier/PremiumLock'
+import { ORACLE_CAP_COPY, oracleCapLegacy } from '@/lib/tier/locked-copy'
 
 interface CapReachedNoticeProps {
   cap: number
+  reason?: CapReachedReason
 }
 
 /**
- * Free-tier monthly-cap surface for the Oracle screen.
+ * The Oracle conversion surface for the FREE tier (mobile). A thin caller
+ * of the shared PremiumLock primitive (tier item 5) — maps the server's
+ * `reason` to the copy branch in @/lib/tier/locked-copy. Wording unchanged
+ * from the two founder review passes.
  *
- * Text-only notice with no CTA — RevenueCat isn't wired yet and Stripe
- * is web-only, so a button that opens nothing or web checkout would be
- * dead UX (founder ratification, SR 7). Web parity ported in B.0f-2-fix-1
- * (apps/web/components/oracle/CapReachedNotice.tsx) — REVISIT-23 closed.
+ * NO CTA: PremiumLock renders no button unless given one, and this surface
+ * deliberately gives none — the mobile purchase path is the RevenueCat
+ * native paywall, which does not exist.
  *
- * Bulgarian copy unified across web and mobile per B.0f-2-fix-1
- * Variant 2 ratification (2026-05-10):
- *  - Verb-first «Изчерпа…» reads naturally when the time frame isn't
- *    the topic; «за този месец» trailing matches the new monthly cap
- *    (subscription_quotas, B.0f-1).
- *  - «идния месец» is slightly literary; fits the oracle voice paired
- *    with «Звездите ще говорят».
- *  - «безплатни» hints at premium without selling it.
- *  - No transactional CTA — the upgrade path lands when RevenueCat ships
- *    in P.15.
+ * STELLAEUM_PLACEHOLDER: PAYWALL-MOBILE — the missing CTA here is the
+ * visible edge of it: no RevenueCat native paywall exists, so there is no
+ * subscribe path anywhere in the mobile app. See .planning/PLACEHOLDERS.md.
  */
-export function CapReachedNotice({ cap }: CapReachedNoticeProps) {
-  return (
-    <View
-      className="rounded-2xl border border-white/[0.05] bg-white/[0.015] px-7 py-8"
-      accessibilityRole="text"
-    >
-      <View
-        className="mb-4 flex-row items-center justify-center"
-        style={{ gap: 12 }}
-      >
-        <View
-          className="h-px flex-1 bg-bronze/30"
-          style={{ maxWidth: 40 }}
-        />
-        <View
-          className="h-1 w-1 bg-bronze/80"
-          style={{
-            transform: [{ rotate: '45deg' }],
-            shadowColor: 'rgb(184, 118, 62)',
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.7,
-            shadowRadius: 8,
-          }}
-        />
-        <View
-          className="h-px flex-1 bg-bronze/30"
-          style={{ maxWidth: 40 }}
-        />
-      </View>
+export function CapReachedNotice({ cap, reason }: CapReachedNoticeProps) {
+  const copy = reason ? ORACLE_CAP_COPY[reason] : oracleCapLegacy(cap)
 
-      <Text className="text-center text-[15px] font-light leading-7 text-slate-300/90">
-        Изчерпа {cap} безплатни четения за този месец.
-      </Text>
-      <Text className="mt-2 text-center text-[14px] font-light leading-7 text-slate-400">
-        Звездите ще говорят отново идния месец.
-      </Text>
-    </View>
-  )
+  return <PremiumLock title={copy.title} sub={copy.sub} />
 }

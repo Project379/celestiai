@@ -1,7 +1,7 @@
 import type { GoogleLanguageModelOptions } from '@ai-sdk/google'
 import { generateText, Output } from 'ai'
 import { z } from 'zod'
-import { AI_MODEL, gemini } from './client'
+import { AI_MODEL, gemini, isUpstreamAiError } from './client'
 import { getAIStatusCode, isTransientAIError } from './errors'
 import { sanitizeFinalAIOutput } from './final-output'
 
@@ -52,7 +52,12 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
   try {
     result = await callModel(AI_MODEL)
   } catch (primaryError) {
-    if (!fallbackModel || !isTransientAIError(primaryError)) throw primaryError
+    if (
+      !fallbackModel ||
+      (!isTransientAIError(primaryError) && !isUpstreamAiError(primaryError))
+    ) {
+      throw primaryError
+    }
 
     console.warn('[AI] Oracle primary model unavailable; trying model fallback.', {
       fallbackModel,

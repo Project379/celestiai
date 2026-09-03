@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { HoroscopeStream } from './HoroscopeStream'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
+import { AI_GENERATED_DISCLOSURE_BG } from '@/lib/legal/compliance-copy'
 
 const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
   day: 'numeric',
@@ -95,6 +96,10 @@ export function DailyHoroscope({ chartId }: DailyHoroscopeProps) {
         </h2>
         <p className="mt-1.5 font-display text-[12.5px] text-slate-400">
           {todayFormatted}
+        </p>
+        {/* EU AI Act Art. 50 — AI-generated content disclosure. */}
+        <p className="mt-1.5 font-display text-[11px] text-slate-500">
+          {AI_GENERATED_DISCLOSURE_BG}
         </p>
       </div>
 

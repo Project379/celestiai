@@ -1,7 +1,12 @@
 # AI Provider — Decision Trail
 
 **Written:** 2026-04-20
-**Status:** Superseded on 2026-09-01 by the implemented Gemini 3.7 Flash decision in `.planning/LLM-PROVIDER-DECISION-2026-08-27.md`. This file remains a historical decision trail; references to OpenRouter/Llama as the current provider describe the pre-swap state.
+**Status:** Superseded on 2026-09-01 by the implemented Gemini 3.7 Flash
+decision in `.planning/LLM-PROVIDER-DECISION-2026-08-27.md`. This file remains
+the historical record of the pre-swap OpenRouter/Llama implementation and the
+earlier BgGPT deferral. Statements below that call OpenRouter/Llama the
+"current" provider are accurate only for the period they document, not for
+the current code.
 **Epistemic tags:** `[verified]` / `[inferred]` / `[planned]` / `[assumed]` / `[open]`. Sub-claims get their own tag when they make a different claim than parent.
 
 ---

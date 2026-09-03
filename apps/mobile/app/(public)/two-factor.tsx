@@ -43,6 +43,10 @@ export default function TwoFactorScreen() {
 
   // Pick preferred strategy from supportedSecondFactors. Order: TOTP > SMS > backup.
   // If only backup is available, it becomes primary.
+  //
+  // STELLAEUM_PLACEHOLDER: 2FA-BUG — backup-code sign-in gets stuck here
+  // and blocks the user; the lead is this strategy-selection / factor path
+  // (lines ~44-54) but the failure is undiagnosed. See .planning/PLACEHOLDERS.md.
   const supported = useMemo(() => {
     const factors = signIn?.supportedSecondFactors ?? []
     return new Set(factors.map((f) => f.strategy))

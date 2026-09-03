@@ -21,9 +21,22 @@ interface GenerateResponse {
   generatedAt: string
 }
 
+/**
+ * `reason` (frozen tier definition 2026-09-01) tells CapReachedNotice
+ * which copy to show. Absent = legacy monthly-cap wording. `free_used` =
+ * the one free lifetime reading is spent; `premium_topic` = love/career/
+ * health tapped by a free user; `premium_regenerate` = free user hit
+ * regenerate.
+ */
+export type CapReachedReason =
+  | 'free_used'
+  | 'premium_topic'
+  | 'premium_regenerate'
+
 interface CapReachedError {
   kind: 'cap-reached'
   cap: number
+  reason?: CapReachedReason
 }
 
 interface GenericGenerationError {
@@ -132,10 +145,10 @@ export function useOracleReading(
     if (!err) return null
     if (err instanceof ApiError && err.status === 429) {
       const body = err.body as
-        | { code?: string; cap?: number }
+        | { code?: string; cap?: number; reason?: CapReachedReason }
         | null
       if (body?.code === 'CAP_REACHED') {
-        return { kind: 'cap-reached', cap: body.cap ?? 3 }
+        return { kind: 'cap-reached', cap: body.cap ?? 3, reason: body.reason }
       }
     }
     return {

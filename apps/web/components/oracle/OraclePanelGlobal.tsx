@@ -8,9 +8,18 @@ import { ReadingStream } from './ReadingStream'
 import { CapReachedNotice } from './CapReachedNotice'
 import { TOPIC_META, type OracleTopic } from './TopicCard'
 import { stripSentinels } from '@stellaeum/core/oracle/planet-parser'
+import { AI_GENERATED_DISCLOSURE_BG } from '@/lib/legal/compliance-copy'
 
 interface OraclePanelGlobalProps {
   chartId: string | null
+  /**
+   * Frozen tier definition (2026-09-01): free = one `general` reading for
+   * the account lifetime; love/career/health + regenerate are premium.
+   * Drives the padlock affordance on the topic cards. The route is still
+   * the authority — a locked tap hits /api/oracle/generate and comes back
+   * as a `code: 'CAP_REACHED'` 429 with `reason: 'premium_topic'`.
+   */
+  subscriptionTier?: 'free' | 'premium'
 }
 
 /**
@@ -21,16 +30,18 @@ interface OraclePanelGlobalProps {
  * No floating trigger. The navbar is the only entry point. If the user
  * has no chart yet, the panel doesn't mount and the event is a no-op.
  *
- * Post cap-gate refactor (2026-04-20): subscriptionTier is no longer a
- * prop — all topics are available to all authed users, and the daily
- * cap is enforced server-side at /api/oracle/generate.
+ * 2026-04-20 → 2026-09-01: the cap-gate refactor dropped `subscriptionTier`
+ * ("all topics free, cap is server-side"). The frozen tier definition
+ * reinstates it — free is one `general` reading, lifetime; love/career/
+ * health + regenerate are premium — so the prop is back, purely to drive
+ * the padlock affordance. The server route stays the sole gate.
  */
-export function OraclePanelGlobal({ chartId }: OraclePanelGlobalProps) {
+export function OraclePanelGlobal({ chartId, subscriptionTier = 'free' }: OraclePanelGlobalProps) {
   if (!chartId) return null
-  return <OraclePanel chartId={chartId} />
+  return <OraclePanel chartId={chartId} isPremium={subscriptionTier === 'premium'} />
 }
 
-function OraclePanel({ chartId }: { chartId: string }) {
+function OraclePanel({ chartId, isPremium }: { chartId: string; isPremium: boolean }) {
   const {
     completion,
     isLoading,
@@ -71,8 +82,11 @@ function OraclePanel({ chartId }: { chartId: string }) {
 
   const isGenerating = isLoading
   const savedReading = activeTopic ? savedReadings[activeTopic] : null
+  // Hide the stale saved reading while the conversion notice is up so the
+  // two don't stack (applies to every cap-reached reason, not just the new
+  // premium-topic / free-used ones).
   const showSavedReading =
-    !isGenerating && activeTopic && savedReading && !completion
+    !isGenerating && activeTopic && savedReading && !completion && !generationError
   const showStream = activeTopic && (isGenerating || Boolean(completion))
 
   const canRegenerate =
@@ -158,6 +172,11 @@ function OraclePanel({ chartId }: { chartId: string }) {
                     )}
                   </p>
                 )}
+                {/* EU AI Act Art. 50 — AI-generated content disclosure,
+                    visible before any reading is shown. */}
+                <p className="mt-2 font-display text-[11px] text-slate-500">
+                  {AI_GENERATED_DISCLOSURE_BG}
+                </p>
               </div>
 
               <button
@@ -189,6 +208,7 @@ function OraclePanel({ chartId }: { chartId: string }) {
                   activeTopic={activeTopic}
                   savedReadings={savedReadings}
                   onTopicSelect={handleTopicSelect}
+                  isPremium={isPremium}
                 />
               </div>
             )}
@@ -209,7 +229,10 @@ function OraclePanel({ chartId }: { chartId: string }) {
               )}
 
               {activeTopic && generationError?.kind === 'cap-reached' && (
-                <CapReachedNotice cap={generationError.cap} />
+                <CapReachedNotice
+                  cap={generationError.cap}
+                  reason={generationError.reason}
+                />
               )}
 
               {showStream && (

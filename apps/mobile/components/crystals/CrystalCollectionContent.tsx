@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import type { CatalogRow } from '@stellaeum/core/crystals/queries'
 
 import { useCrystalsOverview } from '@/hooks/useCrystalsOverview'
 import { pressFeedback } from '@/components/design-system/tokens'
+import { PremiumLock } from '@/components/tier/PremiumLock'
+import { CRYSTALS_LOCKED } from '@/lib/tier/locked-copy'
 import { CrystalGridTile } from './CrystalGridTile'
 import { DailyStreakPanel } from './DailyStreakPanel'
 import type { GemVariant } from './CrystalGem'
@@ -12,7 +14,8 @@ import type { GemVariant } from './CrystalGem'
 type Tab = 'windows' | 'discovered' | 'daily' | 'all'
 
 interface CrystalCollectionContentProps {
-  chartId: string
+  /** null for a free user with no chart — the API ignores it in that case. */
+  chartId: string | null
   onSelectCrystal: (slug: string) => void
 }
 
@@ -26,7 +29,14 @@ interface CrystalCollectionContentProps {
  */
 export function CrystalCollectionContent({ chartId, onSelectCrystal }: CrystalCollectionContentProps) {
   const [tab, setTab] = useState<Tab>('windows')
-  const { data: state, isLoading, isError } = useCrystalsOverview(chartId, true)
+  const { data: state, isLoading, isError } = useCrystalsOverview(chartId)
+
+  const locked = state?.locked ?? false
+
+  // Free tier only sees the catalog grid — the collection-driven tabs are premium.
+  useEffect(() => {
+    if (locked) setTab('all')
+  }, [locked])
 
   const discoveredIds = useMemo(() => {
     if (!state) return new Set<string>()
@@ -74,15 +84,23 @@ export function CrystalCollectionContent({ chartId, onSelectCrystal }: CrystalCo
 
   const pendingRecsCount = state.recommendations.filter((r) => !discoveredIds.has(r.crystal_id)).length
 
-  const tabs: { id: Tab; label: string; count?: number }[] = [
-    { id: 'windows', label: 'Прозорци', count: pendingRecsCount },
-    { id: 'discovered', label: 'Твои камъни', count: state.collection.length },
-    { id: 'daily', label: 'Дневна серия' },
-    { id: 'all', label: 'Каталог', count: state.catalog.length },
-  ]
+  const tabs: { id: Tab; label: string; count?: number }[] = locked
+    ? [{ id: 'all', label: 'Каталог', count: state.catalog.length }]
+    : [
+        { id: 'windows', label: 'Прозорци', count: pendingRecsCount },
+        { id: 'discovered', label: 'Твои камъни', count: state.collection.length },
+        { id: 'daily', label: 'Дневна серия' },
+        { id: 'all', label: 'Каталог', count: state.catalog.length },
+      ]
 
   return (
     <View>
+      {locked && (
+        <View className="mb-8">
+          <PremiumLock title={CRYSTALS_LOCKED.title} sub={CRYSTALS_LOCKED.sub} />
+        </View>
+      )}
+
       <View className="mb-8 flex-row flex-wrap border-b border-white/[0.06] pb-1" style={{ gap: 24 }}>
         {tabs.map((t) => {
           const isActive = tab === t.id

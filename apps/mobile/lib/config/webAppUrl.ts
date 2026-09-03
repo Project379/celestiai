@@ -15,6 +15,11 @@ let warned = false
  * at (web has no confirmed live deployment as of 2026-08-14).
  */
 export function getWebAppUrl(): string | null {
+  // STELLAEUM_PLACEHOLDER: APP-URL-MOBILE — EXPO_PUBLIC_WEB_APP_URL is
+  // unset / still a REPLACE_WITH_ placeholder in every environment, so this
+  // guard returns null and the /you/premium web-pricing fallback CTA never
+  // renders. The guard itself is real; the value behind it is missing.
+  // See .planning/PLACEHOLDERS.md.
   const value = process.env.EXPO_PUBLIC_WEB_APP_URL
 
   if (!value || value.startsWith(PLACEHOLDER_PREFIX)) {

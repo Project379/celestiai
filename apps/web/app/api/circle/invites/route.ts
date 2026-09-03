@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { createInviteToken, hashInviteToken } from '@/lib/circle/token'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, readJsonBody } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 import {
   getLatestChartRowForUser,
@@ -65,15 +65,17 @@ export async function POST(req: Request) {
       windowMs: 60_000,
     })
 
-    const parsed = createInviteSchema.safeParse(await req.json())
+    const parsed = createInviteSchema.safeParse(await readJsonBody(req))
     if (!parsed.success) {
       return Response.json({ error: 'Невалидни данни' }, { status: 400 })
     }
 
     const tier = await getUserTier(userId)
     if (tier !== 'premium') {
+      // Authority for the gate. The client renders a locked affordance
+      // from tier so a free user does not normally reach this. (tier item 5)
       return Response.json(
-        { error: 'Само Premium потребители могат да изпращат покани за връзка.' },
+        { error: 'Само Premium потребители могат да изпращат покани за връзка.', code: 'PREMIUM_REQUIRED' },
         { status: 403 },
       )
     }

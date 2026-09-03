@@ -30,13 +30,19 @@ export interface CrystalsOverview {
     latin: string
     illumination: number
   }
+  /**
+   * Free tier (tier item 5): the catalog grid is returned so it can be
+   * browsed in a locked state, but `collection` and `recommendations` are
+   * empty and no writes happen. Premium: `false`.
+   */
+  locked: boolean
 }
 
 export type CrystalsOverviewResult =
   | { ok: true; data: CrystalsOverview }
   | {
       ok: false
-      error: 'PREMIUM_REQUIRED' | 'CHART_NOT_FOUND' | 'INTERNAL'
+      error: 'CHART_NOT_FOUND' | 'INTERNAL'
     }
 
 /**
@@ -54,13 +60,33 @@ export async function getCrystalsOverview(
 ): Promise<CrystalsOverviewResult> {
   try {
     const tier = await getSubscriptionTier(userId)
-    if (tier !== 'premium') {
-      return { ok: false, error: 'PREMIUM_REQUIRED' }
-    }
 
     const supabase = createCoreSupabaseClient()
     const catalogRows = await fetchCatalog(supabase)
     const catalog = catalogRows.map(toCatalogEntry)
+
+    // Free tier: return the catalog grid only — no chart-derived
+    // recommendations, no collection, no DB writes. The client renders it
+    // in a locked state (collect + recommendations stay premium-only,
+    // enforced here and on /api/crystals/collect).
+    if (tier !== 'premium') {
+      const lp = getLunarPhase(new Date())
+      return {
+        ok: true,
+        data: {
+          catalog: catalogRows,
+          collection: [],
+          recommendations: [],
+          lunarPhase: {
+            id: lp.id,
+            name: lp.name,
+            latin: lp.latin,
+            illumination: lp.illumination,
+          },
+          locked: true,
+        },
+      }
+    }
 
     let natalPlanets: PlanetPosition[] = []
     let resolvedChartId: string | null = null
@@ -172,6 +198,7 @@ export async function getCrystalsOverview(
           latin: lunarPhase.latin,
           illumination: lunarPhase.illumination,
         },
+        locked: false,
       },
     }
   } catch (err) {

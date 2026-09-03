@@ -1,47 +1,27 @@
+import type { CapReachedReason } from '@/hooks/useOracleReading'
+import { PremiumLock } from '@/components/tier/PremiumLock'
+import { ORACLE_CAP_COPY, oracleCapLegacy } from '@/lib/tier/locked-copy'
+
 interface CapReachedNoticeProps {
   cap: number
+  reason?: CapReachedReason
 }
 
 /**
- * Free-tier monthly-cap surface for the Oracle panel.
+ * The Oracle conversion surface for the FREE tier. A thin caller of the
+ * shared PremiumLock primitive (tier item 5) — it only maps the server's
+ * `reason` to the right copy branch:
+ *   - free_used            — the one free reading is spent
+ *   - premium_topic        — a free user tapped love / career / health
+ *   - premium_regenerate   — a free user hit "Ново четене"
+ *   - (no reason)          — legacy monthly-cap wording, keyed off `cap`
  *
- * Web port of apps/mobile/components/oracle/CapReachedNotice.tsx
- * (B.0f-2-fix-1, 2026-05-10). Text-only notice with no CTA — RevenueCat
- * isn't wired yet and a button that opens nothing or web checkout would
- * be dead UX (founder ratification, SR 7). Bulgarian copy is unified
- * across web and mobile per Variant 2 ratification:
- *   «Изчерпа {cap} безплатни четения за този месец.»
- *   «Звездите ще говорят отново идния месец.»
- *
- * Closes REVISIT-23 (web cap-reached path silently swallowed 429).
+ * The reason-branched wording lives in @/lib/tier/locked-copy
+ * (ORACLE_CAP_COPY / oracleCapLegacy) and is unchanged from the two
+ * founder review passes — see scripts/i18n/check-bg-lint-baseline.mjs.
  */
-export function CapReachedNotice({ cap }: CapReachedNoticeProps) {
-  return (
-    <div
-      className="rounded-2xl border border-white/[0.05] bg-white/[0.015] px-7 py-8"
-      role="status"
-    >
-      <div className="mb-4 flex items-center justify-center gap-3">
-        <span
-          aria-hidden
-          className="h-px max-w-[40px] flex-1 bg-amber-300/30"
-        />
-        <span
-          aria-hidden
-          className="h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.7)]"
-        />
-        <span
-          aria-hidden
-          className="h-px max-w-[40px] flex-1 bg-amber-300/30"
-        />
-      </div>
+export function CapReachedNotice({ cap, reason }: CapReachedNoticeProps) {
+  const copy = reason ? ORACLE_CAP_COPY[reason] : oracleCapLegacy(cap)
 
-      <p className="text-center text-[15px] font-light leading-7 text-slate-300/90">
-        Изчерпа {cap} безплатни четения за този месец.
-      </p>
-      <p className="mt-2 text-center text-[14px] font-light leading-7 text-slate-400">
-        Звездите ще говорят отново идния месец.
-      </p>
-    </div>
-  )
+  return <PremiumLock title={copy.title} sub={copy.sub} />
 }

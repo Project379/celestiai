@@ -118,7 +118,7 @@ export default async function ProtectedLayout({
       <OracleFab hasChart={!!chartId} />
 
       {/* Global Oracle modal — listens for oracle:open event */}
-      <OraclePanelGlobal chartId={chartId} />
+      <OraclePanelGlobal chartId={chartId} subscriptionTier={subscriptionTier} />
 
       {/* Global session expiry modal */}
       <SessionExpiryModal />

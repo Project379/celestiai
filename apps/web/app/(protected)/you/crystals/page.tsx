@@ -95,40 +95,17 @@ export default async function CrystalsPage() {
         <CrystalOfTheDayCard initialData={crystalOfTheDay} />
       </section>
 
-      {!isPremium && <PremiumGate />}
-      {isPremium && !chartId && <MissingChartState />}
-      {isPremium && chartId && (
+      {/* Tier item 5: the collection grid renders for everyone. Free tier
+         gets it in a locked state (the API returns `locked: true` with an
+         empty collection / no recommendations); premium gets the full
+         personalised payload. */}
+      {isPremium && !chartId ? (
+        <MissingChartState />
+      ) : (
         <Suspense fallback={<div className="flex justify-center py-20"><LoadingAnimation /></div>}>
           <CrystalCollectionContent chartId={chartId} />
         </Suspense>
       )}
-    </div>
-  )
-}
-
-function PremiumGate() {
-  return (
-    <div className="mx-auto max-w-xl rounded-3xl border border-amber-300/20 bg-amber-400/[0.03] px-6 py-10 text-center sm:px-10">
-      <p className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-300/90">
-        Премиум функция
-      </p>
-      <p className="mt-4 font-display text-[17px] font-light leading-[1.8] text-slate-300">
-        Личната ти колекция, препоръките по натална карта и лунните събития са част от Премиум достъпа. Без пробен период, без уловки — плащаш, когато камъкът вече те е намерил.
-      </p>
-      <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-        <Link
-          href="/pricing"
-          className="rounded-full border border-amber-300/40 bg-gradient-to-b from-amber-400/20 to-amber-500/5 px-7 py-3 font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-200 transition-colors hover:border-amber-200 hover:bg-amber-400/15"
-        >
-          Научи повече
-        </Link>
-        <Link
-          href="/dashboard"
-          className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500 transition-colors hover:text-amber-300"
-        >
-          &larr; Обратно
-        </Link>
-      </div>
     </div>
   )
 }

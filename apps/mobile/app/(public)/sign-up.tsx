@@ -1,6 +1,7 @@
 import { useAuth, useSignUp } from '@clerk/expo'
+import * as AppleAuthentication from 'expo-apple-authentication'
 import { Link, useRouter } from 'expo-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -14,7 +15,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { pressFeedback } from '@/components/design-system/tokens'
+import { resolveClerkError } from '@/lib/clerk/errorMessages'
+import { useAppleSignIn, useGoogleSignIn } from '@/lib/clerk/oauth'
 import { hapticInvite, hapticSelect } from '@/lib/haptics'
+import { logError } from '@/lib/monitoring/logError'
 
 // Bulgarian error mapping — first-pass draft, calibrated in commit 1.4d via bulgarian-skill
 const ERROR_MESSAGES: Record<string, string> = {
@@ -28,17 +32,16 @@ const ERROR_MESSAGES: Record<string, string> = {
 }
 
 function getErrorMessage(err: unknown): string {
-  if (!err || typeof err !== 'object') return 'Нещо се обърка. Опитай отново.'
-  const e = err as { code?: string; message?: string; errors?: { code?: string; message?: string }[] }
-  if (e.code && ERROR_MESSAGES[e.code]) return ERROR_MESSAGES[e.code]
-  const nested = e.errors?.[0]
-  if (nested?.code && ERROR_MESSAGES[nested.code]) return ERROR_MESSAGES[nested.code]
-  return e.message || nested?.message || 'Нещо се обърка. Опитай отново.'
+  const mapped = resolveClerkError(err, ERROR_MESSAGES)
+  if (!mapped) logError('ERR-AUTH-SIGNUP', err)
+  return mapped ?? 'Нещо се обърка. Опитай отново.'
 }
 
 export default function SignUpScreen() {
   const { isLoaded } = useAuth()
   const { signUp } = useSignUp()
+  const { signInWithGoogle } = useGoogleSignIn()
+  const { signInWithApple } = useAppleSignIn()
   const router = useRouter()
 
   const [firstName, setFirstName] = useState('')
@@ -48,6 +51,52 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [googleSubmitting, setGoogleSubmitting] = useState(false)
+  const [appleSubmitting, setAppleSubmitting] = useState(false)
+  // See sign-in.tsx: gate on the native availability check, not Platform.OS
+  // alone (Expo Go / iOS < 13 return false).
+  const [appleAuthAvailable, setAppleAuthAvailable] = useState(false)
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return
+    AppleAuthentication.isAvailableAsync()
+      .then(setAppleAuthAvailable)
+      .catch(() => setAppleAuthAvailable(false))
+  }, [])
+
+  const handleGoogleSignIn = async () => {
+    if (googleSubmitting) return
+    setError(null)
+    setGoogleSubmitting(true)
+    try {
+      const result = await signInWithGoogle()
+      if (result.status === 'error') {
+        setError(result.message)
+      } else if (result.status === 'success') {
+        router.replace('/')
+      }
+      // 'cancelled': user dismissed the sheet — no error, nothing to do
+    } finally {
+      setGoogleSubmitting(false)
+    }
+  }
+
+  const handleAppleSignIn = async () => {
+    if (appleSubmitting) return
+    setError(null)
+    setAppleSubmitting(true)
+    try {
+      const result = await signInWithApple()
+      if (result.status === 'error') {
+        setError(result.message)
+      } else if (result.status === 'success') {
+        router.replace('/')
+      }
+      // 'cancelled': user dismissed the sheet — no error, nothing to do
+    } finally {
+      setAppleSubmitting(false)
+    }
+  }
 
   const handleSignUp = async () => {
     if (!isLoaded || submitting) return
@@ -245,6 +294,53 @@ export default function SignUpScreen() {
               </Text>
             </View>
           </Pressable>
+
+          <View className="my-8 flex-row items-center gap-3">
+            <View className="h-px flex-1 bg-slate-800/60" />
+            <Text className="font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-600">
+              или
+            </Text>
+            <View className="h-px flex-1 bg-slate-800/60" />
+          </View>
+
+          <Pressable
+            onPress={() => {
+              hapticSelect()
+              handleGoogleSignIn()
+            }}
+            disabled={!isLoaded || googleSubmitting}
+            className="rounded-2xl border border-slate-700/60 bg-slate-900/40 py-4"
+            style={({ pressed }) => pressFeedback(pressed)}
+          >
+            <View className="flex-row items-center justify-center gap-3">
+              {googleSubmitting && <ActivityIndicator color="#e2e8f0" size="small" />}
+              <Text className="font-cinzel text-[12px] font-semibold uppercase tracking-[0.32em] text-slate-200">
+                {googleSubmitting ? 'Влизане' : 'Продължи с Google'}
+              </Text>
+            </View>
+          </Pressable>
+
+          {/* Sign in with Apple — iOS only. See sign-in.tsx for the HIG
+              rationale (WHITE style, SIGN_UP type here, 16px corner radius,
+              no restyling, native-localised label). */}
+          {Platform.OS === 'ios' && appleAuthAvailable && (
+            <View className="mt-4">
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={
+                  AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP
+                }
+                buttonStyle={
+                  AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                }
+                cornerRadius={16}
+                style={{ width: '100%', height: 52 }}
+                onPress={() => {
+                  hapticSelect()
+                  handleAppleSignIn()
+                }}
+              />
+            </View>
+          )}
 
           <View className="mt-10 flex-row items-center justify-center gap-2">
             <Text className="text-[13px] text-slate-500">Имаш профил?</Text>

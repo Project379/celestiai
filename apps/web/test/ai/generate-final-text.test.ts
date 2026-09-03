@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'gemini-primary',
   gemini: vi.fn((model: string) => `model:${model}`),
+  isUpstreamAiError: vi.fn(() => false),
 }))
 
 vi.mock('ai', () => ({

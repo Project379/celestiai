@@ -62,6 +62,16 @@ const CONTENT_HOME_GLOBS = [
   '**/oracle/prompts.ts',
   '**/oracle/chart-to-prompt.ts',
   '**/components/chart/AstrologyReference.tsx',
+  // Regulated consumer-facing legal/compliance copy (AI Act disclosure,
+  // CRD consent text, trader identification). Centralised so a lawyer can
+  // vet exact wording and multi-surface strings stay identical — see
+  // apps/{web,mobile}/lib/legal/compliance-copy.ts (compliance batch,
+  // 2026-09-01).
+  '**/lib/legal/*.ts',
+  // Free-tier locked-state copy, centralised so a single primitive (PremiumLock)
+  // and both platforms stay word-identical — see apps/{web,mobile}/lib/tier/
+  // locked-copy.ts (tier items 4 & 5, 2026-09-01).
+  '**/lib/tier/*.ts',
   // Future namespaced strings modules (architecture approved, not yet built).
   '**/i18n/strings/**',
 ]

@@ -8,6 +8,7 @@ import { StoriesContent } from '@/components/stories/StoriesContent'
 import { BackButton } from '@/components/design-system/BackButton'
 import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
 import { useFirstChart } from '@/hooks/useFirstChart'
+import { useSubscription } from '@/hooks/useSubscription'
 
 /**
  * /you/recommendations route — replaces P.5 stub with the full stories
@@ -21,6 +22,15 @@ export default function RecommendationsScreen() {
   const sunSign = firstChart.data?.birth_date
     ? getSunSign(firstChart.data.birth_date)
     : null
+
+  const { data: subscription, isError: subscriptionError } = useSubscription()
+  // Tri-state: undefined while the tier query loads, so the monthly arc
+  // shows a neutral pending treatment instead of flashing a lock at a
+  // premium user. Hard error → free experience.
+  const isPremium =
+    subscription === undefined && !subscriptionError
+      ? undefined
+      : subscription?.tier === 'premium'
 
   const backVisibility = useBackButtonVisibility()
 
@@ -38,7 +48,7 @@ export default function RecommendationsScreen() {
         onScroll={backVisibility.onScroll}
         scrollEventThrottle={100}
       >
-        <StoriesContent sunSign={sunSign} />
+        <StoriesContent sunSign={sunSign} isPremium={isPremium} />
       </ScrollView>
     </SafeAreaView>
   )

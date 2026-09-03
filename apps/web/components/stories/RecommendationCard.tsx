@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Recommendation, RecommendationStatus } from '@stellaeum/core/stories/types'
+import { LockBadge } from '@/components/tier/PremiumLock'
+import { RECS_DETAIL_LOCKED } from '@/lib/tier/locked-copy'
 
 const KIND_LABEL: Record<Recommendation['kind'], string> = {
   story: 'Разказ',
@@ -33,6 +35,12 @@ interface RecommendationCardProps {
   status: RecommendationStatus
   onStatusChange: (status: RecommendationStatus) => void
   variant?: 'daily' | 'monthly'
+  /**
+   * Free tier (tier item 4): show identity + tagline, withhold the
+   * "why for you" detail (howItConnects / whyNow / whatItGives) and the
+   * status controls behind a locked line.
+   */
+  locked?: boolean
 }
 
 export function RecommendationCard({
@@ -40,6 +48,7 @@ export function RecommendationCard({
   status,
   onStatusChange,
   variant = 'daily',
+  locked = false,
 }: RecommendationCardProps) {
   const [expanded, setExpanded] = useState(variant === 'daily')
   const r = recommendation
@@ -94,7 +103,16 @@ export function RecommendationCard({
         {r.tagline}
       </p>
 
+      {locked && (
+        <p className="mt-5 inline-flex items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-300/80">
+          <LockBadge />
+          {RECS_DETAIL_LOCKED}
+        </p>
+      )}
+
       {/* Expand / collapse toggle for "why for you" */}
+      {!locked && (
+      <>
       <button
         type="button"
         onClick={() => setExpanded(v => !v)}
@@ -146,6 +164,8 @@ export function RecommendationCard({
           tone="accent"
         />
       </footer>
+      </>
+      )}
     </article>
   )
 }

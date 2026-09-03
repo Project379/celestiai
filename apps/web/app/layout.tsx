@@ -3,6 +3,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { bgBG } from '@clerk/localizations'
 import { dark } from '@clerk/themes'
 import { Manrope, Inter, Cinzel } from 'next/font/google'
+import { SiteFooter } from '@/components/layout/SiteFooter'
 import './globals.css'
 
 const manrope = Manrope({
@@ -85,6 +86,7 @@ export default function RootLayout({
           suppressHydrationWarning
         >
           {children}
+          <SiteFooter />
         </body>
       </html>
     </ClerkProvider>

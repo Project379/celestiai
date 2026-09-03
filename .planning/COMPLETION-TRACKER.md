@@ -2,7 +2,7 @@
 title: Completion Tracker
 status: living document — the single "where are we / what is left" reference
 created: 2026-08-13
-last-updated: 2026-08-27 (FIRST SUCCESSFUL PRODUCTION DEPLOY — www.stellaeum.com live; Vercel out of blocked-externally, Apple privacy-URL blocker closed. Chain: turbo.json env allowlist → lazy Stripe → Next.js 15.5.24. Also shipped: audit_logs de-identification, /support page, lazy Stripe. New docs: NEXTJS-UPGRADE, AUTH-PROVIDER-EXPANSION, APPLE-REVIEW-REQUIREMENTS, PRIVACY-POLICY-LAWYER-BRIEF, LLM-PROVIDER-DECISION. Web browser Sentry verified live for the first time.)
+last-updated: 2026-08-27 LATE (RESOLVED: the app works in production — `POST /api/horoscope/generate` → 200 from a clean tab with Skew Protection OFF, plus every compute route + `/connect/test` friendly page. §0.8's "third failure" was a PHANTOM: skew protection routed every post-fix probe to a deployment pinned before the §0.6/§0.7 fixes, so the logged `SyntaxError` was pre-fix code. §0.6 sweph/geo-tz CLOSED + the win32→linux glob RESOLVED (this time on a live authed compute request vs. a probe from an unknown deployment). §0.8 shim REMOVED; 502 classification + Sentry.captureException KEPT (real gaps). §0.9 = the full post-skew re-verification table. VSG #10 added + the general form ("every observation has a scope, usually narrower than it appears") stated at the top of that doc. PROJECT-HISTORY.md written + postscript on how today ended. Earlier: Sentry caught a production-breaking bug 1h after going live — sweph/geo-tz/dictionary-bg missing from the deployed function; every compute path 500ing. §0.6: sweph + geo-tz FIXED and verified in production (`e64ef9f`), win32-trace residual risk resolved, `/connect/[token]` 500 resolved as a side effect. §0.7: the `bg-allowlist.txt` read — webpack froze `import.meta.url` to the build machine's path; FIXED (allowlist → bundled data module, parsed Set byte-identical). §0.8: NO THIRD FAILURE — it was a phantom. `/api/horoscope/generate` returns **200** from a clean tab with **Skew Protection off**; every probe after the §0.6/§0.7 fixes had been routed by skew to a deployment pinned *before* those fixes, so the `SyntaxError` in the logs was pre-fix code on a stale deployment. Sound reasoning, false observation (VSG #10). Kept: the `isUpstreamAiError` → **502 AI_UPSTREAM_FAILED** + quota refund on both AI routes, and `Sentry.captureException` in `toErrorResponse` — both fix real defects the phantom surfaced. Removed: the `[OPENROUTER-DEBUG]` shim (built for a bug that never existed). All six §0.9 re-verification items now pass against the confirmed-current deployment. VERIFICATION-SURFACE-GAPS #7 (build-time constant inlining), #8 (ad blocker eats the Sentry tunnel), #9 (`toErrorResponse` returns a 500 Response → Sentry never sees it), **#10 (a probe only tests the deployment you're routed to — skew protection can invalidate a whole session of probes)**. New §7: full path-to-launch sequence recorded (Tracks 1–6, auth Phase A/B + enrolment boundary, launch clock, zero-spend week plan). Apple enrolment + Play registration moved to next week (money). Earlier same day: FIRST SUCCESSFUL PRODUCTION DEPLOY — chain turbo.json env allowlist → lazy Stripe → Next.js 15.5.24; audit_logs de-identification, /support page.)
 ---
 
 # Completion Tracker
@@ -19,6 +19,23 @@ not on request.**
 
 ---
 
+## SUBMISSION BLOCKER — mobile is non-submittable to the App Store right now
+
+**Open since 2026-08-29 (Google sign-in shipped), closes only when SIWA
+Phase B completes.** Guideline 4.8: shipping Google sign-in as a launch
+feature makes Sign in with Apple **mandatory**, not optional. The mobile
+build cannot be submitted to App Store review until SIWA is live
+end-to-end. This is a hard gate, not a footnote — see
+`APPLE-REVIEW-REQUIREMENTS-2026-08-27.md` §1 for the ruling and
+`AUTH-PROVIDER-EXPANSION-2026-08-27.md` / §7.4 below for the Phase A/B
+split. Phase A (client code, config plugin, `app.json`) does not need
+Apple enrolment and can ship now; Phase B (capability, keys, Clerk config,
+end-to-end device test) is blocked on Apple Developer enrolment, which is
+next week's money item. **Do not reach "ready to submit" and discover
+this** — it closes only after B1-B3 below are done and device-verified.
+
+---
+
 ## 0. Open rulings — 2026-08-26 technical sweep
 
 A full technical sweep ran 2026-08-26 across DB/RLS, secrets, auth, cost,
@@ -32,10 +49,11 @@ VERIFIED/INFERRED labels: `.planning/TECHNICAL-SWEEP-2026-08-26.md`.
   byte-identical to `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`, a value shipped in
   the mobile bundle — anyone who unzipped the APK could forge a signed
   webhook payload and grant themselves premium. **Rotated to a random value
-  local-only, in `apps/web/.env.local` (gitignored, no code change).** State
-  is now safe-but-dead: the webhook will reject all real RevenueCat traffic
-  until the real dashboard signing secret replaces the placeholder — see
-  the RevenueCat row in §5 Blocked-externally, founder-owned.
+  local-only, in `apps/web/.env.local` (gitignored, no code change).** The
+  webhook will reject all real RevenueCat traffic until the real dashboard
+  signing secret is set (placeholder status: see `.planning/PLACEHOLDERS.md`
+  RC-WEBHOOK-SECRET; also the RevenueCat row in §5 Blocked-externally,
+  founder-owned).
 - **#2+#3 CRITICAL, chained.** `/api/horoscope/generate` had no quota;
   chart creation was uncapped — chained, a free account could reach ~7,200
   unquota'd paid generations/day. **Fixed:** horoscope/generate now shares
@@ -109,15 +127,22 @@ plus `.env.local` fixes for #12 — local-only, gitignored, not a commit):
   being truthy; `@sentry/react-native` config plugin is already in
   `app.json`; `logError.ts` already tags events. The remaining work is
   100% Sentry-dashboard + EAS-env, all founder-owned:
-  1. Create a **React Native** project in org `celestia-ul`, suggested
-     slug `stellaeum-mobile`. Bring back: the new **DSN** and the
-     **project slug**.
-  2. Set `EXPO_PUBLIC_SENTRY_DSN` = new DSN as an **EAS environment
-     variable** (dashboard, visibility plain — it's a public DSN),
-     scoped to development + preview + production. Also replace the value
-     in `apps/mobile/.env.local` (currently holds the *web* project's
-     Next.js-platform DSN — mobile events landing there are
-     mis-platformed, no RN release health).
+  1. ~~Create a **React Native** project in org `celestia-ul`, suggested
+     slug `stellaeum-mobile`.~~ **DONE — confirmed 2026-08-31** via the
+     Sentry API (`SENTRY_READ_TOKEN`): org `celestia-ul` has a project
+     `stellaeum-mobile` (id `4511981481885776`, platform `react-native`),
+     separate from `javascript-nextjs` (id `4511290989805648`). The
+     §7.9 ANR issue and the other three §7.9 events all landed in
+     `stellaeum-mobile`, correctly platformed.
+  2. `apps/mobile/.env.local`'s `EXPO_PUBLIC_SENTRY_DSN` **already points
+     at the `stellaeum-mobile` project** (confirmed 2026-08-31 by reading
+     the file — its DSN's project-id segment matches `4511981481885776`,
+     not the web project's). The note below (mobile events landing in the
+     web project, mis-platformed) is **stale** — that was true before
+     this was fixed, not now. **Still unconfirmed:** whether the EAS
+     **environment variable** (as opposed to the local `.env.local`) also
+     carries this DSN — that determines what a real dev/preview/production
+     build sends, and only the founder can check the EAS dashboard.
   3. **Not** adding an `env` block to `eas.json` — there is nothing to
      wire. `sentry.ts` already reads the right var and guards on it, the
      plugin is already in `app.json`, and Expo now recommends
@@ -198,9 +223,33 @@ migrations awaiting founder action, not open findings:
 
 ## 0.6 PRODUCTION-BREAKING — `sweph` / `geo-tz` / `dictionary-bg` missing from the deployed function (found 2026-08-27)
 
-**Status: FIX APPLIED + trace-verified locally 2026-08-27 (this commit).
-AWAITING PRODUCTION CONFIRMATION — not closed until an authed probe of a
-real compute path passes against the deploy. Founder runs that probe.**
+**Status 2026-08-27 — CLOSED, verified against the confirmed-current
+deployment in a clean post-skew session.**
+- **`sweph` — CLOSED.** `POST /api/horoscope/generate` → **200** from a
+  clean tab (Skew Protection off, deployment confirmed current). That
+  route runs a full chart compute, so `sweph` is demonstrably loading in
+  the Lambda. `/chart`, `/circle`, `/rhythm`, `/dashboard` all 200 too.
+- **`geo-tz` — CLOSED.** Same request — `calculateNatalChart` resolves a
+  timezone via `geo-tz` before it can return, and it returned 200.
+- **The win32→linux `outputFileTracingIncludes` glob was honored by
+  Vercel's Linux build — RESOLVED.** *Why it is resolved this time, and
+  the retraction mattered:* the earlier "RESOLVED" rested on browser
+  probes from an unknown (possibly skew-pinned) deployment — worthless as
+  proof. This one rests on a **live authed compute request that succeeded
+  against a deployment confirmed current in the dashboard.** `sweph` only
+  loads if `prebuilds/linux-x64/sweph.node` is physically in the Lambda,
+  and it only got there via the explicit glob. That is the distinction
+  the retraction was about — same conclusion, real evidence.
+- **`/connect/[token]` invalid-token → friendly page (not 500):**
+  **CLOSED.** `GET /connect/test` in the clean session renders «Поканата
+  не е активна». It was the `sweph` failure all along, not token
+  validation. No separate work.
+- **`dictionary-bg` chain — STILL BROKEN in production.** `POST
+  /api/horoscope/generate` still 500s (fired from the Днес page — real
+  user path, not a synthetic probe). `/api/oracle/generate` shares the
+  import and is broken identically (not probed yet, but same chunk). Root
+  cause is NOT file tracing — see the dedicated section below. Fix
+  pending founder go-ahead on approach.
 
 **The fix (one pass, all three packages):**
 - `sweph` (`2.10.0-11`) and `geo-tz` (`^8.1.6`) added as **direct
@@ -321,13 +370,498 @@ a Vercel **Deploy Hook** / post-deploy GitHub Action against the
 production URL, and/or a manual `pnpm smoke:prod`. Not built now per the
 halt; tracked so it is not forgotten.
 
+---
+
+## 0.8 `/api/horoscope/generate` 500 — DIAGNOSED AGAINST STALE EVIDENCE. No such bug. (2026-08-27)
+
+**Status: RESOLVED — there was never a third failure.**
+
+`POST /api/horoscope/generate` returns **200** from a clean tab with Skew
+Protection off, against the confirmed-current deployment. It loads
+`dictionary-bg` via `check-bg-output`, calls OpenRouter, and returns a
+real reading. Alongside it, all 200 in the same clean pass: `/dashboard`,
+`/chart`, `/circle`, `/rhythm`, `/you`, `/you/crystals`,
+`/api/oracle/readings`.
+
+**What actually happened:** the §0.6 (`sweph`/`geo-tz`) and §0.7
+(allowlist) fixes both worked. Every probe run *after* them — for hours —
+was routed by **Vercel Skew Protection** to a deployment pinned *before*
+those fixes landed. The `SyntaxError` in the Runtime Logs was the
+**pre-fix code running on a stale deployment** (`bg-speller.mjs`'s
+`readFileSync` on the frozen Windows path, or an equivalent early throw),
+not a live OpenRouter failure. There was no empty response body, no failing
+provider call, no Cloudflare IP block. The whole "Q1/Q2/Q3" analysis below
+reasoned correctly from the stack trace — **the stack trace was false
+evidence.** The lesson is not "the analysis was wrong", it is "the
+observation was". See VERIFICATION-SURFACE-GAPS #10.
+
+**What was built while chasing the phantom, and what stays:**
+- **`[OPENROUTER-DEBUG]` fetch shim** — **REMOVED** (same-day, once §0.8 proved a phantom). Built
+  for a bug that does not exist; logged 2 KB of every AI response.
+- **`isUpstreamAiError` + the 502 `AI_UPSTREAM_FAILED` classification +
+  quota refund** on both AI routes — **KEPT.** Correct regardless: an
+  upstream provider will return garbage eventually, and an opaque 500 that
+  also burns a quota claim is a real defect whether or not it has fired.
+  Proven-against-pre-fix test retained.
+- **`Sentry.captureException` in `toErrorResponse`'s non-`ApiError`
+  branch** — **KEPT.** Six routes being blind to their own 500s
+  (VERIFICATION-SURFACE-GAPS #9) is a real gap independent of today.
+
+Not a wasted session: one thing built for a phantom (removed), two built
+for real problems the phantom happened to surface (kept).
+
+---
+
+**2026-08-28 follow-up — a bodiless-probe `SyntaxError`, the 4th thing on this route.**
+The founder ran a bodiless `fetch()` at `POST /api/horoscope/generate` to
+verify an unrelated fix. `await req.json()` on an empty body threw
+`SyntaxError: Unexpected end of JSON input` (`route.ts:45`), which reached
+`toErrorResponse` and — because §0.8 KEPT the `Sentry.captureException` in
+that path — produced a **High-priority Sentry alert with nothing marking
+it as self-generated**. Diagnosed from the stack: `undici.parseJSONFromBytes`
+frames = it is parsing the *incoming request body*, not an AI response;
+release 5a4a2c8, Brave/Windows. Confirmed the founder's own probe.
+
+This is the **fourth distinct thing chased on this one route, and the
+second that was never a real defect** (first: the §0.8 phantom above). The
+route has been correct since §0.7 landed. What kept producing "errors" was
+probing and skew, not the handler.
+
+Two outcomes:
+1. **Small real fix — DONE 2026-08-28.** A malformed/absent request body is
+   a client error and should be a `400`, not an unhandled `500` that pages
+   Sentry at High. Added `readJsonBody(req)` to `lib/auth/guards.ts`
+   (`try req.json() / catch → throw ApiError(400, 'Невалидна заявка',
+   'INVALID_BODY')`), applied to all 8 routes that called `req.json()`
+   unguarded (`horoscope/generate`, `oracle/generate`, `circle/invites`,
+   `circle/invites/accept`, `circle/profiles`, `push/{subscribe,register,
+   unsubscribe}`). The `ApiError` lands in `toErrorResponse`'s structured
+   branch — no `Sentry.captureException`. Left deliberately alone:
+   `stripe/cancel` (missing body is *intentionally optional* there — it
+   reads `body?.reason`); `crystals/collect` + the two `circle/*/report`
+   routes (already `.catch(() => …)`); `stripe/checkout` (already wrapped).
+2. **Deferred, pre-launch — probe traffic must be identifiable at the
+   monitor.** This alert was indistinguishable from a real user hitting a
+   broken endpoint. Fine now (founder is the only traffic), a triage
+   problem once there are real users. Belongs in the post-deploy smoke
+   test's scoping (PRE_LAUNCH_PREREQS item 2), which will generate exactly
+   this shape on every deploy. Tracked as VERIFICATION-SURFACE-GAPS **#11**.
+
+---
+
+**PRESERVED BELOW — the original diagnosis. Sound reasoning; the evidence
+it reasoned from was a stale-deployment stack trace. Kept as the record of
+how a false observation produced a confident wrong conclusion.**
+
+**The stack (Vercel Runtime Logs, not Sentry):**
+```
+POST /api/horoscope/generate → 500, 1.66s
+Failed to generate horoscope. SyntaxError: Unexpected end of JSON input
+  at JSON.parse (<anonymous>)
+  at async u (.next/server/app/api/horoscope/generate/route.js:34:689)
+  at async (.next/server/chunks/1349.js:41:7566)
+```
+
+**Q1 — what is being `JSON.parse`'d:** the OpenRouter HTTP response,
+**inside the `ai` SDK**, not our code. Verified: `chunks/1349.js` contains
+the `ai` package (`streamText`/`generateText`/`ai-sdk` markers). The route
+never calls `JSON.parse` directly — its only JSON parse is `await
+req.json()` at `route.ts:45`, and the Днес client
+(`hooks/useDailyHoroscope.ts:52`) always sends a valid
+`JSON.stringify({ chartId })` body, so that path is fine. The failing
+parse is `@ai-sdk/openai`'s response handler doing `JSON.parse('')` on an
+**empty body** returned by OpenRouter during `await generateText(...)`
+(`route.ts:312`). `JSON.parse('')` is exactly "Unexpected end of JSON
+input".
+
+**Q1 corollary — the 1.66s and the missing OpenRouter entry:** a 70B
+non-streaming generation takes 5–30s; **1.66s means OpenRouter rejected
+the request almost immediately** (auth/edge rejection, not a generation).
+`assertRateLimit` (`route.ts:38`) hits Supabase *before* the AI call —
+that is why Supabase shows in the invocation's External APIs list. The
+OpenRouter fetch **did** happen (a fully-absent key would throw
+`LoadAPIKeyError` before any fetch — see Q2 — and we got a `SyntaxError`
+instead); Vercel's External-APIs panel just doesn't reliably surface a
+fetch that was rejected fast / returned non-2xx. "Not in the panel" ≠ "no
+request made".
+
+**Q2 — is `OPENROUTER_API_KEY` in Vercel Production *runtime* env
+(FOUNDER TO CHECK):** it is in `turbo.json` `build.env` (build-time only,
+same distinction as `SENTRY_DSN`). `lib/ai/client.ts` reads
+`process.env.OPENROUTER_API_KEY` **at module scope** and passes it to
+`createOpenAI({ apiKey })`. Verified against `@ai-sdk/provider-utils@4.0.15`
+`loadApiKey`:
+- key **absent / `undefined`** → `loadApiKey` throws
+  `LoadAPIKeyError: OpenAI API key is missing…`. That is a *different*
+  error than what we see, so the key is **not simply missing**.
+- key **`""` (empty string)** → `typeof "" === "string"` → returned
+  as-is, **no emptiness check** → request goes out with
+  `Authorization: Bearer ` (blank) → OpenRouter / its Cloudflare front
+  rejects fast with an empty or HTML body → `JSON.parse('')` →
+  `SyntaxError`. **This is the shape that matches.**
+- key present but **invalid/revoked** → OpenRouter normally returns a
+  *JSON* 401 → `@ai-sdk/openai` throws `APICallError`, not `SyntaxError`
+  (unless a Cloudflare challenge served non-JSON).
+- **What to check:** not "is it set" but "is the value a real, non-empty
+  OpenRouter key" (prefix `sk-or-v1-`). An empty string or placeholder in
+  the Production env explains the whole thing.
+- Note: `/api/horoscope/generate` has **never completed a successful run
+  in production** — production is 1 day old and was broken by §0.6 then
+  §0.7 the entire time. The AI call has never actually executed in prod.
+  So this is a latent config/resilience gap surfacing now, not a
+  regression.
+
+**Q3 — why an unhandled 500 instead of a handled error (two defects):**
+1. `route.ts:319–322` catches the `generateText` error, runs
+   `releaseClaimOnFailure()`, then **`throw err`** to the outer catch
+   (`route.ts:397`), which calls `toErrorResponse(error, 'Failed to
+   generate horoscope.')`. `toErrorResponse` (`lib/auth/guards.ts:20`)
+   only builds a structured response for `ApiError`; **anything else →
+   bare `500` + generic message + `console.error`**. A provider returning
+   an empty body is a *foreseeable* upstream failure that should be a
+   `502/503` with a retry hint, not an unhandled `500`.
+2. The founder's point: **`generateText` is called with zero resilience** —
+   no retry, no timeout-to-friendly-error, no catch that separates
+   "provider returned garbage" from "our code threw". And the SDK itself
+   `JSON.parse`s the provider response with no empty-body guard (not our
+   line, but our exposure). Every failure here also burns → refunds a
+   quota claim and an INSERT/delete on `daily_horoscopes`.
+
+**Why Sentry had nothing (structural, not a misconfig) — see
+VERIFICATION-SURFACE-GAPS #9:** `toErrorResponse` **catches** the error
+and **returns** a `Response.json(500)`. A returned Response is a normal
+return, not a thrown error, so Next's `onRequestError` /
+`Sentry.captureRequestError` **never fires**. Only the `console.error`
+inside `toErrorResponse` reaches anything — and that goes to Vercel logs,
+not Sentry (the server config has no `console` integration). **All 6
+routes using `toErrorResponse` are Sentry-blind for any non-`ApiError`
+500.** So "no Sentry event for this release" is expected and is not
+evidence server-side Sentry is broken — though whether `SENTRY_DSN` is in
+the Production runtime env is still worth confirming (§0.7).
+
+**KEY CONFIRMED PRESENT + WELL-FORMED 2026-08-27** (`sk-or-v1-b62c…`, 73
+chars, correct prefix; founder rotating it anyway — it was screenshot-
+exposed and set as Config not Secret, neither of which is the cause). So
+the empty-string theory is dead. Next step is the raw OpenRouter response
+body, not more inference.
+
+**SHIPPED alongside the diagnosis (`4f751d2`) — the shim + the two
+hardening items, all correct regardless of what the body turns out to
+be:**
+1. **`[OPENROUTER-DEBUG]` fetch shim** in `lib/ai/client.ts` — a custom
+   `fetch` passed to `createOpenAI` that `console.error`s the outgoing
+   `model=` plus the response `status` / `content-type` / first 2 KB of
+   body, via `res.clone()` so the SDK still gets an intact stream. Dated,
+   loud prefix, explicit REMOVAL note (delete the block + the
+   `fetch: debugFetch` line). **Confirmed present in the built server
+   bundle** (`chunks/4585.js`), so it will log in production. `AI_MODEL`
+   is a hardcoded constant (`meta-llama/llama-3.3-70b-instruct`) — not
+   env-configurable — confirmed inlined in the build; the shim logs the
+   actual outgoing value too.
+2. **Upstream-vs-ours error classification** — `isUpstreamAiError(err)` in
+   `lib/ai/client.ts` (raw `SyntaxError` → true; fetch/network
+   `TypeError` → true; `ai` SDK `APICallError`/`RetryError` by name →
+   true; `LoadAPIKeyError` deliberately **false** — a blank key is our
+   bug, "retry shortly" would be a lie). Both `horoscope/generate` and
+   `oracle/generate` `jsonOnly` catch blocks now: refund the quota claim,
+   then if `isUpstreamAiError` → `ApiError(502, RETRY_LATER_MESSAGE,
+   'AI_UPSTREAM_FAILED')` (reuses `lib/rate-limit.ts`'s already-reviewed
+   retry copy, now exported as `RETRY_LATER_MESSAGE` — net-zero new
+   Cyrillic literals, baseline unchanged at 1772); anything else still
+   500s. Oracle also nulls `claimedPeriodStart` in that branch so the
+   outer catch can't double-refund.
+3. **`Sentry.captureException` in `toErrorResponse`'s non-`ApiError`
+   branch** (`lib/auth/guards.ts`) — closes the VERIFICATION-SURFACE-GAPS
+   #9 blind spot for all 6 routes that use the helper. `ApiError` (the
+   deliberate 4xx/5xx path, incl. the new 502) is NOT captured.
+4. **Tests (206 total, +11):**
+   - `test/ai/upstream-error.test.ts` — `isUpstreamAiError` truth table.
+   - `test/auth/to-error-response.test.ts` — proves `captureException`
+     fires for a non-`ApiError` 500 and does NOT for an `ApiError` (the
+     "verify with a deliberate error" the founder asked for).
+   - `test/horoscope/generate-upstream-failure.test.ts` — an SDK
+     `SyntaxError` now yields **502 `AI_UPSTREAM_FAILED`** (not an opaque
+     500) **and** `decrementQuotaUsage` fires (refund proven, not
+     assumed); a non-upstream `TypeError` still 500s. **Proven against
+     pre-hardening `route.ts`: the 502 assertion failed with `expected
+     500 to be 502` before the fix was restored.**
+
+**2026-08-27 — the `4f751d2` probe came back 500 with the IDENTICAL stack
+(`route.js:34`, `chunks/1349.js:41:7566`) and NO `[OPENROUTER-DEBUG]`
+line. If `4f751d2` were serving it, the shim would have logged and the
+502 classification would have fired. Neither did → the request is not
+being served by `4f751d2`.**
+
+**Cause: Vercel Skew Protection is ENABLED (verified — production HTML
+contains `?dpl=dpl_JChvkyHkhdYi1yT4gXybCDWcS6ry`).** With skew protection
+on, a browser is pinned for the configured window (the founder saw 12h in
+settings) to whatever deployment served its HTML — every `fetch()` from
+that tab, including the Днес page's call to `/api/horoscope/generate`,
+carries `?dpl=<old>` and is routed to the OLD deployment's functions. The
+founder's tab was loaded before the recent deploys, so **every probe run
+from it today may have hit stale functions** — which puts an asterisk on
+the "sweph/geo-tz verified in prod" probe results too (those were still
+independently confirmed by reading the local `.nft.json` trace artifacts,
+so the *code* fixes stand; what is uncertain is which deployment prod is
+actually serving the founder's browser).
+
+**To force the current deployment** (do these before trusting any further
+probe):
+1. **Confirm which commit is current Production.** Vercel → Deployments →
+   the Ready one → its git commit. Confirm it is `49b79ea` / includes
+   `4f751d2`. A docs-only commit on top (`5a4a2c8`, `49b79ea`) still
+   triggers a full rebuild, so it *should* — but confirm, don't assume.
+2. **Hit the deployment's own URL directly.** Each deployment has a unique
+   `*.vercel.app` URL (shown on its dashboard page). A request straight to
+   that URL bypasses skew routing entirely — it targets that deployment's
+   functions. Probe there.
+3. **Browser: fully close every `stellaeum.com` tab, then open a fresh
+   one (or a clean Incognito window).** A plain reload may keep the pin;
+   a fresh document load fetches the current `?dpl`. Then re-probe.
+4. **A fresh `curl` already hits latest** (no prior `dpl`), but the AI
+   path needs a real `__session` cookie + a JSON body with `chartId` —
+   without a body, `req.json()` at `route.ts:45` throws its own
+   `SyntaxError` (empty-body) which the hardening does NOT wrap, so a
+   bodiless curl 500s on every build and tells you nothing.
+5. **Recommendation: turn Skew Protection OFF for the rest of pre-launch.**
+   Its value is protecting real users mid-session during a deploy; with
+   the founder as the only "user" and actively debugging, it only serves
+   stale functions and corrupts every probe. Re-enable before launch.
+
+The route change (`4f751d2`) is verified correct locally — build, the
+compiled bundle carrying `[OPENROUTER-DEBUG]`, +11 tests, 502-proven-
+against-pre-fix. What is unverified is that production is *running* it.
+
+---
+
+## 0.7 `bg-allowlist.txt` read fails in production — webpack freezes `import.meta.url` at build time (found 2026-08-27, part of §0.6)
+
+**Status: FIX APPLIED + verified locally 2026-08-27 (`<this commit>`).
+AWAITING PRODUCTION PROBE — re-run `POST /api/horoscope/generate` and
+`POST /api/oracle/generate` on the deploy; both must stop 500ing.**
+
+**What shipped:**
+- `scripts/i18n/bg-allowlist.txt` (276 unique entries) → converted to
+  `scripts/i18n/bg-allowlist.data.mjs` (`export const BG_ALLOWLIST = [...]`),
+  provenance comments preserved. **Verified: the parsed Set is byte-for-byte
+  identical to the old `loadAllowlist()` output — 276 words, zero
+  duplicates, `in-txt-not-mjs: []`, `in-mjs-not-txt: []` (content compared,
+  not just size).**
+- `bg-speller.mjs` now `import { BG_ALLOWLIST }` + `new Set(BG_ALLOWLIST)`;
+  the `readFileSync` + `dirname`/`resolve`/`fileURLToPath` imports removed.
+- `next.config.js`: the now-dead `bg-allowlist.txt` entry removed from
+  `outputFileTracingIncludes` (sweph/geo-tz/dictionary-bg globs stay).
+- Docs updated: `scripts/i18n/README.md`, this file.
+- **Grep sweep for the same shape — see the dedicated finding below. One
+  broken instance (this one), zero others, one same-shape-but-shimmed
+  pattern noted.**
+
+**Verified locally:** `next build` exit 0; the compiled chunk
+`4585.js` no longer contains `bg-allowlist` or the frozen
+`file:///C:/Users/...` path, and `BG_ALLOWLIST` / `Асцендент` are now
+inlined as bundled data; the `.nft.json` for `oracle/generate` +
+`horoscope/generate` no longer references `scripts/` or `bg-allowlist.txt`;
+`check:bg-strings` PASS (the CI consumer, same allowlist behaviour);
+195/195 web tests; typecheck clean; bg-lint-baseline + error-code checks
+PASS.
+
+**PRODUCTION CONFIRMATION IS BLOCKED ON GETTING THE CURRENT ERROR
+(2026-08-27).** The two Sentry events pulled so far are both release
+`2df6aeb71509…` — a build that **predates every fix in this section**
+(`c9dc9c1`, `e64ef9f`, `8031ee5` all come after `2df6aeb`). They are the
+*original* errors (`Cannot find module 'sweph'` on `/connect/[token]`;
+ENOENT in `bg-speller.mjs:26` `loadAllowlist` — code deleted in
+`8031ee5`), not the current one. The founder's fresh 500 repro was on
+Vercel deploy `dpl_EvjecA4vGGHgqBm7QZvDiYp8fzTe`; we do not yet know which
+commit that deploy built, nor whether a current-release event exists.
+
+**Sentry `release` = the full git commit SHA** (verified: `withSentryConfig`
+in `next.config.js` sets no explicit `release`, so `@sentry/nextjs`
+auto-detects the build SHA; the stale events prove the format). Current
+fix SHAs to filter by:
+- `e64ef9fdbc16c40dfcb70e58b0d4f9961cc4c333` (sweph/geo-tz fix)
+- `8031ee56bcff7a8902c579ef3528320a8bf770bb` (allowlist fix — current HEAD)
+- Sentry UI truncates to 12: `e64ef9fdbc16`, `8031ee56bcff`.
+
+**Un-verified gap this exposed:** server-side Sentry (`SENTRY_DSN`,
+unprefixed, read at runtime by `sentry.server.config.ts`) has **never
+been confirmed live in production**. §5's "web browser Sentry verified
+live" was about `NEXT_PUBLIC_SENTRY_DSN` (a different var, inlined in the
+client bundle). `SENTRY_DSN` is in `turbo.json` `build.env` (build-time
+only — that does NOT put it in the Lambda runtime env); it must also be
+set in Vercel → Project Settings → Environment Variables → Production for
+`Sentry.init` to be anything but a no-op in the function. If it is
+missing, **no API-route 500 has ever reached Sentry** and the "stale
+events" are simply the last ones the *client* SDK managed to send.
+`instrumentation.ts` correctly exports
+`onRequestError = Sentry.captureRequestError`, so the wiring is right —
+the question is purely whether the runtime DSN is set.
+
+**Capture routes if the current release has no Sentry event** (see the
+report for the full walkthrough): (1) confirm `SENTRY_DSN` in Vercel
+Production runtime env; (2) **Vercel Runtime Logs** for deploy
+`dpl_EvjecA4v…`, path `/api/horoscope/generate` — a module-eval throw
+(`const ALLOWLIST = loadAllowlist()` at top level) can fault *before* the
+request handler and surface as a raw Vercel `FUNCTION_INVOCATION_FAILED` /
+`500` that `onRequestError` never sees, but Vercel's runtime always logs
+it. The generic `filename="500"`, `Content-Length: 2303` page the earlier
+probes returned is consistent with a Vercel-level 500, not a
+Next-rendered error.
+
+**No further fix until the current error is in hand. Two failed attempts
+already — sweph fix (real, verified) then allowlist fix (real, unverified
+in prod). The third must be driven by the actual current stack trace, not
+by another inference.**
+
+**UPDATE 2026-08-27: current stack trace obtained from Vercel Runtime
+Logs. §0.6 (sweph/geo-tz) and §0.7 (allowlist) are BOTH confirmed working
+— the route now loads and runs. The third failure is diagnosed in §0.8
+below: `generateText` receives an empty body from OpenRouter, the `ai` SDK
+does `JSON.parse('')`, `SyntaxError` propagates to an unhandled 500.
+Leading cause: `OPENROUTER_API_KEY` in Vercel Production runtime env is
+blank/empty (a fully-missing key throws a distinct `LoadAPIKeyError`
+instead). Founder to check the value before any fix.**
+
+---
+
+**Original diagnosis:**
+
+`POST /api/horoscope/generate` and `POST /api/oracle/generate` 500 at
+module evaluation. Both statically import `@/lib/ai/check-bg-output` →
+`scripts/i18n/bg-speller.mjs`, which is **bundled** by webpack (it is not
+in `serverExternalPackages` — only `dictionary-bg` is). `bg-speller.mjs`
+computes its allowlist path as
+`resolve(dirname(fileURLToPath(import.meta.url)), 'bg-allowlist.txt')` at
+module scope.
+
+**The smoking gun — `apps/web/.next/server/chunks/4585.js` contains
+literally:**
+
+```
+(0,g.fileURLToPath)("file:///C:/Users/ntone/Desktop/sub-project/scripts/i18n/bg-speller.mjs")
+```
+
+Webpack replaced `import.meta.url` with a **hard-coded absolute `file://`
+URL of the build machine**. At runtime the code does
+`readFileSync("C:/Users/ntone/Desktop/sub-project/scripts/i18n/bg-allowlist.txt")`
+→ ENOENT on Vercel's Linux filesystem. `outputFileTracingIncludes` copied
+`bg-allowlist.txt` into the function correctly — but the code never looks
+there; it looks at the frozen Windows path. **On Vercel's own Linux build
+the frozen path would be `/vercel/path0/...` (the build workspace), which
+also does not exist in the Lambda runtime (`/var/task/...`) — so this
+fails regardless of build OS. Tracing cannot fix it.** This is a *third*
+mechanism, distinct from the two "fragile asset" cases named in §0.6
+(missing-file and `new URL(import.meta.url)` resolution) — here the file
+is present and the resolution logic is sound; webpack's build-time
+`import.meta.url` inlining is what breaks it.
+
+**Why `dictionary-bg` (same file, same chain) is NOT broken:** it is in
+`serverExternalPackages`, so webpack does **not** bundle it — its own
+`index.js` runs un-transformed from `node_modules/dictionary-bg/` in the
+Lambda, its `new URL('index.aff', import.meta.url)` resolves against the
+real file location, and the `outputFileTracingIncludes` glob put
+`index.aff`/`index.dic` right next to it. The externalization that made it
+*look* fragile is what protects it. `bg-speller.mjs` gets bundled;
+`dictionary-bg` doesn't — that asymmetry is the whole story.
+
+**Sentry confirmation (for the founder, independent of the above):**
+sentry.io → org `celestia-ul` → project `javascript-nextjs` → Issues →
+filter `is:unresolved`, look for the `/api/horoscope/generate` issue.
+Open it → latest event → the exception should be `ENOENT: no such file or
+directory, open '.../bg-allowlist.txt'` with the path in the message. If
+the path starts `C:\Users\ntone\...` that is the frozen-build-path
+mechanism above, confirmed. (Could not pull programmatically — the
+`SENTRY_AUTH_TOKEN` in `.env.local` is a `sntrys_` source-map-upload
+token with no `event:read` scope. See §6 "Sentry read token".)
+
+**Fix (APPLIED) — eliminated the runtime file read:**
+`scripts/i18n/bg-allowlist.txt` → `scripts/i18n/bg-allowlist.data.mjs`
+(`export const BG_ALLOWLIST = [ ... ]`, provenance comments kept);
+`bg-speller.mjs` does `import { BG_ALLOWLIST }` + `new Set(BG_ALLOWLIST)`,
+with the `readFileSync`/`dirname`/`resolve`/`fileURLToPath` imports
+removed. Webpack bundles it as data — no `fs`, no `import.meta.url`, no
+tracing dependency; works identically under `node` (CI: `check:bg-strings`
+PASS) and under webpack (runtime). The dead `bg-allowlist.txt` glob is
+gone from `next.config.js` (`dictionary-bg` / `sweph` / `geo-tz` globs
+stay). `scripts/i18n/README.md` updated; `STAGE5_PREVENTION.md` left as
+the historical record it is. This also answers the founder's design
+question: **yes — the allowlist belongs with the code that reads it, as
+code. The coupling (a production route reading a file from `scripts/i18n/`
+— a tooling directory — at module scope) was the defect; tracing was
+always the wrong lever.**
+
+---
+
+## 0.9 Re-verify list — today's "confirmed in production" claims audited against skew (2026-08-27)
+
+Skew Protection was on all day (§0.8). Every probe run from the founder's
+long-lived browser tab may have hit a stale deployment, not the latest.
+Splitting today's production claims by **how** they were verified:
+
+### STANDS — verified by reading an artifact or a fresh `curl` (no pinned-tab dependency)
+
+- **`sweph` / `geo-tz` / `dictionary-bg` assets are traced into the
+  function** — read from the per-route `.nft.json` in the local build
+  (`sweph/prebuilds/linux-x64/sweph.node`, `geo-tz/data/*.geo.dat`,
+  `dictionary-bg/index.{aff,dic}` all listed). Local artifact. The *code*
+  fix is sound.
+- **Allowlist fix** — compiled `chunks/4585.js` no longer contains the
+  frozen `file:///C:/…` path; `BG_ALLOWLIST` inlined; `.nft.json` for the
+  AI routes no longer references `scripts/`. Local artifact.
+- **`/`, `/privacy`, `/pricing` return 200** — re-hit with a fresh `curl`
+  this session (fresh curl sends no `dpl`, so it reaches latest).
+- **Vercel deployment reached "Ready" / Production** — dashboard state,
+  not a probe.
+- **Web browser Sentry SDK is inlined in the production bundle** —
+  re-verified 2026-08-27 with a **fresh curl**: prod HTML carries
+  `sentry-trace` + `baggage` meta tags; `main-app-50f12ad7….js` contains
+  a real DSN (`o4511290988429312.ingest…sentry.io/4511290989805648`).
+  (Whether events actually *leave the founder's browser* is still
+  unverified — ad blocker, VSG #8 — but that was never the claim.)
+- **Skew Protection is enabled** — prod HTML contains `?dpl=dpl_…` on
+  fresh curl.
+- **The `4f751d2` hardening** (502 classification, shim, +11 tests) —
+  local build + tests + proven-against-pre-fix. Never claimed verified in
+  prod.
+
+### VERIFIED POST-SKEW — all six re-run in one clean pass 2026-08-27
+
+Skew Protection disabled, fresh tab, deployment confirmed current. All
+`www.stellaeum.com`, all 200 unless noted:
+
+| # | Claim | Result |
+|---|---|---|
+| 1 | `sweph` loads at runtime in the current function | ✅ `POST /api/horoscope/generate` → 200 (full chart compute) |
+| 2 | `geo-tz` loads at runtime | ✅ same request — `calculateNatalChart` resolves a tz via `geo-tz` before returning |
+| 3 | win32→linux `outputFileTracingIncludes` glob honored by Vercel's Linux build | ✅ by implication — `sweph` only loads if `prebuilds/linux-x64/sweph.node` is physically in the Lambda, and it only got there via the glob. **Evidence this time: a live authed compute request that succeeded against a confirmed-current deployment — not a probe from an unknown one.** That distinction is the whole point of the earlier retraction. |
+| 4 | `/connect/[token]` invalid token → friendly page, not 500 | ✅ `GET /connect/test` renders «Поканата не е активна» |
+| 5 | API compute routes load | ✅ `/chart`, `/circle`, `/rhythm`, `/dashboard`, `/you`, `/you/crystals`, `/api/oracle/readings` all 200 |
+| 6 | `/api/horoscope/generate` on current code | ✅ 200 — loads `sweph` + `geo-tz` + `dictionary-bg`, calls OpenRouter, returns a real reading. **This single result closed 1, 2, 5, 6 and (by implication) 3.** |
+
+**§0.8's "third failure" was a phantom** — the `SyntaxError` in the logs
+was pre-fix code on a skew-pinned stale deployment. See §0.8.
+
+**Still only artifact-verified, not exercised in prod** (not on the list
+above because they were never *claimed* prod-verified — recorded here so
+the boundary stays honest):
+- Server-side Sentry (`SENTRY_DSN`) actually capturing in the Lambda —
+  §0.7 note. `instrumentation.ts` wiring is correct; whether the runtime
+  DSN is set and events arrive is unconfirmed. A deliberate thrown error
+  in a route would confirm it.
+- `/api/oracle/generate` end-to-end (the streaming path) — only
+  `/api/oracle/readings` (the GET) was in the clean pass.
+- The premium free-state CTA and `/support` page rendering correctly —
+  founder was going to probe these; add the result when run.
+
 ## 1. Context block
 
 **Product:** Stellaeum AI — a subscription astrology app for the Bulgarian
 market. Swiss Ephemeris precision (`sweph`, native, GPL-2.0-pinned) +
-AI-generated readings (OpenRouter, Llama 3.3 70B — not Gemini/GPT-5 as
-CLAUDE.md's header still says; that line is stale and should be corrected
-next time CLAUDE.md is touched). Web (Next.js 15) and mobile (Expo SDK 54,
+AI-generated readings (OpenRouter, Llama 3.3 70B). CLAUDE.md's header and
+the `docs/` specs were corrected for this drift 2026-08-28. Current AI
+truth: SYSTEM-MAP §4; provider-swap status: see `.planning/PLACEHOLDERS.md`
+LLM-MODEL. Web (Next.js 15)
+and mobile (Expo SDK 54,
 Solito) share ~90% of code via `packages/core`, `packages/astrology`.
 
 **Who works on it:** one founder (Toni), doing product/design/business calls
@@ -361,9 +895,11 @@ product/money/auth/schema/ambiguity" operating model established 2026-08-13.
   design language; redesign pass is Batch 8. `/you/premium` subscription
   status/management (Batch 5) is now built and device-tested 2026-08-26 — the
   free-state branch's "subscribe on web" CTA is functional but its target
-  URL is an unfilled placeholder blocked on the founder's Vercel fix, see
-  halt-required register. **Not yet built on mobile:** the RevenueCat
-  paywall/purchase flow (native purchase UI — halt-required) and the
+  URL is unset (placeholder status: see `.planning/PLACEHOLDERS.md`
+  APP-URL-MOBILE; ruling in the halt-required register). **Not yet built on
+  mobile:** the RevenueCat paywall/purchase flow (native purchase UI —
+  halt-required; placeholder status: see `.planning/PLACEHOLDERS.md`
+  PAYWALL-MOBILE) and the
   push-notification permission/settings UI (Batch 8) — the push *backend*
   (schema, registration route, cron delivery) is fully built and wired,
   corrected 2026-08-16, was understated here. Amber→bronze is done
@@ -374,13 +910,10 @@ product/money/auth/schema/ambiguity" operating model established 2026-08-13.
   completion (stale TanStack Query cache never invalidated after save), and
   a chart-tab FPS drop on planet tap (unmemoized static SVG layers
   re-rendering on every selection change — see Batch 1 below for both).
-- **Pre-launch gates not yet clear** (see `.planning/PRE_LAUNCH_PREREQS.md`
-  for full detail, not duplicated here): telemetry/analytics `[not started]`,
-  browser UAT sign-off `[not started]`, load-testing `[blocked on M4]`, AI
-  provider fallback strategy `[not started, founder product call]`, GDPR/
-  privacy `[partial — no cookie consent banner, no /terms route, processor
-  DPAs unsigned]`, third-party licensing `[partial — 5 provider TOS reviews
-  outstanding]`.
+- **Pre-launch gates not yet clear.** Full detail and per-gate status:
+  `.planning/PRE_LAUNCH_PREREQS.md` (not duplicated here). The register
+  tracks the code-side items: `.planning/PLACEHOLDERS.md` COOKIE-CONSENT,
+  TERMS, DPA-CONTRACTS, ANALYTICS-VENDOR, LLM-FAILOVER.
 
 **Standing rules, established during batching (apply going forward, not
 just to the batch that produced them):**
@@ -408,10 +941,11 @@ should be:
 
 - Apple Developer Program enrollment and anything gated on it (TestFlight
   provisioning, SR 9 biometric auth bundle).
-- Compliance/legal items: cookie consent banner, `/terms` route, signed
-  processor DPAs (Clerk/Supabase/Stripe/OpenRouter TOS reviews), the Swiss
-  Ephemeris Professional License purchase (deferred by design until the
-  first genuine paying subscriber, not a launch blocker).
+- Compliance/legal items — cookie consent, `/terms`, signed processor
+  DPAs (Clerk/Supabase/Stripe/OpenRouter TOS reviews), the Swiss Ephemeris
+  Professional License purchase. Per-item status: see
+  `.planning/PLACEHOLDERS.md` COOKIE-CONSENT, TERMS, DPA-CONTRACTS,
+  SE-LICENCE (rollup in `PRE_LAUNCH_PREREQS.md` PLP-7).
 
 Every batch below is scoped and judged against this bar — a batch is not
 "done" if it ships code but leaves something that isn't Apple/compliance
@@ -1522,6 +2056,32 @@ used on.
   `.planning/TECHNICAL-SWEEP-2026-08-26.md` §6.1), so a wizard redesign is the
   natural place to fix it rather than a separate patch.
 
+**ADDED TO SCOPE 2026-08-28 (founder ruling — push opt-in split, see §6):**
+
+- **A "notifications" row in Settings — BOTH platforms — designed as part
+  of the settings screen's Batch 8 pass (`settings-v4.html`).** Recorded
+  now so it is not missed when the mockup is worked. Rationale: "Manage my
+  notifications" is something users go looking for, not something they
+  should have to catch in a transient banner. A banner is fine as an
+  *additional* prompt; it is not acceptable as the *only* route.
+  - **Web:** re-mount `PushNotificationBanner.tsx` (complete, currently
+    imported by nothing — unmounted as collateral damage in `d230a3f`),
+    but the settings row is the canonical home, not `/dashboard`. Banner
+    optional and secondary.
+  - **Mobile:** worse than a missing feature — a real UX defect. The only
+    trigger today is a one-time `Alert` after the first Oracle reading,
+    with an AsyncStorage flag (`stellaeum.notifications.prompted.v1`) that
+    never re-fires. Anyone who taps "Не сега" is permanently locked out of
+    notifications with no in-app path back. `you/settings.tsx` needs a real
+    toggle that reads current OS permission state and can re-request /
+    deep-link to OS settings.
+  - **Parity implication (open question the founder flagged):** web has a
+    working-but-unmounted banner; mobile has an incidental one-time prompt.
+    Neither matches the other. Under the same-on-both bar they need the
+    *same* control, designed once and built twice — another case where
+    parity is more work than the tracker's screen count implies. Feed this
+    into the Batch 8 settings mockup as a single cross-platform spec.
+
 **Status: scoped (2026-08-16), not started building.** Doesn't batch like
 the rest — screen-by-screen, founder approves every gate (mockup, then
 build, then device verify), per the process that finally worked for
@@ -1650,12 +2210,112 @@ build plan's Кръг sequencing predates the Кръг port and is now wrong, no
 just stale, corrected in Batch 8's own order above — is in the reference
 doc's own §8, not duplicated here.
 
+### Simultaneous-launch parity — recorded as a deliberate choice, 2026-08-28
+
+**Founder ruling (2026-08-28):** web and mobile launch simultaneously with
+the **same feature set** — one product, not a mobile subset and a web
+superset. Parity is the bar; a cut-scope launch test was explicitly
+rejected. This entry records that choice **with its cost stated**, per
+instruction, and separates the two readings of "parity" because they price
+very differently.
+
+**Two bars — BOTH now in force, one with a carve-out:**
+- **Feature/capability parity** (ruled, in force): every user-facing
+  capability exists on both platforms at launch. This is what the
+  MOBILE-WEB-PARITY-GAP inventory has always tracked, one direction
+  (web→mobile).
+- **Visual/design-language parity — RULED YES, 2026-08-28, with one
+  explicit carve-out.** The seven Batch 8 screens with real web
+  counterparts (`/rhythm`, the Oracle panel, `/you/guide`,
+  `/you/crystals`, `/you/recommendations`, `/rhythm/journal`,
+  `/birth-data`) get the **same design pass on both platforms**. Batch 8
+  is knowingly a double-build phase; the founder is accepting that cost.
+
+**SETTINGS AND AUTH ARE EXEMPT FROM VISUAL PARITY — this is the decision,
+not an oversight.** Web uses Clerk's hosted `<UserButton>` / `<SignIn>`
+UI. Building custom web auth/settings screens to match the mobile design
+language is a large, security-sensitive detour for aesthetic consistency,
+and Clerk's hosted UI is a hard boundary. **Accepted divergence:** web
+keeps Clerk's look for auth and account/settings; mobile keeps its
+hand-rolled screens (`sign-in`, `sign-up`, `verify`, `two-factor`,
+`settings`, `settings-email/-name/-password`). A later pass must not
+silently re-expand visual parity to cover these — the exemption is
+deliberate and is recorded here so it survives context loss. The
+notifications row (§6) is still designed once as a cross-platform spec —
+it is a content control inside settings, not the Clerk-hosted chrome, so
+the exemption does not cover it.
+
+**Cost of the choice, stated:**
+1. **Ongoing tax on every future feature.** Every new capability is now
+   built twice and gated twice before either platform can ship it. The
+   platforms gate each other: mobile cannot launch a feature web lacks,
+   and vice versa, for the life of the product (or until the bar is
+   formally relaxed).
+2. **Batch 8 is a double-build phase (ruled, accepted).** Of the nine
+   Batch 8 screens with existing v4 mockups (Оракул, Ритъм, Guide,
+   Crystals, Recommendations, Lunar diary, Settings, Wizard, Auth),
+   **seven get the same design pass on both platforms** (`/rhythm`,
+   Oracle panel, `/you/guide`, `/you/crystals`, `/you/recommendations`,
+   `/rhythm/journal`, and the wizard's web equivalent `/birth-data`).
+   **Settings and Auth are exempt** — see the carve-out above. The
+   doubling is **not uniform**:
+   - **Днес premium badge inverts — this is MOBILE work under the bar.**
+     Web already ships the badge (`DashboardContent.tsx`, `isPremium =
+     subscriptionTier !== 'free'`); mobile lost its stub in the
+     2026-07-22 Днес rebuild (parity-doc item 1.3). It is already on
+     Batch 8's list (#3, "Днес premium badge") — confirmed on the correct
+     side: mobile builds it, web is done.
+   - **The mobile paywall mockup IS the spec for Petko's `/pricing`
+     redesign.** The mobile paywall is ruled built-from-scratch without
+     opening `/pricing`; `/pricing` and `you/premium.tsx` are the two
+     surfaces DESIGN-RESEARCH-2026-08-27 flagged as carrying every
+     vibe-coded tell. So the from-scratch mobile paywall mockup becomes
+     the de-facto design spec Petko's `/pricing` rebuild follows —
+     **stated in his handoff**, otherwise two paywalls get designed
+     independently and neither matches.
+3. **Two open design decisions now gate a web screen too, not just
+   mobile:** the unruled WIZARD-PARTIAL-VALUE decision (wizard ↔
+   `/birth-data`), and the push-notification permission control (§6 ruling
+   already says "same control, designed once, built twice").
+
+**Direction-B gaps (mobile has, web lacks) that a same-on-both bar
+converts into web work:**
+- **Oracle sentinel colours** — web's Oracle `ReadingStream.tsx` strips
+  sentinels; mobile renders them (parity-doc 6.2). One component, in
+  Petko's tree. (Web's Днес `HoroscopeStream.tsx` already colours them —
+  the gap is Oracle-specific, not web-wide.)
+- **`/connect/[token]` deep link** — mobile deliberately opens the invite
+  link in the recipient's browser (documented decision in `circle.tsx`),
+  no native handler despite `scheme: "stellaeum"` in `app.json`.
+- **`/support`** — web has a support page (added with the first deploy);
+  mobile has no in-app support link anywhere. Apple review needs a support
+  URL as metadata regardless.
+- Hand-rolled mobile auth sub-screens (`two-factor`, `verify`,
+  `settings-email/-name/-password`) exist because Clerk RN `<UserProfile>`
+  is unloadable in Expo Go (parity-doc 5.7) — no web counterpart as custom
+  screens; web gets these from Clerk.
+
+**Verification basis:** web route list and mobile screen list are
+code-verified (`find` over `apps/web/app` and `apps/mobile/app`); the
+per-screen "needs a design pass" status is doc-sourced (Batch 8 scoping +
+DESIGN-RESEARCH-2026-08-27) and carries that doc's own reliability caveat
+— spot-check each against shipped code at mockup time.
+
+**Next action:** the Batch 8 plan needs Petko's seven web screens folded in
+and re-sequenced with him (`/rhythm`, Oracle panel, `/you/guide`,
+`/you/crystals`, `/you/recommendations`, `/rhythm/journal`, `/birth-data`),
+each following the mobile mockup for that screen as its spec. Settings and
+Auth stay out per the carve-out.
+
 ---
 
 ## 4. Halt-required register
 
 Items pulled out of batching because they need a founder ruling before any
-implementation work starts.
+implementation work starts. This section owns the **ruling narrative and
+history**; one-line current status + owner for the placeholder items it
+covers (PAYWALL-MOBILE, PROD-CREDS, RC-WEBHOOK-SECRET, APP-URL-MOBILE)
+lives in `.planning/PLACEHOLDERS.md`.
 
 ### Кръг invite UI (Batch 4 sub-batch B) — RATIFIED 2026-08-14
 
@@ -1852,9 +2512,10 @@ they were forgotten rather than deferred on purpose.
   second-provider failover), not something to decide unilaterally, so it
   sits here until ruled rather than being silently folded into a batch.
 - **Cookie consent banner / `/terms` route / signed processor DPAs.**
-  `PRE_LAUNCH_PREREQS.md` item 7 — genuinely open, not started. Depends
-  partly on item 1 (telemetry vendor decision, since a chosen analytics
-  tool determines what needs consent).
+  `PRE_LAUNCH_PREREQS.md` item 7. Cookie consent depends partly on item 1
+  (a chosen analytics tool determines what needs consent). Per-item
+  status: see `.planning/PLACEHOLDERS.md` COOKIE-CONSENT, TERMS,
+  DPA-CONTRACTS.
 - **Telemetry/analytics vendor decision** (`PRE_LAUNCH_PREREQS.md` item 1).
   PostHog was the prior candidate but was never installed — no vendor
   decision has actually been ratified. Not batched because it's a founder
@@ -1992,35 +2653,156 @@ they were forgotten rather than deferred on purpose.
      batch when the wizard mockup comes up (teaser content, Moon
      handling, wheel vs. sign-list, time-step framing) — not piecemeal.
 
-- **Post-deploy smoke test — OWNED, scoped 2026-08-27, not built.** After
-  every production deploy, one authed request per compute path (chart
-  calculate, transits overview, crystals overview, one circle route, both
-  AI routes, `/connect/<token>`), asserting no 5xx. Exists because the
-  2026-08-27 `sweph`/`geo-tz`/`dictionary-bg` outage (§0.6) was invisible
-  to page-level checks — every static page and auth gate returned exactly
-  what a healthy deploy would. Scope: `scripts/smoke/post-deploy.mjs`
-  taking a base URL + a seeded test user's `__session` cookie; wired as a
-  Vercel Deploy Hook / post-deploy GitHub Action + a manual
-  `pnpm smoke:prod`. **Must not depend on anyone remembering to curl
-  things.** Owner: engineering (Claude Code) once the §0.6 fix is
-  confirmed in production.
+- **Post-deploy smoke test — OWNED, scoped 2026-08-27, PRIORITY RAISED
+  2026-08-27, not built.** After every production deploy, one authed
+  request per compute path (chart calculate, transits overview, crystals
+  overview, one circle route, both AI routes, `/connect/<token>`),
+  asserting no 5xx. **Founder raised this up the queue after
+  `/api/horoscope/generate` failed three separate ways in one session
+  (§0.6 missing module → §0.7 frozen build path → §0.8 empty upstream
+  body), each one invisible until the previous came off.** That is the
+  argument: page-level checks and even a first authed probe kept passing
+  while a core route was dead. Scope: `scripts/smoke/post-deploy.mjs`
+  taking a base URL + a seeded test user's `__session` cookie; assert no
+  5xx on any probe; wired as a Vercel Deploy Hook / post-deploy GitHub
+  Action + a manual `pnpm smoke:prod`. For the AI routes, "no 5xx" now
+  includes accepting a **502 `AI_UPSTREAM_FAILED`** as a *known* state to
+  report-but-not-fail-on until §0.8's root cause is closed (else the smoke
+  test just red-flags the same known issue every run). **Must not depend
+  on anyone remembering to curl things.** Owner: engineering (Claude
+  Code); next in the queue after §0.8's root cause is identified from the
+  `[OPENROUTER-DEBUG]` logs.
+  - **2026-08-28 — scope additions + hard design requirements from the VAPID-cron incident.**
+    Scope addition:
+    - **The scheduled jobs are in scope, not just request routes.** The
+      `daily-horoscope` cron threw on every 06:00 UTC run since Web Push
+      shipped (malformed `VAPID_PRIVATE_KEY` → `setVapidDetails` throw) and
+      nothing surfaced it until server-side Sentry went live weeks later.
+      That is the one-sentence case for this whole item, sharpened: **a
+      scheduled job that fails silently is invisible by construction** — no
+      user is watching it, and it has no caller to return an error to. The
+      smoke test hits both cron paths (`daily-horoscope`,
+      `cleanup-deleted-accounts`) with the Production `CRON_SECRET` bearer
+      and asserts 200 + a sane body (`web`/`mobile` tallies present, no
+      `error` field). This is now the pre-launch mechanism for cron
+      observability — **PRE_LAUNCH_PREREQS item 2's "cron observability
+      deferred post-launch" line is overturned as of 2026-08-28, not merely
+      contested** (a contested deferral is still a deferral, and we now have
+      a concrete weeks-long silent failure). Sentry Crons / heartbeat
+      remains the better long-term shape and can replace this later; it is
+      no longer a reason to ship launch with zero cron coverage.
 
-- **Mobile has ZERO automated tests — OWNED, scoped 2026-08-27.** `pnpm
-  test` = 195 tests, **all `@stellaeum/web`** (`apps/web/test/**`, vitest).
-  `apps/mobile` has no test runner configured, no test files, no
-  `test` script. Every mobile guarantee to date is device-pass + code
-  read only. For an end state described as "built and tested" this is a
-  real gap that was never explicitly owned. Scope (not a decision to make
-  silently — founder confirms shape): (a) unit-level — the pure hooks and
-  lib helpers (`lib/config/webAppUrl.ts`, `lib/clerk/displayName.ts`, the
-  Кръг hooks' cache logic, `lib/haptics`) under vitest + React Testing
-  Library, mirroring the web setup; (b) NOT full RN render/e2e (Detox/
-  Maestro) at launch — disproportionate pre-users, revisit post-launch.
-  Smallest useful first slice: the auth-error mapping in `sign-in.tsx` /
-  `sign-up.tsx` and the `getWebAppUrl` placeholder guard, both of which
-  are logic with branches and both of which have shipped bugs before.
-  Owner: engineering; sequence after the §0.6 fix and the Google button,
-  before Batch 8's later screens.
+    Two hard requirements of the smoke test's **design** — if it ships
+    without either, it is a net negative:
+    1. **Probe traffic MUST be identifiable at the monitor.** The smoke
+       test deliberately generates error-shaped traffic on every deploy (a
+       malformed body → 400, a 502 `AI_UPSTREAM_FAILED`, a cron hit).
+       Without a marker, each run pages exactly like a real user outage, and
+       once real users exist a probe failure and a user failure are the
+       same Sentry event — we would have built a machine for generating
+       indistinguishable false alarms. Requirement: every smoke request
+       carries `x-stellaeum-probe: 1` (or a dedicated synthetic user / DSN
+       env), and `beforeSend` in `sentry.server.config.ts` tags or drops
+       it. Ship the `beforeSend` filter and the header **together**, in the
+       same change as the smoke script. Tracked as VERIFICATION-SURFACE-GAPS
+       #11 (a requirement of this item, not a note attached to it).
+    2. **The response MUST carry a build/version marker** so a probe can
+       tell *which deployment answered it* from the response body alone —
+       e.g. `x-stellaeum-build: <VERCEL_GIT_COMMIT_SHA>` header, or a
+       `build` field in each JSON response. 2026-08-28's cron probe returned
+       the pre-refactor `{sent, failed, mobile}` shape, which by accident
+       revealed it had hit a stale deployment — the smoke test should give
+       that signal on purpose, not by luck. This is the direct fix for the
+       Skew Protection episode (VSG #10): "did the fix deploy" becomes
+       answerable without dashboard archaeology. Tracked in the register:
+       `.planning/PLACEHOLDERS.md` BUILD-SHA (this item is its spec).
+
+- **Mobile has ZERO automated tests — OWNED, scoped 2026-08-27. First slice
+  landed 2026-08-29 (Google sign-in build).** Scope confirmed: (a)
+  unit-level — pure hooks and lib helpers under vitest, mirroring web's
+  setup; (b) NOT full RN render/e2e (Detox/Maestro) at launch —
+  disproportionate pre-users, revisit post-launch. Added `apps/mobile/
+  vitest.config.ts` (same shape as `apps/web/vitest.config.ts`: `@/` alias,
+  `test/**/*.test.ts`, node environment) and `"test": "vitest run"` in
+  `apps/mobile/package.json`, wired into root `check:all` via the existing
+  `pnpm run test` → `turbo run test` fan-out (no separate gate needed —
+  turbo already runs any workspace's `test` script if present). First real
+  test: `apps/mobile/test/clerk/displayName.test.ts`, 5 cases covering the
+  Apple-private-relay guard added in the same change (see Google sign-in
+  entry below) — proved red against the pre-guard `displayName.ts` via
+  `git stash` before restoring the fix, per standing discipline. `pnpm run
+  check:all` green end-to-end with mobile's tests included (exit 0).
+  Remaining from the original scope (`lib/config/webAppUrl.ts`, the Кръг
+  hooks' cache logic, `lib/haptics`) not yet covered — this slice only
+  added tests for code touched in this change, not a retroactive sweep.
+
+- **Push notification opt-in — WEB has no user-reachable subscribe control;
+  MOBILE prompt is incidental-only. Found 2026-08-28 after the VAPID cron
+  fixes.** The two transports are on different tracks and were being
+  conflated:
+  - **Web push has NO Apple dependency and is otherwise shippable today.**
+    Server side is complete and verified: `/api/push/subscribe` +
+    `/api/push/unsubscribe` (tested), `public/sw.js` service worker,
+    `NEXT_PUBLIC_VAPID_PUBLIC_KEY` inlined, the `daily-horoscope` cron web
+    branch confirmed working in prod on `d151f5a`. **The gap is the opt-in
+    UI.** `apps/web/components/horoscope/PushNotificationBanner.tsx` is a
+    complete, styled subscribe/unsubscribe control — but it is imported by
+    nothing. Git history: it was mounted on `/dashboard`
+    (`DashboardContent.tsx`, gated on `birthChart`) in `fd15199`, then the
+    `<PushNotificationBanner />` render **and** its import were deleted in
+    `d230a3f` ("style: editorial front-end overhaul across web app") — the
+    same commit restyled the component file, so the unmount looks
+    incidental to the aesthetic pass, not a deliberate product call. Net:
+    `push_subscriptions` can only be populated by re-mounting that
+    component (one line) or building a new control. Until then the entire
+    web push path is server-only with no way for a user to subscribe.
+    **Founder ruling 2026-08-28:** the canonical home is a notifications
+    row in Settings, both platforms, designed in the Batch 8 settings pass
+    — re-mounting the banner is fine as an additional prompt but not as the
+    only route. Full ruling + parity note in the Batch 8 "ADDED TO SCOPE
+    2026-08-28" block. Also VERIFICATION-SURFACE-GAPS #12 (nothing caught
+    the unmount because every gate tests code that runs, not reachability).
+    No Claude UI work until asked.
+  - **Mobile push permission flow exists and is reachable, but only fires
+    incidentally.** `maybePromptPushPermission` (`apps/mobile/lib/
+    notifications/`) is wired to `oracle.tsx`'s `onFreshGeneration` — it
+    prompts once, ever (AsyncStorage flag `stellaeum.notifications.
+    prompted.v1`), after the user's first successful Oracle reading. FF
+    `EXPO_PUBLIC_FF_PUSH` defaults on. There is **no explicit
+    "notifications" toggle** anywhere — `you/settings.tsx` has only
+    name/email/password rows — so a user who declines or misses the
+    one-shot prompt has no in-app way back. End-to-end verification
+    (system prompt → `getExpoPushTokenAsync` → `/api/push/register` →
+    APNs delivery) is blocked on Apple Developer enrolment (APNs
+    credentials) and needs a real iOS build — see §5 Blocked-externally.
+    The permission *scaffold* is code-complete (SR 8.3); the reachable,
+    manageable opt-in and the real-device verification are not. **Founder
+    ruling 2026-08-28:** the one-shot-prompt-with-no-way-back is a UX
+    defect, not just a missing feature — a real notifications toggle in
+    `you/settings.tsx` is Batch 8 scope (see the "ADDED TO SCOPE
+    2026-08-28" block).
+
+- **Unimported-module / reachability CI gate — OWNED, scoped 2026-08-28,
+  not now.** Adopt `knip` as a CI check with Next app-router entry points
+  (`app/**/{page,layout,route,default,loading,error,not-found}.tsx`,
+  `instrumentation*.ts`, `middleware.ts`, `sentry.*.config.ts`, config
+  files, `scripts/**`) declared as roots, so a component/module that
+  nothing reaches from a real entry point fails the build. Rationale +
+  the full "why not (b)/(c)/(d)" reasoning: VERIFICATION-SURFACE-GAPS #12.
+  This is the automatable slice of the reachability gap — it would have
+  caught `PushNotificationBanner.tsx` the day `d230a3f` orphaned it.
+  **Stated one-time cost: baseline triage.** A monorepo this size will
+  surface a first-run list mixing real dead code with intentional-but-
+  unreferenced files (generated code, type-only barrels, scripts invoked
+  by name, EAS/Expo config, test fixtures); each needs a keep/delete call
+  and a `knip.json` `ignore` entry or deletion before the gate can go
+  red-on-new. Budget that as the bulk of the work, not the wiring.
+  Explicitly **not** in scope: dead-conditional render detection (#12 (b),
+  undecidable — skip); route-with-no-nav-path sweep (#12 (c), optional
+  advisory only if someone asks). Real user-reachability (#12 (d)) is
+  handled by the per-feature obligation now in
+  `.planning/phases/m3-uat/BROWSER_CHECKLIST.md`, not by tooling. Owner:
+  engineering; no fixed sequence — slots into any CI-hardening pass.
 
 ## Correction — Кръг mobile is functionally ported (parity-doc error #6)
 
@@ -2040,3 +2822,406 @@ SavedProfileForm}.tsx` (~970 LOC combined), and **13 hooks** under
 not functional. This is the sixth documented instance of that doc's
 status column being wrong — treat every cell there as a hypothesis
 (its own header says so).
+
+---
+
+## 7. Path to launch — full sequence (recorded 2026-08-27)
+
+Written down because it previously lived only in a session and would be
+lost on a context clear. Supersedes the scattered auth/UI notes above
+where they conflict. Re-verify any code claim against the tree.
+
+### 7.1 The launch clock — three wall-clock items, none shortened by code
+
+Launch is not gated on the engineering queue. It is gated on three
+founder-owned items that consume calendar time regardless of what is
+built:
+
+| Clock | Duration once started | Start date |
+|---|---|---|
+| **Apple Developer enrolment** | Days (Individual) to weeks (Organization — needs a D-U-N-S number, the long pole). The Individual-vs-Organization choice is the first fork. | **NEXT WEEK** — costs money the founder does not have this week |
+| **Google Play registration -> closed testing** | Registration + **hard 14-day** closed test with >=12 testers, counted from when a signed build is uploaded | **NEXT WEEK** — same money constraint |
+| **Bulgarian data-protection lawyer** — `/privacy` (long pole) + short `/terms` review | Weeks: engagement + drafting + founder review. Brief is written (`PRIVACY-POLICY-LAWYER-BRIEF-2026-08-27.md`). Also needs Petko's LLM-provider decision to fill the AI section. | **THIS WEEK** — the email costs nothing |
+
+**Timeline read:** if all three start on schedule and engineering runs in
+parallel, launch is ~4-6 weeks out. Serialised (finish Batch 8, then
+start the clocks) it is that plus the whole Batch 8 duration.
+
+### 7.2 What the one-week slip on Apple + Play actually moves
+
+Apple enrolment and Play registration slipping from "this week" to "next
+week" (money):
+
+**Slips by ~1 week:**
+- Store submission and therefore the Play 14-day closed-test window ->
+  **launch date moves ~1 week later.** This is the binding effect.
+- SIWA end-to-end config/testing (already gated on Apple enrolment).
+
+**Does NOT slip:**
+- Anything in Batch 8 — mockup -> approve -> build -> device-verify runs
+  on founder-review cycles, not money.
+- The Google button and everything in Tracks 4 and 5 (all zero-spend).
+- Legal readiness — the pole there is the **lawyer's** turnaround, not
+  enrolment; the engagement email goes this week regardless.
+- The 0.6 / 0.7 production fixes.
+
+**Therefore the week is genuinely free** to spend on engineering that
+would otherwise be critical-path — the Google button, Track 4, Track 5,
+the 0.7 fix — rather than on Batch 8's long tail, which can wait without
+moving the launch date.
+
+### 7.3 Zero-spend plan for THIS week, ordered
+
+0. **0.7 fix** — `bg-allowlist.txt` -> code module. Unblocks
+   `/api/horoscope/generate` + `/api/oracle/generate` in production.
+   First, on founder go-ahead. **[me, free]**
+1. **Lawyer email** — send `PRIVACY-POLICY-LAWYER-BRIEF-2026-08-27.md`.
+   Starts the longest legal clock. **[founder, free]**
+2. **`support@stellaeum.com`** — Cloudflare Email Routing, ~15 min.
+   **[founder, free]**
+3. **Track 5 env values** — `NEXT_PUBLIC_APP_URL` in Vercel ->
+   `https://www.stellaeum.com`; `EXPO_PUBLIC_WEB_APP_URL` in
+   `apps/mobile/.env.local` + EAS env. Small, was blocked on Vercel (now
+   resolved). **[me + founder, free]**
+4. **Google button** — Track 1 Phase A (see 7.4). ~2 days, device-testable
+   on the current dev client. **[me, free]**
+5. **Track 4 loose ends** as time allows — the two prepared migrations,
+   `subscription_quotas` export gap, `audit_logs` id backfill. All small,
+   all free. **[me, free]**
+
+**Next week, when money is available:** Apple enrolment (decide
+Individual vs Organization first), Google Play registration + line up 12
+testers.
+
+### 7.4 Auth work — Phase A (now) vs Phase B (after Apple enrolment)
+
+Deps already installed: `@clerk/expo ^3.2.4`, `expo-auth-session`,
+`expo-apple-authentication`, `expo-dev-client`, `expo-web-browser` (the
+last already in `app.json` plugins). No `expo-apple-authentication`
+plugin, no `ios.usesAppleSignIn` — verified 2026-08-27. Account linking:
+no Clerk toggle exists, it is always on; only "Verify at sign-up" (ON,
+done) matters — see 6 and `APPLE-REVIEW-REQUIREMENTS 7`.
+
+**Phase A — no Apple enrolment needed, all doable now:**
+- A1. Google connection on the Clerk **dev** instance — reportedly already
+  enabled on the shared credentials; confirm. ~0. **[me]**
+- A2. Mobile "Continue with Google" button + `useSSO`/`startSSOFlow` +
+  `setActive(createdSessionId)` + Bulgarian error mapping (mirror the
+  `ERROR_MESSAGES` maps in `sign-in.tsx`). ~1-2 d. **Device-testable on
+  the current dev client — browser SSO needs no native build.** **[me]**
+- A3. `displayName.ts` relay-host guard (skip the email-username step when
+  the host is `privaterelay.appleid.com`). ~15 min. **[me]**
+- A4. SIWA client code — `expo-apple-authentication` config plugin +
+  `ios.usesAppleSignIn` in `app.json`, native Apple-sheet flow, token
+  handoff to Clerk (`oauth_token_apple`), the compliant
+  `<AppleAuthentication.AppleAuthenticationButton>`. ~2-3 d of code.
+  **Writable now, NOT testable — needs the new build (A5) + Phase B.**
+  **[me]**
+- A5. New dev-client build with the Apple plugin. Changes the founder's
+  testing loop — flag before starting A4. **[me + founder]**
+
+**=== APPLE ENROLMENT BOUNDARY ===**
+
+**Phase B — only after enrolment clears:**
+- B1. Developer portal: "Sign In with Apple" capability on
+  `com.stellaeum.app`; Services ID; `.p8` key + Key ID + Team ID. ~45 min.
+  **[founder]**
+- B2. Paste those into Clerk's Apple connection. ~15 min. **[me + founder]**
+- B3. End-to-end SIWA test on the new dev-client build. ~0.5 d.
+  **[me + founder]**
+- B4. Token-revocation-on-delete in `cron/cleanup-deleted-accounts` —
+  best-effort revoke + Sentry alert (recommended ruling), client-secret
+  JWT signing server-side, `.p8` as a Vercel secret + a `turbo.json`
+  `build.env` entry. ~1-1.5 d. **[me, needs the .p8 from B1]**
+
+**Gates "Google is shipped" regardless of client code:** the founder's own
+Google Cloud OAuth client + consent screen (needs the resolving privacy
+URL — have it now); and **web must render the Google button in the same
+release as mobile** (a Google-only mobile signup cannot log into web
+otherwise). Web is near-zero via Clerk's prebuilt `<SignIn/>` once the
+connection exists on the **production** Clerk instance — but that is a
+Vercel deploy plus the Clerk production instance setup (DNS on the domain,
+now resolving).
+
+### 7.5 Tracks 1-6 — the full dependency sequence
+
+Tags: **[me-free]** = no external dependency, do any time - **[me-coupled]**
+= no external dependency but sequenced behind another internal item -
+**[external]** = blocked on money / Apple / Play / lawyer / Petko.
+
+**Track 1 — Auth** (detail in 7.4)
+- Phase A1-A5 — **[me-free]** (A4/A5 writable now, SIWA untestable)
+- Phase B1-B4 — **[external]** (Apple enrolment)
+- Google production OAuth client + consent screen — **[external]** (founder
+  + needs Clerk production instance)
+- Web Google/Apple buttons + Clerk production instance — **[me-coupled]**
+  (Vercel deploy; must ship same release as mobile Google)
+
+**Track 2 — Batch 8 UI** (screen-by-screen, founder gate at every step)
+- Device-check the contrast fix (`#6d7e97` at 12px / 9.5px) — **[me-free]**,
+  the thing blocking Batch 8 start
+- Ti-premium + paywall mockup -> approve -> build -> verify — **[me-free]**
+  (fresh mockups, zero exist)
+- Krug — fresh mockups every screen (`krug-v4.html` is mood-only), build
+  against the already-ported functionality (see the "Krug mobile is
+  functionally ported" correction above) — **[me-free]**, design only
+- Dnes premium badge — trivial, bundle into another session — **[me-free]**
+- Remaining screens with usable v4 mockups (Orakul, Ritam, Guide,
+  Crystals, Recommendations, Lunar diary, Settings, Auth) — **[me-free]**
+- Wizard — mockup currency check, then build; includes `POST
+  /api/chart/preview` (Design A, wraps existing `calculateNatalChart`;
+  route does not exist yet) + the one VirtualizedList-nesting fix —
+  **[me-free]**
+- AppLoadingScreen — needs a mockup from scratch — **[me-free]**
+- Cinzel-Cyrillic ESLint guard — after Batch 8's first screen exists —
+  **[me-coupled]**
+
+**Track 3 — Money path**
+- Item 16: **native RevenueCat purchase-call layer** —
+  `RevenueCatProvider.tsx` is `configure()` + identity only; zero
+  `getOfferings`/`purchasePackage`/`CustomerInfo`/paywall anywhere in
+  mobile. Real engineering, no external dependency, but **coupled to the
+  paywall mockup** -> lands with Batch 8's first screen, not before.
+  ~3-4 d + tests. **[me-coupled]**
+- Item 17: **RevenueCat webhook signing secret** — RevenueCat dashboard,
+  ~15 min, then an e2e webhook test. A finished paywall grants nothing
+  server-side until this is real, but item 16 can be built before it.
+  Status: see `.planning/PLACEHOLDERS.md` RC-WEBHOOK-SECRET. **[external]**
+  (founder, dashboard — but free; do it any time)
+
+**Track 4 — Backend loose ends** (all **[me-free]**, all small)
+- Two prepared DB migrations (`user_crystals` FK + orphan cleanup;
+  capture 16 untracked tables via `migration repair` — never `db push`)
+- `subscription_quotas` missing from GDPR export
+- `audit_logs` pre-existing-rows id backfill `UPDATE` (or moot if the
+  accountant says prune)
+- Mobile test suite — see 6 "Mobile has ZERO automated tests"
+- ~~`/connect/[token]` 500~~ — **RESOLVED by the 0.6 fix**, it was the
+  `sweph` failure, not token validation. No separate work.
+
+**Track 5 — Env values** (all **[me-free]**, ~5 min each; were blocked on
+Vercel, now unblocked)
+- `NEXT_PUBLIC_APP_URL` in Vercel -> `https://www.stellaeum.com`
+- `EXPO_PUBLIC_WEB_APP_URL` in `apps/mobile/.env.local` + EAS env
+
+**Track 6 — External, founder-owned**
+- Apple enrolment — **[external]**, NEXT WEEK (money)
+- Google Play registration + 12 testers + 14-day closed test —
+  **[external]**, NEXT WEEK (money); the 14-day wall is the true critical
+  path
+- Bulgarian privacy lawyer — **[external]**, email THIS WEEK (free); brief
+  ready
+- Accountant — controller legal entity + `audit_logs` payment-row
+  retention — **[external]**
+- Petko's LLM-provider decision — **[external]**, blocks the privacy
+  policy's AI section + the 300/mo premium-cap re-derivation
+- `support@stellaeum.com` — **[me-free / founder]**, THIS WEEK, 15 min
+- App icon + designer assets (glyphs are Unicode placeholders now) —
+  **[external]**
+- Termly — **[me]** decision: don't buy (no Bulgarian). Needs ratification.
+
+### 7.6 Sentry read token — noted, not urgent
+
+The `SENTRY_AUTH_TOKEN` in `apps/web/.env.local` is a `sntrys_...`
+org-scoped token provisioned for **source-map upload only**. It returns
+`You do not have permission` on the Issues and Events APIs (tried both
+`sentry.io` and the `de.sentry.io` EU region — the org is EU-hosted per
+the token's `region_url`). Consequence: every production error diagnosis
+currently depends on the founder screenshotting or pasting from the Sentry
+dashboard. A **read token** for programmatic diagnosis needs, at minimum,
+scopes **`event:read`** and **`project:read`** (add **`org:read`** to
+enumerate projects). Create it as a Sentry **User Auth Token** (Settings ->
+Account -> Auth Tokens) or an **Organization Auth Token** with those
+scopes, store it as a separate env var (e.g. `SENTRY_READ_TOKEN`) so it is
+not conflated with the upload token, and keep it out of `turbo.json` /
+Vercel (local-diagnosis only). Not launch-blocking; do it when convenient.
+
+### 7.7 Before real traffic — flip-these-back checklist
+
+Things deliberately set to a debugging-friendly state during solo
+pre-launch that MUST be reverted before the first real users:
+
+- **Re-enable Vercel Skew Protection** before the closed test opens (12h
+  window is fine). It was turned off for solo pre-launch debugging, where
+  its only effect was pinning the browser to stale functions and
+  corrupting every probe (§0.9, VSG #10). Status + target state (ON before
+  real traffic, paired with a build-SHA marker): see
+  `.planning/PLACEHOLDERS.md` SKEW-PROTECT and BUILD-SHA.
+- ~~Remove the `[OPENROUTER-DEBUG]` shim in `lib/ai/client.ts`~~ —
+  **DONE 2026-08-27**, removed the same day it was added once §0.8 turned
+  out to be a phantom.
+- **Back-out any temporary `console.error(await res.text())` / debug
+  instrumentation** — none currently outstanding; keep the habit of
+  listing new ones here.
+- (Add here as more debug-state toggles accumulate.)
+
+### 7.8 Google sign-in (mobile) — built 2026-08-29
+
+`useSSO` from `@clerk/expo` (legacy `useSignIn`/`useSignUp` under the
+hood, throw-based, does not compose with the Future API's `finalize()` —
+confirmed from installed source, not docs). New `lib/clerk/oauth.ts`
+wraps `startSSOFlow({ strategy: 'oauth_google' })` with an explicit
+`redirectUrl` (`stellaeum://sso-callback`, via `AuthSession.makeRedirectUri`)
+rather than the SDK default, so the Clerk-allowlisted value is provably
+what's in code. Dismissing the browser sheet (`authSessionResult.type`
+`'cancel'`/`'dismiss'`) is treated as a no-op, not an error — it has no
+Clerk error code. `app/(public)/sso-callback.tsx` added as a safety-net
+route: `openAuthSessionAsync` resolves the promise itself, but if the OS
+also fires the redirect as a normal expo-router deep link, this keeps the
+user off an "Unmatched Route" screen while `(public)/_layout.tsx`'s
+existing `isSignedIn` redirect takes over.
+
+Error mapping refactored: `lib/clerk/errorMessages.ts` now exports
+`resolveClerkError(err, messages)` — the lookup logic shared across every
+screen's own key→string map (Future-API value errors and legacy thrown
+errors both handled, never falls through to Clerk's raw English) — plus
+a new `OAUTH_ERROR_MESSAGES` map. Per-screen maps in `sign-in.tsx` /
+`sign-up.tsx` kept byte-identical; only the duplicate inline
+lookup-function bodies were collapsed to call the shared helper. The
+no-name edge (Google omits firstName/lastName, transfer `signUp.create`
+fails required-field validation, or `signUp.status === 'missing_requirements'`
+on return) maps to a message telling the user to sign up with email/password
+instead, not a dead end.
+
+**Pre-existing defect found, not created, by this refactor:** the original
+`sign-in.tsx`/`sign-up.tsx` `getErrorMessage` had no `logError` call at
+all — an unmapped Clerk code fell through to `e.message`, so the user saw
+raw English text, but nothing ever reached Sentry. That gap was invisible
+because the English fallthrough was itself the only signal anything was
+wrong, and nobody was watching for it. Collapsing both screens onto
+`resolveClerkError` (which intentionally never falls through to raw
+English, to stop the leak) would have made it strictly worse — an
+unmapped code now shows the generic Bulgarian string with nothing behind
+it to notice or map from. Caught before commit; fixed by adding
+`logError('ERR-AUTH-SIGNIN'/'ERR-AUTH-SIGNUP', err)` at the point
+`resolveClerkError` returns `undefined`, on all three touched call sites
+(`oauth.ts`, `sign-in.tsx`, `sign-up.tsx`). `verify.tsx` has the identical
+original shape — same missing `logError`, not touched in this change,
+left open. Same class as the RevenueCat non-Error-object finding below:
+a defect that sat silent until a new code path ran through it.
+
+Two `getDisplayName` (`lib/clerk/displayName.ts`) fixes shipped alongside,
+solving different problems:
+- **Permanent guard:** Apple Private Relay addresses
+  (`a1b2c3d4e5@privaterelay.appleid.com`, SIWA's "Hide My Email") never
+  reach the email-username fallback — host check is `=== 'appleid.com'`
+  or `.appleid.com` suffix, not a bare substring match. An earlier draft
+  using `.endsWith('appleid.com')` on the full email would have
+  false-positived on `notappleid.com`; caught before commit — but the
+  sharper reason it must stay an exact host/subdomain match, not
+  `includes()`/`endsWith()` on the email string, is that a substring
+  check matches an attacker-registered domain containing the string,
+  e.g. `foo@privaterelay.appleid.com.evil.tld` — that domain is not
+  Apple's, and display-name spoofing from it should not get free rein.
+  The reasoning is recorded in `displayName.ts` itself, not just here —
+  this is exactly the kind of check someone "simplifies" back to
+  `includes()` later without reading a commit message first. Google
+  rarely triggers the no-name path at all since Google returns names;
+  SIWA (next, blocked on Apple Developer enrolment) would hit it
+  immediately and permanently.
+- **Transient guard:** one `clerk.user?.reload()` in `oauth.ts` right
+  after `setActive`, closing the window where Clerk populates
+  firstName/lastName from the external account asynchronously on
+  transfer — without it, a legitimate user could briefly see their email
+  username as their name right after sign-in.
+
+First mobile test suite landed in the same change — see §"Mobile has ZERO
+automated tests" above for the vitest setup; the test itself
+(`test/clerk/displayName.test.ts`, 5 cases) is the relay guard, proved red
+against pre-fix code before being trusted.
+
+**Copy-lock / lint-baseline:** `copy-lock.json` regenerated, diff
+contained exactly the new/changed literals (2 Google button labels, 4
+`OAUTH_ERROR_MESSAGES` strings) plus a de-dup of the pre-existing
+catch-all string's occurrence count (the refactor removed a redundant
+`e.message || nested?.message ||` fallthrough that had it appearing
+twice per file). Lint baseline `1772 → 1778` (+6, matches exactly).
+`pnpm run check:all` green end-to-end, exit 0.
+
+**DEVICE-VERIFIED 2026-08-31 (Android emulator) — happy path, both cancel
+paths, all clean.** `stellaeum://sso-callback` allowlisted in Clerk →
+Native Applications; Google confirmed enabled on the dev-client's Clerk
+instance. Account picker appears, picking an account returns a session,
+lands authed. Sheet-swipe-away and in-sheet Cancel both resolve as no-ops
+(no red error, button re-enabled) — matches the `'cancel'`/`'dismiss'`
+no-op design in `lib/clerk/oauth.ts`. Only errors observed were the known
+`ERR-MOB-RC-004` RevenueCat Test Store noise (§7.9), not auth defects.
+
+**NOT yet verified — do not treat as covered:**
+- **iPhone / Expo Go.** Only the Android emulator has been device-tested.
+  iOS may hit different `AuthSession`/redirect behavior; untested.
+- **Account-linking case** — an existing password account signing in with
+  Google on the same email, to confirm Clerk links rather than
+  duplicating the user. Test plan step 4, not yet run.
+- **Airplane-mode / offline error path** (test plan step 5) — not yet run.
+
+### 7.9 Sentry triage from first Google-button emulator/device testing — 2026-08-29
+
+Four High-priority Sentry issues, `environment: development`, from the
+founder's own testing of §7.8. See VERIFICATION-SURFACE-GAPS #11
+reinforcement — none of these self-identify as test traffic.
+
+**Ignored, correctly:**
+- `ERR-MOB-RC-004` on both platforms — RevenueCat `logIn()` rejection,
+  iPhone breadcrumb confirms `POST /v1/subscribers/identify [401]`. Known
+  Test Store limitation (§ RevenueCatProvider.tsx's own REVISIT-62
+  verification-checkpoint comments), not a code defect.
+- `NullPointerException: null cannot be cast to non-null type
+  DevLauncherController` — Expo's own dev launcher crashing on its error
+  screen. Their bug, dev-client-only, not reachable in a production build.
+
+**Fixed in this change:**
+- **`logError` was passing non-Error values straight to
+  `Sentry.captureException`**, so a plain rejection object (RevenueCat's
+  `{code, info, message}` shape, from the `ERR-MOB-RC-004` `.catch()`
+  above) arrived in Sentry as "Object captured as exception with keys:
+  code, info, message" — ungroupable, no stack trace, message useless.
+  This is a general defect in the shared helper
+  (`apps/mobile/lib/monitoring/logError.ts`), not specific to RevenueCat —
+  every non-Error rejection anywhere in the app degrades the same way;
+  RevenueCat's was just the first one to run through a path that actually
+  threw a plain object instead of an `Error`. Fixed by wrapping any
+  non-Error `err` in a real `Error` before capture (preserving the
+  original value as `extra.originalValue`), so Sentry always gets a
+  message and a stack. Same shape as the defects found in §7.8 above and
+  the RevenueCat-Expo-Go-detection pattern documented in
+  `RevenueCatProvider.tsx`'s own header comment: invisible until
+  something new ran through the path.
+
+**Still open — Sentry read access confirmed the thread dump exists but is
+not usable for localization (2026-08-31, via `SENTRY_READ_TOKEN`):**
+- **Foreground ANR, level FATAL, Android emulator, mechanism
+  `AppExitInfo`, fingerprint `foreground-anr`.** Device class "low", 4
+  processors, 3.8 GiB. Static code read (prior session) ruled out the
+  obvious candidates without finding the blocker: `NatalWheel.tsx`'s
+  planet-position collision pass is a 4-pass loop over ~10-13 planets
+  behind its own `useMemo`, not expensive; every `AsyncStorage` call in
+  the app (`useDailyHoroscope`, `useDailyReveal`, `inviteLinks`,
+  `useStoryList`, `maybePromptPushPermission`) is awaited, none
+  synchronous; `useDailyHoroscope`'s only `JSON.parse` is on a small
+  cached payload; `RevenueCatProvider`'s `configure()`/`logIn()`/`logOut()`
+  are all async/Promise-based; Swiss Ephemeris WASM runs server-side only
+  per this repo's architecture, never in the mobile bundle.
+  **2026-08-31, pulled the actual event (`sentry.io` org `celestia-ul`,
+  project `stellaeum-mobile`, issue 143611866, event `b5662c31…`) via the
+  read token: the `threads` entry enumerates 82 threads with full frames,
+  but NONE is named `main`, none is flagged `crashed: true` or
+  `main: true`, and the top-level `exception` entry has `threadId: null`
+  and `stacktrace: null`.** So the actual UI/main thread — the one that
+  would show what blocked it — is simply absent from this event's thread
+  dump. This is a known limitation of Sentry Android's `AppExitInfo`
+  mechanism: on Android 11+ it reconstructs ANR reports from the OS's own
+  exit-info record, and if the OS didn't retain a full trace at capture
+  time (or Sentry's SDK couldn't attach to it), the report still lists
+  every live thread (names/states) but the one thread that actually
+  matters can come back frameless or missing entirely. **This is not
+  "needs more digging" — it's a data gap the emulator's ANR report
+  doesn't have.** Conclusion: this specific Sentry event cannot localize
+  the block. Two ways forward, not attempted yet: (a) reproduce on a real
+  device / higher-spec emulator and see if a subsequent ANR event carries
+  a populated `main` thread (some OS versions retain the trace more
+  reliably); (b) treat the "low"/4-core device class as the leading
+  suspect per the founder's original framing — a real phone may simply
+  not hit Android's ANR threshold at all, in which case this closes by
+  disappearing rather than by being fixed. Not ruling that in yet either —
+  "may be" is still not "is".

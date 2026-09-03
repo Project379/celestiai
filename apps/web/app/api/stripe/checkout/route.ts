@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { stripe } from '@/lib/stripe/client'
 import { requireAppUser, requireAccountActive, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
+import { CHECKOUT_IMMEDIATE_PERFORMANCE_CONSENT_BG } from '@/lib/legal/compliance-copy'
 
 /**
  * POST /api/stripe/checkout
@@ -64,6 +65,9 @@ export async function POST(req: Request) {
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
+      // Bulgarian-market app — render Checkout in Bulgarian rather than
+      // letting it fall back to the browser locale.
+      locale: 'bg',
       line_items: [{ price: priceId, quantity: 1 }],
       customer: stripeCustomerId ?? undefined,
       metadata: {
@@ -72,6 +76,22 @@ export async function POST(req: Request) {
       subscription_data: {
         metadata: {
           clerkUserId: userId,
+        },
+      },
+      // EU consumer law: require an explicit Terms-of-Service tick before
+      // payment. NOTE: Stripe rejects this call unless a Terms-of-Service
+      // URL is set in Dashboard → Settings → Public details. That is a
+      // dashboard step tied to PROD-CREDS, not code.
+      consent_collection: {
+        terms_of_service: 'required',
+      },
+      // Consumer Rights Directive: for a digital service that starts
+      // immediately, the buyer must consent to immediate performance and
+      // acknowledge that doing so waives the 14-day withdrawal right. This
+      // text replaces Stripe's default ToS-agreement line.
+      custom_text: {
+        terms_of_service_acceptance: {
+          message: CHECKOUT_IMMEDIATE_PERFORMANCE_CONSENT_BG,
         },
       },
       success_url: `${appUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,

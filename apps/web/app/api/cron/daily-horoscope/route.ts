@@ -1,5 +1,6 @@
 import webpush from 'web-push'
 import { Expo } from 'expo-server-sdk'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { verifyCronSecret } from '@/lib/auth/cron-secret'
 
@@ -62,112 +63,207 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Configure VAPID details for web-push authentication
-  webpush.setVapidDetails(
-    'mailto:hello@stellaeum.app',
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
-  )
-
   const supabase = createServiceSupabaseClient()
 
-  // Fetch all active push subscriptions
-  const { data: subscriptions, error } = await supabase
-    .from('push_subscriptions')
-    .select('id, endpoint, p256dh, auth')
-    .limit(WEB_PUSH_SELECT_CEILING)
-
-  if (error) {
-    console.error('[Cron Daily Horoscope] Failed to fetch subscriptions:', error)
-    return Response.json({ error: 'Грешка при зареждане на абонаментите' }, { status: 500 })
-  }
-
-  if (!subscriptions || subscriptions.length === 0) {
-    return Response.json({ sent: 0, failed: 0 })
-  }
-
-  const payload = JSON.stringify({
-    title: 'Твоят дневен хороскоп',
-    body: 'Новото ти послание от звездите те очаква.',
-    icon: '/icon-192x192.png',
-    url: '/dashboard',
-  })
-
-  let sent = 0
-  let failed = 0
-  const expiredEndpoints: string[] = []
-
-  // Send notification to each subscriber, WEB_PUSH_CONCURRENCY at a time
-  // rather than one at a time — see the constant's doc comment above.
-  // Per-subscriber error handling (expired-endpoint detection) is
-  // unchanged; only the await structure changed, from one-at-a-time to
-  // batched-parallel.
-  for (let i = 0; i < subscriptions.length; i += WEB_PUSH_CONCURRENCY) {
-    const batch = subscriptions.slice(i, i + WEB_PUSH_CONCURRENCY)
-    const results = await Promise.allSettled(
-      batch.map((sub) =>
-        webpush.sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: {
-              p256dh: sub.p256dh,
-              auth: sub.auth,
-            },
-          },
-          payload
-        )
-      )
-    )
-
-    results.forEach((result, idx) => {
-      const sub = batch[idx]
-      if (result.status === 'fulfilled') {
-        sent++
-        return
-      }
-
-      failed++
-      const err = result.reason as unknown
-
-      // Clean up expired or invalid subscriptions (410 Gone, 404 Not Found)
-      const statusCode =
-        err && typeof err === 'object' && 'statusCode' in err
-          ? (err as { statusCode: number }).statusCode
-          : null
-
-      if (statusCode === 410 || statusCode === 404) {
-        expiredEndpoints.push(sub.endpoint)
-      } else {
-        console.error(
-          `[Cron Daily Horoscope] Failed to send to ${sub.endpoint}:`,
-          err
-        )
-      }
-    })
-  }
-
-  // Delete expired subscriptions in batch
-  if (expiredEndpoints.length > 0) {
-    const { error: deleteError } = await supabase
-      .from('push_subscriptions')
-      .delete()
-      .in('endpoint', expiredEndpoints)
-
-    if (deleteError) {
-      console.error(
-        '[Cron Daily Horoscope] Failed to clean up expired subscriptions:',
-        deleteError
-      )
-    }
-  }
-
-  console.log(
-    `[Cron Daily Horoscope] Completed: ${sent} sent, ${failed} failed, ${expiredEndpoints.length} expired cleaned up`
-  )
-
+  // Web Push and Expo (mobile) are independent transports with independent
+  // failure modes. Run BOTH unconditionally and report each separately.
+  // 2026-08-28: before this, the web block ran inline in this handler,
+  // ahead of the mobile call — so a malformed VAPID_PRIVATE_KEY throwing
+  // inside setVapidDetails (Sentry, release f3e2feb), a Supabase fetch
+  // error, or even an early `return` on zero web subscribers all killed
+  // the mobile push silently. A config error in one transport must
+  // degrade only that transport, not the whole scheduled job.
+  const web = await sendWebPush(supabase)
   const mobile = await sendMobilePush(supabase)
 
-  return Response.json({ sent, failed, mobile })
+  return Response.json({ web, mobile })
+}
+
+/**
+ * Sends the daily-horoscope Web Push (VAPID) notification to every row in
+ * push_subscriptions. Mirrors sendMobilePush: wraps everything in its own
+ * try/catch, never throws, and returns a { sent, failed, expired } tally
+ * (plus { error } when the whole transport failed to start). Isolating it
+ * this way is the point — see the handler comment.
+ */
+async function sendWebPush(
+  supabase: ReturnType<typeof createServiceSupabaseClient>
+): Promise<{ sent: number; failed: number; expired: number; error?: string }> {
+  try {
+    // Configure VAPID details for web-push authentication. Throws
+    // synchronously if NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY are
+    // absent or malformed — e.g. a private key that doesn't base64url-decode
+    // to exactly 32 bytes ("Vapid private key should be 32 bytes long when
+    // decoded"). Caught below; reported as { error }; mobile push unaffected.
+    webpush.setVapidDetails(
+      'mailto:hello@stellaeum.com',
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+      process.env.VAPID_PRIVATE_KEY!
+    )
+
+    // Fetch all active push subscriptions
+    const { data: subscriptions, error } = await supabase
+      .from('push_subscriptions')
+      .select('id, endpoint, p256dh, auth')
+      .limit(WEB_PUSH_SELECT_CEILING)
+
+    if (error) {
+      console.error('[Cron Daily Horoscope] Failed to fetch subscriptions:', error)
+      return { sent: 0, failed: 0, expired: 0, error: 'subscription fetch failed' }
+    }
+
+    if (!subscriptions || subscriptions.length === 0) {
+      return { sent: 0, failed: 0, expired: 0 }
+    }
+
+    const payload = JSON.stringify({
+      title: 'Твоят дневен хороскоп',
+      body: 'Новото ти послание от звездите те очаква.',
+      icon: '/icon-192x192.png',
+      url: '/dashboard',
+    })
+
+    let sent = 0
+    let failed = 0
+    // Unconditionally dead: 404 Not Found / 410 Gone are RFC 8030's
+    // unambiguous "this subscription no longer exists, delete it" signals.
+    const expiredEndpoints: string[] = []
+    // Conditionally dead: 401/403 mean the push service rejected our VAPID
+    // JWT for *this* endpoint. That is either (a) this one subscription is
+    // bound to an old application server key — a stale binding, safe to
+    // delete — or (b) our whole VAPID keypair is misconfigured, in which
+    // case EVERY send auth-fails and deleting anything would wipe the
+    // table. We can't tell per-endpoint, so we hold these and decide after
+    // the run using sibling successes as the discriminator. NOT 400: a
+    // push-service 400 means "malformed request" (bad TTL/encryption
+    // headers, oversized payload, corrupt stored keys) — mostly our bug,
+    // not a dead subscription, and a wrongly-swept row is a silent
+    // user-facing regression (no push until they re-subscribe) whereas a
+    // retained 400 row is just a visible recurring `failed++` a human can
+    // chase. When the signal is ambiguous, don't delete.
+    const authFailedEndpoints: string[] = []
+
+    // Send notification to each subscriber, WEB_PUSH_CONCURRENCY at a time
+    // rather than one at a time — see the constant's doc comment above.
+    for (let i = 0; i < subscriptions.length; i += WEB_PUSH_CONCURRENCY) {
+      const batch = subscriptions.slice(i, i + WEB_PUSH_CONCURRENCY)
+      const results = await Promise.allSettled(
+        batch.map((sub) =>
+          webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: sub.p256dh,
+                auth: sub.auth,
+              },
+            },
+            payload
+          )
+        )
+      )
+
+      results.forEach((result, idx) => {
+        const sub = batch[idx]
+        if (result.status === 'fulfilled') {
+          sent++
+          return
+        }
+
+        failed++
+        const err = result.reason as unknown
+
+        const statusCode =
+          err && typeof err === 'object' && 'statusCode' in err
+            ? (err as { statusCode: number }).statusCode
+            : null
+
+        if (statusCode === 410 || statusCode === 404) {
+          expiredEndpoints.push(sub.endpoint)
+        } else if (statusCode === 401 || statusCode === 403) {
+          authFailedEndpoints.push(sub.endpoint)
+        } else {
+          console.error(
+            `[Cron Daily Horoscope] Failed to send to ${sub.endpoint}:`,
+            err
+          )
+        }
+      })
+    }
+
+    // Sibling-success guard for the held 401/403 endpoints. `sent > 0`
+    // means at least one send this run succeeded with the very same VAPID
+    // keypair — so the keypair is valid and the auth failures are
+    // per-subscription stale bindings, safe to delete. `sent === 0` with
+    // auth failures present means the keypair itself is almost certainly
+    // wrong (nothing VAPID-signed got through); deleting would wipe live
+    // subscriptions to paper over a config error, so delete nothing and
+    // make it loud — this case looks identical to "everyone expired" in
+    // the tallies otherwise, and it's the one that needs a human.
+    let keypairSuspect = false
+    if (authFailedEndpoints.length > 0) {
+      if (sent > 0) {
+        expiredEndpoints.push(...authFailedEndpoints)
+      } else {
+        keypairSuspect = true
+        const msg =
+          `[Cron Daily Horoscope] ${authFailedEndpoints.length} web push ` +
+          `subscription(s) auth-failed (401/403) with zero successful sends ` +
+          `this run — VAPID keypair likely misconfigured. No subscriptions deleted.`
+        console.error(msg)
+        Sentry.captureException(new Error(msg), {
+          tags: {
+            cron: 'daily-horoscope',
+            transport: 'web-push',
+            reason: 'vapid-keypair-suspected-misconfig',
+          },
+          extra: {
+            authFailed: authFailedEndpoints.length,
+            sent,
+            totalSubscriptions: subscriptions.length,
+          },
+        })
+      }
+    }
+
+    // Delete dead subscriptions in one batch
+    if (expiredEndpoints.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('push_subscriptions')
+        .delete()
+        .in('endpoint', expiredEndpoints)
+
+      if (deleteError) {
+        console.error(
+          '[Cron Daily Horoscope] Failed to clean up expired subscriptions:',
+          deleteError
+        )
+      }
+    }
+
+    console.log(
+      `[Cron Daily Horoscope] Web: ${sent} sent, ${failed} failed, ${expiredEndpoints.length} expired cleaned up`
+    )
+
+    return keypairSuspect
+      ? { sent, failed, expired: expiredEndpoints.length, error: 'vapid-keypair-suspected-misconfig' }
+      : { sent, failed, expired: expiredEndpoints.length }
+  } catch (err) {
+    // Transport-level failure (almost always setVapidDetails rejecting a
+    // bad env key). Catching it here keeps the daily job alive, but a
+    // returned Response means Next's onRequestError never fires — so
+    // capture explicitly, or this regression goes silent again (same
+    // reasoning as toErrorResponse's Sentry.captureException).
+    console.error('[Cron Daily Horoscope] Web push transport failed:', err)
+    Sentry.captureException(err, {
+      tags: { cron: 'daily-horoscope', transport: 'web-push' },
+    })
+    return {
+      sent: 0,
+      failed: 0,
+      expired: 0,
+      error: err instanceof Error ? err.message : String(err),
+    }
+  }
 }
 
 /**

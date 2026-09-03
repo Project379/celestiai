@@ -84,6 +84,7 @@ vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
   ORACLE_FALLBACK_MODEL: 'fake-oracle-fallback-model',
   gemini: vi.fn(() => 'fake-model-instance'),
+  isUpstreamAiError: vi.fn(() => false),
 }))
 
 vi.mock('@/lib/oracle/prompts', () => ({

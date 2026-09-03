@@ -35,7 +35,8 @@ export default function CrystalsScreen() {
   const chartResolved = firstChart !== undefined
   const isPremium = crystalOfTheDay?.isPremium ?? false
 
-  const { data: overview } = useCrystalsOverview(chartId, isPremium)
+  const { data: overview } = useCrystalsOverview(chartId)
+  const locked = overview?.locked ?? false
   const collectMutation = useCollectCrystal(chartId)
 
   const selected = overview?.catalog.find((c) => c.slug === selectedSlug) ?? null
@@ -70,11 +71,12 @@ export default function CrystalsScreen() {
           <CrystalOfTheDayCard />
         </View>
 
-        {!isPremium && <PremiumGate onPress={() => push('/you/premium')} />}
-        {isPremium && chartResolved && chartId === null && (
+        {/* Tier item 5: the grid renders for everyone. Free tier gets it
+           locked (API returns `locked: true`, empty collection); premium
+           gets the personalised payload. */}
+        {isPremium && chartResolved && chartId === null ? (
           <MissingChartState onPress={() => push('/wizard/date')} />
-        )}
-        {isPremium && chartId && (
+        ) : (
           <CrystalCollectionContent
             chartId={chartId}
             onSelectCrystal={(slug) => {
@@ -90,34 +92,13 @@ export default function CrystalsScreen() {
       <CrystalDetailPanel
         crystal={selected}
         reason={selectedRec?.reason_text_bg ?? selectedRec?.reason_text_en ?? null}
-        canCollect={Boolean(selectedRec && !isDiscovered)}
+        canCollect={!locked && Boolean(selectedRec && !isDiscovered)}
+        collectLocked={locked}
         collecting={collectMutation.isPending}
         onCollect={() => selectedRec && collectMutation.mutate(selectedRec.id)}
         onClose={() => setSelectedSlug(null)}
       />
     </SafeAreaView>
-  )
-}
-
-function PremiumGate({ onPress }: { onPress: () => void }) {
-  return (
-    <View className="items-center rounded-3xl border border-bronze/20 bg-bronze/[0.03] px-6 py-10">
-      <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-bronze/90">
-        Премиум функция
-      </Text>
-      <Text className="mt-4 text-center text-[15px] font-light leading-[1.8] text-slate-300">
-        Личната ти колекция, препоръките по натална карта и лунните събития са част от Премиум достъпа.
-      </Text>
-      <Pressable
-        onPress={onPress}
-        className="mt-6 rounded-full border border-bronze/40 bg-bronze/15 px-7 py-3"
-        style={({ pressed }) => pressFeedback(pressed)}
-      >
-        <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-bronze-text">
-          Научи повече
-        </Text>
-      </Pressable>
-    </View>
   )
 }
 

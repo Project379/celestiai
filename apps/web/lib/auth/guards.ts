@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import {
   ensureUserRecord,
@@ -25,8 +26,44 @@ export function toErrorResponse(error: unknown, fallbackMessage: string) {
     )
   }
 
+  // A non-ApiError reaching here is an unexpected 500. Because we CATCH it
+  // and RETURN a Response (rather than letting it throw), Next's
+  // onRequestError / Sentry.captureRequestError never fires — so without
+  // this line these 500s are invisible in Sentry and only land in Vercel
+  // logs (which have no console-capture integration). See
+  // VERIFICATION-SURFACE-GAPS.md #9. Capture explicitly here so the
+  // failures most likely to happen (external-service calls in the 6 routes
+  // that use this helper) are actually monitored.
+  //
+  // STELLAEUM_PLACEHOLDER: CAUGHT-500S — this capture only covers routes
+  // that funnel through toErrorResponse. Routes that build a bare
+  // `Response.json(…, { status: 500 })` in their own catch (e.g. the
+  // Oracle generate route's save-failure path) still reach Sentry through
+  // nothing. See .planning/PLACEHOLDERS.md.
+  Sentry.captureException(error, { extra: { fallbackMessage } })
   console.error(fallbackMessage, error)
   return Response.json({ error: fallbackMessage }, { status: 500 })
+}
+
+/**
+ * Parses a JSON request body, turning a missing / empty / malformed body
+ * into a structured 400 instead of letting `req.json()`'s SyntaxError
+ * ("Unexpected end of JSON input") bubble up. On the routes that funnel
+ * their catch into `toErrorResponse`, that SyntaxError hits the
+ * non-`ApiError` branch — an unhandled 500 plus `Sentry.captureException`,
+ * i.e. a client sending a bad body pages us at High severity (see
+ * COMPLETION-TRACKER §0.8, the bodiless-fetch probe). A bad body is a
+ * client error. Throw this from inside the route's existing try: the
+ * `ApiError` lands in the structured-400 branch and does NOT capture to
+ * Sentry. Message reuses the Bulgarian string `stripe/checkout` already
+ * returns for this exact case.
+ */
+export async function readJsonBody(req: Request): Promise<unknown> {
+  try {
+    return await req.json()
+  } catch {
+    throw new ApiError(400, 'Невалидна заявка', 'INVALID_BODY')
+  }
 }
 
 export async function requireAppUser(): Promise<{

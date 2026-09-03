@@ -13,9 +13,22 @@ export interface SavedReading {
   teaserContent: string | null
 }
 
+/**
+ * `reason` (frozen tier definition 2026-09-01) tells the conversion
+ * surface which copy to show. Absent = the legacy monthly-cap wording.
+ * `free_used` = the one free lifetime reading is spent; `premium_topic` =
+ * love/career/health tapped by a free user; `premium_regenerate` = a free
+ * user hit the regenerate button.
+ */
+export type CapReachedReason =
+  | 'free_used'
+  | 'premium_topic'
+  | 'premium_regenerate'
+
 interface CapReachedError {
   kind: 'cap-reached'
   cap: number
+  reason?: CapReachedReason
 }
 
 interface GenericGenerationError {
@@ -156,6 +169,7 @@ export function useOracleReading(chartId: string) {
             setGenerationError({
               kind: 'cap-reached',
               cap: typeof data.cap === 'number' ? data.cap : 3,
+              reason: data?.reason as CapReachedReason | undefined,
             })
           } else {
             setGenerationError({
@@ -167,6 +181,21 @@ export function useOracleReading(chartId: string) {
             })
           }
           return
+        }
+
+        // A live reading already exists → the route short-circuits before
+        // streaming (route.ts step 5) and returns JSON, not a text stream.
+        // Happens when a topic is (re)generated while its saved reading is
+        // still loading client-side. Render it as a finished reading rather
+        // than piping the JSON envelope into the completion buffer.
+        if ((res.headers.get('content-type') ?? '').includes('application/json')) {
+          const data = await res.json().catch(() => null)
+          if (data && typeof data.content === 'string') {
+            setCompletion(data.content)
+            void fetchSavedReadings()
+            return
+          }
+          throw new Error('Unexpected JSON response from /api/oracle/generate')
         }
 
         if (!res.body) {
@@ -202,7 +231,7 @@ export function useOracleReading(chartId: string) {
         }
       }
     },
-    [chartId],
+    [chartId, fetchSavedReadings],
   )
 
   return {

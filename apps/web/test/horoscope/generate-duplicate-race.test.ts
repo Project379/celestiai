@@ -52,6 +52,7 @@ vi.mock('@/lib/ai/check-bg-output', () => ({
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
   gemini: vi.fn(() => 'fake-model-instance'),
+  isUpstreamAiError: vi.fn(() => false),
 }))
 
 vi.mock('@/lib/horoscope/prompts', () => ({

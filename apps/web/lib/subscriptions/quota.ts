@@ -4,21 +4,31 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import type { AppUser } from '@/lib/users/ensure-user'
 import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 
-// 2026-08-26 sweep #4 (Tier 2): premium was entirely unmetered on every AI
-// path — the 10/min burst limiter was its only brake, so a scripted premium
-// account could reach ~14,400 generations/day. This is a SAFETY NET, not a
-// product feature — see checkQuotaAvailable's premium branch below for why
-// it must stay invisible to the user (503, no CAP_REACHED code, no number in
-// the response — unlike free tier's 429, which DOES surface its cap because
-// that's a real, known product limit).
+// SCOPE (frozen tier definition, 2026-09-01): this counter is now
+// ORACLE-ONLY. It is no longer shared with /api/horoscope/generate — Днес
+// is fully free with its own structural per-day ceiling (see that route's
+// header). The two limits below govern the Oracle route only.
 //
-// 300/month is ~10x realistic heavy usage (4 oracle topics with occasional
-// regenerate, plus a cached-once-daily horoscope) — no genuine paying user
-// should ever reach it. Basis: Google Gemini 3.7 Flash pricing at time of
-// writing against this app's ~1-1.5k input / up to 2,000 output tokens per
-// generation. Thinking usage and actual completion length affect the final
-// amount, but the 300-call cap keeps exposure bounded to a few dollars per
-// compromised account.
+// FREE_MONTHLY_LIMIT: legacy value, kept for reference and for the
+// horoscope quota-gate regression test's "not consumed" assertion. The
+// FREE tier's real Oracle allowance is now ONE `general` reading for the
+// LIFETIME of the account, enforced via users.free_oracle_used_at
+// (apps/web/lib/subscriptions/free-oracle.ts), NOT via a monthly count.
+// oracle/generate no longer routes free users through this month-scoped
+// counter at all.
+//
+// PREMIUM_MONTHLY_LIMIT: 2026-08-26 sweep #4 (Tier 2) — premium was
+// entirely unmetered on every AI path; the burst limiter was its
+// only brake, so a scripted premium account could reach ~14,400
+// generations/day. This is a SAFETY NET, not a product feature — see
+// checkQuotaAvailable's premium branch below for why it must stay
+// invisible to the user (503, no CAP_REACHED code, no number in the
+// response). 300/month is ~10x realistic heavy usage (4 oracle topics
+// with occasional regenerate) — no genuine paying user should reach it.
+// Basis: Gemini 3.7 Flash Standard pricing and a representative Oracle
+// request of ~1.3k input tokens with at most 900 configured output tokens.
+// Even the configured-output ceiling keeps 300 successful calls below a
+// few dollars per compromised account; actual short readings cost less.
 // Re-derive this number if AI_MODEL (apps/web/lib/ai/client.ts) ever
 // changes — the arithmetic it's based on changes with it.
 export const FREE_MONTHLY_LIMIT = 3

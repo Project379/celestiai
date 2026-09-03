@@ -8,6 +8,8 @@ import type {
 } from '@stellaeum/core/stories/types'
 
 import { pressFeedback } from '@/components/design-system/tokens'
+import { LockBadge } from '@/components/tier/PremiumLock'
+import { RECS_DETAIL_LOCKED } from '@/lib/tier/locked-copy'
 
 const KIND_LABEL: Record<Recommendation['kind'], string> = {
   story: 'Разказ',
@@ -44,6 +46,11 @@ interface RecommendationCardProps {
   status: RecommendationStatus
   onStatusChange: (status: RecommendationStatus) => void
   variant?: 'daily' | 'monthly'
+  /**
+   * Free tier (tier item 4): identity + tagline visible; the "why for you"
+   * detail and status controls are withheld behind a locked line.
+   */
+  locked?: boolean
 }
 
 /**
@@ -67,6 +74,7 @@ export function RecommendationCard({
   status,
   onStatusChange,
   variant = 'daily',
+  locked = false,
 }: RecommendationCardProps) {
   const [expanded, setExpanded] = useState(variant === 'daily')
   const r = recommendation
@@ -123,56 +131,67 @@ export function RecommendationCard({
         {r.tagline}
       </Text>
 
-      {/* Expand toggle */}
-      <Pressable
-        onPress={() => setExpanded((v) => !v)}
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        className="mt-5 flex-row items-center"
-        style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 8 })}
-      >
-        <View className="h-px w-6 bg-slate-300/80" />
-        <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-slate-200">
-          {expanded ? 'Скрий обяснението' : 'Защо точно сега'}
-        </Text>
-      </Pressable>
-
-      {/* Why blocks — conditional render only, no AnimatePresence (HT 8) */}
-      {expanded && (
-        <View className="mt-6 border-t border-slate-300/[0.08] pt-6" style={{ gap: 24 }}>
-          <WhyBlock label="Връзка с твоето небе" body={r.howItConnects} />
-          <WhyBlock label="Защо точно сега" body={r.whyNow} />
-          <WhyBlock label="Какво ще ти даде" body={r.whatItGives} />
+      {locked ? (
+        <View className="mt-5 flex-row items-center" style={{ gap: 8 }}>
+          <LockBadge />
+          <Text className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.3em] text-bronze/80">
+            {RECS_DETAIL_LOCKED}
+          </Text>
         </View>
+      ) : (
+        <>
+          {/* Expand toggle */}
+          <Pressable
+            onPress={() => setExpanded((v) => !v)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded }}
+            className="mt-5 flex-row items-center"
+            style={({ pressed }) => ({ ...pressFeedback(pressed), gap: 8 })}
+          >
+            <View className="h-px w-6 bg-slate-300/80" />
+            <Text className="font-cinzel text-[10.5px] font-semibold uppercase tracking-[0.32em] text-slate-200">
+              {expanded ? 'Скрий обяснението' : 'Защо точно сега'}
+            </Text>
+          </Pressable>
+
+          {/* Why blocks — conditional render only, no AnimatePresence (HT 8) */}
+          {expanded && (
+            <View className="mt-6 border-t border-slate-300/[0.08] pt-6" style={{ gap: 24 }}>
+              <WhyBlock label="Връзка с твоето небе" body={r.howItConnects} />
+              <WhyBlock label="Защо точно сега" body={r.whyNow} />
+              <WhyBlock label="Какво ще ти даде" body={r.whatItGives} />
+            </View>
+          )}
+
+          {/* Status footer */}
+          <View
+            className="mt-7 flex-row flex-wrap items-center border-t border-slate-300/[0.07] pt-6"
+            style={{ gap: 16 }}
+          >
+            <Text className="font-cinzel text-[9.5px] uppercase tracking-[0.3em] text-slate-500">
+              Статус · <Text className="text-slate-300">{statusLabel(r.kind, status)}</Text>
+            </Text>
+            <View className="flex-1" />
+
+            <StatusButton
+              active={status === 'saved'}
+              onPress={() => {
+                // Low-consequence binary toggle — lightest impact tier.
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                onStatusChange(status === 'saved' ? 'new' : 'saved')
+              }}
+              label={status === 'saved' ? 'Извади от списъка' : 'Запази за по-късно'}
+              tone="muted"
+            />
+            <StatusButton
+              active={status === 'consumed'}
+              onPress={() => onStatusChange(status === 'consumed' ? 'new' : 'consumed')}
+              label={status === 'consumed' ? undoLabel(r.kind) : variantDoneLabel(r.kind)}
+              tone="accent"
+            />
+          </View>
+        </>
       )}
-
-      {/* Status footer */}
-      <View
-        className="mt-7 flex-row flex-wrap items-center border-t border-slate-300/[0.07] pt-6"
-        style={{ gap: 16 }}
-      >
-        <Text className="font-cinzel text-[9.5px] uppercase tracking-[0.3em] text-slate-500">
-          Статус · <Text className="text-slate-300">{statusLabel(r.kind, status)}</Text>
-        </Text>
-        <View className="flex-1" />
-
-        <StatusButton
-          active={status === 'saved'}
-          onPress={() => {
-            // Low-consequence binary toggle — lightest impact tier.
-            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-            onStatusChange(status === 'saved' ? 'new' : 'saved')
-          }}
-          label={status === 'saved' ? 'Извади от списъка' : 'Запази за по-късно'}
-          tone="muted"
-        />
-        <StatusButton
-          active={status === 'consumed'}
-          onPress={() => onStatusChange(status === 'consumed' ? 'new' : 'consumed')}
-          label={status === 'consumed' ? undoLabel(r.kind) : variantDoneLabel(r.kind)}
-          tone="accent"
-        />
-      </View>
     </View>
   )
 }

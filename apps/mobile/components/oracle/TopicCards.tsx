@@ -1,18 +1,21 @@
-import { Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 
 import { pressFeedback } from '@/components/design-system/tokens'
 import type { OracleTopic, SavedReading } from '@/hooks/useOracleReading'
 
 /**
- * Mobile port of apps/web/components/oracle/TopicCards.tsx (post 2026-04-20
- * cap-gate refactor: all topics unlocked for all authed users; the daily
- * cap is enforced server-side at /api/oracle/generate). 2×2 grid mirrors
- * the <640px breakpoint layout web users see on phones.
+ * Mobile port of apps/web/components/oracle/TopicCards.tsx.
+ *
+ * Frozen tier definition (2026-09-01): `general` is free (one reading,
+ * account lifetime); love / career / health are premium and render the
+ * padlock affordance for free users. The padlock is a hint — tapping a
+ * locked card still calls /api/oracle/generate, which returns
+ * `code: 'CAP_REACHED'` + `reason: 'premium_topic'`, and the screen shows
+ * the conversion surface (CapReachedNotice). The server route is the gate.
  *
  * Topic icons port web's solid-fill SVG glyphs from TopicCard.tsx
- * TOPIC_META, rendered via react-native-svg. Bulgarian labels mirror
- * web verbatim.
+ * TOPIC_META. Bulgarian labels mirror web verbatim.
  */
 
 interface TopicMeta {
@@ -60,28 +63,41 @@ const TOPIC_META: Record<OracleTopic, TopicMeta> = {
   },
 }
 
+const LOCK_PATH =
+  'M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z'
+
 const ALL_TOPICS: OracleTopic[] = ['general', 'love', 'career', 'health']
 
 interface TopicCardProps {
   topic: OracleTopic
   isActive: boolean
+  isLocked: boolean
+  /** Tier still loading — render neither the locked nor the unlocked state. */
+  tierPending: boolean
   hasSavedReading: boolean
   onPress: () => void
 }
 
-function TopicCard({ topic, isActive, hasSavedReading, onPress }: TopicCardProps) {
+function TopicCard({ topic, isActive, isLocked, tierPending, hasSavedReading, onPress }: TopicCardProps) {
   const meta = TOPIC_META[topic]
-  const iconColor = isActive ? '#d9a06a' : 'rgba(196, 181, 253, 0.85)'
+  const iconColor = tierPending
+    ? 'rgba(148, 163, 184, 0.6)'
+    : isLocked
+      ? 'rgb(71, 85, 105)'
+      : isActive
+        ? '#d9a06a'
+        : 'rgba(196, 181, 253, 0.85)'
 
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}
-      accessibilityLabel={`${meta.label}${hasSavedReading ? ' (записано)' : ''}`}
+      accessibilityLabel={`${meta.label}${isLocked ? ' (заключено)' : ''}${hasSavedReading ? ' (записано)' : ''}`}
       style={({ pressed }) => ({
         ...pressFeedback(pressed),
         flex: 1,
+        ...((isLocked || tierPending) && { opacity: 0.6 }),
         ...(isActive && {
           shadowColor: 'rgb(167, 139, 250)',
           shadowOffset: { width: 0, height: 0 },
@@ -129,13 +145,27 @@ function TopicCard({ topic, isActive, hasSavedReading, onPress }: TopicCardProps
 
       <Text
         className={`font-cinzel text-[10px] font-semibold uppercase tracking-[0.28em] ${
-          isActive ? 'text-white' : 'text-slate-400'
+          tierPending ? 'text-slate-500' : isLocked ? 'text-slate-600' : isActive ? 'text-white' : 'text-slate-400'
         }`}
       >
         {meta.label}
       </Text>
 
-      {hasSavedReading && !isActive && (
+      {tierPending && (
+        <View className="absolute" style={{ top: 8, right: 8 }}>
+          <ActivityIndicator size="small" color="rgba(148, 163, 184, 0.7)" />
+        </View>
+      )}
+
+      {isLocked && !tierPending && (
+        <View className="absolute" style={{ top: 10, right: 10 }}>
+          <Svg width={12} height={12} viewBox="0 0 20 20">
+            <Path d={LOCK_PATH} fill="rgb(71, 85, 105)" fillRule="evenodd" />
+          </Svg>
+        </View>
+      )}
+
+      {hasSavedReading && !isActive && !isLocked && !tierPending && (
         <View
           className="absolute h-1 w-1 bg-bronze/85"
           style={{
@@ -157,12 +187,19 @@ interface TopicCardsProps {
   activeTopic: OracleTopic | null
   savedReadings: Record<string, SavedReading>
   onTopicSelect: (topic: OracleTopic) => void
+  /**
+   * `true` → all topics open. `false` → love/career/health render the
+   * padlock. `undefined` → tier still loading, render the neutral pending
+   * state (no padlock, no full unlock). See file header.
+   */
+  isPremium: boolean | undefined
 }
 
 export function TopicCards({
   activeTopic,
   savedReadings,
   onTopicSelect,
+  isPremium,
 }: TopicCardsProps) {
   const rows: OracleTopic[][] = [
     [ALL_TOPICS[0], ALL_TOPICS[1]],
@@ -173,15 +210,21 @@ export function TopicCards({
     <View style={{ gap: 12 }}>
       {rows.map((row, rowIdx) => (
         <View key={rowIdx} style={{ gap: 12, flexDirection: 'row' }}>
-          {row.map((topic) => (
-            <TopicCard
-              key={topic}
-              topic={topic}
-              isActive={activeTopic === topic}
-              hasSavedReading={Boolean(savedReadings[topic])}
-              onPress={() => onTopicSelect(topic)}
-            />
-          ))}
+          {row.map((topic) => {
+            const hasSavedReading = Boolean(savedReadings[topic])
+            const wouldGate = topic !== 'general' && !hasSavedReading
+            return (
+              <TopicCard
+                key={topic}
+                topic={topic}
+                isActive={activeTopic === topic}
+                isLocked={isPremium === false && wouldGate}
+                tierPending={isPremium === undefined && wouldGate}
+                hasSavedReading={hasSavedReading}
+                onPress={() => onTopicSelect(topic)}
+              />
+            )
+          })}
         </View>
       ))}
     </View>

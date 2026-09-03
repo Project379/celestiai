@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import type { Metadata } from 'next'
-import { getCachedLatestChart } from '@/lib/supabase/queries'
+import { getCachedLatestChart, getCachedUserTier } from '@/lib/supabase/queries'
 import type { ChartRow } from '@/lib/types/chart'
 import { StoriesContent } from '@/components/stories/StoriesContent'
 
@@ -34,20 +34,25 @@ function getSunSign(birthDate: string): string {
 export default async function RecommendationsPage() {
   const { userId } = await auth()
   let sunSign: string | null = null
+  let isPremium = false
   if (userId) {
     try {
-      const chart = (await getCachedLatestChart(userId)) as ChartRow | null
+      const [chart, tier] = await Promise.all([
+        getCachedLatestChart(userId) as Promise<ChartRow | null>,
+        getCachedUserTier(userId),
+      ])
       if (chart?.birth_date) {
         sunSign = getSunSign(chart.birth_date)
       }
+      isPremium = tier === 'premium'
     } catch {
-      // ignore — renders monthly-missing state
+      // ignore — renders monthly-missing state, free tier
     }
   }
 
   return (
     <div className="px-4 pb-16 pt-8 sm:px-6">
-      <StoriesContent sunSign={sunSign} />
+      <StoriesContent sunSign={sunSign} isPremium={isPremium} />
     </div>
   )
 }

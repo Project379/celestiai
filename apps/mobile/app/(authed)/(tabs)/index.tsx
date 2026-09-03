@@ -25,6 +25,7 @@ import { formatDaysHours } from '@/lib/formatDaysHours'
 import { hapticSelect } from '@/lib/haptics'
 import { renderSentinelChunks, type SentinelChunk } from '@/lib/oracle/renderSentinelChunks'
 import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
+import { AI_GENERATED_DISCLOSURE_BG } from '@/lib/legal/compliance-copy'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 
@@ -389,6 +390,10 @@ export default function DnesScreen() {
                 mirrors web's own heading for this exact content
                 (DailyHoroscope.tsx), not invented copy. */}
             <Text style={HOROSCOPE_CAPTION_STYLE}>дневен хороскоп</Text>
+            {/* EU AI Act Art. 50 — AI-generated content disclosure. */}
+            <Text style={{ fontFamily: font.body, fontSize: 12, lineHeight: 17, color: color.faint, marginTop: 2 }}>
+              {AI_GENERATED_DISCLOSURE_BG}
+            </Text>
             <View style={{ marginTop: rhythm.tight }}>
               {horoscope.isLoading && <LoadingState status="консултира звездите…" />}
               {horoscope.isError && !horoscope.data?.content && (

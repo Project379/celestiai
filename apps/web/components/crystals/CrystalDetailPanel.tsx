@@ -2,6 +2,8 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { CrystalGem, type GemVariant } from './CrystalGem'
+import { LockBadge } from '@/components/tier/PremiumLock'
+import { CRYSTALS_COLLECT_LOCKED } from '@/lib/tier/locked-copy'
 
 export interface CrystalDetailData {
   slug: string
@@ -29,6 +31,8 @@ interface CrystalDetailPanelProps {
   crystal: CrystalDetailData | null
   reason?: string | null
   canCollect?: boolean
+  /** Free tier (tier item 5): show the collect button as a locked affordance. */
+  collectLocked?: boolean
   collecting?: boolean
   onCollect?: () => void
   onClose: () => void
@@ -92,6 +96,7 @@ export function CrystalDetailPanel({
   crystal,
   reason,
   canCollect,
+  collectLocked,
   collecting,
   onCollect,
   onClose,
@@ -267,7 +272,7 @@ export function CrystalDetailPanel({
                   </p>
                 </div>
 
-                {canCollect && (
+                {canCollect && !collectLocked && (
                   <button
                     type="button"
                     disabled={collecting}
@@ -280,6 +285,16 @@ export function CrystalDetailPanel({
                     />
                     {collecting ? 'Събира се...' : 'Събери в колекцията'}
                   </button>
+                )}
+
+                {collectLocked && (
+                  <div
+                    className="mt-7 flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-6 py-4 font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500"
+                    aria-disabled="true"
+                  >
+                    <LockBadge />
+                    {CRYSTALS_COLLECT_LOCKED}
+                  </div>
                 )}
               </div>
             </div>
