@@ -107,7 +107,7 @@ SENTINEL MARKERS (critical - follow exactly):
 - When you mention a planet by name in the text, wrap that mention with sentinel markers
 - Format: [planet:KEY]Българско_Наименование[/planet]
 - Use these English keys: sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto, northNode
-- Example combining both rules: "Твоето [planet:sun]Слънце[/planet] на [pos:sun], в [house:sun], е в [aspect:sun-moon] с твоята [planet:moon]Луна[/planet]."
+- Token syntax only (not a sentence to reuse or open with): "...в [pos:sun] откриваш [planet:sun]Слънце[/planet]... по-нататък [aspect:sun-moon] спрямо [planet:moon]Луна[/planet] оформя..."
 - Apply sentinels EVERY time you mention a planet name - this enables the chart wheel to highlight
   the corresponding planet as the reader moves through the text
 - Do NOT use sentinels for "Асцендент", "MC", "Зодия", house numbers, or aspect names

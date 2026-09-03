@@ -57,10 +57,12 @@ keeps the register's truth in one file.
 
 ## Register
 
-41 OPEN rows + 11 RESOLVED rows = 52 total, per `check-placeholders`'s own
+43 OPEN rows + 11 RESOLVED rows = 54 total, per `check-placeholders`'s own
 count. LLM-MODEL-SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL
 added 2026-09-03 (PostHog hardening pass); COOKIE-CONSENT and
-ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day.
+ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day. GEMINI-API-TIER and
+ORACLE-WORD-BAND added 2026-09-03 (sentinel-example / Gate 9 follow-up on
+`gemini/rebased-onto-injection`).
 
 | ID | Description | Type | Owner | Blocks | Status | Resolved-date | Location |
 |---|---|---|---|---|---|---|---|
@@ -113,8 +115,10 @@ ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day.
 | VERCEL-PLAN | Confirmed not Hobby | CONFIG | Toni | — | RESOLVED | 2026-09-01 | n/a |
 | LLM-MODEL | Provider decided; Petko implementing | DECISION | Petko | — | RESOLVED | 2026-09-01 | n/a |
 | KRUG-TEASER | Free users keep the teaser as the locked state | DECISION | Toni | — | RESOLVED | 2026-09-01 | n/a |
-| LLM-MODEL-SWAP | LLM-MODEL (decision) is RESOLVED but the implementation has not landed — production still calls `meta-llama/llama-3.3-70b-instruct` (SYSTEM-MAP §4). Gate 9 on the widened 300-800-word band still shows an ~80% first-pass rate (see PROJECT.md/handoff for the 2026-09-03 run), driven by foreign-script injection and hallucinated aspects — a known-weak-model ceiling, not a bug in the validator. The app cannot reliably ship Oracle/horoscope readings on this model | CODE | Petko | Launch | OPEN | | apps/web/lib/ai/client.ts |
-| GATE9-PHRASE-REPETITION | Gate 9 (2026-09-03 run, 300-800-word band): the model writes "твоят [planet] на" as a stock opening in 6-8 of 10 readings per run, and separately gets Слънце's grammatical gender wrong ("твоят Слънце" instead of neuter "твоето Слънце") in most of those — confirmed model-only, no static Bulgarian string in the codebase has the wrong-gender form (`packages/astrology/src/constants.ts` already encodes `PLANETS_BG_GENDER.sun = 'neut'` correctly; it just is not consulted by the prompt). Not fixable by prompt engineering per this file's header ruling — blocked on the model swap | CODE | Petko | Launch quality bar | OPEN | | — |
+| LLM-MODEL-SWAP | LLM-MODEL (decision) is RESOLVED and the implementation HAS landed — production now calls Gemini (`gemini-3.7-flash`, falling back to `gemini-3.6-flash`; see SYSTEM-MAP §4), not Llama. Stays OPEN: three consecutive full Gate 9 runs on `gemini/rebased-onto-injection` (2026-09-03, after the sentinel-example rewrite) produced **0 of 10 successful generations each** (30/30 calls `GENERATION_THREW` — free-tier quota exhausted on both the primary and the fallback model; see GEMINI-API-TIER). A clean read on output quality (phrase repetition, gender agreement, word band) requires a Gate 9 run on an unthrottled key; until then this row cannot be closed on the strength of a quality argument, because no quality data was collectable this session | CODE | Petko | Launch | OPEN | | apps/web/lib/ai/client.ts |
+| GEMINI-API-TIER | Gemini free-tier quota caused 7/10 and 9/10 transient (fallback-then-fail) failures in an earlier Gate 9 run, and on 2026-09-03 three further full runs (this session, post sentinel-example rewrite) each hit 0/10 successful generations — every one of 30 attempted calls across primary + fallback returned `generativelanguage.googleapis.com/generate_content_free_tier_requests` quota-exceeded (`limit: 20`). At these limits, real user traffic sees the same failure rate the validator's regenerate-once-then-fail-visibly path is not designed to absorb at this frequency. Blocks both Launch and any further Gate 9 quality measurement | CONFIG | Toni | Launch | OPEN | | n/a |
+| ORACLE-WORD-BAND | Oracle's post-generation word-count band was widened from the Llama-era 300-800 words to 100-250, based on Gate 9 measuring live Gemini output at 126-164 words across 11 live samples (6 in the run documented at `apps/web/app/api/oracle/generate/route.ts`'s WORD-COUNT BAND comment, plus 5 more from a prior session) — see that comment for the derivation. Re-verify against a larger Gate 9 sample once GEMINI-API-TIER is resolved and a full 10-for-10 run is possible; 11 samples is not enough to trust the band long-term | CODE | CC | Launch quality bar | OPEN | | apps/web/app/api/oracle/generate/route.ts |
+| GATE9-PHRASE-REPETITION | Llama-era baseline (last full run): "твоят [planet] на" as a stock opening in 6-8 of 10 readings, with Слънце's grammatical gender wrong ("твоят Слънце" instead of neuter "твоето Слънце") in most of those. On Gemini, a prior session's partial run saw the related "твоята/твоето [planet] на" construction in 4-6 of 10 readings — close enough to the SENTINEL MARKERS example in `prompts.ts` (which opened its example sentence with "Твоето [planet:sun]Слънце[/planet] на …") to suspect the model was copying the example's sentence-opening shape rather than following the instruction, the same failure the three removed example phrases caused. 2026-09-03 (this session): both oracle and horoscope prompt files' sentinel examples were rewritten to demonstrate the token syntax mid-clause instead of as a reusable sentence opener (see `apps/web/lib/oracle/prompts.ts` and `apps/web/lib/horoscope/prompts.ts`). The hypothesis is UNTESTED, not confirmed or refuted: three follow-up Gate 9 runs against the rewritten prompts each returned 0 of 10 successful generations (GEMINI-API-TIER quota exhaustion), so there is no post-rewrite output to check for the phrase. Confirmed model-only either way — no static Bulgarian string in the codebase has the wrong-gender form (`packages/astrology/src/constants.ts` already encodes `PLANETS_BG_GENDER.sun = 'neut'` correctly; it just is not consulted by the prompt) | CODE | Petko | Launch quality bar | OPEN | | — |
 | CHART-CALC-BACKFILL | `6b1a25d` (2026-09-02) made `calculateNatalChart` use the stated birth-time window's midpoint for unknown-time charts instead of always assuming noon, but existing `chart_calculations` rows computed before that commit still hold the old 12:00 estimate — those users see a chart calculated at the wrong assumed time until the row is invalidated/recalculated. No backfill script exists yet | CODE | CC | Data accuracy for existing accounts | OPEN | | — |
 
 ---
@@ -144,7 +148,8 @@ list — its "locations" were all docs, matching EN-LOCALE's shape.)
 **Finding:** 8 of the OPEN CODE entries have no code location (was 9 before
 2026-09-03: COOKIE-CONSENT resolved with a real marker-free Location
 citation, removing it from this list; GATE9-PHRASE-REPETITION and
-CHART-CALC-BACKFILL added to it the same day, net -1). Historical count
+CHART-CALC-BACKFILL added to it the same day, net -1; GEMINI-API-TIER is
+CONFIG-type, not CODE, so it does not affect this count). Historical count
 chain (see prior entries in this file's git history for the full
 derivation) ended at 9 of 27 after TIER-ITEM-4/5 resolved 2026-09-01; this
 is the next link.
@@ -170,6 +175,8 @@ before any launch or submission.
 | PRIVACY-REVIEW | EXTERNAL | Lawyer | **no — manual** |
 | DPA-CONTRACTS | EXTERNAL | Toni | **no — manual** |
 | LLM-MODEL-SWAP | CODE | Petko | yes (marker present) |
+| GEMINI-API-TIER | CONFIG | Toni | **no — manual** |
+| ORACLE-WORD-BAND | CODE | CC | yes (marker present) |
 | GATE9-PHRASE-REPETITION | CODE | Petko | **no — no code location, symptom only** |
 | CHART-CALC-BACKFILL | CODE | CC | **no — no code location, script not written** |
 

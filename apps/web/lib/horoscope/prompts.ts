@@ -51,7 +51,7 @@ NUMBERS AND FACTUAL DETAIL (critical - follow exactly):
 SENTINEL MARKERS:
 - Every time you mention a planet by name, wrap it as [planet:KEY]BulgarianName[/planet]
 - Use only these keys: sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto, northNode
-- Example: "Транзитният [planet:mars]Марс[/planet] активира твоето натално [planet:sun]Слънце[/planet] — [taspect:mars-sun]..."
+- Token syntax only (not a sentence to reuse or open with): "...докато [planet:mars]Марс[/planet] докосва натален [planet:sun]Слънце[/planet] в [taspect:mars-sun]..."
 - Do not use sentinels for Ascendant, MC, zodiac signs, houses, or aspect names
 
 FINAL-OUTPUT CONTRACT:

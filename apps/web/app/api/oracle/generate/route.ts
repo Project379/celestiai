@@ -296,6 +296,8 @@ export async function POST(req: Request) {
     // 11. Generate + validate before display. See the RETRY SHAPE comment
     // above the maxDuration export for the composed retry axes.
     //
+    // STELLAEUM_PLACEHOLDER: ORACLE-WORD-BAND — 100-250 derived from 11 live
+    // samples; re-verify at scale. See .planning/PLACEHOLDERS.md
     // WORD-COUNT BAND (100-250): derived from the FORMAT rule in
     // lib/oracle/prompts.ts. Gemini's FORMAT section (ported from
     // change-ai-to-bulgarian-fluent) targets 800-1200 CHARACTERS across 6-8
