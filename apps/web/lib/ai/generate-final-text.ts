@@ -13,18 +13,27 @@ interface GenerateFinalTextOptions {
 }
 
 /**
- * STELLAEUM_PLACEHOLDER: THINKING-BUDGET-SPIKE — thinkingLevel: 'low'
- * signals a preference, not a hard cap: Gate 9 (2026-09-04, paid tier)
- * measured 1 of 20 calls spending 867 thinking tokens against the
+ * STELLAEUM_PLACEHOLDER: THINKING-BUDGET-SPIKE — thinkingLevel: 'low' was
+ * a preference, not a hard cap: Gate 9 (2026-09-04, paid tier) measured
+ * 1 of 20 calls spending 867 thinking tokens against the
  * maxOutputTokens: 900 ceiling, leaving 18 tokens for the actual answer
- * and throwing AI_NoOutputGeneratedError — non-deterministic, same
- * prompt succeeded cleanly on retry. @ai-sdk/google's thinkingConfig
- * also accepts `thinkingBudget` (a numeric token cap), unset here. See
- * .planning/PLACEHOLDERS.md.
+ * and throwing AI_NoOutputGeneratedError. thinkingBudget below is the
+ * real fix — a numeric hard cap. NOTE: the Gemini API rejects setting
+ * both thinkingLevel and thinkingBudget at once ("You can only set only
+ * one of thinking budget and thinking level" — hit live on the first
+ * re-run attempt), so thinkingLevel is gone, not additive with it. 300
+ * chosen from the observed candidatesTokenCount range across the first
+ * two Gate 9 runs (311-460): 900 - 300 = 600 tokens guaranteed available
+ * for the answer, comfortably above the observed max with margin for a
+ * longer reading, while 300 still leaves genuine reasoning room (this
+ * is not thinkingBudget: 0 / thinking disabled). errors.ts's
+ * isTransientAIError now also treats AI_NoOutputGeneratedError as
+ * retryable, as defense in depth for whatever other cause might still
+ * produce it. See .planning/PLACEHOLDERS.md.
  */
 export const GEMINI_FINAL_ONLY_OPTIONS = {
   thinkingConfig: {
-    thinkingLevel: 'low',
+    thinkingBudget: 300,
     includeThoughts: false,
   },
 } satisfies GoogleLanguageModelOptions
@@ -71,16 +80,30 @@ function logAiUsage(model: string, result: { providerMetadata?: Record<string, u
  * final content separate from model reasoning; maxRetries: 0 prevents either
  * model call from multiplying into hidden SDK retries.
  *
- * Ported from change-ai-to-bulgarian-fluent (Petko), unchanged in
- * implementation. The caller (route.ts) wraps this in its OWN two-attempt
- * loop for validation-quality failures — see that file's header comment for
- * the composed retry shape and worst-case call count.
+ * Ported from change-ai-to-bulgarian-fluent (Petko). callModel's `void
+ * result.output` line is NOT part of that port — added 2026-09-04
+ * (THINKING-BUDGET-SPIKE) after a live Gate 9 run showed the fallback
+ * never actually engaging for a real AI_NoOutputGeneratedError: the `ai`
+ * SDK's `.output` is a LAZY GETTER (`ai/dist/index.mjs`'s
+ * `GenerateTextResult.get output()`) that throws NoOutputGeneratedError
+ * on ACCESS, not a promise rejection from `generateText()` itself — so
+ * `await callModel(model)` resolves normally even when structured-output
+ * parsing failed, and the throw used to happen only later at
+ * `result.output.content` below, OUTSIDE this function's try/catch,
+ * where isTransientAIError was never consulted and the error surfaced
+ * as a bare 500 with the fallback never attempted. Forcing the getter
+ * here, inside callModel, moves the throw inside the try/catch so it's
+ * actually classified and retried.
+ *
+ * The caller (route.ts) wraps this in its OWN two-attempt loop for
+ * validation-quality failures — see that file's header comment for the
+ * composed retry shape and worst-case call count.
  */
 export async function generateFinalText(options: GenerateFinalTextOptions) {
   const { fallbackModel, ...callOptions } = options
 
   async function callModel(model: string) {
-    return generateText({
+    const result = await generateText({
       model: gemini(model),
       ...callOptions,
       maxRetries: 0,
@@ -89,6 +112,8 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
         google: GEMINI_FINAL_ONLY_OPTIONS,
       },
     })
+    void result.output
+    return result
   }
 
   let servedModel = AI_MODEL

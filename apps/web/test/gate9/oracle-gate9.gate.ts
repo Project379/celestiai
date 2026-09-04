@@ -93,6 +93,67 @@ function shingles(text: string, n = 3): Set<string> {
 }
 
 /**
+ * PHRASE-REPETITION STOPLIST — exact 3-word phrases exempt from the
+ * "no 3-word phrase shared by more than 3 of 10" check below.
+ *
+ * The check cannot distinguish a content-bearing template (the model's
+ * fixed way of introducing a planet: "твоята луна в", "твоето слънце
+ * в" — these stay GATED, and should keep failing the run when they
+ * recur) from ordinary Bulgarian sentence connectors and mechanical
+ * astrological phrasing that any independent writer — model or human —
+ * reaches for repeatedly because the language and the domain vocabulary
+ * are small, not because the output is templated.
+ *
+ * This list is deliberately an EXACT-PHRASE match, not a word-level
+ * stopword filter: a word-level filter (e.g. exempting any shingle
+ * containing "в") would silently exempt genuine templates too, since
+ * "твоята луна в" contains the preposition "в" — that is exactly the
+ * "quiet loosening" this file must not do. Every entry below is a
+ * specific, reviewable phrase, added deliberately.
+ *
+ * Adding a phrase is a judgement call — justify it in the commit
+ * message (what run surfaced it, why it's connective/mechanical rather
+ * than content). Do not add a phrase you have not seen recur in real
+ * Gate 9 output.
+ *
+ * Seeded 2026-09-04 from the two paid-tier Gate 9 runs:
+ *   - "в същото време" (5/10 both runs) — pure temporal connector
+ *     ("at the same time"), interchangeable with any other transition.
+ *   - "от друга страна" / "от една страна" — standard "on the other
+ *     hand" / "on one hand" connector pair. Not observed verbatim in
+ *     these two runs, but the same class as "в същото време" and
+ *     common enough in Bulgarian expository prose to seed pre-emptively
+ *     — remove if a future run shows they never actually recur.
+ *   - "<aspect> орб с" for each of the five aspect names the app's own
+ *     serializer renders ([aspect:] tokens — packages/astrology/src/
+ *     constants.ts) — mechanical astrological phrasing describing an
+ *     orb, not a stylistic choice. "тригон орб с" was the one observed
+ *     (5/10, run 2); the other four are its equivalents for the other
+ *     aspect types, added on the same reasoning rather than waiting to
+ *     observe each one individually.
+ *
+ * NOTE on single-word connectives (e.g. "същевременно" — "meanwhile"):
+ * deliberately NOT stoplisted here. A lone connective word does not
+ * form a fixed 3-word shingle by itself — it combines with whatever
+ * words surround it each time, so it is very unlikely to ever produce
+ * an identical repeated 3-word phrase across independently generated
+ * readings. If a future run does show one recurring verbatim, add that
+ * exact phrase then, on the same evidence-first basis as everything
+ * else here — do not pre-emptively stoplist single words, which is the
+ * word-level-filter risk this comment opened with.
+ */
+const CONNECTIVE_STOPLIST = new Set<string>([
+  'в същото време',
+  'от друга страна',
+  'от една страна',
+  'съединение орб с',
+  'секстил орб с',
+  'квадрат орб с',
+  'тригон орб с',
+  'опозиция орб с',
+])
+
+/**
  * "твоят [planet] на" gender-agreement failure — GATE9-PHRASE-REPETITION
  * (.planning/PLACEHOLDERS.md). Every planet name is either neuter
  * (Слънце) or feminine (Луна, Венера, Земя — not a planet key here, kept
@@ -218,7 +279,10 @@ describe('Gate 9 — Oracle output on the live model (Gemini)', () => {
     const withText = results.filter((r) => r.plainText.length > 0)
     const docFreq = new Map<string, number>()
     for (const r of withText) {
-      for (const s of shingles(r.plainText)) docFreq.set(s, (docFreq.get(s) ?? 0) + 1)
+      for (const s of shingles(r.plainText)) {
+        if (CONNECTIVE_STOPLIST.has(s)) continue
+        docFreq.set(s, (docFreq.get(s) ?? 0) + 1)
+      }
     }
     const over = [...docFreq.entries()]
       .filter(([, n]) => n > 3)

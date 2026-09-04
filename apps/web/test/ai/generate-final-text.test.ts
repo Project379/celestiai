@@ -65,6 +65,46 @@ describe('generateFinalText', () => {
     })
   })
 
+  it('uses the fallback after AI_NoOutputGeneratedError (thinking-budget spike), not a bare failure', async () => {
+    // Real `ai`-SDK shape (verified against node_modules/ai/dist/
+    // index.mjs's GenerateTextResult): `.output` is a LAZY GETTER that
+    // throws NoOutputGeneratedError on ACCESS — generateText() itself
+    // resolves normally even when structured-output parsing failed. A
+    // rejected promise (mockRejectedValueOnce) does NOT reproduce this;
+    // it must be a resolved value whose `output` getter throws, exactly
+    // like this. THINKING-BUDGET-SPIKE (.planning/PLACEHOLDERS.md): a
+    // live Gate 9 run first "fixed" this with only an errors.ts change
+    // and a rejected-promise test, and the fallback still never fired —
+    // this getter-shaped mock is what caught that gap in the first
+    // attempt at this fix. No statusCode, no isRetryable on the thrown
+    // error — the only classifiable signal is `name`.
+    const throwingResult = {
+      providerMetadata: undefined,
+      get output(): never {
+        throw Object.assign(new Error('No output generated.'), {
+          name: 'AI_NoOutputGeneratedError',
+        })
+      },
+    }
+    vi.mocked(generateText)
+      .mockResolvedValueOnce(throwingResult as never)
+      .mockResolvedValueOnce({ output: { content: 'Финален fallback текст' } } as never)
+
+    await expect(generateFinalText({
+      ...request,
+      fallbackModel: 'gemini-fallback',
+    })).resolves.toMatchObject({
+      model: 'gemini-fallback',
+      text: 'Финален fallback текст',
+    })
+
+    expect(generateText).toHaveBeenCalledTimes(2)
+    expect(vi.mocked(generateText).mock.calls[1]?.[0]).toMatchObject({
+      maxRetries: 0,
+      model: 'model:gemini-fallback',
+    })
+  })
+
   it('does not use the fallback after a non-transient failure', async () => {
     const invalidRequest = Object.assign(new Error('invalid request'), {
       statusCode: 400,

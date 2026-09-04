@@ -10,6 +10,7 @@ type AIErrorLike = {
   errors?: unknown[]
   isRetryable?: unknown
   lastError?: unknown
+  name?: unknown
   statusCode?: unknown
 }
 
@@ -55,6 +56,17 @@ export function isTransientAIError(error: unknown): boolean {
     ) {
       return true
     }
+    // AI_NoOutputGeneratedError (the `ai` SDK's structured-output failure,
+    // thrown when the model responds but no valid Output.object() content
+    // comes back) carries no statusCode/isRetryable — it isn't an
+    // HTTP-level failure, so the checks above never catch it. Gate 9
+    // (2026-09-04, THINKING-BUDGET-SPIKE — .planning/PLACEHOLDERS.md)
+    // confirmed it empirically non-deterministic: a thinking-token spike
+    // starved the output budget and threw this on one call, then an
+    // isolated retry of the IDENTICAL prompt completed cleanly. That's
+    // exactly what "transient" means here — worth the same-provider
+    // fallback attempt, not a hard fail.
+    if (candidate.name === 'AI_NoOutputGeneratedError') return true
   }
   return false
 }
