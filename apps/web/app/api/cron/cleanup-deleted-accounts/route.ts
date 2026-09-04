@@ -200,6 +200,22 @@ export async function GET(req: Request) {
         supabase.from('user_daily_crystals').delete().eq('user_id', clerkId),
       )
 
+      // Recommendation history and preference signals are user data. The
+      // schema also cascades these from users.clerk_id; explicit deletion
+      // keeps this cron's fail-fast/retry semantics visible and testable.
+      await deleteOrThrow(
+        'recommendation_events',
+        supabase.from('recommendation_events').delete().eq('user_id', clerkId),
+      )
+      await deleteOrThrow(
+        'user_recommendation_work_states',
+        supabase.from('user_recommendation_work_states').delete().eq('user_id', clerkId),
+      )
+      await deleteOrThrow(
+        'recommendation_deliveries',
+        supabase.from('recommendation_deliveries').delete().eq('user_id', clerkId),
+      )
+
       // Delete diary entries (§8.7). Uses the core helper per the
       // §8.7 direction-of-travel ratification — new cascade tables go
       // through packages/core/src/diary/entries.ts rather than inline

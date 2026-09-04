@@ -115,6 +115,41 @@ The Moshier-vs-SE-files empirical-precision-floor check described in `packages/a
 
 ## Other third-party dependencies
 
+## Recommendation metadata and artwork
+
+**Current state:** development-only, not cleared for commercial launch.
+
+The movie/book catalog has a database-enforced rights boundary. Every source,
+work, and poster/cover asset carries a `rights_scope` (`development`,
+`commercial`, or `both`). Server selection reads
+`RECOMMENDATION_RIGHTS_MODE`; production defaults to `commercial` if the value
+is missing, which excludes the seeded TMDB and Open Library development data.
+
+- TMDB supplies development movie discovery and poster URLs. Attribution is
+  retained. Before a commercial release, obtain written terms that explicitly
+  cover the intended metadata and image display; then import under a new
+  commercial source/license record rather than changing the historical
+  development record in place.
+- Open Library supplies development book discovery and cover URLs. API access
+  is not treated as a blanket copyright license for the underlying cover art.
+  Covers remain `license_verified = false` and development-only until a rights
+  review or commercial provider agreement replaces them.
+- Stellaeum-authored summaries, safety annotations, and recommendation traits
+  are stored separately from provider provenance.
+
+The monthly importer stores raw provider records and normalized candidates as
+`draft` + `review_required`. Automation alone never promotes a title into the
+recommendable pool. Publication requires verified content flags, an approved
+safety status, sufficient metadata quality, and a rights scope allowed by the
+current environment.
+
+**Commercial-launch gate:** switch `RECOMMENDATION_RIGHTS_MODE=commercial`, add
+the contracted provider/license records, re-import assets under those records,
+and verify that both daily and monthly slots still have enough eligible titles.
+Do not relabel development assets as commercial without documentary rights.
+
+This is an engineering compliance control and record, not legal advice.
+
 Third-party dependencies whose licenses are standard permissive (MIT, ISC, Apache-2.0) and do not require explicit analysis are not enumerated here. This file records only dependencies whose license choice is a load-bearing decision or non-trivial to verify.
 
 **Pending founder review** (not automatable): Clerk TOS, Supabase TOS, Stripe TOS, OpenRouter TOS. These are service-provider Terms of Service, not software licenses, but compose with GDPR obligations (see `.planning/PRE_LAUNCH_PREREQS.md` item 7). Tracked in `.planning/PRE_LAUNCH_PREREQS.md` item 9.

@@ -50,6 +50,9 @@ export async function GET() {
     userRes,
     userCrystalsRes,
     userDailyCrystalsRes,
+    recommendationDeliveriesRes,
+    recommendationStatesRes,
+    recommendationEventsRes,
   ] = await Promise.all([
       supabase.from('charts').select('*').eq('user_id', userId),
       supabase.from('ai_readings').select('*').eq('user_id', userId),
@@ -68,6 +71,9 @@ export async function GET() {
       // column but were missing from export entirely.
       supabase.from('user_crystals').select('*').eq('user_id', userId),
       supabase.from('user_daily_crystals').select('*').eq('user_id', userId),
+      supabase.from('recommendation_deliveries').select('*').eq('user_id', userId),
+      supabase.from('user_recommendation_work_states').select('*').eq('user_id', userId),
+      supabase.from('recommendation_events').select('*').eq('user_id', userId),
     ])
 
   const relationshipIds = (spacesRes.data ?? []).map((row) => row.id)
@@ -107,6 +113,9 @@ export async function GET() {
     savedProfileReports: savedProfileReportsRes.data ?? [],
     userCrystals: userCrystalsRes.data ?? [],
     userDailyCrystals: userDailyCrystalsRes.data ?? [],
+    recommendationDeliveries: recommendationDeliveriesRes.data ?? [],
+    recommendationWorkStates: recommendationStatesRes.data ?? [],
+    recommendationEvents: recommendationEventsRes.data ?? [],
   }
 
   after(() => logAuditEvent(userId, 'account.data_export'))

@@ -60,6 +60,15 @@ describe('GET /api/gdpr/export — user_crystals / user_daily_crystals (2026-08-
     mockSupabase.push('user_daily_crystals', {
       data: [{ id: 'udc-1', user_id: 'user_test123', crystal_id: 'c-1', date: '2026-08-26' }],
     })
+    mockSupabase.push('recommendation_deliveries', {
+      data: [{ id: 'delivery-1', user_id: 'user_test123', work_id: 'work-1' }],
+    })
+    mockSupabase.push('user_recommendation_work_states', {
+      data: [{ user_id: 'user_test123', work_id: 'work-1', status: 'saved' }],
+    })
+    mockSupabase.push('recommendation_events', {
+      data: [{ user_id: 'user_test123', work_id: 'work-1', event_type: 'saved' }],
+    })
 
     const res = await GET()
     const body = JSON.parse(await res.text())
@@ -68,6 +77,9 @@ describe('GET /api/gdpr/export — user_crystals / user_daily_crystals (2026-08-
     expect(body.userDailyCrystals).toEqual([
       { id: 'udc-1', user_id: 'user_test123', crystal_id: 'c-1', date: '2026-08-26' },
     ])
+    expect(body.recommendationDeliveries).toHaveLength(1)
+    expect(body.recommendationWorkStates).toHaveLength(1)
+    expect(body.recommendationEvents).toHaveLength(1)
   })
 
   it('queries both tables scoped by the caller\'s own user_id', async () => {

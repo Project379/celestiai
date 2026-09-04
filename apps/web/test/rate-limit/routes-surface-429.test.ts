@@ -181,6 +181,18 @@ vi.mock('@stellaeum/core/horoscope/transits', () => ({
   }),
 }))
 
+vi.mock('@stellaeum/core/recommendations/service', () => ({
+  getRecommendationsOverview: vi.fn(() => {
+    throw new Error('getRecommendationsOverview should not be called')
+  }),
+  rerollRecommendation: vi.fn(() => {
+    throw new Error('rerollRecommendation should not be called')
+  }),
+  updateRecommendationFeedback: vi.fn(() => {
+    throw new Error('updateRecommendationFeedback should not be called')
+  }),
+}))
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
@@ -435,6 +447,21 @@ describe('rate-limited routes surface 429, not 500, when assertRateLimit throws'
     const { GET } = await import('@/app/api/user/route')
     await expectRateLimited(GET())
   })
+
+  it('GET /api/recommendations', async () => {
+    const { GET } = await import('@/app/api/recommendations/route')
+    await expectRateLimited(GET(req('http://localhost/api/recommendations')))
+  })
+
+  it('POST /api/recommendations/reroll', async () => {
+    const { POST } = await import('@/app/api/recommendations/reroll/route')
+    await expectRateLimited(POST(jsonReq('http://localhost/api/recommendations/reroll', {})))
+  })
+
+  it('POST /api/recommendations/feedback', async () => {
+    const { POST } = await import('@/app/api/recommendations/feedback/route')
+    await expectRateLimited(POST(jsonReq('http://localhost/api/recommendations/feedback', {})))
+  })
 })
 
 describe('excluded routes (webhooks/cron) do NOT call assertRateLimit at all', () => {
@@ -469,6 +496,13 @@ describe('excluded routes (webhooks/cron) do NOT call assertRateLimit at all', (
   it('cron/cleanup-deleted-accounts module does not import assertRateLimit', async () => {
     const source = await import('node:fs/promises').then((fs) =>
       fs.readFile(new URL('../../app/api/cron/cleanup-deleted-accounts/route.ts', import.meta.url), 'utf-8'),
+    )
+    expect(source).not.toContain("from '@/lib/rate-limit'")
+  })
+
+  it('cron/recommendation-catalog module does not import assertRateLimit', async () => {
+    const source = await import('node:fs/promises').then((fs) =>
+      fs.readFile(new URL('../../app/api/cron/recommendation-catalog/route.ts', import.meta.url), 'utf-8'),
     )
     expect(source).not.toContain("from '@/lib/rate-limit'")
   })
