@@ -1,6 +1,6 @@
 ---
 title: Compliance and cost inventory — 2026-08-31
-status: point-in-time audit, not a living document — re-run rather than edit if state has moved on
+status: ARCHIVED 2026-09-04 — superseded by the 2026-09-01 pre-launch compliance batch (commit de3a91a) and the 2026-09-04 compliance follow-up. Current status lives in .planning/PLACEHOLDERS.md (TERMS, AI-ACT-COPY, ENTITY-NAME, WITHDRAWAL-COPY, STRIPE-TOS-URL, COMPLIANCE-AUDIT-RERUN) and the narrative in .planning/SYSTEM-MAP.md §11. This file is a point-in-time audit, not a living document — re-run rather than edit if state has moved on further.
 created: 2026-08-31
 ---
 

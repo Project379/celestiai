@@ -57,11 +57,15 @@ keeps the register's truth in one file.
 
 ## Register
 
-42 OPEN rows + 11 RESOLVED rows = 53 total, per `check-placeholders`'s own
+43 OPEN rows + 11 RESOLVED rows = 54 total, per `check-placeholders`'s own
 count. LLM-MODEL-SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL
 added 2026-09-03 (PostHog hardening pass); COOKIE-CONSENT and
-ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day. STRIPE-TOS-URL
-added 2026-09-04 (compliance batch).
+ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day. STRIPE-TOS-URL and
+COMPLIANCE-AUDIT-RERUN added 2026-09-04 (compliance batch). Note:
+`origin/gemini/rebased-onto-injection` (unmerged into main as of
+2026-09-04, 6 commits ahead) independently carries its own STRIPE-TOS-URL
+row, added 2026-09-03 with different wording and Location — a same-ID
+collision to resolve by hand when that branch merges into main.
 
 | ID | Description | Type | Owner | Blocks | Status | Resolved-date | Location |
 |---|---|---|---|---|---|---|---|
@@ -92,6 +96,7 @@ added 2026-09-04 (compliance batch).
 | TERMS | `/terms` route exists as a placeholder only (compliance batch 2026-09-01) — body is not lawyer-reviewed; linked from checkout + pricing + footer | CODE | Lawyer | Store submission | OPEN | | apps/web/app/terms/page.tsx |
 | WITHDRAWAL-COPY | CRD immediate-performance / 14-day-withdrawal consent wording now shipped at Stripe Checkout (`custom_text`), still not lawyer-reviewed (compliance batch 2026-09-01) | CODE | Lawyer | Web payments | OPEN | | apps/web/lib/legal/compliance-copy.ts |
 | STRIPE-TOS-URL | `consent_collection.terms_of_service: 'required'` in the Stripe Checkout call is rejected by Stripe unless a Terms-of-Service URL is set in Dashboard → Settings → Public details — a founder dashboard step, not code. Stripe is sandbox-only until the company registers, so this whole checkout path is untestable against a real session until then (compliance batch 2026-09-04) | CONFIG | Toni | Real traffic, Company registration | OPEN | | apps/web/app/api/stripe/checkout/route.ts |
+| COMPLIANCE-AUDIT-RERUN | The compliance picture has not been independently re-verified since the 2026-09-01 batch (`de3a91a`) shipped. Everything believed about AI-Act disclosure, checkout consent copy, pricing-page disclosures, footer trader-ID, and CSP has come from the implementing session's own report — including this row's own session (2026-09-04 follow-up). Nobody has checked this work except the thing that did it. Resolves when an independent pass (different session, ideally different reviewer) re-verifies the claims in `.planning/SYSTEM-MAP.md` §11 against the running app | DECISION | Toni | Launch | OPEN | | n/a |
 | AI-ACT-COPY | Article 50 disclosure now shown on Oracle (web+mobile), daily horoscope (web+mobile) and pricing (compliance batch 2026-09-01); wording not lawyer-reviewed; other AI surfaces still unaudited | CODE | Lawyer | Already overdue | OPEN | | apps/web/lib/legal/compliance-copy.ts |
 | ENTITY-NAME | Legal entity name, ЕИК, address, VAT rendered in the site footer as bracketed placeholder values (compliance batch 2026-09-01); founder must supply real values | CODE | Toni | Launch, DSA trader | OPEN | | apps/web/lib/legal/compliance-copy.ts |
 | TIER-ITEM-4 | Recommendations gating built (2026-09-01) — free sees the daily pick; the monthly arc renders identity + teaser with detail behind PremiumLock, web + mobile (`StoriesContent` takes `isPremium`) | CODE | CC | Launch | RESOLVED | 2026-09-01 | n/a |

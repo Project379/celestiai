@@ -699,8 +699,8 @@ the account being upgraded, on each platform.
 - Mobile: no native paywall UI, no purchase call, dead webhook. This is a
   halt-required item — it needs a founder ruling on what the paywall
   shows and what test coverage is required before a real-money path ships.
-- No auto-renewal statement, no VAT statement, and no links to Terms or
-  Privacy on the pricing page (see §11).
+- Pricing-page legal disclosures (VAT rate, auto-renewal, cancellation,
+  Terms/Privacy links): status tracked in §11, not restated here.
 
 **4. Health: WEAK.** Web has a complete, well-tested path that has never
 run in production or taken a real payment. Mobile cannot take money at
@@ -709,16 +709,18 @@ pending a five-minute dashboard action.
 
 **5. What would make it GOOD.** Web flipped to live Stripe keys and one
 real end-to-end purchase confirmed; the RevenueCat signing secret set and
-a test event confirmed to sync; a native mobile paywall built after the
-founder ruling; and the pricing page carrying the required auto-renewal
-and legal-link disclosures.
+a test event confirmed to sync; and a native mobile paywall built after
+the founder ruling. Pricing-page legal disclosures: see §11.
 
 ---
 
 # 11. Compliance — the legal obligations, plainly
 
-**In bad shape. Nearly every consumer-facing legal obligation is
-currently unmet.**
+**Status: see `.planning/PLACEHOLDERS.md`** — TERMS, AI-ACT-COPY,
+ENTITY-NAME, WITHDRAWAL-COPY, STRIPE-TOS-URL, PRIVACY-REVIEW,
+DPA-CONTRACTS, COOKIE-CONSENT, COMPLIANCE-AUDIT-RERUN. The per-obligation
+status lives there, not here; this section is the narrative of what each
+obligation requires and why it matters.
 
 **1. What it is.** The things EU and Bulgarian law require of a
 subscription app that collects personal data and sells to consumers.
@@ -747,15 +749,13 @@ subscription app that collects personal data and sells to consumers.
   that is AI-generated must be labelled as such. **Consequence:** a
   compliance gap under the AI Act's transparency rules, on every Oracle
   and horoscope surface. **Status:** see `.planning/PLACEHOLDERS.md`
-  AI-ACT-COPY (VERIFIED absent from the authenticated app — "AI" appears
-  only in pre-login marketing).
+  AI-ACT-COPY.
 - **Trader identification.** EU consumer law requires the operating
   company be identifiable: legal entity name, company number (ЕИК),
   registered address, VAT number, and the supervisory authority.
   **Consequence:** a straightforward consumer-protection breach; also
   weakens the App Store and payment-provider position. **Status:** see
-  `.planning/PLACEHOLDERS.md` ENTITY-NAME (1 of 6 identifiers present — a
-  support email; no footer).
+  `.planning/PLACEHOLDERS.md` ENTITY-NAME.
 - **Cookie consent.** Required only for non-essential cookies/trackers.
   Clerk and Stripe cookies are strictly necessary and exempt.
   **Consequence:** none *if* the launch decision is no third-party
@@ -777,17 +777,18 @@ subscription app that collects personal data and sells to consumers.
   technically still applies to every subscriber. **Status:** see
   `.planning/PLACEHOLDERS.md` WITHDRAWAL-COPY.
 
-**4. Health: BROKEN.** Data-subject rights (export/delete) are done well.
-Everything else a consumer or a regulator would look for — privacy
-policy, terms, AI labelling, company identification, processor contracts,
-withdrawal notice — is absent, and the privacy policy specifically is on
-the critical path for launch.
+**4. Health.** Data-subject rights (export/delete) are done well. Current
+per-obligation health: see `.planning/PLACEHOLDERS.md` (the row IDs
+listed at the top of this section) — not restated here to avoid drift.
+The real Bulgarian privacy policy is on the critical path for launch
+regardless of the other rows' status.
 
-**5. What would make it GOOD.** The lawyer engaged and the Bulgarian
-privacy policy and terms shipped; an AI-generated label on the Oracle and
-horoscope surfaces; a footer identifying the legal entity with ЕИК / VAT /
-CPDP; the processor DPAs signed; and a withdrawal-consent checkbox (or
-notice) on checkout.
+**5. What would make it GOOD.** The lawyer engaged and the real Bulgarian
+privacy policy and terms shipped (not the current placeholder copy); real
+entity data (name / ЕИК / address / VAT) replacing the bracketed
+placeholders in the footer; the processor DPAs signed; and an independent
+re-verification of the rest of this section's code-level claims — see
+COMPLIANCE-AUDIT-RERUN.
 
 ---
 
