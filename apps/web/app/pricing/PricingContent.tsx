@@ -284,9 +284,13 @@ export function PricingContent({ currentTier, priceMonthly, priceAnnual }: Prici
           Сигурно плащане чрез Stripe
         </p>
         <p className="mx-auto max-w-xl font-display text-[12px] leading-relaxed text-slate-500">
-          Цената е с включен ДДС. Абонаментът се подновява автоматично, докато
-          не го прекратиш. Можеш да прекратиш по всяко време от настройките на
-          абонамента си или през клиентския портал на Stripe.
+          Цените (€6,99/месец, €59,99/година) са с включен ДДС 20% за
+          България.
+        </p>
+        <p className="mx-auto max-w-xl font-display text-[12px] leading-relaxed text-slate-500">
+          Абонаментът се подновява автоматично, докато не го прекратиш.
+          Можеш да прекратиш по всяко време от настройките на абонамента си
+          или през клиентския портал на Stripe.
         </p>
         <p className="font-display text-[12px] text-slate-500">
           {AI_GENERATED_DISCLOSURE_BG}

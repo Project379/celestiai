@@ -93,10 +93,12 @@ before consent" trivially — there is no gate to be before or after:
 - **Clerk** — loads unconditionally at the root layout.
 - **Sentry** — all three `Sentry.init()` calls (client/server/edge)
   unconditional at module load.
-- **Google Maps** (CSP-allowlisted) — **zero actual usage in code.** Dead
-  CSP entry.
-- **Cloudflare Turnstile** (CSP-allowlisted) — **zero usage in code.** Dead
-  CSP entry.
+- **Google Maps / Cloudflare Turnstile** — this section originally
+  claimed both were CSP-allowlisted dead entries. Re-checked 2026-09-04
+  (compliance batch): neither domain is CSP-allowlisted or referenced
+  anywhere in code — there was no entry to remove. Correction, not
+  re-verification of the original claim; see the same note in
+  `SYSTEM-MAP.md` §12.
 - **Stripe.js** — zero client-side usage (hosted-Checkout redirect design).
 
 **Sentry session replay: NOT enabled.** VERIFIED directly against code —

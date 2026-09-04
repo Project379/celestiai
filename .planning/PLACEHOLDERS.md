@@ -57,10 +57,11 @@ keeps the register's truth in one file.
 
 ## Register
 
-41 OPEN rows + 11 RESOLVED rows = 52 total, per `check-placeholders`'s own
+42 OPEN rows + 11 RESOLVED rows = 53 total, per `check-placeholders`'s own
 count. LLM-MODEL-SWAP, GATE9-PHRASE-REPETITION and CHART-CALC-BACKFILL
 added 2026-09-03 (PostHog hardening pass); COOKIE-CONSENT and
-ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day.
+ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day. STRIPE-TOS-URL
+added 2026-09-04 (compliance batch).
 
 | ID | Description | Type | Owner | Blocks | Status | Resolved-date | Location |
 |---|---|---|---|---|---|---|---|
@@ -90,6 +91,7 @@ ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day.
 | COOKIE-CONSENT | RESOLVED 2026-09-03: PostHog (the analytics that made this row live, see ANALYTICS-VENDOR) is configured cookieless — `persistence: 'memory'` at `apps/web/components/analytics/PostHogProvider.tsx:71` and `apps/mobile/lib/analytics/posthog.ts:31` means neither platform ever writes a cookie/localStorage/AsyncStorage-persisted analytics identity. This is CONFIG-verified (the option is posthog-js's own documented storage-mode enum, not a workaround) but NOT live-browser-verified — the claude-in-chrome extension was unavailable in the session that made this change, so `document.cookie` / Application > Storage were never inspected empirically in a running app. Do that check before treating this as fully closed; re-open this row if it turns up a cookie. If persistence is ever changed off `'memory'` on either file, re-open regardless | CODE | CC | EU traffic | RESOLVED | 2026-09-03 | apps/web/components/analytics/PostHogProvider.tsx |
 | TERMS | `/terms` route exists as a placeholder only (compliance batch 2026-09-01) — body is not lawyer-reviewed; linked from checkout + pricing + footer | CODE | Lawyer | Store submission | OPEN | | apps/web/app/terms/page.tsx |
 | WITHDRAWAL-COPY | CRD immediate-performance / 14-day-withdrawal consent wording now shipped at Stripe Checkout (`custom_text`), still not lawyer-reviewed (compliance batch 2026-09-01) | CODE | Lawyer | Web payments | OPEN | | apps/web/lib/legal/compliance-copy.ts |
+| STRIPE-TOS-URL | `consent_collection.terms_of_service: 'required'` in the Stripe Checkout call is rejected by Stripe unless a Terms-of-Service URL is set in Dashboard → Settings → Public details — a founder dashboard step, not code. Stripe is sandbox-only until the company registers, so this whole checkout path is untestable against a real session until then (compliance batch 2026-09-04) | CONFIG | Toni | Real traffic, Company registration | OPEN | | apps/web/app/api/stripe/checkout/route.ts |
 | AI-ACT-COPY | Article 50 disclosure now shown on Oracle (web+mobile), daily horoscope (web+mobile) and pricing (compliance batch 2026-09-01); wording not lawyer-reviewed; other AI surfaces still unaudited | CODE | Lawyer | Already overdue | OPEN | | apps/web/lib/legal/compliance-copy.ts |
 | ENTITY-NAME | Legal entity name, ЕИК, address, VAT rendered in the site footer as bracketed placeholder values (compliance batch 2026-09-01); founder must supply real values | CODE | Toni | Launch, DSA trader | OPEN | | apps/web/lib/legal/compliance-copy.ts |
 | TIER-ITEM-4 | Recommendations gating built (2026-09-01) — free sees the daily pick; the monthly arc renders identity + teaser with detail behind PremiumLock, web + mobile (`StoriesContent` takes `isPremium`) | CODE | CC | Launch | RESOLVED | 2026-09-01 | n/a |

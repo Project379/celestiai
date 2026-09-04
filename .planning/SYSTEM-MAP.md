@@ -809,8 +809,13 @@ receives, and what breaks if it goes down.
 | **Vercel** | Hosts web + API routes | All request traffic | Total outage of web and of the API that mobile depends on. |
 | **PostHog (Cloud EU)** | Product analytics — added 2026-09-03. Exactly five events (signup completed, birth data submitted, chart first viewed, free Oracle reading generated, subscription started), no autocapture, no session replay, no heatmaps, no surveys, no feature flags/experiments (`advanced_disable_flags` / `disableRemoteFeatureFlags` on both platforms) | The Clerk user ID as `distinct_id` (same opaque string RevenueCat uses — never email, never name), each bare event name, and PostHog's own default event metadata (`$browser`/`$os`/`$device_type`/`$lib`/`$session_id` on web; RN's device/app-version fields on mobile — no autocapture DOM/touch data on either). **No birth data, no reading content, no free text.** Configured cookieless (`persistence: 'memory'`, both platforms — see COOKIE-CONSENT, `.planning/PLACEHOLDERS.md`); a `before_send` hook strips the query string from `$current_url`/`$pathname`/etc. on web so a URL like `/subscription/success?session_id=...` never ships the Stripe session id. IP: `disableGeoip: true` is set on mobile (stops geo enrichment); the browser SDK has no equivalent client option — full "PostHog never sees/stores the raw IP" requires the project-level "Discard client IP data" toggle in the PostHog dashboard, which is **founder-owned, not verifiable from code** | Analytics blind spot only — no user-facing feature depends on PostHog. The `signup completed` event captures server-side from Vercel (see `lib/analytics/server-capture.ts`), so a PostHog outage cannot block account creation (fire-and-forget, try/caught). |
 
-Google Maps and Cloudflare Turnstile are in the security allowlist but
-have **zero usage in code** — dead entries (VERIFIED).
+Google Maps and Cloudflare Turnstile: this line previously claimed they
+were dead CSP allowlist entries. Re-checked 2026-09-04 (compliance
+batch) — neither domain appears anywhere in `apps/web/middleware.ts`'s
+CSP directives or any other CSP-relevant file, so there is nothing to
+remove. Either they were already removed since this was written, or the
+claim was never accurate; either way, current code has no such entries
+(VERIFIED 2026-09-04).
 
 **3. What is missing or unknown.**
 
