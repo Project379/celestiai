@@ -12,6 +12,16 @@ interface GenerateFinalTextOptions {
   system: string
 }
 
+/**
+ * STELLAEUM_PLACEHOLDER: THINKING-BUDGET-SPIKE — thinkingLevel: 'low'
+ * signals a preference, not a hard cap: Gate 9 (2026-09-04, paid tier)
+ * measured 1 of 20 calls spending 867 thinking tokens against the
+ * maxOutputTokens: 900 ceiling, leaving 18 tokens for the actual answer
+ * and throwing AI_NoOutputGeneratedError — non-deterministic, same
+ * prompt succeeded cleanly on retry. @ai-sdk/google's thinkingConfig
+ * also accepts `thinkingBudget` (a numeric token cap), unset here. See
+ * .planning/PLACEHOLDERS.md.
+ */
 export const GEMINI_FINAL_ONLY_OPTIONS = {
   thinkingConfig: {
     thinkingLevel: 'low',
@@ -34,13 +44,14 @@ interface GoogleUsageMetadata {
 }
 
 /**
- * STELLAEUM_PLACEHOLDER: THINKING-TOKEN-COST — thinkingLevel: 'low' above
- * still bills thinking tokens as output (Google's pricing page: "output
- * price includes thinking tokens"), and until this log line existed
- * nothing ever read result.usage — real per-call cost was unmeasured. Logs
- * the raw Gemini usageMetadata (exact field names, no prompt/response
- * content, no userId) so real cost can be reconstructed from Vercel's
- * Runtime Logs by grepping "[AI usage]". See .planning/PLACEHOLDERS.md.
+ * RESOLVED 2026-09-04 (THINKING-TOKEN-COST, .planning/PLACEHOLDERS.md):
+ * thinkingLevel: 'low' above still bills thinking tokens as output
+ * (Google's pricing page: "output price includes thinking tokens"), so
+ * this line reads result.usage and logs the raw Gemini usageMetadata
+ * (exact field names, no prompt/response content, no userId) — real
+ * per-call cost was reconstructed from 20 Gate 9 calls at ~€0.00265/call,
+ * confirming the earlier €0.0022 estimate undershot. Still readable via
+ * Vercel Runtime Logs by grepping "[AI usage]" for production numbers.
  */
 function logAiUsage(model: string, result: { providerMetadata?: Record<string, unknown> }): void {
   const usage = (result.providerMetadata?.google as { usageMetadata?: GoogleUsageMetadata } | undefined)
