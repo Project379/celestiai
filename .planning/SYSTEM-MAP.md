@@ -1,7 +1,8 @@
 ---
 title: Stellaeum system map — plain-language orientation
-status: SNAPSHOT, 2026-09-01. Not a living document. Where this conflicts with the code or the placeholder register, the code and the register win.
+status: LIVING DOCUMENT (redesignated 2026-09-04 — was mislabelled SNAPSHOT since creation, which two straight sessions took literally and left it drifting for days against known-changed reality). CLAUDE.md §"AI model" sends readers here for current AI-model truth, and this file is the narrative layer other docs point at for "where does current status live" — a snapshot cannot be that. Where this conflicts with the code or `.planning/PLACEHOLDERS.md`, the code and the register still win on the FACT; this document owns the NARRATIVE and must be updated to match, not left pointing at stale facts. Maintenance rule: any commit that changes payments, pricing/legal copy, the footer, CSP, the AI provider/model, or flips a PLACEHOLDERS.md row's Status touching a section below must update that section in the same session — not deferred to a later sweep.
 created: 2026-09-01
+last-reconciled: 2026-09-04 (§10, §11, §15 items 7/8/12, §16 item 6)
 method: synthesis of the two 2026-08-31 audits (ground-truth inventory, compliance/cost inventory) plus the 2026-08-26 technical sweep, the completion tracker, and the session handoff. New investigation this session only where those did not cover something.
 ---
 
@@ -982,10 +983,12 @@ Grouped by what each one blocks, ordered within each group by dependency
 6. **Privacy policy + Terms pages (lawyer, then engineering).** Waiting
    on: task 2, and task 1 for the AI section.
 7. **AI-generated-content label on Oracle + horoscope (engineering).**
-   Waiting on: a founder ruling on wording. Small.
+   Shipped, wording approved. Status: see `.planning/PLACEHOLDERS.md`
+   AI-ACT-COPY.
 8. **Trader-identification footer — entity name, ЕИК, VAT, CPDP
-   (founder supplies details, engineering builds).** Waiting on: the
-   founder confirming the operating entity.
+   (founder supplies details, engineering builds).** Footer built.
+   Waiting on: the founder confirming the operating entity. Status: see
+   `.planning/PLACEHOLDERS.md` ENTITY-NAME.
 9. **Content-safety decision for AI output (founder ruling, then
    engineering).** Waiting on: a product call. Even a static disclaimer +
    crisis-resource link is a change from nothing.
@@ -994,9 +997,9 @@ Grouped by what each one blocks, ordered within each group by dependency
     repair`, never `db push`. Blocks any further schema change safely.
 11. **Post-deploy smoke test (engineering).** Waiting on: nothing. Must
     ship with a probe marker and a build-SHA in responses.
-12. **Analytics vendor decision + signup-funnel instrumentation (founder
-    decides, engineering builds).** Waiting on: a vendor choice. Also
-    determines whether a cookie banner is needed.
+12. **Analytics vendor decision + signup-funnel instrumentation.**
+    Resolved. Status: see `.planning/PLACEHOLDERS.md` ANALYTICS-VENDOR
+    and COOKIE-CONSENT.
 13. **Production-credentials cutover — Clerk, Stripe, RevenueCat
     (founder-owned dashboard work + a mobile rebuild).** Waiting on: the
     domain/DNS and a planned cutover; orphans every current test user.
@@ -1085,9 +1088,11 @@ lives in the register — pointers below, not restated here.
    build/version marker, so "did the fix deploy?" is not answerable from
    the response. Register: `.planning/PLACEHOLDERS.md` BUILD-SHA and
    SKEW-PROTECT.
-6. **No user-behaviour signal of any kind.** No funnel, no drop-off, no
-   feature-engagement events. Register: `.planning/PLACEHOLDERS.md`
-   ANALYTICS-VENDOR.
+6. **Behaviour signal is narrow by design, not absent.** Five funnel
+   events only (signup, birth data, first chart, first free Oracle
+   reading, subscription started) — no autocapture, no session replay,
+   no broader feature-engagement tracking beyond those five. Register:
+   `.planning/PLACEHOLDERS.md` ANALYTICS-VENDOR.
 7. **Nothing scans dependencies for known vulnerabilities.** Register:
    `.planning/PLACEHOLDERS.md` DEP-AUDIT.
 8. **Nothing scans commits or the history for secrets.** No secret
