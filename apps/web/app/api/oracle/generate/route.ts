@@ -320,10 +320,22 @@ export async function POST(req: Request) {
     let lastValidation: ReadingValidationResult | null = null
     try {
       for (let attempt = 1; attempt <= 2 && finalContent === null; attempt++) {
+        // THINKING-BUDGET-SPIKE fix, defense-in-depth alongside the
+        // aspects-orb trim in chart-to-prompt.ts (.planning/PLACEHOLDERS.md):
+        // raised from 900 — thinkingBudget is a soft target the model may
+        // overflow (confirmed live, up to 1317 tokens against a configured
+        // 300), so headroom here is what stops an overflow from starving
+        // the actual answer. Free in the normal case: maxOutputTokens is a
+        // ceiling, not a floor — Gemini bills actual candidatesTokenCount +
+        // thoughtsTokenCount, and 10 live trials at this same 2000 ceiling
+        // never used more than ~420 candidate tokens even while thinking
+        // spiked to 1317. Not a hard guarantee — a spike bigger than
+        // observed could still starve 2000 — hence pairing this with the
+        // aspects trim rather than relying on headroom alone.
         const { model, text } = await generateFinalText({
           system: systemPrompt,
           prompt: chartPromptText,
-          maxOutputTokens: 900,
+          maxOutputTokens: 2000,
           fallbackModel: ORACLE_FALLBACK_MODEL,
         })
         servedModel = model

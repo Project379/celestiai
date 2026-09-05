@@ -70,6 +70,33 @@ function formatAspectLine(aspect: AspectData): string {
 }
 
 /**
+ * THINKING-BUDGET-SPIKE fix (2026-09-05, .planning/PLACEHOLDERS.md): live
+ * ablation against the Burgas chart (Gate 9 fixture id 6) isolated the
+ * spike's trigger to the ASPECTI list, not any single planet or degree —
+ * that chart's 14 aspects form an unusually interconnected cluster
+ * (Sun/Moon/Mercury/Venus/Mars/Saturn/North Node all mutually aspected),
+ * and reasoning about it burns far more thinking than
+ * thinkingConfig.thinkingBudget accounts for (Google's own docs call it a
+ * soft target the model may overflow, and it did — up to 862 tokens
+ * against a configured 300). Dropping wide-orb aspects — the
+ * astrologically weakest, least "active" ones — eliminated all measured
+ * thinking spend across 10/10 live trials on this chart (baseline: 5/15
+ * trials non-zero, 3 of those >400 tokens and one throwing
+ * AI_NoOutputGeneratedError). 4.0° kept 7 of Burgas's 14 aspects in that
+ * trial — tight enough to matter astrologically, loose enough to still
+ * describe the chart's real texture. Only the PROMPT is trimmed;
+ * buildOraclePlaceholderValues below still maps every aspect the raw
+ * chart has, so a model reference to a dropped aspect (which it never
+ * saw, so should not happen) still resolves instead of throwing
+ * UNRESOLVED_PLACEHOLDER.
+ */
+const MAX_PROMPT_ASPECT_ORB = 4.0
+
+function significantAspects(aspects: AspectData[]): AspectData[] {
+  return aspects.filter((a) => a.orb <= MAX_PROMPT_ASPECT_ORB)
+}
+
+/**
  * Converts a ChartData object to a textual prompt representation.
  *
  * @param chartData - The calculated natal chart data
@@ -102,11 +129,13 @@ export function chartToPromptText(chartData: ChartData): string {
     lines.push('(Часът на раждане е неизвестен - Асцендент и домове са приблизителни)')
   }
 
-  // Aspects section
-  if (chartData.aspects.length > 0) {
+  // Aspects section — trimmed to significant orbs only, see
+  // significantAspects() above.
+  const aspects = significantAspects(chartData.aspects)
+  if (aspects.length > 0) {
     lines.push('')
     lines.push('АСПЕКТИ:')
-    for (const aspect of chartData.aspects) {
+    for (const aspect of aspects) {
       lines.push(formatAspectLine(aspect))
     }
   }

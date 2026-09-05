@@ -63,7 +63,7 @@ async function generate(userPrompt: string): Promise<string> {
   const { text } = await generateFinalText({
     system: SYSTEM_PROMPT,
     prompt: userPrompt,
-    maxOutputTokens: 900,
+    maxOutputTokens: 2000, // matches the route — see THINKING-BUDGET-SPIKE fix, PLACEHOLDERS.md
     fallbackModel: ORACLE_FALLBACK_MODEL,
   })
   return text
