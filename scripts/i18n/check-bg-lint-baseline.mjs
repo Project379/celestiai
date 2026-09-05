@@ -184,6 +184,17 @@
  * са теми за Премиум."), and reuses "Отключи Премиум" as the CTA.
  * Through check:bg-strings and copy-lock.
  *
+ * Lowered to 1703 on 2026-09-05 (TIER-ITEM-4 recommendation gating fix):
+ * -81, progress not drift. packages/core/src/stories/catalog.ts — the
+ * ~680-line hardcoded movie/book catalog with dozens of literal Cyrillic
+ * strings — was deleted and replaced by the DB-driven
+ * packages/core/src/recommendations/* catalog. New counts: 73
+ * packages/core, 968 apps/web, 662 apps/mobile. The 71 new Cyrillic
+ * strings the recommendations UI itself introduces (RecommendationCard.tsx
+ * status/action labels, both platforms) are smaller than what the deleted
+ * catalog removed, so the net moves down despite the new surface. Through
+ * check:bg-strings and copy-lock (see scripts/i18n/copy-lock.json).
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -194,10 +205,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
 // STELLAEUM_PLACEHOLDER: LINT-BASELINE-1800 — every move of this ratchet
-// (1778→1800→1784, all 2026-09-01) is logged with its justification in
-// this file's header comment above. The ID keeps its "-1800" suffix as a
-// stable handle; the current value is 1784. See .planning/PLACEHOLDERS.md.
-const BASELINE = 1784
+// (1778→1800→1784→1703, 2026-09-01 through 2026-09-05) is logged with its
+// justification in this file's header comment above. The ID keeps its
+// "-1800" suffix as a stable handle; the current value is 1703. See
+// .planning/PLACEHOLDERS.md.
+const BASELINE = 1703
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

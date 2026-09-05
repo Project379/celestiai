@@ -47,6 +47,13 @@ export const PersonalizedRecommendationSchema = z.object({
   status: RecommendationStatusSchema,
   sentiment: RecommendationSentimentSchema.nullable(),
   explanation: RecommendationExplanationSchema,
+  /**
+   * Tier item 4: true when this slot's `explanation` was withheld server-side
+   * for a free-tier user (see getRecommendationsOverview). The client's own
+   * `locked` prop on RecommendationCard is a rendering hint only — this is
+   * the field that reflects what the server actually sent.
+   */
+  locked: z.boolean(),
 })
 
 export const RecommendationsOverviewSchema = z.object({

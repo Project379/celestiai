@@ -3,6 +3,7 @@ import { RecommendationRerollRequestSchema } from '@stellaeum/core/recommendatio
 import { rerollRecommendation } from '@stellaeum/core/recommendations/service'
 import { requireAccountActive, requireAppUser, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
+import { RECS_MONTHLY_LOCKED } from '@/lib/tier/locked-copy'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,6 +49,12 @@ export async function POST(request: Request) {
       return Response.json(
         { error: 'No other safe recommendation is available.', code: result.error },
         { status: 409 },
+      )
+    }
+    if (result.error === 'PREMIUM_REQUIRED') {
+      return Response.json(
+        { error: RECS_MONTHLY_LOCKED.title, code: result.error },
+        { status: 403 },
       )
     }
     return Response.json({ error: 'Internal error', code: result.error }, { status: 500 })

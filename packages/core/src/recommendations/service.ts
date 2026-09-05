@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { getSunSign } from '../welcome/sun-sign'
 import { getLunarPhase, type LunarPhase } from '../lib/moon-phase'
 import { createCoreSupabaseClient } from '../lib/supabase'
+import { getSubscriptionTier } from '../subscription/tier'
 import {
   buildRecommendationExplanation,
   buildTasteVector,
@@ -96,6 +97,7 @@ export type RecommendationServiceError =
   | 'NO_ELIGIBLE_CATALOG'
   | 'NOT_FOUND'
   | 'REROLL_USED'
+  | 'PREMIUM_REQUIRED'
   | 'INTERNAL'
 
 export type RecommendationServiceResult<T> =
@@ -270,13 +272,25 @@ function explanationFromRow(row: RecommendationDeliveryRow): RecommendationExpla
   }
 }
 
+const LOCKED_EXPLANATION: RecommendationExplanation = {
+  howItConnects: '',
+  whyNow: '',
+  whatItGives: '',
+}
+
 function serializeDelivery(options: {
   delivery: RecommendationDeliveryRow
   work: CatalogWork
   asset: RecommendationAssetRow | undefined
   state: WorkStateRow | undefined
+  /**
+   * Tier item 4: free users get identity + tagline only for the monthly
+   * arc — the server must not put howItConnects/whyNow/whatItGives on the
+   * wire at all, not just hide them client-side. See getRecommendationsOverview.
+   */
+  locked: boolean
 }): PersonalizedRecommendation {
-  const { delivery, work, asset, state } = options
+  const { delivery, work, asset, state, locked } = options
   const publicStatus: RecommendationStatus =
     state?.status === 'saved' || state?.status === 'consumed' ? state.status : 'new'
   const title = work.title_bg ?? work.canonical_title
@@ -310,7 +324,8 @@ function serializeDelivery(options: {
     },
     status: publicStatus,
     sentiment: state?.sentiment ?? null,
-    explanation: explanationFromRow(delivery),
+    explanation: locked ? LOCKED_EXPLANATION : explanationFromRow(delivery),
+    locked,
   }
 }
 
@@ -382,6 +397,7 @@ async function getOrCreateDelivery(options: {
   phase: LunarPhase
   sunSign: string | null
   seedSuffix?: string
+  locked: boolean
 }): Promise<PersonalizedRecommendation | null> {
   const existing = await fetchActiveDelivery(
     options.supabase,
@@ -399,6 +415,7 @@ async function getOrCreateDelivery(options: {
       work,
       asset: options.assets.get(work.id),
       state: statesMap.get(work.id),
+      locked: options.locked,
     })
   }
 
@@ -469,6 +486,7 @@ async function getOrCreateDelivery(options: {
             work: racedWork,
             asset: options.assets.get(racedWork.id),
             state: statesMap.get(racedWork.id),
+            locked: options.locked,
           })
         : null
     }
@@ -482,6 +500,7 @@ async function getOrCreateDelivery(options: {
     work: selected.work,
     asset: options.assets.get(selected.work.id),
     state: { work_id: selected.work.id, status: 'new', sentiment: null },
+    locked: options.locked,
   })
 }
 
@@ -494,6 +513,13 @@ export async function getRecommendationsOverview(
     const supabase = createCoreSupabaseClient()
     const resolved = await resolveChart(supabase, userId, requestedChartId)
     if (resolved.invalidRequestedChart) return { ok: false, error: 'CHART_NOT_FOUND' }
+
+    // Tier item 4 / TIER-DEFINITION-2026-09-01 §11: the daily pick is free
+    // in full; the monthly arc is identity + tagline only for free users.
+    // This must trim the wire payload — the client's own lock is a
+    // rendering hint, not the gate (see circle/profiles, crystals overview).
+    const tier = await getSubscriptionTier(userId)
+    const monthlyLocked = tier !== 'premium'
 
     const phase = getLunarPhase(now)
     const sunSign = resolved.chart ? getSunSign(resolved.chart.birth_date) : null
@@ -527,12 +553,14 @@ export async function getRecommendationsOverview(
         slot: 'daily_movie',
         periodKey: recommendationPeriodKey('daily_movie', now),
         works: movies,
+        locked: false,
       }),
       getOrCreateDelivery({
         ...common,
         slot: 'monthly_book',
         periodKey: recommendationPeriodKey('monthly_book', now),
         works: books,
+        locked: monthlyLocked,
       }),
     ])
 
@@ -575,6 +603,15 @@ export async function rerollRecommendation(
     const current = currentData as RecommendationDeliveryRow
     if (current.status !== 'active' || current.revision !== 0) {
       return { ok: false, error: 'REROLL_USED' }
+    }
+
+    // Tier item 4: the monthly arc is a locked surface for free users —
+    // rerolling it is an action on that surface, so it's a hard gate
+    // (matching circle/profiles), not a trimmed payload. The daily pick
+    // stays free-tier-full, including reroll.
+    if (current.slot === 'monthly_book') {
+      const tier = await getSubscriptionTier(userId)
+      if (tier !== 'premium') return { ok: false, error: 'PREMIUM_REQUIRED' }
     }
 
     const resolved = await resolveChart(supabase, userId, current.chart_id)
@@ -650,6 +687,9 @@ export async function rerollRecommendation(
         work: selected.work,
         asset: assets.get(selected.work.id),
         state: { work_id: selected.work.id, status: 'new', sentiment: null },
+        // Reached only after the monthly_book premium gate above, so a
+        // reroll result is never a locked delivery.
+        locked: false,
       }),
     }
   } catch (error) {
