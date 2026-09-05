@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
-import { generateText } from 'ai'
 import type { TransitAspect } from '@stellaeum/astrology'
 import type { PlanetPosition } from '@stellaeum/astrology/client'
-import { AI_MODEL, isUpstreamAiError, openrouter } from '@/lib/ai/client'
+import { AI_MODEL, isUpstreamAiError, ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
+import { aiTemporarilyUnavailableResponse, isTransientAIError } from '@/lib/ai/errors'
+import { generateFinalText } from '@/lib/ai/generate-final-text'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { validateReading, type ReadingValidationResult } from '@/lib/ai/validate-reading'
 import { logAuditEvent } from '@/lib/audit'
@@ -16,10 +17,12 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 
-// 300s = the Vercel Pro ceiling. Two sequential generateText calls (the
-// regenerate-once path) at ~10-25s each for the shorter horoscope prompt,
-// plus validation and DB writes, comfortably fit; 60s did not leave
-// headroom for a slow upstream attempt followed by a retry.
+// 300s = the Vercel Pro ceiling. Worst case is 4 sequential model calls —
+// two quality-driven attempts (validateReading), each internally allowed
+// one same-provider transient-failure fallback inside generateFinalText()
+// — see apps/web/app/api/oracle/generate/route.ts's RETRY SHAPE comment
+// for the full reasoning (identical composition here, shorter prompt).
+// 60s did not leave headroom for even a single transient-failure retry.
 export const maxDuration = 300
 
 /**
@@ -309,35 +312,28 @@ export async function POST(req: Request) {
       }
     }
 
-    // Generate + validate before display. The daily horoscope no longer
-    // streams: the pre-display validator (lib/ai/validate-reading.ts) — in
-    // particular SCRIPT PURITY and placeholder substitution — has to see
-    // the whole text. Both callers already POST `format=json` and read a
-    // `{ content }` envelope, so no client change is needed. On a
-    // validation failure we regenerate ONCE (the daily_horoscopes INSERT
-    // claim already caps this to one paid slot per chart per day), then
-    // fail visibly rather than persist broken output.
-    async function generateRaw(): Promise<string> {
-      const r = await generateText({
-        model: openrouter(AI_MODEL),
-        system: systemPrompt,
-        prompt: promptText,
-        temperature: 0.85,
-        maxOutputTokens: 1500,
-      })
-      return r.text
-    }
-
+    // Generate + validate before display. See the RETRY SHAPE comment on
+    // oracle/generate/route.ts's maxDuration export for the composed retry
+    // axes (identical here). Word-count band (30-160) is unaffected by the
+    // FORMAT change — this surface's bounds were already loose and
+    // script-purity/placeholder-integrity are the load-bearing checks.
     let finalContent: string | null = null
     let finalPlainText = ''
+    let servedModel: string = AI_MODEL
     let lastValidation: ReadingValidationResult | null = null
     try {
       for (let attempt = 1; attempt <= 2 && finalContent === null; attempt++) {
-        const raw = await generateRaw()
-        // 400-550 chars over 3 short lines -> roughly 45-110 words. Bounds
-        // kept loose; script purity + placeholder integrity are the load-
-        // bearing checks for this surface.
-        const validation = validateReading(raw, placeholderValues, {
+        const { model, text } = await generateFinalText({
+          system: systemPrompt,
+          prompt: promptText,
+          maxOutputTokens: 1500,
+          fallbackModel: ORACLE_FALLBACK_MODEL,
+        })
+        servedModel = model
+        // `text` is already sanitizeFinalAIOutput()-cleaned by
+        // generateFinalText — validateReading sees the reasoning-leakage-
+        // stripped text, per the ordering this reconciliation requires.
+        const validation = validateReading(text, placeholderValues, {
           minWords: 30,
           maxWords: 160,
         })
@@ -348,6 +344,7 @@ export async function POST(req: Request) {
         } else {
           console.error('[Horoscope Generate] reading rejected by validator', {
             attempt,
+            model: servedModel,
             code: validation.code,
             detail: validation.detail,
           })
@@ -355,6 +352,9 @@ export async function POST(req: Request) {
       }
     } catch (err) {
       await releaseClaimOnFailure()
+      if (isTransientAIError(err)) {
+        return aiTemporarilyUnavailableResponse()
+      }
       if (isUpstreamAiError(err)) {
         throw new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED')
       }
@@ -375,7 +375,7 @@ export async function POST(req: Request) {
 
     void checkAndLogGeneration({
       source: 'horoscope',
-      model: AI_MODEL,
+      model: servedModel,
       text: finalPlainText,
       conditions: generationConditions,
     })
@@ -388,7 +388,7 @@ export async function POST(req: Request) {
         user_id: userId,
         date: requestedDate,
         content: finalContent,
-        model_version: AI_MODEL,
+        model_version: servedModel,
       },
       { onConflict: 'chart_id,date' },
     )

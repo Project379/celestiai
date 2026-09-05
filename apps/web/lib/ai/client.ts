@@ -1,28 +1,34 @@
-import { createOpenAI } from '@ai-sdk/openai'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
 
 // Single source of truth for the LLM used by both Bulgarian-generation call
 // sites (daily horoscope, Oracle) — was previously duplicated as a local
 // `const LLAMA_MODEL` in each route file, so swapping models meant hunting
-// down every call site individually. A model swap (e.g. once the Bulgarian-
-// coverage research lands) is now a one-line change here, not a hunt.
+// down every call site individually. A model swap is now a one-line change
+// here, not a hunt.
 //
-// Currently Llama 3.3 70B — a known-weak-Bulgarian placeholder per the
-// founder's explicit instruction, not a considered choice. Do not add
-// prompt workarounds, retries, or post-processing to compensate for its
-// output quality; that work becomes dead weight the moment this constant
-// changes, and would mask whether a new model actually fixes anything.
+// Gemini 3.7 Flash — ported from change-ai-to-bulgarian-fluent (Petko),
+// reconciled onto the injection/validation layer on this branch
+// (gemini/rebased-onto-injection). ORACLE_FALLBACK_MODEL is the one-step
+// same-provider fallback generateFinalText() (lib/ai/generate-final-text.ts)
+// tries after a TRANSIENT primary-model failure only — see that file and
+// lib/ai/errors.ts's isTransientAIError. Shared by both the Oracle and
+// horoscope routes (his branch wired it to Oracle only; extended to
+// horoscope here for consistency — both are paid, user-facing generation
+// paths and there is no reason one should retry past a hiccup and the
+// other not).
 // STELLAEUM_PLACEHOLDER: LLM-MODEL-SWAP — decision resolved, implementation
-// not landed; the app cannot reliably serve readings on this model. See
-// .planning/PLACEHOLDERS.md.
-export const AI_MODEL = 'meta-llama/llama-3.3-70b-instruct'
+// not landed ON MAIN; this branch (gemini/rebased-onto-injection) is that
+// implementation, not yet merged. See .planning/PLACEHOLDERS.md.
+export const AI_MODEL = 'gemini-3.7-flash'
+export const ORACLE_FALLBACK_MODEL = 'gemini-3.6-flash'
 
-// STELLAEUM_PLACEHOLDER: LLM-FAILOVER — one provider (OpenRouter), no
-// retry and no alternate-provider fallback wired behind this client. A 5xx
-// mid-generation is turned into a deliberate 502 (isUpstreamAiError below)
-// but nothing recovers it. See .planning/PLACEHOLDERS.md.
-export const openrouter = createOpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
+// STELLAEUM_PLACEHOLDER: LLM-FAILOVER — one provider (Google), no
+// alternate-PROVIDER fallback. ORACLE_FALLBACK_MODEL above is a same-
+// provider model swap (3.7 -> 3.6) on a transient failure, not a
+// different-provider fallback — a Google-wide outage still has nothing to
+// fall back to. See .planning/PLACEHOLDERS.md.
+export const gemini = createGoogleGenerativeAI({
+  apiKey: process.env.GEMINI_API_KEY,
 })
 
 /**
@@ -30,11 +36,18 @@ export const openrouter = createOpenAI({
  * gateway, non-JSON body, network drop, rate-limit) rather than a bug in
  * our own code. The `ai` SDK does NOT wrap a non-JSON provider response —
  * `JSON.parse` throws a raw `SyntaxError` straight out of
- * `generateText`/`streamText`.
+ * `generateText`/`streamText`. Provider-agnostic: these are `ai`-SDK-level
+ * error shapes, not OpenAI/OpenRouter-specific ones, so this is unchanged
+ * by the Gemini swap.
  *
- * Call sites use this to turn an unexpected 500 into a deliberate 502 with
- * a retry hint, so a provider hiccup is not indistinguishable from "our
- * route is broken". Anything not matched here re-throws unchanged — a real
+ * Call sites use this as the LAST-RESORT classifier for an error that
+ * escaped generateFinalText() entirely (its own fallback also failed, or
+ * threw something isTransientAIError — lib/ai/errors.ts — doesn't
+ * recognize), turning an unexpected 500 into a deliberate 502 with a retry
+ * hint. isTransientAIError is checked FIRST at those call sites (a more
+ * specific, chain-aware classification used to decide the primary/fallback
+ * model switch inside generateFinalText); this stays the broader net
+ * behind it. Anything not matched by either re-throws unchanged — a real
  * bug must still surface as a 500.
  *
  * History: added 2026-08-27 while chasing a production `SyntaxError` on

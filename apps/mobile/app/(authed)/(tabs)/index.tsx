@@ -827,15 +827,32 @@ function firstPlanetOf(chunks: SentinelChunk[]): Planet | null {
 // the takeaway, not another influence, so it stays visually distinct from
 // the influence segments rather than reading as one more of them).
 //
-// MOBILE-ALPHA-REDESIGN v3, Step 2 (reading length): the daily-horoscope
-// prompt now targets 400-550 characters, 2 paragraphs (apps/web/lib/
-// horoscope/prompts.ts) — a genuine "text from a friend" reading fits
-// on-screen with no scroll needed. This threshold is a variance safety
-// net, not a routine control: it sits well above the new target so it
-// only fires on outliers (a model that ignores the length instruction,
-// or a legacy reading generated under the old 4-6 paragraph prompt still
-// cached for today). See REVISIT 57 (daily-reading length re-verification
-// against production model).
+// MOBILE-ALPHA-REDESIGN v3, Step 2 (reading length) — UPDATED 2026-09-04.
+// The daily-horoscope prompt (apps/web/lib/horoscope/prompts.ts) now
+// targets 420-450 characters, 3 paragraphs, 3-4 sentences (cut down from
+// a 600-850/3-paragraph target that briefly replaced the original
+// 400-550/2-paragraph one during the Gemini port, 2d87ea3/f34f09f, and
+// didn't fit on-screen at any device size — see the Gemini cost/
+// rate-limit report, item 3).
+//
+// Re-measured against DEVICE-SUPPORT-POLICY.md's 360x780 design floor
+// (not iPhone SE — see that doc for why), analytically (no on-device/
+// simulator render was available either time): 420-450 chars is CLOSE
+// but, on the central estimate, still ~2-3 lines (~65-95px) over one
+// screen including this screen's header block, the AI disclosure, and
+// the "Плъзни надолу" hint below the reading — it is not a confirmed
+// fit. At the most favorable plausible character-width assumption it's
+// within ~1 line (~35px). A target around 350-390 characters would fit
+// with real margin at this floor; 420-450 was chosen as a smaller,
+// approved cut from 600-850, not as a value confirmed to fit exactly.
+// Re-verify on a real 360x780-class device before treating this as
+// solved — see the DEVICE-PASS-STALE register row.
+//
+// EXPAND_THRESHOLD_CHARS below is still a variance safety net, not a
+// routine control, at roughly the same proportional headroom above the
+// new target (2x its upper bound) as it had above the old one. See
+// REVISIT 57 (daily-reading length re-verification against production
+// model).
 const EXPAND_THRESHOLD_CHARS = 900
 
 // Opener/development paragraph block — shared by both the single-paragraph

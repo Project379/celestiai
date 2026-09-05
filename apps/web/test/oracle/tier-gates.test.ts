@@ -26,8 +26,6 @@ import { makeAppUser } from '../mocks/fixtures'
  *     regenerate was allowed, quota-exempt for a live cached reading).
  */
 
-const AI_MOCK_MODEL = 'fake-model-instance'
-
 const userState = vi.hoisted(() => ({ tier: 'free' as 'free' | 'premium' }))
 
 vi.mock('@clerk/nextjs/server', () => ({
@@ -53,7 +51,7 @@ vi.mock('@/lib/audit', () => ({ logAuditEvent: vi.fn() }))
 vi.mock('@/lib/ai/check-bg-output', () => ({ checkAndLogGeneration: vi.fn(async () => {}) }))
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
-  openrouter: vi.fn(() => AI_MOCK_MODEL),
+  ORACLE_FALLBACK_MODEL: 'fake-fallback-model',
   isUpstreamAiError: vi.fn(() => false),
 }))
 vi.mock('@/lib/oracle/prompts', () => ({ buildSystemPrompt: vi.fn(() => 'system prompt') }))
@@ -65,9 +63,8 @@ vi.mock('@/lib/ai/validate-reading', () => ({
   validateReading: vi.fn((raw: string) => ({ ok: true, text: raw, content: raw, wordCount: 500 })),
 }))
 vi.mock('@stellaeum/core/oracle/planet-parser', () => ({ stripSentinels: vi.fn((t: string) => t) }))
-vi.mock('ai', () => ({
-  generateText: vi.fn(async () => ({ text: 'a generated reading' })),
-  streamText: vi.fn(),
+vi.mock('@/lib/ai/generate-final-text', () => ({
+  generateFinalText: vi.fn(async () => ({ model: 'fake-model', text: 'a generated reading' })),
 }))
 
 // Premium monthly quota — stateful, mirrors the real RPC shape. Only the
@@ -117,7 +114,7 @@ vi.mock('@/lib/subscriptions/free-oracle', async (importActual) => {
 })
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { generateText } from 'ai'
+import { generateFinalText } from '@/lib/ai/generate-final-text'
 import { incrementQuotaUsage } from '@/lib/subscriptions/quota'
 import { POST } from '@/app/api/oracle/generate/route'
 import { NEVER_EXPIRES_AT } from '@/lib/oracle/expiry'
@@ -214,7 +211,7 @@ describe('POST /api/oracle/generate — FREE tier gates (frozen definition 2026-
 
     expect(res.status).toBe(200)
     expect(claimSpy).toHaveBeenCalledTimes(1)
-    expect(vi.mocked(generateText)).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(generateFinalText)).toHaveBeenCalledTimes(1)
     // Free path must NOT touch the premium monthly counter.
     expect(vi.mocked(incrementQuotaUsage)).not.toHaveBeenCalled()
   })
@@ -231,7 +228,7 @@ describe('POST /api/oracle/generate — FREE tier gates (frozen definition 2026-
     expect(body.code).toBe('CAP_REACHED')
     expect(body.reason).toBe('free_used')
     // The blocked call must not have reached generation.
-    expect(vi.mocked(generateText)).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(generateFinalText)).toHaveBeenCalledTimes(1)
   })
 
   it('blocks a premium topic (love) with CAP_REACHED / premium_topic, before any claim or generation', async () => {
@@ -243,7 +240,7 @@ describe('POST /api/oracle/generate — FREE tier gates (frozen definition 2026-
     expect(body.code).toBe('CAP_REACHED')
     expect(body.reason).toBe('premium_topic')
     expect(claimSpy).not.toHaveBeenCalled()
-    expect(vi.mocked(generateText)).not.toHaveBeenCalled()
+    expect(vi.mocked(generateFinalText)).not.toHaveBeenCalled()
   })
 
   it('blocks regenerate with CAP_REACHED / premium_regenerate', async () => {

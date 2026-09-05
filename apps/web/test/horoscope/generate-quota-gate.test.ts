@@ -43,7 +43,7 @@ vi.mock('@/lib/audit', () => ({ logAuditEvent: vi.fn() }))
 vi.mock('@/lib/ai/check-bg-output', () => ({ checkAndLogGeneration: vi.fn(async () => {}) }))
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
-  openrouter: vi.fn(() => 'fake-model-instance'),
+  ORACLE_FALLBACK_MODEL: 'fake-fallback-model',
   isUpstreamAiError: vi.fn(() => false),
 }))
 vi.mock('@/lib/horoscope/prompts', () => ({ buildDailyHoroscopePrompt: vi.fn(() => 'system prompt') }))
@@ -64,9 +64,8 @@ vi.mock('@stellaeum/astrology', () => ({
   })),
   calculateTransitAspects: vi.fn(() => []),
 }))
-vi.mock('ai', () => ({
-  generateText: vi.fn(async () => ({ text: 'a generated horoscope' })),
-  streamText: vi.fn(),
+vi.mock('@/lib/ai/generate-final-text', () => ({
+  generateFinalText: vi.fn(async () => ({ model: 'fake-model', text: 'a generated horoscope' })),
 }))
 
 // Regression guard: the route must NOT reach for the Oracle monthly quota.

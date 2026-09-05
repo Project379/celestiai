@@ -184,6 +184,14 @@
  * са теми за Премиум."), and reuses "Отключи Премиум" as the CTA.
  * Through check:bg-strings and copy-lock.
  *
+ * Raised to 1785 on 2026-09-03 (gemini/rebased-onto-injection —
+ * reconciling change-ai-to-bulgarian-fluent onto the injection/validation
+ * layer): +1, apps/web/lib/ai/errors.ts's aiTemporarilyUnavailableResponse()
+ * 503 message ("Звездите са временно недостъпни. Опитай отново след
+ * малко."), ported from that branch unchanged. Same voice as the existing
+ * RETRY_LATER_MESSAGE-style copy elsewhere in lib/ai. Through
+ * check:bg-strings and copy-lock.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -194,10 +202,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
 // STELLAEUM_PLACEHOLDER: LINT-BASELINE-1800 — every move of this ratchet
-// (1778→1800→1784, all 2026-09-01) is logged with its justification in
-// this file's header comment above. The ID keeps its "-1800" suffix as a
-// stable handle; the current value is 1784. See .planning/PLACEHOLDERS.md.
-const BASELINE = 1784
+// (1778→1800→1784→1785, 2026-09-01 through 2026-09-03) is logged with its
+// justification in this file's header comment above. The ID keeps its
+// "-1800" suffix as a stable handle; the current value is 1785. See
+// .planning/PLACEHOLDERS.md.
+const BASELINE = 1785
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

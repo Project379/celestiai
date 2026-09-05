@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
  * confirmed live in 20260413141504_schema_hardening.sql) BEFORE calling
  * the AI model — an application-level lock using a constraint that
  * already exists, no migration needed. This test proves that of two
- * concurrent requests, only ONE reaches generateText; the other is
+ * concurrent requests, only ONE reaches generateFinalText; the other is
  * rejected at the claim step with 429, before any AI cost is incurred.
  */
 
@@ -51,7 +51,8 @@ vi.mock('@/lib/ai/check-bg-output', () => ({
 
 vi.mock('@/lib/ai/client', () => ({
   AI_MODEL: 'fake-model',
-  openrouter: vi.fn(() => 'fake-model-instance'),
+  ORACLE_FALLBACK_MODEL: 'fake-fallback-model',
+  isUpstreamAiError: vi.fn(() => false),
 }))
 
 vi.mock('@/lib/horoscope/prompts', () => ({
@@ -83,18 +84,17 @@ vi.mock('@stellaeum/astrology', () => ({
   calculateTransitAspects: vi.fn(() => []),
 }))
 
-const generateTextCallCount = vi.hoisted(() => ({ count: 0 }))
+const generateFinalTextCallCount = vi.hoisted(() => ({ count: 0 }))
 
-vi.mock('ai', () => ({
-  generateText: vi.fn(async () => {
-    generateTextCallCount.count += 1
+vi.mock('@/lib/ai/generate-final-text', () => ({
+  generateFinalText: vi.fn(async () => {
+    generateFinalTextCallCount.count += 1
     // Simulate real generation latency — long enough that a genuinely
     // concurrent second request would reach this point too if the claim
     // step didn't block it first.
     await new Promise((resolve) => setTimeout(resolve, 10))
-    return { text: 'a generated horoscope' }
+    return { model: 'fake-model', text: 'a generated horoscope' }
   }),
-  streamText: vi.fn(),
 }))
 
 /**
@@ -267,7 +267,7 @@ let fake: ReturnType<typeof createFakeSupabase>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  generateTextCallCount.count = 0
+  generateFinalTextCallCount.count = 0
   fake = createFakeSupabase()
   vi.mocked(createServiceSupabaseClient).mockReturnValue(fake as never)
 })
@@ -280,6 +280,6 @@ describe('POST /api/horoscope/generate — duplicate paid-call race (Batch 5.5 #
     // One succeeds (200), one is turned away at the claim (429) — never
     // both succeeding, and never both paying for generation.
     expect(statuses).toEqual([200, 429])
-    expect(generateTextCallCount.count).toBe(1)
+    expect(generateFinalTextCallCount.count).toBe(1)
   })
 })

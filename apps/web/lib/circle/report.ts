@@ -21,7 +21,7 @@ const DOMAIN_NAMES_BG: Record<CompatibilityDomainKey, string> = {
 
 // 2026-08-26 sweep #5, corrected: these routes generate content from a
 // deterministic template over already-computed compatibility scores — no
-// OpenRouter/LLM call anywhere in this path (buildCompatibilityReportContent
+// external LLM call anywhere in this path (buildCompatibilityReportContent
 // / buildSavedProfileFullContent / buildSavedProfileTeaserContent are pure
 // functions). This is NOT an AI-spend control. It caps unbounded
 // version-row growth per pair — each POST inserts a new row and re-runs
