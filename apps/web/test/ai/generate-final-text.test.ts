@@ -105,6 +105,54 @@ describe('generateFinalText', () => {
     })
   })
 
+  it('logs usage for a failing call, not just the eventual successful one (THINKING-BUDGET-SPIKE gap)', async () => {
+    // Forcing the lazy `.output` getter inside callModel (so the throw is
+    // classified and the fallback engages — see the test above) had a
+    // side effect: logAiUsage was only ever reached on a successful
+    // return, so a spiking call's real token counts — the ones that
+    // matter most for THINKING-BUDGET-SPIKE — were invisible whenever the
+    // call failed outright (no fallback configured, or the fallback also
+    // failed). This proves the primary attempt's usage is logged even
+    // though that attempt itself throws.
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const throwingResult = {
+      providerMetadata: {
+        google: {
+          usageMetadata: {
+            promptTokenCount: 1655,
+            candidatesTokenCount: 24,
+            thoughtsTokenCount: 862,
+            totalTokenCount: 2541,
+          },
+        },
+      },
+      get output(): never {
+        throw Object.assign(new Error('No output generated.'), {
+          name: 'AI_NoOutputGeneratedError',
+        })
+      },
+    }
+    vi.mocked(generateText).mockResolvedValueOnce(throwingResult as never)
+
+    // No fallbackModel — this is a bare failure with nothing to log
+    // afterward, so the ONLY chance to observe this call's usage is
+    // inside callModel, before the throw.
+    await expect(generateFinalText(request)).rejects.toThrow('No output generated.')
+
+    expect(logSpy).toHaveBeenCalledWith(
+      '[AI usage]',
+      JSON.stringify({
+        model: 'gemini-primary',
+        promptTokenCount: 1655,
+        candidatesTokenCount: 24,
+        thoughtsTokenCount: 862,
+        totalTokenCount: 2541,
+      }),
+    )
+
+    logSpy.mockRestore()
+  })
+
   it('does not use the fallback after a non-transient failure', async () => {
     const invalidRequest = Object.assign(new Error('invalid request'), {
       statusCode: 400,

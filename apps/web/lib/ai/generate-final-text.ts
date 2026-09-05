@@ -29,7 +29,22 @@ interface GenerateFinalTextOptions {
  * is not thinkingBudget: 0 / thinking disabled). errors.ts's
  * isTransientAIError now also treats AI_NoOutputGeneratedError as
  * retryable, as defense in depth for whatever other cause might still
- * produce it. See .planning/PLACEHOLDERS.md.
+ * produce it.
+ *
+ * STELLAEUM_PLACEHOLDER: THINKING-BUDGET-NOT-A-CAP — thinkingBudget is
+ * NOT a hard cap. Google's own docs for this exact field
+ * (ai.google.dev/gemini-api/docs/generate-content/thinking,
+ * thinkingConfig.thinkingBudget): "Depending on the prompt, the model
+ * might overflow or underflow the token budget." Measured live on this
+ * exact config, against the Burgas chart (Gate 9 fixture id 6): 15
+ * trials with thinkingBudget: 300 produced thinking spends of 153, 212,
+ * 348, 707, and 862 — the last two overflowing by 136% and 187%. Treat
+ * 300 as a spend target the model is free to exceed, not a ceiling that
+ * bounds worst-case latency/cost/output-token headroom; the retryable-
+ * fallback path in isTransientAIError below is a mitigation for a call
+ * that overflows badly enough to starve maxOutputTokens, not a fix for
+ * the overflow itself. See .planning/PLACEHOLDERS.md THINKING-BUDGET-
+ * SPIKE and THINKING-BUDGET-NOT-A-CAP.
  */
 export const GEMINI_FINAL_ONLY_OPTIONS = {
   thinkingConfig: {
@@ -112,6 +127,17 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
         google: GEMINI_FINAL_ONLY_OPTIONS,
       },
     })
+    // Log here, BEFORE forcing `.output` below — usage/providerMetadata
+    // live on `result` as soon as generateText() resolves, regardless of
+    // whether the lazy `.output` getter is about to throw
+    // NoOutputGeneratedError. This is the only place a spiking-thinking
+    // call's real token cost is observable: NoOutputGeneratedError is a
+    // property-access throw over an already-completed response, not a
+    // network failure, so `result` (and its usage) exists whether or not
+    // the getter access below succeeds. Logging inside callModel also
+    // means a primary-then-fallback sequence logs both attempts, not just
+    // whichever one ultimately succeeded.
+    logAiUsage(model, result)
     void result.output
     return result
   }
@@ -125,6 +151,13 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
       !fallbackModel ||
       (!isTransientAIError(primaryError) && !isUpstreamAiError(primaryError))
     ) {
+      // The AI SDK's error classes (APICallError, NoOutputGeneratedError,
+      // etc.) carry no usage/token data at all — see lib/ai/errors.ts's
+      // errorChain and generateText's own error types. When generateText()
+      // itself throws before resolving (a genuine upstream/network
+      // failure, as opposed to the lazy-getter throw above), that call's
+      // token cost is not observable from here or anywhere else client-
+      // side; nothing is logged for it.
       throw primaryError
     }
 
@@ -136,8 +169,6 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
     servedModel = fallbackModel
     result = await callModel(fallbackModel)
   }
-
-  logAiUsage(servedModel, result)
 
   const text = sanitizeFinalAIOutput(result.output.content)
   if (!text) {
