@@ -1,7 +1,8 @@
 ---
 title: Stellaeum system map — plain-language orientation
-status: SNAPSHOT, 2026-09-01. Not a living document. Where this conflicts with the code or the placeholder register, the code and the register win.
+status: LIVING DOCUMENT (redesignated 2026-09-04 — was mislabelled SNAPSHOT since creation, which two straight sessions took literally and left it drifting for days against known-changed reality). CLAUDE.md §"AI model" sends readers here for current AI-model truth, and this file is the narrative layer other docs point at for "where does current status live" — a snapshot cannot be that. Where this conflicts with the code or `.planning/PLACEHOLDERS.md`, the code and the register still win on the FACT; this document owns the NARRATIVE and must be updated to match, not left pointing at stale facts. Maintenance rule: any commit that changes payments, pricing/legal copy, the footer, CSP, the AI provider/model, or flips a PLACEHOLDERS.md row's Status touching a section below must update that section in the same session — not deferred to a later sweep.
 created: 2026-09-01
+last-reconciled: 2026-09-04 (§10, §11, §15 items 7/8/12, §16 item 6)
 method: synthesis of the two 2026-08-31 audits (ground-truth inventory, compliance/cost inventory) plus the 2026-08-26 technical sweep, the completion tracker, and the session handoff. New investigation this session only where those did not cover something.
 ---
 
@@ -291,71 +292,97 @@ the 16 tables were untracked so the history is not a mystery.
 
 # 4. LLM & AI — the model, the prompt, and what is not checked
 
-**In bad shape. Read this section first if you read only one.**
+**Improved, not clean. The placeholder model is gone; three tracked
+quality gaps remain open.**
 
 **1. What it is.** The part that turns a user's chart into a written
-reading in Bulgarian. It calls one language model, through OpenRouter,
-using a fixed system prompt plus a text description of the user's
-computed chart. Two features use it: the Oracle reading and the daily
-horoscope.
+reading in Bulgarian. It calls one language model directly, using a
+fixed system prompt plus a text description of the user's computed
+chart. Two features use it: the Oracle reading and the daily horoscope.
 
-**2. Current state (VERIFIED — traced in full and measured with 10 real
-generations, 2026-08-31 ground-truth audit).**
+**2. Current state (VERIFIED — `gemini/rebased-onto-injection` merged
+into main 2026-09-05, commit `d08bd03`; `check:all` including a forced
+non-cached `check:build` passed clean post-merge).**
 
-- **The model is `meta-llama/llama-3.3-70b-instruct`**, via OpenRouter,
-  using a generic OpenAI-compatible client. CLAUDE.md and every planning
-  doc call this an **explicit placeholder with known-weak Bulgarian
-  output**. It is not the intended production model.
-- **The prompt is built server-side only.** It contains: the fixed
-  voice/format instructions, four topic variants, and a plain-text
-  serialisation of the user's computed chart (planet, sign, degree,
-  house, retrograde, aspects, ascendant). **No user free text ever
-  reaches it** — not diary entries, not chart nicknames, nothing typed
-  (VERIFIED). Only a chart ID (looked up server-side) and server-computed
-  astronomy. So prompt injection is not a live attack surface on this
-  feature.
-- **What is checked about the output before the user sees it: nothing.**
-  There is no safety filter, no sensitive-topic handling, no disclaimer,
-  no format validation, and no retry on a malformed or truncated
-  response (the last is a deliberate standing ruling — no
-  retries/workarounds for a placeholder model). A spell-check runs
-  afterwards and only writes a log line.
+- **The model is `gemini-3.7-flash`** (falling back to `gemini-3.6-flash`
+  on failure), called **directly via `@ai-sdk/google`**
+  (`createGoogleGenerativeAI`, `apps/web/lib/ai/client.ts`) —
+  **not through OpenRouter.** This replaces the
+  `meta-llama/llama-3.3-70b-instruct` placeholder this section previously
+  described. See `.planning/PLACEHOLDERS.md` LLM-MODEL-SWAP for the full
+  history and what's still open.
+- **The prompt is built server-side only**, same as before: fixed
+  voice/format instructions, topic variants, and a serialisation of the
+  user's computed chart. **No user free text ever reaches it** — the
+  Oracle takes a chart ID and a topic enum, nothing typed (VERIFIED,
+  and now a permanent design decision — see PLACEHOLDERS.md
+  ORACLE-INPUT-STRUCTURED). Prompt injection is not a live attack
+  surface on this feature.
+- **The model can no longer author its own figures.** Both system
+  prompts (Oracle and horoscope) now forbid the model from writing
+  degrees/signs/houses/orbs directly and require `[pos:]`/`[house:]`/
+  `[aspect:]`/`[tpos:]`/`[taspect:]` sentinel tokens instead; the server
+  substitutes real chart values after generation. A pre-display validator
+  (`apps/web/lib/ai/validate-reading.ts`) rejects any model-authored
+  digit, unresolved token, non-Bulgarian glyph, unbalanced sentinel, or
+  out-of-range length, regenerating once before failing visibly. This
+  closes the "fabricated precision" defect this section previously
+  described in detail (every reading citing the same fake degree) — it's
+  no longer possible for the model to fabricate a number, since it isn't
+  allowed to write one at all. Oracle and daily horoscope no longer
+  stream, as a consequence.
+- **What is still not checked**: no content-safety filter, no
+  sensitive-topic handling beyond what's described below. Google's own
+  safety filtering exists on the API side but is untested against real
+  emotionally-serious content (see below).
 
-**3. What is wrong, plainly.**
+**3. What's measured, what's fixed, what's still open** (Gate 9 —
+`apps/web/scripts/oracle-gate9.mjs` / `apps/web/test/gate9/` — is the
+regression harness; see `.planning/PLACEHOLDERS.md` for full detail on
+each row named below):
 
-- **Fabricated precision (VERIFIED, 10/10 sample readings, zero
-  exceptions).** Every reading cites planetary positions in
-  precise-looking degree-and-minute form (e.g. "14°49'") five to twelve
-  times. **Within any single reading, every one of those citations is the
-  same number** — the Sun, Moon, Mercury, Ascendant and Venus were all
-  cited at "14°49'" in one reading — even though the chart data fed in
-  gives each planet a different degree. In plain terms: the reading
-  prints a specific-looking number to sound like it is reading your
-  chart, and it is not reading your chart. This held in all ten samples.
-- **Repetition (VERIFIED).** Across ten deliberately different charts,
-  there were effectively two distinct opening sentences, not ten. The
-  phrase "космически път" appeared in 10 of 10 readings. Six of ten
-  opened with a construction that is **grammatically broken Bulgarian** —
-  the model mashing two example phrases from the prompt into one
-  ungrammatical clause.
-- **No awareness of crisis, grief, medical, or self-harm content
-  (VERIFIED).** The project's own market research says Bulgarians turn to
-  astrology for psychological comfort during hard times. The pipeline has
-  no signpost to any support resource anywhere, and no filter for these
-  topics.
+- **Fabricated precision: FIXED**, per the sentinel-token mechanism
+  above (ASTRO-INJECT, RESOLVED).
+- **Phrase repetition: IMPROVED, NOT RESOLVED.** The Llama-era stock
+  opening ("твоят [planet] на" in 6-8/10 readings, with wrong gender on
+  "Слънце" in most) is gone as that specific construction, but two
+  content templates ("твоята луна в", "твоето слънце в") still fail
+  every run they've been checked against — genuine templating, not
+  Llama-era grammar breakage. See GATE9-PHRASE-REPETITION.
+- **A thinking-budget failure mode (Gemini-specific, didn't exist under
+  Llama): FIXED, not yet proven at scale.** Dense mutual-aspect charts
+  could spend the model's entire token budget on internal reasoning
+  before writing any output, throwing an uncaught error. Root-caused to
+  aspect-cluster density; fixed by trimming aspects to orb≤4.0 in the
+  prompt and raising the output ceiling. Verified 0/20 failures across
+  two post-fix Gate 9 runs — kept OPEN pending a larger sample, since the
+  base rate this fixes was itself measured at 20-45% depending on
+  condition. See THINKING-BUDGET-SPIKE.
+- **No awareness of crisis, grief, medical, or self-harm content:
+  narrowed, not closed.** 21 real API probes produced zero safety-filter
+  activations — but the probes tested generic natal-chart requests,
+  which is exactly what today's Oracle input shape is (bare topic enum).
+  This doesn't block current launch. It becomes live again if the parked
+  Oracle-questions redesign (`.planning/ORACLE-QUESTIONS-SPEC.md`) ships
+  richer, mood/circumstance-scoped prompt content, which has never been
+  tested against Google's content policy. See SAFETY-FILTER-UNTESTED.
+- **Gender agreement: much improved, not perfect.** 0/20 across two runs,
+  then a single `"твоят Меркурий"` violation on a third — roughly 2.7%
+  across 37 generations, down from the Llama-era 8-9/10 rate.
 
-**4. Health: BROKEN.** The plumbing works — caching, quota, streaming
-normalisation all function — but the actual product (a good Bulgarian
-reading) is not fit to show a paying user on the current model, and there
-is no safety layer at all on emotionally serious output.
+**4. Health: IMPROVED.** The placeholder model and its worst defect
+(fabricated precision) are both gone. What remains open is real but
+narrower and better-understood than "everything is broken": one
+content-templating issue, one probabilistic failure mode with a shipped
+fix pending larger-sample confirmation, and one testing gap that's
+correctly scoped to a feature that hasn't shipped yet rather than to
+current production.
 
-**5. What would make it GOOD.** A production model chosen and swapped in
-(a small code change once decided — see §12); its Bulgarian output
-measured against the same speller the gates use and read for register; a
-minimum content-safety decision made and shipped (even a static
-disclaimer line and a crisis-resource link); and a re-run of the
-10-reading variety test showing distinct openings and per-planet degrees
-that actually match the input.
+**5. What would make it GOOD.** GATE9-PHRASE-REPETITION resolved (either
+the two remaining templates rewritten, or a ruling that the repetition
+rate is acceptable); THINKING-BUDGET-SPIKE re-verified at a larger sample
+and flipped to RESOLVED; SAFETY-FILTER-UNTESTED re-tested against real
+emotionally-serious content before the Oracle-questions feature ships.
 
 ---
 
@@ -699,8 +726,8 @@ the account being upgraded, on each platform.
 - Mobile: no native paywall UI, no purchase call, dead webhook. This is a
   halt-required item — it needs a founder ruling on what the paywall
   shows and what test coverage is required before a real-money path ships.
-- No auto-renewal statement, no VAT statement, and no links to Terms or
-  Privacy on the pricing page (see §11).
+- Pricing-page legal disclosures (VAT rate, auto-renewal, cancellation,
+  Terms/Privacy links): status tracked in §11, not restated here.
 
 **4. Health: WEAK.** Web has a complete, well-tested path that has never
 run in production or taken a real payment. Mobile cannot take money at
@@ -709,16 +736,18 @@ pending a five-minute dashboard action.
 
 **5. What would make it GOOD.** Web flipped to live Stripe keys and one
 real end-to-end purchase confirmed; the RevenueCat signing secret set and
-a test event confirmed to sync; a native mobile paywall built after the
-founder ruling; and the pricing page carrying the required auto-renewal
-and legal-link disclosures.
+a test event confirmed to sync; and a native mobile paywall built after
+the founder ruling. Pricing-page legal disclosures: see §11.
 
 ---
 
 # 11. Compliance — the legal obligations, plainly
 
-**In bad shape. Nearly every consumer-facing legal obligation is
-currently unmet.**
+**Status: see `.planning/PLACEHOLDERS.md`** — TERMS, AI-ACT-COPY,
+ENTITY-NAME, WITHDRAWAL-COPY, STRIPE-TOS-URL, PRIVACY-REVIEW,
+DPA-CONTRACTS, COOKIE-CONSENT, COMPLIANCE-AUDIT-RERUN. The per-obligation
+status lives there, not here; this section is the narrative of what each
+obligation requires and why it matters.
 
 **1. What it is.** The things EU and Bulgarian law require of a
 subscription app that collects personal data and sells to consumers.
@@ -747,15 +776,13 @@ subscription app that collects personal data and sells to consumers.
   that is AI-generated must be labelled as such. **Consequence:** a
   compliance gap under the AI Act's transparency rules, on every Oracle
   and horoscope surface. **Status:** see `.planning/PLACEHOLDERS.md`
-  AI-ACT-COPY (VERIFIED absent from the authenticated app — "AI" appears
-  only in pre-login marketing).
+  AI-ACT-COPY.
 - **Trader identification.** EU consumer law requires the operating
   company be identifiable: legal entity name, company number (ЕИК),
   registered address, VAT number, and the supervisory authority.
   **Consequence:** a straightforward consumer-protection breach; also
   weakens the App Store and payment-provider position. **Status:** see
-  `.planning/PLACEHOLDERS.md` ENTITY-NAME (1 of 6 identifiers present — a
-  support email; no footer).
+  `.planning/PLACEHOLDERS.md` ENTITY-NAME.
 - **Cookie consent.** Required only for non-essential cookies/trackers.
   Clerk and Stripe cookies are strictly necessary and exempt.
   **Consequence:** none *if* the launch decision is no third-party
@@ -777,17 +804,18 @@ subscription app that collects personal data and sells to consumers.
   technically still applies to every subscriber. **Status:** see
   `.planning/PLACEHOLDERS.md` WITHDRAWAL-COPY.
 
-**4. Health: BROKEN.** Data-subject rights (export/delete) are done well.
-Everything else a consumer or a regulator would look for — privacy
-policy, terms, AI labelling, company identification, processor contracts,
-withdrawal notice — is absent, and the privacy policy specifically is on
-the critical path for launch.
+**4. Health.** Data-subject rights (export/delete) are done well. Current
+per-obligation health: see `.planning/PLACEHOLDERS.md` (the row IDs
+listed at the top of this section) — not restated here to avoid drift.
+The real Bulgarian privacy policy is on the critical path for launch
+regardless of the other rows' status.
 
-**5. What would make it GOOD.** The lawyer engaged and the Bulgarian
-privacy policy and terms shipped; an AI-generated label on the Oracle and
-horoscope surfaces; a footer identifying the legal entity with ЕИК / VAT /
-CPDP; the processor DPAs signed; and a withdrawal-consent checkbox (or
-notice) on checkout.
+**5. What would make it GOOD.** The lawyer engaged and the real Bulgarian
+privacy policy and terms shipped (not the current placeholder copy); real
+entity data (name / ЕИК / address / VAT) replacing the bracketed
+placeholders in the footer; the processor DPAs signed; and an independent
+re-verification of the rest of this section's code-level claims — see
+COMPLIANCE-AUDIT-RERUN.
 
 ---
 
@@ -802,39 +830,52 @@ receives, and what breaks if it goes down.
 |---|---|---|---|
 | **Clerk** | Auth, sessions, 2FA, Google sign-in | Email + name | Nobody can log in or sign up. Total outage of the authed app. |
 | **Supabase** | The database | All user data | Total outage. Nothing reads or writes. |
-| **OpenRouter** | Routes AI calls to the model | **Computed chart data only** — planet/sign/degree/house/aspect/ascendant + a "birth time known" flag. **No birth date, time, or place. No free text.** | Oracle and horoscope generation fail. **There is no fallback provider and no retry** — a 429 or 5xx becomes a 502 to the user. Rest of the app is fine. |
+| **Google (Gemini API)** | Generates the AI reading — **UPDATED 2026-09-05**: replaces OpenRouter, which this row previously listed. Called directly via `@ai-sdk/google` (`generativelanguage.googleapis.com`), no router in between | **Computed chart data only** — planet/sign/degree/house/aspect/ascendant + a "birth time known" flag. **No birth date, time, or place. No free text.** | Oracle and horoscope generation fail. **There is still no fallback provider** (LLM-FAILOVER, OPEN) — a model-level fallback exists (`gemini-3.6-flash` on `gemini-3.7-flash` failure) but there is no cross-provider retry, so a Google-wide outage becomes a 502 to the user. Rest of the app is fine. |
 | **Stripe** | Web payments | Customer ID + metadata. No astrology data. | No new web subscriptions; existing users unaffected until renewal. |
 | **RevenueCat** | Mobile IAP (not live) | The Clerk user ID only | Nothing today (not in use). |
 | **Sentry** | Error reporting | Errors with PII scrubbing on (`sendDefaultPii: false`), no session replay | We fly blind on errors; app keeps working. |
 | **Vercel** | Hosts web + API routes | All request traffic | Total outage of web and of the API that mobile depends on. |
 | **PostHog (Cloud EU)** | Product analytics — added 2026-09-03. Exactly five events (signup completed, birth data submitted, chart first viewed, free Oracle reading generated, subscription started), no autocapture, no session replay, no heatmaps, no surveys, no feature flags/experiments (`advanced_disable_flags` / `disableRemoteFeatureFlags` on both platforms) | The Clerk user ID as `distinct_id` (same opaque string RevenueCat uses — never email, never name), each bare event name, and PostHog's own default event metadata (`$browser`/`$os`/`$device_type`/`$lib`/`$session_id` on web; RN's device/app-version fields on mobile — no autocapture DOM/touch data on either). **No birth data, no reading content, no free text.** Configured cookieless (`persistence: 'memory'`, both platforms — see COOKIE-CONSENT, `.planning/PLACEHOLDERS.md`); a `before_send` hook strips the query string from `$current_url`/`$pathname`/etc. on web so a URL like `/subscription/success?session_id=...` never ships the Stripe session id. IP: `disableGeoip: true` is set on mobile (stops geo enrichment); the browser SDK has no equivalent client option — full "PostHog never sees/stores the raw IP" requires the project-level "Discard client IP data" toggle in the PostHog dashboard, which is **founder-owned, not verifiable from code** | Analytics blind spot only — no user-facing feature depends on PostHog. The `signup completed` event captures server-side from Vercel (see `lib/analytics/server-capture.ts`), so a PostHog outage cannot block account creation (fire-and-forget, try/caught). |
 
-Google Maps and Cloudflare Turnstile are in the security allowlist but
-have **zero usage in code** — dead entries (VERIFIED).
+Google Maps and Cloudflare Turnstile: this line previously claimed they
+were dead CSP allowlist entries. Re-checked 2026-09-04 (compliance
+batch) — neither domain appears anywhere in `apps/web/middleware.ts`'s
+CSP directives or any other CSP-relevant file, so there is nothing to
+remove. Either they were already removed since this was written, or the
+claim was never accurate; either way, current code has no such entries
+(VERIFIED 2026-09-04).
 
 **3. What is missing or unknown.**
 
 - **Single AI provider, no failover (VERIFIED, pre-launch item 5a).** This
   is a named pre-launch gate awaiting a founder product decision: graceful
   degradation (a clear Bulgarian "temporarily unavailable" message) versus
-  wiring a second provider behind the same call.
-- **The provider choice drives the privacy policy.** A single direct
-  provider = one name, one contract, one jurisdiction in the policy. A
-  router (like OpenRouter) = the router plus every downstream model it can
-  reach, unless an allowlist and zero-retention mode are enforced. An
-  EU-hosted provider removes an entire cross-border-transfer section from
-  the policy. This is why the LLM decision is the legal critical path.
-- Whether the current OpenRouter account has zero-data-retention enabled
-  is **UNKNOWN** — it would need checking in the OpenRouter dashboard.
+  wiring a second provider behind the same call. Unchanged by the
+  OpenRouter→Google swap — see LLM-FAILOVER.
+- **The provider choice drives the privacy policy — now resolved to a
+  single direct provider, which is the simpler case.** A router (like
+  OpenRouter) means the router plus every downstream model it can reach,
+  unless an allowlist and zero-retention mode are enforced; a single
+  direct provider (Google, now) means one name, one contract, one
+  jurisdiction in the policy. **UPDATED 2026-09-05**: Google's retention
+  terms are no longer unknown the way OpenRouter's were — on the paid
+  tier, Google's "no training on your data, no human review" guarantee
+  applies unconditionally regardless of caller region
+  (`ai.google.dev/gemini-api/terms`), though a 55-day abuse-monitoring log
+  retention still applies regardless of tier, and this is Google's own
+  claim, not yet lawyer-reviewed. See PLACEHOLDERS.md LLM-RETENTION-EEA.
+  DPA-CONTRACTS updated the same day: OpenRouter drops out of the unsigned
+  list, Google is the confirmed processor.
 
 **4. Health: OK.** The data flow is well understood and minimal — notably,
 no birth identifiers leave our systems to the AI provider. The weak point
-is the single AI provider with no failover and an unresolved retention
-posture.
+is the single AI provider with no failover; the retention-posture question
+this section previously flagged as unknown is now substantially answered
+(pending lawyer review, not pending discovery).
 
-**5. What would make it GOOD.** The AI provider decided (with retention
-terms in writing and zero-retention on); a failover or graceful-
-degradation path shipped; and the dead allowlist entries removed.
+**5. What would make it GOOD.** A failover or graceful-degradation path
+shipped for the single-provider risk; lawyer sign-off on Google's
+retention terms; DPA signed.
 
 ---
 
@@ -976,10 +1017,12 @@ Grouped by what each one blocks, ordered within each group by dependency
 6. **Privacy policy + Terms pages (lawyer, then engineering).** Waiting
    on: task 2, and task 1 for the AI section.
 7. **AI-generated-content label on Oracle + horoscope (engineering).**
-   Waiting on: a founder ruling on wording. Small.
+   Shipped, wording approved. Status: see `.planning/PLACEHOLDERS.md`
+   AI-ACT-COPY.
 8. **Trader-identification footer — entity name, ЕИК, VAT, CPDP
-   (founder supplies details, engineering builds).** Waiting on: the
-   founder confirming the operating entity.
+   (founder supplies details, engineering builds).** Footer built.
+   Waiting on: the founder confirming the operating entity. Status: see
+   `.planning/PLACEHOLDERS.md` ENTITY-NAME.
 9. **Content-safety decision for AI output (founder ruling, then
    engineering).** Waiting on: a product call. Even a static disclaimer +
    crisis-resource link is a change from nothing.
@@ -988,9 +1031,9 @@ Grouped by what each one blocks, ordered within each group by dependency
     repair`, never `db push`. Blocks any further schema change safely.
 11. **Post-deploy smoke test (engineering).** Waiting on: nothing. Must
     ship with a probe marker and a build-SHA in responses.
-12. **Analytics vendor decision + signup-funnel instrumentation (founder
-    decides, engineering builds).** Waiting on: a vendor choice. Also
-    determines whether a cookie banner is needed.
+12. **Analytics vendor decision + signup-funnel instrumentation.**
+    Resolved. Status: see `.planning/PLACEHOLDERS.md` ANALYTICS-VENDOR
+    and COOKIE-CONSENT.
 13. **Production-credentials cutover — Clerk, Stripe, RevenueCat
     (founder-owned dashboard work + a mobile rebuild).** Waiting on: the
     domain/DNS and a planned cutover; orphans every current test user.
@@ -1079,9 +1122,11 @@ lives in the register — pointers below, not restated here.
    build/version marker, so "did the fix deploy?" is not answerable from
    the response. Register: `.planning/PLACEHOLDERS.md` BUILD-SHA and
    SKEW-PROTECT.
-6. **No user-behaviour signal of any kind.** No funnel, no drop-off, no
-   feature-engagement events. Register: `.planning/PLACEHOLDERS.md`
-   ANALYTICS-VENDOR.
+6. **Behaviour signal is narrow by design, not absent.** Five funnel
+   events only (signup, birth data, first chart, first free Oracle
+   reading, subscription started) — no autocapture, no session replay,
+   no broader feature-engagement tracking beyond those five. Register:
+   `.planning/PLACEHOLDERS.md` ANALYTICS-VENDOR.
 7. **Nothing scans dependencies for known vulnerabilities.** Register:
    `.planning/PLACEHOLDERS.md` DEP-AUDIT.
 8. **Nothing scans commits or the history for secrets.** No secret

@@ -82,6 +82,11 @@ export async function POST(req: Request) {
       // payment. NOTE: Stripe rejects this call unless a Terms-of-Service
       // URL is set in Dashboard → Settings → Public details. That is a
       // dashboard step tied to PROD-CREDS, not code.
+      //
+      // STELLAEUM_PLACEHOLDER: STRIPE-TOS-URL — Stripe is sandbox-only
+      // until the company registers, so this whole checkout flow
+      // (consent_collection included) cannot be exercised against a real
+      // session yet. See .planning/PLACEHOLDERS.md STRIPE-TOS-URL.
       consent_collection: {
         terms_of_service: 'required',
       },
