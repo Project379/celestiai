@@ -142,6 +142,8 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'img.clerk.com' },
       { protocol: 'https', hostname: 'images.clerk.dev' },
+      { protocol: 'https', hostname: 'image.tmdb.org' },
+      { protocol: 'https', hostname: 'covers.openlibrary.org' },
     ],
   },
   // Legacy-route redirects for the Phase-A IA move (MOBILE_UX_RESEARCH §10).

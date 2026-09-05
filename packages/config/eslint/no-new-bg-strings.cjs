@@ -32,7 +32,7 @@ const NO_NEW_BG_STRINGS_RULE = {
     {
       selector: CYRILLIC_SELECTOR,
       message:
-        'New Cyrillic string literal outside an established content-home file. Either add real, reviewed Bulgarian copy to one of the existing content modules (packages/core/src/stories/catalog.ts, .../charts/interpretations.ts, apps/web/lib/crystals/guide-content-bg.ts, etc.) or the namespaced strings module (packages/i18n/strings/**), or confirm this file IS a content home and add it to CONTENT_HOME_GLOBS in packages/config/eslint/no-new-bg-strings.cjs.',
+        'New Cyrillic string literal outside an established content-home file. Either add real, reviewed Bulgarian copy to one of the existing content modules (packages/core/src/recommendations/**, .../charts/interpretations.ts, apps/web/lib/crystals/guide-content-bg.ts, etc.) or the namespaced strings module (packages/i18n/strings/**), or confirm this file IS a content home and add it to CONTENT_HOME_GLOBS in packages/config/eslint/no-new-bg-strings.cjs.',
     },
   ],
 }
@@ -42,7 +42,8 @@ const NO_NEW_BG_STRINGS_RULE = {
 // apps/mobile mirrors of the same file (e.g. AstrologyReference.tsx) are
 // covered by one pattern.
 const CONTENT_HOME_GLOBS = [
-  '**/stories/catalog.ts',
+  '**/recommendations/**',
+  '**/components/stories/**',
   '**/charts/interpretations.ts',
   '**/charts/sections.ts',
   '**/crystals/guide-content-bg.ts',

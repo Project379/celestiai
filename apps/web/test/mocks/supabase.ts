@@ -33,6 +33,7 @@ const CHAIN_METHODS = [
   'order',
   'in',
   'gt',
+  'gte',
   'lt',
   'not',
   'lte',

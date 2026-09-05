@@ -192,6 +192,24 @@
  * RETRY_LATER_MESSAGE-style copy elsewhere in lib/ai. Through
  * check:bg-strings and copy-lock.
  *
+ * Lowered to 1703 on 2026-09-05 (TIER-ITEM-4 recommendation gating fix,
+ * on `recommendations/gated` before this merge): -81, progress not drift.
+ * packages/core/src/stories/catalog.ts — the ~680-line hardcoded
+ * movie/book catalog with dozens of literal Cyrillic strings — was
+ * deleted and replaced by the DB-driven packages/core/src/recommendations/*
+ * catalog. The 71 new Cyrillic strings the recommendations UI itself
+ * introduces (RecommendationCard.tsx status/action labels, both
+ * platforms) are smaller than what the deleted catalog removed, so the
+ * net moved down despite the new surface, measured against the pre-merge
+ * 1784 baseline on that branch.
+ *
+ * Reconciled on merge to main, 2026-09-05: this branch's -81 and
+ * gemini's +1 both landed on main independently (from a shared 1784
+ * ancestor), so neither 1785 nor 1703 alone reflected the merged tree.
+ * Measured directly against the actual post-merge tree (not computed by
+ * hand, though it does match: 1784 + 1 - 81 = 1704): 73 packages/core,
+ * 969 apps/web, 662 apps/mobile = 1704. Locked in as the new baseline.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -202,11 +220,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
 // STELLAEUM_PLACEHOLDER: LINT-BASELINE-1800 — every move of this ratchet
-// (1778→1800→1784→1785, 2026-09-01 through 2026-09-03) is logged with its
-// justification in this file's header comment above. The ID keeps its
-// "-1800" suffix as a stable handle; the current value is 1785. See
-// .planning/PLACEHOLDERS.md.
-const BASELINE = 1785
+// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled,
+// 2026-09-01 through 2026-09-05) is logged with its justification in
+// this file's header comment above. The ID keeps its "-1800" suffix as
+// a stable handle; the current value is 1704. See .planning/PLACEHOLDERS.md.
+const BASELINE = 1704
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },
