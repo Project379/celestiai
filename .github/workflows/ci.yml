@@ -38,3 +38,75 @@ jobs:
           echo "sweph license pin verified: 2.10.0-11 only"
 
       - run: pnpm run check:all
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history is required to diff a commit range below — a
+          # shallow clone (the actions/checkout default) would make
+          # gitleaks scan nothing and silently pass forever.
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          curl -sL -o gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          rm gitleaks.tar.gz
+          gitleaks version
+
+      - name: Scan only the commits being pushed/PR'd for secrets
+        # Deliberately NOT a full-history scan: this repo's history has
+        # known findings (a committed apps/web/.env, 2026-04-05..2026-09-06
+        # incident — see .planning/PLACEHOLDERS.md SECRET-SCAN) that are
+        # not being rewritten out of history. Scanning only the new range
+        # means CI gates future secrets without requiring history rewrite
+        # or an allowlist that would read as "this leaked credential is
+        # accepted." .gitleaks.toml still allowlists a few permanent
+        # non-secret false-positive patterns (env.example placeholders,
+        # a checksum manifest) that would otherwise trip on any new commit.
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
+            RANGE="origin/${{ github.event.pull_request.base.ref }}..HEAD"
+          else
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.event.after }}"
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              RANGE="-1"
+            else
+              RANGE="$BEFORE..$AFTER"
+            fi
+          fi
+          echo "Scanning range: $RANGE"
+          gitleaks detect --source . --config .gitleaks.toml --log-opts="$RANGE" --redact -v --exit-code 1
+
+  dep-audit:
+    runs-on: ubuntu-latest
+    # Advisory only (see .planning/PLACEHOLDERS.md DEP-AUDIT) — reports
+    # findings without failing the build. `pnpm audit` on this monorepo's
+    # transitive tree (React Native/Expo/Solana-wallet-adapter chains
+    # especially) turns up dependency-graph noise no one here controls;
+    # failing CI on every new advisory across that whole tree would make
+    # this step something people route around, not something they read.
+    # Revisit failing the build once there's a triage process for what's
+    # actionable vs. noise.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: pnpm audit (production dependencies)
+        run: pnpm audit --prod

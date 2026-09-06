@@ -1,0 +1,42 @@
+title = "Stellaeum gitleaks config"
+
+# Extends gitleaks' built-in default ruleset (secrets patterns for Stripe,
+# Clerk, Google, AWS, generic high-entropy strings, etc.) rather than
+# replacing it.
+[extend]
+useDefault = true
+
+# CI (.github/workflows/ci.yml, job `secret-scan`) only ever scans the
+# commit range being pushed/PR'd, never full history — so nothing here
+# is an "accepted" historical secret. This allowlist exists solely for
+# patterns that permanently look like secrets but never are, so future
+# legitimate commits to these files don't spuriously fail CI.
+[allowlist]
+description = "Structural false positives, not accepted secrets"
+
+paths = [
+  # Committed *.env.example files hold placeholder values (`xxxxx`,
+  # `pk_test_xxxxxxxxxxxxxxxxx`) by design — see apps/web/.env.example,
+  # apps/mobile/.env.example.
+  '''\.env\.example$''',
+  # Build-manifest file listing SHA-256 checksums of GSD command files —
+  # every entry is a 64-hex-char digest, which collides with several
+  # token-shaped detection rules (e.g. discord-api-token).
+  '''\.claude/gsd-file-manifest\.json$''',
+]
+
+regexes = [
+  # Literal placeholder text used in docs/plan examples, never a real
+  # secret value.
+  '''YOUR_CRON_SECRET''',
+]
+
+# One-off false positive: an AsyncStorage key name
+# ('stellaeum.notifications.prompted.v1'), not a credential — high enough
+# entropy/shape to trip the generic-api-key rule. Fingerprint-scoped
+# rather than a path/regex allowlist since the file is live application
+# code that could legitimately hold a real secret later.
+commits = [
+  "12f690060eee77840264eacb04e75eb3537224b5",
+]
+
