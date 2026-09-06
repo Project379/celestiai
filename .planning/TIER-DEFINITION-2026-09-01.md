@@ -1,12 +1,26 @@
 ---
 title: Free / Premium tier definition — FROZEN 2026-09-01
-status: FROZEN definition + implementation-gap report + implementation log. See "Amendments" and "Implementation status" below.
+status: SPLIT SOURCE OF TRUTH, updated 2026-09-06 (see note below). "The frozen definition" section (what is free vs. premium) remains the permanent SoT. Everything past it — "Implementation status", §1-§12 — is a HISTORICAL implementation-gap report and build log frozen as of 2026-09-01/2026-09-05; it is not maintained as current status. Current status of any tracked item lives in `.planning/PLACEHOLDERS.md` (TIER-ITEM-4, TIER-ITEM-5, KRUG-TEASER, FREE-TIER, PRICE-ANNUAL).
 created: 2026-09-01
 supersedes: .planning/phases/m3-uat/PREMIUM_MATRIX.md (2026-04-20) where they conflict — see §9
 tagging: every factual claim about current code is VERIFIED (read/ran this session) or INFERRED (from a dated doc not re-checked)
 ---
 
 # Free / Premium tier definition — frozen
+
+**2026-09-06 — source-of-truth split, applied after this document's
+implementation-status table went stale across the 2026-09-05 branch
+merges** (recommendations gating shown "NOT DONE" here after it had
+shipped — see `.planning/PLACEHOLDERS.md` TIER-ITEM-4/5 and
+`git log` for the incident). **"The frozen definition" section
+immediately below — the FREE and PREMIUM tables — remains the
+permanent source of truth for what is free versus premium; it does
+not change when code ships.** Everything after "Implementation status"
+(that section plus §1 through §12) is left in place as a **historical
+build log**, frozen as written — read it for the reasoning trail and
+the original scoping, not for current state. For current state of any
+item this document tracks, see `.planning/PLACEHOLDERS.md`'s reconcile
+table, which now names PLACEHOLDERS.md itself as SoT for status.
 
 ## Amendments (founder ruling, 2026-09-01, applied)
 
@@ -54,7 +68,7 @@ as locked, never hidden. No empty states where a paid feature would be.
 
 ---
 
-## Implementation status (2026-09-01)
+## Implementation status (2026-09-01) — HISTORICAL, not current. See `.planning/PLACEHOLDERS.md` for current status (2026-09-06 SoT split, see top of document).
 
 Priority order from the founder's directive. VERIFIED = code written and
 the gate/test suite run green this session.

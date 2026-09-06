@@ -57,10 +57,12 @@ keeps the register's truth in one file.
 
 ## Register
 
-54 OPEN rows + 17 RESOLVED rows = 71 total, per `check-placeholders`'s own
+55 OPEN rows + 17 RESOLVED rows = 72 total, per `check-placeholders`'s own
 count (re-run after every merge below rather than hand-added, since three
 branches landing in one session made manual arithmetic the thing most
-likely to drift). LLM-MODEL-SWAP, GATE9-PHRASE-REPETITION and
+likely to drift). BULGARIAN-SKILL-UPDATE added 2026-09-06 (pre-launch
+task — skill-file lessons found during the drift sweep; see the row for
+detail). LLM-MODEL-SWAP, GATE9-PHRASE-REPETITION and
 CHART-CALC-BACKFILL added 2026-09-03 (PostHog hardening pass);
 COOKIE-CONSENT and ANALYTICS-VENDOR flipped OPEN → RESOLVED the same day.
 GEMINI-API-TIER and ORACLE-WORD-BAND added 2026-09-03 (sentinel-example /
@@ -161,6 +163,7 @@ STRUCTURED, CRISIS-COPY-VERIFICATION, and THROUGHLINE-INTEGRATION (new).
 | GATE9-PHRASE-REPETITION | Llama-era baseline (last full run): "твоят [planet] на" as a stock opening in 6-8 of 10 readings, with Слънце's grammatical gender wrong ("твоят Слънце" instead of neuter "твоето Слънце") in most of those. On Gemini, a prior session's partial run saw the related "твоята/твоето [planet] на" construction in 4-6 of 10 readings — close enough to the SENTINEL MARKERS example in `prompts.ts` (which opened its example sentence with "Твоето [planet:sun]Слънце[/planet] на …") to suspect the model was copying the example's sentence-opening shape rather than following the instruction, the same failure the three removed example phrases caused. 2026-09-03 (this session): both oracle and horoscope prompt files' sentinel examples were rewritten to demonstrate the token syntax mid-clause instead of as a reusable sentence opener (see `apps/web/lib/oracle/prompts.ts` and `apps/web/lib/horoscope/prompts.ts`). The hypothesis is UNTESTED, not confirmed or refuted: three follow-up Gate 9 runs against the rewritten prompts each returned 0 of 10 successful generations (GEMINI-API-TIER quota exhaustion), so there is no post-rewrite output to check for the phrase. Confirmed model-only either way — no static Bulgarian string in the codebase has the wrong-gender form (`packages/astrology/src/constants.ts` already encodes `PLANETS_BG_GENDER.sun = 'neut'` correctly; it just is not consulted by the prompt) | CODE | Petko | Launch quality bar | OPEN | | — |
 | CHART-CALC-BACKFILL | `6b1a25d` (2026-09-02) made `calculateNatalChart` use the stated birth-time window's midpoint for unknown-time charts instead of always assuming noon, but existing `chart_calculations` rows computed before that commit still hold the old 12:00 estimate — those users see a chart calculated at the wrong assumed time until the row is invalidated/recalculated. No backfill script exists yet | CODE | CC | Data accuracy for existing accounts | OPEN | | — |
 | THINKING-TOKEN-COST | Added 2026-09-03: `thinkingLevel: 'low'` in `generate-final-text.ts` still bills thinking tokens as output (Google's pricing page: output price includes thinking tokens), and `generateFinalText()` never read `result.usage` before this branch, so real per-call cost was unmeasured — the €0.0022/call estimate in the Gemini cost report excluded it entirely. Instrumented: `logAiUsage()` logs the raw `{promptTokenCount, candidatesTokenCount, thoughtsTokenCount, totalTokenCount}` (no prompt/response content, no userId) to `console.log('[AI usage]', ...)` on every generation, readable via Vercel Runtime Logs. RESOLVED 2026-09-04: real figure measured — 20 Gate 9 calls (two full 10-chart runs, paid tier), token counts read from the `[AI usage]` log lines, costed at Gemini 3.7 Flash's introductory list pricing ($0.75/M input, $3.75/M output incl. thinking — `ai.google.dev/gemini-api/docs/pricing`), USD→EUR at ≈0.93 (same conversion basis as `LLM-PROVIDER-DECISION-2026-08-27.md`). Result: **€0.00265/call average, ~20% above the €0.0022 estimate** — 19/20 calls logged `thoughtsTokenCount: null` (near-zero, consistent with `thinkingLevel: 'low'`), one spent 867 thinking tokens and cost 65% more than the normal-call average (see THINKING-BUDGET-SPIKE). This is a lab measurement against the Gate 9 fixture, not a production-traffic average — a wider gap is possible under real usage patterns | CODE | Toni | Cost visibility | RESOLVED | 2026-09-04 | apps/web/lib/ai/generate-final-text.ts |
+| BULGARIAN-SKILL-UPDATE | `.claude/skills/bulgarian-skill/references/*.md` has been the authority behind this project's Bulgarian copy (caught the "сърдечно състояние"→"любовен живот" and "Какво тежи ти"→"Какво ти тежи" errors — see `.planning/ORACLE-QUESTIONS-SPEC.md` §2). A 2026-09-06 review found three project-surfaced lessons the skill files do not yet capture: (1) **possessive-adjective agreement with a personified noun** — `astrology.md`'s planet-gender table correctly lists Слънце as neuter, but nothing connects that to possessive-adjective agreement or flags it as error-prone; `grammar.md` §4 (Adjectives) covers gender agreement for a regular adjective but has no entry for possessive adjectives (мой/твой/негов/неин/наш/ваш/техен) at all, and §12 (Common Grammar Mistakes) has no "personified/mythologically-masculine noun defaults to masculine article despite grammatically neuter/feminine gender" entry — this is the exact shape of the Llama-era "твоят Слънце" error (8-9/10 readings), fixed only by the model swap, not by a prompt or content correction, per GATE9-PHRASE-REPETITION; (2) **fleeting-vowel gender pairs** — the Oracle-questions ruling (spelled-out gender pairs everywhere, no compact "/а", because fleeting-vowel adjectives like "доволен"/"несигурен" don't compact evenly to "доволен/на") has no home in `orthography.md` (§4 "Променливо я" is a different alternation) or `grammar.md`; (3) **clitic second-position placement** — `grammar.md` §9's clitic-ordering note covers only cluster-internal order (dative before accusative), not the clause-level rule that a clitic attaches after the first stressed/focused constituent, not the verb — the exact rule behind the caught "Какво тежи ти" error. Scope is reporting only; the skill files were not edited — see the 2026-09-06 session report for the full writeup of what to add and where | DECISION | CC | Launch quality bar | OPEN | | n/a |
 
 ---
 
@@ -227,6 +230,7 @@ before any launch or submission.
 | GATE9-PHRASE-REPETITION | CODE | Petko | **no — no code location, symptom only** |
 | CHART-CALC-BACKFILL | CODE | CC | **no — no code location, script not written** |
 | DEVICE-PASS-STALE | CODE | CC | **no — no code location, manual QA gap** |
+| BULGARIAN-SKILL-UPDATE | DECISION | CC | **no — manual, skill-file content** |
 
 ### Blocks: Store submission
 
@@ -277,42 +281,95 @@ anywhere.
 
 ---
 
-## Reconcile — source of truth per overlapping item (adopted 2026-09-01)
+## Reconcile — source of truth per overlapping item (adopted 2026-09-01, scope extended 2026-09-06)
 
 Every item below is described in **two or more** of: this register,
 `COMPLETION-TRACKER.md`, `PRE_LAUNCH_PREREQS.md`, `SYSTEM-MAP.md`,
-`TIER-DEFINITION-2026-09-01.md`. The **source of truth (SoT)** column is
-now in force: the SoT doc owns that item; the others carry a one-line
+`TIER-DEFINITION-2026-09-01.md`, `STATE.md`,
+`legal/processor-dpa-audit.md`, `legal/pending-review/privacy-draft.md`.
+The **source of truth (SoT)** column is now in force: the SoT doc owns
+that item; the others carry a one-line
 `placeholder status: see .planning/PLACEHOLDERS.md <ID>` pointer and do
-**not** restate its status. Restated status text in the four docs was
+**not** restate its status. Restated status text in the bound docs was
 deleted on adoption (dated log entries, ruling narrative, and evidence
 tables excluded).
+
+**2026-09-06 scope extension — why these three joined the other five.**
+The 2026-09-05 branch merges left four documents describing pre-merge
+state; three of them — `STATE.md` and the two `legal/*` files — were
+never bound by this rule at all, so their drift wasn't a rule failure,
+it was an absence of a rule:
+- **`STATE.md`** plays the same "what's currently true" role as
+  `SYSTEM-MAP.md` and is a document a future session is likely to read
+  first — it held the single most stale line found in the 2026-09-06
+  sweep (claimed the LLM provider swap was "recommended not decided"
+  after it had shipped). Bound into the LLM cluster below.
+- **`legal/processor-dpa-audit.md`** and
+  **`legal/pending-review/privacy-draft.md`** were already *mentioned*
+  in the COOKIE-CONSENT/DPA-CONTRACTS cluster's "also documented in"
+  column, but only as "working drafts" with no SoT discipline applied to
+  them — nothing pointed the AI-provider identity fact (DPA-CONTRACTS,
+  LLM-MODEL-SWAP) at these two files specifically, which is exactly why
+  `privacy-draft.md` — the one document in this repo that leaves it for
+  a lawyer to read — still named OpenRouter/Llama as the AI processor.
+  Bound into a new DPA-CONTRACTS cluster below.
+
+Files intentionally **left out of scope**: `COMPLETION-TRACKER.md`'s own
+dated narrative log, `archive/*`, `phases/*/HANDOFF-*` /
+`*-SUMMARY.md`, and `research/AI_PROVIDER_DECISION.md` are historical
+records by design — reconciling them against current state would falsify
+the history they exist to preserve.
 
 | Item(s) | Also documented in | Source of truth | Rationale |
 |---|---|---|---|
 | PAYWALL-MOBILE, PROD-CREDS, RC-WEBHOOK-SECRET, APP-URL-MOBILE | COMPLETION-TRACKER "Halt-required register" + "blocked-externally"; SYSTEM-MAP §10 | **COMPLETION-TRACKER** (halt-required register) for the *narrative / ruling*; this register for the *one-line status + marker*. | The tracker already holds ratification history and founder rulings; duplicating that here would rot. This register should carry the ID, one line, and the marker location, and link to the tracker section. |
 | SIWA-BG-LABEL, OAUTH-COPY-GOOGLE, APPLE-ERROR-CODES, PAYWALL-MOBILE (store side) | PRE_LAUNCH_PREREQS PLP-11; COMPLETION-TRACKER "SUBMISSION BLOCKER"; APPLE-REVIEW-REQUIREMENTS-2026-08-27 §1 | **PRE_LAUNCH_PREREQS PLP-11** for "is SIWA submittable"; this register for the code-level sub-items. | Submission-readiness is a launch-gate question; the prereq doc is the canonical launch-gate list. |
 | ASTRO-TIMEZONE, ASTRO-INJECT | SYSTEM-MAP §5; PRE_LAUNCH_PREREQS PLP-6 (ephemeris validation, `[done]` for the *ephemeris*, silent on BG birth locations) | **SYSTEM-MAP §5** for the technical description; this register for "unverified, blocks launch". PLP-6 carries a scope-note pointer to this register. | PLP-6 is marked `[done]` and could be misread as "astrology is validated"; the scope gap needs a pointer. |
-| LLM-GUARDRAILS, LLM-FAILOVER, LLM-RETENTION, LLM-MODEL, PRICE-BASIS | SYSTEM-MAP §4; PRE_LAUNCH_PREREQS PLP-5 / PLP-5a; `LLM-PROVIDER-DECISION-*` / `AI_PROVIDER_DECISION.md`; CLAUDE.md header | **SYSTEM-MAP §4** for current AI truth; PLP-5a for the failover *decision*; this register for status lines. CLAUDE.md's AI header block should be trimmed to a pointer at SYSTEM-MAP §4. | Four docs restate the "Llama placeholder" fact; one drifts (`PRICE-BASIS` €9.99 vs €6.99 is exactly this kind of drift). |
+| LLM-GUARDRAILS, LLM-FAILOVER, LLM-RETENTION, LLM-MODEL, PRICE-BASIS | SYSTEM-MAP §4; PRE_LAUNCH_PREREQS PLP-5 / PLP-5a; `STATE.md` Phase 5 Completion Summary; `LLM-PROVIDER-DECISION-*` / `AI_PROVIDER_DECISION.md`; CLAUDE.md header | **SYSTEM-MAP §4** for current AI truth; PLP-5a for the failover *decision*; this register for status lines. `STATE.md` and CLAUDE.md's AI header block should be trimmed to a pointer at SYSTEM-MAP §4, not restate the provider. | Now five docs restate the "current model/provider" fact instead of pointing at one; `STATE.md` was the one that drifted worst (2026-09-06 sweep). |
 | MIGRATIONS, SCHEMA-UNTRACKED | SYSTEM-MAP §3; `SCHEMA_DRIFT_AUDIT.md`; COMPLETION-TRACKER §0.6 area | **`SCHEMA_DRIFT_AUDIT.md`** (or SYSTEM-MAP §3 if that audit is stale) for the full picture; this register for the one-line status. | Schema state needs a table-by-table ledger, which belongs in the audit doc, not a status row. |
-| TIER-ITEM-4, TIER-ITEM-5, KRUG-TEASER, FREE-TIER, PRICE-ANNUAL | **TIER-DEFINITION-2026-09-01.md** §11 (items 4 & 5 scoped), §12, "Implementation status" table | **TIER-DEFINITION-2026-09-01.md** — unambiguously. | It is the frozen definition + implementation log. This register should carry only the ID + "see TIER-DEFINITION item N". |
+| TIER-ITEM-4, TIER-ITEM-5, KRUG-TEASER, FREE-TIER, PRICE-ANNUAL | **TIER-DEFINITION-2026-09-01.md** "The frozen definition" (policy tables); §11/§12/"Implementation status" (historical build log, frozen) | **Split, 2026-09-06:** **TIER-DEFINITION-2026-09-01.md "The frozen definition"** section (the FREE/PREMIUM tables) for what is free vs. premium — permanent, does not change when code ships. **This register** for current implementation status of each item. TIER-DEFINITION's "Implementation status" table and §1-§12 are historical as of 2026-09-01/2026-09-05 — read for reasoning and original scoping, not current state. | Naming TIER-DEFINITION as sole SoT for *status*, with nothing that re-triggers an edit to it when code ships elsewhere, is exactly what let it still read "NOT DONE" after recommendations gating merged 2026-09-05. The policy-vs-narrative split removes the incentive to hand-edit a frozen narrative doc every time a tracked item's status changes — this register's rows already get touched on every merge, by construction. |
 | NEVER-EXPIRES-SENTINEL | TIER-DEFINITION §12 (the restore SQL); `apps/web/lib/oracle/expiry.ts` (the constant) | **the code** (`NEVER_EXPIRES_AT` in lib/oracle/expiry.ts) is SoT for the *value*; TIER-DEFINITION §12 must be updated whenever it changes. This register tracks the duplication risk. | A literal duplicated between code and a SQL snippet has no doc SoT — only a "these must match" note, which is what the marker is for. |
 | LINT-BASELINE-1800 | `scripts/i18n/check-bg-lint-baseline.mjs` header log; `feedback_epistemic_tagging` / handoff §2 | **the script header** (`check-bg-lint-baseline.mjs`) — it already logs every raise with justification. | The raise log lives with the number it governs. This register just points at it. |
-| COOKIE-CONSENT, ANALYTICS-VENDOR, PRIVACY-REVIEW, DPA-CONTRACTS, TERMS, WITHDRAWAL-COPY, AI-ACT-COPY, ENTITY-NAME | PRE_LAUNCH_PREREQS PLP-7; SYSTEM-MAP §11; `.planning/legal/*` (`processor-dpa-audit.md`, `privacy-draft.md`) | **PRE_LAUNCH_PREREQS PLP-7** for the launch-gate rollup; `.planning/legal/*` for the working drafts; this register for per-item status + owner. | Compliance has a natural home (PLP-7 + the legal folder); this register adds machine-visible IDs and owners those lack. |
+| COOKIE-CONSENT, ANALYTICS-VENDOR, PRIVACY-REVIEW, TERMS, WITHDRAWAL-COPY, AI-ACT-COPY, ENTITY-NAME | PRE_LAUNCH_PREREQS PLP-7; SYSTEM-MAP §11; `.planning/legal/*` (`processor-dpa-audit.md`, `privacy-draft.md`) | **PRE_LAUNCH_PREREQS PLP-7** for the launch-gate rollup; `.planning/legal/*` for the working drafts; this register for per-item status + owner. | Compliance has a natural home (PLP-7 + the legal folder); this register adds machine-visible IDs and owners those lack. |
+| DPA-CONTRACTS | `legal/processor-dpa-audit.md` §4 (per-processor detail); `legal/pending-review/privacy-draft.md` §III / §X / §XI (lawyer-facing disclosure text) | **This register (DPA-CONTRACTS row)** for *which processor is live* (currently: Google, not OpenRouter). The two `legal/*` files own the full disclosure language and DPA-status tracking, but must match this row's processor identity — they do not get to independently decide who the AI processor is. | This is the cluster that drifted worst: `privacy-draft.md` named OpenRouter/Llama as the AI processor for a document meant to leave the repo and reach a lawyer, weeks after the register itself had already recorded the Google swap. Naming the processor identity as this register's job, with the legal docs required to match it, is the fix. |
 | SE-LICENCE | PRE_LAUNCH_PREREQS "Founder watch item"; `docs/licensing.md § Revisit triggers`; `POST_LAUNCH_UPGRADES.md` item 1; trigger code in `stripe/subscription.ts` + `revenuecat/webhook-events.ts` | **`docs/licensing.md`** for the reasoning + trigger list; this register for "undocumented deferral reasoning" (the actual gap). | The licence decision is documented in three places; the *gap* this row names is that the deferral rationale isn't written down — fixing that means editing `docs/licensing.md`, then this row can point there. |
 
 **Cross-cutting rule (in force):** SYSTEM-MAP.md already states (line 3)
 that the placeholder register wins over it on conflict. The same now holds
-for all four docs: this register owns **ID + one-line status + owner +
+for all bound docs: this register owns **ID + one-line status + owner +
 marker location**; the other docs own **narrative, rulings, dated history,
-evidence, and technical depth**. Where a doc restated a status this
-register owns, that text was deleted and replaced with a
-`placeholder status: see .planning/PLACEHOLDERS.md <ID>` pointer.
+evidence, and technical depth** — except TIER-DEFINITION's policy tables,
+which this register does not own (see the split above). Where a doc
+restated a status this register owns, that text was deleted and replaced
+with a `placeholder status: see .planning/PLACEHOLDERS.md <ID>` pointer.
 Excluded from deletion by design: dated log entries (batch ledger,
-status-change log, §12 live-data check), TIER-DEFINITION's
-"Implementation status" table (carries VERIFIED/INFERRED tags + test
-names), and PRE_LAUNCH `PLP-7`'s body (the compliance rollup this table
-names as SoT for that cluster).
+status-change log, §12 live-data check), TIER-DEFINITION's frozen policy
+tables and its "Implementation status" historical log (carries
+VERIFIED/INFERRED tags + test names — kept as a build-log record, not as
+current status), and PRE_LAUNCH `PLP-7`'s body (the compliance rollup this
+table names as SoT for that cluster).
+
+**Granularity gap (identified 2026-09-06) and the rule adopted to close
+it.** This table reconciles *named clusters* — specific IDs, pointed at
+specific sections — not full document text. That is why the 2026-09-05
+drift wasn't limited to the cells this table names: `SYSTEM-MAP.md`'s §2
+overview prose, its "blocks scale" task list, and `PRE_LAUNCH_PREREQS.md`
+PLP-9's provider-TOS list all named OpenRouter without being part of any
+reconciled cluster cell. A calendar-based periodic full-text sweep was
+considered and rejected — there is no CI job or scheduled session in this
+project to run it, so a "recheck every N weeks" rule would silently lapse
+the same way the reconcile pass itself did between 2026-09-01 and
+2026-09-06. **Adopted instead: a full-text grep trigger, tied to the event
+that already reliably happens — a register status change.** Whenever a
+row belonging to a reconciled cluster in this table changes Status (e.g.
+DPA-CONTRACTS or LLM-MODEL-SWAP moving between values, or a new dated
+update appended to one), the session making that edit must
+`grep -ri` the term that changed (the old provider name, the old status
+adjective, etc.) across **every** doc bound by this section — not just the
+cells this table names for that cluster — and fix every hit. This is
+cheap (one grep, run at a moment that already requires touching this
+file) and catches prose outside named cells, which a narrower "update the
+named cluster cells only" rule does not.
 
 ---
 
