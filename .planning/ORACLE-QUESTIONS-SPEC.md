@@ -531,23 +531,28 @@ separate feature requiring prompt-injection defence, Bulgarian
 crisis-language detection, validator rework, and legal review. Do not add
 a text field without reopening this decision explicitly.
 
-**CRISIS-COPY-VERIFICATION** (RESOLVED, rule rewritten 2026-09-05) —
-**the rule is now email-first, not phone-first.** Bulgarian helplines are
+**CRISIS-COPY-VERIFICATION** (RESOLVED, verified 2026-09-06) —
+**Founder confirmed all three non-112 operators directly** — БЧК, Animus,
+Single Step — closing the email-first verification called for by the rule
+rewritten 2026-09-05. Hours/scope as listed in the table above stand as
+confirmed unless the founder supplies updated figures separately; do not
+assume they match ThroughLine's record without that follow-up.
+
+**The rule remains email-first, not phone-first.** Bulgarian helplines are
 small and largely volunteer-run; a verification call takes a live slot
 from someone who actually needs one, for a confirmation that doesn't need
 a live human on the other end. Verify by email or web contact form before
 shipping; call only if there's no reply *and* the entry is critical enough
 that shipping unconfirmed is worse than the cost of a call.
 
-Founder is emailing all three non-112 operators directly to confirm hours
-and scope in writing: БЧК (info@redcross.bg), Animus, Single Step. If no
-reply within two weeks, ship on ThroughLine's own verification — they
-confirmed each of these three by direct contact with helpline staff, more
-recently than our own research: BRC 2025-11-06, Animus 2026-05-25, Single
-Step 2026-01-14. 112 needs no separate verification.
+For history: ThroughLine had independently confirmed each of these three
+by direct contact with helpline staff, more recently than our own
+research: BRC 2025-11-06, Animus 2026-05-25, Single Step 2026-01-14. 112
+needs no separate verification.
 
-**Recheck cadence**: every 6 months, by email, checked against
-ThroughLine's `last_verified_at` and the organisation's own site.
+**Recheck cadence**: every 6 months from 2026-09-06, by email, checked
+against ThroughLine's `last_verified_at` and the organisation's own site —
+next recheck due ~2027-03-06.
 
 **Sourcing lesson, folded into the recheck rule**: `findahelpline.com`
 blocks direct fetching, and a first attempt at reading it via
@@ -622,12 +627,10 @@ implementation only:
   — not built.
 - The standing tension-instruction addition to the Oracle system prompt
   (§5) — not applied to the live prompt.
-- Email verification of the three non-112 numbers (§10 CRISIS-COPY-
-  VERIFICATION — founder is emailing БЧК, Animus, and Single Step
-  directly; ships on ThroughLine's own verification after a two-week
-  no-reply window) — a founder task, not blocked on engineering, but
-  blocks *shipping* the support screen regardless of when the code is
-  written.
+- ~~Email verification of the three non-112 numbers~~ — **done.** Founder
+  confirmed БЧК, Animus, and Single Step directly on 2026-09-06 (§10
+  CRISIS-COPY-VERIFICATION). No longer a blocker on shipping the support
+  screen.
 
 **Build estimate**: medium-sized feature, ~3-5 GSD-plan-sized chunks (§11)
 — DB+core, prompts+API, UI×2 (questions + support screen), copy/compliance.
