@@ -43,15 +43,18 @@
 - **Personal data flow:** payment-method metadata + billing identifiers (Stripe stores card numbers; we store only Stripe customer/subscription IDs + non-sensitive metadata)
 - **Filed at:** `[founder action]`
 
-### 4. OpenRouter (AI inference)
+### 4. Google (Gemini API — AI inference)
 
-- **Region:** US-based; routes to multiple underlying model providers
-- **DPA URL:** `[founder action]` — OpenRouter DPA path not standard self-serve; may require contacting OpenRouter support
-- **Status:** `[ ]` `[founder action]` — request DPA from OpenRouter via support if not self-serve in dashboard
-- **Cross-border basis:** SCCs (Standard Contractual Clauses) — required since US-based + EU users
-- **Personal data flow:** AI Oracle prompts contain birth-data context (DOB / coords / chart calculations) for personalization; user identifiers (clerk_user_id) may appear in request metadata depending on integration
+**Updated 2026-09-05: replaces OpenRouter, which this section previously listed.** Production calls `generativelanguage.googleapis.com` directly via `@ai-sdk/google` — see `.planning/SYSTEM-MAP.md` §4 and §12, `.planning/PLACEHOLDERS.md` LLM-MODEL-SWAP and DPA-CONTRACTS.
+
+- **Region:** US-based (Google); no EU-region pinning on the endpoint — `createGoogleGenerativeAI({ apiKey })` takes no region/location parameter (see `.planning/PLACEHOLDERS.md` GEMINI-EU-REGION)
+- **DPA URL:** `[founder action]` — verify Google's Cloud/API Data Processing Terms path for the Gemini Developer API project
+- **Status:** `[ ]` `[founder action]` — confirm DPA acceptance for the Gemini API project
+- **Cross-border basis:** SCCs (Standard Contractual Clauses) — required since US-based + EU users; no EU-region pinning exists, so the third-country-transfer analysis applies in full
+- **Personal data flow:** the model receives **computed chart data only** — planet/sign/degree/house/aspect/ascendant and a "birth time known" boolean flag. **No birth date, time, or place, and no free text** reach the model (see `.planning/SYSTEM-MAP.md` §12). User identifiers (clerk_user_id) may appear in server-side logging but are not sent in the model prompt itself.
 - **Filed at:** `[founder action]`
-- **Sub-processor caveat:** sub-processor chain depends on which model OpenRouter routes to. Currently `meta-llama/llama-3.3-70b-instruct` per `.planning/research/AI_PROVIDER_DECISION.md`. Verify the underlying provider's data-handling (Meta hosting, or whichever inference partner OpenRouter delegates to). Document the sub-processor chain in this entry once confirmed.
+- **Retention:** on the paid tier, Google's "no training on your data, no human review" guarantee applies unconditionally, regardless of caller region (`ai.google.dev/gemini-api/terms`) — this is stronger than the earlier EEA-conditional reading. A 55-day abuse-monitoring log retention still applies regardless of tier (`ai.google.dev/gemini-api/docs/usage-policies`). Both are Google's own claims, not yet lawyer-reviewed — see `.planning/PLACEHOLDERS.md` LLM-RETENTION-EEA and LLM-RETENTION.
+- **Single processor, no sub-processor chain:** Google is called directly, not through a router — there is no "which model it routes to" question the way there was with OpenRouter.
 
 ### 5. Sentry (error monitoring)
 
@@ -77,7 +80,7 @@
 
 - **§11.5 ROPA draft** (`.planning/legal/pending-review/ROPA-draft.md`, pending) — consumes this list as the per-activity processor column
 - **§11.1 privacy-draft** (`.planning/legal/pending-review/privacy-draft.md`, pending) — section XI lists these processors with links to their privacy policies for transparency disclosure
-- **Item 9 (third-party licensing) overlap:** Clerk + Supabase + Stripe + OpenRouter TOS reviews per `PRE_LAUNCH_PREREQS.md` item 9 are personal-data-processor TOS reviews — once this DPA audit is complete, those 4 sub-items in Item 9 can be marked covered. JPL Horizons + Astronomy Engine remain Item 9-specific (non-personal-data, library-license-only)
+- **Item 9 (third-party licensing) overlap:** Clerk + Supabase + Stripe + Google (Gemini API) TOS reviews per `PRE_LAUNCH_PREREQS.md` item 9 (PLP-9, updated 2026-09-05 to replace OpenRouter) are personal-data-processor TOS reviews — once this DPA audit is complete, those 4 sub-items in Item 9 can be marked covered. JPL Horizons + Astronomy Engine remain Item 9-specific (non-personal-data, library-license-only)
 
 ---
 

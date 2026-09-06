@@ -251,7 +251,7 @@ Phase 5 (AI Oracle) is complete with all requirements built (human verification 
 
 **Database:** users table (subscription_tier), ai_readings table (7-day expiry cache, unique per chart+topic)
 **Prompt Engineering:** Bulgarian mystical guide persona, sentinel markers for cross-highlighting, topic suffixes
-**Streaming API:** `meta-llama/llama-3.3-70b-instruct` via OpenRouter (Vercel AI SDK `@ai-sdk/openai` client) — placeholder, weak Bulgarian; swap recommended not decided (`.planning/LLM-PROVIDER-DECISION-2026-08-27.md`). Tier gating, cache-first, 24h regen rate limit. *(Was "Gemini 2.5 Flash" — never wired; corrected 2026-08-28.)*
+**API:** `gemini-3.7-flash` (falling back to `gemini-3.6-flash`) called directly via `@ai-sdk/google` (`generativelanguage.googleapis.com`) — swap decided and live on main since 2026-09-05 (`gemini/rebased-onto-injection`, commit `d08bd03`; see `.planning/SYSTEM-MAP.md` §4 and `.planning/PLACEHOLDERS.md` LLM-MODEL-SWAP). Replaces the `meta-llama/llama-3.3-70b-instruct` via OpenRouter placeholder this line previously described. Generation no longer streams (see ASTRO-INJECT). Tier gating, cache-first, 24h regen rate limit.
 **UI:** TopicCards (4 topics with lock states), ReadingStream (streaming + cross-highlight), LockedTopicTeaser (blurred + CTA), OraclePanel
 **Integration:** ChartView with responsive Oracle panel, planet cross-highlighting bridge to NatalWheel
 

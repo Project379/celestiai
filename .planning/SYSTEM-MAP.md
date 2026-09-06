@@ -178,7 +178,7 @@ Turborepo, with two apps and four shared packages:
 |---|---|---|
 | **Clerk** | Sign-up, login, sessions, 2FA, Google sign-in | Rented |
 | **Supabase** | The PostgreSQL database (and nothing else — see §3) | Rented |
-| **OpenRouter** | Routes our AI calls to a language model | Rented |
+| **Google (Gemini API)** | Generates the AI reading, called directly | Rented |
 | **Stripe** | Web subscription payments | Rented |
 | **RevenueCat** | Mobile in-app purchase handling | Rented (not live) |
 | **Sentry** | Catches and reports crashes/errors | Rented |
@@ -199,8 +199,8 @@ Turborepo, with two apps and four shared packages:
    monthly quota (an atomic database operation with a refund path if
    generation fails).
 5. It loads the **already-computed** chart data from the database, turns
-   it into prompt text, and calls the language model through OpenRouter
-   via the Vercel AI SDK.
+   it into prompt text, and calls the language model directly (Google
+   Gemini, via `@ai-sdk/google`) through the Vercel AI SDK.
 6. The response is lightly cleaned of formatting markers, written to the
    cache table, and returned. A spell-check runs after the fact and only
    logs — it never blocks or rewrites.
@@ -791,7 +791,7 @@ subscription app that collects personal data and sells to consumers.
   COOKIE-CONSENT.
 - **Data-processor contracts (DPAs).** GDPR requires a signed data
   processing agreement with each processor — Clerk, Supabase, Stripe,
-  OpenRouter (or its replacement), Sentry. **Consequence:** direct GDPR
+  Google, Sentry. **Consequence:** direct GDPR
   liability for transfers to processors with no contract in place.
   **Status:** see `.planning/PLACEHOLDERS.md` DPA-CONTRACTS.
 - **Right to erasure and data export.** GDPR Articles 15 and 17.
@@ -1058,7 +1058,7 @@ Grouped by what each one blocks, ordered within each group by dependency
 18. **Load test — Scenarios B and C (engineering).** Waiting on: the M4
     streaming-endpoint work and a load-test harness that does not exist
     yet.
-19. **OpenRouter (or successor) rate-limit + cost envelope documented
+19. **Google Gemini rate-limit + cost envelope documented
     (engineering).** Waiting on: task 1.
 20. **AI provider failover or graceful degradation (founder ruling, then
     engineering).** Waiting on: a product call.

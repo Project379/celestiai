@@ -95,7 +95,7 @@ item from §11 partial opening). -->
 
 **Sentry GmbH** обработва само технически данни от наблюдение на грешки — със зададен EU регион (Франкфурт). PII по подразбиране е изключено.
 
-**OpenRouter** обработва AI заявките, които генерират четенията. Заявките съдържат рождени данни в контекст за персонализация. OpenRouter е базиран в САЩ и прехвърлянето се покрива от Стандартни договорни клаузи (виж раздел X).
+**Google LLC** ("Gemini API") обработва AI заявките, които генерират четенията — директно, без посредник. На модела се предават единствено изчислени астрономически данни: позиция на планетите (знак, градус, дом), аспекти, ретроградност и булев флаг дали часът на раждане е известен. **Рождените данни — дата, час и място на раждане — не се предават на модела, нито свободен текст.** При платения тарифен план на Gemini API Google гарантира, че данните не се използват за обучение на модели и не подлежат на човешки преглед, безусловно и независимо от региона на потребителя; отделно от това важи 55-дневен период на съхранение на логове единствено за целите на откриване на злоупотреби. Google е базиран в САЩ, а заявките не са закрепени към конкретен ЕС регион, поради което анализът за прехвърляне към трета държава се прилага в пълен обем — прехвърлянето се покрива от Стандартни договорни клаузи (виж раздел X).
 
 **Vercel** хоства приложението с регионално закрепване във Франкфурт. Vercel вижда само метаданни на заявките (IP, user agent) на edge слоя и не съхранява персистентни идентификационни данни.
 
@@ -104,9 +104,16 @@ item from §11 partial opening). -->
 <!-- COUNSEL-REVIEW: This section conflates "where data lives" with
 "which processor sees what." Counsel may want clearer separation —
 data-storage block (Supabase only as authoritative store) vs
-processing-touch block (Sentry, OpenRouter, Vercel, Stripe pass
+processing-touch block (Sentry, Google, Vercel, Stripe pass
 through but don't authoritatively store). Bulgarian privacy-policy
 convention may differ from this structuring. -->
+
+<!-- COUNSEL-REVIEW (2026-09-06): AI processor corrected from OpenRouter
+to Google (Gemini API) — Google has been the live provider since
+2026-09-05; see .planning/PLACEHOLDERS.md LLM-MODEL-SWAP and
+DPA-CONTRACTS, .planning/legal/processor-dpa-audit.md §4. This paragraph
+was previously drafted against a provider the app no longer uses. -->
+
 
 ---
 
@@ -226,10 +233,10 @@ financial records). Counsel must verify each row, especially:
 | Sentry GmbH | EU (Франкфурт) | Без прехвърляне — обработването се извършва в ЕС. |
 | Clerk | САЩ | Сертификация по EU-US Data Privacy Framework (DPF). |
 | Stripe | Глобално, регионално закрепване | Регионална адекватност + Стандартни договорни клаузи (СДК) при необходимост. |
-| OpenRouter | САЩ | Стандартни договорни клаузи (СДК) — задължителен механизъм след решението на Съда на ЕС по дело Schrems II. |
+| Google LLC (Gemini API) | САЩ — без закрепване към ЕС регион | Стандартни договорни клаузи (СДК) — задължителен механизъм след решението на Съда на ЕС по дело Schrems II. |
 | Vercel | Глобално, регионално закрепване (`fra1` за ЕС трафик) | Регионална адекватност + СДК при необходимост. |
 
-**Обобщение:** за европейски потребители основните потоци (база данни, наблюдение на грешки) остават в ЕС. AI обработката (OpenRouter) и автентикацията (Clerk) включват прехвърляне към САЩ, покрито от съответния правен механизъм.
+**Обобщение:** за европейски потребители основните потоци (база данни, наблюдение на грешки) остават в ЕС. AI обработката (Google, Gemini API) и автентикацията (Clerk) включват прехвърляне към САЩ, покрито от съответния правен механизъм.
 
 <!-- COUNSEL-REVIEW: Schrems II implications + DPF current status (DPF
 self-certification post-2023 framework). Counsel should verify each
@@ -248,16 +255,15 @@ met. -->
 | **Clerk** | Автентикация, профили, сесии | САЩ (DPF) | `clerk.com/legal/privacy` |
 | **Supabase** | База данни (PostgreSQL) | EU — Франкфурт | `supabase.com/privacy` |
 | **Stripe** | Обработка на плащания | Глобално | `stripe.com/privacy` |
-| **OpenRouter** | AI инференция (Llama 3.3 70B чрез `meta-llama/llama-3.3-70b-instruct`) | САЩ | `openrouter.ai/privacy` |
+| **Google LLC** | AI инференция (Gemini API, директно, без посредник — само изчислени астрономически данни, без рождени данни и без свободен текст) | САЩ | `policies.google.com/privacy` |
 | **Sentry GmbH** | Наблюдение на грешки в продукция | EU — Франкфурт | `sentry.io/privacy/` |
 | **Vercel** | Хостинг и edge | Глобално, `fra1` за ЕС | `vercel.com/legal/privacy-policy` |
 
 DPA статус на всеки обработващ се проследява в `.planning/legal/processor-dpa-audit.md` (вътрешен документ, не публичен).
 
 <!-- COUNSEL-REVIEW: All privacy-policy URLs marked "[verify]" — counsel
-should confirm each link is current and accessible. The OpenRouter
-link in particular may require updating depending on their public
-policy availability. -->
+should confirm each link is current and accessible, including the
+Google Gemini API privacy policy URL above. -->
 
 ---
 

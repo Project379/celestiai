@@ -64,8 +64,8 @@ the gate/test suite run green this session.
 | 1 | **Split the AI counter** — Днес off `subscription_quotas`, its own unlimited-for-free path | **DONE** (VERIFIED). `apps/web/app/api/horoscope/generate/route.ts` no longer imports or calls any quota helper. Structural ceiling documented in the route header (5/min burst + `UNIQUE(chart_id,date)` = 1/chart/day + 20-chart cap). `quota.ts` doc comments updated. Test `test/horoscope/generate-quota-gate.test.ts` inverted to assert "not consumed"; `generate-upstream-failure.test.ts` refund assertion dropped. |
 | 2 | **Lifetime Oracle counter** — `users.free_oracle_used_at` | **CODE DONE, MIGRATION NOT APPLIED** (VERIFIED code; migration is founder action — see §10). Migration `supabase/migrations/20260901120000_free_oracle_used_at.sql` written, **not run**. Helper `apps/web/lib/subscriptions/free-oracle.ts` claims/releases the marker and tolerates the column being absent (dark-launch: enforcement starts when the column exists). Oracle route free branch uses it. |
 | 3 | **Oracle topic gating** — `love`/`career`/`health` premium, at the route AND the UI | **DONE** (VERIFIED). Route: free + non-`general` → 429 `CAP_REACHED` / `reason: premium_topic`, before any claim or generation. Free regenerate → `reason: premium_regenerate`. UI: `TopicCards` (web + mobile) render the padlock for the three topics when not premium (tap still hits the route — the route is the gate). Tests in `test/oracle/tier-gates.test.ts` + `generate-quota-bypass.test.ts`, proved red against the pre-change route. |
-| 4 | **Recommendations gating** — one visible, rest locked | **NOT DONE** — see §11. Scoped, not built. |
-| 5 | **Locked-state consistency** — one shared component across all locations | **PARTIAL** — the Oracle surfaces (topic padlock, conversion notice) are done and consistent between web and mobile. The other ~7 non-Oracle surfaces (crystals grid, Кръг, recommendations) and the single shared component are **NOT DONE** — see §11. |
+| 4 | **Recommendations gating** — one visible, rest locked | **DONE (UPDATED 2026-09-06).** Shipped on `recommendations/gated`, merged to main 2026-09-05. `StoriesContent` (web) and `you/recommendations.tsx` (mobile) take `isPremium`: the daily pick renders free, the monthly arc renders identity + teaser with detail behind `PremiumLock`. Server-side enforcement at the route — `POST /api/recommendations/reroll` returns 403 with `code: 'PREMIUM_REQUIRED'` for a free user, not just a client-side lock. See `.planning/PLACEHOLDERS.md` TIER-ITEM-4 (RESOLVED 2026-09-01/updated 2026-09-05) — was **NOT DONE** at this document's original writing; §11's build-out narrative below is superseded. |
+| 5 | **Locked-state consistency** — one shared component across all locations | **DONE (UPDATED 2026-09-06).** The shared `PremiumLock` / `LockBadge` primitive is applied across all surfaces this row originally flagged as gapped: Oracle (topic padlock, conversion notice), crystals (grid `locked` state; collect + collection tabs gated), Кръг (2nd saved profile, connection invite, connection report — locked affordances before the attempt, server 403s carry `code: 'PREMIUM_REQUIRED'`), and recommendations (monthly arc, per item 4 above). See `.planning/PLACEHOLDERS.md` TIER-ITEM-5 (RESOLVED 2026-09-01). §11's "NOT DONE" narrative below is superseded. |
 | 6 | **Conversion surface** — fix copy, add CTA, reach it from a locked-topic tap | **DONE for Oracle** (VERIFIED). `CapReachedNotice` (web + mobile) reworded per `reason`; lifetime wording replaces "this month / next month". Web CTA **"Отключи Премиум" → `/pricing`** (reusing the existing button label from PricingContent/SettingsContent). Mobile has **no CTA button** — blocked on the RevenueCat native paywall (documented in the component). A locked-topic tap and a spent free reading both route here. **Bulgarian copy run through the `bulgarian-skill`** and de-calqued over two founder-review passes — final wording uses "тълкуване" (the app's established word for an AI reading — cf. FeaturesSection / PricingSection / AstrologyGuideContent) rather than "четене", and leads with the topics instead of a fronted noun: "Любов, кариера и здраве са теми за Премиум.", "Ново тълкуване има само в Премиум.", "Това беше безплатното ти тълкуване от Оракула." CTA reuses "Отключи Премиум". |
 | 7 | **Reversal / existing-access report** | **DONE** — see §9 (rewritten) and §12 (live-data check). |
 | 8 | **Free lifetime `general` reading must never expire** | **DONE** (VERIFIED). Root cause: `apps/web/app/api/oracle/generate/route.ts` wrote `expires_at = generatedAt + 7d` for *every* reading; both the route's step-5 cache check and `GET /api/oracle/readings` filter `expires_at > now`, so after 7 days the free tier's one reading became unfetchable (row retained — no expiry-based DELETE exists anywhere; only `cron/cleanup-deleted-accounts` deletes `ai_readings`, and only for deleted accounts). Fix: `resolveReadingExpiry()` — free + `general` → `NEVER_EXPIRES_AT` sentinel (`2999-12-31…`, exported); every other reading keeps the 7-day window; a row already at the sentinel stays there across a tier change (free→premium→free churn). Display order needed no change — both platforms already prefer a saved reading over `CapReachedNotice` on topic-tap (web `OraclePanelGlobal.tsx:65-75`, mobile `useOracleReading.ts:198-211`); the cap notice only renders on a 429 from an actual generate/regenerate. One web-only defect fixed alongside: `useOracleReading.ts` `generateReading` treated the cache-hit JSON 200 (route step 5) as a text stream and would render the JSON envelope — now branches on `content-type`. Tests: 3 cases in `test/oracle/tier-gates.test.ts`, proved red against the pre-fix route. |
@@ -221,7 +221,7 @@ This is the single largest new build in the frozen definition.
 | **Crystals — daily crystal visible for free** | `GET /api/crystals/today` open to all (free + anon); returns the rotation crystal + lunar phase, `isPremium: false`. | **Implemented** (VERIFIED) |
 | **Crystals — collection grid visible with locked slots for free** | `GET /api/crystals` (the grid/overview) is **premium-only** — returns `PREMIUM_REQUIRED`. The web page renders a `<PremiumGate/>` upsell block for free users **instead of** the grid. Mobile: `crystals.tsx` has a premium branch (`CrystalGridTile` referenced but grid gated). | **BROKEN against the frozen rule + the visibility principle** (VERIFIED). Free users see an upsell panel, not a locked grid. |
 | **Crystals — collecting / streaks / gamification for premium** | Manual "collect a recommendation" (`POST /api/crystals/collect`): **premium-only** (VERIFIED). Personalised recommendations + history (`GET /api/crystals`): **premium-only**. **Daily streak**: currently **FREE** — `getCrystalOfTheDay` auto-collects and computes a 60-day streak for any authed user (shipped 2026-04-20, commit `cb54ede`, per matrix "streak as the free-tier hook"). `POST /api/crystals/daily/collect`: open to all. | **Mismatch** (VERIFIED). Frozen rule puts streaks in premium; current code deliberately made streaks free. Reversing it undoes a shipped decision — flag to founder. |
-| **Recommendations — 1 visible for free, all for premium** | `StoriesContent` / `/you/recommendations`: **no tier gate at all.** Content is a hardcoded stub catalog (`packages/core/src/stories/catalog.ts`): 8 daily picks (one per lunar phase) + 12 monthly arcs (one per sun sign). The only gate is a chart gate — the monthly arc needs birth data. | **Absent / net-new** (VERIFIED). "1 visible, rest locked" is entirely unbuilt. |
+| **Recommendations — 1 visible for free, all for premium** | `StoriesContent` / `/you/recommendations`: **`isPremium` gates the monthly arc behind `PremiumLock`**; the daily pick renders free. Server-side enforcement at `POST /api/recommendations/reroll` (403 `code: 'PREMIUM_REQUIRED'`). Content is a hardcoded stub catalog (`packages/core/src/stories/catalog.ts`): 8 daily picks (one per lunar phase) + 12 monthly arcs (one per sun sign). | **DONE (updated 2026-09-06)** — shipped on `recommendations/gated`, merged to main 2026-09-05; was "Absent / net-new" at this row's original writing. |
 | **Guide — full for free** | `you/guide.tsx` header comment: "Free page, no premium/chart gating." | **Implemented** (VERIFIED) — matches. |
 | **Moon — full for free** | No tier gate on the Moon detail screen (mobile-only feature). | **Implemented** (INFERRED — no tier reference found in the moon screen; consistent with it being free) |
 
@@ -292,7 +292,7 @@ shape with a lock affordance — never hide it, never show an empty state.
 | 4 | Crystals — collection grid | web (`you/crystals/page.tsx` → `PremiumGate` block), mobile (`you/crystals.tsx`) | **Hides the grid**, shows an upsell panel instead | Render the actual grid with locked slots; only the daily crystal is interactive for free |
 | 5 | Crystals — daily streak / gamification affordances | web (`CrystalOfTheDayCard`, `DailyStreakPanel`), mobile (`CrystalOfTheDayCard`, `CrystalGridTile`) | Streak currently **free**; would need to become a locked affordance for free | Locked streak/collect UI for free (this reverses a shipped decision — confirm first) |
 | 6 | Crystals — "collect this recommendation" button | web + mobile crystal detail panels | Behind the premium grid gate | Visible + locked once the grid is visible to free |
-| 7 | Recommendations — daily picks list (8) and monthly arc | web (`components/stories/StoriesContent.tsx`), mobile (`you/recommendations.tsx`) | **No gating** — all shown | Show one unlocked, the rest visible + locked |
+| 7 | Recommendations — daily picks list (8) and monthly arc | web (`components/stories/StoriesContent.tsx`), mobile (`you/recommendations.tsx`) | **DONE (updated 2026-09-06)** — `isPremium` prop gates the monthly arc behind `PremiumLock`; `POST /api/recommendations/reroll` enforces server-side, 403 `code: 'PREMIUM_REQUIRED'` for free. Shipped on `recommendations/gated`, merged to main 2026-09-05 | ~~Show one unlocked, the rest visible + locked~~ — done |
 | 8 | Кръг — "save another profile" (2nd+) | web (`CircleHub`), mobile (`circle.tsx`, `SavedProfileForm`) | Server 403s; client behaviour on the 403 needs checking | A locked "add profile" affordance for free with the count made explicit |
 | 9 | Кръг — compatibility report on a saved profile | web (`CircleHub` / detail), mobile (`SavedProfileDetailPanel`) | Free gets a **teaser**; premium gets full | Depending on the founder call in §4: either keep the teaser as the locked state, or replace it with a locked panel |
 | 10 | Кръг — send a connection invite / generate a connection report | web (`CircleHub`), mobile (`circle.tsx`, `new-connection.tsx`) | Server 403s (premium-only) | Locked affordance rather than a raw error |
@@ -308,9 +308,9 @@ principle — call these out):**
   suppressed (`isLocked={false}`), so a free user who taps `love` today
   silently gets a full premium reading. Post-change they need a visible
   lock, not a silent allow and not a hidden card.
-- **Recommendations** (#7) — nothing is locked or hidden today; all content
+- ~~**Recommendations** (#7) — nothing is locked or hidden today; all content
   is shown to everyone. Adding the lock is new, but there is no hidden
-  state to fix, just missing gating.
+  state to fix, just missing gating.~~ **DONE 2026-09-05** — see row 7 above.
 
 Everything else already renders *something* (a teaser, a 403-driven message,
 or an upsell) — those need re-skinning to a consistent locked treatment,
@@ -392,9 +392,12 @@ the work is:**
 7. Crystals streak — **decision required**: move streak/daily-collect back
    behind premium (reverses commit `cb54ede`), or keep free and treat only
    "collecting into the collection" as the premium gamification. (§4)
-8. Recommendations — add tier gating to `StoriesContent`'s data path: one
+8. ~~Recommendations — add tier gating to `StoriesContent`'s data path: one
    unlocked pick, the rest returned as locked stubs (title/teaser only).
-   (§4, §6)
+   (§4, §6)~~ **DONE 2026-09-05** — `isPremium` prop on `StoriesContent` /
+   `you/recommendations.tsx`, server-enforced at `POST
+   /api/recommendations/reroll` (403 `code: 'PREMIUM_REQUIRED'`). Shipped
+   on `recommendations/gated`.
 9. Кръг compatibility on saved profiles — **decision required**: keep the
    existing free teaser as the locked state, or block free entirely to
    match the literal frozen wording. (§4)
@@ -414,7 +417,7 @@ the work is:**
 14. Crystals — render the real grid with locked slots instead of the
     `PremiumGate` block; lock the streak/collect affordances per decision 7.
     (§6 #4–6)
-15. Recommendations — render all items, one unlocked, rest locked. (§6 #7)
+15. ~~Recommendations — render all items, one unlocked, rest locked. (§6 #7)~~ **DONE 2026-09-05** — see item 8 above.
 16. Кръг — locked affordances for 2nd profile, compatibility, invites,
     connection reports, instead of raw 403 messages. (§6 #8–10)
 17. Днес — premium "deeper detail" section + its locked state. (§6 #11)
@@ -499,15 +502,20 @@ second attempt returns 429 `CAP_REACHED` / `free_used`.
 
 ---
 
-# 11. Items 4 & 5 — not built, scoped
+# 11. Items 4 & 5 — SHIPPED 2026-09-05 (scoped here 2026-09-01, built on `recommendations/gated`)
 
-Per the founder's priority order and to keep this change a coherent unit
-(routes + tests + the Oracle conversion surface), the following were
-**not** built and are the remaining work:
+**This section originally scoped items 4 & 5 as not-yet-built remaining
+work. Both have since shipped** — see `.planning/PLACEHOLDERS.md`
+TIER-ITEM-4 and TIER-ITEM-5 (RESOLVED). The scoping below is left as the
+historical build plan; it is no longer the current state.
 
-**Item 4 — Recommendations gating.** `StoriesContent` (web) +
-`you/recommendations.tsx` (mobile) have zero tier gating. The screen shows
-one daily pick (today's lunar phase) + one monthly arc (sun sign). Build:
+**Item 4 — Recommendations gating.** ~~`StoriesContent` (web) +
+`you/recommendations.tsx` (mobile) have zero tier gating.~~ **DONE.** Both
+now take `isPremium`: the daily pick renders free, the monthly arc renders
+identity + teaser with detail behind `PremiumLock`. Server-side
+enforcement at `POST /api/recommendations/reroll` (403 `code:
+'PREMIUM_REQUIRED'`), not just a client-side lock. Original scoping, for
+history:
 - A tier read in the recommendations data path. `general`-equivalent: keep
   the **daily pick** free; lock the **monthly arc** (or, if the design
   wants a list, show the first item free and the rest as locked stubs —
@@ -516,8 +524,12 @@ one daily pick (today's lunar phase) + one monthly arc (sun sign). Build:
   with no backend — gating is a client/prop concern, ~0.5 day.
 
 **Item 5 — one shared locked-state component + the non-Oracle surfaces.**
-The Oracle surfaces (topic padlock, `CapReachedNotice`) are done and
-consistent web↔mobile, but they are bespoke. Remaining:
+**DONE.** The `PremiumLock` / `LockBadge` primitive is built and applied
+across all surfaces this item scoped: crystals (grid `locked` state,
+collect + collection tabs gated), Кръг (2nd saved profile, connection
+invite, connection report — locked affordances before the attempt, server
+403s carry `code: 'PREMIUM_REQUIRED'`), and recommendations (item 4's
+locked monthly arc). Original scoping, for history:
 - Extract a shared `PremiumLock` / locked-state primitive per platform
   (padlock affordance + short copy + CTA into the conversion surface),
   fold `CapReachedNotice` into it.
