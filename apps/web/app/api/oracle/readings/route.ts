@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
@@ -58,6 +59,8 @@ export async function GET(req: Request) {
 
     if (readingsError) {
       console.error('[Oracle Readings] Failed to fetch readings:', readingsError)
+      // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+      Sentry.captureException(readingsError, { extra: { context: 'GET /api/oracle/readings: fetch readings' } })
       return Response.json(
         { error: 'Грешка при извличане на четенията' },
         { status: 500 }
@@ -79,9 +82,7 @@ export async function GET(req: Request) {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Oracle Readings] Unhandled error:', error)
-    return Response.json(
-      { error: 'Грешка при обработка на заявката' },
-      { status: 500 }
-    )
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Грешка при обработка на заявката')
   }
 }

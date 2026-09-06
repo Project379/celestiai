@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { getTransitsOverview } from '@stellaeum/core/horoscope/transits'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { ApiError } from '@/lib/auth/guards'
@@ -41,6 +42,11 @@ export async function GET(req: Request) {
         return Response.json({ error: 'Forbidden' }, { status: 403 })
       case 'INTERNAL':
       default:
+        // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+        Sentry.captureMessage('Unexpected transits-overview result code', {
+          level: 'error',
+          extra: { context: 'GET /api/transits/overview', resultError: result.error },
+        })
         return Response.json(
           { error: 'Failed to load transit overview.' },
           { status: 500 },

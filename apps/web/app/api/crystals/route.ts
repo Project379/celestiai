@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { getCrystalsOverview } from '@stellaeum/core/crystals/overview'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { ApiError } from '@/lib/auth/guards'
@@ -38,6 +39,11 @@ export async function GET(req: Request) {
         return Response.json({ error: 'Chart not found' }, { status: 404 })
       case 'INTERNAL':
       default:
+        // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+        Sentry.captureMessage('Unexpected crystals-overview result code', {
+          level: 'error',
+          extra: { context: 'GET /api/crystals', resultError: result.error },
+        })
         return Response.json({ error: 'Internal error' }, { status: 500 })
     }
   } catch (error) {

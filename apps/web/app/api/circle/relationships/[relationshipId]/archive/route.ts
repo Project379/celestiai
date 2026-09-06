@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { listSpaceMembers } from '@/lib/circle/service'
@@ -60,6 +61,8 @@ export async function POST(
 
   if (error) {
     console.error('[Circle Connection] archive failed:', error)
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    Sentry.captureException(error, { extra: { context: 'POST /api/circle/relationships/[relationshipId]/archive' } })
     return Response.json({ error: 'Не успяхме да архивираме пространството.' }, { status: 500 })
   }
 

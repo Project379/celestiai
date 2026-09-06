@@ -1,5 +1,6 @@
 import { after } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { ApiError, requireAppUser } from '@/lib/auth/guards'
@@ -86,6 +87,8 @@ export async function POST() {
 
   if (error) {
     console.error('[GDPR Delete] Failed to request deletion:', error)
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    Sentry.captureException(error, { extra: { context: 'POST /api/gdpr/delete-account: request deletion' } })
     return Response.json(
       { error: 'Грешка при заявка за изтриване' },
       { status: 500 }
@@ -143,6 +146,8 @@ export async function DELETE() {
 
   if (error) {
     console.error('[GDPR Delete] Failed to cancel deletion:', error)
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    Sentry.captureException(error, { extra: { context: 'POST /api/gdpr/delete-account: cancel deletion' } })
     return Response.json(
       { error: 'Грешка при отмяна на изтриването' },
       { status: 500 }

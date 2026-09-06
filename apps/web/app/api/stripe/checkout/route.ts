@@ -107,6 +107,10 @@ export async function POST(req: Request) {
     return Response.json({ url: session.url })
   } catch (error) {
     console.error('[Stripe Checkout] Error creating session:', error)
-    return Response.json({ error: 'Грешка при създаване на плащане' }, { status: 500 })
+    // CAUGHT-500S (historical) — was a bare 500, invisible to
+    // Sentry; routed through toErrorResponse (already imported in this
+    // file, identical response shape) rather than a new capture call site.
+    // See .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Грешка при създаване на плащане')
   }
 }

@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { getCrystalOfTheDay } from '@stellaeum/core/crystals/today'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { ApiError } from '@/lib/auth/guards'
@@ -42,6 +43,8 @@ export async function GET() {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[api/crystals/daily-streak] error', error)
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    Sentry.captureException(error, { extra: { context: 'GET /api/crystals/daily-streak' } })
     return Response.json({ error: 'Internal error' }, { status: 500 })
   }
 }

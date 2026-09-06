@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { logAuditEvent } from '@/lib/audit'
 import { buildCompatibilityReportContent, MAX_REPORT_VERSIONS_PER_PAIR } from '@/lib/circle/report'
@@ -136,6 +137,8 @@ export async function POST(
         if (winner) return Response.json(winner)
       }
       console.error('[Circle Report] insert failed:', error)
+      // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+      Sentry.captureException(error, { extra: { context: 'POST /api/circle/relationships/[relationshipId]/report: insert' } })
       return Response.json({ error: 'Не успяхме да генерираме доклада.' }, { status: 500 })
     }
 
@@ -168,6 +171,7 @@ export async function POST(
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Circle Report] unhandled error:', error)
-    return Response.json({ error: 'Не успяхме да генерираме доклада.' }, { status: 500 })
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Не успяхме да генерираме доклада.')
   }
 }

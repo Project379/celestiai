@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createPublicSupabaseClient } from '@/lib/supabase/public'
 import { toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit, getRequestIp } from '@/lib/rate-limit'
@@ -99,6 +100,9 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error('City search error:', error)
+      // CAUGHT-500S (historical) — was a bare 500, invisible to
+      // Sentry (see .planning/PLACEHOLDERS.md).
+      Sentry.captureException(error, { extra: { context: 'GET /api/cities/search' } })
       return Response.json(
         { error: 'Грешка при търсене' },
         { status: 500 }

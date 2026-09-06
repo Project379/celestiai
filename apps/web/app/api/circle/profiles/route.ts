@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createBirthDataSchema } from '@stellaeum/core/charts/schemas'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { listSavedProfilesForUser } from '@/lib/circle/service'
-import { ApiError, readJsonBody } from '@/lib/auth/guards'
+import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 
 export async function GET() {
@@ -26,7 +27,8 @@ export async function GET() {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Circle Profiles] list failed:', error)
-    return Response.json({ error: 'Не успяхме да заредим профилите.' }, { status: 500 })
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Не успяхме да заредим профилите.')
   }
 }
 
@@ -84,6 +86,8 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error('[Circle Profiles] create failed:', error)
+      // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+      Sentry.captureException(error, { extra: { context: 'POST /api/circle/profiles: create_saved_profile_if_allowed RPC' } })
       return Response.json({ error: 'Не успяхме да запазим профила.' }, { status: 500 })
     }
 
@@ -109,6 +113,7 @@ export async function POST(req: Request) {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Circle Profiles] create unhandled error:', error)
-    return Response.json({ error: 'Не успяхме да запазим профила.' }, { status: 500 })
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Не успяхме да запазим профила.')
   }
 }

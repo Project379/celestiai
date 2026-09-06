@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { ApiError, readJsonBody } from '@/lib/auth/guards'
+import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
@@ -46,6 +47,8 @@ export async function POST(req: Request) {
 
     if (deleteError) {
       console.error('[Push Unsubscribe] Delete failed:', deleteError)
+      // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+      Sentry.captureException(deleteError, { extra: { context: 'POST /api/push/unsubscribe: delete' } })
       return Response.json({ error: 'Грешка при отписването' }, { status: 500 })
     }
 
@@ -55,6 +58,7 @@ export async function POST(req: Request) {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Push Unsubscribe] Error:', error)
-    return Response.json({ error: 'Грешка при отписването' }, { status: 500 })
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Грешка при отписването')
   }
 }

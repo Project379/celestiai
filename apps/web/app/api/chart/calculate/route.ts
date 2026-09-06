@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { calculateChartForUser } from '@stellaeum/core/charts/calculate'
 import { chartCalculationSchema } from '@/lib/validators/chart'
 import { logAuditEvent } from '@/lib/audit'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 
 /**
@@ -57,12 +58,24 @@ export async function POST(request: Request) {
       case 'FORBIDDEN':
         return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 403 })
       case 'CALC_ERROR':
+        // CAUGHT-500S (historical) — was a bare 500, invisible to
+        // Sentry. Not a caught exception — a result.error code from
+        // calculateChartForUser — so captureMessage. See
+        // .planning/PLACEHOLDERS.md.
+        Sentry.captureMessage('Chart calculation CALC_ERROR', {
+          level: 'error',
+          extra: { context: 'POST /api/chart/calculate', chartId },
+        })
         return Response.json(
           { error: 'Грешка при изчисление. Провери данните.' },
           { status: 500 },
         )
       case 'INTERNAL':
       default:
+        Sentry.captureMessage('Chart calculation INTERNAL error', {
+          level: 'error',
+          extra: { context: 'POST /api/chart/calculate', chartId, resultError: result.error },
+        })
         return Response.json(
           { error: 'Грешка при обработка на заявката' },
           { status: 500 },
@@ -73,9 +86,7 @@ export async function POST(request: Request) {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('Error in chart calculation:', error)
-    return Response.json(
-      { error: 'Грешка при обработка на заявката' },
-      { status: 500 },
-    )
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Грешка при обработка на заявката')
   }
 }

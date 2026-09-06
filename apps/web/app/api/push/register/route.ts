@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { ApiError, readJsonBody } from '@/lib/auth/guards'
+import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 
 const VALID_PLATFORMS = ['ios', 'android'] as const
@@ -64,6 +65,8 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error('[Push Register] Error:', error)
+      // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+      Sentry.captureException(error, { extra: { context: 'POST /api/push/register: upsert' } })
       return Response.json({ error: 'Грешка при регистрирането' }, { status: 500 })
     }
 
@@ -73,6 +76,7 @@ export async function POST(req: Request) {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Push Register] Error:', error)
-    return Response.json({ error: 'Грешка при регистрирането' }, { status: 500 })
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Грешка при регистрирането')
   }
 }

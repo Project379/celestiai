@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { createInviteToken, hashInviteToken } from '@/lib/circle/token'
-import { ApiError, readJsonBody } from '@/lib/auth/guards'
+import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 import {
   getLatestChartRowForUser,
@@ -48,7 +49,8 @@ export async function GET() {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Circle Invite] list failed:', error)
-    return Response.json({ error: 'Не успяхме да заредим поканите.' }, { status: 500 })
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Не успяхме да заредим поканите.')
   }
 }
 
@@ -145,6 +147,8 @@ export async function POST(req: Request) {
 
     if (error || !invite) {
       console.error('[Circle Invite] create failed:', error)
+      // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+      Sentry.captureException(error, { extra: { context: 'POST /api/circle/invites: create' } })
       return Response.json({ error: 'Не успяхме да създадем поканата.' }, { status: 500 })
     }
 
@@ -171,6 +175,7 @@ export async function POST(req: Request) {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Circle Invite] unhandled error:', error)
-    return Response.json({ error: 'Не успяхме да създадем поканата.' }, { status: 500 })
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Не успяхме да създадем поканата.')
   }
 }

@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { getSavedProfileForUser } from '@/lib/circle/service'
@@ -42,6 +43,8 @@ export async function DELETE(
 
   if (error) {
     console.error('[Circle Profiles] delete failed:', error)
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    Sentry.captureException(error, { extra: { context: 'DELETE /api/circle/profiles/[profileId]' } })
     return Response.json({ error: 'Не успяхме да изтрием профила.' }, { status: 500 })
   }
 

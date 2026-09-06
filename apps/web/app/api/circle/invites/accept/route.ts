@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
@@ -13,7 +14,7 @@ import {
 } from '@/lib/circle/service'
 import type { ConnectionInviteRow } from '@/lib/circle/types'
 import { hashInviteToken } from '@/lib/circle/token'
-import { ApiError, readJsonBody } from '@/lib/auth/guards'
+import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 
 const acceptInviteSchema = z.object({
@@ -113,6 +114,9 @@ export async function POST(req: Request) {
 
     if (claimError) {
       console.error('[Circle Invite] accept claim failed:', claimError)
+      // CAUGHT-500S (historical) — was a bare 500, invisible to
+      // Sentry (see .planning/PLACEHOLDERS.md).
+      Sentry.captureException(claimError, { extra: { context: 'POST /api/circle/invites/accept: claim' } })
       return Response.json({ error: 'Не успяхме да приемем поканата.' }, { status: 500 })
     }
 
@@ -357,6 +361,10 @@ export async function POST(req: Request) {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Circle Invite] accept unhandled error:', error)
-    return Response.json({ error: 'Не успяхме да приемем поканата.' }, { status: 500 })
+    // CAUGHT-500S (historical) — was a hand-rolled duplicate of
+    // toErrorResponse's non-ApiError branch, minus the Sentry capture; now
+    // routed through toErrorResponse (identical response shape). See
+    // .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Не успяхме да приемем поканата.')
   }
 }

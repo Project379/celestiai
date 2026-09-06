@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import type { TransitAspect } from '@stellaeum/astrology'
 import type { PlanetPosition } from '@stellaeum/astrology/client'
 import { AI_MODEL, isUpstreamAiError, ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
@@ -204,6 +205,9 @@ export async function POST(req: Request) {
 
       if (insertError || !insertedCalculation) {
         console.error('[Horoscope Generate] Failed to bootstrap chart calculation:', insertError)
+        // CAUGHT-500S (historical) — was a bare 500, invisible to
+        // Sentry (see .planning/PLACEHOLDERS.md).
+        Sentry.captureException(insertError, { extra: { context: 'POST /api/horoscope/generate: bootstrap chart calculation' } })
         return Response.json(
           { error: 'Failed to prepare natal chart for horoscope generation.' },
           { status: 500 }
@@ -285,6 +289,9 @@ export async function POST(req: Request) {
         )
       }
       console.error('[Horoscope Generate] Failed to claim generation slot:', claimError)
+      // CAUGHT-500S (historical) — was a bare 500, invisible to
+      // Sentry (see .planning/PLACEHOLDERS.md).
+      Sentry.captureException(claimError, { extra: { context: 'POST /api/horoscope/generate: claim generation slot' } })
       return Response.json(
         { error: 'Failed to prepare horoscope generation.' },
         { status: 500 }

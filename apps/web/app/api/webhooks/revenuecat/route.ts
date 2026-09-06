@@ -1,4 +1,5 @@
 import { after } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { logAuditEvent } from '@/lib/audit'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
@@ -51,6 +52,13 @@ export async function POST(request: Request) {
     console.error(
       '[RevenueCat Webhook] REVENUECAT_WEBHOOK_SECRET is not set — rejecting all requests. A missing secret must never silently disable verification on a route that grants premium.'
     )
+    // CAUGHT-500S (historical) — a payment webhook rejecting
+    // every event because of a missing env var must page someone, not
+    // just log. See .planning/PLACEHOLDERS.md.
+    Sentry.captureMessage('RevenueCat webhook secret missing — rejecting all events', {
+      level: 'fatal',
+      extra: { context: 'POST /api/webhooks/revenuecat' },
+    })
     return new Response('Webhook not configured', { status: 500 })
   }
 
@@ -120,6 +128,10 @@ export async function POST(request: Request) {
       '[RevenueCat Webhook] Failed to record processed event:',
       insertError.message
     )
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    Sentry.captureException(insertError, {
+      extra: { context: 'POST /api/webhooks/revenuecat: insert processed_revenuecat_events', eventId: event.id },
+    })
     return new Response('Processing error', { status: 500 })
   }
 
@@ -148,6 +160,12 @@ export async function POST(request: Request) {
 
     const message = err instanceof Error ? err.message : String(err)
     console.error(`[RevenueCat Webhook] Processing error for event ${event.id}:`, message)
+    // CAUGHT-500S (historical) — a failed RevenueCat event means
+    // a real purchase may not be reflected in users.subscription_tier.
+    // See .planning/PLACEHOLDERS.md.
+    Sentry.captureException(err, {
+      extra: { context: 'POST /api/webhooks/revenuecat: handleRevenueCatEvent', eventId: event.id, eventType: event.type },
+    })
     return new Response(`Processing error: ${message}`, { status: 500 })
   }
 }

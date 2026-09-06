@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { RecommendationFeedbackRequestSchema } from '@stellaeum/core/recommendations/schemas'
 import { updateRecommendationFeedback } from '@stellaeum/core/recommendations/service'
 import { requireAccountActive, requireAppUser, toErrorResponse } from '@/lib/auth/guards'
@@ -34,6 +35,14 @@ export async function POST(request: Request) {
     if (result.error === 'NOT_FOUND') {
       return Response.json({ error: 'Recommendation not found', code: result.error }, { status: 404 })
     }
+    // CAUGHT-500S (historical) — was a bare 500, invisible to
+    // Sentry (see .planning/PLACEHOLDERS.md). Not a caught exception — an
+    // unexpected result.error code from updateRecommendationFeedback —
+    // so captureMessage, not captureException.
+    Sentry.captureMessage('Unexpected recommendation-feedback result code', {
+      level: 'error',
+      extra: { context: 'POST /api/recommendations/feedback', resultError: result.error },
+    })
     return Response.json({ error: 'Internal error', code: result.error }, { status: 500 })
   } catch (error) {
     return toErrorResponse(error, 'Failed to update recommendation feedback')

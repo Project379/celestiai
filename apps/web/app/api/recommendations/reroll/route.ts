@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { RecommendationRerollRequestSchema } from '@stellaeum/core/recommendations/schemas'
 import { rerollRecommendation } from '@stellaeum/core/recommendations/service'
 import { requireAccountActive, requireAppUser, toErrorResponse } from '@/lib/auth/guards'
@@ -57,6 +58,14 @@ export async function POST(request: Request) {
         { status: 403 },
       )
     }
+    // CAUGHT-500S (historical) — was a bare 500, invisible to
+    // Sentry (see .planning/PLACEHOLDERS.md). Not a caught exception — an
+    // unexpected result.error code from rerollRecommendation — so
+    // captureMessage, not captureException.
+    Sentry.captureMessage('Unexpected recommendation-reroll result code', {
+      level: 'error',
+      extra: { context: 'POST /api/recommendations/reroll', resultError: result.error },
+    })
     return Response.json({ error: 'Internal error', code: result.error }, { status: 500 })
   } catch (error) {
     return toErrorResponse(error, 'Failed to reroll recommendation')

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { buildCircleSpaceView, listSpacesForUser } from '@/lib/circle/service'
 
@@ -33,6 +33,7 @@ export async function GET() {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Circle Relationships] list failed:', error)
-    return Response.json({ error: 'Не успяхме да заредим пространствата.' }, { status: 500 })
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Не успяхме да заредим пространствата.')
   }
 }

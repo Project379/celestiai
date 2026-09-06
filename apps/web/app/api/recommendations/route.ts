@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { getRecommendationsOverview } from '@stellaeum/core/recommendations/service'
 import { requireAccountActive, requireAppUser, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
@@ -31,6 +32,14 @@ export async function GET(request: Request) {
         { status: 503 },
       )
     }
+    // CAUGHT-500S (historical) — was a bare 500, invisible to
+    // Sentry (see .planning/PLACEHOLDERS.md). Not a caught exception — an
+    // unexpected result.error code from getRecommendationsOverview — so
+    // captureMessage, not captureException.
+    Sentry.captureMessage('Unexpected recommendations-overview result code', {
+      level: 'error',
+      extra: { context: 'GET /api/recommendations', resultError: result.error },
+    })
     return Response.json({ error: 'Internal error', code: result.error }, { status: 500 })
   } catch (error) {
     return toErrorResponse(error, 'Failed to load recommendations')

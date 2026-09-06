@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { AI_MODEL, isUpstreamAiError, ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
 import { aiTemporarilyUnavailableResponse, isTransientAIError } from '@/lib/ai/errors'
 import { generateFinalText } from '@/lib/ai/generate-final-text'
@@ -376,6 +377,9 @@ export async function POST(req: Request) {
         )
       }
       console.error('[Oracle Generate] generation threw:', err)
+      // CAUGHT-500S (historical) — was a bare 500, invisible to
+      // Sentry (see .planning/PLACEHOLDERS.md).
+      Sentry.captureException(err, { extra: { context: 'POST /api/oracle/generate: generation threw' } })
       return Response.json(
         { error: 'Грешка при генериране на четенето' },
         { status: 500 },

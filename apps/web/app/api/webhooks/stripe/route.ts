@@ -1,4 +1,5 @@
 import { after } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import Stripe from 'stripe'
 import { logAuditEvent } from '@/lib/audit'
 import { stripe } from '@/lib/stripe/client'
@@ -81,6 +82,10 @@ export async function POST(request: Request) {
       return new Response('OK', { status: 200 })
     }
     console.error('[Webhook] Failed to record processed event:', insertError.message)
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    Sentry.captureException(insertError, {
+      extra: { context: 'POST /api/webhooks/stripe: insert processed_webhook_events', eventId: event.id },
+    })
     return new Response('Processing error', { status: 500 })
   }
 
@@ -181,6 +186,12 @@ export async function POST(request: Request) {
 
     const message = err instanceof Error ? err.message : String(err)
     console.error(`[Webhook] Processing error for event ${event.id}:`, message)
+    // CAUGHT-500S (historical) — a failed Stripe event means a
+    // real payment/subscription change may not be reflected in
+    // users.subscription_tier. See .planning/PLACEHOLDERS.md.
+    Sentry.captureException(err, {
+      extra: { context: 'POST /api/webhooks/stripe: event handler', eventId: event.id, eventType: event.type },
+    })
     return new Response(`Processing error: ${message}`, { status: 500 })
   }
 }

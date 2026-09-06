@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { collectDailyCrystal } from '@stellaeum/core/crystals/daily-collect'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { ApiError } from '@/lib/auth/guards'
@@ -35,12 +36,21 @@ export async function POST() {
 
     switch (result.error) {
       case 'NO_CRYSTAL':
+        // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+        Sentry.captureMessage('Daily crystal collect: NO_CRYSTAL', {
+          level: 'error',
+          extra: { context: 'POST /api/crystals/daily/collect' },
+        })
         return Response.json(
           { error: 'No crystal available' },
           { status: 500 },
         )
       case 'INTERNAL':
       default:
+        Sentry.captureMessage('Unexpected daily-crystal-collect result code', {
+          level: 'error',
+          extra: { context: 'POST /api/crystals/daily/collect', resultError: result.error },
+        })
         return Response.json({ error: 'Internal error' }, { status: 500 })
     }
   } catch (error) {

@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { ApiError } from '@/lib/auth/guards'
+import { ApiError, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { logAuditEvent } from '@/lib/audit'
 import {
@@ -55,7 +56,8 @@ export async function GET(
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Circle Profiles] report fetch unhandled error:', error)
-    return Response.json({ error: 'Не успяхме да заредим доклада.' }, { status: 500 })
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Не успяхме да заредим доклада.')
   }
 }
 
@@ -153,6 +155,8 @@ export async function POST(
         if (winner) return Response.json(winner)
       }
       console.error('[Circle Profiles] report failed:', error)
+      // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+      Sentry.captureException(error, { extra: { context: 'POST /api/circle/profiles/[profileId]/report: insert' } })
       return Response.json({ error: 'Не успяхме да анализираме профила.' }, { status: 500 })
     }
 
@@ -169,6 +173,7 @@ export async function POST(
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[Circle Profiles] report unhandled error:', error)
-    return Response.json({ error: 'Не успяхме да анализираме профила.' }, { status: 500 })
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    return toErrorResponse(error, 'Не успяхме да анализираме профила.')
   }
 }

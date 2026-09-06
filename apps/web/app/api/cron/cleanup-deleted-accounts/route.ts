@@ -1,4 +1,5 @@
 import { clerkClient } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { deleteUserDiaryEntries } from '@stellaeum/core/diary/entries'
 import { verifyCronSecret } from '@/lib/auth/cron-secret'
@@ -77,6 +78,10 @@ export async function GET(req: Request) {
 
   if (fetchError) {
     console.error('[Cron Cleanup] Failed to fetch expired accounts:', fetchError)
+    // CAUGHT-500S (historical) — a silently-failing cron already
+    // hid a production outage once (VAPID key incident, COMPLETION-
+    // TRACKER.md). See .planning/PLACEHOLDERS.md.
+    Sentry.captureException(fetchError, { extra: { context: 'GET /api/cron/cleanup-deleted-accounts: fetch expired accounts' } })
     return Response.json({ error: 'Грешка при зареждане' }, { status: 500 })
   }
 

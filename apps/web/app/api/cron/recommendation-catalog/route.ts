@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { runDevelopmentCatalogImport } from '@stellaeum/core/recommendations/import'
 import { verifyCronSecret } from '@/lib/auth/cron-secret'
 
@@ -19,6 +20,8 @@ export async function GET(request: Request) {
     return Response.json(result)
   } catch (error) {
     console.error('[cron/recommendation-catalog] import failed', error)
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    Sentry.captureException(error, { extra: { context: 'GET /api/cron/recommendation-catalog' } })
     return Response.json({ error: 'Catalog import failed' }, { status: 500 })
   }
 }

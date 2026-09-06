@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { ApiError } from '@/lib/auth/guards'
@@ -54,6 +55,8 @@ export async function DELETE(
 
   if (error) {
     console.error('[Circle Invite] cancel failed:', error)
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    Sentry.captureException(error, { extra: { context: 'DELETE /api/circle/invites/[inviteId]' } })
     return Response.json({ error: 'Не успяхме да отменим поканата.' }, { status: 500 })
   }
 

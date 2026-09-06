@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { collectCrystalRecommendation } from '@stellaeum/core/crystals/collect'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { ApiError } from '@/lib/auth/guards'
@@ -54,6 +55,14 @@ export async function POST(req: Request) {
         )
       case 'INTERNAL':
       default:
+        // CAUGHT-500S (historical) — was a bare 500, invisible
+        // to Sentry. Not a caught exception — a result.error code from
+        // collectCrystalRecommendation — so captureMessage. See
+        // .planning/PLACEHOLDERS.md.
+        Sentry.captureMessage('Unexpected crystal-collect result code', {
+          level: 'error',
+          extra: { context: 'POST /api/crystals/collect', resultError: result.error },
+        })
         return Response.json({ error: 'Internal error' }, { status: 500 })
     }
   } catch (error) {

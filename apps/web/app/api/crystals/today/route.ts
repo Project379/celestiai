@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import { getCrystalOfTheDay } from '@stellaeum/core/crystals/today'
 import { assertRateLimit, getRequestIp } from '@/lib/rate-limit'
 import { ApiError } from '@/lib/auth/guards'
@@ -38,6 +39,8 @@ export async function GET(request: Request) {
       return Response.json({ error: error.message, code: error.code }, { status: error.status })
     }
     console.error('[api/crystals/today] error', error)
+    // CAUGHT-500S (historical) — see .planning/PLACEHOLDERS.md.
+    Sentry.captureException(error, { extra: { context: 'GET /api/crystals/today' } })
     return Response.json({ error: 'Internal error' }, { status: 500 })
   }
 }
