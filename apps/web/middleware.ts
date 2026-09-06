@@ -41,6 +41,16 @@ export default clerkMiddleware(
     response.headers.set('X-DNS-Prefetch-Control', 'on')
     response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
 
+    // STELLAEUM_PLACEHOLDER: BUILD-SHA — was: no build/version marker on
+    // any response, so "which deployment answered this request" required
+    // dashboard archaeology. VERCEL_GIT_COMMIT_SHA is Vercel's own env var
+    // (auto-populated per deployment, no manual config) — read here at
+    // REQUEST time, not baked in at build time, so it can't become a
+    // turbo build-cache key (see turbo.json globalPassThroughEnv comment).
+    // Local dev has no such deployment, hence the fallback. See
+    // .planning/PLACEHOLDERS.md.
+    response.headers.set('X-Deploy-SHA', process.env.VERCEL_GIT_COMMIT_SHA ?? 'local')
+
     return response
   },
   {
