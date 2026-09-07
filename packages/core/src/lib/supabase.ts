@@ -1,7 +1,9 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 /**
- * Service-role Supabase client factory for @stellaeum/core.
+ * Secret-key Supabase client factory for @stellaeum/core (the secret key is
+ * the new-format replacement for the legacy service_role key — same
+ * privilege level).
  *
  * Env-only. No Clerk. No React. No Next.js. This mirrors the pattern in
  * `apps/web/lib/supabase/service.ts` but lives in the shared package so
@@ -13,15 +15,15 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
  */
 export function createCoreSupabaseClient(): SupabaseClient {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!supabaseUrl || !supabaseSecretKey) {
     throw new Error(
-      'Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required',
+      'Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY are required',
     )
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  return createClient(supabaseUrl, supabaseSecretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

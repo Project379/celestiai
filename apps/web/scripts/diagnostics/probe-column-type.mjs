@@ -21,8 +21,8 @@
  * turns out to be a range. Replace PROBE_TABLE / PROBE_COLUMN /
  * PROBE_VALUES / BASE_ROW for the next schema-drift investigation.
  *
- * Requires SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY via env (service
- * role bypasses RLS so the probe sees schema-level errors, not RLS
+ * Requires SUPABASE_URL + SUPABASE_SECRET_KEY via env (the secret key
+ * bypasses RLS so the probe sees schema-level errors, not RLS
  * 0-row rejects).
  *
  * First diagnostic run used this probe to identify charts.
@@ -33,13 +33,13 @@
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY
-if (!SUPABASE_URL || !SUPABASE_SERVICE) {
-  console.error('Missing Supabase env: NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY required')
+const SUPABASE_SECRET = process.env.SUPABASE_SECRET_KEY
+if (!SUPABASE_URL || !SUPABASE_SECRET) {
+  console.error('Missing Supabase env: NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SECRET_KEY required')
   process.exit(2)
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE, {
+const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 

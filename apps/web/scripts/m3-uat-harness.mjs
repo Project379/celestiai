@@ -38,10 +38,10 @@ const TEST_EMAIL = process.env.UAT_TEST_EMAIL ?? 'm3uat@celestia-ai.dev'
 
 const CLERK_SECRET = process.env.CLERK_SECRET_KEY
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY
+const SUPABASE_SECRET = process.env.SUPABASE_SECRET_KEY
 
-if (!CLERK_SECRET || !SUPABASE_URL || !SUPABASE_SERVICE) {
-  console.error('Missing env. Need CLERK_SECRET_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.')
+if (!CLERK_SECRET || !SUPABASE_URL || !SUPABASE_SECRET) {
+  console.error('Missing env. Need CLERK_SECRET_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY.')
   process.exit(2)
 }
 
@@ -69,7 +69,7 @@ async function clerkFetch(path, init = {}) {
   return body
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE, {
+const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 

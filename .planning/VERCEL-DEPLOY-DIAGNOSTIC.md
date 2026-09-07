@@ -95,7 +95,7 @@ broken client bundle (undefined values baked in):
 |---|---|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk client SDK |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `_SIGN_UP_URL` / `_SIGN_IN_FALLBACK_REDIRECT_URL` / `_SIGN_UP_FALLBACK_REDIRECT_URL` | Clerk routing |
-| `NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` | Supabase client config (server-lazy, see §2) |
+| `NEXT_PUBLIC_SUPABASE_URL` / `_PUBLISHABLE_KEY` | Supabase client config (server-lazy, see §2). Renamed 2026-09-07: `NEXT_PUBLIC_SUPABASE_ANON_KEY` → `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` when the legacy anon key was revoked and replaced with a `sb_publishable_...` key. The `NEXT_PUBLIC_` prefix is mandatory — `lib/supabase/client.ts` runs client-side. |
 | `NEXT_PUBLIC_APP_URL` | Stripe redirect URLs — defaults to `http://localhost:3000` in `.env.example`; **check this is actually set to the real prod URL in Vercel, not left at the example default** |
 | `NEXT_PUBLIC_SENTRY_DSN` | Client-side Sentry |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Web Push |
@@ -116,8 +116,8 @@ that needs them, not at build time, EXCEPT one case flagged in §3):**
 | Var | Used for |
 |---|---|
 | `CLERK_SECRET_KEY` | Clerk server SDK |
-| `SUPABASE_SERVICE_ROLE_KEY` | `lib/supabase/service.ts` — lazy, guarded (throws a clean error if missing, doesn't crash the build) |
-| `OPENROUTER_API_KEY` | AI generation (Oracle, daily horoscope) |
+| `SUPABASE_SECRET_KEY` | `lib/supabase/service.ts` + `packages/core/src/lib/supabase.ts` — lazy, guarded (throws a clean error if missing, doesn't crash the build). Renamed 2026-09-07 from `SUPABASE_SERVICE_ROLE_KEY` (legacy service_role key revoked, replaced with a `sb_secret_...` key). |
+| `GEMINI_API_KEY` | AI generation (Oracle, daily horoscope) — `lib/ai/client.ts`. Was `OPENROUTER_API_KEY` before the 2026-09-05 provider swap. |
 | `CRON_SECRET` | Cron route auth |
 | `VAPID_PRIVATE_KEY` | Web Push send |
 | `STRIPE_SECRET_KEY` | **NOT lazy — see §3, this is the strongest lead** |

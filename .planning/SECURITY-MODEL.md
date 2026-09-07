@@ -268,7 +268,7 @@ curl -isS -X POST 'https://zsypmpswqrhkfvlnowcp.supabase.co/rest/v1/<TABLE>' \
   -d '{"<minimal_required_column>": "test_lockdown_check"}'
 ```
 
-`PUB_KEY` is the value of `NEXT_PUBLIC_SUPABASE_ANON_KEY` from `apps/web/.env.local`. The same key visitors to the site can extract from the JS bundle.
+`PUB_KEY` is the value of `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from `apps/web/.env.local` (renamed 2026-09-07 from `NEXT_PUBLIC_SUPABASE_ANON_KEY`; the legacy anon key was revoked and replaced with a `sb_publishable_...` key — same low-privilege, RLS-enforced role). The same key visitors to the site can extract from the JS bundle.
 
 The PostgREST error code `42501` ("insufficient_privilege") with message "new row violates row-level security policy" is the canonical signal that RLS is enforcing on writes.
 
