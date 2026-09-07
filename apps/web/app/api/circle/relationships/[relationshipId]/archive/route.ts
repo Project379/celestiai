@@ -87,6 +87,22 @@ export async function POST(
       '[Circle Connection] space archived but member-status cascade failed — connection_spaces/connection_members now inconsistent:',
       { spaceId: relationshipId, error: memberArchiveError },
     )
+    // The request still returns 200 (the space IS archived) so this never
+    // reaches a caught-500 path, but it leaves connection_spaces.status
+    // 'archived' while connection_members.status stays 'active' — a real
+    // data-integrity split that hasActiveRomanticSpace / listSpaceMembers
+    // read independently. console.error alone lands only in Vercel runtime
+    // logs; server-side Sentry needs an explicit call (sentry.server.config
+    // captures no console). Warning level: not a user-facing failure, but a
+    // state a human must reconcile.
+    Sentry.captureMessage('Circle archive: member-status cascade failed after space archived', {
+      level: 'warning',
+      extra: {
+        context: 'POST /api/circle/relationships/[relationshipId]/archive',
+        spaceId: relationshipId,
+        error: memberArchiveError.message,
+      },
+    })
   }
 
   void logAuditEvent(userId, 'relationship.archived', { spaceId: relationshipId })

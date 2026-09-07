@@ -745,206 +745,43 @@ async function checkPremiumPaths(jwt, clerkId, chartId) {
 }
 
 /**
- * Oracle cap-gate verification (§6 commit 3).
+ * Oracle free-tier gate verification.
  *
- * Covers:
- *   - Free tier at the cap is blocked (429 CAP_REACHED). Reads the cap
- *     value from ORACLE_FREE_MESSAGES_PER_DAY env so changes to the
- *     config stay tracked by the test.
- *   - Premium tier at the same row count is NOT blocked — verified via
- *     cache hit so no real AI call is spent.
- *   - Cache hits do NOT count against the cap (free user with a cache-
- *     hit row still gets 200 cached, not 429).
- *   - Cap row pre-seed is timestamped within today's Europe/Sofia
- *     calendar day (the window the handler queries against).
+ * DISABLED 2026-09-07 — this block asserted the pre-2026-09-01 model: a
+ * shared 3-per-calendar-month `subscription_quotas` counter, with the cap
+ * read from `ORACLE_FREE_MESSAGES_PER_DAY`. The frozen tier definition
+ * (.planning/TIER-DEFINITION-2026-09-01.md) replaced that for the FREE
+ * tier with ONE `general` reading for the LIFETIME of the account,
+ * enforced by `users.free_oracle_used_at` (apps/web/lib/subscriptions/
+ * free-oracle.ts) — not a counter, not per-day, not three. Every
+ * assertion that was here (pre-seed N `ai_readings` rows, expect 429 at
+ * cap===3, expect "not 429 at cap-1") tests removed behaviour, and the
+ * `ORACLE_FREE_MESSAGES_PER_DAY` env read was wrong on both axes.
  *
- * Per-run cleanup: ai_readings for the test user are deleted at the
- * start AND end of this block, mirroring the existing cleanup pattern
- * for user_daily_crystals, user_crystals, crystal_recommendations.
- * Without this, the second run of the day would start already at the
- * cap and the assertions would skew.
+ * REWRITE TARGET (tracked in the 2026-09-07 session report) — assert
+ * against the lifetime gate instead:
+ *   - free, 1st `general` reading             → 200 (or a real generation)
+ *   - free, 2nd `general` reading             → 429, code CAP_REACHED,
+ *                                               reason 'free_used', cap 1
+ *   - free, topic love|career|health          → 429, reason 'premium_topic'
+ *   - free, regenerate of an existing reading → 429, reason 'premium_regenerate'
+ *   - premium, 2nd reading                    → NOT gated (subscription_quotas
+ *                                               at 300 — impractical to exhaust,
+ *                                               just assert it is not 429)
+ *   - cleanup: reset `users.free_oracle_used_at = NULL` for the test user
+ *     (NOT delete `ai_readings` — that is no longer what the gate reads)
  */
-function sofiaDayStartUtcIso(now = new Date()) {
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Europe/Sofia',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  })
-  const parts = Object.fromEntries(
-    fmt.formatToParts(now).map((p) => [p.type, p.value]),
-  )
-  const h = parseInt(parts.hour, 10) % 24
-  const m = parseInt(parts.minute, 10)
-  const s = parseInt(parts.second, 10)
-  const msSinceSofiaMidnight = ((h * 60 + m) * 60 + s) * 1000
-  return new Date(now.getTime() - msSinceSofiaMidnight).toISOString()
-}
-
 async function clearOracleHistory(clerkId) {
   await supabase.from('ai_readings').delete().eq('user_id', clerkId)
 }
 
-async function checkOracleCapGate(jwt, clerkId, chartId) {
-  console.log('\n== Oracle cap-gate (3/day, Europe/Sofia reset) ==')
-  const auth = { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' }
-
-  // Read the cap from env so the test tracks the config constant.
-  // Route handler reads the same env with default 3.
-  const cap = Number(process.env.ORACLE_FREE_MESSAGES_PER_DAY ?? '3')
-
-  // Start clean — prior runs of this harness OR prior legitimate use
-  // of the oracle by this test user would skew the counter.
-  await clearOracleHistory(clerkId)
-  await setTier(clerkId, 'free')
-
-  const now = new Date()
-  const dayStart = new Date(sofiaDayStartUtcIso(now))
-  const sofiaNoonIsh = new Date(dayStart.getTime() + 12 * 3600 * 1000)
-
-  // Pre-seed exactly `cap` ai_readings rows timestamped within today's
-  // Sofia day window. All are EXPIRED for cache purposes (past
-  // expires_at) so they don't cache-hit — the cap check should fire
-  // cleanly. Different (chart_id, topic) pairs to bypass the unique
-  // index on (chart_id, topic); we piggyback on chartId for one and
-  // synthesize fake chart ids for the rest since the cap check counts
-  // by user_id only.
-  const preseededRows = []
-  for (let i = 0; i < cap; i++) {
-    const row = {
-      chart_id: chartId,
-      user_id: clerkId,
-      topic: ['general', 'love', 'career', 'health'][i % 4],
-      content: `uat-preseed-${i}`,
-      generated_at: new Date(sofiaNoonIsh.getTime() + i * 1000).toISOString(),
-      expires_at: new Date(now.getTime() - 60_000).toISOString(),
-      model_version: 'uat-preseed',
-    }
-    // Topic uniqueness across (chart_id, topic) is enforced by a unique
-    // index, so we delete first to avoid conflicts on re-run.
-    await supabase
-      .from('ai_readings')
-      .delete()
-      .eq('chart_id', chartId)
-      .eq('topic', row.topic)
-    await supabase.from('ai_readings').insert(row)
-    preseededRows.push(row)
-  }
-
-  // Verify the cap-reached response for a fresh topic (no cache) on
-  // the remaining unseeded topic. Pick a topic not in preseededRows
-  // if possible; if cap >= 4 all four topics are seeded and we need
-  // to delete one to create a "fresh topic" slot. For the default
-  // cap=3 the 4th topic stays unseeded and gives us a clean probe.
-  const seededTopics = new Set(preseededRows.map((r) => r.topic))
-  const allTopics = ['general', 'love', 'career', 'health']
-  const probeTopic = allTopics.find((t) => !seededTopics.has(t)) ?? 'general'
-
-  // Ensure the probe (chartId, probeTopic) has NO row so cache check
-  // misses and we reach the cap check at step 7.
-  await supabase
-    .from('ai_readings')
-    .delete()
-    .eq('chart_id', chartId)
-    .eq('topic', probeTopic)
-
-  const capReached = await fetchJson('/api/oracle/generate', {
-    method: 'POST',
-    headers: auth,
-    body: JSON.stringify({ chartId, topic: probeTopic }),
-  })
-  expect(
-    `POST /api/oracle/generate (free, at cap=${cap}) → 429 CAP_REACHED`,
-    capReached.status === 429 &&
-      capReached.json?.code === 'CAP_REACHED' &&
-      capReached.json?.cap === cap,
-    `status=${capReached.status} code=${capReached.json?.code} cap=${capReached.json?.cap}`,
+async function checkOracleCapGate(_jwt, clerkId, _chartId) {
+  record(
+    'Oracle free-tier gate',
+    'skip',
+    'harness block stale vs the frozen tier definition (2026-09-01): FREE is now ONE lifetime `general` reading via users.free_oracle_used_at, not a 3/month counter. Rewrite pending — see this function\'s header and the 2026-09-07 session report.',
   )
-
-  // Cache hit under cap — free user, same count, but (chartId,
-  // probeTopic) now has a cache-valid row. Server returns 200 cached
-  // and the cap check is bypassed because cache-first returns earlier.
-  const futureExpiry = new Date(now.getTime() + 24 * 3600 * 1000).toISOString()
-  await supabase.from('ai_readings').insert({
-    chart_id: chartId,
-    user_id: clerkId,
-    topic: probeTopic,
-    content: 'uat-cache-hit-content',
-    generated_at: now.toISOString(),
-    expires_at: futureExpiry,
-    model_version: 'uat-cache',
-  })
-
-  const cacheBypass = await fetchJson('/api/oracle/generate', {
-    method: 'POST',
-    headers: auth,
-    body: JSON.stringify({ chartId, topic: probeTopic }),
-  })
-  expect(
-    'POST /api/oracle/generate (free, over cap, cache hit) → 200 cached — cache bypasses cap',
-    cacheBypass.status === 200 && cacheBypass.json?.cached === true,
-    `status=${cacheBypass.status} cached=${cacheBypass.json?.cached}`,
-  )
-
-  // Premium bypass — same user, same pre-seeded cap rows. Premium
-  // removes the cap entirely. Verified via the cache-hit row above
-  // so no real AI call is spent.
-  await setTier(clerkId, 'premium')
-  const premiumBypass = await fetchJson('/api/oracle/generate', {
-    method: 'POST',
-    headers: auth,
-    body: JSON.stringify({ chartId, topic: probeTopic }),
-  })
-  expect(
-    'POST /api/oracle/generate (premium, over cap, cache hit) → 200 cached — premium bypasses cap',
-    premiumBypass.status === 200 && premiumBypass.json?.cached === true,
-    `status=${premiumBypass.status} cached=${premiumBypass.json?.cached}`,
-  )
-
-  // Cap check boundary — take seeded count below cap and confirm a
-  // cache-miss topic no longer returns 429. Free user, cap-1 rows,
-  // fresh topic with valid chartId, no cache row → should NOT be
-  // 429. The actual response status depends on whether a real AI
-  // call succeeds (200 streaming) — we accept any non-429 as proof
-  // the cap check correctly short-circuited when below the limit.
-  await setTier(clerkId, 'free')
-  // Remove one preseeded row to drop below cap
-  const firstSeededTopic = preseededRows[0].topic
-  await supabase
-    .from('ai_readings')
-    .delete()
-    .eq('chart_id', chartId)
-    .eq('topic', firstSeededTopic)
-  // Pre-seed a cache-hit row on a different (chartId, 'general')
-  // pair so we can observe the non-429 outcome without spending
-  // a real AI call. If probeTopic was 'general', reuse it; else
-  // pick general.
-  const belowCapTopic = 'general'
-  await supabase.from('ai_readings').delete().eq('chart_id', chartId).eq('topic', belowCapTopic)
-  await supabase.from('ai_readings').insert({
-    chart_id: chartId,
-    user_id: clerkId,
-    topic: belowCapTopic,
-    content: 'uat-below-cap-cache',
-    generated_at: now.toISOString(),
-    expires_at: futureExpiry,
-    model_version: 'uat-cache',
-  })
-
-  const belowCap = await fetchJson('/api/oracle/generate', {
-    method: 'POST',
-    headers: auth,
-    body: JSON.stringify({ chartId, topic: belowCapTopic }),
-  })
-  expect(
-    `POST /api/oracle/generate (free, at cap-1) → not 429 (cap check short-circuits below limit)`,
-    belowCap.status !== 429,
-    `status=${belowCap.status} code=${belowCap.json?.code ?? '-'}`,
-  )
-
-  // Clean up all ai_readings for the test user — per-run cleanup
-  // mirroring the existing pattern for other user-scoped rows.
+  // Best-effort: leave the test user in a known-clean state regardless.
   await clearOracleHistory(clerkId)
   await setTier(clerkId, 'free')
 }
