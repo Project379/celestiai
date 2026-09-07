@@ -1,5 +1,5 @@
 {
-  "count": 2859,
+  "count": 2858,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -2076,7 +2076,6 @@
     "apps/web/lib/subscriptions/free-oracle.ts::'Ново тълкуване има само в Премиум.'",
     "apps/web/lib/subscriptions/free-oracle.ts::'Това беше безплатното ти тълкуване от Оракула. С Премиум получаваш неограничени тълкувания по всички теми.'",
     "apps/web/lib/subscriptions/quota.ts::'Временно не успяваме да генерираме. Опитай отново след малко.'",
-    "apps/web/lib/subscriptions/quota.ts::`Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`",
     "apps/web/lib/tier/locked-copy.ts::'Дневната препоръка остава безплатна.'",
     "apps/web/lib/tier/locked-copy.ts::'Докладът е за Премиум'",
     "apps/web/lib/tier/locked-copy.ts::'Личната ти колекция е за Премиум.'",

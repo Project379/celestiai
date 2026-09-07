@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 
 /**
@@ -13,14 +14,27 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
  * 20260901120000_free_oracle_used_at.sql). NULL = still available; a
  * timestamp = spent.
  *
- * DARK-LAUNCH TOLERANCE: every function here treats the column being
- * absent (Postgres undefined_column / SQLSTATE 42703) as "the reading is
- * available" and no-ops, logging once per process. This lets the
- * application ship ahead of the hand-applied migration (the ledger is
- * unreconciled, so the column is added out-of-band) — the lifetime cap
- * simply starts being enforced the moment the column exists. It also
- * keeps APP_USER_SELECT / ensureUserRecord untouched, so no other route
- * breaks if the code is live before the column is.
+ * DARK-LAUNCH TOLERANCE (fail-OPEN): every function here treats the column
+ * being absent (Postgres undefined_column / SQLSTATE 42703) as "the reading
+ * is available" and no-ops. This let the application ship ahead of the
+ * hand-applied migration (the ledger is unreconciled, so the column was
+ * added out-of-band) — the lifetime cap started being enforced the moment
+ * the column existed. The column is confirmed present in production as of
+ * 2026-09-08, so this branch is now insurance against an accidental column
+ * drop, not a live gap.
+ *
+ * It stays fail-open on purpose: a 42703 here is our schema mistake, and
+ * failing closed would deny every free user their one reading over an
+ * internal error — worse for users, and no louder for us than the Sentry
+ * error below. The blast radius of fail-open is bounded (each free user
+ * gets at most one extra `general` reading until the column is restored)
+ * and now visible immediately. If that tradeoff is ever revisited, this
+ * comment and warnMissingColumnOnce are the two places to change.
+ *
+ * ESCALATION (2026-09-08): the absence is reported to Sentry at level
+ * 'error', once per process — a silently unenforced paid boundary must be
+ * loud. console.warn alone never reached Sentry (sentry.server.config.ts
+ * captures no console output), so this was previously invisible.
  */
 
 let missingColumnWarned = false
@@ -34,9 +48,17 @@ function isUndefinedColumn(error: { code?: string; message?: string } | null): b
 function warnMissingColumnOnce(where: string) {
   if (missingColumnWarned) return
   missingColumnWarned = true
-  console.warn(
-    `[free-oracle] users.free_oracle_used_at is absent (${where}) — treating the free Oracle reading as available and NOT enforcing the lifetime cap. Apply migration 20260901120000_free_oracle_used_at.sql to enable enforcement.`,
-  )
+  const message =
+    `[free-oracle] users.free_oracle_used_at is absent (${where}) — failing OPEN: the free Oracle reading is being handed out WITHOUT enforcing the lifetime cap. Apply/restore migration 20260901120000_free_oracle_used_at.sql.`
+  console.warn(message)
+  try {
+    Sentry.captureMessage(message, {
+      level: 'error',
+      tags: { freeOracle: 'column_missing_fail_open', where },
+    })
+  } catch (sentryErr) {
+    console.error('[free-oracle] Sentry.captureMessage failed:', sentryErr)
+  }
 }
 
 export interface FreeOracleClaim {
@@ -93,8 +115,12 @@ export async function releaseFreeOracleReading(clerkUserId: string): Promise<voi
     .update({ free_oracle_used_at: null })
     .eq('clerk_id', clerkUserId)
 
-  if (error && !isUndefinedColumn(error)) {
-    console.error(`[free-oracle] release (refund) failed for ${clerkUserId}:`, error.message)
+  if (error) {
+    if (isUndefinedColumn(error)) {
+      warnMissingColumnOnce('release')
+    } else {
+      console.error(`[free-oracle] release (refund) failed for ${clerkUserId}:`, error.message)
+    }
   }
 }
 

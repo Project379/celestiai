@@ -210,6 +210,11 @@
  * hand, though it does match: 1784 + 1 - 81 = 1704): 73 packages/core,
  * 969 apps/web, 662 apps/mobile = 1704. Locked in as the new baseline.
  *
+ * Lowered to 1700 on 2026-09-08: quota.ts's dead free-tier 429 branch was
+ * removed (FREE_MONTHLY_LIMIT cleanup) — one Bulgarian template literal
+ * plus its `pluralizeBg('четене', 'четения')` arguments, -4 in apps/web.
+ * 73 packages/core, 965 apps/web, 662 apps/mobile = 1700.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -220,11 +225,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
 // STELLAEUM_PLACEHOLDER: LINT-BASELINE-1800 — every move of this ratchet
-// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled,
-// 2026-09-01 through 2026-09-05) is logged with its justification in
+// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled→1700,
+// 2026-09-01 through 2026-09-08) is logged with its justification in
 // this file's header comment above. The ID keeps its "-1800" suffix as
-// a stable handle; the current value is 1704. See .planning/PLACEHOLDERS.md.
-const BASELINE = 1704
+// a stable handle; the current value is 1700. See .planning/PLACEHOLDERS.md.
+const BASELINE = 1700
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

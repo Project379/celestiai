@@ -1,27 +1,28 @@
 import * as Sentry from '@sentry/nextjs'
 import { logAuditEvent } from '@/lib/audit'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import type { AppUser } from '@/lib/users/ensure-user'
-import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 
-// SCOPE (frozen tier definition, 2026-09-01): this counter is now
-// ORACLE-ONLY. It is no longer shared with /api/horoscope/generate — Днес
-// is fully free with its own structural per-day ceiling (see that route's
-// header). The two limits below govern the Oracle route only.
+// SCOPE (frozen tier definition, 2026-09-01): this counter is PREMIUM-
+// ONLY. It is not shared with /api/horoscope/generate (Днес is fully free
+// with its own structural per-day ceiling — see that route's header), and
+// it does not gate the FREE tier: a free account's one lifetime `general`
+// Oracle reading is enforced by users.free_oracle_used_at
+// (apps/web/lib/subscriptions/free-oracle.ts), not by any monthly count.
+// oracle/generate routes only premium users through the code below.
 //
-// FREE_MONTHLY_LIMIT: legacy value, kept for reference and for the
-// horoscope quota-gate regression test's "not consumed" assertion. The
-// FREE tier's real Oracle allowance is now ONE `general` reading for the
-// LIFETIME of the account, enforced via users.free_oracle_used_at
-// (apps/web/lib/subscriptions/free-oracle.ts), NOT via a monthly count.
-// oracle/generate no longer routes free users through this month-scoped
-// counter at all.
+// 2026-09-08: removed the former `FREE_MONTHLY_LIMIT = 3` constant and the
+// free arm of checkQuotaAvailable / quotaCapReachedResponse. Both had been
+// unreachable since the 2026-09-01 lifetime-gate change — oracle/generate
+// step 8 calls this module only inside `if (isPremium)` — so their only
+// remaining consumers were test suites exercising a path production never
+// takes. checkQuotaAvailable now takes a bare userId; quotaCapReachedResponse
+// only builds the premium 503.
 //
 // PREMIUM_MONTHLY_LIMIT: 2026-08-26 sweep #4 (Tier 2) — premium was
 // entirely unmetered on every AI path; the burst limiter was its
 // only brake, so a scripted premium account could reach ~14,400
 // generations/day. This is a SAFETY NET, not a product feature — see
-// checkQuotaAvailable's premium branch below for why it must stay
+// quotaCapReachedResponse below for why it must stay
 // invisible to the user (503, no CAP_REACHED code, no number in the
 // response). 300/month is ~10x realistic heavy usage of FRESH generations
 // (4 oracle topics, occasional new-chart/new-topic reads) — no genuine
@@ -46,7 +47,6 @@ import { pluralizeBg } from '@stellaeum/core/i18n/bg-grammar'
 // few dollars per compromised account; actual short readings cost less.
 // Re-derive this number if AI_MODEL (apps/web/lib/ai/client.ts) ever
 // changes — the arithmetic it's based on changes with it.
-export const FREE_MONTHLY_LIMIT = 3
 export const PREMIUM_MONTHLY_LIMIT = 300
 
 // Loud, explicit alert (Sentry.captureMessage, not just console) if a
@@ -154,17 +154,14 @@ export async function getCurrentPeriodQuota(
 }
 
 /**
- * Pre-flight quota availability check.
- *
- * 2026-08-26 (Tier 2 #4): premium no longer short-circuits — it now shares
- * the exact same table/RPC as free tier, just with a much higher limit
- * (PREMIUM_MONTHLY_LIMIT) that's a safety net, not a product feature. Free
- * tier's limit is FREE_MONTHLY_LIMIT, same value the column default always
- * encoded, now passed explicitly so both tiers go through one code path.
+ * Pre-flight quota availability check — PREMIUM ONLY (frozen tier
+ * definition 2026-09-01; the free tier's one lifetime reading is gated by
+ * users.free_oracle_used_at, not this counter). Takes a bare Clerk user id
+ * since there is no longer a tier-dependent limit to select:
+ * PREMIUM_MONTHLY_LIMIT is the only cap this path applies.
  */
-export async function checkQuotaAvailable(user: AppUser): Promise<QuotaStatus> {
-  const defaultLimit = user.subscription_tier === 'premium' ? PREMIUM_MONTHLY_LIMIT : FREE_MONTHLY_LIMIT
-  const { used, limit, periodStart } = await getCurrentPeriodQuota(user.clerk_id, defaultLimit)
+export async function checkQuotaAvailable(userId: string): Promise<QuotaStatus> {
+  const { used, limit, periodStart } = await getCurrentPeriodQuota(userId, PREMIUM_MONTHLY_LIMIT)
   return {
     available: used < limit,
     used,
@@ -174,38 +171,26 @@ export async function checkQuotaAvailable(user: AppUser): Promise<QuotaStatus> {
 }
 
 /**
- * Builds the cap-reached HTTP response for a quota-gated AI route.
- * Centralizes the tier split ruled on 2026-08-26 (Tier 2 #4) so both
- * oracle/generate and horoscope/generate produce it identically:
+ * Builds the cap-reached HTTP response for the premium Oracle safety net.
  *
- * - Free tier: 429, CAP_REACHED code, the cap NUMBER included — this is a
- *   real, known, surfaced product limit; the UI is meant to show it.
- * - Premium tier: 503, no code, no number — indistinguishable from a real
- *   outage to the client BY DESIGN, because this is a safety net the user
- *   should never learn is a monthly cap (see the module doc comment
- *   above). Internally tagged `[Quota] premium safety-net cap reached` in
- *   the server log so it's greppable and distinguishable from a genuine
- *   outage without exposing that distinction to the client.
+ * 503, no code, no number — indistinguishable from a real outage to the
+ * client BY DESIGN, because this is a safety net the user should never
+ * learn is a monthly cap (see the module doc comment above). Internally
+ * tagged `[Quota] premium safety-net cap reached` in the server log so
+ * it's greppable and distinguishable from a genuine outage without
+ * exposing that distinction to the client.
+ *
+ * The free tier does not reach this — it hits freeOracleGateResponse
+ * (apps/web/lib/subscriptions/free-oracle.ts). This used to carry a free
+ * 429/CAP_REACHED branch too; removed 2026-09-08 as unreachable.
  */
-export function quotaCapReachedResponse(user: AppUser, quota: QuotaStatus): Response {
-  if (user.subscription_tier === 'premium') {
-    console.error(
-      `[Quota] premium safety-net cap reached for ${user.clerk_id} (${quota.used}/${quota.limit}) — returning 503, not surfaced to client`,
-    )
-    return Response.json(
-      { error: 'Временно не успяваме да генерираме. Опитай отново след малко.' },
-      { status: 503 },
-    )
-  }
-
+export function quotaCapReachedResponse(userId: string, quota: QuotaStatus): Response {
+  console.error(
+    `[Quota] premium safety-net cap reached for ${userId} (${quota.used}/${quota.limit}) — returning 503, not surfaced to client`,
+  )
   return Response.json(
-    {
-      error: `Достигна месечния лимит от ${quota.limit} ${pluralizeBg(quota.limit, 'четене', 'четения')}. Премиум абонаментът премахва ограничението.`,
-      code: 'CAP_REACHED',
-      cap: quota.limit,
-      tier: user.subscription_tier,
-    },
-    { status: 429 },
+    { error: 'Временно не успяваме да генерираме. Опитай отново след малко.' },
+    { status: 503 },
   )
 }
 
@@ -243,10 +228,10 @@ export async function incrementQuotaUsage(
 
   const newUsed = data as number
 
-  // Free tier is capped at FREE_MONTHLY_LIMIT (3), structurally incapable
-  // of ever reaching this threshold — so an unconditional check here only
-  // ever fires for premium, without needing to thread tier through this
-  // function. Explicit Sentry call, not console — see PREMIUM_ALERT_THRESHOLD
+  // Only premium reaches this function at all — oracle/generate routes
+  // free users through the lifetime free_oracle_used_at gate, never this
+  // counter — so an unconditional threshold check here needs no tier
+  // argument. Explicit Sentry call, not console — see PREMIUM_ALERT_THRESHOLD
   // comment above for why console alone wouldn't be found.
   if (newUsed >= PREMIUM_ALERT_THRESHOLD) {
     console.error(

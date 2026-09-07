@@ -227,13 +227,13 @@ export async function POST(req: Request) {
     if (!isRegenerationOfExisting) {
       if (isPremium) {
         // 8a. Premium — monthly safety-net cap (invisible by design).
-        const quota = await checkQuotaAvailable(user)
+        const quota = await checkQuotaAvailable(userId)
         if (!quota.available) {
-          return quotaCapReachedResponse(user, quota)
+          return quotaCapReachedResponse(userId, quota)
         }
         const claim = await incrementQuotaUsage(userId, quota.periodStart)
         if (!claim.success) {
-          return quotaCapReachedResponse(user, quota)
+          return quotaCapReachedResponse(userId, quota)
         }
         claimedPeriodStart = quota.periodStart
       } else {

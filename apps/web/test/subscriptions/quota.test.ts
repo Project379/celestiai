@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AppUser } from '@/lib/users/ensure-user'
 
 interface MockSupabase {
   from: ReturnType<typeof vi.fn>
@@ -45,7 +44,6 @@ vi.mock('@sentry/nextjs', () => ({
 }))
 
 const {
-  FREE_MONTHLY_LIMIT,
   PREMIUM_MONTHLY_LIMIT,
   checkQuotaAvailable,
   quotaCapReachedResponse,
@@ -53,96 +51,68 @@ const {
   decrementQuotaUsage,
 } = await import('@/lib/subscriptions/quota')
 
-function makeUser(tier: 'free' | 'premium'): AppUser {
-  return {
-    id: 'row_1',
-    clerk_id: 'user_1',
-    subscription_tier: tier,
-    subscription_status: 'active',
-    subscription_provider: tier === 'premium' ? 'stripe' : 'none',
-    created_at: null,
-    updated_at: null,
-    stripe_customer_id: null,
-    stripe_subscription_id: null,
-    subscription_expires_at: null,
-    trial_claimed_at: null,
-    deleted_at: null,
-    deletion_scheduled_at: null,
-  } as AppUser
-}
-
 beforeEach(() => {
   vi.clearAllMocks()
   mockSupabase = createMockSupabase()
   upsertResult = { error: null }
   selectSingleResult = {
-    data: { ai_readings_used: 0, ai_readings_limit: FREE_MONTHLY_LIMIT, period_start: '2026-09-01' },
+    data: { ai_readings_used: 0, ai_readings_limit: PREMIUM_MONTHLY_LIMIT, period_start: '2026-09-01' },
     error: null,
   }
   rpcResult = { data: 1, error: null }
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
+// quota.ts is PREMIUM-ONLY since the 2026-09-01 frozen tier definition —
+// the free tier's one lifetime reading is gated by users.free_oracle_used_at,
+// not this counter. checkQuotaAvailable takes a bare userId and always
+// applies PREMIUM_MONTHLY_LIMIT.
 describe('checkQuotaAvailable', () => {
-  it('uses FREE_MONTHLY_LIMIT as the default cap for a free user', async () => {
-    selectSingleResult = {
-      data: { ai_readings_used: 0, ai_readings_limit: FREE_MONTHLY_LIMIT, period_start: '2026-09-01' },
-      error: null,
-    }
-    const status = await checkQuotaAvailable(makeUser('free'))
-    expect(status.limit).toBe(FREE_MONTHLY_LIMIT)
-    expect(status.available).toBe(true)
-  })
-
-  it('uses PREMIUM_MONTHLY_LIMIT as the default cap for a premium user', async () => {
+  it('applies PREMIUM_MONTHLY_LIMIT as the cap', async () => {
     selectSingleResult = {
       data: { ai_readings_used: 0, ai_readings_limit: PREMIUM_MONTHLY_LIMIT, period_start: '2026-09-01' },
       error: null,
     }
-    const status = await checkQuotaAvailable(makeUser('premium'))
+    const status = await checkQuotaAvailable('user_1')
     expect(status.limit).toBe(PREMIUM_MONTHLY_LIMIT)
+    expect(status.available).toBe(true)
   })
 
-  it('reports unavailable once used reaches the limit (used < limit boundary)', async () => {
+  it('reports unavailable once used reaches the limit (used < limit boundary, exclusive)', async () => {
     selectSingleResult = {
-      data: { ai_readings_used: FREE_MONTHLY_LIMIT, ai_readings_limit: FREE_MONTHLY_LIMIT, period_start: '2026-09-01' },
+      data: {
+        ai_readings_used: PREMIUM_MONTHLY_LIMIT,
+        ai_readings_limit: PREMIUM_MONTHLY_LIMIT,
+        period_start: '2026-09-01',
+      },
       error: null,
     }
-    const status = await checkQuotaAvailable(makeUser('free'))
+    const status = await checkQuotaAvailable('user_1')
     expect(status.available).toBe(false)
   })
 
   it('reports available one unit below the limit', async () => {
     selectSingleResult = {
-      data: { ai_readings_used: FREE_MONTHLY_LIMIT - 1, ai_readings_limit: FREE_MONTHLY_LIMIT, period_start: '2026-09-01' },
+      data: {
+        ai_readings_used: PREMIUM_MONTHLY_LIMIT - 1,
+        ai_readings_limit: PREMIUM_MONTHLY_LIMIT,
+        period_start: '2026-09-01',
+      },
       error: null,
     }
-    const status = await checkQuotaAvailable(makeUser('free'))
+    const status = await checkQuotaAvailable('user_1')
     expect(status.available).toBe(true)
   })
 
   it('throws when the quota row cannot be loaded', async () => {
     selectSingleResult = { data: null, error: { message: 'row not found' } }
-    await expect(checkQuotaAvailable(makeUser('free'))).rejects.toThrow(/Failed to load quota row/)
+    await expect(checkQuotaAvailable('user_1')).rejects.toThrow(/Failed to load quota row/)
   })
 })
 
 describe('quotaCapReachedResponse', () => {
-  it('free tier: 429 with CAP_REACHED code and the cap number exposed', async () => {
-    const res = quotaCapReachedResponse(makeUser('free'), {
-      available: false,
-      used: FREE_MONTHLY_LIMIT,
-      limit: FREE_MONTHLY_LIMIT,
-      periodStart: new Date('2026-09-01'),
-    })
-    expect(res.status).toBe(429)
-    const body = await res.json()
-    expect(body.code).toBe('CAP_REACHED')
-    expect(body.cap).toBe(FREE_MONTHLY_LIMIT)
-  })
-
-  it('premium tier: 503, no code, no cap number — indistinguishable from a real outage by design', async () => {
-    const res = quotaCapReachedResponse(makeUser('premium'), {
+  it('premium safety net: 503, no code, no cap number — indistinguishable from a real outage by design', async () => {
+    const res = quotaCapReachedResponse('user_1', {
       available: false,
       used: PREMIUM_MONTHLY_LIMIT,
       limit: PREMIUM_MONTHLY_LIMIT,
@@ -153,25 +123,6 @@ describe('quotaCapReachedResponse', () => {
     expect(body.code).toBeUndefined()
     expect(body.cap).toBeUndefined()
     expect(String(body.error)).not.toMatch(/\d/) // no leaked limit number in the message
-  })
-
-  it('pluralizes the Bulgarian cap message correctly at n=1 vs n>1', async () => {
-    const singular = await quotaCapReachedResponse(makeUser('free'), {
-      available: false,
-      used: 1,
-      limit: 1,
-      periodStart: new Date('2026-09-01'),
-    }).json()
-    expect(singular.error).toContain('четене')
-    expect(singular.error).not.toContain('четения')
-
-    const plural = await quotaCapReachedResponse(makeUser('free'), {
-      available: false,
-      used: 3,
-      limit: 3,
-      periodStart: new Date('2026-09-01'),
-    }).json()
-    expect(plural.error).toContain('четения')
   })
 })
 
