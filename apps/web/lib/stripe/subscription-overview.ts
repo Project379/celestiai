@@ -1,6 +1,7 @@
 import { stripe } from '@/lib/stripe/client'
 import {
   ensureUserRecord,
+  type SubscriptionProvider,
   type SubscriptionStatus,
   type SubscriptionTier,
 } from '@/lib/users/ensure-user'
@@ -17,6 +18,14 @@ export interface SubscriptionData {
 export interface SubscriptionOverview {
   tier: SubscriptionTier
   subscriptionStatus: SubscriptionStatus
+  /**
+   * Which payment system owns this subscription's status/expiry. `stripe`
+   * subs are managed via the Stripe billing portal; `revenuecat` (App
+   * Store / Play IAP) subs are managed in the store's own subscription
+   * settings and have no `subscriptionData` (that block is Stripe-only).
+   * Defaulted to `stripe` to match the DB column default.
+   */
+  subscriptionProvider: SubscriptionProvider
   subscriptionData: SubscriptionData | null
   subscriptionExpiresAt: string | null
 }
@@ -66,6 +75,7 @@ export async function getSubscriptionOverview(userId: string): Promise<Subscript
   return {
     tier,
     subscriptionStatus,
+    subscriptionProvider: user.subscription_provider ?? 'stripe',
     subscriptionData,
     subscriptionExpiresAt,
   }

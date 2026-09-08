@@ -16,6 +16,13 @@ export interface SubscriptionData {
 export interface SubscriptionOverview {
   tier: 'free' | 'premium'
   subscriptionStatus: string
+  /**
+   * Which payment system owns this subscription. `stripe` subs are
+   * managed via the Stripe billing portal (the `subscriptionData` block);
+   * `revenuecat` (App Store / Play IAP) subs are managed in the store's
+   * own settings and carry no `subscriptionData`.
+   */
+  subscriptionProvider: 'stripe' | 'revenuecat'
   subscriptionData: SubscriptionData | null
   subscriptionExpiresAt: string | null
 }

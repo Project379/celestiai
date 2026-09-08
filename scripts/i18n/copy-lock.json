@@ -1,5 +1,5 @@
 {
-  "count": 2868,
+  "count": 2873,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -813,6 +813,11 @@
     "apps/mobile/lib/tier/locked-copy.ts::'Събирането е за Премиум.'",
     "apps/mobile/lib/tier/locked-copy.ts::'Това беше безплатното ти тълкуване от Оракула.'",
     "apps/mobile/lib/tier/locked-copy.ts::`Достигна лимита от ${cap} безплатни тълкувания.`",
+    "apps/mobile/lib/tier/subscription-copy.ts::'Stellaeum Премиум'",
+    "apps/mobile/lib/tier/subscription-copy.ts::'Активен до'",
+    "apps/mobile/lib/tier/subscription-copy.ts::'Активен'",
+    "apps/mobile/lib/tier/subscription-copy.ts::`Този абонамент е закупен през ${STORE} и се управлява оттам.`",
+    "apps/mobile/lib/tier/subscription-copy.ts::`Управление в ${STORE}`",
     "apps/web/app/(auth)/sign-in/[[...sign-in]]/page.tsx::'Влез в своя Stellaeum AI акаунт'",
     "apps/web/app/(auth)/sign-in/[[...sign-in]]/page.tsx::'Вход'",
     "apps/web/app/(auth)/sign-up/[[...sign-up]]/page.tsx::'Регистрация'",

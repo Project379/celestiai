@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Linking, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated from 'react-native-reanimated'
 import * as WebBrowser from 'expo-web-browser'
@@ -9,6 +9,10 @@ import { pressFeedback } from '@/components/design-system/tokens'
 import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
 import { getWebPricingUrl } from '@/lib/config/webAppUrl'
 import { hapticSelect } from '@/lib/haptics'
+import {
+  STORE_MANAGED_SUBSCRIPTION,
+  STORE_SUBSCRIPTIONS_URL,
+} from '@/lib/tier/subscription-copy'
 import {
   useBillingPortal,
   useCancelSubscription,
@@ -71,14 +75,28 @@ export default function PremiumScreen() {
   const [cancelReason, setCancelReason] = useState('')
 
   const tier = data?.tier ?? 'free'
+  const subscriptionProvider = data?.subscriptionProvider ?? 'stripe'
   const subscriptionData = data?.subscriptionData ?? null
   const subscriptionExpiresAt = data?.subscriptionExpiresAt ?? null
 
   const isFree = tier === 'free'
   const isExpired =
     isFree && subscriptionExpiresAt !== null && new Date(subscriptionExpiresAt) < new Date()
-  const isActive = !isFree && subscriptionData !== null && !subscriptionData.cancelAtPeriodEnd
-  const isCancelling = !isFree && subscriptionData !== null && subscriptionData.cancelAtPeriodEnd
+  // Stripe-only: `subscriptionData` (renewal date, payment method, the
+  // portal/cancel/reactivate actions) is populated only for a Stripe sub.
+  // The `subscriptionProvider === 'stripe'` guard is explicit so an IAP
+  // subscriber can never be routed into a Stripe-management branch, even
+  // if `subscriptionData` were ever non-null for one.
+  const isStripe = subscriptionProvider === 'stripe'
+  const isActive =
+    !isFree && isStripe && subscriptionData !== null && !subscriptionData.cancelAtPeriodEnd
+  const isCancelling =
+    !isFree && isStripe && subscriptionData !== null && subscriptionData.cancelAtPeriodEnd
+  // Premium bought through the App Store / Play Store (RevenueCat). No
+  // `subscriptionData`; managed in the store's own subscription settings,
+  // never the Stripe portal (Apple guideline 3.1.1). Without this branch a
+  // store subscriber falls through every case and sees an empty screen.
+  const isStoreManaged = !isFree && subscriptionProvider === 'revenuecat'
 
   const planName =
     subscriptionData?.interval === 'year'
@@ -245,6 +263,39 @@ export default function PremiumScreen() {
                     onPress={() => {
                       hapticSelect()
                       portal.mutate()
+                    }}
+                  />
+                </View>
+              </View>
+            )}
+
+            {isStoreManaged && (
+              <View>
+                <View className="mb-5 flex-row flex-wrap items-center gap-3">
+                  <Text className="text-[16px] font-medium text-slate-100">
+                    {STORE_MANAGED_SUBSCRIPTION.planName}
+                  </Text>
+                  <Badge tone="emerald" label={STORE_MANAGED_SUBSCRIPTION.statusBadge} />
+                </View>
+
+                {subscriptionExpiresAt && (
+                  <Row
+                    label={STORE_MANAGED_SUBSCRIPTION.activeUntilLabel}
+                    value={formatBgDateFromString(subscriptionExpiresAt)}
+                    last
+                  />
+                )}
+
+                <Text className="mb-6 mt-6 text-[14px] leading-6 text-slate-400">
+                  {STORE_MANAGED_SUBSCRIPTION.managedNote}
+                </Text>
+
+                <View className="flex-row flex-wrap gap-3">
+                  <ActionButton
+                    label={STORE_MANAGED_SUBSCRIPTION.manageButtonLabel}
+                    onPress={() => {
+                      hapticSelect()
+                      void Linking.openURL(STORE_SUBSCRIPTIONS_URL)
                     }}
                   />
                 </View>

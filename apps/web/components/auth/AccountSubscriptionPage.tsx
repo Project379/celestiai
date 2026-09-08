@@ -7,6 +7,7 @@ import type { SubscriptionOverview } from '@/lib/stripe/subscription-overview'
 const fallbackOverview: SubscriptionOverview = {
   tier: 'free',
   subscriptionStatus: 'inactive',
+  subscriptionProvider: 'stripe',
   subscriptionData: null,
   subscriptionExpiresAt: null,
 }
