@@ -2,26 +2,33 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockSupabase, type MockSupabase } from '../mocks/supabase'
 
 /**
- * COMPLETION-TRACKER §0.8. When the provider returns a non-JSON / empty
- * body the `ai` SDK throws a raw `SyntaxError` out of `generateText`. Before the
- * hardening, `/api/horoscope/generate` re-threw it to `toErrorResponse`,
- * which produced an opaque **500** — indistinguishable from "our route is
- * broken".
+ * COMPLETION-TRACKER §0.8 + LLM-FAILOVER Option B (2026-09-09).
  *
- * This test proves the upstream failure now returns a deliberate **502**
- * with the AI_UPSTREAM_FAILED code and a retry-hint message, and that a
- * genuine bug in our own code still 500s.
+ * History: when the provider returned a non-JSON / empty body the `ai` SDK
+ * threw a raw `SyntaxError` out of `generateText`, and the route re-threw
+ * it to `toErrorResponse` → an opaque **500**. §0.8 changed that to a
+ * deliberate **502 AI_UPSTREAM_FAILED** for upstream failures while a
+ * genuine bug in our own code still 500'd.
  *
- * NOTE (2026-09-01): the earlier "refunds the quota claim" assertion was
- * removed — the frozen tier definition makes Днес fully free, so this
- * route no longer touches `subscription_quotas` and has nothing to refund.
- * The placeholder-row release (releaseClaimOnFailure) is still exercised
- * by generate-duplicate-race.test.ts.
+ * LLM-FAILOVER Option B then folded BOTH into one outcome: both Gemini
+ * tiers are Google, so once `generateFinalText` has exhausted its own
+ * fallback there is nothing left to try — every post-fallback failure
+ * (transient, upstream/transport, or an unclassified throw) now returns
+ * the shared **503 `aiTemporarilyUnavailableResponse()`** (code
+ * `AI_TEMPORARILY_UNAVAILABLE`, `Retry-After: 30`, Bulgarian retry copy).
+ * A full Google outage reads as "temporarily unavailable", not an error
+ * page. An UNCLASSIFIED throw is still `Sentry.captureException`'d before
+ * the 503, so a real bug in this loop is still reported even though the
+ * user sees the graceful message.
  *
- * Standing discipline (prove-it-fails): run against the pre-hardening
- * route.ts (the `catch (err) { await releaseClaimOnFailure(); throw err }`
- * with no isUpstreamAiError branch) and confirm the 502 assertion FAILS
- * with `expected 500 to be 502` before restoring the fix.
+ * The validation-failed-twice path (model responded, output unusable —
+ * not an outage) is a separate concern and still returns 502
+ * AI_OUTPUT_INVALID; it is not exercised here.
+ *
+ * Prove-it-fails: this file asserted `502` / `500` before Option B —
+ * running it against `71a5c96^`'s route.ts (the `isUpstreamAiError` →
+ * `throw ApiError(502)` / `throw err` branches) fails every assertion
+ * below with `expected 502 to be 503`.
  */
 
 vi.mock('@clerk/nextjs/server', () => ({
@@ -39,6 +46,9 @@ vi.mock('@/lib/rate-limit', async (importOriginal) => {
 
 vi.mock('@/lib/audit', () => ({ logAuditEvent: vi.fn() }))
 vi.mock('@/lib/ai/check-bg-output', () => ({ checkAndLogGeneration: vi.fn(async () => {}) }))
+
+const captureException = vi.fn()
+vi.mock('@sentry/nextjs', () => ({ captureException: (...a: unknown[]) => captureException(...a) }))
 
 vi.mock('@/lib/horoscope/prompts', () => ({
   buildDailyHoroscopePrompt: vi.fn(() => 'system prompt'),
@@ -62,16 +72,8 @@ vi.mock('@stellaeum/astrology', () => ({
   calculateTransitAspects: vi.fn(() => []),
 }))
 
-// @/lib/ai/client is deliberately NOT mocked here (same as before this
-// reconciliation) — this test exercises the REAL isUpstreamAiError, which
-// route.ts still imports from there unchanged.
-//
-// The failure under test: the provider returned a non-JSON body → the ai
-// SDK threw a raw SyntaxError, which generateFinalText lets propagate
-// uncaught to the caller (no fallbackModel configured, so there is nothing
-// for it to retry into). generateFinalText's OWN retry behavior is a
-// separate concern, covered by test/ai/generate-final-text.test.ts — this
-// file only tests the route's error -> HTTP-status mapping.
+// @/lib/ai/client is deliberately NOT mocked — this test exercises the
+// REAL isUpstreamAiError / isTransientAIError classifiers the route imports.
 const { generateFinalText } = vi.hoisted(() => ({ generateFinalText: vi.fn() }))
 vi.mock('@/lib/ai/generate-final-text', () => ({ generateFinalText }))
 
@@ -113,28 +115,39 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {})
   mockSupabase = createMockSupabase()
   vi.mocked(createServiceSupabaseClient).mockReturnValue(mockSupabase as never)
-  // Default: OpenRouter returned a non-JSON body → raw SyntaxError.
+  // Default: provider returned a non-JSON body → raw SyntaxError.
   generateFinalText.mockRejectedValue(new SyntaxError('Unexpected end of JSON input'))
 })
 
-describe('POST /api/horoscope/generate — upstream provider failure (§0.8)', () => {
-  it('returns 502 AI_UPSTREAM_FAILED (not an opaque 500) when the AI SDK throws a SyntaxError', async () => {
+describe('POST /api/horoscope/generate — post-fallback AI failure (§0.8 + LLM-FAILOVER)', () => {
+  it('returns the ratified 503 (AI_TEMPORARILY_UNAVAILABLE, Retry-After) when the AI SDK throws a SyntaxError', async () => {
     seed('chart-1')
     const res = await POST(makeRequest('chart-1'))
 
-    // Pre-hardening this is 500 — the assertion that must fail against the
-    // un-fixed route.
-    expect(res.status).toBe(502)
+    // Was 502 before LLM-FAILOVER Option B — this is the assertion that
+    // fails against the pre-change route.
+    expect(res.status).toBe(503)
+    expect(res.headers.get('Retry-After')).toBe('30')
     const body = await res.json()
-    expect(body.code).toBe('AI_UPSTREAM_FAILED')
+    expect(body.code).toBe('AI_TEMPORARILY_UNAVAILABLE')
     expect(typeof body.error).toBe('string')
     expect(body.error.length).toBeGreaterThan(0)
+    // An upstream/transport failure is classified — no Sentry noise.
+    expect(captureException).not.toHaveBeenCalled()
   })
 
-  it('still 500s for a genuine bug in our own code (not every throw is "upstream")', async () => {
-    generateFinalText.mockRejectedValueOnce(new TypeError("Cannot read properties of undefined (reading 'x')"))
+  it('an UNCLASSIFIED throw also degrades to 503, but is still Sentry-captured', async () => {
+    generateFinalText.mockRejectedValueOnce(
+      new TypeError("Cannot read properties of undefined (reading 'x')"),
+    )
     seed('chart-3')
     const res = await POST(makeRequest('chart-3'))
-    expect(res.status).toBe(500)
+
+    // Was 500 before Option B. The user now sees the graceful 503...
+    expect(res.status).toBe(503)
+    const body = await res.json()
+    expect(body.code).toBe('AI_TEMPORARILY_UNAVAILABLE')
+    // ...but the unrecognised failure is not swallowed — it reaches Sentry.
+    expect(captureException).toHaveBeenCalledTimes(1)
   })
 })
