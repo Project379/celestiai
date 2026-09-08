@@ -215,6 +215,18 @@
  * plus its `pluralizeBg('четене', 'четения')` arguments, -4 in apps/web.
  * 73 packages/core, 965 apps/web, 662 apps/mobile = 1700.
  *
+ * Raised to 1711 on 2026-09-09 (PUSH-ORPHAN — mobile push settings toggle):
+ * +11 in apps/mobile, all in the new
+ * apps/mobile/components/settings/PushNotificationToggle.tsx — a section
+ * header ("Известия"), a row label ("Сутрешен хороскоп"), three
+ * mutually-exclusive subtitle strings for the on / off / OS-denied states,
+ * and two Alert.alert title+body pairs for the enable/disable failure
+ * cases. Same outside-content-home shape as the sibling
+ * you/settings-{name,email,password}.tsx routes (the 2026-08-04 +27 raise),
+ * informal ти, checked against check:bg-strings and the copy lock. Deliberate
+ * raise, not drift — the new file is the user-facing half of a control
+ * that had none. 73 packages/core, 969 apps/web, 669 apps/mobile = 1711.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -225,11 +237,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
 // STELLAEUM_PLACEHOLDER: LINT-BASELINE-1800 — every move of this ratchet
-// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled→1700,
-// 2026-09-01 through 2026-09-08) is logged with its justification in
+// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled→1700→1711,
+// 2026-09-01 through 2026-09-09) is logged with its justification in
 // this file's header comment above. The ID keeps its "-1800" suffix as
-// a stable handle; the current value is 1700. See .planning/PLACEHOLDERS.md.
-const BASELINE = 1700
+// a stable handle; the current value is 1711. See .planning/PLACEHOLDERS.md.
+const BASELINE = 1711
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

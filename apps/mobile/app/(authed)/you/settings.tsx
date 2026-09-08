@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router'
 import { BackButton } from '@/components/design-system/BackButton'
 import { pressFeedback } from '@/components/design-system/tokens'
 import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
+import { PushNotificationToggle } from '@/components/settings/PushNotificationToggle'
 import { useAccountDeletion } from '@/hooks/useAccountDeletion'
 import { useApiClient } from '@/lib/api/client'
 import { shareAccountExport } from '@/lib/gdpr/export'
@@ -146,6 +147,8 @@ export default function SettingsScreen() {
             <Text className="text-[14px] text-slate-500">›</Text>
           </Pressable>
         </View>
+
+        <PushNotificationToggle />
 
         <View className="mb-10">
           <Text className="mb-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-400">

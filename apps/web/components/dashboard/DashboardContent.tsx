@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { DailyHoroscope } from '@/components/horoscope/DailyHoroscope'
+import { PushNotificationBanner } from '@/components/horoscope/PushNotificationBanner'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 import {
   CircleTile,
@@ -237,13 +238,32 @@ export function DashboardContent({
         </div>
       </motion.section>
 
+      {/* ── Morning-horoscope push opt-in ───────────────────
+         Re-mounted 2026-09-09 (PUSH-ORPHAN). The Web Push backend + the
+         06:00 delivery cron have always existed; this control was the
+         user-facing half, dropped from here by the 2026-04-15 editorial
+         restyle (d230a3f) and imported by nothing since. Renders itself
+         to null on browsers without PushManager.
+      */}
+      {birthChart && (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={3}
+          className="mb-10"
+        >
+          <PushNotificationBanner />
+        </motion.div>
+      )}
+
       {/* ── Layer D · Streak footer ── */}
       {birthChart && (
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          custom={3}
+          custom={4}
           className="text-center font-cinzel text-[9px] uppercase tracking-[0.32em] text-slate-600"
         >
           · небесен ритъм ·

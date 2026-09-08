@@ -30,10 +30,13 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
  * - Denied: "Известията са блокирани в браузъра" (no button)
  * - Unsupported: renders nothing
  *
- * STELLAEUM_PLACEHOLDER: PUSH-ORPHAN — this component is imported by
- * nothing (dead on web), and mobile has no equivalent settings toggle at
- * all. The Web Push backend + cron exist; the user-facing control does
- * not. See .planning/PLACEHOLDERS.md.
+ * PUSH-ORPHAN resolved 2026-09-09 — re-mounted in
+ * components/dashboard/DashboardContent.tsx (it had been dropped by the
+ * 2026-04-15 editorial restyle, d230a3f, and imported by nothing since).
+ * Mobile got the equivalent control the same day:
+ * components/settings/PushNotificationToggle.tsx in the /you/settings
+ * screen, backed by the new POST /api/push/unregister route. See
+ * .planning/PLACEHOLDERS.md.
  */
 export function PushNotificationBanner() {
   const [supported, setSupported] = useState(false)

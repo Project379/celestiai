@@ -61,8 +61,13 @@ type ApiFetch = (path: string, init?: RequestInit) => Promise<unknown>
  * scope (D4). Off → entire flow no-ops.
  */
 
-const PROMPTED_FLAG_KEY = 'stellaeum.notifications.prompted.v1'
-const PUSH_TOKEN_KEY = 'stellaeum.notifications.push_token.v1'
+export const PROMPTED_FLAG_KEY = 'stellaeum.notifications.prompted.v1'
+export const PUSH_TOKEN_KEY = 'stellaeum.notifications.push_token.v1'
+// Set by the settings toggle when the user turns notifications OFF while the
+// OS permission is still `granted` — the OS has nothing to read back in that
+// case, so the intent lives here. maybePromptPushPermission never touches
+// this; only the toggle does.
+export const USER_DISABLED_KEY = 'stellaeum.notifications.user_disabled.v1'
 // REVISIT-50 harmonization — old @-prefixed keys, migrated on first read below.
 const OLD_PROMPTED_FLAG_KEY = '@stellaeum/notif_prompted'
 const OLD_PUSH_TOKEN_KEY = '@stellaeum/push_token'
@@ -165,7 +170,7 @@ async function safeSetFlag(): Promise<void> {
   }
 }
 
-async function registerPushToken(apiFetch: ApiFetch): Promise<void> {
+export async function registerPushToken(apiFetch: ApiFetch): Promise<void> {
   if (!Device.isDevice) {
     Sentry.addBreadcrumb({
       category: 'push',
@@ -215,6 +220,8 @@ async function registerPushToken(apiFetch: ApiFetch): Promise<void> {
         deviceId: token,
       }),
     })
+    // Clear any prior settings-toggle OFF intent — the device is active again.
+    await AsyncStorage.removeItem(USER_DISABLED_KEY).catch(() => {})
     Sentry.addBreadcrumb({
       category: 'push',
       message: 'Push token registered with backend (P.16)',
@@ -226,4 +233,47 @@ async function registerPushToken(apiFetch: ApiFetch): Promise<void> {
     // caller regardless of this outcome. Logged, not rethrown.
     logError('ERR-MOB-PUSH-006', err)
   }
+}
+
+/**
+ * Turn mobile push OFF from the settings toggle (PUSH-ORPHAN, 2026-09-09).
+ *
+ * Revokes the token server-side (push_tokens.revoked_at) so the
+ * daily-horoscope cron stops targeting this device, drops the local token
+ * stash, and — because the OS permission stays `granted` after this — sets
+ * USER_DISABLED_KEY so the toggle can render OFF on next open without a
+ * server round-trip. Re-enabling clears that key and calls
+ * registerPushToken again.
+ *
+ * Throws on backend failure so the caller can keep the switch in its old
+ * position and surface an error, rather than silently showing OFF while the
+ * cron keeps sending.
+ */
+export async function revokePushToken(apiFetch: ApiFetch): Promise<void> {
+  let token: string | null = null
+  try {
+    token = await AsyncStorage.getItem(PUSH_TOKEN_KEY)
+  } catch (err) {
+    logError('ERR-MOB-PUSH-007', err)
+  }
+
+  if (token) {
+    await apiFetch('/api/push/unregister', {
+      method: 'POST',
+      body: JSON.stringify({ deviceId: token }),
+    })
+  }
+
+  try {
+    await AsyncStorage.multiRemove([PUSH_TOKEN_KEY])
+    await AsyncStorage.setItem(USER_DISABLED_KEY, 'true')
+  } catch (err) {
+    logError('ERR-MOB-PUSH-008', err)
+  }
+
+  Sentry.addBreadcrumb({
+    category: 'push',
+    message: 'Push token revoked from settings toggle',
+    level: 'info',
+  })
 }
