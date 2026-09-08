@@ -28,6 +28,27 @@
 -- on a fresh database. Policies and triggers use DROP ... IF EXISTS +
 -- CREATE since Postgres has no CREATE POLICY/TRIGGER IF NOT EXISTS.
 --
+-- CORRECTION (2026-09-08, Session C orphan-ledger reconciliation):
+-- (1) The "verbatim" / "this exact shape" claim above is WRONG for three
+--     columns. This file declares `headline_score numeric` (bare, typmod
+--     -1) on compatibility_reports, saved_people_reports and
+--     connection_reports; production actually stores them as numeric(5,2),
+--     and so did the real applied history (orphan rows 20260509163000 /
+--     20260510093000 / 20260511103000). The body of this file is NOT
+--     edited (it is recorded in the ledger). The fix is a forward
+--     migration: 20260908150236_fix_headline_score_precision.sql. Nothing
+--     else in the nine tables diverged — every other column, constraint,
+--     index, policy and trigger was re-verified against live and matches.
+-- (2) The "DORMANT" / "zero references anywhere in application code"
+--     framing above is stale. As of 2026-09-08 these tables hold live
+--     rows: relationship_profiles 3, relationship_invites 3,
+--     compatibility_reports 6, saved_people_profiles 5,
+--     saved_people_reports 3, connection_spaces 4, connection_members 9,
+--     connection_invites 6, connection_reports 8. Still no app-code
+--     references were re-checked this session — treat "dormant" as
+--     unverified, not confirmed.
+-- See .planning/PLACEHOLDERS.md CAPTURE-VERIFICATION-CLAIMS.
+--
 -- Dependency order: connection_spaces before its children; charts
 -- (already in migration history) before anything FK'ing to it;
 -- relationship_profiles before compatibility_reports;
