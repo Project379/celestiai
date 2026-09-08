@@ -41,10 +41,26 @@ const SMOKE_SECRET = process.env.SMOKE_SECRET || ''
 const CRON_SECRET = process.env.CRON_SECRET || ''
 const EXPECTED_SHA = process.env.SMOKE_EXPECTED_SHA || ''
 const SKIP_AI = process.env.SMOKE_SKIP_AI === '1'
+const IN_CI = process.env.GITHUB_ACTIONS === 'true' || process.env.CI === 'true'
 
 if (!BASE || !SMOKE_SECRET || !CRON_SECRET) {
   console.error(
     '[smoke] missing env: SMOKE_BASE_URL, SMOKE_SECRET and CRON_SECRET are all required',
+  )
+  process.exit(1)
+}
+
+// The deploy-SHA assertion is the whole reason this runs as a
+// deployment_status Action rather than a Vercel cron — without it the
+// smoke test cannot prove it hit the build that was just deployed. An
+// assertion that silently skips is worse than none, so in CI a missing
+// SMOKE_EXPECTED_SHA is a hard failure, not "optional". Locally (no CI)
+// it stays optional so `node scripts/smoke.mjs` against a running dev
+// server still works.
+if (IN_CI && !EXPECTED_SHA) {
+  console.error(
+    '[smoke] SMOKE_EXPECTED_SHA is empty in CI — refusing to run a smoke test that cannot verify which build it hit. ' +
+      'The workflow should set it from `github.event.deployment.sha || github.sha` (NOT deployment_status.sha, which has no such field).',
   )
   process.exit(1)
 }

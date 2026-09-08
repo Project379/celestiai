@@ -5,10 +5,18 @@ name: Post-deploy smoke
 # ones are skipped by the job-level `if`.
 #
 # Why deployment_status and not a Vercel cron: this needs to assert that the
-# smoke run hit the build that was just deployed (X-Deploy-SHA ==
-# deployment_status.sha). A time-based cron cannot know which deploy it is
-# testing. Continuous uptime monitoring is a separate concern and is not
-# this workflow.
+# smoke run hit the build that was just deployed (X-Deploy-SHA response
+# header == the deployed commit). A time-based cron cannot know which deploy
+# it is testing. Continuous uptime monitoring is a separate concern and is
+# not this workflow.
+#
+# SHA SOURCE: in the `deployment_status` webhook payload the commit is
+# `github.event.deployment.sha` — the `deployment` object. The
+# `deployment_status` object has NO `sha` field, so
+# `github.event.deployment_status.sha` silently resolves to "" (this bit us
+# on the first run — checkout still worked only because an empty `ref:`
+# falls back to `github.sha`, which for this event IS the deployed commit).
+# `github.sha` is kept as an explicit fallback.
 on:
   deployment_status: {}
 
@@ -22,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.deployment_status.sha }}
+          ref: ${{ github.event.deployment.sha || github.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -35,7 +43,7 @@ jobs:
           # variable SMOKE_BASE_URL (set to the canonical domain) if Vercel
           # didn't populate it.
           SMOKE_BASE_URL: ${{ github.event.deployment_status.environment_url || vars.SMOKE_BASE_URL }}
-          SMOKE_EXPECTED_SHA: ${{ github.event.deployment_status.sha }}
+          SMOKE_EXPECTED_SHA: ${{ github.event.deployment.sha || github.sha }}
           SMOKE_SECRET: ${{ secrets.SMOKE_SECRET }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           # Set to "1" in repo variables to skip the paid Gemini call.
