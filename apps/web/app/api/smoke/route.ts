@@ -103,7 +103,9 @@ async function checkAi(): Promise<string> {
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('Authorization')
-  const secret = process.env.SMOKE_SECRET
+  // .trim(): a trailing newline in the pasted Vercel env var is invisible in
+  // the dashboard and would break the exact-match check below (SMOKE-TEST).
+  const secret = process.env.SMOKE_SECRET?.trim()
   if (!secret || authHeader !== `Bearer ${secret}`) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }

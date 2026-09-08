@@ -43,7 +43,9 @@ export async function GET(req: Request) {
   // handler ever accepts requests without the CRON_SECRET check, it needs
   // rate limiting.
   const authHeader = req.headers.get('Authorization')
-  const cronSecret = process.env.CRON_SECRET
+  // .trim(): a trailing newline in the pasted Vercel env var is invisible in
+  // the dashboard and would fail verifyCronSecret's length check (SMOKE-TEST).
+  const cronSecret = process.env.CRON_SECRET?.trim()
 
   // Timing-safe comparison (Batch 5.5 #22) — plain !== permits a timing
   // side-channel, low real-world exploitability but a cheap fix.

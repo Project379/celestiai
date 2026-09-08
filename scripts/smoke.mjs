@@ -41,8 +41,12 @@
  */
 
 const BASE = (process.env.SMOKE_BASE_URL || '').replace(/\/+$/, '')
-const SMOKE_SECRET = process.env.SMOKE_SECRET || ''
-const CRON_SECRET = process.env.CRON_SECRET || ''
+// .trim() both: a trailing newline in a secret pasted into the GitHub repo
+// secrets UI is invisible there and neither this script nor verifyCronSecret
+// normalises it — a length mismatch → 401. BASE is normalised one line up for
+// the same reason. SMOKE_SECRET works today only because it was pasted clean.
+const SMOKE_SECRET = process.env.SMOKE_SECRET?.trim() || ''
+const CRON_SECRET = process.env.CRON_SECRET?.trim() || ''
 const EXPECTED_SHA = process.env.SMOKE_EXPECTED_SHA || ''
 const SKIP_AI = process.env.SMOKE_SKIP_AI === '1'
 const IN_CI = process.env.GITHUB_ACTIONS === 'true' || process.env.CI === 'true'

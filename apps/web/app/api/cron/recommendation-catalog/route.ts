@@ -7,7 +7,9 @@ export const dynamic = 'force-dynamic'
 
 /** Monthly, bounded candidate import. New records stay draft + review_required. */
 export async function GET(request: Request) {
-  if (!verifyCronSecret(request.headers.get('Authorization'), process.env.CRON_SECRET)) {
+  // .trim(): a trailing newline in the pasted Vercel env var is invisible in
+  // the dashboard and would fail verifyCronSecret's length check (SMOKE-TEST).
+  if (!verifyCronSecret(request.headers.get('Authorization'), process.env.CRON_SECRET?.trim())) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
