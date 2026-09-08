@@ -215,17 +215,19 @@
  * plus its `pluralizeBg('четене', 'четения')` arguments, -4 in apps/web.
  * 73 packages/core, 965 apps/web, 662 apps/mobile = 1700.
  *
- * Raised to 1711 on 2026-09-09 (PUSH-ORPHAN — mobile push settings toggle):
- * +11 in apps/mobile, all in the new
+ * Raised to 1711 on 2026-09-09 (PUSH-ORPHAN — push opt-in controls): +11,
+ * split +7 apps/mobile / +4 apps/web. Mobile: the new
  * apps/mobile/components/settings/PushNotificationToggle.tsx — a section
- * header ("Известия"), a row label ("Сутрешен хороскоп"), three
- * mutually-exclusive subtitle strings for the on / off / OS-denied states,
- * and two Alert.alert title+body pairs for the enable/disable failure
- * cases. Same outside-content-home shape as the sibling
- * you/settings-{name,email,password}.tsx routes (the 2026-08-04 +27 raise),
- * informal ти, checked against check:bg-strings and the copy lock. Deliberate
- * raise, not drift — the new file is the user-facing half of a control
- * that had none. 73 packages/core, 969 apps/web, 669 apps/mobile = 1711.
+ * header ("Известия"), a row label, the on/off/OS-denied subtitle strings,
+ * and the enable/disable failure Alert copy. Web: the new
+ * apps/web/app/api/push/unregister/route.ts — four error strings copied
+ * verbatim from its sibling push/register/route.ts ("Сесията ти изтече.
+ * Влез отново.", "Липсва device_id", "Грешка при изключването" ×2). Same
+ * outside-content-home shape as those siblings (the 2026-08-03 +8 push
+ * infra raise and the 2026-08-04 +27 you/settings raise), informal ти,
+ * checked against check:bg-strings and the copy lock. Deliberate raise —
+ * the user-facing half of a control that had none.
+ * 73 packages/core, 969 apps/web, 669 apps/mobile = 1711.
  *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */

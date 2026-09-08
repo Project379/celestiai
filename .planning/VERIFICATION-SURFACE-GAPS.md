@@ -334,6 +334,19 @@ than it looks." This one is "the observation's *origin* is invisible" —
 the monitor faithfully recorded a real error; it just can't say the error
 was manufactured.
 
+**Update 2026-09-09 — the smoke test shipped with the marker + filter, as
+required here.** `scripts/smoke.mjs` sends `x-stellaeum-probe: smoke` on
+every request; the probe-capable routes (`/api/smoke`, the three crons'
+`?probe=1` mode) call `Sentry.getCurrentScope().setTag('probe', 'smoke')`;
+`apps/web/sentry.server.config.ts` gained a `beforeSend` that returns
+`null` for any event carrying that tag or header. The
+`daily-horoscope` cron additionally skips its explicit
+`Sentry.captureException` outright when `probe` is set. So a smoke probe
+that trips an error fails the Action's exit code and is visible in Vercel
+logs (`[smoke]` prefix), but pages nobody. Still unaddressed: **mobile**
+has no equivalent — the second half of this entry's 2026-08-29
+reinforcement stands.
+
 **Reinforced 2026-08-29 — mobile, not just web.** Four Sentry issues from
 the founder's own emulator/device testing of the Google sign-in build, all
 `environment: development`, all High priority, none self-marking as test
@@ -412,6 +425,50 @@ entirely. (c) optional advisory only if someone asks — not built. (d)
 written into `.planning/phases/m3-uat/BROWSER_CHECKLIST.md` as a
 per-feature `[must-exercise]` "can a user reach and operate this"
 obligation.
+
+**Update 2026-09-09 — this specific instance is fixed, the gate is still
+deferred.** `PushNotificationBanner` is re-mounted in
+`components/dashboard/DashboardContent.tsx` and mobile got a real settings
+toggle (PUSH-ORPHAN resolved). The reachability CI gate from disposition
+(a) is still not built, so the next time an aesthetic pass unmounts a
+working control, nothing will flag it — the class is open even though this
+occurrence is closed.
+
+## 13. A post-deploy smoke test only exercises the surface its probe mode reaches
+
+Found 2026-09-09, building the SMOKE-TEST fix. The new smoke test
+(`scripts/smoke.mjs` + `.github/workflows/smoke.yml`) is a real
+improvement — it asserts on response *bodies* (the daily-horoscope cron
+returns 200 with `web.error` set, which is how it stayed dead for weeks)
+and it ties each run to the deployed SHA via `X-Deploy-SHA`. But two
+surfaces it *looks* like it covers, it does not:
+
+- **`recommendation-catalog`'s probe is shallow.** The other two crons'
+  `?probe=1` runs the full read/config path (VAPID init, every SELECT,
+  Expo token validation) and stops before the side effect.
+  `recommendation-catalog` has no dry-run — `runDevelopmentCatalogImport`
+  does external TMDB/Open-Library fetches and DB upserts as one
+  indivisible unit — so its probe only checks auth + `TMDB_API_READ_TOKEN`
+  presence. A broken importer (bad TMDB response shape, an upsert
+  constraint violation, a rights-mode misconfig) passes the smoke test.
+  The monthly cron itself is the only thing that exercises that path, and
+  a monthly failure is exactly the kind that rots unnoticed.
+- **`/api/smoke`'s AI check hits the generation core, not the route
+  wrappers.** It calls `generateFinalText` directly. The real
+  `/api/oracle/generate` and `/api/horoscope/generate` add Clerk auth, the
+  quota claim/refund, prompt-injection sanitising, tier gating, and
+  post-generation output validation (`validate-reading.ts`) on top. A
+  regression in any of *those* layers — the ones with the most history of
+  breakage — is invisible to the smoke test. Exercising them needs a real
+  authed request with a real chart, which the deploy-time Action does not
+  have.
+
+Same shape as #6: the probe is evidence only for the code it runs. The
+smoke test narrows the "is the deploy healthy" question from "unknown" to
+"the ephemeris binding loads, Postgres answers, Gemini answers, and the
+cron read-paths work" — which is most of what silently broke before — but
+it is not "every compute path a user touches works", and the gap between
+those two should not be read as covered just because a green check exists.
 
 ## The underlying pattern across items 1-3 (environment-fidelity gaps)
 

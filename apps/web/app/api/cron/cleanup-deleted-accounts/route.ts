@@ -51,6 +51,18 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Probe mode (SMOKE-TEST): `?probe=1` runs the expired-account selection
+  // query and returns the count, then stops — nothing is deleted. Lets the
+  // post-deploy smoke test confirm this handler still authenticates and
+  // reaches Postgres without touching a single account.
+  const probe = new URL(req.url).searchParams.get('probe') === '1'
+  if (probe) {
+    // beforeSend (sentry.server.config.ts) drops events with this tag — a
+    // smoke probe surfaces failures via the smoke script's exit code, not
+    // a Sentry page.
+    Sentry.getCurrentScope().setTag('probe', 'smoke')
+  }
+
   const supabase = createServiceSupabaseClient()
   const now = new Date().toISOString()
 
@@ -83,6 +95,10 @@ export async function GET(req: Request) {
     // TRACKER.md). See .planning/PLACEHOLDERS.md.
     Sentry.captureException(fetchError, { extra: { context: 'GET /api/cron/cleanup-deleted-accounts: fetch expired accounts' } })
     return Response.json({ error: 'Грешка при зареждане' }, { status: 500 })
+  }
+
+  if (probe) {
+    return Response.json({ probe: true, eligible: usersToDelete?.length ?? 0 })
   }
 
   if (!usersToDelete || usersToDelete.length === 0) {

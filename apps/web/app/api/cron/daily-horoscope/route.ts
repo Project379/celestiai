@@ -63,6 +63,20 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Probe mode (SMOKE-TEST): `?probe=1` runs the whole read path — VAPID
+  // config, the push_subscriptions / push_tokens queries, the Expo token
+  // format validation — but returns BEFORE any notification is sent, so
+  // the post-deploy smoke test can exercise this handler without waking
+  // every subscriber. The response still carries each transport's `error`
+  // field when a read/config step failed (a dead VAPID key, a broken
+  // query), which is the failure this cron hid for weeks by returning 200.
+  const probe = new URL(req.url).searchParams.get('probe') === '1'
+  if (probe) {
+    // Tag the isolation scope so sentry.server.config.ts's beforeSend drops
+    // anything this probe run might capture — a smoke probe must not page.
+    Sentry.getCurrentScope().setTag('probe', 'smoke')
+  }
+
   const supabase = createServiceSupabaseClient()
 
   // Web Push and Expo (mobile) are independent transports with independent
@@ -73,10 +87,10 @@ export async function GET(req: Request) {
   // error, or even an early `return` on zero web subscribers all killed
   // the mobile push silently. A config error in one transport must
   // degrade only that transport, not the whole scheduled job.
-  const web = await sendWebPush(supabase)
-  const mobile = await sendMobilePush(supabase)
+  const web = await sendWebPush(supabase, probe)
+  const mobile = await sendMobilePush(supabase, probe)
 
-  return Response.json({ web, mobile })
+  return Response.json(probe ? { probe: true, web, mobile } : { web, mobile })
 }
 
 /**
@@ -87,8 +101,9 @@ export async function GET(req: Request) {
  * this way is the point — see the handler comment.
  */
 async function sendWebPush(
-  supabase: ReturnType<typeof createServiceSupabaseClient>
-): Promise<{ sent: number; failed: number; expired: number; error?: string }> {
+  supabase: ReturnType<typeof createServiceSupabaseClient>,
+  probe = false
+): Promise<{ sent: number; failed: number; expired: number; eligible?: number; error?: string }> {
   try {
     // Configure VAPID details for web-push authentication. Throws
     // synchronously if NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY are
@@ -113,7 +128,13 @@ async function sendWebPush(
     }
 
     if (!subscriptions || subscriptions.length === 0) {
-      return { sent: 0, failed: 0, expired: 0 }
+      return probe ? { sent: 0, failed: 0, expired: 0, eligible: 0 } : { sent: 0, failed: 0, expired: 0 }
+    }
+
+    // Probe: VAPID config validated, subscriptions readable — stop before
+    // fanning out any actual sends.
+    if (probe) {
+      return { sent: 0, failed: 0, expired: 0, eligible: subscriptions.length }
     }
 
     const payload = JSON.stringify({
@@ -254,9 +275,14 @@ async function sendWebPush(
     // capture explicitly, or this regression goes silent again (same
     // reasoning as toErrorResponse's Sentry.captureException).
     console.error('[Cron Daily Horoscope] Web push transport failed:', err)
-    Sentry.captureException(err, {
-      tags: { cron: 'daily-horoscope', transport: 'web-push' },
-    })
+    // In probe mode the smoke script surfaces this via `error` in the body
+    // and a non-zero exit — no Sentry page (beforeSend would drop it via
+    // the scope tag anyway; this skips the call outright).
+    if (!probe) {
+      Sentry.captureException(err, {
+        tags: { cron: 'daily-horoscope', transport: 'web-push' },
+      })
+    }
     return {
       sent: 0,
       failed: 0,
@@ -273,8 +299,9 @@ async function sendWebPush(
  * SDKs, payload shapes, and failure semantics don't share code cleanly.
  */
 async function sendMobilePush(
-  supabase: ReturnType<typeof createServiceSupabaseClient>
-): Promise<{ sent: number; failed: number; revoked: number }> {
+  supabase: ReturnType<typeof createServiceSupabaseClient>,
+  probe = false
+): Promise<{ sent: number; failed: number; revoked: number; eligible?: number; error?: string }> {
   const { data: tokenRows, error } = await supabase
     .from('push_tokens')
     .select('token')
@@ -283,11 +310,11 @@ async function sendMobilePush(
 
   if (error) {
     console.error('[Cron Daily Horoscope] Failed to fetch push_tokens:', error)
-    return { sent: 0, failed: 0, revoked: 0 }
+    return { sent: 0, failed: 0, revoked: 0, error: 'push_tokens fetch failed' }
   }
 
   if (!tokenRows || tokenRows.length === 0) {
-    return { sent: 0, failed: 0, revoked: 0 }
+    return probe ? { sent: 0, failed: 0, revoked: 0, eligible: 0 } : { sent: 0, failed: 0, revoked: 0 }
   }
 
   const expo = new Expo()
@@ -301,7 +328,12 @@ async function sendMobilePush(
     })
 
   if (validTokens.length === 0) {
-    return { sent: 0, failed: 0, revoked: 0 }
+    return probe ? { sent: 0, failed: 0, revoked: 0, eligible: 0 } : { sent: 0, failed: 0, revoked: 0 }
+  }
+
+  // Probe: push_tokens readable, formats validated — stop before sending.
+  if (probe) {
+    return { sent: 0, failed: 0, revoked: 0, eligible: validTokens.length }
   }
 
   const messages = validTokens.map((token: string) => ({

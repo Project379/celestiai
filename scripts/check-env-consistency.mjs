@@ -70,6 +70,13 @@ const ALLOWLIST = [
       'Test/UAT-harness only (apps/web/scripts/m3-uat-harness.mjs). Never a deploy variable; not expected in turbo.json or any .env.example.',
   },
   {
+    match: (name) =>
+      name === 'SMOKE_BASE_URL' || name === 'SMOKE_EXPECTED_SHA' || name === 'SMOKE_SKIP_AI',
+    rules: ['undeclared', 'unread'],
+    reason:
+      'Post-deploy smoke runner only (scripts/smoke.mjs, wired in .github/workflows/smoke.yml from deployment_status context + repo vars). CI-runner env, never a Vercel deploy variable — not expected in turbo.json or any .env.example. NB: SMOKE_SECRET is NOT here — it IS a deploy variable (read by apps/web/app/api/smoke/route.ts) and is declared in globalPassThroughEnv + apps/web/.env.example.',
+  },
+  {
     match: (name) => name === 'NODE_ENV' || name === 'NEXT_RUNTIME' || name === 'CI',
     rules: ['undeclared', 'unread'],
     reason: 'Platform/framework built-in, set by the runtime, never declared by us.',

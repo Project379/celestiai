@@ -11,6 +11,19 @@ export async function GET(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Probe mode (SMOKE-TEST): `?probe=1` confirms only that this route
+  // authenticates and that its TMDB credential is configured — it does NOT
+  // run the import (external TMDB / Open Library fetches + DB upserts, no
+  // dry-run mode on runDevelopmentCatalogImport). This is a shallower
+  // check than the other two crons' probes; the gap is tracked in
+  // .planning/VERIFICATION-SURFACE-GAPS.md.
+  if (new URL(request.url).searchParams.get('probe') === '1') {
+    return Response.json({
+      probe: true,
+      tmdbTokenPresent: Boolean(process.env.TMDB_API_READ_TOKEN),
+    })
+  }
+
   try {
     const result = await runDevelopmentCatalogImport({
       tmdbToken: process.env.TMDB_API_READ_TOKEN,
