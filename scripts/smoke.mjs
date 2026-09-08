@@ -27,7 +27,11 @@
  * run should read as noise to alerting, not as an outage or as traffic.
  *
  * Env:
- *   SMOKE_BASE_URL     required — e.g. https://stellaeum.com (no trailing /)
+ *   SMOKE_BASE_URL     required — the canonical, UNPROTECTED production
+ *                      domain, e.g. https://stellaeum.com (no trailing /).
+ *                      NOT a raw *.vercel.app deployment URL — those sit
+ *                      behind Vercel Deployment Protection and bounce every
+ *                      unauthenticated request to an SSO HTML page.
  *   SMOKE_SECRET       required — bearer for /api/smoke
  *   CRON_SECRET        required — bearer for the three cron probes
  *   SMOKE_EXPECTED_SHA optional — assert the deploy's X-Deploy-SHA equals this
@@ -75,6 +79,45 @@ function record(name, ok, detail) {
   console.log(`[smoke] ${ok ? 'PASS' : 'FAIL'}  ${name}  —  ${detail}`)
 }
 
+/**
+ * True when a response is Vercel's Deployment-Protection / SSO login wall
+ * rather than the app. Symptoms seen in the wild: HTTP 401 with an HTML
+ * body carrying `data-dpl-id`, a `<title>` of "Authentication Required",
+ * a `Set-Cookie: _vercel_sso_nonce`, or a redirect to `vercel.com/sso` /
+ * `/.well-known/vercel-user-meta`. Any one of these means the smoke test
+ * is pointed at a protected URL and NONE of its checks can pass — a
+ * generic "body is not JSON" per check buries that.
+ */
+function looksLikeDeploymentProtection(res, text) {
+  const setCookie = res.headers.get('set-cookie') || ''
+  if (setCookie.includes('_vercel_sso_nonce')) return true
+  if (/vercel\.com\/sso|\/sso-api|\.well-known\/vercel-user-meta/i.test(res.url || '')) return true
+  if (!(res.headers.get('content-type') || '').includes('text/html')) return false
+  const body = (text || '').slice(0, 4000)
+  return (
+    /data-dpl-id=/.test(body) ||
+    /Authentication Required/i.test(body) ||
+    /Vercel Authentication/i.test(body) ||
+    /vercel\.com\/sso/i.test(body) ||
+    /\.well-known\/vercel-user-meta/i.test(body)
+  )
+}
+
+let protectionReported = false
+/** Record the deployment-protection failure — full guidance once, terse after. */
+function recordProtection(name) {
+  if (!protectionReported) {
+    protectionReported = true
+    return record(
+      name,
+      false,
+      `${BASE} is behind Vercel Deployment Protection — the request was answered by the Vercel SSO login page, not the app. ` +
+        `Point SMOKE_BASE_URL at the canonical (unprotected) production domain, or set a VERCEL_AUTOMATION_BYPASS_SECRET and send it as the x-vercel-protection-bypass header. No app checks can pass until then.`,
+    )
+  }
+  return record(name, false, 'blocked by Vercel Deployment Protection (see first failure)')
+}
+
 async function req(path, { bearer } = {}) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
@@ -93,7 +136,7 @@ async function req(path, { bearer } = {}) {
     } catch {
       json = undefined
     }
-    return { res, text, json }
+    return { res, text, json, protection: looksLikeDeploymentProtection(res, text) }
   } finally {
     clearTimeout(t)
   }
@@ -101,8 +144,9 @@ async function req(path, { bearer } = {}) {
 
 async function checkRoot() {
   try {
-    const { res } = await req('/')
-    if (!res.ok) return record('GET /', false, `status ${res.status}`)
+    const { res, text, protection } = await req('/')
+    if (protection) return recordProtection('GET /')
+    if (!res.ok) return record('GET /', false, `status ${res.status}: ${text.slice(0, 160)}`)
     const sha = res.headers.get('x-deploy-sha')
     if (EXPECTED_SHA) {
       if (!sha) return record('GET /', false, 'no x-deploy-sha header on response')
@@ -123,7 +167,8 @@ async function checkRoot() {
 
 async function checkCron(path, assert) {
   try {
-    const { res, json, text } = await req(`${path}?probe=1`, { bearer: CRON_SECRET })
+    const { res, json, text, protection } = await req(`${path}?probe=1`, { bearer: CRON_SECRET })
+    if (protection) return recordProtection(path)
     if (!res.ok) return record(path, false, `status ${res.status}: ${text.slice(0, 200)}`)
     if (!json || json.probe !== true) {
       return record(path, false, `body is not a probe response: ${text.slice(0, 200)}`)
@@ -153,7 +198,8 @@ function badTransport(t) {
 async function checkSmoke() {
   try {
     const path = SKIP_AI ? '/api/smoke?ai=0' : '/api/smoke'
-    const { res, json, text } = await req(path, { bearer: SMOKE_SECRET })
+    const { res, json, text, protection } = await req(path, { bearer: SMOKE_SECRET })
+    if (protection) return recordProtection('GET /api/smoke')
     if (!json || !Array.isArray(json.checks)) {
       return record('GET /api/smoke', false, `unexpected body (status ${res.status}): ${text.slice(0, 200)}`)
     }

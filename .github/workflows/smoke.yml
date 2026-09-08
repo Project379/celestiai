@@ -39,10 +39,12 @@ jobs:
       - name: Run smoke checks
         run: node scripts/smoke.mjs
         env:
-          # environment_url is the exact deployment; fall back to the repo
-          # variable SMOKE_BASE_URL (set to the canonical domain) if Vercel
-          # didn't populate it.
-          SMOKE_BASE_URL: ${{ github.event.deployment_status.environment_url || vars.SMOKE_BASE_URL }}
+          # PREFER the repo variable SMOKE_BASE_URL (set to the canonical,
+          # unprotected production domain). `environment_url` is the raw
+          # *.vercel.app deployment URL, which sits behind Vercel Deployment
+          # Protection and answers every unauthenticated request with an SSO
+          # HTML page — so it is only a last-resort fallback.
+          SMOKE_BASE_URL: ${{ vars.SMOKE_BASE_URL || github.event.deployment_status.environment_url }}
           SMOKE_EXPECTED_SHA: ${{ github.event.deployment.sha || github.sha }}
           SMOKE_SECRET: ${{ secrets.SMOKE_SECRET }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
