@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "//": "globalPassThroughEnv: vars that exist in the deploy environment (Vercel project settings) but are NOT build inputs — they must reach task processes without polluting the cache key. [verified] DATABASE_URL is read only by apps/web/scripts/diagnostics/*.mjs (manual `node --env-file=.env.local` runs); nothing in `next build` or any request path reads it (the app reaches Postgres via @supabase/supabase-js with NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SECRET_KEY). [verified] EXPO_PUBLIC_API_BASE is read only by apps/mobile/lib/api/client.ts; apps/web never reads it and apps/mobile has no build task, so it belongs in neither `build.env` — it is listed here only to quiet the Vercel warning and is trivially droppable. [inferred] listing both here silences the Vercel 'set but missing from turbo.json' warning (that warning only surfaces on a Vercel build; not reproduced locally). [verified] NEXT_PUBLIC_* is NOT listed anywhere because Turbo's nextjs framework inference already includes it for @stellaeum/web#build — a NEXT_PUBLIC_PROBE var showed up under 'Inferred Env Vars Values' in `turbo run build --dry`. [added 2026-09-06, BUILD-SHA] VERCEL_GIT_COMMIT_SHA is read by apps/web/middleware.ts at REQUEST time (X-Deploy-SHA response header) — it must NOT be a build.env entry, since Vercel sets a new value on every deployment and a build-input env var becomes part of turbo's cache key, busting the build cache on every single commit. [added 2026-09-07, ENV-CONSISTENCY sweep] TMDB_API_READ_TOKEN is read at REQUEST time by apps/web/app/api/cron/recommendation-catalog/route.ts (passed as `tmdbToken` into `runDevelopmentCatalogImport`); when absent the TMDB import is skipped and OpenLibrary still runs — no crash. RECOMMENDATION_RIGHTS_MODE is read at REQUEST time by packages/core/src/recommendations/{service.ts,import.ts}; unset resolves to 'commercial' in production. Neither is a build input (both are read inside request handlers), so both are pass-through, not build.env — same rationale as DATABASE_URL. [added 2026-09-09, SMOKE-TEST] SMOKE_SECRET is read only inside apps/web/app/api/smoke/route.ts (the post-deploy smoke probe's bearer check) — a request handler, never `next build`, so pass-through not build.env, same rationale again. [added 2026-09-09] CRON_SECRET moved here from build.env: verifyCronSecret (apps/web/lib/auth/cron-secret.ts) reads process.env.CRON_SECRET INSIDE the three cron route handlers at request time — nothing in `next build` reads it. Keeping it in build.env baked its value into the turbo cache key and every build's env; it is a request-time secret, same rationale as DATABASE_URL / SMOKE_SECRET. Other build.env entries that are ALSO only read at request time (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_MONTHLY/ANNUAL, SUPABASE_SECRET_KEY, REVENUECAT_WEBHOOK_SECRET, VAPID_PRIVATE_KEY, arguably SENTRY_DSN) are candidates for the same move but were left pending a watched Vercel build — see the 2026-09-09 session report. GEMINI_API_KEY is read at MODULE scope (lib/ai/client.ts) and SENTRY_ORG/PROJECT/AUTH_TOKEN are genuinely build-time (next.config.js withSentryConfig) — those stay.",
+  "//": "THE SPLIT: `build.env` is for env vars that `next build` GENUINELY READS — a module-scope `process.env.X`, a `next.config.js` plugin option, anything evaluated during the build / page-data-collection render pass. Its values enter Turbo's cache key (correct: a changed build input must bust the cache) and are baked into every build's environment. `globalPassThroughEnv` is for REQUEST-TIME values a running serverless function needs but `next build` never touches — read inside a route handler, or via a lazy client that constructs-on-use — so they must reach task processes WITHOUT entering the cache key (a per-deploy secret in build.env busts the cache every deploy and needlessly widens the value's exposure). When unsure, the test is empirical: run `next build` with the var deliberately absent from the environment AND from every `.env*` file — if the build still succeeds AND nothing it renders reads the var, it is not a build input. --- [verified] DATABASE_URL read only by apps/web/scripts/diagnostics/*.mjs (manual runs). [verified] EXPO_PUBLIC_API_BASE read only by apps/mobile; listed here only to quiet the Vercel 'set but missing from turbo.json' warning. [verified] NEXT_PUBLIC_* is not listed anywhere — Turbo's nextjs framework inference already includes it for @stellaeum/web#build. [BUILD-SHA] VERCEL_GIT_COMMIT_SHA read by middleware.ts at REQUEST time. [ENV-CONSISTENCY sweep] TMDB_API_READ_TOKEN + RECOMMENDATION_RIGHTS_MODE read at REQUEST time in recommendation handlers / packages/core. [SMOKE-TEST] SMOKE_SECRET read only inside app/api/smoke/route.ts. [2026-09-09] CRON_SECRET moved here — verifyCronSecret (lib/auth/cron-secret.ts) reads it inside the three cron route handlers, never at build. [2026-09-09, batch move — PROVEN by a `next build` with all eight deliberately unset and `.env.local` moved aside; the build succeeded (exit 0, compiled) and none of these seven produced ANY build-time reference] STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET (lazy `getStripe` Proxy / inside the webhook POST), STRIPE_PRICE_MONTHLY + STRIPE_PRICE_ANNUAL (inside the checkout POST; pricing/page.tsx reads them with `?? ''` on a dynamic route), REVENUECAT_WEBHOOK_SECRET (inside the webhook POST), VAPID_PRIVATE_KEY (inside `sendWebPush`, called from the cron GET), SENTRY_DSN (`Sentry.init` in sentry.server.config.ts — instrumentation `register()` / server startup, not build). STAYS in build.env: GEMINI_API_KEY is read at MODULE scope (lib/ai/client.ts's `export const gemini = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY })`, evaluated during page-data collection); CLERK_SECRET_KEY is resolved inside the @clerk/nextjs SDK whose build-time behaviour is unverified; SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN are consumed by next.config.js's withSentryConfig at build (source-map upload); **SUPABASE_SECRET_KEY was in the move list but the prove-build showed `next build` DOES reach it — `app/(protected)/you/crystals/guide/page.tsx` is an async Server Component that calls `createServiceSupabaseClient()` during page-data collection, throwing `Missing Supabase environment variables ... SUPABASE_SECRET_KEY` (caught → empty catalog). Harmless today because that route is dynamic (`ƒ`), so nothing stale is baked, but a future `revalidate`/static on any Supabase-reading Server Component would silently ship empty data — kept in build.env as the cautious call.**",
   "globalPassThroughEnv": [
     "DATABASE_URL",
     "EXPO_PUBLIC_API_BASE",
@@ -8,7 +8,14 @@
     "TMDB_API_READ_TOKEN",
     "RECOMMENDATION_RIGHTS_MODE",
     "SMOKE_SECRET",
-    "CRON_SECRET"
+    "CRON_SECRET",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "STRIPE_PRICE_MONTHLY",
+    "STRIPE_PRICE_ANNUAL",
+    "REVENUECAT_WEBHOOK_SECRET",
+    "VAPID_PRIVATE_KEY",
+    "SENTRY_DSN"
   ],
   "tasks": {
     "build": {
@@ -18,13 +25,6 @@
         "CLERK_SECRET_KEY",
         "SUPABASE_SECRET_KEY",
         "GEMINI_API_KEY",
-        "STRIPE_SECRET_KEY",
-        "STRIPE_WEBHOOK_SECRET",
-        "STRIPE_PRICE_MONTHLY",
-        "STRIPE_PRICE_ANNUAL",
-        "REVENUECAT_WEBHOOK_SECRET",
-        "VAPID_PRIVATE_KEY",
-        "SENTRY_DSN",
         "SENTRY_ORG",
         "SENTRY_PROJECT",
         "SENTRY_AUTH_TOKEN"
