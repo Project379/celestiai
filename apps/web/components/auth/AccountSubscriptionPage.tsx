@@ -91,6 +91,7 @@ export function AccountSubscriptionPage() {
     <div className="-mx-4 -my-6 sm:-mx-6">
       <SettingsContent
         tier={overview.tier}
+        subscriptionProvider={overview.subscriptionProvider}
         subscriptionData={overview.subscriptionData}
         subscriptionExpiresAt={overview.subscriptionExpiresAt}
       />

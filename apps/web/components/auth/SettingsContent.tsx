@@ -16,6 +16,8 @@ interface SubscriptionData {
 
 interface SettingsContentProps {
   tier: string
+  /** `stripe` (web billing portal) | `revenuecat` (App Store / Play IAP). */
+  subscriptionProvider: 'stripe' | 'revenuecat'
   subscriptionData: SubscriptionData | null
   subscriptionExpiresAt: string | null
 }
@@ -38,7 +40,12 @@ function formatBgDateFromString(dateStr: string): string {
   }).format(new Date(dateStr))
 }
 
-export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt }: SettingsContentProps) {
+export function SettingsContent({
+  tier,
+  subscriptionProvider,
+  subscriptionData,
+  subscriptionExpiresAt,
+}: SettingsContentProps) {
   const router = useRouter()
   const { closeUserProfile } = useClerk()
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -51,8 +58,16 @@ export function SettingsContent({ tier, subscriptionData, subscriptionExpiresAt 
     isFree &&
     subscriptionExpiresAt !== null &&
     new Date(subscriptionExpiresAt) < new Date()
-  const isActive = !isFree && subscriptionData !== null && !subscriptionData.cancelAtPeriodEnd
-  const isCancelling = !isFree && subscriptionData !== null && subscriptionData.cancelAtPeriodEnd
+  // Stripe-only: `subscriptionData` and the portal/cancel/reactivate
+  // actions exist only for a Stripe subscription. The explicit
+  // `subscriptionProvider === 'stripe'` guard keeps an IAP subscriber out
+  // of the Stripe-management branches even if `subscriptionData` were ever
+  // populated for one.
+  const isStripe = subscriptionProvider === 'stripe'
+  const isActive =
+    !isFree && isStripe && subscriptionData !== null && !subscriptionData.cancelAtPeriodEnd
+  const isCancelling =
+    !isFree && isStripe && subscriptionData !== null && subscriptionData.cancelAtPeriodEnd
 
   const planName =
     subscriptionData?.interval === 'year'

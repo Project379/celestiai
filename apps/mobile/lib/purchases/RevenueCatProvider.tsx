@@ -51,15 +51,38 @@ import { logError } from '@/lib/monitoring/logError'
 
 const PLACEHOLDER_PREFIX = 'REPLACE_WITH_'
 
+// RevenueCat issues a distinct public SDK key per store, each with a fixed
+// prefix. A real store build must carry one of these; a Test Store key
+// (`test_…`) or a placeholder in a production build points real purchases
+// at the wrong project.
+const EXPECTED_KEY_PREFIX: Partial<Record<typeof Platform.OS, string>> = {
+  ios: 'appl_',
+  android: 'goog_',
+}
+
 export function RevenueCatProvider({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn, userId } = useAuth()
   const loggedInUserIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    const apiKey = Platform.select({
-      ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY,
-      android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY,
-    })
+    const iosKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY
+    const androidKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY
+
+    // Guard (a): the two platform keys must never be equal. RevenueCat
+    // always issues a distinct key per store, so identical values mean a
+    // placeholder or a single test key was pasted into both. Both env vars
+    // are read here regardless of the running platform — both ship in the
+    // JS bundle anyway. logError, not a throw: it must not block a build.
+    if (iosKey && androidKey && iosKey === androidKey) {
+      logError(
+        'ERR-MOB-RC-006',
+        new Error(
+          'EXPO_PUBLIC_REVENUECAT_IOS_API_KEY and EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY are identical — RevenueCat issues a distinct key per platform, so one of them is a placeholder or the wrong key.',
+        ),
+      )
+    }
+
+    const apiKey = Platform.select({ ios: iosKey, android: androidKey })
 
     if (!apiKey) {
       logError(
@@ -67,6 +90,27 @@ export function RevenueCatProvider({ children }: { children: React.ReactNode }) 
         new Error(`Missing RevenueCat API key env var for platform "${Platform.OS}"`),
       )
       return
+    }
+
+    // Guard (b): a real store build must use a platform-shaped public SDK
+    // key (appl_… / goog_…). A `test_…` Test Store key or anything else in
+    // a store build is a misconfiguration. Gated on EXPO_PUBLIC_APP_VARIANT
+    // (set per profile in eas.json), NOT __DEV__ — __DEV__ is false on the
+    // `preview` builds used for Test Store work, which is exactly when a
+    // `test_…` key is correct and must not warn. logError, does not block.
+    const expectedPrefix = EXPECTED_KEY_PREFIX[Platform.OS]
+    if (
+      process.env.EXPO_PUBLIC_APP_VARIANT === 'production' &&
+      expectedPrefix &&
+      !apiKey.startsWith(expectedPrefix) &&
+      !apiKey.startsWith(PLACEHOLDER_PREFIX) // placeholder already covered by ERR-MOB-RC-002
+    ) {
+      logError(
+        'ERR-MOB-RC-007',
+        new Error(
+          `Production build configured with a RevenueCat key that does not start with "${expectedPrefix}" for platform "${Platform.OS}" — a Test Store ("test_…") or otherwise non-production key must not ship in a store build.`,
+        ),
+      )
     }
 
     if (apiKey.startsWith(PLACEHOLDER_PREFIX)) {
