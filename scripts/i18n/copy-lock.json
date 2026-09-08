@@ -1,5 +1,5 @@
 {
-  "count": 2869,
+  "count": 2868,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -998,7 +998,6 @@
     "apps/web/app/api/gdpr/delete-account/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/gdpr/export/route.ts::'Сесията ти изтече. Влез отново.'",
     "apps/web/app/api/horoscope/generate/route.ts::'Хороскопът вече се генерира. Опитай отново след малко.'",
-    "apps/web/app/api/oracle/generate/route.ts::'Грешка при генериране на четенето'",
     "apps/web/app/api/oracle/generate/route.ts::'Грешка при генериране на четенето'",
     "apps/web/app/api/oracle/generate/route.ts::'Картата не е намерена'",
     "apps/web/app/api/oracle/generate/route.ts::'Можеш да регенерираш веднъж на ден'",

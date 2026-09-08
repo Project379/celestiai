@@ -362,28 +362,25 @@ export async function POST(req: Request) {
       }
     } catch (err) {
       await refundClaim()
-      // isTransientAIError first — the more specific, chain-aware
-      // classifier (also used inside generateFinalText to decide the
-      // fallback-model switch). A transient failure that ALSO exhausted
-      // generateFinalText's own fallback lands here with a distinct 503,
-      // not lumped into the generic 502 below.
-      if (isTransientAIError(err)) {
-        return aiTemporarilyUnavailableResponse()
+      // LLM-FAILOVER (Option B — graceful degradation, 2026-09-09):
+      // every way generateFinalText can fail AFTER exhausting both Gemini
+      // tiers (transient, upstream/transport, or an unclassified throw)
+      // now returns the same ratified 503 — aiTemporarilyUnavailableResponse
+      // — rather than a bare 502/500. Both Gemini models are Google, so a
+      // Google-wide outage takes the Oracle fully offline for its
+      // duration; this makes that read as "temporarily unavailable, try
+      // again" instead of an error, and the quota claim is already
+      // refunded above. An unclassified throw is still captured for
+      // Sentry so a genuine bug in this loop still surfaces (CAUGHT-500S).
+      // The validation-failed-twice path below stays 502 — there the model
+      // responded, it just produced unusable output; that is not an
+      // outage. Second-provider failover is deferred (see LLM-FAILOVER in
+      // .planning/PLACEHOLDERS.md).
+      if (!isTransientAIError(err) && !isUpstreamAiError(err)) {
+        console.error('[Oracle Generate] generation threw (unclassified):', err)
+        Sentry.captureException(err, { extra: { context: 'POST /api/oracle/generate: generation threw' } })
       }
-      if (isUpstreamAiError(err)) {
-        return toErrorResponse(
-          new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED'),
-          'AI upstream failure',
-        )
-      }
-      console.error('[Oracle Generate] generation threw:', err)
-      // CAUGHT-500S (historical) — was a bare 500, invisible to
-      // Sentry (see .planning/PLACEHOLDERS.md).
-      Sentry.captureException(err, { extra: { context: 'POST /api/oracle/generate: generation threw' } })
-      return Response.json(
-        { error: 'Грешка при генериране на четенето' },
-        { status: 500 },
-      )
+      return aiTemporarilyUnavailableResponse()
     }
 
     if (finalContent === null) {

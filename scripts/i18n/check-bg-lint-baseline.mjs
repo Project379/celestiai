@@ -215,6 +215,14 @@
  * plus its `pluralizeBg('четене', 'четения')` arguments, -4 in apps/web.
  * 73 packages/core, 965 apps/web, 662 apps/mobile = 1700.
  *
+ * Lowered to 1710 on 2026-09-09 (LLM-FAILOVER Option B): -1 in apps/web.
+ * apps/web/app/api/oracle/generate/route.ts's non-transient AI-failure
+ * branch dropped its own `{ error: 'Грешка при генериране на четенето' }`
+ * 500 body in favour of the shared `aiTemporarilyUnavailableResponse()`
+ * 503 helper — that removed one duplicate Cyrillic literal (the identical
+ * string still appears once in the file's outer catch). Progress, not
+ * drift. 73 packages/core, 968 apps/web, 669 apps/mobile = 1710.
+ *
  * Raised to 1711 on 2026-09-09 (PUSH-ORPHAN — push opt-in controls): +11,
  * split +7 apps/mobile / +4 apps/web. Mobile: the new
  * apps/mobile/components/settings/PushNotificationToggle.tsx — a section
@@ -239,11 +247,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
 // STELLAEUM_PLACEHOLDER: LINT-BASELINE-1800 — every move of this ratchet
-// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled→1700→1711,
+// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled→1700→1711→1710,
 // 2026-09-01 through 2026-09-09) is logged with its justification in
 // this file's header comment above. The ID keeps its "-1800" suffix as
-// a stable handle; the current value is 1711. See .planning/PLACEHOLDERS.md.
-const BASELINE = 1711
+// a stable handle; the current value is 1710. See .planning/PLACEHOLDERS.md.
+const BASELINE = 1710
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

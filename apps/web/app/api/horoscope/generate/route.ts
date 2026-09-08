@@ -359,13 +359,23 @@ export async function POST(req: Request) {
       }
     } catch (err) {
       await releaseClaimOnFailure()
-      if (isTransientAIError(err)) {
-        return aiTemporarilyUnavailableResponse()
+      // LLM-FAILOVER (Option B — graceful degradation, 2026-09-09): see
+      // oracle/generate/route.ts for the full rationale. Any post-fallback
+      // AI failure (transient, upstream, or unclassified) degrades to the
+      // same ratified 503 instead of a 502/500 — both Gemini tiers are
+      // Google, so a Google outage takes the daily horoscope offline and
+      // this makes that read as "temporarily unavailable". The claim row
+      // is released above so a retry (and tomorrow) are not blocked. An
+      // unclassified throw is still captured for Sentry. The
+      // validation-failed-twice path below stays 502 (model responded,
+      // output unusable — not an outage).
+      if (!isTransientAIError(err) && !isUpstreamAiError(err)) {
+        console.error('[Horoscope Generate] generation threw (unclassified):', err)
+        Sentry.captureException(err, {
+          extra: { context: 'POST /api/horoscope/generate: generation threw' },
+        })
       }
-      if (isUpstreamAiError(err)) {
-        throw new ApiError(502, RETRY_LATER_MESSAGE, 'AI_UPSTREAM_FAILED')
-      }
-      throw err
+      return aiTemporarilyUnavailableResponse()
     }
 
     if (finalContent === null) {

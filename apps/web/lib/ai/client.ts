@@ -26,7 +26,12 @@ export const ORACLE_FALLBACK_MODEL = 'gemini-3.6-flash'
 // alternate-PROVIDER fallback. ORACLE_FALLBACK_MODEL above is a same-
 // provider model swap (3.7 -> 3.6) on a transient failure, not a
 // different-provider fallback — a Google-wide outage still has nothing to
-// fall back to. See .planning/PLACEHOLDERS.md.
+// fall back to. Graceful degradation shipped 2026-09-09 (Option B): the
+// oracle/horoscope routes now return a ratified 503
+// (aiTemporarilyUnavailableResponse) instead of a bare 502/500 when both
+// tiers are exhausted, so an outage reads as "temporarily unavailable"
+// rather than an error. A second PROVIDER is still deferred — see
+// .planning/PLACEHOLDERS.md for the three revisit triggers.
 export const gemini = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY,
 })
