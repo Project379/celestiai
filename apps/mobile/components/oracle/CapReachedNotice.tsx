@@ -1,6 +1,10 @@
+import { useRouter } from 'expo-router'
+
 import type { CapReachedReason } from '@/hooks/useOracleReading'
 import { PremiumLock } from '@/components/tier/PremiumLock'
+import { hapticSelect } from '@/lib/haptics'
 import { ORACLE_CAP_COPY, oracleCapLegacy } from '@/lib/tier/locked-copy'
+import { PAYWALL } from '@/lib/tier/subscription-copy'
 
 interface CapReachedNoticeProps {
   cap: number
@@ -13,16 +17,23 @@ interface CapReachedNoticeProps {
  * `reason` to the copy branch in @/lib/tier/locked-copy. Wording unchanged
  * from the two founder review passes.
  *
- * NO CTA: PremiumLock renders no button unless given one, and this surface
- * deliberately gives none — the mobile purchase path is the RevenueCat
- * native paywall, which does not exist.
- *
- * STELLAEUM_PLACEHOLDER: PAYWALL-MOBILE — the missing CTA here is the
- * visible edge of it: no RevenueCat native paywall exists, so there is no
- * subscribe path anywhere in the mobile app. See .planning/PLACEHOLDERS.md.
+ * CTA (Phase 2): "Отключи Премиум" → /you/premium, where the RevenueCat
+ * paywall now lives. The server route stays the gate — this is just the
+ * path to the purchase screen.
  */
 export function CapReachedNotice({ cap, reason }: CapReachedNoticeProps) {
+  const router = useRouter()
   const copy = reason ? ORACLE_CAP_COPY[reason] : oracleCapLegacy(cap)
 
-  return <PremiumLock title={copy.title} sub={copy.sub} />
+  return (
+    <PremiumLock
+      title={copy.title}
+      sub={copy.sub}
+      cta={PAYWALL.unlockCta}
+      onPressCta={() => {
+        hapticSelect()
+        router.push('/you/premium')
+      }}
+    />
+  )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, Linking, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated from 'react-native-reanimated'
@@ -7,12 +7,17 @@ import * as WebBrowser from 'expo-web-browser'
 import { BackButton } from '@/components/design-system/BackButton'
 import { pressFeedback } from '@/components/design-system/tokens'
 import { useBackButtonVisibility } from '@/components/design-system/useBackButtonVisibility'
-import { getWebPricingUrl } from '@/lib/config/webAppUrl'
+import { TierGateLoading } from '@/components/tier/PremiumLock'
+import { AI_GENERATED_DISCLOSURE_BG, PAYWALL_DISCLOSURE } from '@/lib/legal/compliance-copy'
+import { getWebAppUrl, getWebPricingUrl } from '@/lib/config/webAppUrl'
 import { hapticSelect } from '@/lib/haptics'
 import {
+  PAYWALL,
+  PURCHASE_FLOW_COPY,
   STORE_MANAGED_SUBSCRIPTION,
   STORE_SUBSCRIPTIONS_URL,
 } from '@/lib/tier/subscription-copy'
+import { useOfferings, usePurchaseFlow } from '@/hooks/usePaywall'
 import {
   useBillingPortal,
   useCancelSubscription,
@@ -21,18 +26,19 @@ import {
 } from '@/hooks/useSubscription'
 
 /**
- * /you/premium — Batch 5 close. Replaces the P.5 stub. Ports web's
- * SettingsContent.tsx (status/management half only — the purchase/paywall
- * half stays halt-required, see COMPLETION-TRACKER.md). Also closes the
- * dead end left by Batch 4's Кръг teaser CTA, which already routes here.
+ * /you/premium — subscription status/management + the RevenueCat paywall.
  *
- * Free-state CTA has no native purchase flow yet (RevenueCat paywall UI is
- * its own halt-required batch) — it opens web's /pricing in the system
- * browser instead. That URL is a guarded config value (getWebPricingUrl),
- * not a hardcoded domain: web has no confirmed live deployment as of
- * 2026-08-14 (Vercel deploy still broken, founder-owned). If unset, the CTA
- * section doesn't render at all rather than linking nowhere — same
- * fail-loudly shape as RevenueCatProvider's placeholder-key check.
+ * Status half (Batch 5): ports web's SettingsContent.tsx — free / expired
+ * / active (Stripe) / cancelling (Stripe) / store-managed (App Store or
+ * Play). Also the destination of Batch 4's Кръг teaser CTA and the Oracle
+ * cap CTA.
+ *
+ * Purchase half (Phase 2): the free / expired branches render
+ * `<PaywallSection />` — offerings-driven, prices from the store, purchase
+ * + restore via `usePaywall`, server tier as the gate (see that hook).
+ * `<FreeStateCta />` (web /pricing in the system browser) remains only as
+ * the fallback when offerings can't load, e.g. the SDK isn't configured
+ * under Expo Go.
  */
 
 const PREMIUM_FEATURES = [
@@ -172,7 +178,7 @@ export default function PremiumScreen() {
                   С Премиум получаваш:
                 </Text>
                 <FeatureList />
-                <FreeStateCta />
+                <PaywallSection />
               </View>
             )}
 
@@ -192,7 +198,7 @@ export default function PremiumScreen() {
                   Абонирай се отново и продължи да се наслаждаваш на пълния достъп до Stellaeum.
                 </Text>
                 <FeatureList />
-                <FreeStateCta />
+                <PaywallSection />
               </View>
             )}
 
@@ -399,6 +405,182 @@ function FeatureList() {
         </View>
       ))}
     </View>
+  )
+}
+
+/**
+ * The offerings-driven paywall (Phase 2). Renders the packages from
+ * RevenueCat's *current* offering (never a by-identifier lookup), each
+ * priced from `product.priceString` — never a hardcoded figure. Purchase
+ * goes through `usePurchaseFlow`, which treats a user-cancel as a no-op
+ * and, on success, waits for the server tier to flip before anything
+ * unlocks (SERVER TIER IS THE GATE — the SDK entitlement is not trusted
+ * for gating). If offerings can't load (SDK not configured, e.g. Expo Go)
+ * it falls back to the web-checkout escape hatch.
+ */
+function PaywallSection() {
+  const { data: packages, isLoading, isError } = useOfferings()
+  const { status, purchase, restore, reset } = usePurchaseFlow()
+  const [selectedType, setSelectedType] = useState<string | null>(null)
+  const [restoreEmpty, setRestoreEmpty] = useState(false)
+
+  const purchasing = status === 'purchasing'
+
+  // A user dismissing the native sheet is not an error — drop straight
+  // back to the paywall (reset in an effect, never during render).
+  useEffect(() => {
+    if (status === 'cancelled') reset()
+  }, [status, reset])
+
+  if (status === 'activating' || status === 'active') {
+    return (
+      <View className="items-center py-8">
+        <ActivityIndicator color="#94a3b8" />
+        <Text className="mt-4 text-center text-[14px] leading-6 text-slate-300">
+          {PURCHASE_FLOW_COPY.activating}
+        </Text>
+      </View>
+    )
+  }
+
+  if (status === 'activation-timeout') {
+    return (
+      <Text className="py-6 text-center text-[14px] leading-6 text-slate-300">
+        {PURCHASE_FLOW_COPY.activationTimeout}
+      </Text>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <View className="py-6">
+        <TierGateLoading variant="block" />
+      </View>
+    )
+  }
+
+  if (isError || !packages || packages.length === 0) {
+    return (
+      <View>
+        <Text className="mb-4 text-[13px] leading-5 text-slate-500">
+          {PURCHASE_FLOW_COPY.offeringsUnavailable}
+        </Text>
+        <FreeStateCta />
+      </View>
+    )
+  }
+
+  const selected =
+    packages.find((p) => p.packageType === selectedType) ??
+    packages.find((p) => p.packageType === 'ANNUAL') ??
+    packages[0]
+
+  return (
+    <View>
+      <View className="gap-3">
+        {packages.map((p) => {
+          const isSel = selected.pkg.identifier === p.pkg.identifier
+          const label = PAYWALL.packageLabel[p.packageType] ?? p.priceString
+          const period = PAYWALL.pricePeriod[p.packageType]
+          return (
+            <Pressable
+              key={p.pkg.identifier}
+              onPress={() => {
+                hapticSelect()
+                setSelectedType(p.packageType)
+                setRestoreEmpty(false)
+              }}
+              className={`rounded-2xl border px-4 py-3.5 ${
+                isSel ? 'border-bronze/50 bg-bronze/[0.08]' : 'border-slate-700/60 bg-white/[0.02]'
+              }`}
+              style={({ pressed }) => pressFeedback(pressed)}
+            >
+              <Text className="text-[15px] font-medium text-slate-100">{label}</Text>
+              <Text className="mt-0.5 text-[14px] text-slate-400">
+                {p.priceString}
+                {period ? ` ${period}` : ''}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+
+      {/* Compliance disclosure — before the purchase button (point of decision). */}
+      <View className="mt-5 gap-2">
+        <Text className="text-[12px] leading-5 text-slate-500">
+          {PAYWALL_DISCLOSURE.chargedToStore}
+        </Text>
+        <Text className="text-[12px] leading-5 text-slate-500">
+          {PAYWALL_DISCLOSURE.autoRenewal}
+        </Text>
+        <Text className="text-[12px] leading-5 text-slate-500">
+          {PAYWALL_DISCLOSURE.cancelInstructions}
+        </Text>
+        <Text className="text-[12px] leading-5 text-slate-500">{AI_GENERATED_DISCLOSURE_BG}</Text>
+        <View className="flex-row flex-wrap gap-x-5 gap-y-1 pt-1">
+          <LegalLink label={PAYWALL_DISCLOSURE.termsLinkLabel} path="/terms" />
+          <LegalLink label={PAYWALL_DISCLOSURE.privacyLinkLabel} path="/privacy" />
+        </View>
+      </View>
+
+      {status === 'error' && (
+        <Text className="mt-4 text-center text-[13px] text-rose-300/85">
+          {PURCHASE_FLOW_COPY.error}
+        </Text>
+      )}
+      {restoreEmpty && (
+        <Text className="mt-4 text-center text-[13px] text-slate-400">
+          {PURCHASE_FLOW_COPY.restoreNothingFound}
+        </Text>
+      )}
+
+      <Pressable
+        onPress={() => {
+          hapticSelect()
+          setRestoreEmpty(false)
+          void purchase(selected.pkg)
+        }}
+        disabled={purchasing}
+        className="mt-5 items-center self-stretch rounded-full border border-bronze/40 bg-bronze/15 px-6 py-3.5"
+        style={({ pressed }) => pressFeedback(pressed)}
+      >
+        {purchasing ? (
+          <ActivityIndicator color="rgba(253, 230, 138, 0.9)" />
+        ) : (
+          <Text className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.3em] text-bronze-text">
+            {PAYWALL.purchaseButton}
+          </Text>
+        )}
+      </Pressable>
+
+      <Pressable
+        onPress={() => {
+          hapticSelect()
+          void restore().then((found) => setRestoreEmpty(!found))
+        }}
+        disabled={purchasing}
+        className="mt-3 items-center py-2"
+        style={({ pressed }) => pressFeedback(pressed)}
+      >
+        <Text className="text-[12.5px] text-slate-400 underline">{PAYWALL.restoreButton}</Text>
+      </Pressable>
+    </View>
+  )
+}
+
+function LegalLink({ label, path }: { label: string; path: '/terms' | '/privacy' }) {
+  const base = getWebAppUrl()
+  if (!base) return null
+  return (
+    <Pressable
+      onPress={() => {
+        hapticSelect()
+        void WebBrowser.openBrowserAsync(`${base}${path}`)
+      }}
+      style={({ pressed }) => pressFeedback(pressed)}
+    >
+      <Text className="text-[12px] text-slate-400 underline">{label}</Text>
+    </Pressable>
   )
 }
 

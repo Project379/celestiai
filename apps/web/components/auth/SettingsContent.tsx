@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useClerk } from '@clerk/nextjs'
 import Link from 'next/link'
 
+import { STORE_MANAGED_SUBSCRIPTION } from '@/lib/tier/subscription-copy'
+
 interface SubscriptionData {
   status: string
   cancelAtPeriodEnd: boolean
@@ -68,6 +70,11 @@ export function SettingsContent({
     !isFree && isStripe && subscriptionData !== null && !subscriptionData.cancelAtPeriodEnd
   const isCancelling =
     !isFree && isStripe && subscriptionData !== null && subscriptionData.cancelAtPeriodEnd
+  // Premium bought through the App Store / Play Store (RevenueCat). No
+  // `subscriptionData`; managed in that store's own subscription settings,
+  // never the Stripe portal. Without this branch a store subscriber who
+  // opens web account settings sees the header and nothing under it.
+  const isStoreManaged = !isFree && subscriptionProvider === 'revenuecat'
 
   const planName =
     subscriptionData?.interval === 'year'
@@ -275,6 +282,33 @@ export function SettingsContent({
               {portalLoading ? 'Зареждане...' : 'Управление на плащанията'}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* State E: subscription managed by the App Store / Play Store */}
+      {isStoreManaged && (
+        <div className="space-y-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-display text-base font-medium text-slate-100">
+              {STORE_MANAGED_SUBSCRIPTION.planName}
+            </span>
+            <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-emerald-300">
+              {STORE_MANAGED_SUBSCRIPTION.statusBadge}
+            </span>
+          </div>
+
+          {subscriptionExpiresAt && (
+            <div className="flex items-center justify-between border-b border-slate-200/[0.06] pb-3 text-sm">
+              <span className="text-slate-500">{STORE_MANAGED_SUBSCRIPTION.activeUntilLabel}</span>
+              <span className="text-slate-200">
+                {formatBgDateFromString(subscriptionExpiresAt)}
+              </span>
+            </div>
+          )}
+
+          <p className="text-sm leading-relaxed text-slate-400">
+            {STORE_MANAGED_SUBSCRIPTION.managedNote}
+          </p>
         </div>
       )}
 

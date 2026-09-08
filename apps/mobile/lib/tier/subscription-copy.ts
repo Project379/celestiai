@@ -35,3 +35,35 @@ export const STORE_MANAGED_SUBSCRIPTION = {
   managedNote: `Този абонамент е закупен през ${STORE} и се управлява оттам.`,
   manageButtonLabel: `Управление в ${STORE}`,
 } as const
+
+/**
+ * Paywall — the offerings-driven purchase surface in `/you/premium`'s
+ * free / expired branch. Package name + price-period suffix are keyed by
+ * RevenueCat's `PACKAGE_TYPE` string; anything not monthly/annual falls
+ * back to no suffix (the price string alone still renders).
+ */
+export const PAYWALL = {
+  packageLabel: {
+    MONTHLY: 'Месечен',
+    ANNUAL: 'Годишен',
+  } as Record<string, string | undefined>,
+  pricePeriod: {
+    MONTHLY: 'на месец',
+    ANNUAL: 'на година',
+  } as Record<string, string | undefined>,
+  purchaseButton: 'Абонирай се',
+  restoreButton: 'Възстанови покупките',
+  /** CTA on the Oracle free-cap surface — matches web's ratified label. */
+  unlockCta: 'Отключи Премиум',
+} as const
+
+/** Purchase-flow status messages (see usePaywall.ts `PurchaseFlowStatus`). */
+export const PURCHASE_FLOW_COPY = {
+  activating: 'Плащането е успешно. Активираме Премиум…',
+  activationTimeout: 'Плащането е успешно. Премиум се активира до няколко минути.',
+  error: 'Плащането не беше завършено. Опитай отново.',
+  restoreNothingFound: 'Няма покупки за възстановяване с този профил.',
+  /** Offerings couldn't load (SDK not configured, network); the web
+   *  checkout fallback renders under this. Added 2026-09-08. */
+  offeringsUnavailable: 'Плановете не се заредиха.',
+} as const

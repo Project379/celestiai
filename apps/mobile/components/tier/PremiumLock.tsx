@@ -7,10 +7,14 @@ import { pressFeedback } from '@/components/design-system/tokens'
  * The single free-tier locked-state primitive for mobile (tier item 5).
  * Mirrors apps/web/components/tier/PremiumLock.tsx.
  *
- * No CTA button by default: the mobile purchase path is the RevenueCat
- * native paywall, which does not exist (STELLAEUM_PLACEHOLDER: PAYWALL-MOBILE).
- * Surfaces that already route somewhere sensible (e.g. the crystals gate →
- * /you/premium management screen) pass `onPressCta` + `cta` explicitly.
+ * No CTA button by default — surfaces that want one pass `cta` +
+ * `onPressCta` explicitly (the Oracle cap notice and the crystals/Кръг
+ * gates route to `/you/premium`, where the RevenueCat paywall now lives).
+ *
+ * STELLAEUM_PLACEHOLDER: PAYWALL-MOBILE — the paywall is built
+ * (apps/mobile/app/(authed)/you/premium.tsx + hooks/usePaywall.ts) but is
+ * unverified against a real store and blocked on the Vercel-prod webhook
+ * secret (RC-WEBHOOK-SECRET). See .planning/PLACEHOLDERS.md.
  */
 
 interface PremiumLockProps {
