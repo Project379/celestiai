@@ -29,14 +29,15 @@ regexes = [
   # Literal placeholder text used in docs/plan examples, never a real
   # secret value.
   '''YOUR_CRON_SECRET''',
-]
-
-# One-off false positive: an AsyncStorage key name
-# ('stellaeum.notifications.prompted.v1'), not a credential — high enough
-# entropy/shape to trip the generic-api-key rule. Fingerprint-scoped
-# rather than a path/regex allowlist since the file is live application
-# code that could legitimately hold a real secret later.
-commits = [
-  "12f690060eee77840264eacb04e75eb3537224b5",
+  # AsyncStorage key names in apps/mobile/lib/notifications/
+  # maybePromptPushPermission.ts — dotted identifier strings, not
+  # credentials, but high enough entropy/shape to trip generic-api-key.
+  # Was a commit-fingerprint allowlist (commit 12f69006) until 2026-09-09,
+  # when re-touching those lines (adding `export` for the settings toggle,
+  # PUSH-ORPHAN) moved them into a new commit the fingerprint didn't
+  # cover. A value-scoped regex on these three specific literals is
+  # narrow — it does not blanket-allow the file, which is live code that
+  # could legitimately hold a real secret later.
+  '''stellaeum\.notifications\.(prompted|push_token|user_disabled)\.v1''',
 ]
 
