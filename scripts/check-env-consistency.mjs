@@ -181,6 +181,24 @@ const declaredAnywhere = (name) =>
 // ---------------------------------------------------------------------------
 const failures = []
 
+// (0) SUPABASE_SECRET_KEY is pinned to build.env and must never move to
+// globalPassThroughEnv. `next build` genuinely reads it: apps/web/app/
+// (protected)/you/crystals/guide/page.tsx is an async Server Component
+// that calls createServiceSupabaseClient() during page-data collection.
+// It is caught (→ empty catalog) so a passThrough move would produce a
+// GREEN build with silently-wrong content the day that route (or any
+// Supabase-reading Server Component) gains `revalidate` / goes static.
+// 2026-09-09 prove-build confirmed the read. Do not "fix" this by moving
+// the var — fix it by keeping it here. See turbo.json's "//" note.
+if (!buildEnv.has('SUPABASE_SECRET_KEY') || passThrough.has('SUPABASE_SECRET_KEY')) {
+  failures.push({
+    rule: 'supabase-secret-key-must-stay-in-build-env',
+    name: 'SUPABASE_SECRET_KEY',
+    detail:
+      'SUPABASE_SECRET_KEY must be in turbo.json tasks.build.env and NOT in globalPassThroughEnv. next build reads it (crystals/guide/page.tsx Server Component, page-data collection). Moving it to passThrough gives a green build that ships an empty catalog once any Supabase-reading Server Component is static/ISR.',
+  })
+}
+
 // (a) read but declared nowhere
 for (const [name, files] of reads) {
   if (isAllowed(name, 'undeclared')) continue
