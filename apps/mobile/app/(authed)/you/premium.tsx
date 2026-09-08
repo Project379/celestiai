@@ -77,6 +77,10 @@ export default function PremiumScreen() {
   const portal = useBillingPortal()
   const cancel = useCancelSubscription()
   const reactivate = useReactivateSubscription()
+  // Lifted here, not inside PaywallSection: when the server tier flips
+  // after a purchase, the free-tier branch (and PaywallSection with it)
+  // unmounts. The flow's poll must outlive that.
+  const purchaseFlow = usePurchaseFlow()
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
 
@@ -169,7 +173,31 @@ export default function PremiumScreen() {
           </View>
         )}
 
-        {!isLoading && !isError && (
+        {/* Post-purchase activation window — rendered at screen level so it
+            survives the free-branch unmount when the server tier flips. */}
+        {!isLoading && !isError &&
+          (purchaseFlow.status === 'activating' || purchaseFlow.status === 'active') && (
+            <View className="items-center py-16">
+              <ActivityIndicator color="#94a3b8" />
+              <Text className="mt-5 text-center text-[15px] leading-6 text-slate-300">
+                {PURCHASE_FLOW_COPY.activating}
+              </Text>
+            </View>
+          )}
+
+        {!isLoading && !isError && purchaseFlow.status === 'activation-timeout' && (
+          <View className="items-center py-16">
+            <Text className="text-center text-[15px] leading-7 text-slate-300">
+              {PURCHASE_FLOW_COPY.activationTimeout}
+            </Text>
+          </View>
+        )}
+
+        {!isLoading &&
+          !isError &&
+          purchaseFlow.status !== 'activating' &&
+          purchaseFlow.status !== 'active' &&
+          purchaseFlow.status !== 'activation-timeout' && (
           <>
             {isFree && !isExpired && (
               <View>
@@ -178,7 +206,7 @@ export default function PremiumScreen() {
                   С Премиум получаваш:
                 </Text>
                 <FeatureList />
-                <PaywallSection />
+                <PaywallSection flow={purchaseFlow} />
               </View>
             )}
 
@@ -198,7 +226,7 @@ export default function PremiumScreen() {
                   Абонирай се отново и продължи да се наслаждаваш на пълния достъп до Stellaeum.
                 </Text>
                 <FeatureList />
-                <PaywallSection />
+                <PaywallSection flow={purchaseFlow} />
               </View>
             )}
 
@@ -411,18 +439,20 @@ function FeatureList() {
 /**
  * The offerings-driven paywall (Phase 2). Renders the packages from
  * RevenueCat's *current* offering (never a by-identifier lookup), each
- * priced from `product.priceString` — never a hardcoded figure. Purchase
- * goes through `usePurchaseFlow`, which treats a user-cancel as a no-op
- * and, on success, waits for the server tier to flip before anything
- * unlocks (SERVER TIER IS THE GATE — the SDK entitlement is not trusted
- * for gating). If offerings can't load (SDK not configured, e.g. Expo Go)
- * it falls back to the web-checkout escape hatch.
+ * priced from `product.priceString` — never a hardcoded figure. The
+ * purchase flow (`usePurchaseFlow`) is owned by `PremiumScreen`, not
+ * here — it treats a user-cancel as a no-op and, on success, waits for
+ * the server tier to flip before anything unlocks (SERVER TIER IS THE
+ * GATE — the SDK entitlement is not trusted for gating), and the
+ * "activating" / "coming soon" views are rendered at screen level so
+ * they outlive this component's unmount. If offerings can't load (SDK
+ * not configured, e.g. Expo Go) it falls back to the web-checkout hatch.
  */
-function PaywallSection() {
+function PaywallSection({ flow }: { flow: ReturnType<typeof usePurchaseFlow> }) {
+  const { status, purchase, restore, reset } = flow
   const { data: packages, isLoading, isError } = useOfferings()
-  const { status, purchase, restore, reset } = usePurchaseFlow()
   const [selectedType, setSelectedType] = useState<string | null>(null)
-  const [restoreEmpty, setRestoreEmpty] = useState(false)
+  const [restoreNote, setRestoreNote] = useState(false)
 
   const purchasing = status === 'purchasing'
 
@@ -431,25 +461,6 @@ function PaywallSection() {
   useEffect(() => {
     if (status === 'cancelled') reset()
   }, [status, reset])
-
-  if (status === 'activating' || status === 'active') {
-    return (
-      <View className="items-center py-8">
-        <ActivityIndicator color="#94a3b8" />
-        <Text className="mt-4 text-center text-[14px] leading-6 text-slate-300">
-          {PURCHASE_FLOW_COPY.activating}
-        </Text>
-      </View>
-    )
-  }
-
-  if (status === 'activation-timeout') {
-    return (
-      <Text className="py-6 text-center text-[14px] leading-6 text-slate-300">
-        {PURCHASE_FLOW_COPY.activationTimeout}
-      </Text>
-    )
-  }
 
   if (isLoading) {
     return (
@@ -488,7 +499,7 @@ function PaywallSection() {
               onPress={() => {
                 hapticSelect()
                 setSelectedType(p.packageType)
-                setRestoreEmpty(false)
+                setRestoreNote(false)
               }}
               className={`rounded-2xl border px-4 py-3.5 ${
                 isSel ? 'border-bronze/50 bg-bronze/[0.08]' : 'border-slate-700/60 bg-white/[0.02]'
@@ -528,7 +539,7 @@ function PaywallSection() {
           {PURCHASE_FLOW_COPY.error}
         </Text>
       )}
-      {restoreEmpty && (
+      {restoreNote && (
         <Text className="mt-4 text-center text-[13px] text-slate-400">
           {PURCHASE_FLOW_COPY.restoreNothingFound}
         </Text>
@@ -537,7 +548,7 @@ function PaywallSection() {
       <Pressable
         onPress={() => {
           hapticSelect()
-          setRestoreEmpty(false)
+          setRestoreNote(false)
           void purchase(selected.pkg)
         }}
         disabled={purchasing}
@@ -556,7 +567,9 @@ function PaywallSection() {
       <Pressable
         onPress={() => {
           hapticSelect()
-          void restore().then((found) => setRestoreEmpty(!found))
+          // Show "nothing to restore" ONLY for a genuine empty restore —
+          // not for a cancel or an error (the error line handles those).
+          void restore().then((result) => setRestoreNote(result === 'none'))
         }}
         disabled={purchasing}
         className="mt-3 items-center py-2"

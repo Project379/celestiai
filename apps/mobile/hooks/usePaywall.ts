@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Purchases, {
   PURCHASES_ERROR_CODE,
@@ -21,26 +21,35 @@ import { SUBSCRIPTION_KEY, type SubscriptionOverview } from '@/hooks/useSubscrip
  * on the DB tier, so trusting the SDK entitlement to unlock the UI would
  * show a premium app whose every API call 403s.
  *
- * So on a successful purchase this hook does NOT set any local "isPremium"
- * — it invalidates the subscription query and refetches it on a bounded
- * poll until the server itself reports `tier === 'premium'`. The caller
- * renders a distinct "activating" state for that window, and a
- * "still activating" state if the poll times out (the purchase still
- * succeeded — never an error). `isPremium` everywhere else in the app
- * stays derived from `useSubscription()`, i.e. the server.
+ * On a successful purchase this hook does NOT set any local "isPremium".
+ * It refetches the subscription overview until the *server* itself reports
+ * `tier === 'premium'`: a short fast phase ('activating', spinner-worthy),
+ * then a longer quiet phase where the caller shows a "coming in a few
+ * minutes" message but polling continues silently so it self-heals with
+ * no user gesture. `isPremium` everywhere else stays derived from the
+ * server via `useSubscription()`.
+ *
+ * MUST be mounted somewhere that outlives the paywall itself (e.g. the
+ * screen, not the free-tier branch) — when the server tier flips, the
+ * branch that renders the paywall unmounts, and an in-flight poll whose
+ * state lived in that branch would be setting state on a dead component.
  */
 
-const ACTIVATION_POLL_ATTEMPTS = 10
-const ACTIVATION_POLL_INTERVAL_MS = 3000
+const FAST_POLL_ATTEMPTS = 6
+const FAST_POLL_INTERVAL_MS = 3000
+const SLOW_POLL_ATTEMPTS = 12
+const SLOW_POLL_INTERVAL_MS = 6000
 
 export type PurchaseFlowStatus =
   | 'idle'
-  | 'purchasing' // native purchase sheet is up / request in flight
-  | 'activating' // purchase succeeded, waiting for the server tier to flip
-  | 'active' // server now reports premium — caller should re-render unlocked
+  | 'purchasing' // native purchase / restore sheet is up
+  | 'activating' // purchase succeeded, first poll for the server tier
+  | 'activation-timeout' // still polling, quietly — server tier not flipped yet
+  | 'active' // server now reports premium — the screen re-renders unlocked
   | 'cancelled' // user dismissed the native sheet — NOT an error
-  | 'activation-timeout' // purchase succeeded but the webhook has not landed yet
   | 'error' // a real failure — network, store problem, invalid product
+
+export type RestoreResult = 'restored' | 'none' | 'cancelled' | 'error'
 
 export interface PaywallPackage {
   /** The RevenueCat package. Passed straight back to `purchase()`. */
@@ -58,6 +67,10 @@ const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
 
 function isPurchasesError(err: unknown): err is PurchasesError {
   return typeof err === 'object' && err !== null && 'code' in err && 'message' in err
+}
+
+function isCancel(err: unknown): boolean {
+  return isPurchasesError(err) && err.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR
 }
 
 /**
@@ -91,80 +104,96 @@ export function usePurchaseFlow() {
   const { apiFetch } = useApiClient()
   const [status, setStatus] = useState<PurchaseFlowStatus>('idle')
 
-  const reset = useCallback(() => setStatus('idle'), [])
+  // Guards against a late poll iteration setting state after this hook's
+  // owner unmounts (leaving the screen entirely).
+  const aliveRef = useRef(true)
+  useEffect(() => {
+    aliveRef.current = true
+    return () => {
+      aliveRef.current = false
+    }
+  }, [])
+  const set = useCallback((s: PurchaseFlowStatus) => {
+    if (aliveRef.current) setStatus(s)
+  }, [])
+
+  const reset = useCallback(() => set('idle'), [set])
+
+  /** One server-tier check. Returns true once the DB reports premium. */
+  const serverIsPremium = useCallback(async (): Promise<boolean> => {
+    try {
+      const overview = (await apiFetch('/api/stripe/subscription')) as SubscriptionOverview
+      queryClient.setQueryData(SUBSCRIPTION_KEY, overview)
+      return overview.tier === 'premium'
+    } catch {
+      return false
+    }
+  }, [apiFetch, queryClient])
 
   /**
-   * Refetch the server subscription overview until it reports premium, or
-   * until the bounded attempts run out. Returns true if the server flipped.
+   * Poll until the server flips. Fast phase reports 'activating'; if that
+   * runs out it drops to 'activation-timeout' and keeps polling quietly.
    */
-  const waitForServerPremium = useCallback(async (): Promise<boolean> => {
-    for (let attempt = 0; attempt < ACTIVATION_POLL_ATTEMPTS; attempt++) {
-      await queryClient.invalidateQueries({ queryKey: SUBSCRIPTION_KEY })
-      try {
-        const overview = (await apiFetch('/api/stripe/subscription')) as SubscriptionOverview
-        queryClient.setQueryData(SUBSCRIPTION_KEY, overview)
-        if (overview.tier === 'premium') return true
-      } catch {
-        // transient — keep polling
-      }
-      await delay(ACTIVATION_POLL_INTERVAL_MS)
+  const waitForServerPremium = useCallback(async () => {
+    for (let i = 0; i < FAST_POLL_ATTEMPTS; i++) {
+      if (!aliveRef.current) return
+      if (await serverIsPremium()) return set('active')
+      await delay(FAST_POLL_INTERVAL_MS)
     }
-    return false
-  }, [apiFetch, queryClient])
+    set('activation-timeout')
+    for (let i = 0; i < SLOW_POLL_ATTEMPTS; i++) {
+      if (!aliveRef.current) return
+      await delay(SLOW_POLL_INTERVAL_MS)
+      if (await serverIsPremium()) return set('active')
+    }
+    // Give up polling; leave the status at 'activation-timeout'. The
+    // purchase still succeeded — useSubscription's own refetch (focus /
+    // reconnect) will eventually surface premium and re-render the screen.
+  }, [serverIsPremium, set])
 
   const purchase = useCallback(
     async (pkg: PurchasesPackage) => {
-      setStatus('purchasing')
+      set('purchasing')
       try {
         await Purchases.purchasePackage(pkg)
       } catch (err) {
-        if (isPurchasesError(err) && err.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
-          setStatus('cancelled')
-          return
-        }
+        if (isCancel(err)) return set('cancelled')
         logError('ERR-MOB-RC-008', err)
-        setStatus('error')
-        return
+        return set('error')
       }
-      // Purchase accepted by the store. Do NOT unlock on the SDK
-      // entitlement — wait for the server tier.
-      setStatus('activating')
-      const flipped = await waitForServerPremium()
-      setStatus(flipped ? 'active' : 'activation-timeout')
+      set('activating')
+      await waitForServerPremium()
     },
-    [waitForServerPremium],
+    [set, waitForServerPremium],
   )
 
   /**
-   * App Store requires a restore control. After a restore, apply the same
-   * server-tier wait: a restored entitlement still has to reach the DB via
-   * the webhook (RevenueCat fires a transfer/renewal event). Returns
-   * whether an active `premium` entitlement was found at all, so the caller
-   * can distinguish "nothing to restore" from "restored, now activating".
+   * App Store requires a restore control. A restored entitlement still has
+   * to reach the DB via the webhook, so it gets the same server-tier wait.
+   * The result is discriminated so the caller shows "nothing to restore"
+   * ONLY for `'none'` — not for a cancel or an error.
    */
-  const restore = useCallback(async (): Promise<boolean> => {
-    setStatus('purchasing')
+  const restore = useCallback(async (): Promise<RestoreResult> => {
+    set('purchasing')
     try {
       const customerInfo = await Purchases.restorePurchases()
-      const hasPremium = customerInfo.entitlements.active['premium'] != null
-      if (!hasPremium) {
-        setStatus('idle')
-        return false
+      if (customerInfo.entitlements.active['premium'] == null) {
+        set('idle')
+        return 'none'
       }
-      setStatus('activating')
-      const flipped = await waitForServerPremium()
-      setStatus(flipped ? 'active' : 'activation-timeout')
-      return true
+      set('activating')
+      await waitForServerPremium()
+      return 'restored'
     } catch (err) {
-      if (isPurchasesError(err) && err.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
-        setStatus('idle')
-        return false
+      if (isCancel(err)) {
+        set('idle')
+        return 'cancelled'
       }
       logError('ERR-MOB-RC-009', err)
-      setStatus('error')
-      return false
+      set('error')
+      return 'error'
     }
-  }, [waitForServerPremium])
+  }, [set, waitForServerPremium])
 
   return { status, purchase, restore, reset }
 }
