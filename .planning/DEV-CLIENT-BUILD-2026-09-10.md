@@ -107,8 +107,8 @@ here is read from `.env.local` by the cloud build.
 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | `@clerk/expo` init — **app crashes on launch if missing/placeholder** (build #5) | **YES, hard** | EAS env | set before build #6, probably in `preview` env — verify it is in `development` | keep `pk_test_…` (dev instance) — see §5 |
 | `EXPO_PUBLIC_API_BASE` | `lib/api/client.ts` — throws "Missing EXPO_PUBLIC_API_BASE" if unset | **YES, hard** | EAS env | prior builds baked `http://10.0.2.2:3000`; verify + almost certainly change — see §4 note | the HTTPS Vercel deployment URL (recommended), or `http://10.0.2.2:3000` for emulator-only |
 | `EXPO_PUBLIC_APP_VARIANT` | RevenueCat key-shape guard (ERR-MOB-RC-007), only fires when `=== 'production'` | auto | `eas.json → build.development.env` → `"development"` | must NOT be in EAS env | nothing — leave it to eas.json |
-| `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` | `RevenueCatProvider` | YES for purchase test | EAS env | real Test Store key set before the Aug Android build — verify it is in `development` env | Play Store Test Store key (`goog_…` or `test_…`) |
-| `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` | `RevenueCatProvider` (both keys read regardless of platform; ERR-MOB-RC-006 compares them) | not exercised on Android, but set it | EAS env | `[inferred]` never set — iOS never built | the iOS key (`appl_…`) — so ERR-MOB-RC-006 (identical-keys) does not false-fire |
+| `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` | `RevenueCatProvider` | YES for purchase test | EAS env | real Test Store key set before the Aug Android build — verify it is in `development` env | RevenueCat **Test Store** key (`test_…`) — same value as the iOS var pre-cutover (ERR-MOB-RC-006 now allows equal `test_…` keys) |
+| `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` | `RevenueCatProvider` (both keys read regardless of platform; ERR-MOB-RC-006 compares them) | not exercised on Android, but set it so the var is not empty | EAS env | `[inferred]` never set — iOS never built | the **same** `test_…` Test Store key as the Android var — there is no `appl_…` key until platform apps exist (REVENUECAT-PLATFORM-KEYS); ERR-MOB-RC-006 now allows equal `test_…` keys |
 | `EXPO_PUBLIC_WEB_APP_URL` | `lib/config/webAppUrl.ts` — placeholder guard hides the "subscribe on web" CTA; logs ERR-MOB-WEBURL-001 | soft (CTA hidden without it) | EAS env | `[inferred]` **missing** (COMPLETION-TRACKER L3005, PLACEHOLDERS APP-URL-MOBILE OPEN) | the Vercel deployment origin, no trailing slash |
 | `EXPO_PUBLIC_SENTRY_DSN` | `lib/monitoring/sentry.ts` — `if (dsn)` guard, no-ops if unset | soft (no crash reporting without it) | EAS env | set before build #6, probably `preview` env; PLACEHOLDERS EAS-SENTRY-DSN still OPEN/unconfirmed | mobile Sentry DSN (currently shares web's project — a separate mobile project is a founder action, not a blocker) |
 | `EXPO_PUBLIC_POSTHOG_KEY` | `lib/analytics/posthog.ts` — logs "analytics disabled" + returns null if missing | soft (no analytics without it) | EAS env | `[inferred]` **missing** — PostHog RN added Sep 3, after the last build | PostHog project key (same project as web) |
@@ -205,21 +205,34 @@ Run `pnpm --filter web dev` (or use the Vercel deploy) and start
      RevenueCat dashboard, or no products attached. Not code.
    - *Fail — only one package, or wrong `packageType`:* dashboard offering
      is missing the monthly or annual package.
-   - *Prices:* come from `product.priceString`, store-localized. `6,99 €`
-     vs `€6.99` is a **format** difference, not a failure. A wrong
-     *number* against the frozen **€6.99 monthly / €59.99 annual** is a
-     Play Console product-price config issue, not code.
+   - *Prices:* come from `product.priceString`, formatted by RevenueCat
+     from the Test Store product's configured price + currency (no real
+     store locale involved). `6,99 €` vs `€6.99` is a **format**
+     difference, not a failure. A wrong *number* against the frozen
+     **€6.99 monthly / €59.99 annual** is a Test Store product-price
+     config issue in the RevenueCat dashboard, not code.
    - *Fail — `[RevenueCat] isConfigured() -> false` in logcat, or
      ERR-MOB-RC-001/002:* the Android API key is missing or still a
      `REPLACE_WITH_` placeholder in EAS env (config).
 
-3. **Purchase completes.** Tap a package → native Google Play sheet (use
-   a licensed test account / Play Console internal testing). Sheet
-   completes, hook goes `purchasing → activating`.
-   - *Fail — sheet never appears / ERR-MOB-RC-008:* product ID mismatch
-     between RevenueCat and Play Console, or the test account is not a
-     licensed tester (config).
-   - *`cancelled` state after dismissing the sheet:* **not an error** —
+3. **Purchase completes.** We are on RevenueCat's **Test Store** (virtual
+   — no Play Console, no App Store Connect, no Google/Apple account).
+   Tap a package → the SDK does **not** invoke a native store sheet;
+   instead RevenueCat renders its own **Test Store modal** showing the
+   product metadata with buttons to simulate a **successful** purchase, a
+   **failed** purchase, or **cancel**. Tap the success button → hook goes
+   `purchasing → activating`. **Any signed-in user can purchase — no
+   designated tester account** (optionally restrictable by user ID in the
+   dashboard's Sandbox Testing Access settings, which we have not set).
+   - *"Did the sheet appear?"* = the RevenueCat-rendered modal with the
+     three simulate buttons. If a **native Google Play** dialog appears
+     instead, the app is running with a `goog_…` production key, not the
+     `test_…` Test Store key — wrong key in the EAS env (config).
+   - *Fail — no modal at all, or ERR-MOB-RC-008 on tap:* the tapped
+     package's product is not attached to the current offering in the
+     RevenueCat dashboard, or the product identifier is malformed
+     (config — all in the RevenueCat dashboard).
+   - *`cancelled` state after dismissing the modal:* **not an error** —
      by design.
 
 4. **Webhook lands and the tier flips.** After the purchase the hook
