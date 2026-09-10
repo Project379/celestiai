@@ -280,6 +280,8 @@ function elementModifier(signA?: string, signB?: string): number {
 }
 
 function houseSignOverlap(chartA: ChartData, chartB: ChartData, houseNumber: number): number {
+  // Estimated birth times cannot supply reliable house cusps.
+  if (!chartA.birthTimeKnown || !chartB.birthTimeKnown) return 0
   const a = chartA.houses.find((house) => house.number === houseNumber)
   const b = chartB.houses.find((house) => house.number === houseNumber)
   if (!a || !b) return 0
