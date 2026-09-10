@@ -51,6 +51,14 @@ import { logError } from '@/lib/monitoring/logError'
 
 const PLACEHOLDER_PREFIX = 'REPLACE_WITH_'
 
+// A RevenueCat Test Store key (`test_…`) is not platform-scoped — it is
+// issued before any App Store / Play Console app exists, which is exactly
+// the pre-developer-account state (see REVENUECAT-PLATFORM-KEYS in
+// .planning/PLACEHOLDERS.md). One `test_…` key on BOTH platforms is the
+// correct configuration until real platform apps (and thus `appl_…` /
+// `goog_…` keys) can be created at the credentials cutover.
+const TEST_STORE_PREFIX = 'test_'
+
 // RevenueCat issues a distinct public SDK key per store, each with a fixed
 // prefix. A real store build must carry one of these; a Test Store key
 // (`test_…`) or a placeholder in a production build points real purchases
@@ -68,12 +76,24 @@ export function RevenueCatProvider({ children }: { children: React.ReactNode }) 
     const iosKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY
     const androidKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY
 
-    // Guard (a): the two platform keys must never be equal. RevenueCat
-    // always issues a distinct key per store, so identical values mean a
-    // placeholder or a single test key was pasted into both. Both env vars
-    // are read here regardless of the running platform — both ship in the
-    // JS bundle anyway. logError, not a throw: it must not block a build.
-    if (iosKey && androidKey && iosKey === androidKey) {
+    // Guard (a): the two PLATFORM keys must never be equal. RevenueCat
+    // issues a distinct `appl_…` / `goog_…` key per store, so identical
+    // values mean a placeholder or a single platform key was pasted into
+    // both. Both env vars are read here regardless of the running platform
+    // — both ship in the JS bundle anyway. logError, not a throw: it must
+    // not block a build.
+    //
+    // Carve-out: one `test_…` Test Store key on both platforms is the
+    // correct pre-credentials-cutover state (REVENUECAT-PLATFORM-KEYS) —
+    // Test Store keys are not platform-scoped, so equality is expected and
+    // must not warn. The guard still fires for identical NON-`test_` keys,
+    // which is the real misconfiguration it was built for.
+    if (
+      iosKey &&
+      androidKey &&
+      iosKey === androidKey &&
+      !iosKey.startsWith(TEST_STORE_PREFIX)
+    ) {
       logError(
         'ERR-MOB-RC-006',
         new Error(
