@@ -24,6 +24,14 @@ const isProtectedRoute = createRouteMatcher([
   '/subscription/success(.*)',
 ])
 
+// PostHog's ingest host, read from the same env var the client SDK uses
+// (PostHogProvider.tsx) so the CSP allowlist can't drift from what the
+// SDK actually calls. Only connect-src is needed: surveys, the toolbar,
+// session recording, and heatmaps are all disabled in the SDK config, so
+// the only network call posthog-js makes is event capture (POST .../e/)
+// against this same api_host — no separate assets/UI host required.
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST
+
 export default clerkMiddleware(
   async (auth, request) => {
     if (isProtectedRoute(request)) {
@@ -59,6 +67,9 @@ export default clerkMiddleware(
       directives: {
         'img-src': ["'self'", 'blob:', 'data:', 'https:'],
         'font-src': ["'self'", 'https://fonts.gstatic.com'],
+        // Merged additively with Clerk's own connect-src defaults, not a
+        // replacement — see @clerk/nextjs's handleExistingDirective.
+        ...(POSTHOG_HOST ? { 'connect-src': [POSTHOG_HOST] } : {}),
       },
     },
   }

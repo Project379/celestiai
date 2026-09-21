@@ -55,8 +55,21 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn, userId } = useAuth()
   const loggedInUserIdRef = useRef<string | null>(null)
 
+  // Init is deliberately gated on Clerk's isLoaded, not fired on mount.
+  // `persistence: 'memory'` means there is no bootstrap.distinctID by
+  // default, so an init before auth resolves would mint a random
+  // anonymous ID and then immediately identify() it away — repeated on
+  // every reload, that merge chain is exactly what PostHog's "too many
+  // distinct IDs for this person" warning flags. Waiting the few ms for
+  // isLoaded lets a signed-in user bootstrap directly on their real
+  // Clerk ID instead, so no anonymous ID is ever created or merged for
+  // them. Signed-out visitors still get a fresh anonymous ID per reload
+  // (memory persistence, no cookie) — that's unchanged and accepted:
+  // their events were never aliased onto a single person to begin with,
+  // so it's inflated distinct-visitor noise, not the alias-limit failure
+  // mode this gating fixes.
   useEffect(() => {
-    if (didInit) return
+    if (didInit || !isLoaded) return
 
     if (!POSTHOG_KEY || !POSTHOG_HOST) {
       console.error(
@@ -79,6 +92,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       disable_conversations: true,
       enable_heatmaps: false,
       advanced_disable_flags: true,
+      bootstrap:
+        isSignedIn && userId ? { distinctID: userId, isIdentifiedID: true } : undefined,
       before_send: (capture) => {
         if (!capture) return capture
         const properties = { ...capture.properties }
@@ -90,14 +105,21 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         return { ...capture, properties }
       },
     })
-  }, [])
+    if (isSignedIn && userId) {
+      loggedInUserIdRef.current = userId
+    }
+  }, [isLoaded, isSignedIn, userId])
 
-  // Identity — mirrors apps/mobile/lib/purchases/RevenueCatProvider.tsx's
-  // pattern: watch Clerk's reactive auth state rather than hooking a
-  // specific sign-in/out call site, and guard reset() with a ref so it
-  // only fires on a real sign-out (never on a cold anonymous load).
+  // Identity transitions AFTER init — a sign-in or sign-out that happens
+  // later in the same session. Mirrors
+  // apps/mobile/lib/purchases/RevenueCatProvider.tsx's pattern: watch
+  // Clerk's reactive auth state rather than hooking a specific
+  // sign-in/out call site, and guard reset() with a ref so it only fires
+  // on a real sign-out (never on the cold anonymous load handled above).
+  // A no-op immediately after the init effect above, since that effect
+  // already set loggedInUserIdRef.current for a signed-in bootstrap.
   useEffect(() => {
-    if (!isLoaded) return
+    if (!isLoaded || !didInit) return
 
     if (isSignedIn && userId) {
       if (loggedInUserIdRef.current === userId) return
