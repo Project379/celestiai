@@ -19,7 +19,7 @@ import { color, font } from '@/components/design-system/tokens'
 import { useChart } from '@/hooks/useChart'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
-import { posthog } from '@/lib/analytics/posthog'
+import { getPostHog } from '@/lib/analytics/posthog'
 import { getDisplayName } from '@/lib/clerk/displayName'
 
 /**
@@ -98,7 +98,7 @@ export default function ChartScreen() {
         // Storage unavailable — fall through and fire anyway rather than
         // silently never reporting a first view.
       }
-      if (!cancelled) posthog?.capture('chart first viewed')
+      if (!cancelled) getPostHog()?.capture('chart first viewed')
     })()
     return () => {
       cancelled = true

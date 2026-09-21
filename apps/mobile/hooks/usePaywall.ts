@@ -7,6 +7,7 @@ import Purchases, {
 } from 'react-native-purchases'
 
 import { useApiClient } from '@/lib/api/client'
+import { getPostHog } from '@/lib/analytics/posthog'
 import { logError } from '@/lib/monitoring/logError'
 import { SUBSCRIPTION_KEY, type SubscriptionOverview } from '@/hooks/useSubscription'
 
@@ -133,23 +134,38 @@ export function usePurchaseFlow() {
   /**
    * Poll until the server flips. Fast phase reports 'activating'; if that
    * runs out it drops to 'activation-timeout' and keeps polling quietly.
+   * `onActivated` fires exactly once, only when the server itself reports
+   * premium — not on the SDK's local purchase success. Shared by `purchase`
+   * and `restore`; only `purchase` passes it (see `posthog.capture`
+   * call site below for why restore doesn't fire it).
    */
-  const waitForServerPremium = useCallback(async () => {
-    for (let i = 0; i < FAST_POLL_ATTEMPTS; i++) {
-      if (!aliveRef.current) return
-      if (await serverIsPremium()) return set('active')
-      await delay(FAST_POLL_INTERVAL_MS)
-    }
-    set('activation-timeout')
-    for (let i = 0; i < SLOW_POLL_ATTEMPTS; i++) {
-      if (!aliveRef.current) return
-      await delay(SLOW_POLL_INTERVAL_MS)
-      if (await serverIsPremium()) return set('active')
-    }
-    // Give up polling; leave the status at 'activation-timeout'. The
-    // purchase still succeeded — useSubscription's own refetch (focus /
-    // reconnect) will eventually surface premium and re-render the screen.
-  }, [serverIsPremium, set])
+  const waitForServerPremium = useCallback(
+    async (onActivated?: () => void) => {
+      for (let i = 0; i < FAST_POLL_ATTEMPTS; i++) {
+        if (!aliveRef.current) return
+        if (await serverIsPremium()) {
+          set('active')
+          onActivated?.()
+          return
+        }
+        await delay(FAST_POLL_INTERVAL_MS)
+      }
+      set('activation-timeout')
+      for (let i = 0; i < SLOW_POLL_ATTEMPTS; i++) {
+        if (!aliveRef.current) return
+        await delay(SLOW_POLL_INTERVAL_MS)
+        if (await serverIsPremium()) {
+          set('active')
+          onActivated?.()
+          return
+        }
+      }
+      // Give up polling; leave the status at 'activation-timeout'. The
+      // purchase still succeeded — useSubscription's own refetch (focus /
+      // reconnect) will eventually surface premium and re-render the screen.
+    },
+    [serverIsPremium, set],
+  )
 
   const purchase = useCallback(
     async (pkg: PurchasesPackage) => {
@@ -162,7 +178,12 @@ export function usePurchaseFlow() {
         return set('error')
       }
       set('activating')
-      await waitForServerPremium()
+      // Fires on the SERVER tier flip, not the SDK's local purchase
+      // success — matches "server tier is the gate" (see this file's
+      // header comment): a purchase RevenueCat accepts but whose webhook
+      // never lands (never reaches users.subscription_tier) is not
+      // counted as a subscription starting. Bare event, no plan/price.
+      await waitForServerPremium(() => getPostHog()?.capture('subscription started'))
     },
     [set, waitForServerPremium],
   )

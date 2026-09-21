@@ -4,7 +4,7 @@ import * as Haptics from 'expo-haptics'
 
 import { ApiError, useApiClient } from '@/lib/api/client'
 import { useFeatureFlag } from '@/hooks/useFeatureFlag'
-import { posthog } from '@/lib/analytics/posthog'
+import { getPostHog } from '@/lib/analytics/posthog'
 
 export type OracleTopic = 'general' | 'love' | 'career' | 'health'
 
@@ -139,7 +139,7 @@ export function useOracleReading(
       // generation (not the server's cache-hit short-circuit) for a
       // confirmed free-tier user. Bare event: no topic, no content.
       if (options?.isPremium === false && data.cached === false) {
-        posthog?.capture('free Oracle reading generated')
+        getPostHog()?.capture('free Oracle reading generated')
       }
     },
     onError: (err) => {
