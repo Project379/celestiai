@@ -55,74 +55,83 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn, userId } = useAuth()
   const loggedInUserIdRef = useRef<string | null>(null)
 
-  // Init is deliberately gated on Clerk's isLoaded, not fired on mount.
-  // `persistence: 'memory'` means there is no bootstrap.distinctID by
-  // default, so an init before auth resolves would mint a random
-  // anonymous ID and then immediately identify() it away — repeated on
-  // every reload, that merge chain is exactly what PostHog's "too many
-  // distinct IDs for this person" warning flags. Waiting the few ms for
-  // isLoaded lets a signed-in user bootstrap directly on their real
-  // Clerk ID instead, so no anonymous ID is ever created or merged for
-  // them. Signed-out visitors still get a fresh anonymous ID per reload
-  // (memory persistence, no cookie) — that's unchanged and accepted:
-  // their events were never aliased onto a single person to begin with,
-  // so it's inflated distinct-visitor noise, not the alias-limit failure
-  // mode this gating fixes.
+  // One effect, not two. Init (with bootstrap) and the post-init identify/
+  // reset transitions used to live in separate effects with the same
+  // dependency array — in production that let a signed-in cold load reach
+  // the transition effect with the ref not yet reflecting the bootstrap
+  // (a remount losing the component-local ref while the module-level
+  // didInit survives, or the two effects simply landing in different
+  // commits), so identify() re-fired on every load even though bootstrap
+  // had already set the right distinct id — a sixth, uninstrumented event
+  // alongside the five this app is supposed to send. A single effect
+  // removes that ordering hazard entirely, and the transition branch
+  // double-checks against posthog.get_distinct_id() (PostHog's own state,
+  // not a component ref) before calling identify(), so it stays correct
+  // even across a remount.
+  //
+  // Init is gated on Clerk's isLoaded, not fired on mount, so a
+  // signed-in user's very first init can bootstrap directly onto their
+  // real Clerk ID — `persistence: 'memory'` means there's no
+  // bootstrap.distinctID by default, so an init before auth resolves
+  // would mint a throwaway anonymous ID for no reason. Bootstrap alone
+  // fully establishes identity for that cold-load case: no identify()
+  // call is needed there, it would just re-send $identify for an id
+  // that's already current. Signed-out visitors still get a fresh
+  // anonymous ID per reload (memory persistence, no cookie) — unchanged
+  // and accepted: those events were never aliased onto one person to
+  // begin with, so it's distinct-visitor noise, not an alias-limit
+  // problem.
   useEffect(() => {
-    if (didInit || !isLoaded) return
+    if (!isLoaded) return
 
-    if (!POSTHOG_KEY || !POSTHOG_HOST) {
-      console.error(
-        '[PostHog] Missing NEXT_PUBLIC_POSTHOG_KEY / NEXT_PUBLIC_POSTHOG_HOST — analytics disabled.',
-      )
+    if (!didInit) {
+      if (!POSTHOG_KEY || !POSTHOG_HOST) {
+        console.error(
+          '[PostHog] Missing NEXT_PUBLIC_POSTHOG_KEY / NEXT_PUBLIC_POSTHOG_HOST — analytics disabled.',
+        )
+        return
+      }
+
+      didInit = true
+      posthog.init(POSTHOG_KEY, {
+        api_host: POSTHOG_HOST,
+        persistence: 'memory',
+        person_profiles: 'identified_only',
+        autocapture: false,
+        capture_pageview: false,
+        capture_pageleave: false,
+        disable_session_recording: true,
+        disable_surveys: true,
+        disable_product_tours: true,
+        disable_conversations: true,
+        enable_heatmaps: false,
+        advanced_disable_flags: true,
+        bootstrap:
+          isSignedIn && userId ? { distinctID: userId, isIdentifiedID: true } : undefined,
+        before_send: (capture) => {
+          if (!capture) return capture
+          const properties = { ...capture.properties }
+          for (const key of URL_SHAPED_PROPERTIES) {
+            if (key in properties) {
+              properties[key] = withoutQuery(properties[key])
+            }
+          }
+          return { ...capture, properties }
+        },
+      })
+      if (isSignedIn && userId) {
+        loggedInUserIdRef.current = userId
+      }
       return
     }
 
-    didInit = true
-    posthog.init(POSTHOG_KEY, {
-      api_host: POSTHOG_HOST,
-      persistence: 'memory',
-      person_profiles: 'identified_only',
-      autocapture: false,
-      capture_pageview: false,
-      capture_pageleave: false,
-      disable_session_recording: true,
-      disable_surveys: true,
-      disable_product_tours: true,
-      disable_conversations: true,
-      enable_heatmaps: false,
-      advanced_disable_flags: true,
-      bootstrap:
-        isSignedIn && userId ? { distinctID: userId, isIdentifiedID: true } : undefined,
-      before_send: (capture) => {
-        if (!capture) return capture
-        const properties = { ...capture.properties }
-        for (const key of URL_SHAPED_PROPERTIES) {
-          if (key in properties) {
-            properties[key] = withoutQuery(properties[key])
-          }
-        }
-        return { ...capture, properties }
-      },
-    })
+    // Past this point: a real sign-in or sign-out happening later in the
+    // same page load, not the cold-load case bootstrap already covers.
     if (isSignedIn && userId) {
-      loggedInUserIdRef.current = userId
-    }
-  }, [isLoaded, isSignedIn, userId])
-
-  // Identity transitions AFTER init — a sign-in or sign-out that happens
-  // later in the same session. Mirrors
-  // apps/mobile/lib/purchases/RevenueCatProvider.tsx's pattern: watch
-  // Clerk's reactive auth state rather than hooking a specific
-  // sign-in/out call site, and guard reset() with a ref so it only fires
-  // on a real sign-out (never on the cold anonymous load handled above).
-  // A no-op immediately after the init effect above, since that effect
-  // already set loggedInUserIdRef.current for a signed-in bootstrap.
-  useEffect(() => {
-    if (!isLoaded || !didInit) return
-
-    if (isSignedIn && userId) {
-      if (loggedInUserIdRef.current === userId) return
+      if (posthog.get_distinct_id() === userId) {
+        loggedInUserIdRef.current = userId
+        return
+      }
       posthog.identify(userId)
       loggedInUserIdRef.current = userId
       return
