@@ -1,5 +1,6 @@
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { getAppUserByClerkId } from '@/lib/users/ensure-user'
+import { captureServerEvent } from '@/lib/analytics/server-capture'
 import { logAuditEvent } from '@/lib/audit'
 import { logIfFirstPremiumSubscription } from '@/lib/licensing/first-premium-trigger'
 
@@ -166,8 +167,14 @@ export async function handleRevenueCatEvent(event: RevenueCatEvent): Promise<voi
 
   switch (type) {
     case 'INITIAL_PURCHASE': {
+      // The one RevenueCat event type that means a genuinely new
+      // subscription — RENEWAL, UNCANCELLATION (a reactivation before
+      // expiration_at_ms), and PRODUCT_CHANGE (monthly<->annual) all
+      // route through the branch below instead, and none of them grant
+      // premium via this path.
       if (!hasPremiumEntitlement(event)) break
       await grantPremium(event, event.period_type === 'TRIAL' ? 'trialing' : 'active')
+      await captureServerEvent('subscription started', user.clerk_id, { platform: 'mobile' })
       await logAuditEvent(user.clerk_id, 'payment.subscription_created', {
         provider: 'revenuecat',
         eventId: event.id,

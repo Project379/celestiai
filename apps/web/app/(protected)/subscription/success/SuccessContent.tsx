@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import posthog from 'posthog-js'
 
 interface SuccessContentProps {
   initialTier: string
@@ -53,25 +52,14 @@ export function SuccessContent({ initialTier }: SuccessContentProps) {
     return () => clearInterval(intervalId)
   }, [uiState, sessionId])
 
-  // "subscription started" — fires exactly once per Stripe checkout
-  // session, keyed by `session_id` from the checkout `success_url`
-  // (stripe/checkout/route.ts). Guards against: (a) the webhook winning
-  // the race so the page loads already-activated (uiState starts
-  // 'activated', skipping the poll effect above entirely — this effect
-  // still catches it), and (b) a bookmarked/revisited success URL
-  // re-firing the event on a later visit. No event fires if `session_id`
-  // is missing (direct navigation with no real checkout behind it).
-  useEffect(() => {
-    if (uiState !== 'activated' || !sessionId || typeof window === 'undefined') return
-    const key = `ph_sub_started_${sessionId}`
-    try {
-      if (window.localStorage.getItem(key)) return
-      window.localStorage.setItem(key, '1')
-    } catch {
-      // Storage unavailable — fall through and fire anyway.
-    }
-    posthog.capture('subscription started')
-  }, [uiState, sessionId])
+  // "subscription started" moved server-side (apps/web/lib/stripe/
+  // subscription.ts's handleInvoicePaid, gated on
+  // billing_reason === 'subscription_create') — this page loading in
+  // an 'activated' state means the checkout succeeded and the server
+  // has confirmed premium, but doesn't by itself distinguish a genuinely
+  // new subscription from other paths that can also land a user here
+  // with tier already 'premium'. The webhook has the real signal and an
+  // idempotency table; this page doesn't need to duplicate that logic.
 
   return (
     <div className="relative mx-auto w-full max-w-xl">

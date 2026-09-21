@@ -1,4 +1,5 @@
 import Stripe from 'stripe'
+import { captureServerEvent } from '@/lib/analytics/server-capture'
 import { logAuditEvent } from '@/lib/audit'
 import { logIfFirstPremiumSubscription } from '@/lib/licensing/first-premium-trigger'
 import { stripe } from '@/lib/stripe/client'
@@ -346,7 +347,16 @@ export async function handleSubscriptionDeleted(
 /**
  * Handle invoice.paid event.
  *
- * Refreshes premium status and expiry date on subscription renewal.
+ * Refreshes premium status and expiry date on subscription renewal —
+ * and, ONLY when `invoice.billing_reason === 'subscription_create'`,
+ * fires "subscription started". This is the single event handler for
+ * a brand-new subscription's first invoice, a renewal
+ * (`subscription_cycle`), AND a monthly<->annual plan change
+ * (`subscription_update`) alike — all three write the same
+ * `subscription_tier: 'premium'` below, so the DB write can't tell them
+ * apart. `billing_reason` is Stripe's own signal for which case this is;
+ * it is NOT re-derived from local state.
+ *
  * In stripe@20.x, the subscription is accessed via
  * invoice.parent.subscription_details.subscription.
  */
@@ -380,6 +390,12 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> 
     throw new Error(
       `[Webhook] handleInvoicePaid: Supabase update failed for ${user.clerk_id}: ${error.message}`
     )
+  }
+
+  // Only the first invoice of a genuinely new subscription — excludes
+  // renewals (subscription_cycle) and plan changes (subscription_update).
+  if (invoice.billing_reason === 'subscription_create') {
+    await captureServerEvent('subscription started', user.clerk_id, { platform: 'web' })
   }
 
   console.log(
