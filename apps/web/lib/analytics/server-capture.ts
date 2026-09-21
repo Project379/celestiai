@@ -37,11 +37,28 @@
  * `properties` to tell them apart in analysis.
  *
  * Never throws — a PostHog outage must not break account creation or
- * webhook processing.
+ * webhook processing. Two of this function's three call sites (as of
+ * this writing) are inside Stripe/RevenueCat webhook handlers, where
+ * both providers enforce their own delivery timeout and mark the
+ * webhook failed (triggering their retry logic) if the response takes
+ * too long — a hanging PostHog request must not hold that response
+ * open. `TIMEOUT_MS` bounds the fetch with an AbortController so a slow
+ * or dead PostHog can cost at most ~2.5s, not "however long the
+ * platform's default socket timeout is." The abort rejects the fetch
+ * promise, which the existing try/catch already swallows — no separate
+ * handling needed for the timeout case.
+ *
+ * Callers that write to `users.subscription_tier` (or any other
+ * business-critical row) MUST call this AFTER that write has resolved,
+ * never before — analytics is optional, the write is not. Both current
+ * webhook call sites (apps/web/lib/stripe/subscription.ts's
+ * handleInvoicePaid, apps/web/lib/revenuecat/webhook-events.ts's
+ * INITIAL_PURCHASE case) follow this; keep it that way for any new one.
  */
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST
+const TIMEOUT_MS = 2500
 
 export async function captureServerEvent(
   event: string,
@@ -55,6 +72,9 @@ export async function captureServerEvent(
     return
   }
 
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
   try {
     await fetch(`${POSTHOG_HOST}/capture/`, {
       method: 'POST',
@@ -65,8 +85,11 @@ export async function captureServerEvent(
         distinct_id: distinctId,
         properties: { $process_person_profile: true, ...properties },
       }),
+      signal: controller.signal,
     })
   } catch (err) {
-    console.error('[PostHog] server capture failed:', err)
+    console.warn('[PostHog] server capture failed:', err)
+  } finally {
+    clearTimeout(timeout)
   }
 }
