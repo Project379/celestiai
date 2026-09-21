@@ -10,6 +10,9 @@
  *
  * What it hits:
  *   GET /                                     — liveness + X-Deploy-SHA match
+ *                                                + CSP connect-src coverage
+ *                                                (self, Stripe, Clerk,
+ *                                                PostHog — see CSP-SMOKE-CHECK)
  *   GET /api/cron/daily-horoscope?probe=1     — VAPID + push_subscriptions
  *                                                + push_tokens reads, no send
  *   GET /api/cron/cleanup-deleted-accounts?probe=1 — expired-account query,
@@ -36,6 +39,10 @@
  *   CRON_SECRET        required — bearer for the three cron probes
  *   SMOKE_EXPECTED_SHA optional — assert the deploy's X-Deploy-SHA equals this
  *   SMOKE_SKIP_AI      optional — "1" to skip the paid Gemini check
+ *   NEXT_PUBLIC_POSTHOG_HOST  required — same var apps/web/middleware.ts reads
+ *                      to build the CSP's connect-src, so the CSP and this
+ *                      check can't drift onto different values. Not the
+ *                      *_KEY, just the host.
  *
  * Exit 0 = every check passed. Exit 1 = at least one failed (details printed).
  */
@@ -50,10 +57,15 @@ const CRON_SECRET = process.env.CRON_SECRET?.trim() || ''
 const EXPECTED_SHA = process.env.SMOKE_EXPECTED_SHA || ''
 const SKIP_AI = process.env.SMOKE_SKIP_AI === '1'
 const IN_CI = process.env.GITHUB_ACTIONS === 'true' || process.env.CI === 'true'
+// Same var name apps/web/middleware.ts reads to build the CSP's
+// connect-src (see PostHogProvider.tsx for the matching client config) —
+// reading it here instead of hardcoding the host means this check and
+// the CSP itself can only drift together, never apart.
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || ''
 
-if (!BASE || !SMOKE_SECRET || !CRON_SECRET) {
+if (!BASE || !SMOKE_SECRET || !CRON_SECRET || !POSTHOG_HOST) {
   console.error(
-    '[smoke] missing env: SMOKE_BASE_URL, SMOKE_SECRET and CRON_SECRET are all required',
+    '[smoke] missing env: SMOKE_BASE_URL, SMOKE_SECRET, CRON_SECRET and NEXT_PUBLIC_POSTHOG_HOST are all required',
   )
   process.exit(1)
 }
@@ -169,6 +181,42 @@ async function checkRoot() {
   }
 }
 
+// CSP-SMOKE-CHECK: built after PostHog silently ate every capture() call
+// for weeks — its ingest host was never added to connect-src, and
+// nothing loaded the page in a real browser (or even just read the
+// response header) to notice. This is the cheap, targeted half of that
+// fix: assert the header, not a full Playwright browser run. It catches
+// exactly this class of bug (an expected host missing from connect-src)
+// but not a brand-new violation from something nobody added to this
+// list — see PLACEHOLDERS.md for the deferred general-purpose Playwright
+// follow-up.
+const EXPECTED_CONNECT_SRC_HOSTS = ["'self'", 'https://api.stripe.com', 'https://clerk-telemetry.com']
+
+async function checkCSP() {
+  try {
+    const { res, text, protection } = await req('/')
+    if (protection) return recordProtection('GET / (CSP connect-src)')
+    if (!res.ok) return record('GET / (CSP connect-src)', false, `status ${res.status}: ${text.slice(0, 160)}`)
+    const csp = res.headers.get('content-security-policy') || ''
+    if (!csp) return record('GET / (CSP connect-src)', false, 'no Content-Security-Policy header on response')
+    const match = csp.match(/(?:^|;)\s*connect-src\s+([^;]*)/i)
+    if (!match) return record('GET / (CSP connect-src)', false, `no connect-src directive in CSP: ${csp.slice(0, 300)}`)
+    const connectSrc = match[1]
+    const expected = [...EXPECTED_CONNECT_SRC_HOSTS, POSTHOG_HOST]
+    const missing = expected.filter((host) => !connectSrc.includes(host))
+    if (missing.length > 0) {
+      return record(
+        'GET / (CSP connect-src)',
+        false,
+        `missing from connect-src: ${missing.join(', ')} — got: ${connectSrc.trim()}`,
+      )
+    }
+    return record('GET / (CSP connect-src)', true, 'connect-src covers self, Stripe, Clerk, PostHog')
+  } catch (err) {
+    return record('GET / (CSP connect-src)', false, String(err))
+  }
+}
+
 async function checkCron(path, assert) {
   try {
     const { res, json, text, protection } = await req(`${path}?probe=1`, { bearer: CRON_SECRET })
@@ -223,6 +271,7 @@ async function checkSmoke() {
 }
 
 await checkRoot()
+await checkCSP()
 await checkCron('/api/cron/daily-horoscope', (j) => badTransport(j.web) || badTransport(j.mobile))
 await checkCron('/api/cron/cleanup-deleted-accounts', (j) =>
   typeof j.eligible === 'number' ? null : 'no eligible count',

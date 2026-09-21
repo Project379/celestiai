@@ -26,13 +26,13 @@ jobs:
     if: >
       github.event.deployment_status.state == 'success' &&
       github.event.deployment_status.environment == 'Production'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.deployment.sha || github.sha }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -50,3 +50,8 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           # Set to "1" in repo variables to skip the paid Gemini call.
           SMOKE_SKIP_AI: ${{ vars.SMOKE_SKIP_AI }}
+          # Not a secret — must equal apps/web's own NEXT_PUBLIC_POSTHOG_HOST
+          # Vercel env var (currently https://eu.i.posthog.com) so the CSP
+          # connect-src check (CSP-SMOKE-CHECK) verifies against the real
+          # deployed value instead of a hardcoded guess.
+          NEXT_PUBLIC_POSTHOG_HOST: ${{ vars.NEXT_PUBLIC_POSTHOG_HOST }}

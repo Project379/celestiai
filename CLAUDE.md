@@ -54,8 +54,9 @@ npm install              # Install dependencies
 npm run dev              # Run dev servers (web + mobile)
 npm run build            # Production build
 npm test                 # Run tests
-npm run test:e2e         # Playwright e2e tests
 ```
+
+No `test:e2e` script or Playwright config exists in this repo — the smoke-test workflow (`scripts/smoke.mjs`, `.github/workflows/smoke.yml`) covers post-deploy checks instead. See PLACEHOLDERS.md's SMOKE-TEST and CSP-SMOKE-CHECK rows.
 
 ## GSD Workflow
 

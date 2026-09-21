@@ -14,15 +14,15 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 9.15.4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: pnpm
@@ -40,9 +40,9 @@ jobs:
       - run: pnpm run check:all
 
   secret-scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Full history is required to diff a commit range below — a
           # shallow clone (the actions/checkout default) would make
@@ -84,7 +84,7 @@ jobs:
           gitleaks detect --source . --config .gitleaks.toml --log-opts="$RANGE" --redact -v --exit-code 1
 
   dep-audit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Advisory only (see .planning/PLACEHOLDERS.md DEP-AUDIT) — reports
     # findings without failing the build. `pnpm audit` on this monorepo's
     # transitive tree (React Native/Expo/Solana-wallet-adapter chains
@@ -95,13 +95,13 @@ jobs:
     # actionable vs. noise.
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 9.15.4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: pnpm
