@@ -1,5 +1,5 @@
 {
-  "count": 2896,
+  "count": 2900,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -1372,10 +1372,14 @@
     "apps/web/components/astrology-guide/CrystalsGuideContent.tsx::\"Транзити\"",
     "apps/web/components/astrology-guide/CrystalsGuideContent.tsx::\"Успоредно с редките камъни върви всекидневен ритъм. Всеки път, когато отвориш таблото, отключваш днешния камък на лунната фаза и удължаваш серията си с още един ден. Пропуснеш ли ден, серията се нулира.\"",
     "apps/web/components/astrology-guide/CrystalsGuideContent.tsx::\"Физически камък\"",
+    "apps/web/components/auth/DataAccountPage.tsx::'Абонаментът е прекратен.'",
     "apps/web/components/auth/DataAccountPage.tsx::'Изпращане...'",
     "apps/web/components/auth/DataAccountPage.tsx::'Изтегли данните си'",
     "apps/web/components/auth/DataAccountPage.tsx::'Изтриване на акаунта'",
     "apps/web/components/auth/DataAccountPage.tsx::'Подготвяме файла...'",
+    "apps/web/components/auth/DataAccountPage.tsx::'Прекрати абонамента вместо това'",
+    "apps/web/components/auth/DataAccountPage.tsx::'Прекратяваме...'",
+    "apps/web/components/auth/DataAccountPage.tsx::`Абонаментът е прекратен. Достъпът ти продължава до ${formatBgDateFromUnixSeconds(periodEnd)}.`",
     "apps/web/components/auth/DataAccountPage.tsx::`Заявката е приета. Акаунтът ще бъде изтрит на ${formatBgDate(data.scheduledDeletion)}, освен ако не отмениш заявката преди това.`",
     "apps/web/components/auth/DeletionPendingBanner.tsx::'Отмени изтриването'",
     "apps/web/components/auth/DeletionPendingBanner.tsx::'Отменяме...'",

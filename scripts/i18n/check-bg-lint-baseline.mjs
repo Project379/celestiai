@@ -248,6 +248,20 @@
  * and it doesn't count here. Through check:bg-strings and copy-lock.
  * 73 packages/core, 970 apps/web, 669 apps/mobile = 1712.
  *
+ * Raised to 1716 on 2026-09-29 (PROCESSOR-ERASURE-GAPS follow-up —
+ * annual-subscriber paid-time-remaining disclosure, founder-approved
+ * copy): +4 in apps/web. apps/web/components/auth/DataAccountPage.tsx's
+ * new "cancel instead" flow: the success-message template literal
+ * ('Абонаментът е прекратен. Достъпът ти продължава до
+ * ${formatBgDateFromUnixSeconds(periodEnd)}.'), its no-date fallback
+ * ('Абонаментът е прекратен.'), the button's loading-state label
+ * ('Прекратяваме...'), and its idle-state label ('Прекрати абонамента
+ * вместо това'). The larger disclosure paragraphs in the same component
+ * are JSX body text (JSXText), not Literal/TemplateLiteral nodes, so
+ * they don't count here — same shape as the account/delete route above.
+ * Through check:bg-strings and copy-lock.
+ * 73 packages/core, 974 apps/web, 669 apps/mobile = 1716.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -258,11 +272,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
 // STELLAEUM_PLACEHOLDER: LINT-BASELINE-1800 — every move of this ratchet
-// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled→1700→1711→1710→1712,
-// 2026-09-01 through 2026-09-28) is logged with its justification in
+// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled→1700→1711→1710→1712→1716,
+// 2026-09-01 through 2026-09-29) is logged with its justification in
 // this file's header comment above. The ID keeps its "-1800" suffix as
-// a stable handle; the current value is 1712. See .planning/PLACEHOLDERS.md.
-const BASELINE = 1712
+// a stable handle; the current value is 1716. See .planning/PLACEHOLDERS.md.
+const BASELINE = 1716
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },

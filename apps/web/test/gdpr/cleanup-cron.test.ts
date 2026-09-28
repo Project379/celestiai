@@ -36,6 +36,14 @@ vi.mock('@clerk/nextjs/server', () => ({
   })),
 }))
 
+const { deleteStripeCustomer } = vi.hoisted(() => ({
+  deleteStripeCustomer: vi.fn(async () => ({ deleted: true })),
+}))
+
+vi.mock('@/lib/stripe/client', () => ({
+  stripe: { customers: { del: deleteStripeCustomer } },
+}))
+
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { GET } from '@/app/api/cron/cleanup-deleted-accounts/route'
 
@@ -294,6 +302,82 @@ describe('GET /api/cron/cleanup-deleted-accounts — Clerk-account-orphan fix (B
     const res = await GET(req('test-cron-secret'))
     const body = await res.json()
 
+    expect(usersDeleteCalled).toBe(true)
+    expect(body.deleted).toBe(1)
+  })
+})
+
+describe('GET /api/cron/cleanup-deleted-accounts — Stripe customer deletion (PROCESSOR-ERASURE-GAPS)', () => {
+  function mockUsersTableWithStripe(
+    clerkId: string,
+    stripeCustomerId: string | null,
+    onUsersDeleteCalled: () => void,
+  ) {
+    let usersCallCount = 0
+    return (table: string) => {
+      if (table !== 'users') return null
+      usersCallCount++
+      if (usersCallCount === 1) {
+        const builder: Record<string, unknown> = {}
+        for (const m of ['select', 'not', 'lte', 'limit']) builder[m] = vi.fn(() => builder)
+        builder.then = (onFulfilled: (v: unknown) => unknown) =>
+          Promise.resolve({
+            data: [{ id: 'row-1', clerk_id: clerkId, stripe_customer_id: stripeCustomerId }],
+            error: null,
+          }).then(onFulfilled)
+        return builder
+      }
+      const builder: Record<string, unknown> = {}
+      builder.delete = vi.fn(() => {
+        onUsersDeleteCalled()
+        return builder
+      })
+      builder.eq = vi.fn(() => builder)
+      builder.then = (onFulfilled: (v: unknown) => unknown) =>
+        Promise.resolve({ data: null, error: null }).then(onFulfilled)
+      return builder
+    }
+  }
+
+  function genericBuilder() {
+    const builder: Record<string, unknown> = {}
+    const methods = ['select', 'eq', 'delete', 'in', 'not', 'lte', 'lt']
+    for (const m of methods) builder[m] = vi.fn(() => builder)
+    builder.then = (onFulfilled: (v: unknown) => unknown) =>
+      Promise.resolve({ data: [], error: null }).then(onFulfilled)
+    return builder
+  }
+
+  it('deletes the Stripe customer when stripe_customer_id is present', async () => {
+    const usersTable = mockUsersTableWithStripe('user_1', 'cus_abc123', () => {})
+    mockSupabase.from.mockImplementation((table: string) => usersTable(table) ?? genericBuilder())
+
+    await GET(req('test-cron-secret'))
+
+    expect(deleteStripeCustomer).toHaveBeenCalledWith('cus_abc123')
+  })
+
+  it('does not call Stripe when stripe_customer_id is null (never subscribed, or store-billed only)', async () => {
+    const usersTable = mockUsersTableWithStripe('user_1', null, () => {})
+    mockSupabase.from.mockImplementation((table: string) => usersTable(table) ?? genericBuilder())
+
+    await GET(req('test-cron-secret'))
+
+    expect(deleteStripeCustomer).not.toHaveBeenCalled()
+  })
+
+  it('still deletes the Clerk account and the users row when the Stripe delete fails — a Stripe failure must never block our own GDPR erasure (same "log it, alert, move on" rule as the payment webhooks)', async () => {
+    let usersDeleteCalled = false
+    const usersTable = mockUsersTableWithStripe('user_1', 'cus_fails', () => {
+      usersDeleteCalled = true
+    })
+    mockSupabase.from.mockImplementation((table: string) => usersTable(table) ?? genericBuilder())
+    deleteStripeCustomer.mockRejectedValueOnce(new Error('Stripe API outage'))
+
+    const res = await GET(req('test-cron-secret'))
+    const body = await res.json()
+
+    expect(deleteClerkUser).toHaveBeenCalledWith('user_1')
     expect(usersDeleteCalled).toBe(true)
     expect(body.deleted).toBe(1)
   })

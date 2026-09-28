@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import type { SubscriptionOverview } from '@/lib/stripe/subscription-overview'
 
 function formatBgDate(iso: string): string {
   return new Intl.DateTimeFormat('bg-BG', {
@@ -10,6 +11,10 @@ function formatBgDate(iso: string): string {
     year: 'numeric',
     timeZone: 'Europe/Sofia',
   }).format(new Date(iso))
+}
+
+function formatBgDateFromUnixSeconds(seconds: number): string {
+  return formatBgDate(new Date(seconds * 1000).toISOString())
 }
 
 function upcomingDeletionDate(): string {
@@ -32,6 +37,66 @@ export function DataAccountPage() {
   const [exportState, setExportState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [deleteState, setDeleteState] = useState<'idle' | 'loading' | 'error' | 'already-pending'>('idle')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [subscription, setSubscription] = useState<SubscriptionOverview | null>(null)
+  const [cancelSubState, setCancelSubState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+
+  // Fetched once on mount so the dialog can decide, the moment it opens,
+  // whether to show the paid-time-remaining disclosure below — not fetched
+  // lazily on dialog-open, since that would add a loading flash to the
+  // one moment this disclosure most needs to already be visible.
+  useEffect(() => {
+    let isMounted = true
+    fetch('/api/stripe/subscription', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted) setSubscription(data)
+      })
+      .catch(() => {
+        // Silent — absence of subscription data just means the disclosure
+        // below doesn't show; it never blocks account deletion itself.
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  // "платен абонамент" (paid subscription) must be literally true — a
+  // trialing subscriber has paid nothing yet, so excluded deliberately.
+  // Only Stripe-billed subscriptions apply here; store-billed (RevenueCat/
+  // Google Play/App Store) subscriptions already get their own separate
+  // warning below, since we can't cancel those server-side at all.
+  const paidTimeRemaining =
+    subscription?.subscriptionProvider === 'stripe' &&
+    subscription.subscriptionData?.status === 'active' &&
+    subscription.subscriptionData.currentPeriodEnd * 1000 > Date.now()
+      ? subscription.subscriptionData
+      : null
+
+  // "Cancel instead" is an alternative to deletion, not a step before it —
+  // deletion still cuts access immediately regardless of subscription
+  // status (existing product behavior, unrelated to this fix), so
+  // cancelling and THEN deleting right away would not actually preserve
+  // the remaining paid time. The button closes the dialog without
+  // deleting anything; the user keeps their account and keeps access
+  // until the period ends naturally.
+  const handleCancelSubscriptionInstead = useCallback(async () => {
+    setCancelSubState('loading')
+    try {
+      const res = await fetch('/api/stripe/cancel', { method: 'POST' })
+      if (!res.ok) throw new Error('cancel failed')
+      const periodEnd = paidTimeRemaining?.currentPeriodEnd
+      dialogRef.current?.close()
+      setCancelSubState('idle')
+      setSubscription(null)
+      setSuccessMessage(
+        periodEnd
+          ? `Абонаментът е прекратен. Достъпът ти продължава до ${formatBgDateFromUnixSeconds(periodEnd)}.`
+          : 'Абонаментът е прекратен.'
+      )
+    } catch {
+      setCancelSubState('error')
+    }
+  }, [paidTimeRemaining?.currentPeriodEnd])
 
   const handleExport = useCallback(async () => {
     setExportState('loading')
@@ -147,6 +212,31 @@ export function DataAccountPage() {
           Акаунтът ти и всички свързани с него данни ще бъдат изтрити безвъзвратно на{' '}
           <span className="text-slate-200">{upcomingDeletionDate()}</span>. До тогава можеш да отмениш заявката по всяко време.
         </p>
+
+        {paidTimeRemaining && (
+          <div className="mb-6 rounded-lg border border-amber-300/25 bg-amber-500/[0.06] px-4 py-3">
+            <p className="text-sm leading-relaxed text-amber-200">
+              <span className="font-semibold">
+                Имаш платен абонамент, валиден до {formatBgDateFromUnixSeconds(paidTimeRemaining.currentPeriodEnd)}.
+              </span>{' '}
+              Ако изтриеш акаунта сега, губиш достъпа и оставащото платено време, без възстановяване на сумата.
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-amber-200">
+              За да запазиш достъпа до {formatBgDateFromUnixSeconds(paidTimeRemaining.currentPeriodEnd)}: първо прекрати абонамента, после изтрий акаунта.
+            </p>
+            <button
+              type="button"
+              onClick={handleCancelSubscriptionInstead}
+              disabled={cancelSubState === 'loading'}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-amber-300/40 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-200 transition-all hover:border-amber-300/70 hover:bg-amber-500/20 disabled:opacity-50"
+            >
+              {cancelSubState === 'loading' ? 'Прекратяваме...' : 'Прекрати абонамента вместо това'}
+            </button>
+            {cancelSubState === 'error' && (
+              <p className="mt-2 text-sm text-rose-300">Не успяхме да прекратим абонамента. Опитай отново.</p>
+            )}
+          </div>
+        )}
 
         {deleteState === 'already-pending' && (
           <p className="mb-4 text-sm text-amber-300">

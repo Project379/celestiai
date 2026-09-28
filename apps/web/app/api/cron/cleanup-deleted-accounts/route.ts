@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/nextjs'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { deleteUserDiaryEntries } from '@stellaeum/core/diary/entries'
 import { verifyCronSecret } from '@/lib/auth/cron-secret'
+import { stripe } from '@/lib/stripe/client'
 
 /**
  * GET /api/cron/cleanup-deleted-accounts
@@ -11,10 +12,11 @@ import { verifyCronSecret } from '@/lib/auth/cron-secret'
  * Scheduled at 03:00 UTC daily via vercel.json.
  *
  * STELLAEUM_PLACEHOLDER: PROCESSOR-ERASURE-GAPS — this cron clears our own
- * database and the Clerk account, but does not touch PostHog, Stripe, or
- * RevenueCat, all three of which retain user-linked data after this runs.
- * See .planning/PLACEHOLDERS.md for the per-processor audit (deletion
- * APIs, required credentials, what already exists).
+ * database, the Clerk account, and (2026-09-28) the Stripe customer. It
+ * still does not touch PostHog or RevenueCat, both of which retain
+ * user-linked data after this runs — both need a credential that does not
+ * exist yet. See .planning/PLACEHOLDERS.md for the per-processor audit
+ * (deletion APIs, required credentials, what already exists).
  */
 export const maxDuration = 60
 
@@ -91,7 +93,7 @@ export async function GET(req: Request) {
   // Find users whose grace period has expired
   const { data: usersToDelete, error: fetchError } = await supabase
     .from('users')
-    .select('id, clerk_id')
+    .select('id, clerk_id, stripe_customer_id')
     .not('deletion_scheduled_at', 'is', null)
     .lte('deletion_scheduled_at', now)
     .limit(CLEANUP_SELECT_CEILING)
@@ -290,6 +292,42 @@ export async function GET(req: Request) {
         const status = (err as { status?: number } | null)?.status
         if (status !== 404) {
           throw err
+        }
+      }
+
+      // PROCESSOR-ERASURE-GAPS (.planning/PLACEHOLDERS.md): delete the
+      // Stripe Customer object at the 30-day hard-delete stage, not at
+      // the deletion REQUEST stage — a plain customer delete immediately
+      // cancels any remaining subscription, which would defeat the
+      // grace-period design (and, for a still-mid-term annual
+      // subscriber, cut off access earlier than deletion-request-time
+      // cancel_at_period_end already promised). By day 30 the user
+      // committed to deletion a month ago; the deletion-request UI
+      // (DataAccountPage.tsx) already disclosed, before they confirmed,
+      // that any Stripe-paid time remaining is forfeited with no refund
+      // — same policy as an ordinary cancel-anytime subscription, just
+      // stated explicitly here since account deletion is more final.
+      //
+      // stripe.customers.del() removes card details and blocks further
+      // operations, but per Stripe's own docs a deleted customer can
+      // still be RETRIEVED via the API/Dashboard for historical tracking
+      // — this is not full PII redaction. True redaction needs Stripe's
+      // Redaction Jobs API, which is in public preview and not present
+      // in this SDK version's types (stripe@20.3.1) — needs requesting
+      // preview access as a follow-up, tracked in PROCESSOR-ERASURE-GAPS.
+      //
+      // Non-blocking by design, same "log it, alert, move on" rule as
+      // the payment webhooks — a Stripe failure here must never stop the
+      // users-row delete below, which is this cron's actual GDPR-erasure
+      // obligation for OUR OWN data.
+      if (user.stripe_customer_id) {
+        try {
+          await stripe.customers.del(user.stripe_customer_id)
+        } catch (stripeErr) {
+          console.error(`[Cron Cleanup] Failed to delete Stripe customer for ${clerkId}:`, stripeErr)
+          Sentry.captureException(stripeErr, {
+            extra: { context: 'GET /api/cron/cleanup-deleted-accounts: delete Stripe customer', clerkId },
+          })
         }
       }
 
