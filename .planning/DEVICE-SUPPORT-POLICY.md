@@ -160,7 +160,58 @@ this floor.
 
 ---
 
+## Tablets and foldables
+
+**Decision (2026-09-28): allow installs, lock to portrait, do not design
+for them.**
+
+Reasoning:
+
+- **Allow installs, don't exclude.** Neither store-side blocker exists
+  today by default — iOS already opts out explicitly
+  (`apps/mobile/app.json`'s `ios.supportsTablet: false`, unrelated to
+  this decision and left as-is), but **Android declares no tablet/
+  foldable exclusion**, so tablet and foldable devices can already
+  install the app. Actively excluding them (a `<supports-screens>`
+  restriction, or a Play Console form-factor opt-out) would cost real
+  install volume for a market segment nobody has sized yet, in exchange
+  for avoiding a design problem that portrait-lock already neutralizes —
+  not a good trade.
+- **Portrait lock is the actual mitigation**, and it was already in
+  place before this decision: `apps/mobile/app.json`'s top-level
+  `"orientation": "portrait"` applies to both platforms (VERIFIED —
+  Expo's config-plugin behavior generates `android:screenOrientation` on
+  the main activity from this single shared key, no per-platform
+  override present in this file). No app.json change was needed to
+  "apply" it — confirmed already applied, this decision just formalizes
+  keeping it. One known caveat (INFERRED, not tested in this codebase):
+  Expo's own issue tracker documents edge cases where `orientation:
+  portrait` in `app.json` doesn't fully prevent landscape on some
+  Android devices/launchers (`expo/expo#13053`) — if a tablet/foldable
+  bug report surfaces an actual landscape rendering, escalate to
+  `expo-screen-orientation`'s runtime lock rather than assuming the
+  static config is airtight everywhere.
+- **Not designing for them is the explicit scope cut.** Portrait-locked
+  tablet/foldable users get the same phone layout stretched into a
+  larger portrait canvas — not optimized, not broken by intent, just
+  unattended. This is a deliberate resource decision (see
+  `.planning/ANDROID-DISPLAY-COMPATIBILITY-2026-09-28.md`'s audit),
+  not an oversight.
+
+**Revisit trigger:** if tablet/foldable installs exceed **3% of total
+Android installs** (Play Console's device-breakdown report, once one
+exists), or if support/review volume shows layout complaints
+specifically traceable to large-screen portrait rendering — whichever
+comes first. 3% is proposed, not measured: it's set near the low end of
+what would usually justify a dedicated design pass for a two-person
+team pre-revenue-scale, not a benchmarked industry figure. Revisit means
+deciding then whether to invest in a large-screen layout pass or move to
+an explicit exclusion — not a commitment to either outcome now.
+
+---
+
 ## Register
 
-Tracked as `DEVICE-SUPPORT-FLOOR` (RESOLVED) and `DEVICE-PASS-STALE`
-(OPEN) in `.planning/PLACEHOLDERS.md`.
+Tracked as `DEVICE-SUPPORT-FLOOR` (RESOLVED), `DEVICE-PASS-STALE`
+(OPEN), and `TABLET-FOLDABLE-SCOPE` (RESOLVED 2026-09-28 — decision
+made, revisit-triggered not open-ended) in `.planning/PLACEHOLDERS.md`.

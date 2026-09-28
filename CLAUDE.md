@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Tech Stack
 
 - **Monorepo**: Turborepo
-- **Universal Framework**: Solito (Next.js 15 + Expo SDK 52)
+- **Universal Framework**: Solito (Next.js 15 + Expo SDK 54) — corrected 2026-09-28; `apps/mobile/package.json` pins `"expo": "~54.0.36"`. This line was wrong three times before being fixed; if you're touching version-sensitive behavior (targetSdkVersion, edge-to-edge, deprecations), read `apps/mobile/package.json` directly rather than trusting this line.
 - **Auth**: Clerk (handles Web cookies + Native tokens/biometrics)
 - **Database**: Supabase (PostgreSQL) — used as plain managed Postgres; Realtime/Storage/Edge Functions are not used
 - **ORM**: Drizzle ORM

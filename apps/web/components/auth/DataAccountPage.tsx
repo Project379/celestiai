@@ -124,6 +124,9 @@ export function DataAccountPage() {
         <p className="mb-4 text-sm leading-relaxed text-slate-400">
           Заявката за изтриване спира достъпа ти до Премиум функциите веднага, но данните се пазят за 30 дни — можеш да отмениш по всяко време през този период.
         </p>
+        <p className="mb-4 text-sm leading-relaxed text-slate-400">
+          Ако имаш активен абонамент, изтриването на акаунта не го прекратява. Откажи го отделно — в Google Play, в App Store или от настройките на абонамента си в Stellaeum.
+        </p>
         <button
           type="button"
           onClick={handleOpenDialog}

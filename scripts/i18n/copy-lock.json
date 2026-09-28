@@ -1,5 +1,5 @@
 {
-  "count": 2894,
+  "count": 2896,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -872,6 +872,8 @@
     "apps/web/app/(protected)/you/page.tsx::'Ти'",
     "apps/web/app/(protected)/you/recommendations/page.tsx::'Дневни филмови и месечни книжни препоръки, водени от лунната фаза, наталната карта и обратната ти връзка.'",
     "apps/web/app/(protected)/you/recommendations/page.tsx::'Препоръки'",
+    "apps/web/app/account/delete/page.tsx::'Заяви изтриване на своя Stellaeum акаунт — работи и без вход, и без инсталирано приложение'",
+    "apps/web/app/account/delete/page.tsx::'Изтриване на акаунта'",
     "apps/web/app/api/birth-data/[id]/route.ts::'Данните не бяха намерени'",
     "apps/web/app/api/birth-data/[id]/route.ts::'Данните не бяха намерени'",
     "apps/web/app/api/birth-data/[id]/route.ts::'Не успяхме да заредим рождените данни. Опитай отново. Код: ERR-BD-005.'",

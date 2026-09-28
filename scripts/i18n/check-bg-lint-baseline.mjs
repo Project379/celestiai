@@ -237,6 +237,17 @@
  * the user-facing half of a control that had none.
  * 73 packages/core, 969 apps/web, 669 apps/mobile = 1711.
  *
+ * Raised to 1712 on 2026-09-28 (PLAY-DELETE-DISCOVERABILITY — standalone
+ * account-deletion URL): +2 in apps/web. apps/web/app/account/delete/
+ * page.tsx's `metadata.title` ('Изтриване на акаунта') and
+ * `metadata.description` ('Заяви изтриване на своя Stellaeum акаунт —
+ * работи и без вход, и без инсталирано приложение') — the only two plain
+ * string-literal Cyrillic nodes on the new route; its JSX body text
+ * (the signed-out explanation, founder-approved copy) is JSXText, not a
+ * Literal/TemplateLiteral node, so no-restricted-syntax doesn't match it
+ * and it doesn't count here. Through check:bg-strings and copy-lock.
+ * 73 packages/core, 970 apps/web, 669 apps/mobile = 1712.
+ *
  * Usage: node scripts/i18n/check-bg-lint-baseline.mjs
  */
 import { execFileSync } from 'node:child_process'
@@ -247,11 +258,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../..')
 
 // STELLAEUM_PLACEHOLDER: LINT-BASELINE-1800 — every move of this ratchet
-// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled→1700→1711→1710,
-// 2026-09-01 through 2026-09-09) is logged with its justification in
+// (1778→1800→1784→1785/1703 on separate branches→1704 reconciled→1700→1711→1710→1712,
+// 2026-09-01 through 2026-09-28) is logged with its justification in
 // this file's header comment above. The ID keeps its "-1800" suffix as
-// a stable handle; the current value is 1710. See .planning/PLACEHOLDERS.md.
-const BASELINE = 1710
+// a stable handle; the current value is 1712. See .planning/PLACEHOLDERS.md.
+const BASELINE = 1712
 
 const WORKSPACES = [
   { name: '@stellaeum/core', dir: 'packages/core', target: 'src' },
