@@ -3,11 +3,20 @@ import * as Sentry from '@sentry/nextjs'
 import { getRecommendationsOverview } from '@stellaeum/core/recommendations/service'
 import { requireAccountActive, requireAppUser, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
+import { isMediaRecommendationsEnabled } from '@/lib/config/featureFlags'
 
 export const dynamic = 'force-dynamic'
 
 /** GET /api/recommendations?chartId=... — daily movie + monthly book. */
 export async function GET(request: Request) {
+  // A real 404, not a UI-only hide — RECOMMENDATION-CONTENT-LICENSING is
+  // open (TMDB/Open Library content not commercially licensed). A
+  // UI-only hide would still let anyone with the URL call this and get
+  // licensed content back.
+  if (!isMediaRecommendationsEnabled()) {
+    return new Response(null, { status: 404 })
+  }
+
   try {
     const { userId } = await auth()
     if (!userId) return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })

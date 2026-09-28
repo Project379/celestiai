@@ -8,10 +8,6 @@
     {
       "path": "/api/cron/cleanup-deleted-accounts",
       "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/recommendation-catalog",
-      "schedule": "0 4 1 * *"
     }
   ]
 }

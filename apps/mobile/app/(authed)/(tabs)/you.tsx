@@ -6,6 +6,7 @@ import { ZODIAC_SIGNS_BG } from '@stellaeum/astrology/client'
 
 import { font, pressFeedback } from '@/components/design-system/tokens'
 import { useChart } from '@/hooks/useChart'
+import { useFeatureFlag } from '@/hooks/useFeatureFlag'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { getDisplayName } from '@/lib/clerk/displayName'
@@ -22,14 +23,21 @@ const TAB_BAR_CLEARANCE = 52
 // the surrounding voice (comma/«и» noun-list pattern). Each row carries a
 // route; P.5 ships the navigation wiring, downstream sub-rounds (P.6/P.7/
 // P.8/P.10/P.11) populate the destination content.
-const SECTIONS = [
+const BASE_SECTIONS = [
   { label: 'Кристали',    hint: 'месечни прозорци + дневна серия', route: '/you/crystals' as const        },
   { label: 'Дневник',     hint: 'лунен дневник — по три реда',     route: '/rhythm/journal' as const       },
-  { label: 'Препоръки',   hint: 'месечни книги и филми',           route: '/you/recommendations' as const  },
   { label: 'Ръководство', hint: 'история, планети, аспекти, лунни фази', route: '/you/guide' as const     },
   { label: 'Премиум',     hint: 'абонамент и плащане',             route: '/you/premium' as const          },
   { label: 'Настройки',   hint: 'акаунт, поверителност, данни',    route: '/you/settings' as const         },
 ] as const
+
+// RECOMMENDATION-CONTENT-LICENSING (.planning/PLACEHOLDERS.md) — kept as a
+// separate entry inserted at its original position (2nd), not appended,
+// so re-enabling the flag restores the exact prior order rather than
+// bolting it onto the end.
+const RECOMMENDATIONS_SECTION = {
+  label: 'Препоръки', hint: 'месечни книги и филми', route: '/you/recommendations' as const,
+} as const
 
 /**
  * Dynamic Big-Three subtitle (item 5.8). Resolves the user's sun + moon +
@@ -65,6 +73,10 @@ export default function YouScreen() {
 
   const displayName = getDisplayName(user)
   const bigThree = getBigThreeLabel(firstChart.data, chart.data)
+  const recommendationsEnabled = useFeatureFlag('media_recommendations')
+  const sections = recommendationsEnabled
+    ? [BASE_SECTIONS[0], RECOMMENDATIONS_SECTION, ...BASE_SECTIONS.slice(1)]
+    : BASE_SECTIONS
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-bg">
@@ -88,7 +100,7 @@ export default function YouScreen() {
         </View>
 
         <View>
-          {SECTIONS.map((section, i) => (
+          {sections.map((section, i) => (
             <Pressable
               key={section.label}
               onPress={() => {

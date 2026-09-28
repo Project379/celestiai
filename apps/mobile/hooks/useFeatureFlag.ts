@@ -17,6 +17,13 @@
  * propagate. That's expected for an emergency cost-control switch (not
  * a runtime A/B toggle).
  *
+ * A fourth flag, media_recommendations, is DIFFERENT SHAPE on purpose —
+ * default OFF, 'true' turns it on — gating a feature that must stay off
+ * until RECOMMENDATION-CONTENT-LICENSING resolves (TMDB/Open Library
+ * content has no confirmed commercial redistribution rights). See
+ * apps/web/lib/config/featureFlags.ts for the server-side twin and
+ * .planning/PLACEHOLDERS.md for the tracked row.
+ *
  * Vendor swap path (post-launch, REVISIT when a flagging vendor lands):
  * replace this module's body with a call to PostHog / GrowthBook / etc.
  * Consumer call sites use the hook pattern and will not need to change.
@@ -26,7 +33,7 @@
  * call-site refactor is zero LOC at vendor-swap time.
  */
 
-export type FeatureFlag = 'daily_horoscope' | 'oracle' | 'push'
+export type FeatureFlag = 'daily_horoscope' | 'oracle' | 'push' | 'media_recommendations'
 
 export function useFeatureFlag(flag: FeatureFlag): boolean {
   switch (flag) {
@@ -36,5 +43,7 @@ export function useFeatureFlag(flag: FeatureFlag): boolean {
       return process.env.EXPO_PUBLIC_FF_ORACLE !== 'false'
     case 'push':
       return process.env.EXPO_PUBLIC_FF_PUSH !== 'false'
+    case 'media_recommendations':
+      return process.env.EXPO_PUBLIC_FF_MEDIA_RECOMMENDATIONS === 'true'
   }
 }

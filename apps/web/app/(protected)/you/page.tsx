@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { YouHub } from '@/components/you/YouHub'
+import { isMediaRecommendationsEnabled } from '@/lib/config/featureFlags'
 
 export const metadata: Metadata = {
   title: 'Ти',
@@ -14,5 +15,5 @@ export const metadata: Metadata = {
  * is a later Phase A task.
  */
 export default function YouPage() {
-  return <YouHub />
+  return <YouHub showRecommendations={isMediaRecommendationsEnabled()} />
 }

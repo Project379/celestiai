@@ -20,6 +20,11 @@ beforeEach(() => {
   vi.clearAllMocks()
   process.env.CRON_SECRET = 'catalog-secret'
   process.env.TMDB_API_READ_TOKEN = 'tmdb-token'
+  // RECOMMENDATION-CONTENT-LICENSING (.planning/PLACEHOLDERS.md) — the
+  // route now no-ops unless FF_MEDIA_RECOMMENDATIONS is on. Default it on
+  // here since most of this suite predates the flag and tests the import
+  // path itself; the flag-off behavior gets its own test below.
+  process.env.FF_MEDIA_RECOMMENDATIONS = 'true'
 })
 
 describe('GET /api/cron/recommendation-catalog', () => {
@@ -37,6 +42,15 @@ describe('GET /api/cron/recommendation-catalog', () => {
       tmdbPages: 1,
       openLibraryLimit: 50,
     })
+  })
+
+  it('skips the import without error when FF_MEDIA_RECOMMENDATIONS is off — defense in depth alongside removing the cron from vercel.json', async () => {
+    process.env.FF_MEDIA_RECOMMENDATIONS = 'false'
+    const response = await GET(request('catalog-secret'))
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body.skipped).toBe(true)
+    expect(runDevelopmentCatalogImport).not.toHaveBeenCalled()
   })
 })
 

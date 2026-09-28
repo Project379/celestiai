@@ -443,16 +443,25 @@ returns 200 with `web.error` set, which is how it stayed dead for weeks)
 and it ties each run to the deployed SHA via `X-Deploy-SHA`. But two
 surfaces it *looks* like it covers, it does not:
 
-- **`recommendation-catalog`'s probe is shallow.** The other two crons'
-  `?probe=1` runs the full read/config path (VAPID init, every SELECT,
-  Expo token validation) and stops before the side effect.
-  `recommendation-catalog` has no dry-run — `runDevelopmentCatalogImport`
-  does external TMDB/Open-Library fetches and DB upserts as one
-  indivisible unit — so its probe only checks auth + `TMDB_API_READ_TOKEN`
-  presence. A broken importer (bad TMDB response shape, an upsert
-  constraint violation, a rights-mode misconfig) passes the smoke test.
-  The monthly cron itself is the only thing that exercises that path, and
-  a monthly failure is exactly the kind that rots unnoticed.
+- **`recommendation-catalog`'s probe is shallow — now moot, not fixed.**
+  This gap is dormant, not resolved: the cron is unscheduled (removed
+  from `vercel.json` 2026-09-28, RECOMMENDATION-CONTENT-LICENSING,
+  `.planning/PLACEHOLDERS.md` — the media-recommendations feature is
+  disabled pending licensing) and its smoke probe removed from
+  `scripts/smoke.mjs` alongside it, so there's currently nothing running
+  for this gap to apply to. The analysis below is preserved for when the
+  feature (and the cron) is re-enabled — re-add the probe to
+  `scripts/smoke.mjs` at that point and revisit whether it's still
+  shallow. The other two crons' `?probe=1` runs the full read/config path
+  (VAPID init, every SELECT, Expo token validation) and stops before the
+  side effect. `recommendation-catalog` has no dry-run —
+  `runDevelopmentCatalogImport` does external TMDB/Open-Library fetches
+  and DB upserts as one indivisible unit — so its probe only checks auth
+  + `TMDB_API_READ_TOKEN` presence. A broken importer (bad TMDB response
+  shape, an upsert constraint violation, a rights-mode misconfig) passes
+  the smoke test. The monthly cron itself is the only thing that
+  exercises that path, and a monthly failure is exactly the kind that
+  rots unnoticed.
 - **`/api/smoke`'s AI check hits the generation core, not the route
   wrappers.** It calls `generateFinalText` directly. The real
   `/api/oracle/generate` and `/api/horoscope/generate` add Clerk auth, the

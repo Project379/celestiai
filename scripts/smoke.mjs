@@ -17,9 +17,10 @@
  *                                                + push_tokens reads, no send
  *   GET /api/cron/cleanup-deleted-accounts?probe=1 — expired-account query,
  *                                                no delete
- *   GET /api/cron/recommendation-catalog?probe=1  — auth + TMDB creds
- *                                                (shallow; see
- *                                                VERIFICATION-SURFACE-GAPS.md)
+ *   (recommendation-catalog cron removed from vercel.json and this probe
+ *   list — RECOMMENDATION-CONTENT-LICENSING, .planning/PLACEHOLDERS.md,
+ *   the feature is disabled pending licensing. The route itself still
+ *   exists behind FF_MEDIA_RECOMMENDATIONS for when it's re-enabled.)
  *   GET /api/smoke                            — Swiss Ephemeris, Postgres,
  *                                                and (unless SMOKE_SKIP_AI)
  *                                                one real Gemini call
@@ -275,9 +276,6 @@ await checkCSP()
 await checkCron('/api/cron/daily-horoscope', (j) => badTransport(j.web) || badTransport(j.mobile))
 await checkCron('/api/cron/cleanup-deleted-accounts', (j) =>
   typeof j.eligible === 'number' ? null : 'no eligible count',
-)
-await checkCron('/api/cron/recommendation-catalog', (j) =>
-  j.tmdbTokenPresent === true ? null : 'TMDB_API_READ_TOKEN not configured in the deploy',
 )
 await checkSmoke()
 

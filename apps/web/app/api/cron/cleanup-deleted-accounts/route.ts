@@ -9,6 +9,12 @@ import { verifyCronSecret } from '@/lib/auth/cron-secret'
  * Vercel cron endpoint that hard-deletes accounts past the 30-day grace period.
  * Removes all user data from Supabase and deletes the Clerk account.
  * Scheduled at 03:00 UTC daily via vercel.json.
+ *
+ * STELLAEUM_PLACEHOLDER: PROCESSOR-ERASURE-GAPS — this cron clears our own
+ * database and the Clerk account, but does not touch PostHog, Stripe, or
+ * RevenueCat, all three of which retain user-linked data after this runs.
+ * See .planning/PLACEHOLDERS.md for the per-processor audit (deletion
+ * APIs, required credentials, what already exists).
  */
 export const maxDuration = 60
 

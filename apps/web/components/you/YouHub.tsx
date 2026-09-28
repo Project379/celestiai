@@ -3,12 +3,15 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
-const SECTIONS = [
+const BASE_SECTIONS = [
   { label: 'Кристали',    hint: 'месечни прозорци + дневна серия', href: '/you/crystals'        },
   { label: 'Дневник',     hint: 'лунен дневник — по три реда',     href: '/rhythm/journal'      },
-  { label: 'Препоръки',   hint: 'месечни книги и филми',            href: '/you/recommendations' },
   { label: 'Ръководство', hint: 'планети, знаци, къщи, аспекти',    href: '/you/guide'           },
 ] as const
+
+const RECOMMENDATIONS_SECTION = {
+  label: 'Препоръки', hint: 'месечни книги и филми', href: '/you/recommendations',
+} as const
 
 const fadeUp = {
   hidden: { opacity: 0, y: 18, filter: 'blur(8px)' },
@@ -24,7 +27,14 @@ const fadeUp = {
   }),
 }
 
-export function YouHub() {
+export function YouHub({ showRecommendations }: { showRecommendations: boolean }) {
+  // Insert Recommendations back into its original position (2nd), not
+  // appended — RECOMMENDATION-CONTENT-LICENSING (.planning/PLACEHOLDERS.md)
+  // is a licensing gate on the feature, not a demotion in the hub's order.
+  const sections = showRecommendations
+    ? [BASE_SECTIONS[0], RECOMMENDATIONS_SECTION, BASE_SECTIONS[1], BASE_SECTIONS[2]]
+    : BASE_SECTIONS
+
   return (
     <div className="mx-auto max-w-2xl">
       <motion.div
@@ -49,7 +59,7 @@ export function YouHub() {
         custom={1}
         className="divide-y divide-slate-800/60"
       >
-        {SECTIONS.map((section) => (
+        {sections.map((section) => (
           <li key={section.href}>
             <Link
               href={section.href}
