@@ -6,6 +6,7 @@ import { logAuditEvent } from '@/lib/audit'
 import { ApiError, requireAppUser } from '@/lib/auth/guards'
 import { isDeletionPending } from '@/lib/users/ensure-user'
 import { assertRateLimit } from '@/lib/rate-limit'
+import { stripe } from '@/lib/stripe/client'
 
 /**
  * GET /api/gdpr/delete-account
@@ -104,6 +105,32 @@ export async function POST() {
 
   after(() => logAuditEvent(userId, 'account.deletion_request', { scheduledDeletion: scheduledDeletion.toISOString() }))
 
+  // The 30-day hard-delete cron never touches Stripe (it only removes
+  // Supabase rows + the Clerk account) — without this, a user who deletes
+  // their account on web keeps being billed for a service they can no
+  // longer use, for as long as their card keeps working. cancel_at_period_end
+  // (not an immediate stripe.subscriptions.cancel()) matches the same
+  // "keep access through what's already paid for" semantics as the manual
+  // cancel button (POST /api/stripe/cancel) — the current paid period isn't
+  // refunded, but no future renewal is charged. Awaited synchronously
+  // (unlike the audit log above) because a failure here is a real billing
+  // risk worth surfacing immediately, not a fire-and-forget telemetry
+  // write; still non-fatal to the deletion request itself — a Stripe
+  // hiccup must not block a GDPR erasure request.
+  if (user.stripe_subscription_id) {
+    try {
+      await stripe.subscriptions.update(user.stripe_subscription_id, {
+        cancel_at_period_end: true,
+      })
+      logAuditEvent(userId, 'payment.subscription_cancelled', { reason: 'account_deletion' })
+    } catch (stripeError) {
+      console.error('[GDPR Delete] Failed to cancel Stripe subscription:', stripeError)
+      Sentry.captureException(stripeError, {
+        extra: { context: 'POST /api/gdpr/delete-account: cancel Stripe subscription' },
+      })
+    }
+  }
+
   return Response.json({
     message: 'Заявката за изтриване е регистрирана',
     scheduledDeletion: scheduledDeletion.toISOString(),
@@ -136,6 +163,23 @@ export async function DELETE() {
 
   const supabase = createServiceSupabaseClient()
 
+  // Read stripe_subscription_id before the update below — deliberately NOT
+  // cleared by that update, so this still finds it. Drives the
+  // subscriptionStillCancelled response field: the POST handler above
+  // cancels this subscription (cancel_at_period_end) as a side effect of
+  // requesting deletion, and undoing the deletion request does NOT
+  // resubscribe the user — "cancel my account deletion" and "resume
+  // billing me" are different intents, and auto-reactivating a payment
+  // the user was never asked to explicitly resume would be the wrong
+  // default. Without this field, a user who cancels their deletion would
+  // reasonably assume Premium is restored and be surprised when it lapses
+  // silently at period end.
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('stripe_subscription_id')
+    .eq('clerk_id', userId)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('users')
     .update({
@@ -156,7 +200,36 @@ export async function DELETE() {
 
   after(() => logAuditEvent(userId, 'account.deletion_confirm', { action: 'cancelled' }))
 
+  let subscriptionStillCancelled: { accessUntil: string } | null = null
+  const subscriptionId = userRow?.stripe_subscription_id
+  if (subscriptionId) {
+    try {
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+      // API version '2026-01-28.clover' moved current_period_end off the
+      // Subscription object onto each SubscriptionItem (multi-item
+      // subscriptions can have per-item billing cycles) — there is no
+      // top-level subscription.current_period_end anymore. This app only
+      // ever creates single-item subscriptions, so the first item's period
+      // end is the subscription's period end.
+      const periodEnd = subscription.items.data[0]?.current_period_end
+      if (subscription.cancel_at_period_end && periodEnd) {
+        subscriptionStillCancelled = {
+          accessUntil: new Date(periodEnd * 1000).toISOString(),
+        }
+      }
+    } catch (stripeError) {
+      // Non-fatal — the deletion-cancel itself already succeeded above.
+      // Worst case, the response omits the subscriptionStillCancelled
+      // note this once; it doesn't change the subscription's actual state.
+      console.error('[GDPR Delete] Failed to check Stripe subscription status:', stripeError)
+      Sentry.captureException(stripeError, {
+        extra: { context: 'DELETE /api/gdpr/delete-account: check Stripe subscription status' },
+      })
+    }
+  }
+
   return Response.json({
     message: 'Изтриването е отменено успешно',
+    subscriptionStillCancelled,
   })
 }

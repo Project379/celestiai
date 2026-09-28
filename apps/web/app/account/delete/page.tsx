@@ -63,8 +63,8 @@ export default async function AccountDeletePage() {
               достъпът ти до Премиум функциите спира веднага. Данните ти — натална карта, запазени профили в Кръг, четения от Оракула, хороскопи и записи в дневника — се пазят 30 дни, през които можеш да отмениш заявката. След това акаунтът и всички свързани с него данни се изтриват безвъзвратно.
             </p>
             <p className="mb-8 max-w-xl font-display text-[15px] leading-[1.85] text-slate-300/90">
-              <span className="font-semibold text-slate-100">Ако имаш активен абонамент,</span>{' '}
-              изтриването на акаунта не го прекратява. Откажи го отделно — в Google Play, в App Store или от настройките на абонамента си в Stellaeum.
+              <span className="font-semibold text-slate-100">Ако имаш активен абонамент през Google Play или App Store,</span>{' '}
+              изтриването на акаунта не го прекратява — откажи го отделно през съответния магазин.
             </p>
             <Link
               href="/sign-in?redirect_url=/account/delete"
