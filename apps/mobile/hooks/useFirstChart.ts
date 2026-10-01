@@ -6,6 +6,8 @@ export interface FirstChartSummary {
   id: string
   birth_date: string
   birth_time_known: boolean
+  /** Derived data older than this is stale. null only if the server predates the column. */
+  birth_data_edited_at: string | null
 }
 
 /**
@@ -38,6 +40,7 @@ export function useFirstChart() {
         id?: unknown
         birth_date?: unknown
         birth_time_known?: unknown
+        birth_data_edited_at?: unknown
       }
       if (
         typeof first.id !== 'string' ||
@@ -52,6 +55,8 @@ export function useFirstChart() {
           typeof first.birth_time_known === 'boolean'
             ? first.birth_time_known
             : true,
+        birth_data_edited_at:
+          typeof first.birth_data_edited_at === 'string' ? first.birth_data_edited_at : null,
       }
     },
   })

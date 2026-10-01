@@ -98,7 +98,7 @@ export default function WizardConfirmScreen() {
       const created = (await apiFetch('/api/birth-data', {
         method: 'POST',
         body: JSON.stringify(data),
-      })) as { id: string; birth_date: string; birth_time_known: boolean }
+      })) as { id: string; birth_date: string; birth_time_known: boolean; birth_data_edited_at?: string }
 
       // Seed the ['first-chart'] cache directly with the row the POST just
       // returned instead of leaving it stale (staleTime Infinity, no auto-
@@ -112,6 +112,7 @@ export default function WizardConfirmScreen() {
         id: created.id,
         birth_date: created.birth_date,
         birth_time_known: created.birth_time_known,
+        birth_data_edited_at: created.birth_data_edited_at ?? null,
       })
 
       // Bare event — no birth date/time/place, no name, no coordinates.

@@ -100,25 +100,9 @@ export function clearAllHoroscopesInBrowser(): void {
   } catch {}
 }
 
-/**
- * True when the server's marker for the active chart differs from the one this
- * client is rendering with — i.e. the chart was edited elsewhere (or just now).
- * Any difference counts, including the chart appearing/disappearing, because a
- * different active chart also invalidates everything derived from the old one.
- */
-export function chartVersionChanged(
-  known: { chartId: string | null; editedAt: string | null },
-  latest: { chartId: string | null; editedAt: string | null },
-): boolean {
-  if (known.chartId !== latest.chartId) return true
-  if (known.editedAt === null || latest.editedAt === null) return known.editedAt !== latest.editedAt
-  return new Date(known.editedAt).getTime() !== new Date(latest.editedAt).getTime()
-}
-
-/** Minimum gap between focus-triggered version checks (ms). */
-export const VERSION_CHECK_MIN_INTERVAL_MS = 30_000
-
-/** Whether enough time has passed since the last version check to run another. */
-export function shouldCheckVersion(lastCheckedAt: number, now: number): boolean {
-  return now - lastCheckedAt >= VERSION_CHECK_MIN_INTERVAL_MS
-}
+// The comparison rule and throttle are shared with mobile (single source in core).
+export {
+  chartVersionChanged,
+  shouldCheckVersion,
+  VERSION_CHECK_MIN_INTERVAL_MS,
+} from '@stellaeum/core/charts/version'

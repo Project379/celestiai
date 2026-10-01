@@ -24,6 +24,7 @@
     "./charts/calculate": "./src/charts/calculate.ts",
     "./charts/birth-data": "./src/charts/birth-data.ts",
     "./charts/schemas": "./src/charts/schemas.ts",
+    "./charts/version": "./src/charts/version.ts",
     "./charts/interpretations": "./src/charts/interpretations.ts",
     "./charts/glyphs": "./src/charts/glyphs.ts",
     "./charts/sections": "./src/charts/sections.ts",
