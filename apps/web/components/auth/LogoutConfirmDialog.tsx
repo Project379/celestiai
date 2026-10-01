@@ -3,6 +3,7 @@
 import { useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { clearAllHoroscopesInBrowser } from '@/lib/birth-data/chart-version'
 
 interface LogoutConfirmDialogProps {
   isOpen: boolean
@@ -29,6 +30,8 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
   const handleSignOut = useCallback(async () => {
     setIsLoading(true)
     try {
+      // Cached daily horoscopes belong to this account; a shared browser must not keep them.
+      clearAllHoroscopesInBrowser()
       await signOut()
       onClose()
       router.replace('/')

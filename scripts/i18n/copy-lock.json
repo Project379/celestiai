@@ -1,5 +1,5 @@
 {
-  "count": 2900,
+  "count": 2902,
   "entries": [
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Днес\"",
     "apps/mobile/app/(authed)/(tabs)/_layout.tsx::\"Карта\"",
@@ -2670,6 +2670,8 @@
     "packages/core/src/i18n/format-days-hours.ts::`${dayStr} и ${hourStr}`",
     "packages/core/src/i18n/format-days-hours.ts::`${days} дни`",
     "packages/core/src/i18n/format-days-hours.ts::`${hours} часа`",
+    "packages/core/src/i18n/strings/birth-data.ts::'Данните са запазени. Картата ти е обновена.'",
+    "packages/core/src/i18n/strings/birth-data.ts::'Рождени данни'",
     "packages/core/src/lib/moon-phase.ts::'Аметистът подкрепя почивката, съня и духовното възстановяване.'",
     "packages/core/src/lib/moon-phase.ts::'Аметистът успокоява и подкрепя медитацията и духовния растеж.'",
     "packages/core/src/lib/moon-phase.ts::'Благодарност'",

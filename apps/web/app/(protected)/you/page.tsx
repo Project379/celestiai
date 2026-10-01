@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import { YouHub } from '@/components/you/YouHub'
+import { auth } from '@clerk/nextjs/server'
 import { isMediaRecommendationsEnabled } from '@/lib/config/featureFlags'
+import { getCachedLatestChart } from '@/lib/supabase/queries'
+import type { ChartRow } from '@/lib/types/chart'
 
 export const metadata: Metadata = {
   title: 'Ти',
@@ -14,6 +17,15 @@ export const metadata: Metadata = {
  * recommendations, astrology-guide). Route consolidation (/you/crystals etc.)
  * is a later Phase A task.
  */
-export default function YouPage() {
-  return <YouHub showRecommendations={isMediaRecommendationsEnabled()} />
+export default async function YouPage() {
+  // The active (latest) chart, for the birth-data edit entry. A DB hiccup or no
+  // chart just hides that row; the rest of the hub still renders.
+  let chart: ChartRow | null = null
+  try {
+    const { userId } = await auth()
+    if (userId) chart = (await getCachedLatestChart(userId)) as ChartRow | null
+  } catch {
+    chart = null
+  }
+  return <YouHub showRecommendations={isMediaRecommendationsEnabled()} chart={chart} />
 }

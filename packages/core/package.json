@@ -20,6 +20,7 @@
     "./horoscope/transit-analysis": "./src/horoscope/transit-analysis.ts",
     "./horoscope/transits": "./src/horoscope/transits.ts",
     "./i18n/bg-grammar": "./src/i18n/bg-grammar.ts",
+    "./i18n/strings/birth-data": "./src/i18n/strings/birth-data.ts",
     "./charts/calculate": "./src/charts/calculate.ts",
     "./charts/birth-data": "./src/charts/birth-data.ts",
     "./charts/schemas": "./src/charts/schemas.ts",

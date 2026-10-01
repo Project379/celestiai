@@ -9,6 +9,7 @@ import { SessionExpiryModal } from '@/components/auth/SessionExpiryModal'
 import { DeletionPendingBanner } from '@/components/auth/DeletionPendingBanner'
 import { OraclePanelGlobal } from '@/components/oracle/OraclePanelGlobal'
 import { OracleFab } from '@/components/oracle/OracleFab'
+import { ChartVersionProvider, ChartVersionWatcher } from '@/components/birth-data/ChartVersion'
 import { getCachedLatestChart, getCachedUserTier, getCachedDeletionStatus } from '@/lib/supabase/queries'
 
 export default async function ProtectedLayout({
@@ -30,6 +31,7 @@ export default async function ProtectedLayout({
   // Fetch chart + tier for the global Oracle button
   // Uses React.cache() - deduped with any page-level fetches in the same render pass
   let chartId: string | null = null
+  let chartEditedAt: string | null = null
   let subscriptionTier: 'free' | 'premium' = 'free'
   let deletionScheduledAt: string | null = null
   try {
@@ -39,6 +41,7 @@ export default async function ProtectedLayout({
       getCachedDeletionStatus(userId),
     ])
     chartId = chart?.id ?? null
+    chartEditedAt = chart?.birth_data_edited_at ?? null
     subscriptionTier = tier
     deletionScheduledAt = deletionStatus
   } catch {
@@ -46,6 +49,8 @@ export default async function ProtectedLayout({
   }
 
   return (
+    <ChartVersionProvider chartId={chartId} editedAt={chartEditedAt}>
+    <ChartVersionWatcher />
     <div className="relative min-h-screen">
       {/* TODO: background redesign - CelestialBackground still uses the legacy
          starfield + constellation overlay. Align it with the editorial system
@@ -123,5 +128,6 @@ export default async function ProtectedLayout({
       {/* Global session expiry modal */}
       <SessionExpiryModal />
     </div>
+    </ChartVersionProvider>
   )
 }

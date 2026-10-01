@@ -59,7 +59,7 @@ export function EditBirthDataDialog({
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = methods
 
   const birthTimeKnown = watch('birthTimeKnown')
@@ -364,17 +364,22 @@ export function EditBirthDataDialog({
               type="button"
               onClick={handleCancel}
               disabled={isLoading}
-              className="group inline-flex items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 transition-colors hover:text-amber-300 disabled:pointer-events-none disabled:opacity-40"
+              className="group inline-flex min-h-[48px] items-center gap-2 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-400 transition-colors hover:text-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60 disabled:pointer-events-none disabled:text-slate-500"
             >
               <svg className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               {showConfirm ? 'Върни се' : 'Отказ'}
             </button>
+            {/* Save: a real <button> (button role), >= 48px tall, named by its visible
+                text. Disabled until a field actually differs (a no-op edit would never
+                bump the chart's birth_data_edited_at anyway). The disabled look keeps
+                readable contrast (slate-400 on the dark panel), not a faded opacity. */}
             <button
               type="submit"
-              disabled={isLoading}
-              className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-amber-300/50 bg-gradient-to-r from-violet-500/15 via-transparent to-amber-400/15 px-6 py-2.5 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-100 transition-all hover:border-amber-300/80 hover:text-white hover:shadow-[0_0_28px_rgba(251,191,36,0.20)] focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/60 disabled:pointer-events-none disabled:opacity-45"
+              disabled={isLoading || (!showConfirm && !isDirty)}
+              aria-busy={isLoading}
+              className="group relative inline-flex min-h-[48px] min-w-[48px] items-center justify-center gap-3 overflow-hidden rounded-full border border-amber-300/50 bg-gradient-to-r from-violet-500/15 via-transparent to-amber-400/15 px-6 py-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-100 transition-all hover:border-amber-300/80 hover:text-white hover:shadow-[0_0_28px_rgba(251,191,36,0.20)] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60 disabled:pointer-events-none disabled:border-slate-500/40 disabled:from-transparent disabled:to-transparent disabled:text-slate-400"
             >
               <span
                 aria-hidden
