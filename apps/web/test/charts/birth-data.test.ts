@@ -146,54 +146,94 @@ describe('getBirthChart', () => {
 })
 
 describe('updateBirthChart', () => {
-  it('only includes explicitly-provided fields in the update payload — an undefined field must not overwrite existing data with null', async () => {
-    let updatePayload: Record<string, unknown> | undefined
-    mockSupabase.from.mockImplementation((table: string) => {
-      if (table === 'charts') {
-        return {
-          update: vi.fn((payload: Record<string, unknown>) => {
-            updatePayload = payload
-            return {
-              eq: () => ({
-                eq: () => ({
-                  select: () => ({
-                    single: () => Promise.resolve({ data: { id: 'chart-1' }, error: null }),
-                  }),
-                }),
-              }),
-            }
-          }),
-        }
-      }
-      return { delete: vi.fn(() => ({ eq: () => Promise.resolve({ data: null, error: null }) })) }
+  const RPC_OK = {
+    chart: { id: 'chart-1', birth_data_edited_at: '2026-10-01T10:00:00.000Z' },
+    birth_data_changed: true,
+    quota_exempt: true,
+    regrant_granted: false,
+  }
+
+  it('edits through apply_birth_data_edit on the EXISTING chart id — never an insert — and sends only the provided fields (an undefined field must not overwrite data with null)', async () => {
+    mockSupabase.pushRpc('apply_birth_data_edit', { data: RPC_OK })
+
+    await updateBirthChart('user-1', 'chart-1', { name: 'New name' })
+
+    expect(mockSupabase.rpc).toHaveBeenCalledTimes(1)
+    const [fn, args] = mockSupabase.rpc.mock.calls[0] as unknown as [string, Record<string, unknown>]
+    expect(fn).toBe('apply_birth_data_edit')
+    expect(args.p_user_id).toBe('user-1')
+    expect(args.p_chart_id).toBe('chart-1')
+    expect(args.p_changes).toEqual({ name: 'New name' })
+    expect(mockSupabase.from).not.toHaveBeenCalled() // no direct insert/update/delete from here
+  })
+
+  it('maps the camelCase input to the snake_case columns the function expects, birth date as an ISO midnight-UTC string', async () => {
+    mockSupabase.pushRpc('apply_birth_data_edit', { data: RPC_OK })
+
+    await updateBirthChart('user-1', 'chart-1', {
+      birthDate: '1990-05-15',
+      birthTimeKnown: false,
+      birthTime: null,
+      approximateTimeRange: 'morning',
+      cityId: null,
+      cityName: 'Plovdiv',
+      latitude: 42.1,
+      longitude: 24.7,
+    } as never)
+
+    const args = (mockSupabase.rpc.mock.calls[0] as unknown as [string, Record<string, unknown>])[1]
+    expect(args.p_changes).toEqual({
+      birth_date: '1990-05-15T00:00:00.000Z',
+      birth_time_known: false,
+      birth_time: null,
+      approximate_time_range: 'morning',
+      city_id: null,
+      city_name: 'Plovdiv',
+      latitude: 42.1,
+      longitude: 24.7,
+    })
+  })
+
+  it('passes the caller tier decision through (free vs premium drives the once-ever regrant)', async () => {
+    mockSupabase.pushRpc('apply_birth_data_edit', { data: RPC_OK })
+    mockSupabase.pushRpc('apply_birth_data_edit', { data: RPC_OK })
+
+    await updateBirthChart('user-1', 'chart-1', { name: 'a' }, { isFree: true })
+    await updateBirthChart('user-1', 'chart-1', { name: 'b' })
+
+    const calls = mockSupabase.rpc.mock.calls as unknown as Array<[string, Record<string, unknown>]>
+    expect(calls[0][1].p_is_free).toBe(true)
+    expect(calls[1][1].p_is_free).toBe(false)
+  })
+
+  it('returns the updated chart and the edit outcome (changed / quotaExempt / regrantGranted)', async () => {
+    mockSupabase.pushRpc('apply_birth_data_edit', {
+      data: { ...RPC_OK, quota_exempt: false, regrant_granted: true },
     })
 
-    await updateBirthChart('user-1', 'chart-1', { name: 'New name' })
+    const result = await updateBirthChart('user-1', 'chart-1', { name: 'x' }, { isFree: true })
 
-    expect(updatePayload).toHaveProperty('name', 'New name')
-    expect(updatePayload).not.toHaveProperty('birth_date')
-    expect(updatePayload).not.toHaveProperty('latitude')
+    expect(result).toEqual({
+      ok: true,
+      data: RPC_OK.chart,
+      edit: { birthDataChanged: true, quotaExempt: false, regrantGranted: true },
+    })
   })
 
-  it('invalidates (deletes) the chart_calculations cache row after a successful update — a stale cached natal chart after an edit is a correctness bug, not a perf nit', async () => {
-    mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user-1' } })
-    mockSupabase.push('chart_calculations', { data: null, error: null })
+  it('returns NOT_FOUND when no chart matches (id, user_id) — the function returns null', async () => {
+    mockSupabase.pushRpc('apply_birth_data_edit', { data: null })
 
-    await updateBirthChart('user-1', 'chart-1', { name: 'New name' })
+    const result = await updateBirthChart('user-1', 'chart-1', { name: 'x' })
 
-    const calcCall = mockSupabase.from.mock.calls.find((c) => c[0] === 'chart_calculations')
-    expect(calcCall).toBeTruthy()
-    const calcBuilder = mockSupabase.from.mock.results.find((r, i) => mockSupabase.from.mock.calls[i][0] === 'chart_calculations')
-    expect(calcBuilder?.value.delete).toHaveBeenCalled()
+    expect(result).toEqual({ ok: false, error: 'NOT_FOUND' })
   })
 
-  it('does NOT delete the cache when the update itself fails (nothing changed, nothing to invalidate)', async () => {
-    mockSupabase.push('charts', { data: null, error: { message: 'no rows' } })
+  it('returns UPDATE_FAILED (not NOT_FOUND) on a database error, so the route can 500 instead of lying with a 404', async () => {
+    mockSupabase.pushRpc('apply_birth_data_edit', { data: null, error: { message: 'boom' } })
 
-    await updateBirthChart('user-1', 'chart-1', { name: 'New name' })
+    const result = await updateBirthChart('user-1', 'chart-1', { name: 'x' })
 
-    const calcCall = mockSupabase.from.mock.calls.find((c) => c[0] === 'chart_calculations')
-    expect(calcCall).toBeFalsy()
+    expect(result).toEqual({ ok: false, error: 'UPDATE_FAILED', message: 'boom' })
   })
 })
 

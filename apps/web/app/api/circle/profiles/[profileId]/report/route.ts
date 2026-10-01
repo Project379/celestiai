@@ -49,7 +49,7 @@ export async function GET(
       return Response.json({ error: 'Профилът не е намерен.' }, { status: 404 })
     }
 
-    const report = await getLatestSavedProfileReport(profileId)
+    const report = await getLatestSavedProfileReport(profileId, userId)
     return Response.json(report)
   } catch (error) {
     if (error instanceof ApiError) {
@@ -151,7 +151,7 @@ export async function POST(
       // instead of a 500. See the sibling connection-report route for
       // the fuller version of this comment.
       if (error && (error as { code?: string }).code === '23505') {
-        const winner = await getLatestSavedProfileReport(profileId)
+        const winner = await getLatestSavedProfileReport(profileId, userId)
         if (winner) return Response.json(winner)
       }
       console.error('[Circle Profiles] report failed:', error)

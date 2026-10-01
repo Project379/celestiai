@@ -193,6 +193,14 @@ export async function GET(req: Request) {
         )
       }
 
+      // Birth-data edit ledger — explicit delete BEFORE charts (the table also
+      // cascades from users.clerk_id and charts.id; explicit here for this
+      // cron's fail-fast/retry semantics, same as every table above).
+      await deleteOrThrow(
+        'birth_data_edits',
+        supabase.from('birth_data_edits').delete().eq('user_id', clerkId),
+      )
+
       // Delete charts
       await deleteOrThrow('charts', supabase.from('charts').delete().eq('user_id', clerkId))
 

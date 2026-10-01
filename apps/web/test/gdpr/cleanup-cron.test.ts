@@ -465,3 +465,57 @@ describe('GET /api/cron/cleanup-deleted-accounts — user_crystals / user_daily_
     )
   })
 })
+
+describe('GET /api/cron/cleanup-deleted-accounts — birth_data_edits (Batch 8 b)', () => {
+  function setup(failEdits = false) {
+    const order: string[] = []
+    const eqs: Array<[string, string, unknown]> = []
+    let usersCall = 0
+    mockSupabase.from.mockImplementation((table: string) => {
+      const builder: Record<string, unknown> = {}
+      for (const m of ['select', 'in', 'not', 'lte', 'lt', 'limit', 'single', 'maybeSingle']) {
+        builder[m] = vi.fn(() => builder)
+      }
+      builder.eq = vi.fn((col: string, val: unknown) => {
+        eqs.push([table, col, val])
+        return builder
+      })
+      builder.delete = vi.fn(() => {
+        order.push(table)
+        return builder
+      })
+      let rows: unknown[] = []
+      if (table === 'users') {
+        usersCall++
+        if (usersCall === 1) rows = [{ id: 'row-1', clerk_id: 'user_bde', stripe_customer_id: null }]
+      }
+      builder.then = (onFulfilled: (v: unknown) => unknown) =>
+        Promise.resolve({
+          data: rows,
+          error: table === 'birth_data_edits' && failEdits ? { message: 'rls denied' } : null,
+        }).then(onFulfilled)
+      return builder
+    })
+    return { order, eqs }
+  }
+
+  it('deletes the birth_data_edits rows of the user, scoped by user_id, BEFORE the charts delete', async () => {
+    const { order, eqs } = setup()
+
+    await GET(req('test-cron-secret'))
+
+    expect(eqs).toContainEqual(['birth_data_edits', 'user_id', 'user_bde'])
+    expect(order.indexOf('birth_data_edits')).toBeGreaterThanOrEqual(0)
+    expect(order.indexOf('birth_data_edits')).toBeLessThan(order.indexOf('charts'))
+  })
+
+  it('a failed birth_data_edits delete stops the user BEFORE the Clerk/users-row deletes (the retry anchor survives)', async () => {
+    setup(true)
+
+    const res = await GET(req('test-cron-secret'))
+    const body = await res.json()
+
+    expect(deleteClerkUser).not.toHaveBeenCalled()
+    expect(body.deleted).toBe(0)
+  })
+})

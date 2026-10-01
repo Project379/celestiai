@@ -24,6 +24,11 @@ export interface BirthChartRow {
   longitude: number
   created_at: string
   updated_at: string
+  /**
+   * A derived row (reading, horoscope, Кръг report) older than this is STALE.
+   * Bumped only by a birth-affecting edit — see apply_birth_data_edit().
+   */
+  birth_data_edited_at: string
 }
 
 export type CreateBirthChartResult =
@@ -42,9 +47,19 @@ export type BirthChartByIdResult =
   | { ok: true; data: BirthChartRow }
   | { ok: false; error: 'NOT_FOUND' }
 
+export interface BirthDataEditOutcome {
+  /** False for a name-only or no-op save — nothing was invalidated. */
+  birthDataChanged: boolean
+  /** True when this edit's regenerations skip the premium quota claim. */
+  quotaExempt: boolean
+  /** True when a free user's lifetime Oracle reading was re-granted. */
+  regrantGranted: boolean
+}
+
 export type UpdateBirthChartResult =
-  | { ok: true; data: BirthChartRow }
+  | { ok: true; data: BirthChartRow; edit: BirthDataEditOutcome }
   | { ok: false; error: 'NOT_FOUND' }
+  | { ok: false; error: 'UPDATE_FAILED'; message: string }
 
 export type DeleteBirthChartResult =
   | { ok: true }
@@ -155,60 +170,75 @@ export async function getBirthChart(
   return { ok: true, data: data as BirthChartRow }
 }
 
+/**
+ * Applies a birth-data edit to the EXISTING chart row (never an insert) via
+ * the apply_birth_data_edit() Postgres function, which does the whole edit in
+ * one transaction: it diffs against the stored values, bumps
+ * charts.birth_data_edited_at only for a birth-affecting change, records the
+ * edit (quota exemption: active chart + first 2 per rolling 30 days), drops
+ * the chart_calculations cache and uncollected crystal recommendations, and
+ * grants a free user's once-ever lifetime-reading regrant. supabase-js has no
+ * transactions, and two concurrent edits must not both read "1 exempt edit".
+ *
+ * `isFree` is the caller's tier decision (the route knows it; this package
+ * deliberately does not read subscription state).
+ */
 export async function updateBirthChart(
   userId: string,
   id: string,
   input: UpdateBirthChartInput,
+  opts: { isFree: boolean } = { isFree: false },
 ): Promise<UpdateBirthChartResult> {
   const supabase = createCoreSupabaseClient()
-  const updateData: Record<string, unknown> = {}
+  // Only the keys the caller provided; a key present with null clears a
+  // nullable column inside the function.
+  const changes: Record<string, unknown> = {}
 
-  if (input.name !== undefined) updateData.name = input.name
+  if (input.name !== undefined) changes.name = input.name
   if (input.birthDate !== undefined) {
-    updateData.birth_date = new Date(
-      input.birthDate + 'T00:00:00Z',
-    ).toISOString()
+    changes.birth_date = new Date(input.birthDate + 'T00:00:00Z').toISOString()
   }
-  if (input.birthTimeKnown !== undefined) {
-    updateData.birth_time_known = input.birthTimeKnown
-  }
-  if (input.birthTime !== undefined) updateData.birth_time = input.birthTime
+  if (input.birthTimeKnown !== undefined) changes.birth_time_known = input.birthTimeKnown
+  if (input.birthTime !== undefined) changes.birth_time = input.birthTime
   if (input.approximateTimeRange !== undefined) {
-    updateData.approximate_time_range = input.approximateTimeRange
+    changes.approximate_time_range = input.approximateTimeRange
   }
-  if (input.cityId !== undefined) updateData.city_id = input.cityId
-  if (input.cityName !== undefined) updateData.city_name = input.cityName
-  if (input.latitude !== undefined) updateData.latitude = input.latitude
-  if (input.longitude !== undefined) updateData.longitude = input.longitude
+  if (input.cityId !== undefined) changes.city_id = input.cityId
+  if (input.cityName !== undefined) changes.city_name = input.cityName
+  if (input.latitude !== undefined) changes.latitude = input.latitude
+  if (input.longitude !== undefined) changes.longitude = input.longitude
 
-  updateData.updated_at = new Date().toISOString()
+  const { data, error } = await supabase.rpc('apply_birth_data_edit', {
+    p_user_id: userId,
+    p_chart_id: id,
+    p_changes: changes,
+    p_is_free: opts.isFree,
+  })
 
-  const { data, error } = await supabase
-    .from('charts')
-    .update(updateData)
-    .eq('id', id)
-    .eq('user_id', userId)
-    .select()
-    .single()
-
-  if (error || !data) {
+  if (error) {
+    console.error('[core/charts/birth-data] apply_birth_data_edit failed:', error)
+    return { ok: false, error: 'UPDATE_FAILED', message: error.message }
+  }
+  if (!data) {
+    // The function returns NULL when no chart matches (id, user_id).
     return { ok: false, error: 'NOT_FOUND' }
   }
 
-  // Invalidate cached natal calc — birth data changed, old calc is stale.
-  const { error: calcDeleteError } = await supabase
-    .from('chart_calculations')
-    .delete()
-    .eq('chart_id', id)
-
-  if (calcDeleteError) {
-    console.error(
-      '[core/charts/birth-data] cache invalidation failed:',
-      calcDeleteError,
-    )
+  const result = data as {
+    chart: BirthChartRow
+    birth_data_changed: boolean
+    quota_exempt: boolean
+    regrant_granted: boolean
   }
-
-  return { ok: true, data: data as BirthChartRow }
+  return {
+    ok: true,
+    data: result.chart,
+    edit: {
+      birthDataChanged: result.birth_data_changed,
+      quotaExempt: result.quota_exempt,
+      regrantGranted: result.regrant_granted,
+    },
+  }
 }
 
 export async function deleteBirthChart(

@@ -148,7 +148,8 @@ function captureAiReadingsUpserts(): Array<Record<string, unknown>> {
 }
 
 function seedChartAndNoCache(topic = 'general') {
-  mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_tier_gate_test' } })
+  mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_tier_gate_test', birth_data_edited_at: '2026-01-01T00:00:00.000Z' } })
+  mockSupabase.push('charts', { data: { birth_data_edited_at: '2026-01-01T00:00:00.000Z' } }) // race-guard re-read
   mockSupabase.push('ai_readings', { data: null }) // cache check — nothing
   mockSupabase.push('chart_calculations', {
     data: {
@@ -165,7 +166,8 @@ function seedChartAndNoCache(topic = 'general') {
 }
 
 function seedChartWithLiveReading() {
-  mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_tier_gate_test' } })
+  mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_tier_gate_test', birth_data_edited_at: '2026-01-01T00:00:00.000Z' } })
+  mockSupabase.push('charts', { data: { birth_data_edited_at: '2026-01-01T00:00:00.000Z' } }) // race-guard re-read
   mockSupabase.push('ai_readings', {
     data: {
       id: 'reading-1',
@@ -320,7 +322,8 @@ describe('POST /api/oracle/generate — reading expiry (2026-09-01)', () => {
   it('keeps a non-expiring row non-expiring when a premium user regenerates it', async () => {
     userState.tier = 'premium'
     const upserts = captureAiReadingsUpserts()
-    mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_tier_gate_test' } })
+    mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_tier_gate_test', birth_data_edited_at: '2026-01-01T00:00:00.000Z' } })
+    mockSupabase.push('charts', { data: { birth_data_edited_at: '2026-01-01T00:00:00.000Z' } }) // race-guard re-read
     mockSupabase.push('ai_readings', {
       data: {
         id: 'reading-1',

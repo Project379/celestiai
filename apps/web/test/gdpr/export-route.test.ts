@@ -110,3 +110,57 @@ describe('GET /api/gdpr/export — user_crystals / user_daily_crystals (2026-08-
     )
   })
 })
+
+describe('GET /api/gdpr/export — birth_data_edits (Batch 8 b)', () => {
+  function seedEmpty() {
+    mockSupabase.push('connection_members', { data: [] })
+    mockSupabase.push('charts', {
+      data: [{ id: 'chart-1', user_id: 'user_test123', birth_data_edited_at: '2026-10-01T10:00:00.000Z' }],
+    })
+    mockSupabase.push('ai_readings', { data: [] })
+    mockSupabase.push('daily_horoscopes', { data: [] })
+    mockSupabase.push('diary_entries', { data: [] })
+    mockSupabase.push('connection_invites', { data: [] })
+    mockSupabase.push('saved_people_profiles', { data: [] })
+    mockSupabase.push('users', { data: { subscription_tier: 'free', created_at: '2026-01-01' } })
+    mockSupabase.push('user_crystals', { data: [] })
+    mockSupabase.push('user_daily_crystals', { data: [] })
+    mockSupabase.push('recommendation_deliveries', { data: [] })
+    mockSupabase.push('user_recommendation_work_states', { data: [] })
+    mockSupabase.push('recommendation_events', { data: [] })
+  }
+
+  it('includes birthDataEdits in the export payload, and the charts keep their birth_data_edited_at marker', async () => {
+    seedEmpty()
+    mockSupabase.push('birth_data_edits', {
+      data: [
+        {
+          id: 'e-1',
+          user_id: 'user_test123',
+          chart_id: 'chart-1',
+          edited_at: '2026-10-01T10:00:00.000Z',
+          quota_exempt: true,
+          was_active_chart: true,
+        },
+      ],
+    })
+
+    const res = await GET()
+    const body = JSON.parse(await res.text())
+
+    expect(body.birthDataEdits).toHaveLength(1)
+    expect(body.birthDataEdits[0].quota_exempt).toBe(true)
+    expect(body.charts[0].birth_data_edited_at).toBe('2026-10-01T10:00:00.000Z')
+  })
+
+  it("queries birth_data_edits scoped by the caller's own user_id (never another user's ledger)", async () => {
+    seedEmpty()
+    mockSupabase.push('birth_data_edits', { data: [] })
+
+    await GET()
+
+    const idx = mockSupabase.from.mock.calls.findIndex((c) => c[0] === 'birth_data_edits')
+    expect(idx).toBeGreaterThanOrEqual(0)
+    expect(mockSupabase.from.mock.results[idx].value.eq).toHaveBeenCalledWith('user_id', 'user_test123')
+  })
+})

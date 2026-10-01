@@ -397,18 +397,44 @@ export async function getSavedProfileForUser(
   return (data as SavedProfileRow | null) ?? null
 }
 
+/**
+ * Latest saved-profile report, or null when there is none OR the latest one is
+ * STALE. A saved-profile report is synastry against the user's ACTIVE (latest)
+ * chart, so it describes the old chart once that chart's birth data was
+ * edited: created before `charts.birth_data_edited_at` => never served. The
+ * caller sees null, which the app already renders as "analyze to create a
+ * report"; the next analyze appends version+1 as it always has.
+ */
 export async function getLatestSavedProfileReport(
   profileId: string,
+  userId: string,
 ): Promise<SavedProfileReportRow | null> {
   const supabase = createServiceSupabaseClient()
-  const { data } = await supabase
-    .from('saved_people_reports')
-    .select('*')
-    .eq('profile_id', profileId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  return (data as SavedProfileReportRow | null) ?? null
+  const [{ data }, { data: activeChart }] = await Promise.all([
+    supabase
+      .from('saved_people_reports')
+      .select('*')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('charts')
+      .select('birth_data_edited_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
+  const report = (data as SavedProfileReportRow | null) ?? null
+  if (report && activeChart && isOlderThan(report.created_at, activeChart.birth_data_edited_at)) {
+    return null
+  }
+  return report
+}
+
+function isOlderThan(timestamp: string, marker: string): boolean {
+  return new Date(timestamp).getTime() < new Date(marker).getTime()
 }
 
 export async function getConnectionInviteByTokenHash(tokenHash: string): Promise<ConnectionInviteRow | null> {
@@ -476,6 +502,11 @@ export async function getMemberViewsForSpace(spaceId: string): Promise<Connectio
   }))
 }
 
+/**
+ * Latest space report, or null when there is none OR it is STALE: a space
+ * report is computed from every member's chart, so it is stale once ANY member
+ * chart's birth data was edited after the report was created.
+ */
 export async function getLatestConnectionReport(
   spaceId: string,
 ): Promise<ConnectionReportRow | null> {
@@ -487,7 +518,22 @@ export async function getLatestConnectionReport(
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
-  return (data as ConnectionReportRow | null) ?? null
+  const report = (data as ConnectionReportRow | null) ?? null
+  if (!report) return null
+
+  const members = await listSpaceMembers(spaceId)
+  const chartIds = members.map((member) => member.chart_id)
+  if (chartIds.length === 0) return report
+  const { data: markers } = await supabase
+    .from('charts')
+    .select('birth_data_edited_at')
+    .in('id', chartIds)
+  const newestEdit = (markers ?? []).reduce<number>(
+    (max, row: { birth_data_edited_at: string }) =>
+      Math.max(max, new Date(row.birth_data_edited_at).getTime()),
+    0,
+  )
+  return new Date(report.created_at).getTime() < newestEdit ? null : report
 }
 
 export async function listSpacesForUser(userId: string): Promise<ConnectionSpaceRow[]> {
@@ -616,7 +662,7 @@ export async function getCircleDashboardData(userId: string): Promise<CircleDash
 
   const spaceViews = await Promise.all(spaces.map((space) => buildCircleSpaceView(space)))
   const latestSavedProfileReportsEntries = await Promise.all(
-    savedProfiles.map(async (profile) => [profile.id, await getLatestSavedProfileReport(profile.id)] as const),
+    savedProfiles.map(async (profile) => [profile.id, await getLatestSavedProfileReport(profile.id, userId)] as const),
   )
   const latestSavedProfileReports = Object.fromEntries(latestSavedProfileReportsEntries) as Record<
     string,

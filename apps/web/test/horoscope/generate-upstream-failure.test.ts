@@ -92,8 +92,10 @@ function seed(chartId: string) {
       birth_time_known: true,
       latitude: 42.7,
       longitude: 23.3,
+      birth_data_edited_at: '2026-01-01T00:00:00.000Z',
     },
   })
+  mockSupabase.push('daily_horoscopes', { data: null }) // stale-row delete
   mockSupabase.push('daily_horoscopes', { data: null }) // cache miss
   mockSupabase.push('daily_transits', { data: { planet_positions: [] } })
   mockSupabase.push('chart_calculations', {
