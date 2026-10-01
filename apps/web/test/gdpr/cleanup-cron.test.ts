@@ -44,6 +44,16 @@ vi.mock('@/lib/stripe/client', () => ({
   stripe: { customers: { del: deleteStripeCustomer } },
 }))
 
+const { deleteRevenueCatCustomer, deletePostHogPerson } = vi.hoisted(() => ({
+  deleteRevenueCatCustomer: vi.fn(async () => 'deleted'),
+  deletePostHogPerson: vi.fn(async () => 'deleted'),
+}))
+
+vi.mock('@/lib/gdpr/processor-erasure', () => ({
+  deleteRevenueCatCustomer,
+  deletePostHogPerson,
+}))
+
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { GET } from '@/app/api/cron/cleanup-deleted-accounts/route'
 
@@ -380,6 +390,31 @@ describe('GET /api/cron/cleanup-deleted-accounts — Stripe customer deletion (P
     expect(deleteClerkUser).toHaveBeenCalledWith('user_1')
     expect(usersDeleteCalled).toBe(true)
     expect(body.deleted).toBe(1)
+  })
+
+  it('calls RevenueCat and PostHog erasure with the Clerk ID, even when the user has no Stripe customer', async () => {
+    const usersTable = mockUsersTableWithStripe('user_1', null, () => {})
+    mockSupabase.from.mockImplementation((table: string) => usersTable(table) ?? genericBuilder())
+
+    await GET(req('test-cron-secret'))
+
+    expect(deleteRevenueCatCustomer).toHaveBeenCalledWith('user_1')
+    expect(deletePostHogPerson).toHaveBeenCalledWith('user_1')
+  })
+
+  it('still deletes the users row when the RevenueCat/PostHog helpers reject — belt-and-braces over their own never-throw contract', async () => {
+    let usersDeleteCalled = false
+    const usersTable = mockUsersTableWithStripe('user_1', null, () => {
+      usersDeleteCalled = true
+    })
+    mockSupabase.from.mockImplementation((table: string) => usersTable(table) ?? genericBuilder())
+    deleteRevenueCatCustomer.mockResolvedValueOnce('failed')
+    deletePostHogPerson.mockResolvedValueOnce('failed')
+
+    const res = await GET(req('test-cron-secret'))
+
+    expect(usersDeleteCalled).toBe(true)
+    expect((await res.json()).deleted).toBe(1)
   })
 })
 

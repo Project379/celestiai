@@ -4,6 +4,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { deleteUserDiaryEntries } from '@stellaeum/core/diary/entries'
 import { verifyCronSecret } from '@/lib/auth/cron-secret'
 import { stripe } from '@/lib/stripe/client'
+import { deletePostHogPerson, deleteRevenueCatCustomer } from '@/lib/gdpr/processor-erasure'
 
 /**
  * GET /api/cron/cleanup-deleted-accounts
@@ -11,12 +12,11 @@ import { stripe } from '@/lib/stripe/client'
  * Removes all user data from Supabase and deletes the Clerk account.
  * Scheduled at 03:00 UTC daily via vercel.json.
  *
- * STELLAEUM_PLACEHOLDER: PROCESSOR-ERASURE-GAPS — this cron clears our own
- * database, the Clerk account, and (2026-09-28) the Stripe customer. It
- * still does not touch PostHog or RevenueCat, both of which retain
- * user-linked data after this runs — both need a credential that does not
- * exist yet. See .planning/PLACEHOLDERS.md for the per-processor audit
- * (deletion APIs, required credentials, what already exists).
+ * PROCESSOR-ERASURE-GAPS (closed 2026-10-01): besides our own database and the
+ * Clerk account, this cron erases the Stripe customer, the RevenueCat
+ * customer and the PostHog person (lib/gdpr/processor-erasure.ts). The
+ * RevenueCat/PostHog keys exist in Vercel Production only; where absent
+ * (local dev, preview) those steps skip with a log line.
  */
 export const maxDuration = 60
 
@@ -330,6 +330,13 @@ export async function GET(req: Request) {
           })
         }
       }
+
+      // RevenueCat + PostHog erasure (PROCESSOR-ERASURE-GAPS). Same
+      // non-blocking rule as Stripe above: both helpers never throw — they
+      // log, alert Sentry and return 'failed' — so neither can stop the
+      // users-row delete. Keys absent (dev/preview) => 'skipped'.
+      await deleteRevenueCatCustomer(clerkId)
+      await deletePostHogPerson(clerkId)
 
       // Delete user record LAST — only once the Clerk account is
       // confirmed gone (deleted just now, or already gone from a prior
