@@ -34,7 +34,6 @@ export function EditBirthDataDialog({
 }: EditBirthDataDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showConfirm, setShowConfirm] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
 
   const methods = useForm<UpdateBirthData>({
@@ -79,7 +78,6 @@ export function EditBirthDataDialog({
         longitude: chart.longitude,
       })
       setError(null)
-      setShowConfirm(false)
     }
   }, [isOpen, chart, methods])
 
@@ -102,11 +100,6 @@ export function EditBirthDataDialog({
   )
 
   const onSubmit = async (data: UpdateBirthData) => {
-    if (!showConfirm) {
-      setShowConfirm(true)
-      return
-    }
-
     setIsLoading(true)
     setError(null)
 
@@ -140,16 +133,15 @@ export function EditBirthDataDialog({
           e.clientY < rect.top ||
           e.clientY > rect.bottom)
       ) {
-        if (!showConfirm) onClose()
+        onClose()
       }
     },
-    [onClose, showConfirm]
+    [onClose]
   )
 
   const handleCancel = useCallback(() => {
-    if (showConfirm) setShowConfirm(false)
-    else onClose()
-  }, [showConfirm, onClose])
+    onClose()
+  }, [onClose])
 
   if (!isOpen) return null
 
@@ -176,15 +168,13 @@ export function EditBirthDataDialog({
           <div className="mb-7">
             <p className="mb-2 flex items-center gap-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
               <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-              {showConfirm ? 'Потвърждение' : 'Редакция'}
+              Редакция
             </p>
             <h2 className="font-display text-[1.5rem] font-semibold leading-[1.15] tracking-tight text-slate-100">
-              {showConfirm ? 'Потвърди промените' : 'Редактиране на данни'}
+              Редактиране на данни
             </h2>
             <p className="mt-2 font-display text-[14px] font-light leading-relaxed text-slate-400">
-              {showConfirm
-                ? 'Наталната карта ще бъде преизчислена.'
-                : 'Промени каквото е нужно - резултатите се обновяват веднага.'}
+              Промени каквото е нужно - резултатите се обновяват веднага.
             </p>
           </div>
 
@@ -194,13 +184,7 @@ export function EditBirthDataDialog({
             </div>
           )}
 
-          {showConfirm ? (
-            <div className="mb-7 border-l border-amber-300/40 bg-gradient-to-r from-amber-300/[0.04] via-transparent to-violet-400/[0.04] px-5 py-4">
-              <p className="font-display text-[14px] leading-relaxed text-slate-300/90">
-                Рождените данни ще бъдат актуализирани. Наталната карта, домовете и аспектите ще бъдат преизчислени.
-              </p>
-            </div>
-          ) : (
+          {(
             <div className="space-y-6">
               {/* Name */}
               <div>
@@ -369,7 +353,7 @@ export function EditBirthDataDialog({
               <svg className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              {showConfirm ? 'Върни се' : 'Отказ'}
+              Отказ
             </button>
             {/* Save: a real <button> (button role), >= 48px tall, named by its visible
                 text. Disabled until a field actually differs (a no-op edit would never
@@ -377,7 +361,7 @@ export function EditBirthDataDialog({
                 readable contrast (slate-400 on the dark panel), not a faded opacity. */}
             <button
               type="submit"
-              disabled={isLoading || (!showConfirm && !isDirty)}
+              disabled={isLoading || !isDirty}
               aria-busy={isLoading}
               className="group relative inline-flex min-h-[48px] min-w-[48px] items-center justify-center gap-3 overflow-hidden rounded-full border border-amber-300/50 bg-gradient-to-r from-violet-500/15 via-transparent to-amber-400/15 px-6 py-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-100 transition-all hover:border-amber-300/80 hover:text-white hover:shadow-[0_0_28px_rgba(251,191,36,0.20)] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60 disabled:pointer-events-none disabled:border-slate-500/40 disabled:from-transparent disabled:to-transparent disabled:text-slate-400"
             >
@@ -393,12 +377,6 @@ export function EditBirthDataDialog({
                   </svg>
                   Запазване…
                 </span>
-              ) : showConfirm ? (
-                <>
-                  <span aria-hidden className="relative h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.7)]" />
-                  <span className="relative">Потвърждавам</span>
-                  <span aria-hidden className="relative h-1 w-1 rotate-45 bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.7)]" />
-                </>
               ) : (
                 <span className="relative">Запази</span>
               )}

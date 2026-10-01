@@ -14,3 +14,15 @@
 export function isMediaRecommendationsEnabled(): boolean {
   return process.env.FF_MEDIA_RECOMMENDATIONS === 'true'
 }
+
+/**
+ * FF_BIRTH_DATA_EDIT — gates the web ENTRY to birth-data edit (the «Ти» row that
+ * opens the edit dialog). Default OFF; the var must be exactly 'true'. Web and
+ * mobile ship the edit together, so this stays off until the mobile edit is
+ * ready (BIRTH-DATA-EDIT-PARITY, .planning/PLACEHOLDERS.md). It hides the entry
+ * only: the server side (PATCH /api/birth-data/[id], invalidation) is always
+ * live and is safe to call without the UI. Read per request, never NEXT_PUBLIC_.
+ */
+export function isBirthDataEditEnabled(): boolean {
+  return process.env.FF_BIRTH_DATA_EDIT === 'true'
+}
