@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart reveal flow — new user + edit, mock-up v1</title>
+<!--
+  MOCK-UP v1 — NOTHING BUILT, NOTHING WIRED. One unified flow (founder ruling 2026-10-01):
+    saved -> staged loading (placements light up) -> [new users only: big-three reveal] ->
+    today's horoscope -> a single button to the natal chart.
+
+  Same art direction as the approved mock-ups: oracle-loading-v2.html (ember hero, wash, starfield,
+  sign glyphs from packages/core/src/charts/glyphs.ts ZODIAC_GLYPH_PATHS injected verbatim, the lit
+  "<planet> в <sign>" labels, stage text, 10 s "taking longer" line) and orakul-v4.html (reading type
+  hierarchy; invitation = lit phrase + ember, never a filled/bordered button).
+
+  COPY: the ONLY approved Bulgarian here is «Данните са запазени. Картата ти е обновена.» (edit variant,
+  first stage line). Every other Bulgarian string is PLACEHOLDER_COPY in the COPY object — founder to approve.
+  The NEW-USER first line is deliberately a placeholder: «…обновена» is wrong for a first chart.
+-->
+<style>
+  @font-face{font-family:'PF-Reg';src:url('../../../apps/mobile/assets/fonts/PlayfairDisplay-Regular.ttf');}
+  @font-face{font-family:'PF-Semi';src:url('../../../apps/mobile/assets/fonts/PlayfairDisplay-SemiBold.ttf');}
+  @font-face{font-family:'EBG-Reg';src:url('../../../apps/mobile/assets/fonts/EBGaramond-Regular.ttf');}
+  @font-face{font-family:'EBG-Ital';src:url('../../../apps/mobile/assets/fonts/EBGaramond-Italic.ttf');}
+  :root{
+    --base:#08060f; --starlight:#f5f7fc; --bronze:#b8763e; --bronze-hi:#d9a06a;
+    --text:#e2e8f0; --muted:#94a3b8; --faint:#6d7e97; --rose:#fb7185;
+    --page-bg:#0c0a12; --page-surface:#141019; --page-text:#e9e6f0; --page-muted:#948fa3; --page-border:#241f30;
+    --serif-d:'PF-Semi',Georgia,serif; --serif-d-r:'PF-Reg',Georgia,serif; --body:'EBG-Reg',Palatino,serif; --body-i:'EBG-Ital',Palatino,serif;
+    --mono:"SFMono-Regular",Consolas,Menlo,monospace; --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page-bg);color:var(--page-text);font-family:var(--sans);line-height:1.55;padding:0 0 100px}
+  .wrap{max-width:1160px;margin:0 auto;padding:40px 24px 0}
+  h1{font-family:var(--serif-d-r);font-weight:400;font-size:26px;margin:0 0 6px}
+  .dek{font-size:14px;color:var(--page-muted);max-width:780px;margin:0 0 20px}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+  .row .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8f8aa0;min-width:74px}
+  button.c,select{background:var(--page-surface);color:var(--page-text);border:1px solid var(--page-border);border-radius:4px;padding:8px 12px;font:inherit;font-size:13px;min-height:40px;cursor:pointer}
+  button.c.on{border-color:var(--bronze);color:var(--bronze-hi)}
+  label.chk{font-size:13px;color:var(--page-muted);display:flex;gap:6px;align-items:center}
+  .stage{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;margin-top:18px}
+  .phone-frame{flex:0 0 auto;width:390px;height:780px;border-radius:44px;background:#000;padding:10px;box-shadow:0 30px 70px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04)}
+  .phone-screen{width:100%;height:100%;border-radius:36px;overflow:hidden;position:relative;background:var(--base)}
+  .notes{flex:1 1 300px;min-width:280px}
+  .notes h3{font-family:var(--serif-d-r);font-weight:400;font-size:16px;margin:18px 0 8px}
+  .notes h3:first-child{margin-top:0}
+  .notes p,.notes li{font-size:13.5px;color:#b8b3c6;margin:0 0 8px}
+  .notes ul{padding-left:18px;margin:0 0 8px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#8f8aa0;background:rgba(255,255,255,.04);padding:2px 6px;border-radius:2px;margin-right:6px}
+
+  /* starfield, wash, ember hero — oracle-loading-v2 / orakul-v4 verbatim */
+  .stars{position:absolute;inset:0}
+  .star{position:absolute;border-radius:50%;background:var(--starlight);animation:tw 4.5s ease-in-out infinite}
+  @keyframes tw{0%,100%{opacity:.25}50%{opacity:.85}}
+  .oracle-wash{position:absolute;inset:0;background:radial-gradient(ellipse 400px 360px at 50% 4%,rgba(184,118,62,.3),transparent 64%),radial-gradient(ellipse 320px 260px at 50% 97%,rgba(184,118,62,.13),transparent 62%)}
+  .content{position:relative;height:100%;padding:50px 26px 0;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .ember-hero-stage{position:relative;width:120px;height:120px;flex:0 0 auto;transition:transform .6s ease}
+  .ember-hero-glow{position:absolute;inset:-52px;border-radius:50%;background:radial-gradient(circle,rgba(184,118,62,.5),rgba(184,118,62,.1) 55%,transparent 78%);animation:breathe2 3.2s ease-in-out infinite}
+  .ember-hero{position:absolute;inset:44px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#ffe8c9,var(--bronze-hi) 45%,var(--bronze) 75%,#4a2f18 100%);box-shadow:0 0 30px 6px rgba(217,160,106,.55)}
+  @keyframes breathe2{0%,100%{opacity:.7;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
+  .rm .ember-hero-glow,.rm .star{animation:none}
+  .rm .star{opacity:.5}
+  .rm *{transition:none !important}
+
+  /* placements row (oracle-loading-v2): glow + colour, no container */
+  .placements{margin-top:40px;display:flex;gap:8px;justify-content:center;width:100%}
+  .pl{width:96px;display:flex;flex-direction:column;align-items:center}
+  .pl-glyph{position:relative;width:44px;height:44px;transition:transform .7s ease}
+  .pl-glow{position:absolute;inset:-26px;border-radius:50%;opacity:0;transition:opacity .7s ease;background:radial-gradient(circle,rgba(184,118,62,.5),rgba(184,118,62,.1) 55%,transparent 78%)}
+  .pl-glyph svg{position:relative;width:44px;height:44px;fill:none;stroke:var(--faint);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.35;transition:stroke .7s ease,opacity .7s ease,filter .7s ease}
+  .pl.lit .pl-glow{opacity:1}
+  .pl.lit svg{stroke:var(--bronze-hi);opacity:1;filter:drop-shadow(0 0 6px rgba(217,160,106,.6))}
+  .pl-label{margin-top:12px;font-family:var(--body);font-size:12px;line-height:17px;color:var(--muted);opacity:0;transition:opacity .7s ease;min-height:34px}
+  .pl.lit .pl-label{opacity:1}
+  /* big-three reveal: the glyph being revealed grows and its label becomes the display line */
+  .pl.focus .pl-glyph{transform:scale(1.55)}
+  .pl.focus .pl-label{color:var(--starlight);font-family:var(--serif-d-r);font-size:15px}
+
+  .stagetext{margin-top:34px;min-height:52px;max-width:262px;font-family:var(--body-i);font-style:italic;font-size:14.5px;line-height:1.6;color:#e6e2f0;transition:opacity .35s}
+  .stagetext.swap{opacity:0}
+  .stagetext.slow{color:var(--muted)}
+  .stagetext.err{color:var(--rose)}
+  .reveal-line{margin-top:30px;min-height:44px;max-width:270px;font-family:var(--body-i);font-style:italic;font-size:14.5px;line-height:1.6;color:#e6e2f0;transition:opacity .4s}
+
+  /* horoscope (orakul-v4 answer type) */
+  .daystamp{font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.03em;margin-top:26px}
+  .answer{margin-top:14px;max-width:292px;opacity:0;transition:opacity .9s ease;text-align:center}
+  .answer .lead{font-family:var(--body-i);font-style:italic;font-size:14.5px;color:#e6e2f0;line-height:1.6}
+  .answer .dev{font-family:var(--body);font-size:13.5px;color:#c7c2d6;line-height:1.6;margin-top:10px}
+  .answer .payoff{font-family:var(--serif-d-r);font-size:15.5px;color:var(--starlight);margin-top:16px}
+  .answer.on{opacity:1}
+  .quiet{font-family:var(--body-i);font-style:italic;font-size:13px;line-height:1.55;color:var(--muted);max-width:250px;margin-top:22px}
+
+  /* the one invitation: lit phrase + ember (dnes-v4 .invite). A real button for a11y: role button, >=48px target. */
+  .invite{margin-top:auto;padding:22px 0 34px;text-align:center;position:relative;opacity:0;transition:opacity .7s ease;pointer-events:none;min-height:48px}
+  .invite.on{opacity:1;pointer-events:auto}
+  .invite-glow{position:absolute;left:50%;top:50%;width:260px;height:120px;transform:translate(-50%,-50%);background:radial-gradient(ellipse,rgba(184,118,62,.28),transparent 68%);pointer-events:none}
+  .invite-btn{position:relative;background:none;border:none;cursor:pointer;min-height:48px;min-width:48px;padding:6px 14px;font-family:var(--serif-d);font-weight:600;font-size:20px;color:var(--bronze-hi);letter-spacing:.01em;display:inline-flex;align-items:baseline;gap:9px}
+  .ember{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--bronze-hi);box-shadow:0 0 8px 2px rgba(217,160,106,.7);animation:breathe 2.6s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.5;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+  .rm .ember{animation:none}
+  /* skip: plain text, bottom-right, readable contrast, >=48px target. Not an invitation — it is wayfinding. */
+  .skip{position:absolute;right:8px;bottom:6px;background:none;border:none;cursor:pointer;min-height:48px;min-width:48px;padding:0 14px;font-family:var(--body);font-size:12px;color:var(--muted);opacity:0;transition:opacity .4s;pointer-events:none}
+  .skip.on{opacity:1;pointer-events:auto}
+  .clock{position:absolute;left:0;right:0;top:14px;text-align:center;font-family:var(--mono);font-size:9.5px;color:var(--faint)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Хороскоп и карта след запазване — unified chart reveal flow · v1</h1>
+  <p class="dek">Mock-up only. One flow, two variants. <b>New user:</b> loading → big-three reveal (once ever, skippable) → today's horoscope → chart button. <b>Edit:</b> loading → today's horoscope → chart button (no reveal). The horoscope is generated <i>inside</i> the loading state. All Bulgarian except the approved edit message is PLACEHOLDER copy.</p>
+
+  <div class="row"><span class="k">variant</span><span id="variants"></span></div>
+  <div class="row"><span class="k">horoscope</span><span id="scenarios"></span></div>
+  <div class="row"><span class="k">jump to</span><span id="phases"></span><label class="chk"><input type="checkbox" id="rm"> reduced motion</label><button class="c" id="play">▶ Replay timeline</button></div>
+
+  <div class="stage">
+    <div class="phone-frame"><div class="phone-screen" id="screen">
+      <div class="stars" id="stars"></div>
+      <div class="oracle-wash"></div>
+      <div class="content" aria-live="polite">
+        <div class="ember-hero-stage" id="hero"><div class="ember-hero-glow"></div><div class="ember-hero"></div></div>
+        <div class="placements" id="placements"></div>
+        <div class="stagetext" id="stagetext"></div>
+        <div class="reveal-line hidden" id="revealline"></div>
+        <div class="daystamp hidden" id="daystamp"></div>
+        <div class="answer" id="answer">
+          <div class="lead">Меркурий е в сянка — вниманието ти наистина се разпръсва.</div>
+          <div class="dev">Не е липса на дисциплина. Три планети сменят посока едновременно, а умът следва небето.</div>
+          <div class="payoff">Остави разсейването да мине през теб тази седмица.</div>
+        </div>
+        <div class="quiet hidden" id="quiet"></div>
+        <div class="invite" id="invite"><div class="invite-glow"></div><button class="invite-btn" id="cta" type="button"><span id="ctatext"></span><span class="ember"></span></button></div>
+        <button class="skip" id="skip" type="button"></button>
+        <div class="clock" id="clock"></div>
+      </div>
+    </div></div>
+
+    <div class="notes">
+      <h3>The flow</h3>
+      <ul>
+        <li><span class="tag">1 loading</span> ember hero + Sun / Moon / Ascendant lighting with the stage lines (0 / 1.2 / 2.5 s), exactly oracle-loading-v2. Chart compute is ≈1 ms server-side, so the placements are known immediately; the wait is the horoscope.</li>
+        <li><span class="tag">2 reveal</span> <b>new user only.</b> Fills the horoscope wait instead of adding to it: each placement in turn grows and its label becomes the display line; a one-line trait sits under it. Skip is available from the first frame. Once ever.</li>
+        <li><span class="tag">3 horoscope</span> today's reading in the Оракул answer type (italic lead → body → Playfair payoff), the ember settles as the hero.</li>
+        <li><span class="tag">4 chart</span> one lit phrase + ember (the app's invitation device, never a boxed button), a real button: role, label, ≥48 px.</li>
+      </ul>
+      <h3>States shown</h3>
+      <ul>
+        <li><b>p50 / p90 / slow:</b> horoscope arrives at 4.2 / 8.5 / 20 s. At ≥10 s the stage line becomes the "taking longer" line.</li>
+        <li><b>Horoscope failed</b> (503, validation twice, or the edit-race 409): the horoscope slot becomes one quiet line and the chart button still appears — a failed horoscope never blocks the chart. Retry belongs to Днес (it already requests the horoscope).</li>
+        <li><b>Chart compute failed:</b> the only state with a different button — one lit "try again" phrase instead of the chart button.</li>
+        <li><b>Reduced motion:</b> glyphs static and lit, no fades/growth/twinkle/breathing, text and sections swap instantly; the reveal is the three labels shown at once with a Continue.</li>
+      </ul>
+      <h3>Accessibility</h3>
+      <p>Stage text and the horoscope arrival are in a polite live region (the approved message is announced as the first stage line). Skip and the chart button are real buttons ≥48 px; skip is readable muted text, not decoration.</p>
+      <h3>Copy flags</h3>
+      <ul>
+        <li>Approved: «Данните са запазени. Картата ти е обновена.» — edit variant, first stage line.</li>
+        <li><b>New-user first line is a placeholder</b> — «обновена» (updated) does not fit a first chart; needs your wording.</li>
+        <li>Everything else Bulgarian here (other stage lines, reveal traits, skip, chart button, horoscope-failed line, retry) is PLACEHOLDER.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  const GLYPHS = {"aries":["M12 21V13L4 6C1 6 1 11 4 11","M12 13L20 6C23 6 23 11 20 11"],"taurus":["M 6.5 16 A 5.5 5.5 0 1 0 17.5 16 A 5.5 5.5 0 1 0 6.5 16 Z","M4 4c0 4 3.5 6.5 8 6.5s8-2.5 8-6.5"],"gemini":["M5 3h14","M5 21h14","M8 3c-.5 4-.5 14 0 18","M16 3c.5 4 .5 14 0 18"],"cancer":["M4 10c0-5 16-5 16 0","M20 14c0 5-16 5-16 0","M 4 10 A 3 3 0 1 0 10 10 A 3 3 0 1 0 4 10 Z","M 14 14 A 3 3 0 1 0 20 14 A 3 3 0 1 0 14 14 Z"],"leo":["M 3.5 14 A 4.5 4.5 0 1 0 12.5 14 A 4.5 4.5 0 1 0 3.5 14 Z","M12.5 14c0-6 3-10 5-10s3 2 3 4-2 4-4 3"],"virgo":["M4 20V8c0-3 3-4 4-1v13","M8 20V8c0-3 3-4 4-1v13","M12 20V8c0-3 3-4 4-1v5","M16 12c0 3 2 5 4 4","M18.5 12l2 6"],"libra":["M3 20h18","M3 15h18","M7 15a5 5 0 0 1 10 0"],"scorpio":["M4 20V8c0-3 3-4 4-1v13","M8 20V8c0-3 3-4 4-1v13","M12 20V8c0-3 3-4 4-1v8c0 3 2 5 4 4","M18 16l3 3-3 3"],"sagittarius":["M4 20L20 4","M13 4h7v7","M7 13l5 5"],"capricorn":["M 5.5 8 Q 7 7 8.5 9 L 8.5 16","M 8.5 9 C 8.5 4 14.5 4 14.5 9 V 15 C 14.5 18.5 19.5 20.5 19.5 16 C 19.5 11.5 13.5 11.5 13.5 16 C 13.5 20.5 11.5 21.5 10.5 20.5"],"aquarius":["M3 9l2.5-3 3 3 3-3 3 3 3-3 2.5 3","M3 16l2.5-3 3 3 3-3 3 3 3-3 2.5 3"],"pisces":["M4 12h16","M4 4c6 4 6 12 0 16","M20 4c-6 4-6 12 0 16"]}
+  // PLACEHOLDER_COPY — all Bulgarian below awaits founder approval EXCEPT editFirstLine (approved 2026-10-01)
+  const COPY = {
+    editFirstLine: 'Данните са запазени. Картата ти е обновена.',          // APPROVED
+    newFirstLine:  'Данните са запазени. Картата ти е създадена.',         // PLACEHOLDER — needs real wording
+    stage2: 'Свързвам местата, които се светват…',
+    stage3: 'Подреждам думите за днешния ден…',
+    slow: 'Отнема по-дълго от обикновено…',
+    skip: 'Пропусни',
+    chart: 'Към картата',
+    retry: 'Опитай отново',
+    horoFail: 'Днешният хороскоп ще е готов малко по-късно — ще го намериш в Днес.',
+    chartFail: 'Не успяхме да подготвим картата.',
+    day: '1 октомври',
+    planets: { sun:'Слънце', moon:'Луна', asc:'Асцендент' },
+    signs: { leo:'Лъв', pisces:'Риби', scorpio:'Скорпион' },
+    traits: { sun:'Ядрото ти — как светиш.', moon:'Вътрешният ти свят — от какво се нуждаеш.', asc:'Как те виждат другите.' } // PLACEHOLDER traits
+  }
+  const PL = [['sun','leo'],['moon','pisces'],['asc','scorpio']]
+  const STAGE_AT = [0,1.2,2.5], SLOW_AT = 10
+  const REVEAL_START = 3.0, REVEAL_STEP = 1.7
+  const SCEN = { p50:{t:4.2,label:'p50 — 4.2 s'}, p90:{t:8.5,label:'p90 — 8.5 s'}, slow:{t:20,label:'slow — 20 s'}, hfail:{t:6,fail:true,label:'horoscope fails @ 6 s'}, cfail:{t:1.0,cfail:true,label:'chart compute fails @ 1 s'} }
+  const $ = id => document.getElementById(id)
+  let st = { variant:'edit', scen:'p90', timers:[], raf:0, skipped:false }
+
+  ;(function(){const s=$('stars');let h='';for(let i=0;i<46;i++){const x=Math.random()*100,y=Math.random()*100,z=Math.random()<.2?2:1.2
+    h+='<span class="star" style="left:'+x+'%;top:'+y+'%;width:'+z+'px;height:'+z+'px;animation-delay:'+(Math.random()*4).toFixed(1)+'s"></span>'}s.innerHTML=h})()
+  const svg = sign => '<svg viewBox="0 0 24 24" aria-hidden="true">'+GLYPHS[sign].map(d=>'<path d="'+d+'"/>').join('')+'</svg>'
+  const rm = () => $('rm').checked
+  const T = (fn, s) => st.timers.push(setTimeout(fn, s*1000))
+
+  function setText(t, cls){
+    const el=$('stagetext'); const apply=()=>{el.textContent=t; el.className='stagetext'+(cls?' '+cls:'')}
+    if(rm()||!el.textContent){apply();return}
+    el.classList.add('swap'); setTimeout(apply,350)
+  }
+  function buildPlacements(lit){
+    $('placements').innerHTML=PL.map(([k,sign])=>'<div class="pl'+(lit?' lit':'')+'" data-k="'+k+'"><div class="pl-glyph"><div class="pl-glow"></div>'+svg(sign)+'</div><div class="pl-label">'+COPY.planets[k]+' в '+COPY.signs[sign]+'</div></div>').join('')
+  }
+  function reset(){
+    st.timers.forEach(clearTimeout); cancelAnimationFrame(st.raf); st.timers=[]; st.skipped=false
+    $('screen').classList.toggle('rm', rm())
+    $('hero').style.transform=''
+    for (const id of ['placements','stagetext']) $(id).classList.remove('hidden')
+    for (const id of ['revealline','daystamp','quiet']) $(id).classList.add('hidden')
+    $('answer').classList.remove('on'); $('invite').classList.remove('on'); $('skip').classList.remove('on')
+    $('stagetext').textContent=''; $('stagetext').className='stagetext'
+    buildPlacements(rm())
+  }
+  function showHoroscope(){
+    $('placements').classList.add('hidden'); $('stagetext').classList.add('hidden'); $('revealline').classList.add('hidden')
+    $('skip').classList.remove('on')
+    $('hero').style.transform='scale(.62) translateY(-26px)'
+    $('daystamp').textContent=COPY.day; $('daystamp').classList.remove('hidden')
+    $('answer').classList.add('on')
+    T(()=>showCta(false), rm()?0:1.0)
+  }
+  function showHoroFail(){
+    $('placements').classList.add('hidden'); $('stagetext').classList.add('hidden'); $('revealline').classList.add('hidden')
+    $('skip').classList.remove('on')
+    $('hero').style.transform='scale(.62) translateY(-26px)'
+    $('quiet').textContent=COPY.horoFail; $('quiet').classList.remove('hidden')
+    T(()=>showCta(false), rm()?0:.6)
+  }
+  function showCta(isRetry){
+    $('ctatext').textContent=isRetry?COPY.retry:COPY.chart
+    $('cta').setAttribute('aria-label', isRetry?COPY.retry:COPY.chart)
+    $('invite').classList.add('on')
+  }
+  function showChartFail(){
+    setText(COPY.chartFail,'err'); showCta(true)
+  }
+  function startReveal(){
+    // new user only: placements grow one by one; labels become display lines; trait line under
+    $('stagetext').classList.add('hidden'); $('revealline').classList.remove('hidden')
+    $('skip').textContent=COPY.skip; $('skip').setAttribute('aria-label',COPY.skip)
+    const pls=[...document.querySelectorAll('.pl')]
+    if(rm()){ pls.forEach(p=>p.classList.add('lit')); $('revealline').textContent=PL.map(([k])=>COPY.traits[k]).join(' '); return }
+    PL.forEach(([k],i)=>{
+      T(()=>{ pls.forEach(p=>p.classList.remove('focus')); pls[i].classList.add('focus'); pls[i].classList.add('lit')
+              const el=$('revealline'); el.style.opacity=0; setTimeout(()=>{el.textContent=COPY.traits[k]; el.style.opacity=1},250) }, i*REVEAL_STEP)
+    })
+  }
+  function endReveal(){ document.querySelectorAll('.pl').forEach(p=>p.classList.remove('focus')); $('revealline').classList.add('hidden'); $('skip').classList.remove('on'); $('stagetext').classList.remove('hidden') }
+
+  function play(){
+    reset()
+    const s=SCEN[st.scen], isNew=st.variant==='new'
+    const first = isNew?COPY.newFirstLine:COPY.editFirstLine
+    const lines=[first,COPY.stage2,COPY.stage3]
+    const pls=[...document.querySelectorAll('.pl')]
+    STAGE_AT.forEach((t,i)=>{ T(()=>setText(lines[i]),t); if(!rm()) T(()=>pls[i].classList.add('lit'),t) })
+    T(()=>setText(COPY.slow,'slow'), SLOW_AT)
+
+    let revealDone = !isNew
+    if(isNew){
+      T(()=>{ if(!st.skipped){ startReveal(); $('skip').classList.add('on') } }, REVEAL_START)
+      const revealEnd = REVEAL_START + PL.length*REVEAL_STEP + 0.8
+      T(()=>{ revealDone=true; if(!st.skipped) endReveal(); maybeFinish() }, revealEnd)
+    }
+    let horoDone=false
+    T(()=>{ horoDone=true; maybeFinish() }, s.t)
+    function maybeFinish(){
+      if(!horoDone||!revealDone||st.finished) return
+      st.finished=true
+      if(s.cfail) return showChartFail()
+      s.fail ? showHoroFail() : showHoroscope()
+    }
+    st.finished=false
+    // chart-compute failure happens before anything else resolves
+    if(s.cfail){ T(()=>{ st.finished=true; showChartFail() }, s.t); }
+    $('skip').onclick=()=>{ st.skipped=true; revealDone=true; endReveal(); maybeFinish() }
+    const t0=performance.now()
+    const tick=n=>{const t=(n-t0)/1000;$('clock').textContent='t = '+t.toFixed(1)+' s (mock-up clock)';if(t<Math.max(s.t,REVEAL_START+PL.length*REVEAL_STEP+1)+3)st.raf=requestAnimationFrame(tick)}
+    st.raf=requestAnimationFrame(tick)
+  }
+  function jump(ph){
+    reset(); $('clock').textContent=''
+    const isNew=st.variant==='new'
+    buildPlacements(true)
+    if(ph==='loading'){ setText(isNew?COPY.newFirstLine:COPY.editFirstLine); document.querySelectorAll('.pl').forEach((p,i)=>{ if(i<1) p.classList.add('lit'); else p.classList.remove('lit') }) }
+    if(ph==='reveal'){ if(!isNew){ alert_edit(); return } startReveal(); $('skip').classList.add('on'); document.querySelectorAll('.pl')[1].classList.add('focus'); $('revealline').textContent=COPY.traits.moon }
+    if(ph==='horoscope') showHoroscope()
+    if(ph==='hfail') showHoroFail()
+    if(ph==='cfail') showChartFail()
+    if(ph==='slow'){ setText(COPY.slow,'slow') }
+  }
+  function alert_edit(){ $('stagetext').textContent='(the edit variant has no big-three reveal)'; $('stagetext').className='stagetext slow' }
+
+  const mk = (parent, items, cur, on) => { $(parent).innerHTML=''; items.forEach(([k,l])=>{ const b=document.createElement('button'); b.className='c'+(cur===k?' on':''); b.textContent=l; b.onclick=()=>on(k); $(parent).appendChild(b) }) }
+  function ui(){
+    mk('variants',[['new','New user (after wizard)'],['edit','Edit birth data']],st.variant,k=>{st.variant=k;ui();play()})
+    mk('scenarios',Object.entries(SCEN).map(([k,v])=>[k,v.label]),st.scen,k=>{st.scen=k;ui();play()})
+    mk('phases',[['loading','loading'],['reveal','big-three'],['slow','slow line'],['horoscope','horoscope + chart'],['hfail','horoscope failed'],['cfail','chart failed']],null,jump)
+  }
+  $('rm').onchange=play; $('play').onclick=play
+  ui(); play()
+</script>
+</body>
+</html>
