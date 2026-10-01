@@ -86,9 +86,7 @@ Public reference data. Anyone can read; nobody writes via the API (only seed scr
 | `connection_members` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
 | `connection_invites` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
 | `connection_reports` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
-| `relationship_profiles` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
-| `relationship_invites` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
-| `compatibility_reports` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
+| _(dropped 2026-10-01)_ | — | `relationship_profiles`, `relationship_invites`, `compatibility_reports` — legacy Stream K tables removed by `20261001150000_drop_stream_k_legacy_tables.sql` (STREAM-K-ORPHAN-DATA, RESOLVED). |
 | `saved_people_profiles` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
 | `saved_people_reports` | USER_DATA | Stream K, dormant. Same provenance/status as `connection_spaces`. RLS from `20260803101500_capture_stream_k_relationship_schema.sql`. |
 | `processed_revenuecat_events` | INTERNAL | Idempotency table for the RevenueCat webhook (REVISIT-62, sub-commit A). Mirrors `processed_webhook_events`' shape but kept as its own table rather than reusing Stripe's `stripe_event_id`-named column. Written only by the RevenueCat webhook route (service role). RLS from `20260803122000_revenuecat_provider_column.sql`. |

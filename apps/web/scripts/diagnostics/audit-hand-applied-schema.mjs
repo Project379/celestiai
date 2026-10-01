@@ -19,6 +19,13 @@
  * script is the "assume this is not the only one" check, not a one-time
  * fix.
  *
+ * UPDATE 2026-10-01: three of those nine (relationship_profiles,
+ * relationship_invites, compatibility_reports) were dropped as dead legacy
+ * schema (migration 20261001150000_drop_stream_k_legacy_tables.sql). The
+ * script keeps no table list — it scans the live catalog — so nothing else
+ * needed changing; the capture migration 20260803101500 still creates them
+ * on a fresh replay and the drop migration removes them again.
+ *
  * METHOD AND ITS LIMITS — read before trusting a clean run:
  * This does a live pg_catalog / information_schema scan, then a
  * case-insensitive substring search for each object's name across the
