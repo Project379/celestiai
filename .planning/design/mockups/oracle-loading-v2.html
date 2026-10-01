@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оракул — loading (placements light up), mock-up v2</title>
+<!--
+  MOCK-UP v2 — NOTHING WIRED IN, NOTHING COMMITTED. Supersedes v1 (rejected: did not follow art direction)
+  and the A/B variants (the progress bar is dropped by founder ruling).
+
+  Built only from: orakul-v4.html (ratified Оракул mockup: .oracle-wash, ember hero, starfield, phone frame,
+  oracle-question/oracle-answer type), tokens.ts values, DESIGN-LANGUAGE-REFERENCE.md rules, and the glyph
+  paths in packages/core/src/charts/glyphs.ts (ZODIAC_GLYPH_PATHS — injected verbatim from that file).
+
+  ALL BULGARIAN COPY BELOW IS PLACEHOLDER — NOT FINAL, FOUNDER TO APPROVE. Every such string is in the
+  COPY object in the script, marked PLACEHOLDER_COPY.
+-->
+<style>
+  @font-face{font-family:'PF-Reg';src:url('../../../apps/mobile/assets/fonts/PlayfairDisplay-Regular.ttf');}
+  @font-face{font-family:'EBG-Reg';src:url('../../../apps/mobile/assets/fonts/EBGaramond-Regular.ttf');}
+  @font-face{font-family:'EBG-Ital';src:url('../../../apps/mobile/assets/fonts/EBGaramond-Italic.ttf');}
+  :root{
+    --base:#08060f; --violet:#8b5cf6; --starlight:#f5f7fc; --bronze:#b8763e; --bronze-hi:#d9a06a;
+    --text:#e2e8f0; --muted:#94a3b8; --faint:#6d7e97;
+    --page-bg:#0c0a12; --page-surface:#141019; --page-text:#e9e6f0; --page-muted:#948fa3; --page-border:#241f30;
+    --serif-d-r:'PF-Reg',Georgia,serif; --body:'EBG-Reg',Palatino,serif; --body-i:'EBG-Ital',Palatino,serif;
+    --mono:"SFMono-Regular",Consolas,Menlo,monospace; --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page-bg);color:var(--page-text);font-family:var(--sans);line-height:1.55;padding:0 0 100px}
+  .wrap{max-width:1160px;margin:0 auto;padding:40px 24px 0}
+  h1{font-family:var(--serif-d-r);font-weight:400;font-size:26px;margin:0 0 6px}
+  .dek{font-size:14px;color:var(--page-muted);max-width:720px;margin:0 0 22px}
+  .stage{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}
+  .phone-frame{flex:0 0 auto;width:390px;height:780px;border-radius:44px;background:#000;padding:10px;box-shadow:0 30px 70px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04)}
+  .phone-screen{width:100%;height:100%;border-radius:36px;overflow:hidden;position:relative;background:var(--base)}
+  .notes{flex:1 1 300px;min-width:280px}
+  .notes h3{font-family:var(--serif-d-r);font-weight:400;font-size:16px;margin:18px 0 8px}
+  .notes h3:first-child{margin-top:0}
+  .notes p,.notes li{font-size:13.5px;color:#b8b3c6;margin:0 0 8px}
+  .notes ul{padding-left:18px;margin:0 0 8px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#8f8aa0;background:rgba(255,255,255,.04);padding:2px 6px;border-radius:2px;margin-right:6px}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 20px}
+  .controls button,.controls select{background:var(--page-surface);color:var(--page-text);border:1px solid var(--page-border);border-radius:4px;padding:9px 12px;font:inherit;font-size:13px;min-height:40px}
+  .controls label{font-size:13px;color:var(--page-muted);display:flex;gap:6px;align-items:center}
+
+  /* ---- starfield (orakul-v4) ---- */
+  .stars{position:absolute;inset:0}
+  .star{position:absolute;border-radius:50%;background:var(--starlight);animation:tw 4.5s ease-in-out infinite}
+  @keyframes tw{0%,100%{opacity:.25}50%{opacity:.85}}
+
+  /* ---- ОРАКУЛ — warmest (orakul-v4, verbatim) ---- */
+  .oracle-wash{position:absolute;inset:0;background:
+      radial-gradient(ellipse 400px 360px at 50% 4%,rgba(184,118,62,.3),transparent 64%),
+      radial-gradient(ellipse 320px 260px at 50% 97%,rgba(184,118,62,.13),transparent 62%)}
+  .oracle-content{position:relative;height:100%;padding:50px 26px 0;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .ember-hero-stage{position:relative;width:120px;height:120px;flex:0 0 auto}
+  .ember-hero-glow{position:absolute;inset:-52px;border-radius:50%;background:radial-gradient(circle,rgba(184,118,62,.5),rgba(184,118,62,.1) 55%,transparent 78%);animation:breathe2 3.2s ease-in-out infinite}
+  .ember-hero{position:absolute;inset:44px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#ffe8c9,var(--bronze-hi) 45%,var(--bronze) 75%,#4a2f18 100%);box-shadow:0 0 30px 6px rgba(217,160,106,.55)}
+  @keyframes breathe2{0%,100%{opacity:.7;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
+  .rm .ember-hero-glow,.rm .star{animation:none}
+  .rm .star{opacity:.5}
+
+  /* ---- loading: placements row (new composition — glow mechanism, NO container/border/pill: ref §5) ---- */
+  .placements{margin-top:44px;display:flex;gap:8px;justify-content:center;width:100%;transition:opacity .5s}
+  .pl{width:96px;display:flex;flex-direction:column;align-items:center}
+  .pl-glyph{position:relative;width:44px;height:44px}
+  .pl-glow{position:absolute;inset:-26px;border-radius:50%;opacity:0;transition:opacity .7s ease;
+           background:radial-gradient(circle,rgba(184,118,62,.5),rgba(184,118,62,.1) 55%,transparent 78%)}
+  .pl-glyph svg{position:relative;width:44px;height:44px;fill:none;stroke:var(--faint);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.35;transition:stroke .7s ease,opacity .7s ease,filter .7s ease}
+  /* R7: lit = colour change (categorical: faint -> bronzeText) + glow + label appears, not "slightly brighter" */
+  .pl.lit .pl-glow{opacity:1}
+  .pl.lit svg{stroke:var(--bronze-hi);opacity:1;filter:drop-shadow(0 0 6px rgba(217,160,106,.6))}
+  .pl-label{margin-top:12px;font-family:var(--body);font-size:12px;line-height:17px;color:var(--muted);opacity:0;transition:opacity .7s ease;min-height:34px;text-align:center}
+  .pl.lit .pl-label{opacity:1}
+  .rm .pl-glow,.rm .pl svg,.rm .pl-label,.rm .placements{transition:none}
+
+  .stagetext{margin-top:38px;min-height:52px;max-width:260px;font-family:var(--body-i);font-style:italic;font-size:14.5px;line-height:1.6;color:#e6e2f0;transition:opacity .35s}
+  .stagetext.swap{opacity:0}
+  .rm .stagetext{transition:none}
+  .stagetext.slow{color:var(--muted)}
+
+  /* ---- arrival: reading fades in (orakul-v4 answer type, same hierarchy) ---- */
+  .oracle-answer{max-width:290px;opacity:0;transition:opacity .9s ease;position:absolute;left:0;right:0;top:230px;margin-left:auto;margin-right:auto;pointer-events:none}
+  .oracle-answer .lead{font-family:var(--body-i);font-style:italic;font-size:14.5px;color:#e6e2f0;line-height:1.6}
+  .oracle-answer .dev{font-family:var(--body);font-size:13.5px;color:#c7c2d6;line-height:1.6;margin-top:10px}
+  .oracle-answer .payoff{font-family:var(--serif-d-r);font-size:15.5px;color:var(--starlight);margin-top:16px}
+  .arrived .oracle-answer{opacity:1}
+  .arrived .placements,.arrived .stagetext{opacity:0;pointer-events:none}
+  .rm .oracle-answer{transition:none}
+  .clock{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-family:var(--mono);font-size:9.5px;color:var(--faint)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Оракул — зареждане · placements light up · v2</h1>
+  <p class="dek">Mock-up only — nothing wired in. No bar, no percentage, no fake progress. The reading's own placements light up one at a time; text steps at 0 s / 1.2 s / 2.5 s and switches to a "taking longer" line after ~10 s; the reading fades in on arrival. <b>All Bulgarian is PLACEHOLDER copy.</b></p>
+
+  <div class="controls">
+    <select id="scenario" aria-label="scenario">
+      <option value="3.3">p50 — 3.3 s</option>
+      <option value="6.6" selected>p90 — 6.6 s</option>
+      <option value="20">20 s (hard retry; "taking longer" shows)</option>
+    </select>
+    <select id="topic" aria-label="topic">
+      <option value="general">general</option>
+      <option value="love">love</option>
+      <option value="career">career</option>
+      <option value="health">health</option>
+    </select>
+    <label><input type="checkbox" id="rm"> reduced motion</label>
+    <button id="go">Replay</button>
+  </div>
+
+  <div class="stage">
+    <div class="phone-frame"><div class="phone-screen" id="screen">
+      <div class="stars" id="stars"></div>
+      <div class="oracle-wash"></div>
+      <div class="oracle-content" aria-live="polite">
+        <div class="ember-hero-stage"><div class="ember-hero-glow"></div><div class="ember-hero"></div></div>
+        <div class="placements" id="placements"></div>
+        <div class="stagetext" id="stagetext"></div>
+        <div class="oracle-answer" id="answer">
+          <div class="lead">Меркурий е в сянка — вниманието ти наистина се разпръсва.</div>
+          <div class="dev">Не е липса на дисциплина. Три планети сменят посока едновременно, а умът следва небето, независимо дали го забелязваш.</div>
+          <div class="payoff">Остави разсейването да мине през теб тази седмица, вместо да го трупаш.</div>
+        </div>
+        <div class="clock" id="clock"></div>
+      </div>
+    </div></div>
+
+    <div class="notes">
+      <h3>Reused, verbatim</h3>
+      <ul>
+        <li><span class="tag">source</span> <code>orakul-v4.html</code>: starfield, <code>.oracle-wash</code> (warmest, top-lit), the 120 px ember hero + its breathing glow, phone frame, answer type hierarchy (italic lead 14.5 → body 13.5 → Playfair payoff 15.5).</li>
+        <li><span class="tag">tokens</span> base #08060f, bronze #b8763e, bronzeText #d9a06a, starlight, muted, faint #6d7e97 (the contrast-corrected value, not the old #64748b); fonts Playfair / EB Garamond only — no Cinzel, so no Cyrillic-fallback risk (§1 hard rule).</li>
+        <li><span class="tag">labels</span> each glyph is a SIGN glyph captioned «&lt;planet&gt; в &lt;sign&gt;» — a sign glyph never stands in for a planet, and no Unicode planet symbols are used anywhere.</li>
+        <li><span class="tag">glyphs</span> the zodiac paths are injected from <code>packages/core/src/charts/glyphs.ts</code> (<code>ZODIAC_GLYPH_PATHS</code>), 24×24 viewBox, stroke 1.5, round caps — as that file specifies.</li>
+        <li><span class="tag">rules</span> R1 one dominant element (the ember); R2 only existing sizes; R3 zero tracked-caps; R4 one accent (bronze); no card, border, pill or chevron — lit state is glow + colour, per §5.</li>
+        <li><span class="tag">R7</span> unlit → lit changes colour (faint → bronzeText, categorical), adds a radial glow, and reveals the label — ≥2 dimensions, not "slightly brighter".</li>
+      </ul>
+      <h3>New composition, flagged (not a new primitive)</h3>
+      <p>The three-glyph row. It is built only from the existing glow mechanism and glyphs.ts paths. Per the design reference a new composition is flagged, not slipped in. It replaces the current Oracle loading glyph (spinning ring + rotating diamond via <code>useSpin</code>/<code>usePing</code>).</p>
+      <h3>Pacing findings</h3>
+      <ul>
+        <li>Measured p50 is 3.3 s and min 2.7 s, so with stages at 0 / 1.2 / 2.5 s every one of the 20 measured calls had all three stages (and glyphs) on screen before the reading arrived. The text steps are now 0 / 1.2 / 2.5 s and each glyph lights together with its stage.</li>
+        <li>The 10 s line only shows on a hard retry — it did not occur in any of 20 measured calls.</li>
+      </ul>
+      <h3>Reduced motion</h3>
+      <p>All three glyphs shown static and lit; no breathing, twinkle or fades; text still advances on the same timings but swaps instantly; the reading appears without a fade.</p>
+      <h3>Placeholder copy</h3>
+      <p>Every Bulgarian string (stage lines, "taking longer" line, planet/house labels) is PLACEHOLDER and awaits your approval. The topic → placements mapping is also a proposal.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const GLYPHS = {"aries":["M12 21V13L4 6C1 6 1 11 4 11","M12 13L20 6C23 6 23 11 20 11"],"taurus":["M 6.5 16 A 5.5 5.5 0 1 0 17.5 16 A 5.5 5.5 0 1 0 6.5 16 Z","M4 4c0 4 3.5 6.5 8 6.5s8-2.5 8-6.5"],"gemini":["M5 3h14","M5 21h14","M8 3c-.5 4-.5 14 0 18","M16 3c.5 4 .5 14 0 18"],"cancer":["M4 10c0-5 16-5 16 0","M20 14c0 5-16 5-16 0","M 4 10 A 3 3 0 1 0 10 10 A 3 3 0 1 0 4 10 Z","M 14 14 A 3 3 0 1 0 20 14 A 3 3 0 1 0 14 14 Z"],"leo":["M 3.5 14 A 4.5 4.5 0 1 0 12.5 14 A 4.5 4.5 0 1 0 3.5 14 Z","M12.5 14c0-6 3-10 5-10s3 2 3 4-2 4-4 3"],"virgo":["M4 20V8c0-3 3-4 4-1v13","M8 20V8c0-3 3-4 4-1v13","M12 20V8c0-3 3-4 4-1v5","M16 12c0 3 2 5 4 4","M18.5 12l2 6"],"libra":["M3 20h18","M3 15h18","M7 15a5 5 0 0 1 10 0"],"scorpio":["M4 20V8c0-3 3-4 4-1v13","M8 20V8c0-3 3-4 4-1v13","M12 20V8c0-3 3-4 4-1v8c0 3 2 5 4 4","M18 16l3 3-3 3"],"sagittarius":["M4 20L20 4","M13 4h7v7","M7 13l5 5"],"capricorn":["M 5.5 8 Q 7 7 8.5 9 L 8.5 16","M 8.5 9 C 8.5 4 14.5 4 14.5 9 V 15 C 14.5 18.5 19.5 20.5 19.5 16 C 19.5 11.5 13.5 11.5 13.5 16 C 13.5 20.5 11.5 21.5 10.5 20.5"],"aquarius":["M3 9l2.5-3 3 3 3-3 3 3 3-3 2.5 3","M3 16l2.5-3 3 3 3-3 3 3 3-3 2.5 3"],"pisces":["M4 12h16","M4 4c6 4 6 12 0 16","M20 4c-6 4-6 12 0 16"]}
+  // PLACEHOLDER_COPY — all Bulgarian below awaits founder approval
+  const COPY = {
+    stages: ['Чета небето над теб…', 'Свързвам местата, които се светват…', 'Подреждам думите…'],
+    // sign names — PLACEHOLDER_COPY too
+    signs: { aries:'Овен', taurus:'Телец', gemini:'Близнаци', cancer:'Рак', leo:'Лъв', virgo:'Дева', libra:'Везни', scorpio:'Скорпион', sagittarius:'Стрелец', capricorn:'Козирог', aquarius:'Водолей', pisces:'Риби' },
+    slow: 'Отнема по-дълго от обикновено…',
+    labels: { sun:'Слънце', moon:'Луна', asc:'Асцендент', venus:'Венера', h7:'Дом 7', mc:'Среда на небето', saturn:'Сатурн', h6:'Дом 6', mars:'Марс' }
+  }
+  // Sample chart (illustrative only). Topic mapping mirrors lib/oracle/prompts.ts TOPIC_SUFFIXES.
+  const TOPICS = {
+    general:[['sun','leo'],['moon','pisces'],['asc','scorpio']],
+    love:   [['venus','cancer'],['moon','pisces'],['h7','taurus']],
+    career: [['mc','aquarius'],['saturn','capricorn'],['sun','leo']],
+    health: [['h6','capricorn'],['mars','virgo'],['sun','leo']]
+  }
+  const STAGE_AT = [0, 1.2, 2.5]        // text stages, per ruling (2nd round)
+  const LIGHT_AT = STAGE_AT             // glyph k lights WITH text stage k — aligned, per ruling
+  const SLOW_AT = 10                    // "taking longer" line, per ruling
+  const $ = id => document.getElementById(id)
+  let timers = [], raf
+
+  ;(function(){const s=$('stars');let h='';for(let i=0;i<46;i++){const x=Math.random()*100,y=Math.random()*100,z=Math.random()<.2?2:1.2
+    h+='<span class="star" style="left:'+x+'%;top:'+y+'%;width:'+z+'px;height:'+z+'px;animation-delay:'+(Math.random()*4).toFixed(1)+'s"></span>'}s.innerHTML=h})()
+
+  function glyphSvg(sign){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+GLYPHS[sign].map(d=>'<path d="'+d+'"/>').join('')+'</svg>'}
+
+  function setText(t, slow){
+    const el=$('stagetext'); if(el.textContent===t && el.classList.contains('slow')===!!slow) return
+    const apply=()=>{el.textContent=t; el.classList.toggle('slow',!!slow); el.classList.remove('swap')}
+    if($('rm').checked){apply();return}
+    el.classList.add('swap'); setTimeout(apply,350)
+  }
+
+  function run(){
+    timers.forEach(clearTimeout); cancelAnimationFrame(raf); timers=[]
+    const rm=$('rm').checked, arrive=parseFloat($('scenario').value)
+    $('screen').classList.toggle('rm',rm); $('screen').classList.remove('arrived')
+    const set=TOPICS[$('topic').value]
+    $('placements').innerHTML=set.map(([k,sign])=>
+      '<div class="pl'+(rm?' lit':'')+'"><div class="pl-glyph"><div class="pl-glow"></div>'+glyphSvg(sign)+'</div><div class="pl-label">'+COPY.labels[k]+' в '+COPY.signs[sign]+'</div></div>').join('')
+    const pls=[...document.querySelectorAll('.pl')]
+    $('stagetext').textContent=''; $('stagetext').classList.remove('slow','swap')
+    if(!rm) LIGHT_AT.forEach((t,i)=>timers.push(setTimeout(()=>pls[i].classList.add('lit'),t*1000)))
+    STAGE_AT.forEach((t,i)=>timers.push(setTimeout(()=>setText(COPY.stages[i]),t*1000)))
+    timers.push(setTimeout(()=>setText(COPY.slow,true),SLOW_AT*1000))
+    timers.push(setTimeout(()=>{$('screen').classList.add('arrived');$('clock').textContent='reading arrived at '+arrive.toFixed(1)+' s'},arrive*1000))
+    const t0=performance.now()
+    const tick=n=>{const t=(n-t0)/1000;if(t<arrive){$('clock').textContent='t = '+t.toFixed(1)+' s (mock-up clock, not in app)';raf=requestAnimationFrame(tick)}}
+    raf=requestAnimationFrame(tick)
+  }
+  $('go').onclick=run; $('scenario').onchange=run; $('topic').onchange=run; $('rm').onchange=run
+  run()
+</script>
+</body>
+</html>
