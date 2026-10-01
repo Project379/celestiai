@@ -15,7 +15,10 @@
 --    so the backfill UPDATE does not touch updated_at.
 --
 -- 2. users.free_oracle_edit_regrant_used_at — the free tier's once-ever
---    regrant of the lifetime Oracle reading after an edit.
+--    regrant of the lifetime Oracle reading after an edit. It is SPENT AT
+--    GENERATION TIME by the Oracle route (a free user opening a stale reading
+--    with the regrant unused), never at edit time, and premium edits never
+--    touch it. This migration only adds the column.
 --
 -- 3. birth_data_edits — one row per invalidating edit. `quota_exempt` records
 --    whether THAT edit's regenerations skip the premium quota claim. The
@@ -31,8 +34,15 @@
 --    decide quota exemption (edited chart is the user's ACTIVE = latest chart,
 --    AND fewer than 2 exempt edits in the rolling 30 days), record the edit,
 --    drop the chart_calculations cache and the UNCOLLECTED crystal
---    recommendations (collected ones are the user's collection), and grant
---    the free regrant at most once ever. Edits are never blocked.
+--    recommendations (collected ones are the user's collection). Edits are
+--    never blocked. The free regrant is NOT decided here (see 2).
+--
+-- 5. connection_spaces.computed_at — when the space's cached compatibility /
+--    synastry / composite data was last computed (set by
+--    recomputeAndPersistSpace). A space is stale once any member chart's
+--    birth_data_edited_at is newer; the app then recomputes it on next view.
+--    Nullable: readers fall back to updated_at, so no backfill is needed and
+--    nothing recomputes spuriously on deploy.
 --
 --    Applied via `supabase db push` ONLY if the ledger is clean; this repo's
 --    practice is direct SQL + `supabase migration repair --status applied`.
@@ -43,6 +53,8 @@ ALTER TABLE public.charts ALTER COLUMN birth_data_edited_at SET DEFAULT now();
 ALTER TABLE public.charts ALTER COLUMN birth_data_edited_at SET NOT NULL;
 
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS free_oracle_edit_regrant_used_at timestamptz;
+
+ALTER TABLE public.connection_spaces ADD COLUMN IF NOT EXISTS computed_at timestamptz;
 
 CREATE TABLE IF NOT EXISTS public.birth_data_edits (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -65,8 +77,7 @@ ALTER TABLE public.birth_data_edits ENABLE ROW LEVEL SECURITY;
 CREATE OR REPLACE FUNCTION public.apply_birth_data_edit(
   p_user_id text,
   p_chart_id uuid,
-  p_changes jsonb,
-  p_is_free boolean
+  p_changes jsonb
 ) RETURNS jsonb
 LANGUAGE plpgsql
 SET search_path = public, pg_temp
@@ -77,9 +88,7 @@ DECLARE
   v_birth_changed boolean;
   v_active boolean;
   v_exempt boolean := false;
-  v_regrant boolean := false;
   v_marker timestamptz;
-  v_rows integer;
 BEGIN
   -- Serialise this user's edits so two concurrent PATCHes cannot both read
   -- "1 exempt edit in the last 30 days" and both mark themselves exempt.
@@ -150,18 +159,6 @@ BEGIN
     DELETE FROM public.chart_calculations WHERE chart_id = p_chart_id;
     DELETE FROM public.crystal_recommendations
       WHERE chart_id = p_chart_id AND collected_at IS NULL;
-
-    -- Free regrant: once ever, active chart only.
-    IF p_is_free AND v_active THEN
-      UPDATE public.users
-        SET free_oracle_used_at = NULL,
-            free_oracle_edit_regrant_used_at = v_marker
-        WHERE clerk_id = p_user_id
-          AND free_oracle_used_at IS NOT NULL
-          AND free_oracle_edit_regrant_used_at IS NULL;
-      GET DIAGNOSTICS v_rows = ROW_COUNT;
-      v_regrant := v_rows > 0;
-    END IF;
   END IF;
 
   SELECT * INTO v_new FROM public.charts WHERE id = p_chart_id;
@@ -169,14 +166,13 @@ BEGIN
   RETURN jsonb_build_object(
     'chart', to_jsonb(v_new),
     'birth_data_changed', v_birth_changed,
-    'quota_exempt', v_exempt,
-    'regrant_granted', v_regrant
+    'quota_exempt', v_exempt
   );
 END;
 $$;
 
 -- Service-role only. (The older quota RPCs are executable by PUBLIC/anon —
 -- do not copy that: this one mutates users, charts and the edits ledger.)
-REVOKE ALL ON FUNCTION public.apply_birth_data_edit(text, uuid, jsonb, boolean) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.apply_birth_data_edit(text, uuid, jsonb, boolean) FROM anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.apply_birth_data_edit(text, uuid, jsonb, boolean) TO service_role;
+REVOKE ALL ON FUNCTION public.apply_birth_data_edit(text, uuid, jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.apply_birth_data_edit(text, uuid, jsonb) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.apply_birth_data_edit(text, uuid, jsonb) TO service_role;

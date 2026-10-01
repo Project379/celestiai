@@ -73,8 +73,9 @@ vi.mock('@/lib/subscriptions/quota', () => ({
   ),
 }))
 
-const freeOracleState = vi.hoisted(() => ({ used: false }))
+const freeOracleState = vi.hoisted(() => ({ used: false, regrantUsed: false }))
 const claimSpy = vi.hoisted(() => vi.fn())
+const regrantClaimSpy = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/subscriptions/free-oracle', async (importActual) => {
   const actual = await importActual<typeof import('@/lib/subscriptions/free-oracle')>()
   return {
@@ -87,6 +88,15 @@ vi.mock('@/lib/subscriptions/free-oracle', async (importActual) => {
     }),
     releaseFreeOracleReading: vi.fn(async () => {
       freeOracleState.used = false
+    }),
+    claimFreeOracleRegrant: vi.fn(async () => {
+      regrantClaimSpy()
+      if (freeOracleState.regrantUsed) return false
+      freeOracleState.regrantUsed = true
+      return true
+    }),
+    releaseFreeOracleRegrant: vi.fn(async () => {
+      freeOracleState.regrantUsed = false
     }),
   }
 })
@@ -123,7 +133,7 @@ function reading(generatedAt: string, extra: Record<string, unknown> = {}) {
 
 function seed(opts: {
   prior: Record<string, unknown> | null
-  edit?: { quota_exempt: boolean } | null
+  edit?: { quota_exempt: boolean; was_active_chart?: boolean } | null
   markerAfter?: string
   calc?: boolean
 }) {
@@ -152,6 +162,7 @@ beforeEach(() => {
   userState.tier = 'premium'
   quotaState.used = 0
   freeOracleState.used = false
+  freeOracleState.regrantUsed = false
   mockSupabase = createMockSupabase()
   vi.mocked(createServiceSupabaseClient).mockReturnValue(mockSupabase as never)
 })
@@ -215,13 +226,27 @@ describe('stale reading (generated before the last birth-data edit)', () => {
     expect(vi.mocked(generateFinalText)).not.toHaveBeenCalled()
   })
 
-  it('FREE: a stale lifetime reading with the regrant spent is locked (429 free_used) — never served, never regenerated', async () => {
+  it('FREE: lifetime reading spent + stale + regrant UNUSED + active-chart edit — allowed, the regrant is spent at generation time (the lifetime marker is untouched)', async () => {
     userState.tier = 'free'
     freeOracleState.used = true
+    seed({ prior: reading(BEFORE_EDIT), edit: { quota_exempt: true, was_active_chart: true } })
+    const res = await POST(req({ chartId: 'chart-1', topic: 'general' }))
+    expect(res.status).toBe(200)
+    expect(regrantClaimSpy).toHaveBeenCalledTimes(1)
+    expect(freeOracleState.regrantUsed).toBe(true)
+    expect(freeOracleState.used).toBe(true) // lifetime marker not cleared
+    expect(vi.mocked(incrementQuotaUsage)).not.toHaveBeenCalled()
+  })
+
+  it('FREE: stale + regrant already SPENT — locked (429 free_used), never served, never regenerated', async () => {
+    userState.tier = 'free'
+    freeOracleState.used = true
+    freeOracleState.regrantUsed = true
     mockSupabase.push('charts', {
       data: { id: 'chart-1', user_id: 'user_stale_test', birth_data_edited_at: MARKER },
     })
     mockSupabase.push('ai_readings', { data: reading(BEFORE_EDIT) })
+    mockSupabase.push('birth_data_edits', { data: { quota_exempt: true, was_active_chart: true } })
     const res = await POST(req({ chartId: 'chart-1', topic: 'general' }))
     const body = await res.json()
     expect(res.status).toBe(429)
@@ -230,14 +255,47 @@ describe('stale reading (generated before the last birth-data edit)', () => {
     expect(vi.mocked(generateFinalText)).not.toHaveBeenCalled()
   })
 
-  it('FREE: after the edit RPC re-granted the lifetime marker, the stale general reading regenerates once', async () => {
+  it('FREE: stale from an edit to a NON-active chart gets no regrant (locked) even though the regrant is unused', async () => {
     userState.tier = 'free'
-    freeOracleState.used = false // the regrant cleared free_oracle_used_at
-    seed({ prior: reading(BEFORE_EDIT) }) // free path: no birth_data_edits lookup
+    freeOracleState.used = true
+    mockSupabase.push('charts', {
+      data: { id: 'chart-1', user_id: 'user_stale_test', birth_data_edited_at: MARKER },
+    })
+    mockSupabase.push('ai_readings', { data: reading(BEFORE_EDIT) })
+    mockSupabase.push('birth_data_edits', { data: { quota_exempt: false, was_active_chart: false } })
+    const res = await POST(req({ chartId: 'chart-1', topic: 'general' }))
+    expect(res.status).toBe(429)
+    expect(regrantClaimSpy).not.toHaveBeenCalled()
+    expect(freeOracleState.regrantUsed).toBe(false)
+  })
+
+  it('FREE: a stale reading with the lifetime marker still UNUSED claims the normal marker, not the regrant', async () => {
+    userState.tier = 'free'
+    freeOracleState.used = false
+    seed({ prior: reading(BEFORE_EDIT), edit: { quota_exempt: true, was_active_chart: true } })
     const res = await POST(req({ chartId: 'chart-1', topic: 'general' }))
     expect(res.status).toBe(200)
     expect(claimSpy).toHaveBeenCalledTimes(1)
-    expect(vi.mocked(incrementQuotaUsage)).not.toHaveBeenCalled()
+    expect(regrantClaimSpy).not.toHaveBeenCalled()
+  })
+
+  it('FREE: a discarded generation (edit mid-flight) refunds the spent regrant', async () => {
+    userState.tier = 'free'
+    freeOracleState.used = true
+    seed({
+      prior: reading(BEFORE_EDIT),
+      edit: { quota_exempt: true, was_active_chart: true },
+      markerAfter: '2026-09-12T00:00:00.000Z',
+    })
+    const res = await POST(req({ chartId: 'chart-1', topic: 'general' }))
+    expect(res.status).toBe(409)
+    expect(freeOracleState.regrantUsed).toBe(false)
+  })
+
+  it('PREMIUM: an edit never touches the regrant', async () => {
+    seed({ prior: reading(BEFORE_EDIT), edit: { quota_exempt: false, was_active_chart: true } })
+    await POST(req({ chartId: 'chart-1', topic: 'general' }))
+    expect(regrantClaimSpy).not.toHaveBeenCalled()
   })
 
   it('RACE GUARD: birth data edited while the model ran — result discarded (409), claim refunded, nothing saved', async () => {

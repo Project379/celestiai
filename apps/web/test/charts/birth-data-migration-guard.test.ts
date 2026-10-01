@@ -44,6 +44,6 @@ describe('birth_data_edited_at migration', () => {
     const sql = readFileSync(file, 'utf8')
     expect(sql).toMatch(/ALTER TABLE public\.birth_data_edits ENABLE ROW LEVEL SECURITY/)
     expect(sql).not.toMatch(/CREATE POLICY[^;]*birth_data_edits/i)
-    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.apply_birth_data_edit\(text, uuid, jsonb, boolean\) FROM anon, authenticated/)
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.apply_birth_data_edit\(text, uuid, jsonb\) FROM anon, authenticated/)
   })
 })

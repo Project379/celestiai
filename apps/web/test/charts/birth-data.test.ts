@@ -150,7 +150,6 @@ describe('updateBirthChart', () => {
     chart: { id: 'chart-1', birth_data_edited_at: '2026-10-01T10:00:00.000Z' },
     birth_data_changed: true,
     quota_exempt: true,
-    regrant_granted: false,
   }
 
   it('edits through apply_birth_data_edit on the EXISTING chart id — never an insert — and sends only the provided fields (an undefined field must not overwrite data with null)', async () => {
@@ -194,29 +193,26 @@ describe('updateBirthChart', () => {
     })
   })
 
-  it('passes the caller tier decision through (free vs premium drives the once-ever regrant)', async () => {
-    mockSupabase.pushRpc('apply_birth_data_edit', { data: RPC_OK })
+  it('sends NO tier input — the free regrant is spent at generation time and a premium edit never touches it', async () => {
     mockSupabase.pushRpc('apply_birth_data_edit', { data: RPC_OK })
 
-    await updateBirthChart('user-1', 'chart-1', { name: 'a' }, { isFree: true })
-    await updateBirthChart('user-1', 'chart-1', { name: 'b' })
+    await updateBirthChart('user-1', 'chart-1', { name: 'a' })
 
-    const calls = mockSupabase.rpc.mock.calls as unknown as Array<[string, Record<string, unknown>]>
-    expect(calls[0][1].p_is_free).toBe(true)
-    expect(calls[1][1].p_is_free).toBe(false)
+    const args = (mockSupabase.rpc.mock.calls[0] as unknown as [string, Record<string, unknown>])[1]
+    expect(Object.keys(args).sort()).toEqual(['p_changes', 'p_chart_id', 'p_user_id'])
   })
 
-  it('returns the updated chart and the edit outcome (changed / quotaExempt / regrantGranted)', async () => {
+  it('returns the updated chart and the edit outcome (changed / quotaExempt)', async () => {
     mockSupabase.pushRpc('apply_birth_data_edit', {
-      data: { ...RPC_OK, quota_exempt: false, regrant_granted: true },
+      data: { ...RPC_OK, quota_exempt: false },
     })
 
-    const result = await updateBirthChart('user-1', 'chart-1', { name: 'x' }, { isFree: true })
+    const result = await updateBirthChart('user-1', 'chart-1', { name: 'x' })
 
     expect(result).toEqual({
       ok: true,
       data: RPC_OK.chart,
-      edit: { birthDataChanged: true, quotaExempt: false, regrantGranted: true },
+      edit: { birthDataChanged: true, quotaExempt: false },
     })
   })
 

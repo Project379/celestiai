@@ -97,8 +97,8 @@ async function run(tx) {
         returning id`)[0].id
     const older = await mk('older', '2026-01-01T00:00:00Z')
     const active = await mk('active', '2026-02-01T00:00:00Z') // latest created_at => the active chart
-    const edit = async (chartId, changes, isFree = false) =>
-      (await tx`select public.apply_birth_data_edit(${U}, ${chartId}, ${tx.json(changes)}, ${isFree}) r`)[0].r
+    const edit = async (chartId, changes) =>
+      (await tx`select public.apply_birth_data_edit(${U}, ${chartId}, ${tx.json(changes)}) r`)[0].r
     const marker = async (id) => (await tx`select birth_data_edited_at m from public.charts where id=${id}`)[0].m
 
     // ── 2. name-only and no-op edits never bump the marker ──────────────
@@ -129,22 +129,16 @@ async function run(tx) {
       trig?.is_marker === true && trig?.quota_exempt === false)
 
     // ── 4. non-active chart: never exempt, never regrants ───────────────
-    await tx`update public.users set free_oracle_used_at = now() where clerk_id=${U}`
-    const o = await edit(older, { birth_date: '1991-01-01T00:00:00.000Z' }, true)
+    const o = await edit(older, { birth_date: '1991-01-01T00:00:00.000Z' })
     check('edit to a NON-active chart: quota_exempt=false', o.birth_data_changed && o.quota_exempt === false)
-    check('edit to a NON-active chart: no free regrant', o.regrant_granted === false)
+    const [oe] = await tx`select was_active_chart w from public.birth_data_edits where chart_id=${older} order by edited_at desc limit 1`
+    check('edit to a NON-active chart is recorded was_active_chart=false (the generation-time regrant check reads this)', oe?.w === false)
 
-    // ── 5. free regrant: once ever, active chart only ───────────────────
-    await tx`delete from public.birth_data_edits where chart_id=${active}` // reset exemption window for clarity
-    const g1 = await edit(active, { birth_date: '1992-01-01T00:00:00.000Z' }, true)
+    // ── 5. the edit RPC never touches the free regrant (decided at generation time) ─
+    await tx`update public.users set free_oracle_used_at = now() where clerk_id=${U}`
+    await edit(active, { birth_date: '1992-01-01T00:00:00.000Z' })
     const [u1] = await tx`select free_oracle_used_at u, free_oracle_edit_regrant_used_at g from public.users where clerk_id=${U}`
-    check('first active edit by a free user who used their reading grants the regrant',
-      g1.regrant_granted === true && u1.u === null && u1.g !== null)
-    await tx`update public.users set free_oracle_used_at = now() where clerk_id=${U}` // they spend the new reading
-    const g2 = await edit(active, { birth_date: '1992-01-02T00:00:00.000Z' }, true)
-    const [u2] = await tx`select free_oracle_used_at u from public.users where clerk_id=${U}`
-    check('later edit: regrant NOT granted again (once ever); reading stays used/locked',
-      g2.regrant_granted === false && u2.u !== null)
+    check('an edit leaves the free lifetime marker AND the regrant column untouched', u1.u !== null && u1.g === null)
 
     // ── 6. staleness ordering ──────────────────────────────────────────
     await tx`insert into public.ai_readings (chart_id, user_id, topic, content, expires_at, model_version, generated_at)
@@ -169,11 +163,14 @@ async function run(tx) {
       console.log('SKIP  crystal recommendation check (no crystals rows)')
     }
 
+    const [col] = await tx`select count(*)::int n from information_schema.columns where table_schema='public' and table_name='connection_spaces' and column_name='computed_at'`
+    check('connection_spaces.computed_at exists (nullable, no backfill needed)', col.n === 1)
+
     // ── 8. security posture ────────────────────────────────────────────
     const [rls] = await tx`select relrowsecurity r from pg_class where oid='public.birth_data_edits'::regclass`
     const [pol] = await tx`select count(*)::int n from pg_policies where schemaname='public' and tablename='birth_data_edits'`
     check('birth_data_edits has RLS enabled and ZERO policies (service-role only)', rls.r === true && pol.n === 0)
-    const sig = 'public.apply_birth_data_edit(text,uuid,jsonb,boolean)'
+    const sig = 'public.apply_birth_data_edit(text,uuid,jsonb)'
     const [pr] = await tx`select has_function_privilege('anon', ${sig}, 'EXECUTE') a,
                                  has_function_privilege('authenticated', ${sig}, 'EXECUTE') b,
                                  has_function_privilege('service_role', ${sig}, 'EXECUTE') s`

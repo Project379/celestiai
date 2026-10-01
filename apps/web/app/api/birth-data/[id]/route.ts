@@ -9,7 +9,6 @@ import { updateBirthDataSchema } from '@stellaeum/core/charts/schemas'
 import { logServerError } from '@/lib/monitoring/log-server-error'
 import { ApiError } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
-import { ensureUserRecord } from '@/lib/users/ensure-user'
 
 /**
  * Error IDs emitted by this handler (wired to Sentry via logServerError
@@ -95,12 +94,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       )
     }
 
-    // Free vs premium decides the once-ever free regrant (the edit function
-    // itself never reads subscription state).
-    const user = await ensureUserRecord(userId)
-    const result = await updateBirthChart(userId, id, validation.data, {
-      isFree: user.subscription_tier !== 'premium',
-    })
+    // Tier is deliberately not an input here: the free once-ever regrant is
+    // spent at generation time, and a premium edit never touches it.
+    const result = await updateBirthChart(userId, id, validation.data)
     if (!result.ok) {
       if (result.error === 'UPDATE_FAILED') {
         throw new Error(result.message)

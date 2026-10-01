@@ -569,7 +569,46 @@ export async function hasActiveRomanticSpace(userId: string): Promise<boolean> {
   return (data ?? []).length > 0
 }
 
-export async function buildCircleSpaceView(space: ConnectionSpaceRow): Promise<CircleSpaceView> {
+/**
+ * LAZY RECOMPUTE after a birth-data edit (Batch 8 "b"). A space's cached
+ * compatibility / synastry / composite data is derived from every member's
+ * chart, so it is stale once any member chart's `birth_data_edited_at` is newer
+ * than when the cache was computed (`computed_at`, falling back to
+ * `updated_at` for rows computed before that column existed). Recompute on
+ * next view via the existing recomputeAndPersistSpace. Deterministic and cheap
+ * (no AI). Never throws — a recompute failure must not break the dashboard, it
+ * just leaves the previous view.
+ */
+async function refreshSpaceIfStale(space: ConnectionSpaceRow): Promise<ConnectionSpaceRow> {
+  try {
+    if (space.member_count < 2) return space
+    const members = await listSpaceMembers(space.id)
+    const chartIds = members.map((member) => member.chart_id)
+    if (chartIds.length < 2) return space
+
+    const supabase = createServiceSupabaseClient()
+    const { data: markers } = await supabase
+      .from('charts')
+      .select('birth_data_edited_at')
+      .in('id', chartIds)
+    const newestEdit = (markers ?? []).reduce<number>(
+      (max, row: { birth_data_edited_at: string }) =>
+        Math.max(max, new Date(row.birth_data_edited_at).getTime()),
+      0,
+    )
+    const computedAt = new Date(space.computed_at ?? space.updated_at).getTime()
+    if (newestEdit <= computedAt) return space
+
+    const { space: refreshed } = await recomputeAndPersistSpace(space.id)
+    return refreshed
+  } catch (err) {
+    console.error('[Circle Service] lazy space recompute failed:', err)
+    return space
+  }
+}
+
+export async function buildCircleSpaceView(inputSpace: ConnectionSpaceRow): Promise<CircleSpaceView> {
+  const space = await refreshSpaceIfStale(inputSpace)
   const [members, latestReport] = await Promise.all([
     getMemberViewsForSpace(space.id),
     getLatestConnectionReport(space.id),
@@ -630,6 +669,7 @@ export async function recomputeAndPersistSpace(
       compatibility_summary: computed.compatibilitySummary,
       synastry_aspects: computed.synastryAspects,
       composite_chart_data: computed.compositeChartData,
+      computed_at: new Date().toISOString(),
     })
     .eq('id', spaceId)
 

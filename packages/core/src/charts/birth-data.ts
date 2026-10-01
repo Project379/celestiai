@@ -52,8 +52,6 @@ export interface BirthDataEditOutcome {
   birthDataChanged: boolean
   /** True when this edit's regenerations skip the premium quota claim. */
   quotaExempt: boolean
-  /** True when a free user's lifetime Oracle reading was re-granted. */
-  regrantGranted: boolean
 }
 
 export type UpdateBirthChartResult =
@@ -175,19 +173,19 @@ export async function getBirthChart(
  * the apply_birth_data_edit() Postgres function, which does the whole edit in
  * one transaction: it diffs against the stored values, bumps
  * charts.birth_data_edited_at only for a birth-affecting change, records the
- * edit (quota exemption: active chart + first 2 per rolling 30 days), drops
- * the chart_calculations cache and uncollected crystal recommendations, and
- * grants a free user's once-ever lifetime-reading regrant. supabase-js has no
- * transactions, and two concurrent edits must not both read "1 exempt edit".
+ * edit (quota exemption: active chart + first 2 per rolling 30 days), and
+ * drops the chart_calculations cache and uncollected crystal
+ * recommendations. supabase-js has no transactions, and two concurrent edits
+ * must not both read "1 exempt edit".
  *
- * `isFree` is the caller's tier decision (the route knows it; this package
- * deliberately does not read subscription state).
+ * Tier is deliberately NOT an input: a free user's once-ever regrant of the
+ * lifetime Oracle reading is spent at GENERATION time (oracle/generate), and a
+ * premium edit never touches it.
  */
 export async function updateBirthChart(
   userId: string,
   id: string,
   input: UpdateBirthChartInput,
-  opts: { isFree: boolean } = { isFree: false },
 ): Promise<UpdateBirthChartResult> {
   const supabase = createCoreSupabaseClient()
   // Only the keys the caller provided; a key present with null clears a
@@ -212,7 +210,6 @@ export async function updateBirthChart(
     p_user_id: userId,
     p_chart_id: id,
     p_changes: changes,
-    p_is_free: opts.isFree,
   })
 
   if (error) {
@@ -228,7 +225,6 @@ export async function updateBirthChart(
     chart: BirthChartRow
     birth_data_changed: boolean
     quota_exempt: boolean
-    regrant_granted: boolean
   }
   return {
     ok: true,
@@ -236,7 +232,6 @@ export async function updateBirthChart(
     edit: {
       birthDataChanged: result.birth_data_changed,
       quotaExempt: result.quota_exempt,
-      regrantGranted: result.regrant_granted,
     },
   }
 }

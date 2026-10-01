@@ -21,8 +21,10 @@ import {
 } from '@/lib/subscriptions/quota'
 import {
   claimFreeOracleReading,
+  claimFreeOracleRegrant,
   freeOracleGateResponse,
   releaseFreeOracleReading,
+  releaseFreeOracleRegrant,
 } from '@/lib/subscriptions/free-oracle'
 import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
 import { calculateChartForUser } from '@stellaeum/core/charts/calculate'
@@ -108,6 +110,7 @@ export async function POST(req: Request) {
   // them. Set non-null / true only after a successful cap-claim.
   let claimedPeriodStart: Date | null = null
   let claimedFreeOracle = false
+  let claimedFreeRegrant = false
 
   // Single refund entry point for the synchronous setup paths. The stream
   // callbacks capture their own copies below (they run after this function
@@ -120,6 +123,10 @@ export async function POST(req: Request) {
     if (claimedFreeOracle) {
       await releaseFreeOracleReading(userId!)
       claimedFreeOracle = false
+    }
+    if (claimedFreeRegrant) {
+      await releaseFreeOracleRegrant(userId!)
+      claimedFreeRegrant = false
     }
   }
 
@@ -199,21 +206,24 @@ export async function POST(req: Request) {
     const existingReading = priorReading && !isStale ? priorReading : null
 
     // The "triggering edit" of a stale row is the chart's LATEST edit (its
-    // edited_at equals the chart's marker). Only an exempt triggering edit
-    // lets a PREMIUM regeneration skip the monthly quota claim; a missing
-    // edit row (should not happen) is non-exempt, so quota is claimed.
-    // Never skips anything for free: free is gated by its lifetime marker,
-    // which the edit RPC re-grants at most once ever.
+    // edited_at equals the chart's marker). A missing edit row (should not
+    // happen) is treated as the least-privileged case: not exempt, no regrant.
+    //   - PREMIUM: only an exempt triggering edit lets the regeneration skip
+    //     the monthly quota claim; otherwise quota is claimed normally.
+    //   - FREE: the once-ever regrant is spent HERE, at generation time (never
+    //     at edit time), and only if the edit was on the ACTIVE chart.
     let skipPremiumQuota = false
-    if (isStale && isPremium) {
+    let regrantEligible = false
+    if (isStale) {
       const { data: triggeringEdit } = await supabase
         .from('birth_data_edits')
-        .select('quota_exempt')
+        .select('quota_exempt, was_active_chart')
         .eq('chart_id', chartId)
         .order('edited_at', { ascending: false })
         .limit(1)
         .maybeSingle()
-      skipPremiumQuota = triggeringEdit?.quota_exempt === true
+      skipPremiumQuota = isPremium && triggeringEdit?.quota_exempt === true
+      regrantEligible = !isPremium && triggeringEdit?.was_active_chart === true
     }
 
     if (existingReading && !regenerate) {
@@ -275,10 +285,15 @@ export async function POST(req: Request) {
         //     UPDATE on users.free_oracle_used_at. `claimed: false` means
         //     it has already been spent.
         const claim = await claimFreeOracleReading(userId)
-        if (!claim.claimed) {
+        if (claim.claimed) {
+          claimedFreeOracle = true
+        } else if (isStale && regrantEligible && (await claimFreeOracleRegrant(userId))) {
+          // Lifetime reading already spent, but an edit on the active chart
+          // invalidated it and the once-ever regrant is unused: spend it.
+          claimedFreeRegrant = true
+        } else {
           return freeOracleGateResponse('free_used')
         }
-        claimedFreeOracle = true
       }
     }
 
