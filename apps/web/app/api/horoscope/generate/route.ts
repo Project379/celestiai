@@ -9,6 +9,7 @@ import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { validateReading, type ReadingValidationResult } from '@/lib/ai/validate-reading'
 import { logAuditEvent } from '@/lib/audit'
 import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
+import { MAX_STALE_REGENS_PER_DAY } from '@/lib/horoscope/regen-cap'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
 import {
   buildHoroscopePlaceholderValues,
@@ -130,12 +131,29 @@ export async function POST(req: Request) {
     // Two concurrent requests both delete (one a no-op), then race the same
     // INSERT claim exactly as before. A stale YESTERDAY row is removed too and
     // yesterday is never regenerated, so it reads as unavailable.
-    await supabase
+    //
+    // REGENERATION CAP (founder ruling 2026-10-01): a birth-data edit may make
+    // today's horoscope be regenerated at most MAX_STALE_REGENS_PER_DAY (3) times
+    // per chart per day. The count lives on the row (`stale_regens`) and is carried
+    // across the delete-and-recreate: the delete only matches a stale row still
+    // UNDER the cap and returns it, so its count is known for the new claim row
+    // (previous + 1). A stale row AT the cap is not deleted: the cache check below
+    // finds it, recognises it as stale, and answers `unavailable` — the edit has
+    // already saved, the client shows its quiet failure line, and a stale horoscope
+    // is still never served. (A generation that fails after the claim releases the
+    // claim row, which also forgets the count — a failure does not consume the cap.)
+    const { data: replacedRows } = await supabase
       .from('daily_horoscopes')
       .delete()
       .eq('chart_id', chartId)
       .eq('date', requestedDate)
       .lt('generated_at', chart.birth_data_edited_at)
+      .lt('stale_regens', MAX_STALE_REGENS_PER_DAY)
+      .select('stale_regens')
+    const replacedCount =
+      Array.isArray(replacedRows) && replacedRows.length > 0
+        ? Number((replacedRows[0] as { stale_regens?: number }).stale_regens ?? 0)
+        : null
 
     const { data: cachedHoroscope } = await supabase
       .from('daily_horoscopes')
@@ -143,6 +161,14 @@ export async function POST(req: Request) {
       .eq('chart_id', chartId)
       .eq('date', requestedDate)
       .single()
+
+    if (
+      cachedHoroscope &&
+      new Date(cachedHoroscope.generated_at).getTime() < new Date(chart.birth_data_edited_at).getTime()
+    ) {
+      // Stale row at the cap (the delete above skipped it). Never serve it.
+      return Response.json({ content: null, unavailable: true, reason: 'regen_cap' }, { status: 200 })
+    }
 
     if (cachedHoroscope) {
       return Response.json({
@@ -295,6 +321,8 @@ export async function POST(req: Request) {
       date: requestedDate,
       content: '',
       model_version: AI_MODEL,
+      // Carried across a stale replacement; 0 for an ordinary first generation.
+      stale_regens: replacedCount === null ? 0 : replacedCount + 1,
     })
 
     if (claimError) {

@@ -222,3 +222,118 @@ describe('POST /api/horoscope/generate — birth-data edit invalidation (Batch 8
     expect(horoscopeCalls).toHaveLength(4)
   })
 })
+
+describe('POST /api/horoscope/generate — stale-regeneration cap (3 per chart per day)', () => {
+  const MARKER = '2026-01-01T00:00:00.000Z'
+  const BEFORE = '2025-12-31T00:00:00.000Z'
+
+  function seedChart(chartId: string) {
+    mockSupabase.push('charts', {
+      data: {
+        id: chartId, user_id: 'user_free_horoscope', birth_date: '2000-01-01', birth_time: '12:00',
+        birth_time_known: true, latitude: 42.7, longitude: 23.3, birth_data_edited_at: MARKER,
+      },
+    })
+  }
+
+  /** The tail of a successful generation, after the delete + cache check. */
+  function seedGenerationTail() {
+    mockSupabase.push('daily_transits', { data: { planet_positions: [] } })
+    mockSupabase.push('chart_calculations', {
+      data: { planet_positions: [], house_cusps: [], aspects: [], ascendant: 0, mc: 0, birth_time_known: true },
+    })
+    mockSupabase.push('charts', { data: { birth_data_edited_at: MARKER } }) // race-guard re-read
+    mockSupabase.push('daily_horoscopes', { data: { chart_id: 'c' }, error: null }) // claim insert
+    mockSupabase.push('daily_horoscopes', { data: null }) // final upsert
+  }
+
+  const claimInsert = () => {
+    const calls = mockSupabase.from.mock.calls
+    const results = mockSupabase.from.mock.results
+    for (let i = 0; i < calls.length; i++) {
+      if (calls[i][0] !== 'daily_horoscopes') continue
+      const insert = results[i].value.insert
+      if (insert.mock.calls.length) return insert.mock.calls[0][0] as Record<string, unknown>
+    }
+    return undefined
+  }
+
+  it('the stale-row delete only matches a row still UNDER the cap and returns it, so its count can be carried', async () => {
+    seedChart('c-cap1')
+    mockSupabase.push('daily_horoscopes', { data: null }) // delete
+    mockSupabase.push('daily_horoscopes', { data: null }) // cache check
+    seedGenerationTail()
+
+    await POST(makeRequest('c-cap1'))
+
+    const idx = mockSupabase.from.mock.calls.findIndex((c) => c[0] === 'daily_horoscopes')
+    const builder = mockSupabase.from.mock.results[idx].value
+    expect(builder.lt).toHaveBeenCalledWith('generated_at', MARKER)
+    expect(builder.lt).toHaveBeenCalledWith('stale_regens', 3)
+    expect(builder.select).toHaveBeenCalledWith('stale_regens')
+  })
+
+  it('an ordinary first generation (no stale row) is claimed with stale_regens 0', async () => {
+    seedChart('c-cap2')
+    mockSupabase.push('daily_horoscopes', { data: null })
+    mockSupabase.push('daily_horoscopes', { data: null })
+    seedGenerationTail()
+
+    const res = await POST(makeRequest('c-cap2'))
+
+    expect(res.status).toBe(200)
+    expect(claimInsert()).toMatchObject({ stale_regens: 0 })
+  })
+
+  it('replacing a stale row CARRIES its count: previous 1 -> the new claim row is 2', async () => {
+    seedChart('c-cap3')
+    mockSupabase.push('daily_horoscopes', { data: [{ stale_regens: 1 }] }) // delete returns the replaced row
+    mockSupabase.push('daily_horoscopes', { data: null })
+    seedGenerationTail()
+
+    const res = await POST(makeRequest('c-cap3'))
+
+    expect(res.status).toBe(200)
+    expect(claimInsert()).toMatchObject({ stale_regens: 2 })
+  })
+
+  it('the THIRD regeneration of the day is still allowed (previous 2 -> 3)', async () => {
+    seedChart('c-cap4')
+    mockSupabase.push('daily_horoscopes', { data: [{ stale_regens: 2 }] })
+    mockSupabase.push('daily_horoscopes', { data: null })
+    seedGenerationTail()
+
+    const res = await POST(makeRequest('c-cap4'))
+
+    expect(res.status).toBe(200)
+    expect(claimInsert()).toMatchObject({ stale_regens: 3 })
+  })
+
+  it('AT the cap: the stale row is not deleted, nothing is generated or claimed, and the answer is `unavailable` (the quiet failure line) — a stale horoscope is never served', async () => {
+    seedChart('c-cap5')
+    mockSupabase.push('daily_horoscopes', { data: [] }) // delete skipped the row at the cap
+    mockSupabase.push('daily_horoscopes', {
+      data: { content: 'OLD CHART HOROSCOPE', generated_at: BEFORE }, // cache check finds the stale row
+    })
+
+    const res = await POST(makeRequest('c-cap5'))
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body).toEqual({ content: null, unavailable: true, reason: 'regen_cap' })
+    expect(JSON.stringify(body)).not.toContain('OLD CHART')
+    expect(claimInsert()).toBeUndefined()
+  })
+
+  it('a FRESH cached row (generated after the edit) is still served normally, whatever its count', async () => {
+    seedChart('c-cap6')
+    mockSupabase.push('daily_horoscopes', { data: [] })
+    mockSupabase.push('daily_horoscopes', {
+      data: { content: 'fresh content', generated_at: '2026-02-01T00:00:00.000Z' },
+    })
+
+    const body = await (await POST(makeRequest('c-cap6'))).json()
+
+    expect(body).toMatchObject({ content: 'fresh content', cached: true })
+  })
+})
