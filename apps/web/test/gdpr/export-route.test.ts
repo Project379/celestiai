@@ -164,3 +164,56 @@ describe('GET /api/gdpr/export — birth_data_edits (Batch 8 b)', () => {
     expect(mockSupabase.from.mock.results[idx].value.eq).toHaveBeenCalledWith('user_id', 'user_test123')
   })
 })
+
+describe('GET /api/gdpr/export — push_subscriptions / push_tokens', () => {
+  function seedEmpty() {
+    for (const t of [
+      'connection_members', 'charts', 'ai_readings', 'daily_horoscopes', 'diary_entries',
+      'connection_invites', 'saved_people_profiles', 'user_crystals', 'user_daily_crystals',
+      'recommendation_deliveries', 'user_recommendation_work_states', 'recommendation_events',
+      'birth_data_edits',
+    ]) {
+      mockSupabase.push(t, { data: [] })
+    }
+    mockSupabase.push('users', { data: { subscription_tier: 'free', created_at: '2026-01-01' } })
+  }
+
+  it('includes pushSubscriptions and pushTokens with their notification-preference columns', async () => {
+    seedEmpty()
+    mockSupabase.push('push_subscriptions', {
+      data: [{ id: 's1', endpoint: 'https://push.example/1', created_at: '2026-09-01', morning_enabled: true, diary_enabled: false }],
+    })
+    mockSupabase.push('push_tokens', {
+      data: [{ id: 't1', token: 'ExpoPushToken[x]', platform: 'ios', morning_enabled: true, diary_enabled: true }],
+    })
+
+    const body = JSON.parse(await (await GET()).text())
+
+    expect(body.pushSubscriptions[0]).toMatchObject({ morning_enabled: true, diary_enabled: false })
+    expect(body.pushTokens[0]).toMatchObject({ platform: 'ios', diary_enabled: true })
+  })
+
+  it("is scoped by the caller's own user_id and selects the preference columns", async () => {
+    seedEmpty()
+
+    await GET()
+
+    for (const table of ['push_subscriptions', 'push_tokens']) {
+      const idx = mockSupabase.from.mock.calls.findIndex((c) => c[0] === table)
+      expect(idx).toBeGreaterThanOrEqual(0)
+      const builder = mockSupabase.from.mock.results[idx].value
+      expect(builder.eq).toHaveBeenCalledWith('user_id', 'user_test123')
+      expect(builder.select).toHaveBeenCalledWith(expect.stringContaining('diary_enabled'))
+    }
+  })
+
+  it('never exports the Web Push encryption secrets (p256dh, auth) — credentials, not user information', async () => {
+    seedEmpty()
+
+    await GET()
+
+    const idx = mockSupabase.from.mock.calls.findIndex((c) => c[0] === 'push_subscriptions')
+    const selectArg = mockSupabase.from.mock.results[idx].value.select.mock.calls[0][0] as string
+    expect(selectArg).not.toMatch(/p256dh|auth/)
+  })
+})

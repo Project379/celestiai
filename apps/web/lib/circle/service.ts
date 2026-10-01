@@ -18,6 +18,7 @@ import {
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import type { ChartRow } from '@/lib/types/chart'
 import { buildRelationshipWeatherOverview } from './weather'
+import { buildSavedProfileFullContent, buildSavedProfileTeaserContent } from './report'
 import type {
   CircleDashboardData,
   CircleSpaceView,
@@ -433,6 +434,71 @@ export async function getLatestSavedProfileReport(
   return report
 }
 
+/**
+ * The saved-profile report to SHOW. Like getLatestSavedProfileReport, but a
+ * STALE report (older than the active chart's birth_data_edited_at) is
+ * recomputed on view instead of hidden: it is deterministic synastry (no AI,
+ * no quota), so the automatic path writes version+1 with the stale report's
+ * relationship type, tiered exactly like the analyze action (premium full,
+ * free teaser), and returns it. The 50-version cap is deliberately ignored
+ * here (founder ruling). It never auto-creates a FIRST report. If the
+ * recompute fails the result is null — a stale report is never served — and
+ * nothing throws. A concurrent view that already wrote version+1 (23505) is
+ * resolved by returning that winner.
+ */
+export async function getFreshSavedProfileReport(
+  profile: SavedProfileRow,
+  userId: string,
+): Promise<SavedProfileReportRow | null> {
+  const supabase = createServiceSupabaseClient()
+  const [{ data }, userChart] = await Promise.all([
+    supabase
+      .from('saved_people_reports')
+      .select('*')
+      .eq('profile_id', profile.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    getLatestChartRowForUser(userId),
+  ])
+  const latest = (data as SavedProfileReportRow | null) ?? null
+  if (!latest) return null
+  if (!userChart || !isOlderThan(latest.created_at, userChart.birth_data_edited_at)) return latest
+
+  try {
+    const tier = await getUserTier(userId)
+    const computed = await buildSavedProfileComputation(userChart, profile, latest.relationship_type)
+    const isFull = tier === 'premium'
+    const { data: inserted, error } = await supabase
+      .from('saved_people_reports')
+      .insert({
+        profile_id: profile.id,
+        user_id: userId,
+        version: latest.version + 1,
+        relationship_type: latest.relationship_type,
+        headline_score: computed.compatibilitySummary.headline_score,
+        domain_scores: computed.compatibilitySummary,
+        report_content: isFull
+          ? buildSavedProfileFullContent(computed.compatibilitySummary, profile.name)
+          : buildSavedProfileTeaserContent(computed.compatibilitySummary, profile.name),
+        is_full: isFull,
+      })
+      .select('*')
+      .single()
+
+    if (error || !inserted) {
+      if (error && (error as { code?: string }).code === '23505') {
+        return await getLatestSavedProfileReport(profile.id, userId)
+      }
+      throw error ?? new Error('insert returned no row')
+    }
+    return inserted as SavedProfileReportRow
+  } catch (err) {
+    console.error('[Circle Service] saved-profile report auto-refresh failed:', err)
+    return null
+  }
+}
+
 function isOlderThan(timestamp: string, marker: string): boolean {
   return new Date(timestamp).getTime() < new Date(marker).getTime()
 }
@@ -702,7 +768,7 @@ export async function getCircleDashboardData(userId: string): Promise<CircleDash
 
   const spaceViews = await Promise.all(spaces.map((space) => buildCircleSpaceView(space)))
   const latestSavedProfileReportsEntries = await Promise.all(
-    savedProfiles.map(async (profile) => [profile.id, await getLatestSavedProfileReport(profile.id, userId)] as const),
+    savedProfiles.map(async (profile) => [profile.id, await getFreshSavedProfileReport(profile, userId)] as const),
   )
   const latestSavedProfileReports = Object.fromEntries(latestSavedProfileReportsEntries) as Record<
     string,

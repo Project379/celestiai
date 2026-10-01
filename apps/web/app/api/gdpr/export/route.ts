@@ -54,6 +54,8 @@ export async function GET() {
     recommendationStatesRes,
     recommendationEventsRes,
     birthDataEditsRes,
+    pushSubscriptionsRes,
+    pushTokensRes,
   ] = await Promise.all([
       supabase.from('charts').select('*').eq('user_id', userId),
       supabase.from('ai_readings').select('*').eq('user_id', userId),
@@ -77,6 +79,18 @@ export async function GET() {
       supabase.from('recommendation_events').select('*').eq('user_id', userId),
       // Birth-data edit ledger (quota-exemption bookkeeping) — user-linked, so exported.
       supabase.from('birth_data_edits').select('*').eq('user_id', userId),
+      // Notification registrations + their preference columns (morning_enabled,
+      // diary_enabled). Explicit column lists: the Web Push encryption secrets
+      // (p256dh, auth) are deliberately NOT exported — they are credentials, not
+      // information about the user. Previously neither table was exported at all.
+      supabase
+        .from('push_subscriptions')
+        .select('id, endpoint, created_at, morning_enabled, diary_enabled')
+        .eq('user_id', userId),
+      supabase
+        .from('push_tokens')
+        .select('id, token, platform, device_id, registered_at, revoked_at, last_sent_at, morning_enabled, diary_enabled')
+        .eq('user_id', userId),
     ])
 
   const relationshipIds = (spacesRes.data ?? []).map((row) => row.id)
@@ -120,6 +134,8 @@ export async function GET() {
     recommendationWorkStates: recommendationStatesRes.data ?? [],
     recommendationEvents: recommendationEventsRes.data ?? [],
     birthDataEdits: birthDataEditsRes.data ?? [],
+    pushSubscriptions: pushSubscriptionsRes.data ?? [],
+    pushTokens: pushTokensRes.data ?? [],
   }
 
   after(() => logAuditEvent(userId, 'account.data_export'))
