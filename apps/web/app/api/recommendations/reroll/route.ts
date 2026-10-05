@@ -5,11 +5,18 @@ import { rerollRecommendation } from '@stellaeum/core/recommendations/service'
 import { requireAccountActive, requireAppUser, toErrorResponse } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
 import { RECS_MONTHLY_LOCKED } from '@/lib/tier/locked-copy'
+import { isMediaRecommendationsEnabled } from '@/lib/config/featureFlags'
 
 export const dynamic = 'force-dynamic'
 
 /** POST /api/recommendations/reroll — one atomic replacement per slot/period. */
 export async function POST(request: Request) {
+  // See apps/web/app/api/recommendations/route.ts's matching guard —
+  // real 404, not a UI-only hide.
+  if (!isMediaRecommendationsEnabled()) {
+    return new Response(null, { status: 404 })
+  }
+
   try {
     const { userId } = await auth()
     if (!userId) return Response.json({ error: 'Сесията ти изтече. Влез отново.' }, { status: 401 })

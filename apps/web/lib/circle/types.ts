@@ -20,6 +20,8 @@ export interface ConnectionSpaceRow {
   composite_chart_data: CompositeChartData
   created_at: string
   updated_at: string
+  /** When the cached compatibility/synastry/composite data was computed; null = use updated_at. */
+  computed_at?: string | null
   archived_at: string | null
 }
 

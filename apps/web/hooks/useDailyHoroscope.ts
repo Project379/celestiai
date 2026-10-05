@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import useSWR from 'swr'
+import { useChartEditedAt } from '@/components/birth-data/ChartVersion'
+import { horoscopeStorageKey, sweepStaleHoroscopesInBrowser } from '@/lib/birth-data/chart-version'
 
 export type HoroscopeDate = 'today' | 'yesterday'
 
@@ -13,10 +15,6 @@ export interface CachedHoroscope {
 export interface CachedHoroscopeState {
   today?: CachedHoroscope
   yesterday?: CachedHoroscope
-}
-
-function getStorageKey(chartId: string, date: string) {
-  return `daily-horoscope:${chartId}:${date}`
 }
 
 function getTodayString(): string {
@@ -65,6 +63,10 @@ async function fetchHoroscope(
 }
 
 export function useDailyHoroscope(chartId: string) {
+  // The chart's birth_data_edited_at is part of every cache key below (SWR and
+  // localStorage): a horoscope cached before a birth-data edit describes the old
+  // chart and must never be hydrated or reused after it.
+  const editedAt = useChartEditedAt()
   const [selectedDate, setSelectedDate] = useState<HoroscopeDate>('today')
   const [cachedContent, setCachedContent] = useState<CachedHoroscopeState>({})
   const [yesterdayUnavailable, setYesterdayUnavailable] = useState(false)
@@ -72,12 +74,20 @@ export function useDailyHoroscope(chartId: string) {
   const todayStr = getTodayString()
   const yesterdayStr = getYesterdayString()
 
+  // The chart was edited (here or on another device): drop in-memory content and
+  // remove entries cached under any older marker. Runs before the hydrate effect.
+  useEffect(() => {
+    setCachedContent({})
+    setYesterdayUnavailable(false)
+    if (chartId) sweepStaleHoroscopesInBrowser(chartId, editedAt)
+  }, [chartId, editedAt])
+
   // Hydrate from localStorage on mount
   useEffect(() => {
     if (!chartId) return
     try {
-      const todayCached = localStorage.getItem(getStorageKey(chartId, todayStr))
-      const yesterdayCached = localStorage.getItem(getStorageKey(chartId, yesterdayStr))
+      const todayCached = localStorage.getItem(horoscopeStorageKey(chartId, editedAt, todayStr))
+      const yesterdayCached = localStorage.getItem(horoscopeStorageKey(chartId, editedAt, yesterdayStr))
 
       setCachedContent((prev) => ({
         ...prev,
@@ -87,15 +97,15 @@ export function useDailyHoroscope(chartId: string) {
           : prev.yesterday,
       }))
     } catch {}
-  }, [chartId, todayStr, yesterdayStr])
+  }, [chartId, editedAt, todayStr, yesterdayStr])
 
   // SWR for today's horoscope
   const {
     error: todayError,
     isLoading: todayLoading,
   } = useSWR(
-    chartId ? ['horoscope', chartId, todayStr] : null,
-    ([, id, date]) => fetchHoroscope(id, date),
+    chartId ? ['horoscope', chartId, editedAt, todayStr] : null,
+    ([, id, , date]) => fetchHoroscope(id, date),
     {
       revalidateOnFocus: false,
       onSuccess(data) {
@@ -104,7 +114,7 @@ export function useDailyHoroscope(chartId: string) {
           const generatedAt = data.generatedAt ?? new Date().toISOString()
           try {
             localStorage.setItem(
-              getStorageKey(chartId, todayStr),
+              horoscopeStorageKey(chartId, editedAt, todayStr),
               JSON.stringify({ content: data.content, generatedAt } satisfies CachedHoroscope)
             )
           } catch {}
@@ -123,9 +133,9 @@ export function useDailyHoroscope(chartId: string) {
     isLoading: yesterdayLoading,
   } = useSWR(
     chartId && selectedDate === 'yesterday' && !cachedContent.yesterday && !yesterdayUnavailable
-      ? ['horoscope', chartId, yesterdayStr]
+      ? ['horoscope', chartId, editedAt, yesterdayStr]
       : null,
-    ([, id, date]) => fetchHoroscope(id, date),
+    ([, id, , date]) => fetchHoroscope(id, date),
     {
       revalidateOnFocus: false,
       onSuccess(data) {
@@ -137,7 +147,7 @@ export function useDailyHoroscope(chartId: string) {
           const generatedAt = data.generatedAt ?? new Date().toISOString()
           try {
             localStorage.setItem(
-              getStorageKey(chartId, yesterdayStr),
+              horoscopeStorageKey(chartId, editedAt, yesterdayStr),
               JSON.stringify({ content: data.content, generatedAt } satisfies CachedHoroscope)
             )
           } catch {}
@@ -160,7 +170,7 @@ export function useDailyHoroscope(chartId: string) {
       const generatedAt = data.generatedAt ?? new Date().toISOString()
       try {
         localStorage.setItem(
-          getStorageKey(chartId, todayStr),
+          horoscopeStorageKey(chartId, editedAt, todayStr),
           JSON.stringify({ content: data.content, generatedAt } satisfies CachedHoroscope)
         )
       } catch {}
@@ -169,7 +179,7 @@ export function useDailyHoroscope(chartId: string) {
         today: { content: data.content!, generatedAt },
       }))
     }
-  }, [chartId, todayStr])
+  }, [chartId, editedAt, todayStr])
 
   return {
     completion: '',

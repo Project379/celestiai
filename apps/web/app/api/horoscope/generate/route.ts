@@ -108,7 +108,7 @@ export async function POST(req: Request) {
     const { data: chart, error: chartError } = await supabase
       .from('charts')
       .select(
-        'id, user_id, birth_date, birth_time, birth_time_known, approximate_time_range, latitude, longitude'
+        'id, user_id, birth_date, birth_time, birth_time_known, approximate_time_range, latitude, longitude, birth_data_edited_at'
       )
       .eq('id', chartId)
       .single()
@@ -120,6 +120,22 @@ export async function POST(req: Request) {
     if (chart.user_id !== userId) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
+
+    // STALENESS (birth-data edit): a horoscope generated before the chart's
+    // last birth-affecting edit describes the OLD chart and is never served.
+    // Delete it here (conditional on it still being older than the marker, so
+    // a row regenerated after the edit can never be removed by this) and fall
+    // through to the normal claim-INSERT path below — the INSERT claim is on
+    // UNIQUE(chart_id, date), which a stale row would otherwise 23505 forever.
+    // Two concurrent requests both delete (one a no-op), then race the same
+    // INSERT claim exactly as before. A stale YESTERDAY row is removed too and
+    // yesterday is never regenerated, so it reads as unavailable.
+    await supabase
+      .from('daily_horoscopes')
+      .delete()
+      .eq('chart_id', chartId)
+      .eq('date', requestedDate)
+      .lt('generated_at', chart.birth_data_edited_at)
 
     const { data: cachedHoroscope } = await supabase
       .from('daily_horoscopes')
@@ -396,6 +412,22 @@ export async function POST(req: Request) {
       text: finalPlainText,
       conditions: generationConditions,
     })
+
+    // RACE GUARD (see oracle/generate): if the birth data was edited while the
+    // model ran, this horoscope describes the old chart. Release the claim and
+    // let the client retry against the new chart rather than save it as fresh.
+    const { data: chartNow } = await supabase
+      .from('charts')
+      .select('birth_data_edited_at')
+      .eq('id', chartId)
+      .single()
+    if (!chartNow || chartNow.birth_data_edited_at !== chart.birth_data_edited_at) {
+      await releaseClaimOnFailure()
+      return toErrorResponse(
+        new ApiError(409, RETRY_LATER_MESSAGE, 'CHART_EDITED_DURING_GENERATION'),
+        'Horoscope generation discarded: birth data edited mid-generation',
+      )
+    }
 
     // .upsert() returns { error }, it does not throw — check it explicitly
     // so a silent cache-write failure is visible.

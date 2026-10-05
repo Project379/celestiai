@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useChartEditedAt } from '@/components/birth-data/ChartVersion'
 import {
   PersonalizedRecommendationSchema,
   RecommendationFeedbackResponseSchema,
@@ -22,6 +23,8 @@ function replaceRecommendation(
 }
 
 export function useRecommendations(chartId: string | null) {
+  // Re-fetch when the chart was edited (recommendations are derived from it).
+  const editedAt = useChartEditedAt()
   const [data, setData] = useState<RecommendationsOverview | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -44,7 +47,7 @@ export function useRecommendations(chartId: string | null) {
 
   useEffect(() => {
     void refetch()
-  }, [refetch])
+  }, [refetch, editedAt])
 
   const setFeedback = useCallback(async (
     recommendation: PersonalizedRecommendation,

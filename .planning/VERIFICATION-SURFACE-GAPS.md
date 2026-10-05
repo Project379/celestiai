@@ -443,16 +443,25 @@ returns 200 with `web.error` set, which is how it stayed dead for weeks)
 and it ties each run to the deployed SHA via `X-Deploy-SHA`. But two
 surfaces it *looks* like it covers, it does not:
 
-- **`recommendation-catalog`'s probe is shallow.** The other two crons'
-  `?probe=1` runs the full read/config path (VAPID init, every SELECT,
-  Expo token validation) and stops before the side effect.
-  `recommendation-catalog` has no dry-run — `runDevelopmentCatalogImport`
-  does external TMDB/Open-Library fetches and DB upserts as one
-  indivisible unit — so its probe only checks auth + `TMDB_API_READ_TOKEN`
-  presence. A broken importer (bad TMDB response shape, an upsert
-  constraint violation, a rights-mode misconfig) passes the smoke test.
-  The monthly cron itself is the only thing that exercises that path, and
-  a monthly failure is exactly the kind that rots unnoticed.
+- **`recommendation-catalog`'s probe is shallow — now moot, not fixed.**
+  This gap is dormant, not resolved: the cron is unscheduled (removed
+  from `vercel.json` 2026-09-28, RECOMMENDATION-CONTENT-LICENSING,
+  `.planning/PLACEHOLDERS.md` — the media-recommendations feature is
+  disabled pending licensing) and its smoke probe removed from
+  `scripts/smoke.mjs` alongside it, so there's currently nothing running
+  for this gap to apply to. The analysis below is preserved for when the
+  feature (and the cron) is re-enabled — re-add the probe to
+  `scripts/smoke.mjs` at that point and revisit whether it's still
+  shallow. The other two crons' `?probe=1` runs the full read/config path
+  (VAPID init, every SELECT, Expo token validation) and stops before the
+  side effect. `recommendation-catalog` has no dry-run —
+  `runDevelopmentCatalogImport` does external TMDB/Open-Library fetches
+  and DB upserts as one indivisible unit — so its probe only checks auth
+  + `TMDB_API_READ_TOKEN` presence. A broken importer (bad TMDB response
+  shape, an upsert constraint violation, a rights-mode misconfig) passes
+  the smoke test. The monthly cron itself is the only thing that
+  exercises that path, and a monthly failure is exactly the kind that
+  rots unnoticed.
 - **`/api/smoke`'s AI check hits the generation core, not the route
   wrappers.** It calls `generateFinalText` directly. The real
   `/api/oracle/generate` and `/api/horoscope/generate` add Clerk auth, the
@@ -469,6 +478,39 @@ smoke test narrows the "is the deploy healthy" question from "unknown" to
 cron read-paths work" — which is most of what silently broke before — but
 it is not "every compute path a user touches works", and the gap between
 those two should not be read as covered just because a green check exists.
+
+## 14. No check compares the code to the real database schema — a mocked Supabase client accepts any RPC name, argument or column
+
+**Found 2026-10-01 (birth-data edit work).** `apply_birth_data_edit` changed
+from a 4-argument to a 3-argument function (the free regrant moved from edit
+time to generation time). The unit tests were green throughout, because every
+route and core test runs against `createMockSupabase()`, whose `rpc()` returns
+whatever was queued for a function *name* regardless of the arguments passed,
+and whose `from().select(...)` accepts any column list. The mismatch between
+what the code called and what the migration defined was caught only by
+reading the diff before the push; had the code shipped before the migration
+(or with the wrong arity) it would have 500'd in production on the first edit.
+The live-DB script (`scripts/diagnostics/test-birth-data-edit-migration.mjs`)
+proves the SQL, not the call sites.
+
+What a green run exercised: route/core logic against a fake. What it did not:
+that the function, its argument names, or the columns it selects exist.
+
+**Cheapest guard (proposed, NOT built):** a static `check:rpc-contract`
+script in `check:all` (~60 lines, no database, no network). It greps every
+`.rpc('<name>', { <keys> })` call site in `apps/web`, `apps/mobile` and
+`packages/core`, parses the newest `CREATE [OR REPLACE] FUNCTION public.<name>(
+p_a type, ...)` per function out of `supabase/migrations/*.sql`, and fails on
+(a) an RPC name with no migration, or (b) a different argument-name set. That
+catches exactly the class that nearly shipped, for free, on every run.
+Remaining gap it does NOT close: migration file vs what is actually applied in
+production — covered on demand by `audit-hand-applied-schema.mjs` and, if
+wanted, a one-query comparison of `pg_proc` identity arguments added to the
+existing post-deploy smoke. The principled fix (generated Supabase types, which
+make column names compile-checked too) is blocked on the MIGRATION_TOOLING
+open item (no agreed location for the generated file).
+
+---
 
 ## The underlying pattern across items 1-3 (environment-fidelity gaps)
 

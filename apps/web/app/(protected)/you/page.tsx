@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { YouHub } from '@/components/you/YouHub'
+import { isMediaRecommendationsEnabled } from '@/lib/config/featureFlags'
+import { loadYouEntryChart } from '@/lib/birth-data/you-entry'
 
 export const metadata: Metadata = {
   title: 'Ти',
@@ -13,6 +15,8 @@ export const metadata: Metadata = {
  * recommendations, astrology-guide). Route consolidation (/you/crystals etc.)
  * is a later Phase A task.
  */
-export default function YouPage() {
-  return <YouHub />
+export default async function YouPage() {
+  // The birth-data edit entry exists only behind FF_BIRTH_DATA_EDIT (off by default).
+  const chart = await loadYouEntryChart()
+  return <YouHub showRecommendations={isMediaRecommendationsEnabled()} chart={chart} />
 }

@@ -32,10 +32,23 @@ table, which now names PLACEHOLDERS.md itself as SoT for status.
 3. **Crystals streak and the `/rhythm` transit card stay FREE** — both
    shipped free on 2026-04-20 (`cb54ede`, `da69a9e`); the earlier draft
    definition's move to re-gate them is withdrawn. Not touched.
-4. **Premium is therefore exactly four things:** Oracle depth (love /
+4. **Premium was originally exactly four things:** Oracle depth (love /
    career / health + regenerate + 300/mo), Кръг (compatibility readings +
    unlimited saved profiles), crystal collecting (manual collect +
    personalised recommendations + history), and full Recommendations.
+
+> **AMENDED 2026-09-28 — Recommendations removed. Premium is now exactly
+> three things.** RECOMMENDATION-CONTENT-LICENSING
+> (`.planning/PLACEHOLDERS.md`) is unresolved — TMDB and Open Library
+> content has no confirmed commercial redistribution rights, and this is
+> a paid subscription app. Selling a feature that is switched off is a
+> consumer-rights problem, so the feature was disabled (code kept, not
+> deleted — `RECOMMENDATIONS-FLAG-OFF` in `.planning/PLACEHOLDERS.md`
+> has the full scope and the exact flag to flip it back on) rather than
+> left listed while inert. **Premium is now: Oracle depth, Кръг
+> (compatibility), crystal collecting.** Re-add Recommendations to this
+> section and the table below once RECOMMENDATION-CONTENT-LICENSING
+> resolves and the flag is re-enabled.
 
 ## The frozen definition (as amended)
 
@@ -50,18 +63,21 @@ table, which now names PLACEHOLDERS.md itself as SoT for status.
 | Moon | Full |
 | Ритъм (journal) | Full — unlimited entries, no premium layer |
 | Crystals | Daily crystal + streak; collection grid visible with **locked slots** |
-| Recommendations | One visible; rest visible and locked |
+| ~~Recommendations~~ | ~~One visible; rest visible and locked~~ — disabled, see PREMIUM table note |
 | Guide | Full |
 | `/rhythm` transit card | Full |
 
-**PREMIUM (€6.99/mo, €59.99/yr) — exactly four things:**
+**PREMIUM (€6.99/mo, €59.99/yr) — exactly three things** (was four —
+Recommendations removed 2026-09-28, see the amendment above; the row
+stays here, struck through, so it's clear this was a deliberate removal
+and not an oversight):
 
 | Feature | Premium |
 |---|---|
 | Oracle | All four topics; regenerate; 300 / month |
 | Кръг | Unlimited saved profiles + compatibility readings |
 | Crystals | Manual collecting, personalised recommendations, history |
-| Recommendations | All |
+| ~~Recommendations~~ | ~~All~~ — disabled, `FF_MEDIA_RECOMMENDATIONS` off, licensing unresolved |
 
 **Principle:** every feature is VISIBLE to free users. Locked content renders
 as locked, never hidden. No empty states where a paid feature would be.

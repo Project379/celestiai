@@ -193,6 +193,14 @@ vi.mock('@stellaeum/core/recommendations/service', () => ({
   }),
 }))
 
+// The recommendations routes now 404 before the rate-limit check when
+// FF_MEDIA_RECOMMENDATIONS is off (RECOMMENDATION-CONTENT-LICENSING,
+// .planning/PLACEHOLDERS.md) — this suite is testing rate-limit surfacing,
+// not the flag gate, so force it on for these three routes.
+vi.mock('@/lib/config/featureFlags', () => ({
+  isMediaRecommendationsEnabled: vi.fn(() => true),
+}))
+
 beforeEach(() => {
   vi.clearAllMocks()
 })

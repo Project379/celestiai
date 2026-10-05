@@ -23,7 +23,12 @@ vi.mock('@/lib/users/ensure-user', () => ({
   getAppUserByClerkId: vi.fn(),
 }))
 
+vi.mock('@/lib/analytics/server-capture', () => ({
+  captureServerEvent: vi.fn(async () => {}),
+}))
+
 import { logAuditEvent } from '@/lib/audit'
+import { captureServerEvent } from '@/lib/analytics/server-capture'
 import { handleRevenueCatEvent, type RevenueCatEvent } from '@/lib/revenuecat/webhook-events'
 import { getAppUserByClerkId } from '@/lib/users/ensure-user'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
@@ -83,6 +88,21 @@ describe('with a known user', () => {
     expect(payload.subscription_tier).toBe('premium')
     expect(payload.subscription_status).toBe('active')
     expect(payload.subscription_provider).toBe('revenuecat')
+  })
+
+  it('a PRODUCTION INITIAL_PURCHASE fires the PostHog "subscription started" event', async () => {
+    mockSupabase.push('users', { error: null })
+    await handleRevenueCatEvent(makeEvent({ type: 'INITIAL_PURCHASE', environment: 'PRODUCTION' }))
+
+    expect(captureServerEvent).toHaveBeenCalledWith('subscription started', 'user_1', { platform: 'mobile' })
+  })
+
+  it('a SANDBOX INITIAL_PURCHASE STILL grants premium (closed-test testers need it) but does NOT fire the PostHog "subscription started" event — sandbox purchases are not real subscriptions and must not pollute the funnel', async () => {
+    mockSupabase.push('users', { error: null })
+    await handleRevenueCatEvent(makeEvent({ type: 'INITIAL_PURCHASE', environment: 'SANDBOX' }))
+
+    expect(lastUpdatePayload().subscription_tier).toBe('premium')
+    expect(captureServerEvent).not.toHaveBeenCalled()
   })
 
   it('INITIAL_PURCHASE with period_type TRIAL grants trialing status', async () => {

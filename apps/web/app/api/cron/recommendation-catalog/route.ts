@@ -1,16 +1,28 @@
 import * as Sentry from '@sentry/nextjs'
 import { runDevelopmentCatalogImport } from '@stellaeum/core/recommendations/import'
 import { verifyCronSecret } from '@/lib/auth/cron-secret'
+import { isMediaRecommendationsEnabled } from '@/lib/config/featureFlags'
 
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
 
-/** Monthly, bounded candidate import. New records stay draft + review_required. */
+/**
+ * Monthly, bounded candidate import. New records stay draft + review_required.
+ * No longer scheduled (removed from vercel.json — RECOMMENDATION-CONTENT-
+ * LICENSING, .planning/PLACEHOLDERS.md, the feature is disabled pending
+ * licensing). The route itself stays (disable, not delete) and this flag
+ * check is defense in depth against a manual/leftover trigger importing
+ * more of the same unlicensed content while disabled.
+ */
 export async function GET(request: Request) {
   // .trim(): a trailing newline in the pasted Vercel env var is invisible in
   // the dashboard and would fail verifyCronSecret's length check (SMOKE-TEST).
   if (!verifyCronSecret(request.headers.get('Authorization'), process.env.CRON_SECRET?.trim())) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (!isMediaRecommendationsEnabled()) {
+    return Response.json({ skipped: true, reason: 'FF_MEDIA_RECOMMENDATIONS is not set' })
   }
 
   // Probe mode (SMOKE-TEST): `?probe=1` confirms only that this route

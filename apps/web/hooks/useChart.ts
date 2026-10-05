@@ -1,6 +1,7 @@
 'use client'
 
 import useSWR from 'swr'
+import { useChartEditedAt } from '@/components/birth-data/ChartVersion'
 import type { ChartData } from '@stellaeum/astrology/client'
 
 interface UseChartResult {
@@ -37,8 +38,11 @@ async function fetchChart(chartId: string): Promise<ChartData> {
  * calculated chart with planets, houses, and aspects.
  */
 export function useChart(chartId: string | undefined): UseChartResult {
+  const editedAt = useChartEditedAt()
   const { data, error, isLoading, mutate } = useSWR(
-    chartId ? ['chart', chartId] : null,
+    // editedAt (the chart's birth_data_edited_at) is part of the key: an edit, here or
+    // on another device, moves the key so the pre-edit calculation is never reused.
+    chartId ? ['chart', chartId, editedAt] : null,
     ([, id]) => fetchChart(id),
     { revalidateOnFocus: false }
   )

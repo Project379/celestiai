@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Рождени данни — edit (mobile), mock-up v1</title>
+<!--
+  MOCK-UP v1 — NOTHING WIRED IN, NOTHING COMMITTED. Designed from scratch against DESIGN-LANGUAGE-REFERENCE.md,
+  wizard-v4.html (the answer-line language) and dnes-v4.html (invitation = lit phrase + ember). The existing
+  mobile screens' code was not opened. Behaviour contract (not visual): this screen PATCHes /api/birth-data/{id}
+  on the existing chart — it never reuses the create wizard, which POSTs a new chart.
+
+  ALL BULGARIAN COPY IS PLACEHOLDER — NOT FINAL, FOUNDER TO APPROVE. The post-save message in particular is a
+  deliberately empty slot: the approved copy has not been sent. Strings live in COPY, marked PLACEHOLDER_COPY.
+-->
+<style>
+  @font-face{font-family:'PF-Reg';src:url('../../../apps/mobile/assets/fonts/PlayfairDisplay-Regular.ttf');}
+  @font-face{font-family:'PF-Semi';src:url('../../../apps/mobile/assets/fonts/PlayfairDisplay-SemiBold.ttf');}
+  @font-face{font-family:'EBG-Reg';src:url('../../../apps/mobile/assets/fonts/EBGaramond-Regular.ttf');}
+  @font-face{font-family:'EBG-Ital';src:url('../../../apps/mobile/assets/fonts/EBGaramond-Italic.ttf');}
+  :root{
+    --base:#08060f; --violet:#8b5cf6; --starlight:#f5f7fc; --bronze:#b8763e; --bronze-hi:#d9a06a;
+    --text:#e2e8f0; --muted:#94a3b8; --faint:#6d7e97; --rose:#fb7185;
+    --page-bg:#0c0a12; --page-surface:#141019; --page-text:#e9e6f0; --page-muted:#948fa3; --page-border:#241f30;
+    --serif-d:'PF-Semi',Georgia,serif; --serif-d-r:'PF-Reg',Georgia,serif; --body:'EBG-Reg',Palatino,serif; --body-i:'EBG-Ital',Palatino,serif;
+    --mono:"SFMono-Regular",Consolas,Menlo,monospace; --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page-bg);color:var(--page-text);font-family:var(--sans);line-height:1.55;padding:0 0 100px}
+  .wrap{max-width:1160px;margin:0 auto;padding:40px 24px 0}
+  h1{font-family:var(--serif-d-r);font-weight:400;font-size:26px;margin:0 0 6px}
+  .dek{font-size:14px;color:var(--page-muted);max-width:760px;margin:0 0 20px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+  .controls button{background:var(--page-surface);color:var(--page-text);border:1px solid var(--page-border);border-radius:4px;padding:9px 12px;font:inherit;font-size:13px;min-height:40px;cursor:pointer}
+  .controls button.on{border-color:var(--bronze);color:var(--bronze-hi)}
+  .controls label{font-size:13px;color:var(--page-muted);display:flex;gap:6px;align-items:center}
+  .stage{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}
+  .phone-frame{flex:0 0 auto;width:390px;height:780px;border-radius:44px;background:#000;padding:10px;box-shadow:0 30px 70px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04)}
+  .phone-screen{width:100%;height:100%;border-radius:36px;overflow:hidden;position:relative;background:var(--base)}
+  .notes{flex:1 1 300px;min-width:280px}
+  .notes h3{font-family:var(--serif-d-r);font-weight:400;font-size:16px;margin:18px 0 8px}
+  .notes h3:first-child{margin-top:0}
+  .notes p,.notes li{font-size:13.5px;color:#b8b3c6;margin:0 0 8px}
+  .notes ul{padding-left:18px;margin:0 0 8px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#8f8aa0;background:rgba(255,255,255,.04);padding:2px 6px;border-radius:2px;margin-right:6px}
+
+  /* starfield + warm-quiet wash (wizard-v4, verbatim) */
+  .stars{position:absolute;inset:0}
+  .star{position:absolute;border-radius:50%;background:var(--starlight);animation:tw 4.5s ease-in-out infinite}
+  @keyframes tw{0%,100%{opacity:.25}50%{opacity:.85}}
+  .warm-quiet-wash{position:absolute;inset:0;background:radial-gradient(ellipse 300px 260px at 50% 15%,rgba(184,118,62,.13),transparent 62%)}
+  .content{position:relative;height:100%;padding:60px 26px 0;display:flex;flex-direction:column}
+
+  /* hero: the star (wizard-v4) — same point, now already placed (solid ring, no longer dashed) */
+  .star-stage{position:relative;width:60px;height:60px;margin:0 auto}
+  .wiz-star{position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe8c9,var(--bronze-hi) 55%,var(--bronze) 90%);box-shadow:0 0 18px 4px rgba(217,160,106,.35)}
+  .wiz-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(184,118,62,.3)}
+  .prompt{text-align:center;margin-top:20px;font-family:var(--serif-d-r);font-size:18px;color:var(--starlight)}
+
+  /* the four answer lines — wizard's lit-line device, one per field. No cards, no borders but the 1px lit line. */
+  .lines{margin-top:30px;display:flex;flex-direction:column;gap:20px}
+  .ln{cursor:pointer}
+  .ln-label{font-family:var(--body);font-size:12px;color:var(--faint)}
+  .ln-line{position:relative;margin-top:2px;border-bottom:1px solid rgba(184,118,62,.4);padding-bottom:7px;font-family:var(--body-i);font-style:italic;font-size:15px;color:var(--text);display:flex;justify-content:space-between;align-items:baseline}
+  .ln.active .ln-line{border-bottom-color:rgba(184,118,62,.9);color:var(--starlight)}
+  .ln.active .ln-line::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:14px;background:linear-gradient(to right,transparent,rgba(184,118,62,.22),transparent);filter:blur(3px);pointer-events:none}
+  .caret{display:none;width:1px;height:16px;background:var(--bronze-hi);animation:blink 1s steps(1) infinite;align-self:center}
+  .ln.active .caret{display:inline-block}
+  @keyframes blink{50%{opacity:0}}
+  .ln.err .ln-line{border-bottom-color:var(--rose)}
+  .ln-err{font-family:var(--body);font-size:12px;color:var(--rose);margin-top:6px}
+
+  /* results / options: plain rows separated by hairlines (settings-row language), not cards */
+  .opts{margin-top:10px;font-family:var(--body);font-size:14px}
+  .opt{padding:11px 0;border-top:1px solid rgba(226,232,240,.07);color:var(--text)}
+  .opt:first-child{border-top:none}
+  .opt small{color:var(--faint);font-size:12px;margin-left:8px}
+  .opt.sel{color:var(--bronze-hi)}
+
+  /* the one invitation: lit phrase + ember (dnes-v4 .invite) — NOT a button */
+  .invite{margin-top:auto;padding:26px 0 36px;text-align:center;position:relative}
+  .invite-glow{position:absolute;left:50%;top:50%;width:260px;height:120px;transform:translate(-50%,-50%);background:radial-gradient(ellipse,rgba(184,118,62,.28),transparent 68%);pointer-events:none}
+  .invite-text{position:relative;font-family:var(--serif-d);font-weight:600;font-size:20px;color:var(--bronze-hi);letter-spacing:.01em;display:inline-flex;align-items:baseline;gap:9px}
+  .ember{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--bronze-hi);box-shadow:0 0 8px 2px rgba(217,160,106,.7);animation:breathe 2.6s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.5;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+  /* disabled (nothing changed): glow + ember off, text muted — categorical change, not "a bit dimmer" (R7) */
+  .invite.off .invite-glow{display:none}
+  .invite.off .invite-text{color:var(--faint)}
+  .invite.off .ember{display:none}
+  .invite.saving .ember{animation-duration:.9s}
+  .msg{position:relative;font-family:var(--body-i);font-style:italic;font-size:14.5px;line-height:1.6;color:#e6e2f0;max-width:270px;margin:0 auto;text-align:center}
+  .msg.slot{color:var(--faint);border:none}
+  .rm .star,.rm .ember,.rm .caret{animation:none}
+  .rm .star{opacity:.5}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Рождени данни — редакция (mobile) · v1</h1>
+  <p class="dek">Mock-up only. Reached from Ти; edits the existing chart via <b>PATCH /api/birth-data/{id}</b> (never the create wizard). Every Bulgarian string is PLACEHOLDER copy; the post-save message is an empty slot until you send the approved text.</p>
+
+  <div class="controls" id="states"></div>
+  <div class="controls"><label><input type="checkbox" id="rm"> reduced motion</label></div>
+
+  <div class="stage">
+    <div class="phone-frame"><div class="phone-screen" id="screen">
+      <div class="stars" id="stars"></div>
+      <div class="warm-quiet-wash"></div>
+      <div class="content">
+        <div class="star-stage"><div class="wiz-ring"></div><div class="wiz-star"></div></div>
+        <div class="prompt" id="prompt"></div>
+
+        <div class="lines" id="lines"></div>
+        <div class="opts" id="opts"></div>
+
+        <div class="invite" id="invite">
+          <div class="invite-glow"></div>
+          <div id="msg" class="msg hidden"></div>
+          <span class="invite-text" id="cta"><span id="ctatext"></span><span class="ember"></span></span>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="notes">
+      <h3>Reused, nothing invented</h3>
+      <ul>
+        <li><span class="tag">hero</span> wizard-v4's star — the same warm point, now already placed: the dashed "not yet resolved" ring is solid. R1: one dominant element.</li>
+        <li><span class="tag">fields</span> wizard-v4's lit answer line, once per field (name, date, time, place). Tapping a line activates it (brighter line + soft glow + caret). No cards, no borders, no pills, no chevrons.</li>
+        <li><span class="tag">save</span> dnes-v4's invitation: a lit phrase + breathing ember, not a button. Nothing changed → glow and ember switch OFF and the phrase goes faint (a categorical change, R7), so Save reads as unavailable.</li>
+        <li><span class="tag">options</span> city results, the time-known choice and the approximate range are plain hairline rows (settings-row language) under the active line.</li>
+        <li><span class="tag">type</span> Playfair / EB Garamond only; sizes 12 / 15 / 18 / 20 from the existing scale; zero tracked-caps; no Cinzel.</li>
+        <li><span class="tag">temp</span> warm, restrained — same as the wizard, because this is the same act (telling the app when and where you were born); there is no reading being spoken.</li>
+      </ul>
+      <h3>Contract the build must keep</h3>
+      <ul>
+        <li>PATCH the existing chart id; only send changed fields. No POST. A new chart would change which chart is "active".</li>
+        <li>Save disabled until a field actually differs from the stored value (a no-op edit never bumps <code>birth_data_edited_at</code>).</li>
+        <li>On success: run the shared chart-derived invalidation helper, then show the single post-save message (slot below — copy pending), then return.</li>
+        <li>Unknown time uses the same time-known / approximate-range model as the create flow (<code>birthTimeKnown</code>, <code>approximateTimeRange</code>).</li>
+      </ul>
+      <h3>Open design items</h3>
+      <ul>
+        <li><b>Entry point:</b> proposed as one plain row on Ти («Рождени данни») in the settings-row language — Ти's own mockup has no such row yet; needs your call on placement.</li>
+        <li><b>Post-save message:</b> shown in the invitation's place for a moment, then the screen returns. Duration and whether it is tap-to-dismiss are yours to rule; copy is an empty slot.</li>
+        <li>Delete is deliberately absent (cut from Batch 8).</li>
+      </ul>
+      <h3>Reduced motion</h3>
+      <p>Star twinkle, ember breathing and the caret blink stop; everything else is already static (no transitions on this screen).</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // PLACEHOLDER_COPY — all Bulgarian below awaits founder approval; post-save message intentionally empty.
+  const COPY = {
+    prompt: 'Рождени данни',
+    labels: { name:'Име', date:'Дата', time:'Час', place:'Място' },
+    values: { name:'Николай', date:'15 март 1994', time:'08:30', place:'София' },
+    edited: { name:'Николай', date:'16 март 1994', time:'08:30', place:'Пловдив' },
+    save: 'Запази', saving: 'Запазвам…',
+    msgSlot: '[ текст след запазване — чака одобрен български ]',
+    err: 'Невалидна дата.', netErr: 'Не успяхме да запазим. Опитай отново.',
+    cities: [['София','област София'],['Пловдив','област Пловдив'],['Плевен','област Плевен']],
+    timeOpts: ['Знам точния час','Приблизително','Не знам часа'], ranges: ['сутрин','обед','вечер','нощ']
+  }
+  const STATES = {
+    rest:    {t:'Нищо не е променено', active:null, changed:false},
+    editing: {t:'Редакция на дата', active:'date', changed:true, caret:true},
+    place:   {t:'Търсене на място', active:'place', changed:true, opts:'cities'},
+    time:    {t:'Час — не знам', active:'time', changed:true, opts:'time'},
+    invalid: {t:'Грешка в поле', active:'date', changed:true, err:'date'},
+    saving:  {t:'Запазване', active:null, changed:true, saving:true},
+    saved:   {t:'Запазено', active:null, changed:false, saved:true},
+    failed:  {t:'Грешка при запазване', active:null, changed:true, neterr:true}
+  }
+  const $ = id => document.getElementById(id)
+  ;(function(){const s=$('stars');let h='';for(let i=0;i<40;i++){const x=Math.random()*100,y=Math.random()*100,z=Math.random()<.2?2:1.2
+    h+='<span class="star" style="left:'+x+'%;top:'+y+'%;width:'+z+'px;height:'+z+'px;animation-delay:'+(Math.random()*4).toFixed(1)+'s"></span>'}s.innerHTML=h})()
+
+  function render(key){
+    const st=STATES[key]
+    document.querySelectorAll('#states button').forEach(b=>b.classList.toggle('on',b.dataset.k===key))
+    $('prompt').textContent=COPY.prompt
+    const vals=st.changed&&!st.saved?COPY.edited:COPY.values
+    const timeVal = st.opts==='time' ? 'Не знам часа' : vals.time
+    const shown={name:vals.name,date:(st.active==='date'&&st.caret)?'16 март 199':vals.date,time:timeVal,place:(st.active==='place')?'Пло':vals.place}
+    $('lines').innerHTML=['name','date','time','place'].map(k=>
+      '<div class="ln'+(st.active===k?' active':'')+(st.err===k?' err':'')+'"><div class="ln-label">'+COPY.labels[k]+'</div>'+
+      '<div class="ln-line"><span>'+shown[k]+'</span><span class="caret"></span></div>'+(st.err===k?'<div class="ln-err">'+COPY.err+'</div>':'')+'</div>').join('')
+    let o=''
+    if(st.opts==='cities') o=COPY.cities.map((c,i)=>'<div class="opt'+(i===1?' sel':'')+'">'+c[0]+'<small>'+c[1]+'</small></div>').join('')
+    if(st.opts==='time') o=COPY.timeOpts.map((c,i)=>'<div class="opt'+(i===2?' sel':'')+'">'+c+'</div>').join('')+
+      '<div class="opt" style="color:var(--faint)">'+COPY.ranges.join(' · ')+'</div>'
+    $('opts').innerHTML=o
+    const inv=$('invite'); inv.classList.toggle('off',!st.changed||!!st.err||!!st.saved); inv.classList.toggle('saving',!!st.saving)
+    $('msg').className='msg'+((st.saved||st.neterr)?'':' hidden')+(st.saved?' slot':'')
+    $('msg').textContent=st.saved?COPY.msgSlot:(st.neterr?COPY.netErr:'')
+    $('cta').classList.toggle('hidden',!!st.saved)
+    $('ctatext').textContent=st.saving?COPY.saving:COPY.save
+  }
+  Object.entries(STATES).forEach(([k,v])=>{const b=document.createElement('button');b.textContent=v.t;b.dataset.k=k;b.onclick=()=>render(k);$('states').appendChild(b)})
+  $('rm').onchange=()=>$('screen').classList.toggle('rm',$('rm').checked)
+  render('rest')
+</script>
+</body>
+</html>

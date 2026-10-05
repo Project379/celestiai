@@ -174,7 +174,11 @@ export async function handleRevenueCatEvent(event: RevenueCatEvent): Promise<voi
       // premium via this path.
       if (!hasPremiumEntitlement(event)) break
       await grantPremium(event, event.period_type === 'TRIAL' ? 'trialing' : 'active')
-      await captureServerEvent('subscription started', user.clerk_id, { platform: 'mobile' })
+      // SANDBOX purchases (closed-test testers) still grant premium above, but
+      // are not real subscriptions — keep them out of the PostHog funnel.
+      if (event.environment !== 'SANDBOX') {
+        await captureServerEvent('subscription started', user.clerk_id, { platform: 'mobile' })
+      }
       await logAuditEvent(user.clerk_id, 'payment.subscription_created', {
         provider: 'revenuecat',
         eventId: event.id,

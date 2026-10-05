@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     // Verify chart ownership before returning readings
     const { data: chart, error: chartError } = await supabase
       .from('charts')
-      .select('id, user_id')
+      .select('id, user_id, birth_data_edited_at')
       .eq('id', chartId)
       .single()
 
@@ -67,8 +67,15 @@ export async function GET(req: Request) {
       )
     }
 
+    // STALENESS: a reading generated before the chart's last birth-affecting
+    // edit describes the OLD chart (wrong degrees/houses) and is never served,
+    // including a free user's never-expiring lifetime reading — it is hidden,
+    // and the client shows the locked/regenerate state for that topic.
+    const markerMs = new Date(chart.birth_data_edited_at).getTime()
+    const fresh = (readings ?? []).filter((r) => new Date(r.generated_at).getTime() >= markerMs)
+
     // Return array (empty if no readings exist)
-    const result = (readings ?? []).map((r) => ({
+    const result = fresh.map((r) => ({
       topic: r.topic,
       content: r.content,
       generatedAt: r.generated_at,

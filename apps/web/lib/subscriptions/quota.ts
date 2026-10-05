@@ -1,6 +1,21 @@
+import { createHash } from 'crypto'
 import * as Sentry from '@sentry/nextjs'
 import { logAuditEvent } from '@/lib/audit'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
+
+// One-way hash for a Sentry tag that needs to DISTINGUISH users across
+// alerts (so a repeat offender is visible as the same tag value) without
+// IDENTIFYING them — a raw Clerk userId tag is a real PII leak into a
+// third party whose "PII off" posture (sendDefaultPii: false) this
+// project otherwise relies on (PROCESSOR-ERASURE-GAPS,
+// .planning/PLACEHOLDERS.md). Truncated to 16 hex chars — enough entropy
+// to distinguish users in practice, not meant to be collision-proof
+// against a determined attacker (this is Sentry-tag correlation, not a
+// security boundary). Not reversible: this tag alone cannot be used to
+// look up the Clerk user.
+function hashUserIdForSentry(userId: string): string {
+  return createHash('sha256').update(userId).digest('hex').slice(0, 16)
+}
 
 // SCOPE (frozen tier definition, 2026-09-01): this counter is PREMIUM-
 // ONLY. It is not shared with /api/horoscope/generate (Днес is fully free
@@ -240,7 +255,7 @@ export async function incrementQuotaUsage(
     try {
       Sentry.captureMessage('Premium AI quota nearing safety-net cap', {
         level: 'error',
-        tags: { quotaAlert: 'premium_threshold', userId },
+        tags: { quotaAlert: 'premium_threshold', userIdHash: hashUserIdForSentry(userId) },
         extra: { used: newUsed, limit: PREMIUM_MONTHLY_LIMIT, threshold: PREMIUM_ALERT_THRESHOLD },
       })
     } catch (sentryErr) {

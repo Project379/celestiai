@@ -12,10 +12,13 @@ import { useApiClient } from '@/lib/api/client'
  *
  * Caching: query key is ['chart', chartId]. With the QueryClientProvider
  * defaults from 5.1 (staleTime Infinity, no auto-revalidate), a single
- * fetch per chartId runs across all consumers. The chart is invalidated
- * server-side when birth data is edited (apps/web/app/api/birth-data/[id]
- * PATCH path deletes chart_calculations row), so a stale-Infinity client
- * cache is safe — birth-data edits aren't currently exposed on mobile.
+ * fetch per chartId runs across all consumers. staleTime Infinity is NOT safe
+ * on its own once ANY platform can edit birth data: the server drops the
+ * chart_calculations row on an edit, but a client that already cached the chart
+ * never learns of it. Two things keep it correct (Batch 8 "b"): a local edit
+ * runs invalidateChartDerived (lib/chartDerived.ts), and useChartVersionCheck
+ * (mounted in the authed layout) compares the server's birth_data_edited_at on
+ * app foreground and runs the same invalidation if an edit happened elsewhere.
  *
  * Pass null/undefined chartId to disable the query.
  */

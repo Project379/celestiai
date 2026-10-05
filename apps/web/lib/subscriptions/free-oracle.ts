@@ -124,6 +124,49 @@ export async function releaseFreeOracleReading(clerkUserId: string): Promise<voi
   }
 }
 
+/**
+ * Once-ever regrant of the lifetime free reading after a birth-data edit
+ * (Batch 8 "b"), spent at GENERATION time — never at edit time, and a premium
+ * edit never touches it. A free user whose lifetime reading was invalidated by
+ * an edit may regenerate it exactly once: a conditional UPDATE that only
+ * succeeds while free_oracle_edit_regrant_used_at IS NULL, so concurrent
+ * requests cannot both spend it. The lifetime marker itself is left as-is
+ * (the user already "used" their reading; this is a separate allowance).
+ * Fails CLOSED if the column is missing or the update errors — an
+ * unaccountable regrant must not be handed out (the normal gate response
+ * follows).
+ */
+export async function claimFreeOracleRegrant(clerkUserId: string): Promise<boolean> {
+  const supabase = createServiceSupabaseClient()
+
+  const { data, error } = await supabase
+    .from('users')
+    .update({ free_oracle_edit_regrant_used_at: new Date().toISOString() })
+    .eq('clerk_id', clerkUserId)
+    .is('free_oracle_edit_regrant_used_at', null)
+    .select('clerk_id')
+
+  if (error) {
+    console.error(`[free-oracle] regrant claim failed for ${clerkUserId}:`, error.message)
+    return false
+  }
+  return (data?.length ?? 0) > 0
+}
+
+/** Refund path for a failed/discarded generation that spent the regrant. Best-effort. */
+export async function releaseFreeOracleRegrant(clerkUserId: string): Promise<void> {
+  const supabase = createServiceSupabaseClient()
+
+  const { error } = await supabase
+    .from('users')
+    .update({ free_oracle_edit_regrant_used_at: null })
+    .eq('clerk_id', clerkUserId)
+
+  if (error) {
+    console.error(`[free-oracle] regrant release (refund) failed for ${clerkUserId}:`, error.message)
+  }
+}
+
 export type FreeOracleGateReason = 'free_used' | 'premium_topic' | 'premium_regenerate'
 
 /**

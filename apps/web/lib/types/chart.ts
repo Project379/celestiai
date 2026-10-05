@@ -20,4 +20,6 @@ export interface ChartRow {
   latitude: number
   longitude: number
   city_id: string | null
+  /** Derived rows older than this are stale (bumped only by a birth-affecting edit). */
+  birth_data_edited_at: string
 }

@@ -34,6 +34,12 @@ vi.mock('@/lib/audit', () => ({
   logAuditEvent: vi.fn(),
 }))
 
+vi.mock('@/lib/stripe/client', () => ({
+  stripe: {
+    subscriptions: { update: vi.fn(), retrieve: vi.fn() },
+  },
+}))
+
 let mockSupabase: MockSupabase
 let currentUser: ReturnType<typeof makeAppUser>
 
@@ -44,6 +50,7 @@ vi.mock('@/lib/users/ensure-user', () => ({
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
+import { stripe } from '@/lib/stripe/client'
 import { GET, POST, DELETE } from '@/app/api/gdpr/delete-account/route'
 
 beforeEach(() => {
@@ -146,11 +153,61 @@ describe('POST /api/gdpr/delete-account', () => {
     expect(res.status).toBe(500)
     expect(logAuditEvent).not.toHaveBeenCalled()
   })
+
+  it('cancels the active Stripe subscription (cancel_at_period_end) when the deletion request succeeds — a user who deletes on web must not keep being billed for a service they can no longer use, since the 30-day hard-delete cron never touches Stripe', async () => {
+    currentUser = makeAppUser({
+      deletion_scheduled_at: null,
+      deleted_at: null,
+      stripe_subscription_id: 'sub_test123',
+    })
+    mockSupabase.push('users', { data: { id: 'user-row-1' }, error: null })
+    vi.mocked(stripe.subscriptions.update).mockResolvedValue({} as never)
+
+    await POST()
+
+    expect(stripe.subscriptions.update).toHaveBeenCalledWith('sub_test123', {
+      cancel_at_period_end: true,
+    })
+  })
+
+  it('does not call Stripe when the user has no stripe_subscription_id (free tier, or a store-billed subscription)', async () => {
+    currentUser = makeAppUser({
+      deletion_scheduled_at: null,
+      deleted_at: null,
+      stripe_subscription_id: null,
+    })
+    mockSupabase.push('users', { data: { id: 'user-row-1' }, error: null })
+
+    await POST()
+
+    expect(stripe.subscriptions.update).not.toHaveBeenCalled()
+  })
+
+  it('still succeeds and schedules deletion even if the Stripe cancel call fails — a Stripe hiccup must not block the GDPR deletion request itself', async () => {
+    currentUser = makeAppUser({
+      deletion_scheduled_at: null,
+      deleted_at: null,
+      stripe_subscription_id: 'sub_test123',
+    })
+    mockSupabase.push('users', { data: { id: 'user-row-1' }, error: null })
+    vi.mocked(stripe.subscriptions.update).mockRejectedValue(new Error('Stripe down'))
+
+    const res = await POST()
+
+    expect(res.status).toBe(200)
+  })
 })
 
 describe('DELETE /api/gdpr/delete-account (cancel)', () => {
+  // Route now does a SELECT (stripe_subscription_id) before the UPDATE —
+  // two sequential `.from('users')` calls, so tests queue two results in
+  // order: [select, update]. `mockSupabase.push('users', ...)` is FIFO per
+  // table (test/mocks/supabase.ts), an unset select defaults to
+  // { data: null, error: null } (no subscription).
+
   it('clears deleted_at and deletion_scheduled_at and logs account.deletion_confirm/cancelled', async () => {
-    mockSupabase.push('users', { data: null, error: null })
+    mockSupabase.push('users', { data: null, error: null }) // select
+    mockSupabase.push('users', { data: null, error: null }) // update
 
     const res = await DELETE()
 
@@ -160,12 +217,13 @@ describe('DELETE /api/gdpr/delete-account (cancel)', () => {
       'account.deletion_confirm',
       expect.objectContaining({ action: 'cancelled' }),
     )
-    const usersBuilder = mockSupabase.from.mock.results[0].value
+    const usersBuilder = mockSupabase.from.mock.results[1].value
     expect(usersBuilder.update).toHaveBeenCalledWith({ deleted_at: null, deletion_scheduled_at: null })
   })
 
   it('does NOT check isDeletionPending before cancelling — cancel is idempotent by design, not gated on there being a pending row (matches the route source, which has no such check)', async () => {
-    mockSupabase.push('users', { data: null, error: null })
+    mockSupabase.push('users', { data: null, error: null }) // select
+    mockSupabase.push('users', { data: null, error: null }) // update
 
     const res = await DELETE()
 
@@ -173,10 +231,52 @@ describe('DELETE /api/gdpr/delete-account (cancel)', () => {
   })
 
   it('returns 500 when the Supabase update fails', async () => {
-    mockSupabase.push('users', { data: null, error: { message: 'db error' } })
+    mockSupabase.push('users', { data: null, error: null }) // select — unrelated to the failure
+    mockSupabase.push('users', { data: null, error: { message: 'db error' } }) // update fails
 
     const res = await DELETE()
 
     expect(res.status).toBe(500)
+  })
+
+  it('reports subscriptionStillCancelled with the real accessUntil date when the user had a Stripe subscription that account-deletion had cancelled — undoing deletion must not silently imply Premium is restored', async () => {
+    mockSupabase.push('users', { data: { stripe_subscription_id: 'sub_test123' }, error: null }) // select
+    mockSupabase.push('users', { data: null, error: null }) // update
+    const periodEndSeconds = Math.floor(new Date('2026-11-01T00:00:00.000Z').getTime() / 1000)
+    vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue({
+      cancel_at_period_end: true,
+      items: { data: [{ current_period_end: periodEndSeconds }] },
+    } as never)
+
+    const res = await DELETE()
+    const body = await res.json()
+
+    expect(body.subscriptionStillCancelled).toEqual({
+      accessUntil: '2026-11-01T00:00:00.000Z',
+    })
+  })
+
+  it('does NOT resubscribe the user — cancelling account deletion never calls stripe.subscriptions.update', async () => {
+    mockSupabase.push('users', { data: { stripe_subscription_id: 'sub_test123' }, error: null }) // select
+    mockSupabase.push('users', { data: null, error: null }) // update
+    vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue({
+      cancel_at_period_end: true,
+      items: { data: [{ current_period_end: Math.floor(Date.now() / 1000) }] },
+    } as never)
+
+    await DELETE()
+
+    expect(stripe.subscriptions.update).not.toHaveBeenCalled()
+  })
+
+  it('reports subscriptionStillCancelled as null when the user never had a Stripe subscription', async () => {
+    mockSupabase.push('users', { data: { stripe_subscription_id: null }, error: null }) // select
+    mockSupabase.push('users', { data: null, error: null }) // update
+
+    const res = await DELETE()
+    const body = await res.json()
+
+    expect(body.subscriptionStillCancelled).toBeNull()
+    expect(stripe.subscriptions.retrieve).not.toHaveBeenCalled()
   })
 })

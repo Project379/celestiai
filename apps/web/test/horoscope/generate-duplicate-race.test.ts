@@ -110,6 +110,7 @@ function createFakeSupabase() {
 
   function makeHoroscopesChain() {
     const filters: Array<{ col: string; val: unknown }> = []
+    const ltFilters: Array<{ col: string; val: unknown }> = []
     let op:
       | { type: 'insert'; row: Record<string, unknown> }
       | { type: 'upsert'; row: Record<string, unknown> }
@@ -119,6 +120,12 @@ function createFakeSupabase() {
     const chain = {
       eq(col: string, val: unknown) {
         filters.push({ col, val })
+        return chain
+      },
+      // .lt() is used by the stale-row delete (birth-data edit invalidation):
+      // only rows whose column is DEFINED and strictly older than the marker match.
+      lt(col: string, val: unknown) {
+        ltFilters.push({ col, val })
         return chain
       },
       insert(row: Record<string, unknown>) {
@@ -168,8 +175,14 @@ function createFakeSupabase() {
           else state.dailyHoroscopes.push({ ...row })
           result = { data: null, error: null }
         } else if (op?.type === 'delete') {
-          const matchIndex = state.dailyHoroscopes.findIndex((r) =>
-            filters.every((f) => r[f.col] === f.val),
+          const matchIndex = state.dailyHoroscopes.findIndex(
+            (r) =>
+              filters.every((f) => r[f.col] === f.val) &&
+              ltFilters.every(
+                (f) =>
+                  r[f.col] !== undefined &&
+                  new Date(r[f.col] as string).getTime() < new Date(f.val as string).getTime(),
+              ),
           )
           if (matchIndex >= 0) state.dailyHoroscopes.splice(matchIndex, 1)
           result = { data: null, error: null }
@@ -228,6 +241,7 @@ function createFakeSupabase() {
         birth_time_known: true,
         latitude: 42.7,
         longitude: 23.3,
+        birth_data_edited_at: '2026-01-01T00:00:00.000Z',
       })
     }
     if (table === 'daily_transits') {

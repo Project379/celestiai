@@ -1,8 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
+import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getCachedLatestChart, getCachedUserTier } from '@/lib/supabase/queries'
 import type { ChartRow } from '@/lib/types/chart'
 import { StoriesContent } from '@/components/stories/StoriesContent'
+import { isMediaRecommendationsEnabled } from '@/lib/config/featureFlags'
 
 export const metadata: Metadata = {
   title: 'Препоръки',
@@ -10,6 +12,10 @@ export const metadata: Metadata = {
 }
 
 export default async function RecommendationsPage() {
+  if (!isMediaRecommendationsEnabled()) {
+    notFound()
+  }
+
   const { userId } = await auth()
   let chartId: string | null = null
   let isPremium = false

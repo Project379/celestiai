@@ -3,6 +3,7 @@
 import { useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { clearAllHoroscopesInBrowser } from '@/lib/birth-data/chart-version'
 
 interface LogoutConfirmDialogProps {
   isOpen: boolean
@@ -30,9 +31,12 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
   const handleSignOut = useCallback(async () => {
     setIsLoading(true)
     try {
+      clearAllHoroscopesInBrowser()
       if (user?.id) {
         localStorage.removeItem(`stellaeum.diary.pending.v2.${user.id}`)
-        localStorage.removeItem(`stellaeum.diary.composer.v2.${user.id}`)
+        for (const mode of ['check_in', 'note', 'lunar_practice']) {
+          localStorage.removeItem(`stellaeum.diary.composer.v2.${user.id}.${mode}`)
+        }
       }
       await signOut()
       onClose()

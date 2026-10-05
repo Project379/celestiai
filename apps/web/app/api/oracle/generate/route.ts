@@ -21,10 +21,13 @@ import {
 } from '@/lib/subscriptions/quota'
 import {
   claimFreeOracleReading,
+  claimFreeOracleRegrant,
   freeOracleGateResponse,
   releaseFreeOracleReading,
+  releaseFreeOracleRegrant,
 } from '@/lib/subscriptions/free-oracle'
 import { ApiError, readJsonBody, toErrorResponse } from '@/lib/auth/guards'
+import { calculateChartForUser } from '@stellaeum/core/charts/calculate'
 import { assertRateLimit, RETRY_LATER_MESSAGE } from '@/lib/rate-limit'
 
 /**
@@ -107,6 +110,7 @@ export async function POST(req: Request) {
   // them. Set non-null / true only after a successful cap-claim.
   let claimedPeriodStart: Date | null = null
   let claimedFreeOracle = false
+  let claimedFreeRegrant = false
 
   // Single refund entry point for the synchronous setup paths. The stream
   // callbacks capture their own copies below (they run after this function
@@ -119,6 +123,10 @@ export async function POST(req: Request) {
     if (claimedFreeOracle) {
       await releaseFreeOracleReading(userId!)
       claimedFreeOracle = false
+    }
+    if (claimedFreeRegrant) {
+      await releaseFreeOracleRegrant(userId!)
+      claimedFreeRegrant = false
     }
   }
 
@@ -162,7 +170,7 @@ export async function POST(req: Request) {
     // 4. Chart ownership verification
     const { data: chart, error: chartError } = await supabase
       .from('charts')
-      .select('id, user_id')
+      .select('id, user_id, birth_data_edited_at')
       .eq('id', chartId)
       .single()
 
@@ -178,13 +186,45 @@ export async function POST(req: Request) {
     //    interaction (a reading already generated stays viewable even if
     //    the user's tier has since changed).
     const now = new Date().toISOString()
-    const { data: existingReading } = await supabase
+    const { data: priorReading } = await supabase
       .from('ai_readings')
       .select('id, content, generated_at, expires_at, last_regenerated_at')
       .eq('chart_id', chartId)
       .eq('topic', validatedTopic)
       .gt('expires_at', now)
       .single()
+
+    // STALENESS (birth-data edit invalidation): a reading generated before
+    // the chart's last birth-affecting edit describes the OLD chart (wrong
+    // degrees and houses) and is NEVER served — it is not "cached". It is
+    // kept only as `priorReading` so the upsert below overwrites it and the
+    // never-expires sentinel on a free lifetime reading survives.
+    const isStale =
+      priorReading !== null &&
+      priorReading !== undefined &&
+      new Date(priorReading.generated_at).getTime() < new Date(chart.birth_data_edited_at).getTime()
+    const existingReading = priorReading && !isStale ? priorReading : null
+
+    // The "triggering edit" of a stale row is the chart's LATEST edit (its
+    // edited_at equals the chart's marker). A missing edit row (should not
+    // happen) is treated as the least-privileged case: not exempt, no regrant.
+    //   - PREMIUM: only an exempt triggering edit lets the regeneration skip
+    //     the monthly quota claim; otherwise quota is claimed normally.
+    //   - FREE: the once-ever regrant is spent HERE, at generation time (never
+    //     at edit time), and only if the edit was on the ACTIVE chart.
+    let skipPremiumQuota = false
+    let regrantEligible = false
+    if (isStale) {
+      const { data: triggeringEdit } = await supabase
+        .from('birth_data_edits')
+        .select('quota_exempt, was_active_chart')
+        .eq('chart_id', chartId)
+        .order('edited_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      skipPremiumQuota = isPremium && triggeringEdit?.quota_exempt === true
+      regrantEligible = !isPremium && triggeringEdit?.was_active_chart === true
+    }
 
     if (existingReading && !regenerate) {
       return Response.json({
@@ -225,7 +265,11 @@ export async function POST(req: Request) {
     // 8. Claim before generation. Regenerations of an existing live cached
     //    reading are exempt from both claims (premium-only path).
     if (!isRegenerationOfExisting) {
-      if (isPremium) {
+      if (isPremium && skipPremiumQuota) {
+        // 8a'. Stale reading from a quota-exempt birth-data edit: the user
+        //      corrected their data, they did not ask for a new reading.
+        //      No claim, so nothing to refund either.
+      } else if (isPremium) {
         // 8a. Premium — monthly safety-net cap (invisible by design).
         const quota = await checkQuotaAvailable(userId)
         if (!quota.available) {
@@ -241,21 +285,36 @@ export async function POST(req: Request) {
         //     UPDATE on users.free_oracle_used_at. `claimed: false` means
         //     it has already been spent.
         const claim = await claimFreeOracleReading(userId)
-        if (!claim.claimed) {
+        if (claim.claimed) {
+          claimedFreeOracle = true
+        } else if (isStale && regrantEligible && (await claimFreeOracleRegrant(userId))) {
+          // Lifetime reading already spent, but an edit on the active chart
+          // invalidated it and the once-ever regrant is unused: spend it.
+          claimedFreeRegrant = true
+        } else {
           return freeOracleGateResponse('free_used')
         }
-        claimedFreeOracle = true
       }
     }
 
-    // 9. Load chart calculation data
-    const { data: calculation, error: calcError } = await supabase
-      .from('chart_calculations')
-      .select(
-        'planet_positions, house_cusps, aspects, ascendant, mc, birth_time_known'
-      )
-      .eq('chart_id', chartId)
-      .single()
+    // 9. Load chart calculation data. A birth-data edit deletes the cache
+    //    row, so recompute lazily here (writes it back) rather than 404 a
+    //    user who opens the Oracle before the chart tab after an edit.
+    const loadCalculation = () =>
+      supabase
+        .from('chart_calculations')
+        .select(
+          'planet_positions, house_cusps, aspects, ascendant, mc, birth_time_known'
+        )
+        .eq('chart_id', chartId)
+        .single()
+    let { data: calculation, error: calcError } = await loadCalculation()
+    if (calcError || !calculation) {
+      const recomputed = await calculateChartForUser(userId, chartId)
+      if (recomputed.ok) {
+        ;({ data: calculation, error: calcError } = await loadCalculation())
+      }
+    }
 
     if (calcError || !calculation) {
       // Refund the cap-claim — no generation will happen.
@@ -400,11 +459,28 @@ export async function POST(req: Request) {
       conditions: generationConditions,
     })
 
+    // RACE GUARD: the user may have edited their birth data while the model
+    // was running. A reading built from the old chart but stamped now would
+    // look fresh (generated_at > marker) and be wrong. Re-read the marker;
+    // if it moved, discard, refund, and let the client retry on the new chart.
+    const { data: chartNow } = await supabase
+      .from('charts')
+      .select('birth_data_edited_at')
+      .eq('id', chartId)
+      .single()
+    if (!chartNow || chartNow.birth_data_edited_at !== chart.birth_data_edited_at) {
+      await refundClaim()
+      return toErrorResponse(
+        new ApiError(409, RETRY_LATER_MESSAGE, 'CHART_EDITED_DURING_GENERATION'),
+        'Oracle generation discarded: birth data edited mid-generation',
+      )
+    }
+
     const generatedAt = new Date()
     const expiresAt = resolveReadingExpiry(generatedAt, {
       isPremium,
       topic: validatedTopic,
-      previousExpiresAt: existingReading?.expires_at ?? null,
+      previousExpiresAt: priorReading?.expires_at ?? null,
     })
 
     // SECURITY FIX (2026-08-26 sweep #14): a fresh (non-regeneration)

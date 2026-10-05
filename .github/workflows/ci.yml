@@ -85,15 +85,12 @@ jobs:
 
   dep-audit:
     runs-on: ubuntu-24.04
-    # Advisory only (see .planning/PLACEHOLDERS.md DEP-AUDIT) — reports
-    # findings without failing the build. `pnpm audit` on this monorepo's
-    # transitive tree (React Native/Expo/Solana-wallet-adapter chains
-    # especially) turns up dependency-graph noise no one here controls;
-    # failing CI on every new advisory across that whole tree would make
-    # this step something people route around, not something they read.
-    # Revisit failing the build once there's a triage process for what's
-    # actionable vs. noise.
-    continue-on-error: true
+    # Fails the build on CRITICAL advisories in production dependencies (founder
+    # ruling 2026-10-01). Highs and below are NOT gating — they are triaged in
+    # the pre-launch sweep (this monorepo's React Native / Expo / wallet-adapter
+    # transitive tree carries a lot of noise nobody here controls). A critical is
+    # fixed with a `pnpm.overrides` entry in the root package.json (see
+    # shell-quote and tar there) — not with an audit exception.
     steps:
       - uses: actions/checkout@v7
 
@@ -109,4 +106,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: pnpm audit (production dependencies)
-        run: pnpm audit --prod
+        run: pnpm audit --prod --audit-level critical

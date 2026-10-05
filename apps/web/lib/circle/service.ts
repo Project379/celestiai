@@ -18,6 +18,7 @@ import {
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import type { ChartRow } from '@/lib/types/chart'
 import { buildRelationshipWeatherOverview } from './weather'
+import { buildSavedProfileFullContent, buildSavedProfileTeaserContent } from './report'
 import type {
   CircleDashboardData,
   CircleSpaceView,
@@ -397,18 +398,109 @@ export async function getSavedProfileForUser(
   return (data as SavedProfileRow | null) ?? null
 }
 
+/**
+ * Latest saved-profile report, or null when there is none OR the latest one is
+ * STALE. A saved-profile report is synastry against the user's ACTIVE (latest)
+ * chart, so it describes the old chart once that chart's birth data was
+ * edited: created before `charts.birth_data_edited_at` => never served. The
+ * caller sees null, which the app already renders as "analyze to create a
+ * report"; the next analyze appends version+1 as it always has.
+ */
 export async function getLatestSavedProfileReport(
   profileId: string,
+  userId: string,
 ): Promise<SavedProfileReportRow | null> {
   const supabase = createServiceSupabaseClient()
-  const { data } = await supabase
-    .from('saved_people_reports')
-    .select('*')
-    .eq('profile_id', profileId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  return (data as SavedProfileReportRow | null) ?? null
+  const [{ data }, { data: activeChart }] = await Promise.all([
+    supabase
+      .from('saved_people_reports')
+      .select('*')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('charts')
+      .select('birth_data_edited_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
+  const report = (data as SavedProfileReportRow | null) ?? null
+  if (report && activeChart && isOlderThan(report.created_at, activeChart.birth_data_edited_at)) {
+    return null
+  }
+  return report
+}
+
+/**
+ * The saved-profile report to SHOW. Like getLatestSavedProfileReport, but a
+ * STALE report (older than the active chart's birth_data_edited_at) is
+ * recomputed on view instead of hidden: it is deterministic synastry (no AI,
+ * no quota), so the automatic path writes version+1 with the stale report's
+ * relationship type, tiered exactly like the analyze action (premium full,
+ * free teaser), and returns it. The 50-version cap is deliberately ignored
+ * here (founder ruling). It never auto-creates a FIRST report. If the
+ * recompute fails the result is null — a stale report is never served — and
+ * nothing throws. A concurrent view that already wrote version+1 (23505) is
+ * resolved by returning that winner.
+ */
+export async function getFreshSavedProfileReport(
+  profile: SavedProfileRow,
+  userId: string,
+): Promise<SavedProfileReportRow | null> {
+  const supabase = createServiceSupabaseClient()
+  const [{ data }, userChart] = await Promise.all([
+    supabase
+      .from('saved_people_reports')
+      .select('*')
+      .eq('profile_id', profile.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    getLatestChartRowForUser(userId),
+  ])
+  const latest = (data as SavedProfileReportRow | null) ?? null
+  if (!latest) return null
+  if (!userChart || !isOlderThan(latest.created_at, userChart.birth_data_edited_at)) return latest
+
+  try {
+    const tier = await getUserTier(userId)
+    const computed = await buildSavedProfileComputation(userChart, profile, latest.relationship_type)
+    const isFull = tier === 'premium'
+    const { data: inserted, error } = await supabase
+      .from('saved_people_reports')
+      .insert({
+        profile_id: profile.id,
+        user_id: userId,
+        version: latest.version + 1,
+        relationship_type: latest.relationship_type,
+        headline_score: computed.compatibilitySummary.headline_score,
+        domain_scores: computed.compatibilitySummary,
+        report_content: isFull
+          ? buildSavedProfileFullContent(computed.compatibilitySummary, profile.name)
+          : buildSavedProfileTeaserContent(computed.compatibilitySummary, profile.name),
+        is_full: isFull,
+      })
+      .select('*')
+      .single()
+
+    if (error || !inserted) {
+      if (error && (error as { code?: string }).code === '23505') {
+        return await getLatestSavedProfileReport(profile.id, userId)
+      }
+      throw error ?? new Error('insert returned no row')
+    }
+    return inserted as SavedProfileReportRow
+  } catch (err) {
+    console.error('[Circle Service] saved-profile report auto-refresh failed:', err)
+    return null
+  }
+}
+
+function isOlderThan(timestamp: string, marker: string): boolean {
+  return new Date(timestamp).getTime() < new Date(marker).getTime()
 }
 
 export async function getConnectionInviteByTokenHash(tokenHash: string): Promise<ConnectionInviteRow | null> {
@@ -476,6 +568,11 @@ export async function getMemberViewsForSpace(spaceId: string): Promise<Connectio
   }))
 }
 
+/**
+ * Latest space report, or null when there is none OR it is STALE: a space
+ * report is computed from every member's chart, so it is stale once ANY member
+ * chart's birth data was edited after the report was created.
+ */
 export async function getLatestConnectionReport(
   spaceId: string,
 ): Promise<ConnectionReportRow | null> {
@@ -487,7 +584,22 @@ export async function getLatestConnectionReport(
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
-  return (data as ConnectionReportRow | null) ?? null
+  const report = (data as ConnectionReportRow | null) ?? null
+  if (!report) return null
+
+  const members = await listSpaceMembers(spaceId)
+  const chartIds = members.map((member) => member.chart_id)
+  if (chartIds.length === 0) return report
+  const { data: markers } = await supabase
+    .from('charts')
+    .select('birth_data_edited_at')
+    .in('id', chartIds)
+  const newestEdit = (markers ?? []).reduce<number>(
+    (max, row: { birth_data_edited_at: string }) =>
+      Math.max(max, new Date(row.birth_data_edited_at).getTime()),
+    0,
+  )
+  return new Date(report.created_at).getTime() < newestEdit ? null : report
 }
 
 export async function listSpacesForUser(userId: string): Promise<ConnectionSpaceRow[]> {
@@ -523,7 +635,46 @@ export async function hasActiveRomanticSpace(userId: string): Promise<boolean> {
   return (data ?? []).length > 0
 }
 
-export async function buildCircleSpaceView(space: ConnectionSpaceRow): Promise<CircleSpaceView> {
+/**
+ * LAZY RECOMPUTE after a birth-data edit (Batch 8 "b"). A space's cached
+ * compatibility / synastry / composite data is derived from every member's
+ * chart, so it is stale once any member chart's `birth_data_edited_at` is newer
+ * than when the cache was computed (`computed_at`, falling back to
+ * `updated_at` for rows computed before that column existed). Recompute on
+ * next view via the existing recomputeAndPersistSpace. Deterministic and cheap
+ * (no AI). Never throws — a recompute failure must not break the dashboard, it
+ * just leaves the previous view.
+ */
+async function refreshSpaceIfStale(space: ConnectionSpaceRow): Promise<ConnectionSpaceRow> {
+  try {
+    if (space.member_count < 2) return space
+    const members = await listSpaceMembers(space.id)
+    const chartIds = members.map((member) => member.chart_id)
+    if (chartIds.length < 2) return space
+
+    const supabase = createServiceSupabaseClient()
+    const { data: markers } = await supabase
+      .from('charts')
+      .select('birth_data_edited_at')
+      .in('id', chartIds)
+    const newestEdit = (markers ?? []).reduce<number>(
+      (max, row: { birth_data_edited_at: string }) =>
+        Math.max(max, new Date(row.birth_data_edited_at).getTime()),
+      0,
+    )
+    const computedAt = new Date(space.computed_at ?? space.updated_at).getTime()
+    if (newestEdit <= computedAt) return space
+
+    const { space: refreshed } = await recomputeAndPersistSpace(space.id)
+    return refreshed
+  } catch (err) {
+    console.error('[Circle Service] lazy space recompute failed:', err)
+    return space
+  }
+}
+
+export async function buildCircleSpaceView(inputSpace: ConnectionSpaceRow): Promise<CircleSpaceView> {
+  const space = await refreshSpaceIfStale(inputSpace)
   const [members, latestReport] = await Promise.all([
     getMemberViewsForSpace(space.id),
     getLatestConnectionReport(space.id),
@@ -584,6 +735,7 @@ export async function recomputeAndPersistSpace(
       compatibility_summary: computed.compatibilitySummary,
       synastry_aspects: computed.synastryAspects,
       composite_chart_data: computed.compositeChartData,
+      computed_at: new Date().toISOString(),
     })
     .eq('id', spaceId)
 
@@ -616,7 +768,7 @@ export async function getCircleDashboardData(userId: string): Promise<CircleDash
 
   const spaceViews = await Promise.all(spaces.map((space) => buildCircleSpaceView(space)))
   const latestSavedProfileReportsEntries = await Promise.all(
-    savedProfiles.map(async (profile) => [profile.id, await getLatestSavedProfileReport(profile.id)] as const),
+    savedProfiles.map(async (profile) => [profile.id, await getFreshSavedProfileReport(profile, userId)] as const),
   )
   const latestSavedProfileReports = Object.fromEntries(latestSavedProfileReportsEntries) as Record<
     string,

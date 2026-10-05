@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import posthog from 'posthog-js'
+import { useChartEditedAt } from '@/components/birth-data/ChartVersion'
 
 /**
  * Shape of a saved AI reading returned from GET /api/oracle/readings
@@ -61,6 +62,10 @@ export type GenerationError = CapReachedError | GenericGenerationError
  *                     cache-hit) readings fire it.
  */
 export function useOracleReading(chartId: string, isPremium = false) {
+  // birth_data_edited_at of the active chart. When it changes (an edit here or on
+  // another device) saved readings are re-fetched — the server hides readings
+  // generated before the edit — and any open/streamed old reading is dropped.
+  const editedAt = useChartEditedAt()
   const [savedReadings, setSavedReadings] = useState<
     Record<string, SavedReading>
   >({})
@@ -111,10 +116,22 @@ export function useOracleReading(chartId: string, isPremium = false) {
     }
   }, [chartId])
 
-  // Fetch saved readings on mount
+  // Fetch saved readings on mount, and again whenever the chart was edited.
   useEffect(() => {
     void fetchSavedReadings()
-  }, [fetchSavedReadings])
+  }, [fetchSavedReadings, editedAt])
+
+  // An edit invalidates what is on screen: close the open topic and clear any
+  // streamed completion (it describes the old chart).
+  const lastEditedAt = useRef(editedAt)
+  useEffect(() => {
+    if (lastEditedAt.current === editedAt) return
+    lastEditedAt.current = editedAt
+    setSavedReadings({})
+    setActiveTopicState(null)
+    setCompletion('')
+    setGenerationError(null)
+  }, [editedAt])
 
   // Auto-refresh saved readings when generation completes (true → false)
   useEffect(() => {

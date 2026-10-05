@@ -1,6 +1,7 @@
 'use client'
 
 import useSWR from 'swr'
+import { useChartEditedAt } from '@/components/birth-data/ChartVersion'
 import type { TransitOverview } from '@/lib/horoscope/transit-analysis'
 
 interface UseTransitOverviewResult {
@@ -31,8 +32,9 @@ async function fetchTransitOverview(chartId: string): Promise<TransitOverview> {
  * Multiple components using the same chartId will share a single request.
  */
 export function useTransitOverview(chartId: string | null | undefined): UseTransitOverviewResult {
+  const editedAt = useChartEditedAt()
   const { data, error, isLoading } = useSWR(
-    chartId ? ['transit-overview', chartId] : null,
+    chartId ? ['transit-overview', chartId, editedAt] : null,
     ([, id]) => fetchTransitOverview(id),
     { revalidateOnFocus: false }
   )

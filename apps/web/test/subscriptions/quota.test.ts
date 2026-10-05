@@ -201,6 +201,34 @@ describe('incrementQuotaUsage', () => {
     expect(Sentry.captureMessage).not.toHaveBeenCalled()
   })
 
+  it('tags the Sentry alert with a hashed userId, never the raw Clerk id — PROCESSOR-ERASURE-GAPS, Sentry sendDefaultPii is false and must not leak an identifier through a tag instead', async () => {
+    mockSupabase.pushRpc('increment_quota_if_available', { data: PREMIUM_ALERT_THRESHOLD })
+
+    await incrementQuotaUsage('user_realClerkId123', new Date('2026-09-01'))
+
+    const call = vi.mocked(Sentry.captureMessage).mock.calls[0]
+    const context = call[1] as { tags: Record<string, unknown> }
+    const tags = context.tags
+    expect(tags.userIdHash).not.toBe('user_realClerkId123')
+    expect(Object.values(tags)).not.toContain('user_realClerkId123')
+    expect(tags.userIdHash).toMatch(/^[0-9a-f]{16}$/)
+  })
+
+  it('hashes the same userId to the same tag value — the alert must still be able to distinguish a repeat offender across alerts', async () => {
+    mockSupabase.pushRpc('increment_quota_if_available', { data: PREMIUM_ALERT_THRESHOLD })
+    await incrementQuotaUsage('user_same', new Date('2026-09-01'))
+    const firstContext = vi.mocked(Sentry.captureMessage).mock.calls[0][1] as { tags: Record<string, unknown> }
+    const firstHash = firstContext.tags.userIdHash
+
+    vi.mocked(Sentry.captureMessage).mockClear()
+    mockSupabase.pushRpc('increment_quota_if_available', { data: PREMIUM_ALERT_THRESHOLD })
+    await incrementQuotaUsage('user_same', new Date('2026-09-01'))
+    const secondContext = vi.mocked(Sentry.captureMessage).mock.calls[0][1] as { tags: Record<string, unknown> }
+    const secondHash = secondContext.tags.userIdHash
+
+    expect(firstHash).toBe(secondHash)
+  })
+
   it('swallows a Sentry.captureMessage failure rather than throwing (the claim already succeeded)', async () => {
     mockSupabase.pushRpc('increment_quota_if_available', { data: PREMIUM_ALERT_THRESHOLD })
     vi.mocked(Sentry.captureMessage).mockImplementation(() => {

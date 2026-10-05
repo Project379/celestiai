@@ -96,8 +96,10 @@ function seedRouteQueries(chartId: string) {
       birth_time_known: true,
       latitude: 42.7,
       longitude: 23.3,
+      birth_data_edited_at: '2026-01-01T00:00:00.000Z',
     },
   })
+  mockSupabase.push('daily_horoscopes', { data: null }) // stale-row delete
   mockSupabase.push('daily_horoscopes', { data: null }) // cache miss
   mockSupabase.push('daily_transits', { data: { planet_positions: [] } })
   mockSupabase.push('chart_calculations', {
@@ -105,6 +107,7 @@ function seedRouteQueries(chartId: string) {
       planet_positions: [], house_cusps: [], aspects: [], ascendant: 0, mc: 0, birth_time_known: true,
     },
   })
+  mockSupabase.push('charts', { data: { birth_data_edited_at: '2026-01-01T00:00:00.000Z' } }) // race-guard re-read
   mockSupabase.push('daily_horoscopes', { data: { chart_id: chartId }, error: null }) // claim insert OK
   mockSupabase.push('daily_horoscopes', { data: null }) // final upsert
 }
@@ -150,8 +153,10 @@ describe('POST /api/horoscope/generate — Днес is free, no monthly cap (fro
         birth_time_known: true,
         latitude: 42.7,
         longitude: 23.3,
+      birth_data_edited_at: '2026-01-01T00:00:00.000Z',
       },
     })
+    mockSupabase.push('daily_horoscopes', { data: null }) // stale-row delete
     mockSupabase.push('daily_horoscopes', {
       data: { content: 'cached content', generated_at: '2026-08-25T00:00:00.000Z' },
     })
@@ -160,5 +165,60 @@ describe('POST /api/horoscope/generate — Днес is free, no monthly cap (fro
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.cached).toBe(true)
+  })
+})
+
+describe('POST /api/horoscope/generate — birth-data edit invalidation (Batch 8 b)', () => {
+  const MARKER = '2026-01-01T00:00:00.000Z'
+
+  function seedGeneration(chartId: string, markerAfter = MARKER) {
+    mockSupabase.push('charts', {
+      data: {
+        id: chartId,
+        user_id: 'user_free_horoscope',
+        birth_date: '2000-01-01',
+        birth_time: '12:00',
+        birth_time_known: true,
+        latitude: 42.7,
+        longitude: 23.3,
+        birth_data_edited_at: MARKER,
+      },
+    })
+    mockSupabase.push('daily_horoscopes', { data: null }) // stale-row delete
+    mockSupabase.push('daily_horoscopes', { data: null }) // cache check — nothing left (stale row was removed)
+    mockSupabase.push('daily_transits', { data: { planet_positions: [] } })
+    mockSupabase.push('chart_calculations', {
+      data: { planet_positions: [], house_cusps: [], aspects: [], ascendant: 0, mc: 0, birth_time_known: true },
+    })
+    mockSupabase.push('charts', { data: { birth_data_edited_at: markerAfter } }) // race-guard re-read
+    mockSupabase.push('daily_horoscopes', { data: { chart_id: chartId }, error: null }) // claim insert
+    mockSupabase.push('daily_horoscopes', { data: null }) // final upsert
+  }
+
+  it("removes a STALE row (generated before the chart's marker) before the cache check, scoped by chart + date and conditional on generated_at < marker — a fresh row can never be deleted by it", async () => {
+    seedGeneration('chart-stale')
+
+    const res = await POST(makeRequest('chart-stale'))
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.cached).toBe(false)
+    const firstHoroscopeCall = mockSupabase.from.mock.calls.findIndex((c) => c[0] === 'daily_horoscopes')
+    const builder = mockSupabase.from.mock.results[firstHoroscopeCall].value
+    expect(builder.delete).toHaveBeenCalled()
+    expect(builder.eq).toHaveBeenCalledWith('chart_id', 'chart-stale')
+    expect(builder.lt).toHaveBeenCalledWith('generated_at', MARKER)
+  })
+
+  it('RACE GUARD: birth data edited while the model ran — 409, the claim is released, nothing is saved', async () => {
+    seedGeneration('chart-race', '2026-02-01T00:00:00.000Z')
+
+    const res = await POST(makeRequest('chart-race'))
+
+    expect(res.status).toBe(409)
+    expect((await res.json()).code).toBe('CHART_EDITED_DURING_GENERATION')
+    const horoscopeCalls = mockSupabase.from.mock.calls.filter((c) => c[0] === 'daily_horoscopes')
+    // stale delete, cache check, claim insert, claim release — and NO final upsert
+    expect(horoscopeCalls).toHaveLength(4)
   })
 })

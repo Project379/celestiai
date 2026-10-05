@@ -94,8 +94,13 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       )
     }
 
+    // Tier is deliberately not an input here: the free once-ever regrant is
+    // spent at generation time, and a premium edit never touches it.
     const result = await updateBirthChart(userId, id, validation.data)
     if (!result.ok) {
+      if (result.error === 'UPDATE_FAILED') {
+        throw new Error(result.message)
+      }
       return Response.json(
         { error: 'Данните не бяха намерени' },
         { status: 404 },

@@ -108,7 +108,8 @@ import { POST } from '@/app/api/oracle/generate/route'
 let mockSupabase: MockSupabase
 
 function seedNoExistingReading() {
-  mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_bypass_test' } })
+  mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_bypass_test', birth_data_edited_at: '2026-01-01T00:00:00.000Z' } })
+  mockSupabase.push('charts', { data: { birth_data_edited_at: '2026-01-01T00:00:00.000Z' } }) // race-guard re-read
   mockSupabase.push('ai_readings', { data: null }) // cache check — nothing
   mockSupabase.push('chart_calculations', {
     data: {
@@ -120,7 +121,8 @@ function seedNoExistingReading() {
 }
 
 function seedLiveExistingReading() {
-  mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_bypass_test' } })
+  mockSupabase.push('charts', { data: { id: 'chart-1', user_id: 'user_bypass_test', birth_data_edited_at: '2026-01-01T00:00:00.000Z' } })
+  mockSupabase.push('charts', { data: { birth_data_edited_at: '2026-01-01T00:00:00.000Z' } }) // race-guard re-read
   mockSupabase.push('ai_readings', {
     data: {
       id: 'reading-1',

@@ -5,6 +5,7 @@ import { View } from 'react-native'
 
 import { AppLoadingScreen } from '@/components/design-system/AppLoadingScreen'
 import { DeletionPendingBanner } from '@/components/settings/DeletionPendingBanner'
+import { useChartVersionCheck } from '@/hooks/useChartVersionCheck'
 import { useFirstChart } from '@/hooks/useFirstChart'
 import { isWizardDismissedThisLaunch } from '@/lib/onboarding/dismissState'
 
@@ -29,6 +30,9 @@ export default function AuthedLayout() {
   const router = useRouter()
   const pathname = usePathname()
   const firstChart = useFirstChart()
+  // Cross-device birth-data edits: on foreground, compare the server's chart marker and
+  // run the shared chart-derived invalidation if it moved (staleTime is Infinity).
+  useChartVersionCheck()
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return
