@@ -239,6 +239,15 @@ export async function GET(req: Request) {
         supabase.from('recommendation_deliveries').delete().eq('user_id', clerkId),
       )
 
+      await deleteOrThrow(
+        'diary_reminder_deliveries',
+        supabase.from('diary_reminder_deliveries').delete().eq('user_id', clerkId),
+      )
+      await deleteOrThrow(
+        'diary_reminder_preferences',
+        supabase.from('diary_reminder_preferences').delete().eq('user_id', clerkId),
+      )
+
       // Delete diary entries (§8.7). Uses the core helper per the
       // §8.7 direction-of-travel ratification — new cascade tables go
       // through packages/core/src/diary/entries.ts rather than inline

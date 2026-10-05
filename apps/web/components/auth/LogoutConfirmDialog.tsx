@@ -1,6 +1,6 @@
 'use client'
 
-import { useClerk } from '@clerk/nextjs'
+import { useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useState, useCallback, useEffect, useRef } from 'react'
 
@@ -11,6 +11,7 @@ interface LogoutConfirmDialogProps {
 
 export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProps) {
   const { signOut } = useClerk()
+  const { user } = useUser()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -29,6 +30,10 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
   const handleSignOut = useCallback(async () => {
     setIsLoading(true)
     try {
+      if (user?.id) {
+        localStorage.removeItem(`stellaeum.diary.pending.v2.${user.id}`)
+        localStorage.removeItem(`stellaeum.diary.composer.v2.${user.id}`)
+      }
       await signOut()
       onClose()
       router.replace('/')
@@ -38,7 +43,7 @@ export function LogoutConfirmDialog({ isOpen, onClose }: LogoutConfirmDialogProp
     } finally {
       setIsLoading(false)
     }
-  }, [onClose, router, signOut])
+  }, [onClose, router, signOut, user?.id])
 
   const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
     const rect = dialogRef.current?.getBoundingClientRect()

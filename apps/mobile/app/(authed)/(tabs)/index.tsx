@@ -627,6 +627,38 @@ export default function DnesScreen() {
         </Animated.View>
       )}
 
+      <View style={{ marginTop: rhythm.group }}>
+        <Pressable
+          onPress={() => push({
+            pathname: '/rhythm/journal' as never,
+            params: {
+              mode: 'check_in', source: 'today', sourceLabel: 'Днес', sourcePath: '/',
+            },
+          })}
+          style={({ pressed }) => ({
+            ...pressFeedback(pressed),
+            borderWidth: 1,
+            borderColor: 'rgba(184,118,62,0.22)',
+            borderRadius: 16,
+            paddingHorizontal: 18,
+            paddingVertical: 16,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          })}
+        >
+          <View>
+            <Text style={{ fontFamily: font.displaySemibold, fontSize: 16, color: color.text }}>
+              Как си след днешното?
+            </Text>
+            <Text style={{ marginTop: 4, fontFamily: font.body, fontSize: 13, color: color.faint }}>
+              Кратка проверка със себе си
+            </Text>
+          </View>
+          <Text style={{ color: color.bronzeText }}>→</Text>
+        </Pressable>
+      </View>
+
       {/* «Питай Оракула» stays the screen's single exit — now after ALL
           content blocks (IA reorder, this batch) rather than glued to the
           horoscope block specifically. "Ends in exactly one exit" still

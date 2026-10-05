@@ -11,8 +11,6 @@ import { logError } from '@/lib/monitoring/logError'
 import {
   PROMPTED_FLAG_KEY,
   registerPushToken,
-  revokePushToken,
-  USER_DISABLED_KEY,
 } from '@/lib/notifications/maybePromptPushPermission'
 
 /**
@@ -42,17 +40,17 @@ export function PushNotificationToggle() {
 
   const refresh = useCallback(async () => {
     try {
-      const [{ status }, disabled] = await Promise.all([
+      const [{ status }, preferences] = await Promise.all([
         Notifications.getPermissionsAsync(),
-        AsyncStorage.getItem(USER_DISABLED_KEY),
+        apiFetch('/api/push/preferences').catch(() => ({ morning: false })),
       ])
       setPerm(status === 'granted' ? 'granted' : status === 'denied' ? 'denied' : 'undetermined')
-      setUserDisabled(disabled === 'true')
+      setUserDisabled(!(preferences as { morning?: boolean }).morning)
     } catch (err) {
       logError('ERR-MOB-PUSH-009', err)
       setPerm('undetermined')
     }
-  }, [])
+  }, [apiFetch])
 
   useFocusEffect(
     useCallback(() => {
@@ -76,6 +74,7 @@ export function PushNotificationToggle() {
         return
       }
       await registerPushToken(apiFetch)
+      await apiFetch('/api/push/preferences', { method: 'PATCH', body: JSON.stringify({ category: 'morning', enabled: true }) })
       setUserDisabled(false)
       setPerm('granted')
     } catch (err) {
@@ -89,7 +88,7 @@ export function PushNotificationToggle() {
   const disable = async () => {
     setBusy(true)
     try {
-      await revokePushToken(apiFetch)
+      await apiFetch('/api/push/preferences', { method: 'PATCH', body: JSON.stringify({ category: 'morning', enabled: false }) })
       setUserDisabled(true)
     } catch (err) {
       logError('ERR-MOB-PUSH-011', err)

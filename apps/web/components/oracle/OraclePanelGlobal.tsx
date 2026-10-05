@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useOracleReading } from '@/hooks/useOracleReading'
 import { TopicCards } from './TopicCards'
@@ -56,13 +57,6 @@ function OraclePanel({ chartId, isPremium }: { chartId: string; isPremium: boole
 
   const [isOpen, setIsOpen] = useState(false)
 
-  // Global open bridge — ProtectedNav dispatches this event.
-  useEffect(() => {
-    const handler = () => setIsOpen(true)
-    window.addEventListener('oracle:open', handler)
-    return () => window.removeEventListener('oracle:open', handler)
-  }, [])
-
   const handleTopicSelect = useCallback(
     (topic: OracleTopic) => {
       const saved = savedReadings[topic]
@@ -74,6 +68,19 @@ function OraclePanel({ chartId, isPremium }: { chartId: string; isPremium: boole
     },
     [savedReadings, setActiveTopic, generateReading]
   )
+
+  // The diary may suggest an existing topic. It never sends diary text.
+  useEffect(() => {
+    const handler = (event: Event) => {
+      setIsOpen(true)
+      const topic = (event as CustomEvent<{ topic?: OracleTopic }>).detail?.topic
+      if (topic && ['general', 'love', 'career', 'health'].includes(topic)) {
+        handleTopicSelect(topic)
+      }
+    }
+    window.addEventListener('oracle:open', handler)
+    return () => window.removeEventListener('oracle:open', handler)
+  }, [handleTopicSelect])
 
   const handleRegenerate = useCallback(() => {
     if (!activeTopic) return
@@ -282,6 +289,23 @@ function OraclePanel({ chartId, isPremium }: { chartId: string; isPremium: boole
                   </svg>
                   Всички теми
                 </button>
+
+                {(showSavedReading || completion) && (
+                  <Link
+                    href={{
+                      pathname: '/rhythm/journal',
+                      query: {
+                        mode: 'note', source: 'oracle', sourceId: activeTopic,
+                        sourceLabel: `Оракул · ${TOPIC_META[activeTopic as OracleTopic]?.label ?? activeTopic}`,
+                        sourcePath: '/dashboard',
+                      },
+                    }}
+                    onClick={handleClose}
+                    className="text-xs text-amber-300"
+                  >
+                    Запиши какво отекна
+                  </Link>
+                )}
 
                 {showSavedReading && !isGenerating && (
                   <button

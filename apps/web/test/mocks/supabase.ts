@@ -38,6 +38,7 @@ const CHAIN_METHODS = [
   'not',
   'lte',
   'is',
+  'range',
 ] as const
 
 function makeBuilder(result: QueryResult) {

@@ -69,7 +69,7 @@ export default async function TransitsPage() {
             Три реда на ден, водени от лунната фаза — манифестация, благодарност, освобождаване.
           </p>
           <Link
-            href="/rhythm/journal"
+            href="/rhythm/journal?mode=lunar_practice&source=moon&sourceLabel=Луната&sourcePath=/rhythm"
             className="group inline-flex items-center gap-2 font-display text-[12px] font-medium tracking-wide text-slate-200 transition-colors duration-200 hover:text-amber-300"
           >
             Отвори дневника

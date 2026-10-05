@@ -1,4 +1,4 @@
-import { useClerk } from '@clerk/expo'
+import { useClerk, useUser } from '@clerk/expo'
 import Constants from 'expo-constants'
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -13,6 +13,7 @@ import { useAccountDeletion } from '@/hooks/useAccountDeletion'
 import { useApiClient } from '@/lib/api/client'
 import { shareAccountExport } from '@/lib/gdpr/export'
 import { hapticSelect } from '@/lib/haptics'
+import { clearDiaryStorage } from '@/lib/diary/storage'
 
 const PRIVACY_URL = 'https://stellaeum.com/privacy'
 
@@ -38,6 +39,7 @@ const PRIVACY_URL = 'https://stellaeum.com/privacy'
  */
 export default function SettingsScreen() {
   const { signOut } = useClerk()
+  const { user } = useUser()
   const router = useRouter()
   const { apiFetch } = useApiClient()
   const { status, requestDeletion } = useAccountDeletion()
@@ -52,7 +54,7 @@ export default function SettingsScreen() {
           text: 'Излез',
           style: 'destructive',
           onPress: () => {
-            void signOut().catch((err) => {
+            void (user?.id ? clearDiaryStorage(user.id) : Promise.resolve()).then(() => signOut()).catch((err) => {
               if (__DEV__) console.warn('[SettingsScreen] signOut failed:', err)
             })
           },

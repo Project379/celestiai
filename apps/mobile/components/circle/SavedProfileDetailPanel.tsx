@@ -216,6 +216,16 @@ export function SavedProfileDetailPanel({
                   </Pressable>
                 </View>
               ) : null}
+              <Pressable
+                onPress={() => {
+                  onClose()
+                  router.push(`/rhythm/journal?mode=note&source=circle&sourceId=${profile.id}&sourceLabel=${encodeURIComponent(profile.name)}&sourcePath=${encodeURIComponent('/circle')}` as never)
+                }}
+                className="self-start rounded-full border border-rose-300/30 px-4 py-2"
+                style={({ pressed }) => pressFeedback(pressed)}
+              >
+                <Text style={{ fontFamily: font.bodyMedium }} className="text-[10px] uppercase tracking-[0.24em] text-rose-100">Запиши за тази връзка</Text>
+              </Pressable>
             </View>
           )}
         </ScrollView>

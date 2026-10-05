@@ -30,17 +30,25 @@ export interface ManifestPrompt {
   placeholders: [string, string, string]
 }
 
+export interface ManifestPromptSelection {
+  id: string
+  version: 1
+  phaseId: LunarPhaseId
+  variantIndex: number
+  prompt: ManifestPrompt
+}
+
 type ManifestPromptVariants = readonly [ManifestPrompt, ...ManifestPrompt[]]
 
 export const MANIFEST_PROMPTS: Record<LunarPhaseId, ManifestPromptVariants> = {
   new: [
     {
       heading: 'Три намерения',
-      lead: 'Новолунието е чист лист. Запиши три намерения — ясни, лични, истински. Цикълът напред ще ги понесе.',
+      lead: 'Новолунието е чист лист. Запиши три ясни и лични намерения. Нека те водят през следващия цикъл.',
       fieldLabels: ['Първо намерение', 'Второ намерение', 'Трето намерение'],
       placeholders: [
         'Искам да...',
-        'Канен/а съм да...',
+        'Позволявам си да...',
         'Отварям място за...',
       ],
     },
@@ -120,7 +128,7 @@ export const MANIFEST_PROMPTS: Record<LunarPhaseId, ManifestPromptVariants> = {
     },
     {
       heading: 'Три опори',
-      lead: 'Половината път е зад теб. Запиши три опори — какво те държи изправен/а, когато светлина и сянка се делят поравно.',
+      lead: 'Половината път е зад теб. Запиши три опори — какво ти дава устойчивост, когато светлината и сянката се делят поравно.',
       fieldLabels: ['Стъпвам на', 'Облягам се на', 'Държа се за'],
       placeholders: [
         'Стъпвам на...',
@@ -131,11 +139,11 @@ export const MANIFEST_PROMPTS: Record<LunarPhaseId, ManifestPromptVariants> = {
   ],
   waxing_gibbous: [
     {
-      heading: 'Три настройки',
-      lead: 'Пълнолунието е близо. Какво трябва да се коригира, преди светлината да стане пълна? Запиши три неща за усъвършенстване.',
-      fieldLabels: ['Настройвам', 'Подобрявам', 'Подготвям'],
+      heading: 'Три неща за доизглаждане',
+      lead: 'Пълнолунието наближава. Кое има нужда от малка промяна, преди да продължиш напред?',
+      fieldLabels: ['Доизглаждам', 'Подобрявам', 'Подготвям'],
       placeholders: [
-        'Настройвам...',
+        'Доизглаждам...',
         'Подобрявам...',
         'Подготвям се за...',
       ],
@@ -164,10 +172,10 @@ export const MANIFEST_PROMPTS: Record<LunarPhaseId, ManifestPromptVariants> = {
   full: [
     {
       heading: 'Три благодарности',
-      lead: 'Пълнолунието осветява всичко. Запиши три неща, за които си благодарен/на в този цикъл — постижения, срещи, уроци.',
+      lead: 'Пълнолунието осветява всичко. Запиши три неща, за които изпитваш благодарност в този цикъл — постижения, срещи или уроци.',
       fieldLabels: ['Благодаря за', 'Празнувам', 'Признавам'],
       placeholders: [
-        'Благодарен/на съм за...',
+        'Благодаря за...',
         'Празнувам...',
         'Признавам в себе си...',
       ],
@@ -215,12 +223,12 @@ export const MANIFEST_PROMPTS: Record<LunarPhaseId, ManifestPromptVariants> = {
       ],
     },
     {
-      heading: 'Три реколти',
-      lead: 'Светлината бавно се прибира. Запиши три реколти — какво отнасяш със себе си от този цикъл.',
-      fieldLabels: ['Жъна', 'Прибирам', 'Запазвам'],
+      heading: 'Три плода на този цикъл',
+      lead: 'Светлината бавно намалява. Запиши какво ценно взимаш със себе си от този цикъл.',
+      fieldLabels: ['Научих', 'Взимам със себе си', 'Запазвам'],
       placeholders: [
-        'Жъна от...',
-        'Прибирам...',
+        'Научих...',
+        'Взимам със себе си...',
         'Запазвам...',
       ],
     },
@@ -234,7 +242,7 @@ export const MANIFEST_PROMPTS: Record<LunarPhaseId, ManifestPromptVariants> = {
   // is a forward-only change (doesn't break existing entries' rotation state).
   last_quarter: [
     {
-      heading: 'Три освобождавания',
+      heading: 'Три неща, които пускам',
       lead: 'Време е да отпуснеш хвата. Запиши три неща, с които се сбогуваш преди новия цикъл — навик, страх, очакване.',
       fieldLabels: ['Пускам', 'Сбогувам се с', 'Освобождавам'],
       placeholders: [
@@ -257,11 +265,11 @@ export const MANIFEST_PROMPTS: Record<LunarPhaseId, ManifestPromptVariants> = {
   waning_crescent: [
     {
       heading: 'Три акта на грижа',
-      lead: 'Почивка преди новото начало. Запиши три неща, които ще направиш за себе си в идните дни — меки, бавни, реставриращи.',
-      fieldLabels: ['Подхранвам', 'Почивам в', 'Връщам си'],
+      lead: 'Време за почивка преди новото начало. Запиши три нежни и възстановяващи неща, които ще направиш за себе си.',
+      fieldLabels: ['Подхранвам се с', 'Давам си почивка чрез', 'Връщам си'],
       placeholders: [
         'Подхранвам се с...',
-        'Ще почина в...',
+        'Давам си почивка чрез...',
         'Връщам си...',
       ],
     },
@@ -286,6 +294,24 @@ export const MANIFEST_PROMPTS: Record<LunarPhaseId, ManifestPromptVariants> = {
       ],
     },
   ],
+}
+
+/** Stable selection for persisted lunar-practice entries. */
+export function getManifestPromptSelection(
+  phaseId: LunarPhaseId,
+  entryCount: number,
+  requestedVariant?: number,
+): ManifestPromptSelection {
+  const variants = MANIFEST_PROMPTS[phaseId]
+  const rawIndex = requestedVariant ?? entryCount
+  const variantIndex = ((rawIndex % variants.length) + variants.length) % variants.length
+  return {
+    id: `${phaseId}:${variantIndex}`,
+    version: 1,
+    phaseId,
+    variantIndex,
+    prompt: variants[variantIndex]!,
+  }
 }
 
 /**

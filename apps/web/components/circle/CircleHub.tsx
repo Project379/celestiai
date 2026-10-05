@@ -643,6 +643,12 @@ export function CircleHub({ data }: { data: CircleDashboardData }) {
                     >
                       Архивирай
                     </button>
+                    <Link
+                      href={`/rhythm/journal?mode=note&source=circle&sourceId=${selectedSpace.space.id}&sourceLabel=${encodeURIComponent(selectedSpace.space.label || TYPE_LABELS[selectedSpace.space.relationship_type])}&sourcePath=${encodeURIComponent('/circle')}`}
+                      className="rounded-full border border-rose-300/25 px-4 py-2 font-cinzel text-[10px] uppercase tracking-[0.28em] text-rose-100"
+                    >
+                      Запиши за тази връзка
+                    </Link>
                   </div>
                 </article>
 

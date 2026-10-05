@@ -1,15 +1,16 @@
 import type { Metadata } from 'next'
-import { ManifestDiaryContent } from '@/components/manifest/ManifestDiaryContent'
+import { Suspense } from 'react'
+import { DiaryApp } from '@/components/diary/DiaryApp'
 
 export const metadata: Metadata = {
-  title: 'Лунен дневник',
-  description: 'Три реда на ден, водени от лунната фаза — манифестация, благодарност, освобождаване.',
+  title: 'Дневник',
+  description: 'Проверки със себе си, свободно писане и лунни практики.',
 }
 
 export default function ManifestPage() {
   return (
-    <div className="px-4 pb-16 pt-8 sm:px-6">
-      <ManifestDiaryContent />
-    </div>
+    <Suspense fallback={<div className="px-6 py-12 text-sm text-slate-500">Зареждане…</div>}>
+      <DiaryApp />
+    </Suspense>
   )
 }

@@ -213,6 +213,25 @@ export function DashboardContent({
         )}
       </motion.section>
 
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        custom={2}
+        className="mb-6"
+      >
+        <Link
+          href="/rhythm/journal?mode=check_in&source=today&sourceLabel=Днес&sourcePath=/dashboard"
+          className="group flex items-center justify-between rounded-2xl border border-amber-300/15 bg-amber-400/[0.04] px-5 py-4 transition-colors hover:border-amber-300/35"
+        >
+          <div>
+            <p className="font-display text-base text-slate-200">Как си след днешното?</p>
+            <p className="mt-1 text-xs text-slate-500">Кратка проверка със себе си</p>
+          </div>
+          <span className="text-amber-300 transition-transform group-hover:translate-x-1">→</span>
+        </Link>
+      </motion.section>
+
       {/* ── Layer C · Bento launchpad ────────────────────────
          2×2 grid of scannable tiles. Each tile leads to its deep
          destination: Crystal → /you/crystals (full card + collection),
