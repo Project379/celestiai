@@ -10,6 +10,8 @@ interface GenerateFinalTextOptions {
   maxOutputTokens: number
   prompt: string
   system: string
+  /** Required, per call type: see GEMINI_THINKING_LEVEL. */
+  thinkingLevel: GeminiThinkingLevel
 }
 
 /**
@@ -46,12 +48,47 @@ interface GenerateFinalTextOptions {
  * the overflow itself. See .planning/PLACEHOLDERS.md THINKING-BUDGET-
  * SPIKE and THINKING-BUDGET-NOT-A-CAP.
  */
-export const GEMINI_FINAL_ONLY_OPTIONS = {
-  thinkingConfig: {
-    thinkingBudget: 300,
-    includeThoughts: false,
-  },
-} satisfies GoogleLanguageModelOptions
+/**
+ * 2026-10-07 — thinking_budget → thinking_level (Google deprecation notice:
+ * `thinking_budget` and the sampling params `temperature`, `top_p`, `top_k` return
+ * 400 on upcoming Gemini models). The two rows above are history: the numeric
+ * budget (300) was never a hard cap either (THINKING-BUDGET-NOT-A-CAP), and
+ * `thinkingLevel` is the supported control on current Gemini 3 models, so the call
+ * now sends ONLY `thinkingLevel` (never both — the API rejects the pair). Like the
+ * budget, a level is a preference the model may exceed, so the real protection
+ * against thinking starving the answer stays what it was: generous
+ * `maxOutputTokens` at the call site plus the retryable fallback in errors.ts.
+ * No temperature / topP / topK is passed anywhere (the AI SDK omits them when
+ * undefined — verified against the real request body in
+ * test/ai/gemini-request-params.test.ts).
+ *
+ * Level per call type (see .planning/PLACEHOLDERS.md THINKING-LEVEL-MIGRATION):
+ *   oracle     'low' — user-visible Bulgarian prose; measured by Gate 9 before/after.
+ *   horoscope  'low' — same prose task, shorter; kept equal to the Oracle so nothing
+ *                      about its quality changes in this migration.
+ *   smoke      'low' — a probe that must answer "ok". It cannot be 'minimal':
+ *                      probed live 2026-10-07, `gemini-3.7-flash` (the primary)
+ *                      answers 400 "Thinking level MINIMAL is not supported for this
+ *                      model" while the 3.6 fallback accepts it — so 'minimal' would
+ *                      make every call fail over to 3.6 and the smoke test would
+ *                      silently stop testing the primary model.
+ */
+export type GeminiThinkingLevel = 'low' | 'medium' | 'high' // 'minimal' deliberately excluded: 400 on the primary model
+
+export const GEMINI_THINKING_LEVEL = {
+  oracle: 'low',
+  horoscope: 'low',
+  smoke: 'low',
+} as const satisfies Record<string, GeminiThinkingLevel>
+
+export function geminiFinalOnlyOptions(thinkingLevel: GeminiThinkingLevel) {
+  return {
+    thinkingConfig: {
+      thinkingLevel,
+      includeThoughts: false,
+    },
+  } satisfies GoogleLanguageModelOptions
+}
 
 const finalTextSchema = z.object({
   content: z
@@ -115,7 +152,7 @@ function logAiUsage(model: string, result: { providerMetadata?: Record<string, u
  * composed retry shape and worst-case call count.
  */
 export async function generateFinalText(options: GenerateFinalTextOptions) {
-  const { fallbackModel, ...callOptions } = options
+  const { fallbackModel, thinkingLevel, ...callOptions } = options
 
   async function callModel(model: string) {
     const result = await generateText({
@@ -124,7 +161,7 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
       maxRetries: 0,
       output: Output.object({ schema: finalTextSchema }),
       providerOptions: {
-        google: GEMINI_FINAL_ONLY_OPTIONS,
+        google: geminiFinalOnlyOptions(thinkingLevel),
       },
     })
     // Log here, BEFORE forcing `.output` below — usage/providerMetadata

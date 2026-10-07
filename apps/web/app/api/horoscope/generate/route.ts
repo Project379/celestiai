@@ -4,7 +4,7 @@ import type { TransitAspect } from '@stellaeum/astrology'
 import type { PlanetPosition } from '@stellaeum/astrology/client'
 import { AI_MODEL, isUpstreamAiError, ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
 import { aiTemporarilyUnavailableResponse, isTransientAIError } from '@/lib/ai/errors'
-import { generateFinalText } from '@/lib/ai/generate-final-text'
+import { GEMINI_THINKING_LEVEL, generateFinalText } from '@/lib/ai/generate-final-text'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { validateReading, type ReadingValidationResult } from '@/lib/ai/validate-reading'
 import { logAuditEvent } from '@/lib/audit'
@@ -379,6 +379,7 @@ export async function POST(req: Request) {
           prompt: promptText,
           maxOutputTokens: 1500,
           fallbackModel: ORACLE_FALLBACK_MODEL,
+          thinkingLevel: GEMINI_THINKING_LEVEL.horoscope,
         })
         servedModel = model
         // `text` is already sanitizeFinalAIOutput()-cleaned by

@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/nextjs'
 import { calculateNatalChart } from '@stellaeum/astrology'
-import { generateFinalText } from '@/lib/ai/generate-final-text'
+import { GEMINI_THINKING_LEVEL, generateFinalText } from '@/lib/ai/generate-final-text'
 import { ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 
@@ -94,6 +94,7 @@ async function checkAi(): Promise<string> {
     prompt: 'Say: ok',
     maxOutputTokens: 200,
     fallbackModel: ORACLE_FALLBACK_MODEL,
+    thinkingLevel: GEMINI_THINKING_LEVEL.smoke,
   })
   if (!text || text.trim().length === 0) {
     throw new Error('generateFinalText returned empty text')

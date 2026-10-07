@@ -18,6 +18,7 @@ const request = {
   system: 'system',
   prompt: 'prompt',
   maxOutputTokens: 100,
+  thinkingLevel: 'low' as const,
 }
 
 beforeEach(() => {
