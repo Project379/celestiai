@@ -49,6 +49,12 @@ import { logError } from '@/lib/monitoring/logError'
  * cold launch (never having logged in) would throw needlessly.
  */
 
+// Web (Expo web / the stage-2 preview harness) has no RevenueCat store and no
+// platform key: `Platform.select({ ios, android })` is undefined there, which
+// used to log ERR-MOB-RC-001 into Sentry on every web render. The provider is
+// a pass-through on web — both effects below return before touching Purchases.
+const IS_WEB = Platform.OS === 'web'
+
 const PLACEHOLDER_PREFIX = 'REPLACE_WITH_'
 
 // A RevenueCat Test Store key (`test_…`) is not platform-scoped — it is
@@ -73,6 +79,8 @@ export function RevenueCatProvider({ children }: { children: React.ReactNode }) 
   const loggedInUserIdRef = useRef<string | null>(null)
 
   useEffect(() => {
+    if (IS_WEB) return
+
     const iosKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY
     const androidKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY
 
@@ -164,7 +172,7 @@ export function RevenueCatProvider({ children }: { children: React.ReactNode }) 
   // mount always configures before attempting logIn/logOut (both throw
   // if configure() hasn't run yet).
   useEffect(() => {
-    if (!isLoaded) return
+    if (IS_WEB || !isLoaded) return
 
     if (isSignedIn && userId) {
       if (loggedInUserIdRef.current === userId) return
