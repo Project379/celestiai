@@ -1,0 +1,117 @@
+diff --git a/old/SKILL.md b/new/SKILL.md
+index 8cb1845..f6ab205 100644
+--- a/old/SKILL.md
++++ b/new/SKILL.md
+@@ -5,6 +5,54 @@ description: Comprehensive Bulgarian language skill covering grammar, orthograph
+ 
+ # Bulgarian Language Skill
+ 
++## Stellaeum project rules (these OVERRIDE the general defaults below)
++
++*Proposed 2026-10-07 — register row BULGARIAN-SKILL-UPDATE. Not in force until the founder approves this diff. The founder is the final word on Bulgarian.*
++
++1. **New user-facing Bulgarian stops for founder approval.** Do not add, reword or "improve" any string the user will see — UI label, error, notification, stage line, reading template — without showing it to the founder first and getting an explicit yes. Mark unapproved copy `PLACEHOLDER_COPY` in mock-ups and never commit it to a content-home file. A string passing `check:bg-strings` or `check:copy-lock` is not approval; it only means the spelling is valid and the lock was regenerated.
++2. **Register: informal ти, always.** Never Вие/Ви/Ваш in product copy. The general advice below that Вие is the "safest default" does not apply here. Only Кръг, a jointly addressed pair, uses plural — that is number agreement, not register.
++3. **Gender pairs are spelled out.** "доволен или доволна", never "доволен/а" or "доволен/на" — fleeting-vowel adjectives (доволен, несигурен, уморен) do not compact evenly. Prefer rewording so no gender is needed ("Как се чувстваш днес?").
++4. **Clitics sit after the first stressed constituent, not after the verb.** "Какво ти тежи?" not "Какво тежи ти"; "Днес ще ти кажа", "Тя ми каза". A clitic never opens a clause. Check every composed string, not only fragments — the clause-level rule only shows once the string is assembled.
++5. **Possessives with personified nouns.** Слънце is neuter, Луна feminine, but the model (and humans) default to the masculine article/possessive for "mythological" planets. Agree with the grammatical gender: "твоето Слънце", "твоята Луна", "твоят Меркурий", "твоята Венера" — never "твоят Слънце".
++6. **Route composed strings through `packages/core/src/i18n/bg-grammar.ts`** (в→във, с→със, agreement, ordinals) instead of hand-rolling the rule.
++7. **Quotes:** Bulgarian „…“ quotes in new copy; follow the copy files for ellipsis.
++
++### Glossary — product terms, exactly as they appear in the copy files
++
++Capitalisation and form are part of the term. Do not "correct" them without asking. (Source: `apps/mobile/app/(authed)/(tabs)/_layout.tsx`, `packages/core/src/**`, the mock-ups. Checked 2026-10-07.)
++
++| Term | Form to use | Notes |
++|---|---|---|
++| Tab 1 | **Днес** | tab title and label; mock-ups render the bar label in caps (ДНЕС) |
++| Tab 2 | **Карта** | the chart tab |
++| Tab 3 | **Кръг** | the people graph; "Твоят кръг" is the heading form |
++| Tab 4 | **Ритъм** | |
++| Tab 5 | **Ти** | the app addresses the user in the second person |
++| The AI | **Оракул** (noun), **Питай Оракула** (the one exit on Днес) | Оракулът as subject, Оракула as object / after "Питай" |
++| The chart | **натална карта** (lower case mid-text, 27 files); **Натална карта** (sentence start, 3 files) | not "рождена карта" |
++| Sky block on Днес | **небесен ритъм** (lower-case caption) | |
++| Moon diary | **лунен дневник** / **Лунен дневник** | **INCONSISTENT in code:** one site uses «Лунен Дневник» (moon-detail CtaPanel) — flagged, not fixed |
++| Chart details | **Детайли** | the Карта pedestal word |
++| Big three | **Слънце**, **Луна**, **Асцендент** | order as written; "Слънце · Луна · Асцендент" |
++| Guide | **Ръководство** | |
++| Paid tier | **Премиум** | |
++| Birth data | **рождени данни** | «Рождени данни» as an entry label is PENDING approval |
++
++### Founder-approved strings so far
++
++Only strings the founder has explicitly approved belong here. The copy-lock (`scripts/i18n/copy-lock.json`, 2,898 entries) is the machine snapshot of reviewed copy, not a list of approved wording.
++
++- «Данните са запазени. Картата ти е обновена.» — shown once after a successful birth-data edit (approved 2026-10-01).
++- «Звездите са временно недостъпни. Опитай отново след малко.» — the single AI-unavailable message (ratified; failover adds no new copy).
++- The five tab labels above.
++- «Питай Оракула».
++
++**Pending, NOT approved:** «Рождени данни» (edit entry label), «Изчисляваме картата ти.» (proposed first line for a new user's chart), the reveal-flow traits / skip / chart-button / failure copy, and every `PLACEHOLDER_COPY` string in the mock-ups.
++
++**Known shipped defect found while writing this:** `moon-detail` content (`PHASE_META`, mock-up text «Какъв прогрес съм направил/а…») contains a compact gender pair, which violates rule 3. Listed for the founder, not changed.
++
++---
++
+ This skill encapsulates the rules, conventions, and expressive patterns of the Bulgarian language. It is the authoritative reference for producing grammatically correct, naturally sounding Bulgarian text.
+ 
+ **CRITICAL RULE: NEVER translate English to Bulgarian word-for-word. Bulgarian has its own sentence logic, its own phrasing patterns, its own way of packaging thoughts. Read `references/natural-phrasing.md` FIRST for any text generation task.**
+diff --git a/old/references/astrology.md b/new/references/astrology.md
+index e6cc41c..4ba1a66 100644
+--- a/old/references/astrology.md
++++ b/new/references/astrology.md
+@@ -1,5 +1,7 @@
+ # Bulgarian Astrology Terminology and Phrasing
+ 
++> **Stellaeum override:** the sample sentences in §7–§9 are written in the formal Вие register. In this project they must be re-cast in informal **ти** ("Звездите те подкрепят…", "Слънцето ти е в Лъв…", "Ти си зодия Лъв", "Внимавай с договорите…"). The terminology tables (§1–§6) stand. Possessives follow the grammatical gender of the planet: твоето Слънце, твоята Луна, твоят Меркурий.
++
+ This reference covers the complete vocabulary, phrasing conventions, and natural expression patterns used in Bulgarian astrological writing. Use it whenever generating horoscopes, natal chart interpretations, astrology articles, or any content touching astrological concepts.
+ 
+ ## Table of Contents
+diff --git a/old/references/grammar.md b/new/references/grammar.md
+index 6d0ab35..763442f 100644
+--- a/old/references/grammar.md
++++ b/new/references/grammar.md
+@@ -254,3 +254,13 @@ But word order is flexible because verb conjugation identifies the subject:
+ 8. **Forgetting "да"**: *"Искам пиша" → Искам да пиша
+ 9. **Wrong aspect in subjunctive**: "Да пишеш!" (imperfective — do keep writing) vs. "Да напишеш!" (perfective — write it once / get it done)
+ 10. **Preposition confusion**: "в"→"във" before words starting with в/ф; "с"→"със" before words starting with с/з
++
++---
++
++## Project addenda (proposed 2026-10-07 — BULGARIAN-SKILL-UPDATE)
++
++### Possessive adjectives (мой / твой / негов / неин / наш / ваш / техен)
++They agree with the possessed noun's **grammatical gender**, not with the myth behind it. Слънце (neuter) → твоето Слънце; Луна (feminine) → твоята Луна; Венера (feminine) → твоята Венера; Меркурий, Марс, Сатурн (masculine) → твоят Меркурий, твоят Марс. The recurring error is defaulting to masculine (*"твоят Слънце") for a planet that sounds masculine or mythological.
++
++### Clause-level clitic placement
++Short pronouns and particles (ми, ти, му, ѝ, ни, ви, ги, се, ще, не са…) attach after the **first stressed constituent** of the clause, not automatically after the verb. A clitic never begins a clause. "Какво ти тежи?" (not *"Какво тежи ти"); "Днес ще ти кажа"; "На Иван му казах". The cluster-internal order (dative before accusative) in §9 is a separate rule.
+diff --git a/old/references/orthography.md b/new/references/orthography.md
+index 3f5f985..265b467 100644
+--- a/old/references/orthography.md
++++ b/new/references/orthography.md
+@@ -211,3 +211,10 @@ Before finalizing any Bulgarian text, check for:
+ 13. ✅ Hyphen with по- and най-: по-добър, най-висок
+ 14. ✅ "предвид" (one word, NOT *"в предвид" or *"на предвид")
+ 15. ✅ "вляво", "вдясно", "впоследствие" — written as one word
++
++---
++
++## Project addenda (proposed 2026-10-07 — BULGARIAN-SKILL-UPDATE)
++
++### Gender pairs in UI copy
++Write both forms out: "доволен или доволна", "несигурен или несигурна". Do not compact to "доволен/а": fleeting-vowel adjectives lose the vowel in the feminine (доволен → доволна, несигурен → несигурна), so "несигурен/на" is not a clean slash form either. Better still, reword so no gender is needed.
+diff --git a/old/references/style-and-expression.md b/new/references/style-and-expression.md
+index 2a18b1c..87f859d 100644
+--- a/old/references/style-and-expression.md
++++ b/new/references/style-and-expression.md
+@@ -32,6 +32,8 @@
+ ### The in-between
+ Most modern Bulgarian writing — blogs, newsletters, casual business emails — lives in a middle register that uses Вие but keeps a conversational tone. This is the safest default for general-purpose text.
+ 
++> **Stellaeum override:** product copy is informal **ти** only. See "Stellaeum project rules" in SKILL.md; do not apply this default to the app.
++
+ ---
+ 
+ ## 2. Natural Expression Patterns

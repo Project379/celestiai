@@ -1,0 +1,211 @@
+diff --git a/.planning/CC-SESSION-HANDOFF.md b/.planning/CC-SESSION-HANDOFF.md
+index d61bf1e..ed858d1 100644
+--- a/.planning/CC-SESSION-HANDOFF.md
++++ b/.planning/CC-SESSION-HANDOFF.md
+@@ -77,8 +77,12 @@ because it's empty. Safe to ignore or delete; not part of the real structure.
+ 
+ ## 2. The gates
+ 
+-`pnpm run check:all` runs eight gates in sequence, in this order — the order
+-matters, cheap/fast gates run before slow ones (typecheck, lint, test):
++`pnpm run check:all` runs twelve gates in sequence (updated 2026-10-07; it was eight
++when this was written), in this order — cheap/fast gates run before slow ones.
++The four added since: `check:rpc-contract`, `check:env-consistency`,
++`check:placeholders` (register ↔ code markers), and `check:build` (a real
++`next build`, because `tsc --noEmit` never validates Next route exports or
++`next/font` option rules). Gates 1–8 below keep their original numbering:
+ 
+ 1. **`check:strictness`** — `packages/core/tsconfig.json` must have
+    `noUncheckedIndexedAccess: true`, or carry an explicit
+@@ -94,8 +98,8 @@ matters, cheap/fast gates run before slow ones (typecheck, lint, test):
+    translated (see §8, the Bulgarian workstream, for what does catch those).
+ 
+ 3. **`check:copy-lock`** — compares every Cyrillic literal in the tree
+-   against `scripts/i18n/copy-lock.json` (currently 3,025 unique
+-   entries), which is the "approved copy" snapshot. **Fails on any drift —
++   against `scripts/i18n/copy-lock.json` (currently 2,898 entries,
++   2026-10-07), which is the "approved copy" snapshot. **Fails on any drift —
+    added, removed, or changed Bulgarian text that hasn't been re-approved.**
+    This is the one to internalize: a failure here on a genuinely new
+    Bulgarian string is **correct behaviour, not a bug in the gate.** The fix
+@@ -109,7 +113,7 @@ matters, cheap/fast gates run before slow ones (typecheck, lint, test):
+ 4. **`check:bg-lint-baseline`** — a *ratcheting* baseline on top of the
+    ESLint rule `no-new-bg-strings` (in `packages/config/eslint/`), which
+    flags a Cyrillic literal sitting outside a designated "content home"
+-   file. Baseline is currently **1,778** (started at 1,336 on 2026-07-30;
++   file. Baseline constant in the script is **1,716**, actual count 1,708 (it only ratchets down — lower the constant when it drops) (started at 1,336 on 2026-07-30; peaked at 1,778;
+    existing debt is grandfathered, new instances beyond the baseline fail).
+    Rises only when a reviewed batch of new user-facing strings lands
+    outside a content-home file — check the script's own header comment for
+@@ -138,7 +142,7 @@ matters, cheap/fast gates run before slow ones (typecheck, lint, test):
+ A failure in any of 1–5 almost always means exactly what it says — read the
+ script's own header comment (they're all deliberately well-commented, written
+ to explain *why* the gate exists, not just what it checks) before assuming
+-it's wrong. Baseline numbers (1,778 / 3,025 unique entries) are the tripwire
++it's wrong. Baseline numbers (1,716 / 2,898 entries, 2026-10-07) are the tripwire
+ for drift — if you find yourself needing to raise either one, that's a
+ decide-and-proceed-with-report item per §6, not a silent edit.
+ 
+@@ -150,19 +154,24 @@ Everything below has cost real time once. Read this before you hit any of
+ them a second time.
+ 
+ **NEVER `supabase db push`.** Production's migration ledger
+-(`supabase_migrations.schema_migrations`) holds 6 rows; the repo holds 16
+-migration files — 13 are unrecorded in the ledger, and separately, 16
+-production tables from the Drizzle era have no `CREATE TABLE` in any tracked
+-migration at all (the old `packages/db/drizzle` directory was deleted with
+-no SQL record left behind). A blind `db push` would try to replay all 13
+-unrecorded migrations against a database where most of that work is already
+-done — including `20260413141504_schema_hardening.sql`'s
+-`ALTER TABLE public.users DROP COLUMN subscription_tier`, which is a live
+-column today. That is not a no-op, it is data loss. **Safe pattern:**
+-`supabase migration repair --status applied <version>`, one migration file
+-at a time, only after independently confirming that specific migration's
+-effect already exists in production (read the schema, don't assume). Never
+-push blind.
++(`supabase_migrations.schema_migrations`), checked 2026-10-07 with
++`supabase migration list`: **25 rows; the repo holds 24 migration files and
++all 24 are recorded.** The 25th ledger row, `20260928120000 full_diary_v2`
++(19 statements), has **no file in this checkout** — it belongs to Petko's
++branch (register: MIGRATION-PROCESS-GAP, DIARY-REMINDER-EXPORT). Separately,
++16 production tables from the Drizzle era have no `CREATE TABLE` in any
++tracked migration at all (the old `packages/db/drizzle` directory was deleted
++with no SQL record left behind), and `20260901120000` is recorded with a NULL
++name/statements. (When this was first written the ledger held 6 rows against
++13 unrecorded files; those were reconciled one at a time with `migration
++repair`.) `db push` is still never safe: it would see the remote-only
++`full_diary_v2` row, the Drizzle-era tables, and `20260413141504_schema_hardening.sql`'s
++`ALTER TABLE public.users DROP COLUMN subscription_tier` replay risk. **How
++migrations are applied here:** direct SQL in one transaction, then
++`supabase migration repair --status applied <version>` against the **session**
++port (swap `:6543` for `:5432` in `DATABASE_URL`), only after the file is on
++`main`, and only after reading the schema to confirm what exists. Never push
++blind.
+ 
+ **EAS never validates env values.** A build can go fully green while
+ shipping a literal placeholder string as `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
+diff --git a/.planning/research/FEATURES.md b/.planning/research/FEATURES.md
+index d7da202..1658ac7 100644
+--- a/.planning/research/FEATURES.md
++++ b/.planning/research/FEATURES.md
+@@ -148,7 +148,7 @@ Minimum viable product - what's needed to validate the concept.
+ - [x] **Basic Transit Info** - Moon phases, Mercury retrograde, major events
+ - [x] **User Authentication (Clerk)** - Required for saving data
+ - [x] **Single Profile Support** - Start simple, add multi-profile later
+-- [x] **Bulgarian + English Languages** - Target market + broader reach
++- [x] **Bulgarian language** - Target market. **Launch is Bulgarian only** (PROJECT.md: English localization deferred through Phase D; REQUIREMENTS LOC-01 is not in v1). Corrected 2026-10-07 — this line used to claim Bulgarian + English.
+ - [x] **Freemium Paywall** - Validate willingness to pay
+ 
+ ### Add After Validation (v1.x)
+@@ -218,7 +218,7 @@ Features to defer until product-market fit is established.
+ | **Meditation/Audio** | No | No | No | Yes (library) | No | Future (P3) |
+ | **Tarot** | No | Yes (new) | Yes | No | No | Future (P3) |
+ | **Price** | Free + subscription | Freemium ($varies) | $20/mo | $12/mo or $108/yr | $9.99/unlock | 9.99/mo target |
+-| **Languages** | English only | English only | English only | English only | English only | Bulgarian + English |
++| **Languages** | English only | English only | English only | English only | English only | Bulgarian only at launch |
+ | **Tone** | Harsh/controversial | Neutral/psychological | Friendly | Inclusive/positive | Technical | Positive/growth-oriented |
+ 
+ ### Competitive Insights
+diff --git a/CLAUDE.md b/CLAUDE.md
+index d913372..fa36e48 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
+ 
+ **Stellaeum AI** is a subscription-based astrology application for the Bulgarian market. It combines Swiss Ephemeris astronomical precision with AI-powered readings, serving Web, iOS, and Android from a single codebase.
+ 
+-> **AI model:** this file does not restate model status. See `.planning/SYSTEM-MAP.md` §4 for the current AI truth — which model runs, via which provider/client, and what is and isn't checked on its output — and `.planning/PLACEHOLDERS.md` LLM-MODEL for provider-swap status. The output is a known-weak placeholder: do not add prompt workarounds or post-processing for it.
++> **AI model:** this file does not restate model status. See `.planning/SYSTEM-MAP.md` §4 for the current AI truth — which model runs, via which provider/client, and what is and isn't checked on its output — and `.planning/PLACEHOLDERS.md` (LLM-MODEL-SWAP, LLM-FAILOVER, GEMINI-SLOW-NO-FAILOVER) for what is still open. The placeholder model is gone (Gemini, called directly through `@ai-sdk/google`); output now passes `apps/web/lib/ai/validate-reading.ts`. Read §4 before touching prompts or validators.
++>
++> **Language:** Bulgarian only at launch (informal ти register). New user-facing Bulgarian needs the founder's approval before it lands; the founder is the final word on Bulgarian. Strings live in content-home files and are locked by `scripts/i18n/copy-lock.json`.
+ 
+ ## Tech Stack
+ 
+@@ -14,10 +16,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
+ - **Universal Framework**: Solito (Next.js 15 + Expo SDK 54) — corrected 2026-09-28; `apps/mobile/package.json` pins `"expo": "~54.0.36"`. This line was wrong three times before being fixed; if you're touching version-sensitive behavior (targetSdkVersion, edge-to-edge, deprecations), read `apps/mobile/package.json` directly rather than trusting this line.
+ - **Auth**: Clerk (handles Web cookies + Native tokens/biometrics)
+ - **Database**: Supabase (PostgreSQL) — used as plain managed Postgres; Realtime/Storage/Edge Functions are not used
+-- **ORM**: Drizzle ORM
++- **Data access**: `@supabase/supabase-js` query builder (Drizzle was removed 2026-04-20, see `.planning/research/DRIZZLE_DECISION.md` §9); migrations are plain SQL in `supabase/migrations/`
+ - **Styling**: NativeWind v4
+ - **Visualization**: react-native-svg (mobile), D3.js-driven SVG (web) — corrected 2026-08-04; no Skia dependency exists in the app, and web's chart renders to SVG, not Canvas. See CHECKPOINT-2026-08-04.md §2.
+ - **Astrology Engine**: native `sweph` (Swiss Ephemeris via N-API bindings), server-side only — not `swisseph-wasm`
++- **AI**: Gemini via `@ai-sdk/google` (`apps/web/lib/ai/`), server-side only
+ - **Payments**: Stripe (web) + RevenueCat (mobile IAP)
+ 
+ ## Monorepo Structure
+@@ -25,39 +28,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
+ ```
+ /
+ ├── apps/
+-│   ├── web/          # Next.js 15 app
+-│   │   └── app/api/  # API routes (astrology calculations, webhooks)
+-│   └── mobile/       # Expo app
++│   ├── web/          # Next.js 15 app (app/api/ = compute routes, crons, webhooks)
++│   └── mobile/       # Expo app (design-system primitives in components/design-system/)
+ ├── packages/
++│   ├── core/         # Framework-agnostic logic + Supabase data access + Zod schemas (no React/Next/Expo/Clerk imports)
+ │   ├── astrology/    # Swiss Ephemeris wrapper (native sweph)
+-│   └── db/           # Shared Drizzle ORM schema + Supabase client
++│   ├── ui/           # Shared primitives (small)
++│   └── config/       # Shared ESLint + TypeScript configs
++├── supabase/migrations/   # Hand-applied SQL (never `db push` — see CC-SESSION-HANDOFF §3)
++├── scripts/          # check:* gates, i18n copy-lock, post-deploy smoke
++└── .planning/        # Register (PLACEHOLDERS.md), SYSTEM-MAP.md, design docs, handoff
+ ```
+ 
++(`packages/db` no longer exists.)
++
+ ## Database Schema
+ 
+-- `users` - Linked to Clerk ID, preferences, subscription_tier
+-- `charts` - user_id, name, date_time, lat, lon, city_name
+-- `daily_transits` - Cached calculations (date, planet_positions JSONB)
+-- `journal_entries` - user_id, date, AI insight content
++Production has 41 tables in `public`, all with RLS enabled (checked 2026-10-07). Do not trust a short list here — read `supabase/migrations/` and query the database. Groups:
++
++- **Accounts & billing:** `users`, `subscription_quotas`, `processed_webhook_events`, `processed_revenuecat_events`, `audit_logs`, `rate_limit_buckets`
++- **Charts & sky:** `charts`, `chart_calculations`, `birth_data_edits`, `daily_transits`, `bulgarian_cities`
++- **Readings:** `ai_readings`, `daily_horoscopes`, `bg_generation_flags`
++- **Diary:** `diary_entries`, `diary_reminder_preferences`, `diary_reminder_deliveries`
++- **Кръг (people graph):** `saved_people_profiles`, `saved_people_reports`, `connection_spaces`, `connection_members`, `connection_invites`, `connection_reports`
++- **Crystals:** `crystals`, `crystal_vendors`, `crystal_listings`, `crystal_recommendations`, `user_crystals`, `user_daily_crystals`
++- **Recommendations (feature disabled pending licensing):** `recommendation_*`, `user_recommendation_work_states`
++- **Push:** `push_subscriptions`, `push_tokens`
++
++Migration ledger caveat: 16 tables from the Drizzle era have no `CREATE TABLE` in any tracked migration, and one ledger row (`20260928120000 full_diary_v2`) has no file in this checkout (Petko's branch). See PLACEHOLDERS.md MIGRATION-PROCESS-GAP.
+ 
+ ## Key Architecture Decisions
+ 
+ - Heavy Swiss Ephemeris calculations (native `sweph`) run server-side via API routes, not in the mobile bundle
+-- Clerk JWT Templates configured for Supabase RLS
++- Clerk session token is passed to Supabase through `accessToken()` (`apps/web/lib/supabase/client.ts`) so RLS sees the user
+ - Stripe/RevenueCat webhooks update `users.subscription_tier`
+ - 90% code sharing between web and mobile via Solito
+ 
+ ## Build Commands
+ 
+ ```bash
+-npm install              # Install dependencies
+-npm run dev              # Run dev servers (web + mobile)
+-npm run build            # Production build
+-npm test                 # Run tests
++pnpm install                 # Install dependencies (pnpm@9.15.4, Node >= 22)
++pnpm run dev                 # Run dev servers (web + mobile)
++pnpm run build               # Production build
++pnpm test                    # Run tests
++pnpm run check:all           # The full gate: strictness, bg-strings, copy-lock, bg-lint baseline,
++                             # error codes, rpc contract, env consistency, typecheck, lint, test,
++                             # placeholders, and a real `next build`
++pnpm run i18n:update-copy-lock   # Only after reading the new Bulgarian string
+ ```
+ 
+ No `test:e2e` script or Playwright config exists in this repo — the smoke-test workflow (`scripts/smoke.mjs`, `.github/workflows/smoke.yml`) covers post-deploy checks instead. See PLACEHOLDERS.md's SMOKE-TEST and CSP-SMOKE-CHECK rows.
+ 
++## Branches
++
++`main` is the long-lived branch and deploys to production on push. `ui-parity` (created 2026-10-07) is the short-lived UI branch: preview deploys only, never merged without the founder's say. CI runs on every push and PR.
++
+ ## GSD Workflow
+ 
+ This project uses GSD (Get Shit Done) for structured planning:
