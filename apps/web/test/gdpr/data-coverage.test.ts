@@ -29,18 +29,10 @@ const ALLOWLIST: Record<string, AllowlistEntry> = {
   audit_logs: {
     deletion:
       'user_id is ON DELETE SET NULL by design (apps/web/lib/audit.ts): audit rows survive anonymised after the user is deleted. A retention choice, not an omission.',
-    export:
-      'UNDECIDED (founder): the audit trail is not part of the export today. Decide whether an access request must include it, then add it to /api/gdpr/export or document the exclusion here.',
   },
   crystal_recommendations: {
     deletion:
       'Deleted through chart_id -> charts ON DELETE CASCADE when the cleanup cron deletes the user\'s charts (user_id itself has no foreign key).',
-    export:
-      'UNDECIDED (founder): derived, rotating crystal recommendations are not exported today. Decide whether they are personal data for an access request.',
-  },
-  subscription_quotas: {
-    export:
-      'UNDECIDED (founder): the monthly Oracle usage counter is not exported today (deletion is covered by the users ON DELETE CASCADE foreign key). Decide whether usage counters belong in an access request.',
   },
 }
 

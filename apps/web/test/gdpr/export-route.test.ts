@@ -217,3 +217,52 @@ describe('GET /api/gdpr/export — push_subscriptions / push_tokens', () => {
     expect(selectArg).not.toMatch(/p256dh|auth/)
   })
 })
+
+describe('GET /api/gdpr/export — crystal_recommendations / subscription_quotas / audit_logs (founder ruling 2026-10-07)', () => {
+  function seedEmpty() {
+    for (const t of [
+      'connection_members', 'charts', 'ai_readings', 'daily_horoscopes', 'diary_entries',
+      'connection_invites', 'saved_people_profiles', 'user_crystals', 'user_daily_crystals',
+      'recommendation_deliveries', 'user_recommendation_work_states', 'recommendation_events',
+      'birth_data_edits', 'push_subscriptions', 'push_tokens',
+    ]) {
+      mockSupabase.push(t, { data: [] })
+    }
+    mockSupabase.push('users', { data: { subscription_tier: 'free', created_at: '2026-01-01' } })
+  }
+
+  it('includes crystalRecommendations, subscriptionQuotas and auditLog in the payload', async () => {
+    seedEmpty()
+    mockSupabase.push('crystal_recommendations', { data: [{ id: 'r1', user_id: 'user_test123', reason_code: 'moon' }] })
+    mockSupabase.push('subscription_quotas', { data: [{ user_id: 'user_test123', ai_readings_used: 4 }] })
+    mockSupabase.push('audit_logs', { data: [{ event_type: 'data.ai_reading', created_at: '2026-10-01T10:00:00Z' }] })
+
+    const body = JSON.parse(await (await GET()).text())
+
+    expect(body.crystalRecommendations).toHaveLength(1)
+    expect(body.subscriptionQuotas[0].ai_readings_used).toBe(4)
+    expect(body.auditLog).toEqual([{ event_type: 'data.ai_reading', created_at: '2026-10-01T10:00:00Z' }])
+  })
+
+  it("scopes all three by the caller's own user_id", async () => {
+    seedEmpty()
+
+    await GET()
+
+    for (const table of ['crystal_recommendations', 'subscription_quotas', 'audit_logs']) {
+      const idx = mockSupabase.from.mock.calls.findIndex((c) => c[0] === table)
+      expect(idx, table).toBeGreaterThanOrEqual(0)
+      expect(mockSupabase.from.mock.results[idx].value.eq).toHaveBeenCalledWith('user_id', 'user_test123')
+    }
+  })
+
+  it('selects only event_type and created_at from audit_logs: no row id, no metadata (other users\' ids live there)', async () => {
+    seedEmpty()
+
+    await GET()
+
+    const idx = mockSupabase.from.mock.calls.findIndex((c) => c[0] === 'audit_logs')
+    const selectArg = mockSupabase.from.mock.results[idx].value.select.mock.calls[0][0] as string
+    expect(selectArg.split(',').map((c) => c.trim())).toEqual(['event_type', 'created_at'])
+  })
+})

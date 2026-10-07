@@ -377,7 +377,7 @@ export async function POST(req: Request) {
         const { model, text } = await generateFinalText({
           system: systemPrompt,
           prompt: promptText,
-          maxOutputTokens: 1500,
+          maxOutputTokens: 2000,
           fallbackModel: ORACLE_FALLBACK_MODEL,
           thinkingLevel: GEMINI_THINKING_LEVEL.horoscope,
         })

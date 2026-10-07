@@ -8,7 +8,7 @@ import { assertRateLimit } from '@/lib/rate-limit'
 /**
  * GET /api/gdpr/export
  * Instant GDPR data export - returns a downloadable JSON file containing
- * all user data: profile, charts, AI readings, and daily horoscopes.
+ * all user data (profile, charts, readings, horoscopes, diary, Кръг, crystals, usage counters, own audit events).
  */
 export async function GET() {
   const { userId } = await auth()
@@ -56,6 +56,9 @@ export async function GET() {
     birthDataEditsRes,
     pushSubscriptionsRes,
     pushTokensRes,
+    crystalRecommendationsRes,
+    subscriptionQuotasRes,
+    auditLogsRes,
   ] = await Promise.all([
       supabase.from('charts').select('*').eq('user_id', userId),
       supabase.from('ai_readings').select('*').eq('user_id', userId),
@@ -91,6 +94,18 @@ export async function GET() {
         .from('push_tokens')
         .select('id, token, platform, device_id, registered_at, revoked_at, last_sent_at, morning_enabled, diary_enabled')
         .eq('user_id', userId),
+      // Founder ruling 2026-10-07 (GDPR-EXPORT-UNDECIDED): derived crystal picks and the
+      // monthly Oracle usage counter are exported.
+      supabase.from('crystal_recommendations').select('*').eq('user_id', userId),
+      supabase.from('subscription_quotas').select('*').eq('user_id', userId),
+      // The user's OWN audit events only, explicit columns: no row id, no metadata. Metadata
+      // can carry other people's identifiers (partnerUserId / inviterUserId) and internal ids,
+      // and system.* rows have user_id NULL so are never matched.
+      supabase
+        .from('audit_logs')
+        .select('event_type, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true }),
     ])
 
   const relationshipIds = (spacesRes.data ?? []).map((row) => row.id)
@@ -136,6 +151,9 @@ export async function GET() {
     birthDataEdits: birthDataEditsRes.data ?? [],
     pushSubscriptions: pushSubscriptionsRes.data ?? [],
     pushTokens: pushTokensRes.data ?? [],
+    crystalRecommendations: crystalRecommendationsRes.data ?? [],
+    subscriptionQuotas: subscriptionQuotasRes.data ?? [],
+    auditLog: auditLogsRes.data ?? [],
   }
 
   after(() => logAuditEvent(userId, 'account.data_export'))
