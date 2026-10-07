@@ -1,5 +1,6 @@
 const { defineConfig } = require('eslint/config')
 const expoConfig = require('eslint-config-expo/flat')
+const fontWeight = require('../../packages/config/eslint/no-font-weight.cjs')
 const { NO_NEW_BG_STRINGS_RULE, CONTENT_HOME_GLOBS, TEST_IGNORE_GLOBS } = require('../../packages/config/eslint/no-new-bg-strings.cjs')
 
 module.exports = defineConfig([
@@ -30,6 +31,12 @@ module.exports = defineConfig([
     files: ['**/*.{ts,tsx}'],
     ignores: TEST_IGNORE_GLOBS,
     rules: NO_NEW_BG_STRINGS_RULE,
+  },
+  {
+    // Spectral weights come only from per-weight family tokens (see the rule file).
+    files: ['**/*.{ts,tsx}'],
+    plugins: { stellaeum: fontWeight.plugin },
+    rules: fontWeight.RULE,
   },
   {
     files: CONTENT_HOME_GLOBS,

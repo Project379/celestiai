@@ -34,7 +34,14 @@
       "expo-web-browser",
       "expo-apple-authentication",
       "@react-native-community/datetimepicker",
-      "@sentry/react-native",
+      [
+        "@sentry/react-native",
+        {
+          "url": "https://de.sentry.io/",
+          "organization": "celestia-ul",
+          "project": "stellaeum-mobile"
+        }
+      ],
       "expo-font",
       "./plugins/withEmulatorLoopbackCleartext",
       [
