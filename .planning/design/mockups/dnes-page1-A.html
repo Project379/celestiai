@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Днес + навигация — посока A</title>
+<link rel="stylesheet" href="_page1-common.css">
+<style>
+  /* A-specific: the reading keeps the bronze lead line (bounded to lead+development); sections below the exit separate by rhythm + hairline, no caps labels */
+  .spine-wrap{position:relative}
+  .spine{position:absolute;left:-14px;top:4px;bottom:8px;width:1px;background:linear-gradient(to bottom,rgba(184,118,62,.5),rgba(184,118,62,.05))}
+  .anchor{display:flex;align-items:center;gap:8px;margin:var(--r-para) 0 var(--r-micro)}
+  .anchor .g{font-size:var(--t-cap);color:var(--faint)}
+  .signrow{display:flex;align-items:center;gap:8px;margin-bottom:var(--r-tight)}
+  .signrow svg{width:18px;height:18px;fill:none;stroke:var(--faint);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .skyhero{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .more{display:inline-flex;align-items:center;gap:9px;min-height:44px;margin-top:var(--r-tight);font-size:var(--t-read);line-height:var(--l-read);color:var(--starlight)}
+  .more i{width:3px;height:3px;border-radius:50%;background:var(--violet);box-shadow:0 0 7px 2px rgba(139,92,246,.7)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="_page1-common.js"></script>
+<script src="_page1-boot.js"></script>
+<script>
+const A = {
+  id: 'A', nav: 'A',
+  title: 'Днес + навигация — посока A: „Първо изводът“',
+  concept: `<b>Idea.</b> The payoff is the dominant element (C5), so it leads: under the greeting comes today’s takeaway line in bronze, the AI disclosure attached to it, and the single lit exit «Питай Оракула» — all inside the first viewport at both sizes. The <i>complete</i> reading (opener, planet-by-planet development) follows below the exit, unfolded, with its bronze lead line; then the sign beat; then the moon (148 px, secondary) with its lunar link. <b>What answers “what do I do next”:</b> the first viewport already contains the conclusion and the exit; reading on is optional depth, reached by an ordinary scroll. <b>Trade-off the founder must rule on:</b> the payoff moves from the <i>end</i> of the reading to the <i>top</i> (the model writes it as a conclusion; it is shown once, not repeated). <b>Separation without bronze caps:</b> group rhythm (40) and a half-width hairline; the sign beat is labelled by its glyph + name in caption size. <b>Nav:</b> shipped device (violet point under the active label). <i>Baseline for comparison (measured on the earlier draft of A that kept the shipped order: reading, then exit): the exit was 162 px (384) / 276 px (360) below the fold, because the 20 px reading alone is 677–739 px tall.</i>`,
+  navNote: 'Nav A: icon 20 px + 12 px Medium label, mixed case; active = colour (faint → starlight) + icon opacity + a violet point beneath (R7: colour + shape). The Ти icon is the user’s zodiac sign (placeholder: current 24-box glyph set until the designer’s set lands). Press = opacity .6 + scale .94. No bronze anywhere in the bar.',
+  motion: `<h3>Motion spec (opacity + transform only; reduced motion = instant, no loop)</h3><table class="t"><tr><th>Moment</th><th>Spec</th></tr>
+   <tr><td>Payoff arrives (first open or after loading)</td><td>payoff block: opacity 0→1 + translateY 6→0, 600 ms ease-out, <b>once</b></td></tr>
+   <tr><td>Exit</td><td>opacity 0→1, 500 ms, starts 500 ms after the reading; ember breathes 2.6 s (the only loop)</td></tr>
+   <tr><td>Full reading, sign, moon (below the exit)</td><td>opacity 0→1, 500 ms, +600 ms; moon resolves with opacity only (no rotate, no overshoot)</td></tr>
+   <tr><td>Loading → arrival</td><td>stage block cross-fades out 200 ms while the reading fades in; layout of what is above never moves</td></tr>
+   <tr><td>Stage lines / glyph light</td><td>0 / 1.5 / 3.0 s; the placement lights with its line (colour + glow + label, R7); slow line at 10 s</td></tr>
+   <tr><td>Tab switch</td><td>content cross-fade 200 ms; active point/label swap 150 ms</td></tr>
+   <tr><td>First open after reveal</td><td>same as arrival; the Ти icon’s sign glyph lights once (violet point flashes 400 ms)</td></tr>
+   <tr><td>Reduced motion</td><td>every transition becomes an instant state change; ember static at full opacity</td></tr></table>`,
+
+  render(s, ctx) {
+    const C = P1.C, R = P1.READING
+    const long = s === 'stress'
+    const anim = ctx.anim
+    const mast = `<div class="cap tnum">${C(long ? 'dateLong' : 'date')}</div><div class="read mu" style="margin-top:${P1.INSET ? 4 : 4}px">${C(long ? 'greetLong' : 'greet')}</div>`
+    const notice = (id) => `<div class="cap m" style="margin-top:var(--r-tight)">${C(id)}</div>`
+    // payoff first (dominant), disclosure attached to it; the exit follows; the full reading comes AFTER the exit
+    const lead = () => `<div data-reading class="${anim ? 'm-read' : ''}"><div class="payoff"><div class="glow"></div><span class="t">${R.pay}</span></div></div>
+      <div class="cap ${anim ? 'm-exit' : ''}" style="margin-top:var(--r-micro)">${C('disclose')}</div>`
+    const full = () => `<div class="hair"></div><div class="${anim ? 'm-rest' : ''}"><div class="spine-wrap"><div class="spine"></div>
+          <p class="read" style="margin:0">${R.p1}</p>
+          <div class="anchor"><span class="g">${R.anchor.glyph}</span><span class="cap m">${R.anchor.name}</span></div>
+          <p class="read" style="margin:0">${R.p2}</p></div></div>`
+    const exit = (label, o) => `<div style="margin-top:var(--r-para)">${P1.exitLit(label, { anim, ...o })}</div>`
+    const sign = () => `<div class="hair"></div><div class="${anim ? 'm-rest' : ''}"><div class="signrow">${P1.glyph('libra')}<span class="cap m">${C('signName')}</span></div><p class="read mu" style="margin:0">${C('quip')}</p></div>`
+    const sky = () => {
+      const pl = long ? 'phaseLong' : 'phase', sb = long ? 'phaseSubLong' : 'phaseSub'
+      return `<div class="hair"></div><div class="skyhero ${anim ? 'm-moon' : ''}" style="padding-top:var(--r-tight)">
+        ${P1.moon(148)}
+        <div class="read" style="margin-top:var(--r-group)">${C(pl)}</div>
+        <div class="cap m tnum" style="margin-top:var(--r-micro)">${C(sb)}</div>
+        ${long ? `<p class="read mu" style="margin:var(--r-tight) 0 0">${C('meteor')}</p>` : ''}
+        <div class="more"><i></i>${C('more')}</div></div>`
+    }
+    const rest = () => sign() + sky()
+    switch (s) {
+      case 'normal': case 'scrolled': case 'stress':
+        return mast + `<div style="margin-top:var(--r-para)">${lead()}</div>` + exit(C('cta')) + full() + rest()
+      case 'load0': case 'load1': case 'load2': case 'loadslow':
+        return mast + P1.loading(s === 'load0' ? 0 : s === 'load1' ? 1 : 2, s === 'loadslow')
+      case 'fail':
+        return mast + `<p class="read" style="margin:var(--r-group) 0 0">${C('unavail')}</p>` + exit(C('retry'), { neutral: true }) + rest()
+      case 'offcached':
+        return mast + notice('offNote') + `<div style="margin-top:var(--r-para)">${lead()}</div>` + exit(C('retry'), { neutral: true }) + full() + rest()
+      case 'offnone':
+        return mast + `<p class="read" style="margin:var(--r-group) 0 0">${C('offNone')}</p>` + exit(C('retry'), { neutral: true }) + rest()
+      case 'regencap':
+        return mast + `<div style="margin-top:var(--r-para)" data-reading><div style="border-left:2px solid rgba(139,92,246,.35);padding-left:16px"><p class="read" style="margin:0">${C('capFallback')}</p></div><p class="read mu" style="margin:var(--r-para) 0 0">${C('cap')}</p></div>` + exit(C('cta')) + rest()
+      case 'empty':
+        return mast + `<p class="read" style="margin:var(--r-group) 0 0">${C('emptyBody')}</p>` + exit(C('emptyCta'), { neutral: true }) + sky()
+    }
+    return ''
+  },
+}
+bootPage1(A)
+</script>
+</body>
+</html>

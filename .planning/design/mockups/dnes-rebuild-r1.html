@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Днес — преустройство, кръг 1</title>
+<style>
+@font-face{font-family:'Spectral BG';font-weight:400;src:url('../../../apps/mobile/assets/fonts/SpectralBG-Regular.ttf')}
+@font-face{font-family:'Spectral BG';font-weight:500;src:url('../../../apps/mobile/assets/fonts/SpectralBG-Medium.ttf')}
+@font-face{font-family:'Spectral BG';font-weight:600;src:url('../../../apps/mobile/assets/fonts/SpectralBG-SemiBold.ttf')}
+@font-face{font-family:'Spectral BG';font-weight:700;src:url('../../../apps/mobile/assets/fonts/SpectralBG-Bold.ttf')}
+:root{--page-bg:#0c0a12;--page-text:#e9e6f0;--page-muted:#948fa3;--page-border:#241f30}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--page-bg);color:var(--page-text);font:400 15px/1.55 'Spectral BG',serif}
+.wrap{max-width:1800px;margin:0 auto;padding:36px 24px 120px}
+h1{font-weight:600;font-size:28px;margin:0 0 6px}h2{font-weight:600;font-size:21px;margin:56px 0 10px;border-top:1px solid var(--page-border);padding-top:26px}
+h3{font-weight:600;font-size:15px;margin:18px 0 6px}
+.dek{color:var(--page-muted);max-width:900px;margin:0 0 10px}.dek b{color:var(--page-text);font-weight:600}
+table.t{border-collapse:collapse;font-size:13.5px;line-height:1.45;width:100%;max-width:1300px;margin:8px 0}
+table.t th,table.t td{border-top:1px solid var(--page-border);padding:6px 12px 6px 0;text-align:left;vertical-align:top}
+table.t th{color:var(--page-muted);font-weight:600}
+.keep{color:#86d4a0}.move{color:#f3c677}.rem{color:#fda4af}
+.row-frames{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;margin:10px 0 6px}
+.cell{max-width:388px}.cell .cl{font-weight:600;font-size:13px;line-height:1.35;margin:0 0 6px}.cell .cs{font-size:12.5px;color:var(--page-muted);margin:6px 0 0;max-width:384px}
+.mono{font:400 12px/1.5 Consolas,monospace;color:#b8b3c6}
+
+/* ───────── frame ───────── */
+.frame{position:relative;overflow:hidden;flex:0 0 auto;font-family:'Spectral BG',serif;outline:1px solid rgba(255,255,255,.08)}
+.statusbar{position:absolute;left:0;right:0;top:0;height:32px;z-index:6;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font:500 12px/1 'Spectral BG'}
+.viewport{position:absolute;left:0;right:0;top:32px;bottom:0;overflow:hidden}
+.scroll{position:relative;padding:16px 24px 0}
+.endpad{height:calc(56px + 24px + 40px)}
+.redline{position:absolute;left:0;right:0;border-top:1px dashed #e0475b;z-index:9;pointer-events:none}
+.redline b{position:absolute;right:6px;top:-14px;font:500 11px/1 sans-serif;color:#e0475b}
+
+/* typography via per-frame variables */
+.cap{font-size:12px;line-height:17px;font-weight:400}
+.body{font-size:var(--body);line-height:var(--body-l);font-weight:400}
+.read{font-size:var(--read);line-height:var(--read-l);font-weight:400;margin:0}
+.pay{font-size:var(--pay);line-height:var(--pay-l);font-weight:var(--payW)}
+.disp{font-size:var(--disp);line-height:var(--disp-l);font-weight:var(--dispW)}
+.rtitle{font-size:var(--body);line-height:var(--body-l);font-weight:500}
+.clamp3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.clamp1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.center{text-align:center}
+
+/* layout (8-pt grid; zones separated by space only) */
+.zone{position:relative}
+.z-sky{margin-top:24px}.z-day{margin-top:40px}.z-exit{margin-top:40px}.z-extras{margin-top:48px}
+.moonwrap{display:flex;justify-content:center}
+.skyline{margin-top:16px}
+.day-prev{margin-top:16px}.day-more{margin-top:8px;padding:8px 0}.day-disc{margin-top:8px}
+.cta{display:flex;justify-content:center;align-items:baseline;gap:9px;font-size:var(--cta);line-height:var(--cta-l);font-weight:700;padding:8px 0}
+.ember{display:inline-block;width:5px;height:5px;border-radius:50%}
+.erow{display:flex;gap:16px;align-items:flex-start;min-height:56px;padding:8px 0}
+.erow+.erow{margin-top:8px}
+.erow .g{flex:0 0 24px;height:24px;margin-top:2px}
+.erow .g svg{width:24px;height:24px;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.erow .tb{flex:1;min-width:0}
+.band{display:flex;gap:16px;align-items:center;justify-content:space-between}
+.band .l{flex:1;min-width:0}
+
+/* ───────── styled ───────── */
+.sty{color:#e2e8f0}
+.sty .statusbar{color:rgba(226,232,240,.8)}
+.sty .mu{color:#94a3b8}
+.sty .bz{color:#d9a06a}
+.sty .tx.cap.mu{color:#94a3b8}
+.sty .cta{color:#d9a06a}
+.sty .cta .ember{background:#d9a06a;box-shadow:0 0 6px 1px rgba(217,160,106,.6)}
+.sty .more{color:#e2e8f0}
+.sty .erow .g svg{stroke:#94a3b8}
+.sty .gradbg{position:absolute;inset:0;background:linear-gradient(to bottom,#151030 0%,#100c22 45%,#0a0812 100%)}
+.sty .grain{position:absolute;inset:0;pointer-events:none;opacity:.10}
+.sty .stars{position:absolute;left:0;top:0;pointer-events:none}
+.sty .stars i{position:absolute;border-radius:50%;background:#f5f7fc}
+.moon{position:relative;border-radius:50%}
+.moonlight{position:absolute;pointer-events:none}.wire .moonlight{display:none}
+.sty .moonlight{position:absolute;left:50%;top:0;width:260px;height:260px;margin-left:-130px;margin-top:-58px;border-radius:50%;background:radial-gradient(circle,rgba(130,112,214,.22) 0,rgba(130,112,214,.10) 40%,rgba(130,112,214,0) 60%);pointer-events:none}
+.moon .orb{position:absolute;inset:0;border-radius:50%;overflow:hidden;
+  background:radial-gradient(ellipse 64% 58% at 68% 36%,#c9d0de 0%,#a3acbf 30%,#6f7690 54%,#3a3350 76%,#161122 92%),radial-gradient(ellipse 46% 38% at 78% 84%,rgba(184,118,62,.45),transparent 52%);
+  box-shadow:inset -13px -10px 32px rgba(0,0,0,.4),inset 10px 8px 24px rgba(255,255,255,.05)}
+.moon .orb::after{content:"";position:absolute;width:100%;height:100%;border-radius:50%;background:#0b0914;opacity:.92;left:-62%;top:0;filter:blur(2.5px)}
+/* nav: solid bar + short fade above; nothing scrolls visibly behind the bar */
+.sty .nav{position:absolute;left:0;right:0;bottom:0;height:calc(56px + 24px);z-index:5;background:#0a0812}
+.sty .navfade{position:absolute;left:0;right:0;bottom:calc(56px + 24px);height:32px;z-index:5;background:linear-gradient(to top,#0a0812,rgba(10,8,18,0));pointer-events:none}
+.sty .nav::before{content:"";position:absolute;left:16px;right:16px;top:0;height:1px;background:linear-gradient(to right,transparent,rgba(139,92,246,.4),transparent)}
+.sty .navrow{display:flex;height:56px}
+.sty .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#94a3b8;position:relative}
+.sty .tab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.7}
+.sty .tab span{font-size:12px;line-height:15px;font-weight:500}
+.sty .tab.on{color:#f5f7fc}.sty .tab.on svg{opacity:1}
+.sty .tab.on i{position:absolute;bottom:3px;width:3px;height:3px;border-radius:50%;background:#8b5cf6;box-shadow:0 0 6px 2px rgba(139,92,246,.7)}
+.sty .gesture{position:absolute;left:50%;bottom:8px;width:108px;height:4px;margin-left:-54px;border-radius:2px;background:rgba(226,232,240,.28);z-index:7}
+
+/* ───────── wireframe (greyscale, no colour) ───────── */
+.wire{background:#f4f4f4;color:#444;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 7px,rgba(0,0,0,.045) 7px,rgba(0,0,0,.045) 8px)}
+.wire .statusbar{color:#888}
+.wire .zone{box-shadow:0 0 0 1px #9a9a9a;background:rgba(255,255,255,.55)}
+.wire .zone::before{content:attr(data-z);position:absolute;left:-1px;top:-14px;font:600 10px/12px sans-serif;color:#fff;background:#777;padding:0 5px;z-index:3}
+.wire .mu{color:#777}.wire .bz{color:#444}
+.wire .moon .orb{background:#c8c8c8;box-shadow:none}.wire .moon .orb::after{background:#9d9d9d;filter:none;opacity:1}
+.wire .cta{color:#222}.wire .cta .ember{background:#555}
+.wire .more{color:#444;text-decoration:underline}
+.wire .erow{box-shadow:0 0 0 1px #c4c4c4}
+.wire .erow .g svg{stroke:#777}
+.wire .nav{position:absolute;left:0;right:0;bottom:0;height:80px;z-index:5;background:#e4e4e4;box-shadow:0 -1px 0 #9a9a9a}
+.wire .navrow{display:flex;height:56px}.wire .tab{flex:1;display:flex;align-items:center;justify-content:center;font:500 12px sans-serif;color:#777}
+.wire .tab svg{display:none}.wire .tab i{display:none}.wire .gesture{display:none}
+.wire .navfade{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Днес — преустройство от структурата нагоре</h1>
+<p class="dek">Order: <b>structure → type scale → background → styling</b>. Nothing here is a styled direction. All Bulgarian is <b>PLACEHOLDER_COPY</b> except the approved list («Питай Оракула», the five tab labels, the ratified unavailable message); most strings are reused from the app (list at the bottom). Mock-ups are renders by design; layout on device is yours. Nothing is committed.</p>
+
+<h2>1 · Инвентар — какво има на Днес днес</h2>
+<p class="dek">Read from <span class="mono">apps/mobile/app/(authed)/(tabs)/index.tsx</span>. “Needed” is my estimate (no analytics exist; zero users), not data. Keep / move / remove is a recommendation for the structure below, not a ruling.</p>
+<table class="t">
+<tr><th>Element (today)</th><th>Job</th><th>How often needed</th><th>Verdict</th><th>Reason</th></tr>
+<tr><td>Date line</td><td>orients: this is today</td><td>glance, every open</td><td class="keep">keep</td><td>cheap, anchors the day; goes with the greeting (masthead)</td></tr>
+<tr><td>Greeting (time-of-day + full name)</td><td>warmth, the app addressing the user</td><td>every open, read once</td><td class="keep">keep, smaller</td><td>the name can be long (first + last); one display line, not a headline</td></tr>
+<tr><td>Caption «дневен хороскоп»</td><td>labels the reading</td><td>never needed by a repeat user</td><td class="rem">remove</td><td>a bronze tracked-caps label for something self-evident (R3/C8); the payoff headline carries it</td></tr>
+<tr><td>AI disclosure line</td><td>EU AI Act Art. 50</td><td>legal, always present</td><td class="keep">keep, quiet</td><td>must stay adjacent to the AI text; a caption under the day zone</td></tr>
+<tr><td>Reading opener (paragraph 1)</td><td>sets the day’s mood</td><td>most opens</td><td class="keep">keep, 3-line preview</td><td>enough to feel the day; full text one tap away</td></tr>
+<tr><td>Reading development (paragraph 2, planet anchor row)</td><td>the planet-by-planet “why”</td><td>some opens; the curious</td><td class="move">move behind «Прочети повече»</td><td>longest part, least needed per open; today it pushes everything below the fold</td></tr>
+<tr><td>Payoff (last paragraph)</td><td>the takeaway</td><td>every open — the thing people read</td><td class="move">move to the top of the zone as the headline</td><td>C5: the payoff is the dominant element; it is the answer to “what is today”</td></tr>
+<tr><td>«Плъзни надолу, за да попиташ Оракула»</td><td>patch for the exit being below the fold</td><td>—</td><td class="rem">remove</td><td>instruction text standing in for structure (brief §3.2.3); the exit now sits high</td></tr>
+<tr><td>Sign quip + caption (sun-sign name)</td><td>a light daily beat</td><td>occasional; nice, not needed</td><td class="move">move to an extras row</td><td>short, self-contained, optional</td></tr>
+<tr><td>Caption «небесен ритъм»</td><td>labels the moon block</td><td>never</td><td class="rem">remove</td><td>the moon labels itself; bronze caps caption (R3/C8)</td></tr>
+<tr><td>Moon (202 px) + phase name + sub-label</td><td>today’s sky at a glance</td><td>glance; the phase changes slowly</td><td class="move">keep as a real object (~144 px), move up to zone 2; text to one line</td><td>you asked for a real visual, secondary to the day; the old one sat after four blocks of text</td></tr>
+<tr><td>Meteor note</td><td>rare sky news</td><td>a few days a year</td><td class="move">fold into the moon row’s preview (only when active)</td><td>too rare for its own block</td></tr>
+<tr><td>«За целия лунен профил — докосни «Повече детайли» по-долу.» + «Повече детайли» (bronze ember link)</td><td>entry to moon detail</td><td>rare</td><td class="move">replace by one quiet extras row</td><td>an instruction line + a second bronze ember competing with the exit</td></tr>
+<tr><td>«Питай Оракула» (the one exit)</td><td>the main action; the monetisation path</td><td>the reason for the second tap</td><td class="move">move up: directly after the day zone</td><td>today it is last, behind the moon and details (3 screens down)</td></tr>
+<tr><td>Empty state (no chart)</td><td>first run without birth data</td><td>once</td><td class="keep">keep (designed state)</td><td>unchanged scope</td></tr>
+<tr><td>Loading / error states</td><td>spinner + bordered rose box</td><td>every open that misses the cache</td><td class="keep">keep, restyled later</td><td>staged words (approved device) and quiet lines; not part of this round</td></tr>
+<tr><td><i>Daily crystal</i> — <b>not on Днес today</b></td><td>a free daily beat (tier: free)</td><td>daily glance</td><td class="move">candidate extras row</td><td>exists as <span class="mono">GET /api/crystals/today</span> + hook, shown only under Ти → Кристали. <b>Side effect:</b> each read auto-collects the crystal (writes a row), so showing it on Днес makes every open a write; needs a decision</td></tr>
+<tr><td><i>Transits</i> — <b>not on Днес today</b></td><td>the “what is moving” detail</td><td>rare, for the curious</td><td class="keep">stay off Днес</td><td>already covered by the reading’s planet anchors and by Карта; adding it = a dashboard</td></tr>
+</table>
+
+<h2>2 · Структура — две жични схеми (сиви, без цвят, без блясъци, без звезди)</h2>
+<p class="dek">Text is the real Bulgarian at scale <b>M</b> so line lengths are real. Zones are the outlined boxes; the fine horizontal lines are the 8-pt grid. The red dashed line is the top of the tab bar (752 / 700). First viewport = everything above it.</p>
+<div id="wires"></div>
+
+<h2>3 · Типографски мащаб — W1, нормално състояние, същото реално четене</h2>
+<p class="dek">Same structure (W1), same text, same background (BG1). Payoff and display in Medium in S and M; SemiBold only in L (the current scale). Bold only on «Питай Оракула». The shipped screen is the device capture of 2026-07-27 (old fonts, Вие register, text scrolling behind the bar), not the current build.</p>
+<div id="scales"></div>
+
+<h2>4 · Фон — W1 при мащаб M</h2>
+<p class="dek">BG1 clean depth · BG2 night sky · BG3 texture. No glow behind text, body contrast reported below, base lifted from #08060f.</p>
+<div id="bgs"></div>
+
+<h2>5 · Дължина на четенето — само доклад</h2>
+<div id="reading"></div>
+
+<h2>6 · Копи</h2>
+<div id="copy"></div>
+</div>
+
+<script>
+/* ───────── data ───────── */
+const SCALES = {
+  S:{body:15,bodyL:22,read:16,readL:24,pay:19,payL:26,payW:500,disp:20,dispL:28,dispW:500,cta:20,ctaL:26,label:'S'},
+  M:{body:16,bodyL:24,read:17,readL:26,pay:21,payL:28,payW:500,disp:22,dispL:30,dispW:500,cta:22,ctaL:28,label:'M'},
+  L:{body:17,bodyL:27,read:20,readL:31,pay:30,payL:38,payW:600,disp:19,dispL:26,dispW:400,cta:22,ctaL:28,label:'L (current)'},
+}
+const T = {
+  date:'сряда, 7 октомври', greet:'Добър вечер, Николай Тонев.', sky:'Растяща луна, 62% осветена.',
+  pay:'Сподели съкровено чувство с близък човек и остави сърцето си да води всеки разговор с топла увереност.',
+  p1:'Светлината на транзитното Слънце разгръща хармоничен тригон към твоята рождена Венера в седмия дом, пробуждайки дълбока нежност и копнеж за творческо вдъхновение.',
+  more:'Прочети повече', disc:'Съдържанието е генерирано от изкуствен интелект.', cta:'Питай Оракула',
+  signT:'Везни', quip:'Везните са в баланс. За колко дълго - зависи от теб и от онзи имейл, на който все още не отговаряш.',
+  crysT:'Аметист', crysP:'Спокойствие за вечерта и ясна мисъл.', moonT:'Повече детайли', moonP:'до пълнолуние: 3 дни и 4 часа',
+}
+const SIZES = {full:{w:384,h:832},floor:{w:360,h:780}}
+const TABS=[['dnes','Днес','<circle cx="12" cy="12" r="4.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.2 5.8l-1.7 1.7M7.5 16.5l-1.7 1.7M18.2 18.2l-1.7-1.7M7.5 7.5L5.8 5.8"/>'],['karta','Карта','<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4v2M12 18v2M20 12h-2M4 12h2"/>'],['krug','Кръг','<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>'],['ritam','Ритъм','<path d="M2.5 12h4l2-6 3 12 2.5-9 1.5 3h6.5"/>'],['ti','Ти','<path d="M3 20h18M3 15h18M7 15a5 5 0 0 1 10 0"/>']]
+const GL={sign:'<path d="M3 20h18M3 15h18M7 15a5 5 0 0 1 10 0"/>',gem:'<path d="M12 3l6 5-3 12H9L6 8z"/><path d="M6 8h12"/>',moon:'<circle cx="12" cy="12" r="8"/><path d="M14 4.5a8 8 0 0 0 0 15"/>'}
+
+/* ───────── builders ───────── */
+const moon = (px) => `<div class="moon" style="width:${px}px;height:${px}px"><div class="orb"></div></div>`
+const erow = (g, t, p) => `<div class="erow"><div class="g"><svg viewBox="0 0 24 24">${GL[g]}</svg></div><div class="tb"><div class="tx rtitle">${t}</div><div class="tx body mu clamp1">${p}</div></div></div>`
+function zones(struct, wire) {
+  const masthead = `<section class="zone" data-z="1 masthead"><div class="tx cap mu">${T.date}</div><div class="tx disp" style="margin-top:8px">${T.greet}</div></section>`
+  const day = `<section class="zone z-day" data-z="${struct==='W1'?'3':'2'} your day"><div class="tx pay bz">${T.pay}</div><p class="tx read day-prev clamp3">${T.p1}</p><div class="tx body more day-more">${T.more}</div><div class="tx cap mu day-disc">${T.disc}</div></section>`
+  const exit = `<section class="zone z-exit" data-z="${struct==='W1'?'4':'3'} exit"><div class="cta" data-exit><span class="tx">${T.cta}</span><span class="ember"></span></div></section>`
+  const extras = `<section class="zone z-extras" data-z="${struct==='W1'?'5':'4'} extras">${erow('sign',T.signT,T.quip)}${erow('gem',T.crysT,T.crysP)}${erow('moon',T.moonT,T.moonP)}</section>`
+  if (struct === 'W1') {
+    const sky = `<section class="zone z-sky" data-z="2 sky"><div class="moonwrap" data-moonbox><div class="moonlight"></div>${moon(144)}</div><div class="tx body mu center skyline">${T.sky}</div></section>`
+    return masthead + sky + day + exit + extras
+  }
+  // W2: masthead and sky share one band (text left, moon right) — saves a whole vertical zone
+  const band = `<section class="zone" data-z="1 masthead + sky"><div class="band"><div class="l"><div class="tx cap mu">${T.date}</div><div class="tx disp" style="margin-top:8px">${T.greet}</div><div class="tx body mu" style="margin-top:16px">${T.sky}</div></div><div data-moonbox style="position:relative;flex:0 0 144px;height:144px"><div class="moonlight" style="left:50%;top:50%;margin-top:-130px"></div>${moon(144)}</div></div></section>`
+  return band + day + exit + extras
+}
+function frame(o) { // o: {struct, scale, mode:'wire'|'sty', bg, size, scroll}
+  const {w,h} = SIZES[o.size], S = SCALES[o.scale]
+  const vars = `--body:${S.body}px;--body-l:${S.bodyL}px;--read:${S.read}px;--read-l:${S.readL}px;--pay:${S.pay}px;--pay-l:${S.payL}px;--payW:${S.payW};--disp:${S.disp}px;--disp-l:${S.dispL}px;--dispW:${S.dispW};--cta:${S.cta}px;--cta-l:${S.ctaL}px`
+  const wire = o.mode === 'wire'
+  const nav = `<div class="navfade"></div><div class="nav"><div class="navrow">${TABS.map((t,i)=>`<div class="tab ${i===0?'on':''}"><svg viewBox="0 0 24 24">${t[2]}</svg><span>${t[1]}</span>${i===0?'<i></i>':''}</div>`).join('')}</div></div>`
+  const bgl = wire ? '' : `<div class="gradbg"></div>` + (o.bg==='BG3' ? `<svg class="grain" width="100%" height="100%"><filter id="gr${w}"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .78  0 0 0 0 .8  0 0 0 0 .9  0 0 0 1.4 -.35"/></filter><rect width="100%" height="100%" filter="url(#gr${w})"/></svg>` : '')
+  return `<div class="frame ${wire?'wire':'sty'}" data-struct="${o.struct}" data-scale="${o.scale}" data-size="${o.size}" data-bg="${o.bg||''}" data-scroll="${o.scroll||0}" style="width:${w}px;height:${h}px;${vars}">
+    ${bgl}<div class="statusbar"><span>21:40</span><span>▮▮▮</span></div>
+    <div class="viewport"><div class="scroll">${zones(o.struct, wire)}<div class="endpad"></div><div class="stars"></div></div></div>
+    ${nav}<div class="gesture"></div>${wire?`<div class="redline" style="top:${h-80}px"><b>tab bar top ${h-80}</b></div>`:''}</div>`
+}
+
+/* ───────── settle: stars, moon light, scroll, zone metrics ───────── */
+function placeStars(f) {
+  const sc = f.querySelector('.scroll'), layer = f.querySelector('.stars'); if (!layer) return
+  const W = sc.offsetWidth, H = sc.offsetHeight; layer.style.width = W+'px'; layer.style.height = H+'px'
+  const base = sc.getBoundingClientRect()
+  const rects = [...sc.querySelectorAll('.tx')].map(e => { const r = e.getBoundingClientRect(); return {l:r.left-base.left-14,r:r.right-base.left+14,t:r.top-base.top-12,b:r.bottom-base.top+12} })
+  let s = 11; const rnd = () => ((s = (s*16807)%2147483647)/2147483647)
+  const mb = f.querySelector('[data-moonbox]'); let mc = null; if (mb) { const mr = mb.getBoundingClientRect(); mc = {x:mr.left-base.left+mr.width/2, y:mr.top-base.top+mr.height/2} }
+  const centers = mc ? [[mc.x-125,mc.y-30],[mc.x+128,mc.y+10],[mc.x+110,mc.y-95],[mc.x-105,mc.y+85],[W*.88,H*.03],[W*.1,H*.03]] : [[W*.85,H*.05],[W*.1,H*.1]]
+  const out = []; let tries = 0
+  while (out.length < 34 && tries++ < 6000) {
+    const c = centers[Math.floor(rnd()*centers.length)]
+    const g = () => (rnd()+rnd()+rnd()-1.5)*46
+    const x = c[0]+g(), y = c[1]+g()
+    if (x<6||x>W-6||y<4||y>H-110) continue
+    if (rects.some(q => x>q.l&&x<q.r&&y>q.t&&y<q.b)) continue
+    const m = f.querySelector('[data-moonbox]'); if (m) { const mr = m.getBoundingClientRect(), mc = {x:mr.left-base.left+mr.width/2,y:mr.top-base.top+mr.height/2}; if (Math.hypot(x-mc.x,y-mc.y)<84) continue }
+    const k = rnd(), size = k<.6?1:k<.9?1.6:2.2, op = (0.22+rnd()*0.68).toFixed(2)
+    out.push(`<i style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${size}px;height:${size}px;opacity:${op}"></i>`)
+  }
+  layer.innerHTML = out.join('')
+}
+function settle(root) {
+  const res = []
+  root.querySelectorAll('.frame').forEach(f => {
+    const h = f.offsetHeight, w = f.offsetWidth, sc = f.querySelector('.scroll'), vp = f.querySelector('.viewport')
+    const max = Math.max(0, sc.offsetHeight - vp.offsetHeight)
+    const s = f.dataset.scroll === 'end' ? max : 0; sc.style.transform = `translateY(${-s}px)`
+    if (f.dataset.bg === 'BG2') placeStars(f)
+    const fr = f.getBoundingClientRect(), navTop = h - 80
+    const zs = [...f.querySelectorAll('.zone')].map(z => { const r = z.getBoundingClientRect(); const t = r.top-fr.top, b = r.bottom-fr.top
+      return {name:z.dataset.z, top:Math.round(t), bottom:Math.round(b), st: b<=navTop ? 'in' : t<navTop ? 'partly' : 'below'} })
+    const ex = f.querySelector('[data-exit]'); let exit = null; if (ex) { const r = ex.getBoundingClientRect(); exit = Math.round(r.bottom-fr.top) }
+    let over = 0; sc.querySelectorAll('.tx').forEach(e => { const r = e.getBoundingClientRect(); if (r.right-fr.left > w+0.5) over++ })
+    res.push({struct:f.dataset.struct, scale:f.dataset.scale, size:f.dataset.size, bg:f.dataset.bg, contentH:sc.offsetHeight, navTop, zs, exit, over})
+  }); return res
+}
+const zsum = (m) => m.zs.map(z => `${z.name.split(' ')[0]} ${z.st==='in'?'✓':z.st==='partly'?'<b>½</b>':'✗'}`).join(' · ')
+
+/* ───────── page ───────── */
+const put = (id, html) => document.getElementById(id).innerHTML = html
+const cell = (label, f, note) => `<div class="cell"><div class="cl">${label}</div>${f}${note?`<div class="cs">${note}</div>`:''}</div>`
+put('wires', ['W1','W2'].map(st => `<h3>${st==='W1' ? 'W1 — your model: 1 masthead → 2 today’s sky (moon ~144 px + one line) → 3 your day (payoff headline + 3-line preview + «Прочети повече») → 4 «Питай Оракула» → 5 extras as identical quiet rows' : 'W2 — my alternative: masthead and sky share one band (text left, moon right), so the day and the exit move up a whole zone; same extras rows'}</h3><div class="row-frames">${cell('384×832', frame({struct:st,scale:'M',mode:'wire',size:'full'}))}${cell('360×780 floor', frame({struct:st,scale:'M',mode:'wire',size:'floor'}))}<div id="ws-${st}" style="max-width:520px"></div></div>`).join(''))
+put('scales', `<div class="row-frames">${cell('S — body 15/22 · reading 16/24 · payoff 19/26 Medium · display 20/28 Medium', frame({struct:'W1',scale:'S',mode:'sty',bg:'BG1',size:'full'}))}${cell('M — body 16/24 · reading 17/26 · payoff 21/28 Medium · display 22/30 Medium', frame({struct:'W1',scale:'M',mode:'sty',bg:'BG1',size:'full'}))}${cell('L — current: reading 20/31 · payoff 30/38 SemiBold · greeting 19/26', frame({struct:'W1',scale:'L',mode:'sty',bg:'BG1',size:'full'}))}${cell('Shipped Днес (device capture 2026-07-27)', '<img src="../current-state/device-dnes-2026-07-27.jpg" width="384" height="831" style="display:block;outline:1px solid rgba(255,255,255,.08)">', 'Old fonts, Вие register, bronze caps captions, text visible behind the tab bar.')}</div>
+<h3>Same three at the 360×780 floor</h3><div class="row-frames">${['S','M','L'].map(s=>cell(s, frame({struct:'W1',scale:s,mode:'sty',bg:'BG1',size:'floor'}))).join('')}</div>
+<h3>Scrolled to the end (384×832)</h3><div class="row-frames">${['S','M','L'].map(s=>cell(s, frame({struct:'W1',scale:s,mode:'sty',bg:'BG1',size:'full',scroll:'end'}))).join('')}</div><div id="scale-table"></div>`)
+put('bgs', `<div class="row-frames">${['BG1','BG2','BG3'].map(b=>cell(b+(b==='BG1'?' — clean depth':b==='BG2'?' — night sky':' — texture'), frame({struct:'W1',scale:'M',mode:'sty',bg:b,size:'full'}))).join('')}</div>
+<h3>360×780</h3><div class="row-frames">${['BG1','BG2','BG3'].map(b=>cell(b, frame({struct:'W1',scale:'M',mode:'sty',bg:b,size:'floor'}))).join('')}</div><div id="bg-table"></div>`)
+
+/* contrast table (computed, not asserted) */
+const lin = c => { c/=255; return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4) }
+const lum = h => { const n = parseInt(h.slice(1),16); return 0.2126*lin(n>>16&255)+0.7152*lin(n>>8&255)+0.0722*lin(n&255) }
+const cr = (a,b) => { const [x,y] = [lum(a),lum(b)].sort((p,q)=>q-p); return ((x+0.05)/(y+0.05)).toFixed(2) }
+const BGC = ['#151030','#100c22','#0a0812']
+const FG = [['text #e2e8f0','#e2e8f0','reading, greeting, row titles, «Прочети повече»'],['muted #94a3b8','#94a3b8','date, sky line, row previews, disclosure, nav labels'],['bronzeText #d9a06a','#d9a06a','payoff headline, «Питай Оракула»'],['starlight #f5f7fc','#f5f7fc','active tab label'],['faint #6d7e97','#6d7e97','NOT used in any render (4.3–4.8:1 fails the 7:1 rule)'],['bronze #b8763e','#b8763e','NOT used for text (4.9–5.4:1)']]
+put('bg-table', `<h3>Exact colours</h3><table class="t"><tr><th>Layer</th><th>Value</th></tr>
+<tr><td>Background gradient (all three), top → mid (45 %) → bottom</td><td class="mono">linear-gradient(#151030 0%, #100c22 45%, #0a0812 100%)</td></tr>
+<tr><td>Tab bar</td><td class="mono">solid #0a0812 (tab row + 24 px inset); 32 px fade above it, #0a0812 → transparent</td></tr>
+<tr><td>BG1 moon light (the only light)</td><td class="mono">radial-gradient(circle 130px) rgba(130,112,214,.22) → .10 at 40 % → 0 at 60 %; centred on the moon, clear of the sky line below it</td></tr>
+<tr><td>BG2 stars</td><td class="mono">≤ 34 stars, #f5f7fc, sizes 1 / 1.6 / 2.2 px (60 / 30 / 10 %), opacity .22–.90; six clusters placed in the free areas (beside the moon, top corners); a star is rejected within 14 px (x) / 12 px (y) of any text and within 84 px of the moon centre; they scroll with the content, so none can pass behind text</td></tr>
+<tr><td>BG3 grain</td><td class="mono">feTurbulence fractalNoise baseFrequency .9, 2 octaves, recoloured to rgb(199,204,230) with alpha = 1.4·noise − .35, layer opacity .10, normal blend, under the text</td></tr>
+<tr><td>Base lift</td><td class="mono">bottom #0a0812 (was #08060f); top #151030. Note: this tests the halation question (C19, register BASE-COLOUR-HALATION) on the emulator render; a real OLED check is still pending</td></tr></table>
+<h3>Contrast (computed against the three gradient stops)</h3><table class="t"><tr><th>Text colour</th><th>on #151030 (top)</th><th>on #100c22 (mid)</th><th>on #0a0812 (bottom)</th><th>Used for</th></tr>${FG.map(f=>`<tr><td class="mono">${f[0]}</td><td>${cr(f[1],BGC[0])}</td><td>${cr(f[1],BGC[1])}</td><td>${cr(f[1],BGC[2])}</td><td>${f[2]}</td></tr>`).join('')}</table>`)
+
+/* reading-length report */
+put('reading', `<table class="t"><tr><th>Fact</th><th>Value</th><th>Source</th></tr>
+<tr><td>Prompt target</td><td>420–450 characters, 3 paragraphs, 3–4 sentences, “so the reading fits one mobile screen”</td><td class="mono">apps/web/lib/horoscope/prompts.ts:29</td></tr>
+<tr><td>Server validation band</td><td>30–160 words (rejects outside)</td><td class="mono">apps/web/app/api/horoscope/generate/route.ts:389</td></tr>
+<tr><td>Measured output, 14 live generations 2026-10-07 (gemini-3.7-flash)</td><td><b>58–77 words</b>, median ≈ 67; of the 4 captured with text: <b>362, 377, 487, 492 characters</b> (paragraphs 110–236 chars; last paragraph = payoff, 79–127 chars)</td><td>latency harness + one-off capture</td></tr>
+<tr><td>Model vs target</td><td>2 of 4 captured readings (487, 492) exceed the 450-character target by ~8–9 %; the model does not hold the target tightly</td><td>measured</td></tr></table>
+<p class="dek"><b>Recommendation (report only, no prompt change):</b> on Днес show <b>payoff as headline + the opener clamped to 3 lines, with the development paragraph(s) one tap away («Прочети повече»)</b>, exactly as W1/W2 draw it, instead of asking the model to write shorter. Reasons: the band is 58–77 words and already near the target, so shortening it further costs the reading; the payoff (79–127 chars) is the part that survives any length; at scale M the full reading is ~16–19 lines and the structure still needs room for the sky and the exit. <b>What I cannot tell from here:</b> whether users want the full reading on first sight (no users, no analytics); that is your call. If you would rather show everything, scale S fits the whole reading in the first viewport only if the moon zone shrinks (see the scale table: zone 3 and the exit position per scale and size).</p>`)
+
+/* copy */
+put('copy', `<table class="t"><tr><th>Bulgarian</th><th>Status</th><th>Source</th></tr>
+<tr><td>«Питай Оракула» · «Днес» «Карта» «Кръг» «Ритъм» «Ти»</td><td><b>approved</b></td><td>founder-approved list</td></tr>
+<tr><td>Date, greeting, «Растяща луна, 62% осветена.», «Прочети повече», AI disclosure, «Везни» + quip, «Повече детайли», «до пълнолуние: 3 дни и 4 часа»</td><td>PLACEHOLDER_COPY (reused from the app)</td><td>index.tsx / compose.ts / compliance-copy.ts; the sky line is the first sentence of the waxing-gibbous opener; the moon-row preview is the second half of the existing sub-label (a recomposition: new)</td></tr>
+<tr><td>«Аметист» · «Спокойствие за вечерта и ясна мисъл.»</td><td>PLACEHOLDER_COPY (invented sample)</td><td>stands for <span class="mono">crystal.name_bg</span> / <span class="mono">tagline_bg</span> (both nullable in the schema); real values are not verified</td></tr></table>`)
+
+/* run */
+;(async () => {
+  await document.fonts.load('400 16px "Spectral BG"'); await document.fonts.load('500 16px "Spectral BG"'); await document.fonts.load('700 22px "Spectral BG"'); await document.fonts.load('600 22px "Spectral BG"')
+  const fontOk = document.fonts.check('400 16px "Spectral BG"') && document.fonts.check('500 16px "Spectral BG"') && document.fonts.check('700 22px "Spectral BG"')
+  document.body.dataset.fontOk = String(fontOk)
+  const m = settle(document.body); window.__m = m
+  // wireframe zone tables
+  ;['W1','W2'].forEach(st => { const rows = m.filter(x => x.struct===st && !x.bg && x.scale==='M')
+    document.getElementById('ws-'+st).innerHTML = `<table class="t"><tr><th>Size</th><th>Zone in the first viewport (✓ whole · ½ cut by the bar · ✗ below)</th><th>Exit bottom / bar top</th><th>Content height</th></tr>${rows.map(r=>`<tr><td>${r.size==='full'?'384×832':'360×780'}</td><td>${zsum(r)}</td><td>${r.exit} / ${r.navTop}</td><td>${r.contentH}</td></tr>`).join('')}</table>` })
+  const sc = m.filter(x => x.bg==='BG1' && x.struct==='W1')
+  document.getElementById('scale-table').innerHTML = `<h3>Measured: first viewport by scale (zones: 1 masthead, 2 sky, 3 day, 4 exit, 5 extras)</h3><table class="t"><tr><th>Scale</th><th>Size</th><th>Zones in first viewport</th><th>Exit bottom / bar top</th><th>Content height</th><th>Overflow</th></tr>${sc.filter(x=>x.contentH).map(r=>`<tr><td>${r.scale}</td><td>${r.size==='full'?'384×832':'360×780'}</td><td>${zsum(r)}</td><td>${r.exit} / ${r.navTop}</td><td>${r.contentH}</td><td>${r.over||'none'}</td></tr>`).join('')}</table>`
+  const only = new URLSearchParams(location.search).get('sec')
+  if (only != null) { let i = -1; [...document.querySelector('.wrap').children].forEach(e => { if (e.tagName === 'H2') i++; const keep = (e.tagName === 'H1' || e.tagName === 'P' && i < 0) ? false : (i === Number(only)); e.style.display = keep ? '' : 'none' }) }
+  document.body.dataset.ready = '1'
+})()
+</script>
+</body>
+</html>

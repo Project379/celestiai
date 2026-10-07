@@ -1,0 +1,146 @@
+/* Page 1 (Днес + nav bar) shared mock-up styles. Mock-up only; nothing here is wired into the app.
+   Tokens mirror apps/mobile/components/design-system/tokens.ts. Upright only, one family. */
+@font-face{font-family:'Spectral BG';font-weight:400;src:url('../../../apps/mobile/assets/fonts/SpectralBG-Regular.ttf')}
+@font-face{font-family:'Spectral BG';font-weight:500;src:url('../../../apps/mobile/assets/fonts/SpectralBG-Medium.ttf')}
+@font-face{font-family:'Spectral BG';font-weight:600;src:url('../../../apps/mobile/assets/fonts/SpectralBG-SemiBold.ttf')}
+@font-face{font-family:'Spectral BG';font-weight:700;src:url('../../../apps/mobile/assets/fonts/SpectralBG-Bold.ttf')}
+
+:root{
+  --base:#08060f; --surface1:#0f0b1c; --violet:#8b5cf6; --violet-border:rgba(139,92,246,.25);
+  --bronze:#b8763e; --bronze-text:#d9a06a; --starlight:#f5f7fc;
+  --text:#e2e8f0; --muted:#94a3b8; --faint:#6d7e97; --rose:#fb7185;
+  --ff:'Spectral BG',serif;
+  /* the only four sizes on this screen (R2): caption / reading / cta / payoff */
+  --t-cap:12px;  --l-cap:17px;
+  --t-read:20px; --l-read:31px;
+  --t-cta:22px;  --l-cta:28px;
+  --t-pay:26px;  --l-pay:32px;
+  /* rhythm */
+  --r-micro:4px; --r-tight:12px; --r-para:20px; --r-group:40px;
+  --pad-x:24px; --ib:24px; /* bottom inset: 24 = gesture nav, 48 = three-button nav (?inset=48) */
+  /* page chrome (not the app) */
+  --page-bg:#0c0a12; --page-text:#e9e6f0; --page-muted:#948fa3; --page-border:#241f30;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page-bg);color:var(--page-text);font-family:var(--ff);-webkit-font-smoothing:antialiased}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ───────────────────────── frame ───────────────────────── */
+.frame{position:relative;overflow:hidden;background:var(--base);color:var(--text);font-family:var(--ff);font-weight:400;flex:0 0 auto}
+.frame .bg{position:absolute;inset:0;pointer-events:none}
+.frame .wash-warm{position:absolute;inset:0;background:
+  radial-gradient(ellipse 340px 300px at 78% 86%,rgba(184,118,62,.16),transparent 60%),
+  radial-gradient(ellipse 260px 220px at 12% 6%,rgba(139,92,246,.10),transparent 62%)}
+.frame .star{position:absolute;border-radius:50%;background:var(--starlight);opacity:.34} /* static: only the ember may loop */
+.statusbar{position:absolute;left:0;right:0;top:0;height:32px;z-index:6;display:flex;justify-content:space-between;align-items:center;padding:0 22px;
+  font:500 12px/1 var(--ff);color:rgba(226,232,240,.75)}
+.statusbar i{display:inline-block;width:14px;height:8px;border:1px solid rgba(226,232,240,.6);border-radius:2px;margin-left:6px;vertical-align:middle}
+.viewport{position:absolute;left:0;right:0;top:32px;bottom:0;overflow:hidden}
+.viewport::before{content:"";position:absolute;left:0;right:0;top:0;height:20px;z-index:4;pointer-events:none;background:linear-gradient(to bottom,rgba(8,6,15,.9),rgba(8,6,15,0))}
+.scroll{position:relative;padding:16px var(--pad-x) calc(56px + var(--ib) + 52px)}   /* bottom = tab bar (56) + inset (24) + 52 */
+.gesture{position:absolute;left:50%;bottom:8px;width:108px;height:4px;margin-left:-54px;border-radius:2px;background:rgba(226,232,240,.28);z-index:7}
+
+/* annotation overlays (overview / critique only; never in "clean" renders) */
+.ann .foldline{position:absolute;left:0;right:0;border-top:1px dashed rgba(251,113,133,.7);z-index:9;pointer-events:none}
+.ann .foldline b{position:absolute;right:6px;top:-15px;font:500 11px/1 var(--ff);color:rgba(251,113,133,.9)}
+
+/* ───────────────────────── text roles ───────────────────────── */
+.cap{font-size:var(--t-cap);line-height:var(--l-cap);font-weight:400;color:var(--faint)}
+.cap.m{color:var(--muted)}
+.read{font-size:var(--t-read);line-height:var(--l-read);font-weight:400;color:var(--text)}
+.read.mu{color:var(--muted)}
+.payoff{font-size:var(--t-pay);line-height:var(--l-pay);font-weight:600;color:var(--bronze-text);position:relative}
+.payoff .glow{position:absolute;left:-28px;top:-14px;width:150px;height:96px;background:radial-gradient(ellipse,rgba(184,118,62,.16),transparent 70%);pointer-events:none}
+.payoff span.t{position:relative}
+.pl-mention{font-weight:500}  /* planet mentions: weight only, no bronze (C8) */
+.hair{height:1px;width:50%;margin:var(--r-para) auto;background:rgba(148,163,184,.10)}
+.hair.v{background:linear-gradient(to right,transparent,rgba(139,92,246,.35),transparent)}
+
+/* ───────────────────────── the one lit exit ───────────────────────── */
+.exit{position:relative;text-align:center;padding:14px 0}
+.exit .eglow{position:absolute;left:50%;top:50%;width:280px;height:120px;transform:translate(-50%,-50%);background:radial-gradient(ellipse,rgba(184,118,62,.28),transparent 68%);pointer-events:none}
+.exit .etext{position:relative;display:inline-flex;align-items:baseline;gap:9px;font-size:var(--t-cta);line-height:var(--l-cta);font-weight:700;color:var(--bronze-text);text-shadow:0 0 14px rgba(184,118,62,.55)}
+.ember{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--bronze-text);box-shadow:0 0 8px 2px rgba(217,160,106,.7);animation:breathe 2.6s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.5;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+/* neutral lit exit (failure/retry): starlight + violet, no bronze (bronze = the Oracle speaking) */
+.exit.neutral .eglow{background:radial-gradient(ellipse,rgba(139,92,246,.20),transparent 68%)}
+.exit.neutral .etext{color:var(--starlight);text-shadow:0 0 12px rgba(139,92,246,.45);font-weight:600;font-size:var(--t-read);line-height:var(--l-read)}
+.exit.neutral .ember{background:var(--starlight);box-shadow:0 0 8px 2px rgba(245,247,252,.6)}
+.exit.locked .etext{opacity:.9}
+
+/* ───────────────────────── moon (resolves once) ───────────────────────── */
+.moon{position:relative;flex:0 0 auto}
+.moon .halo{position:absolute;inset:-40%;border-radius:50%;background:radial-gradient(circle,rgba(184,118,62,.16),rgba(139,92,246,.05) 55%,transparent 72%)}
+.moon .depth{position:absolute;inset:7%;border-radius:50%;background:radial-gradient(circle at 32% 30%,rgba(226,232,240,.5),rgba(20,16,30,.85) 60%,#08060f 78%);filter:blur(10px);opacity:.5;transform:scale(1.12)}
+.moon .orb{position:absolute;inset:0;border-radius:50%;overflow:hidden;
+  background:
+   radial-gradient(ellipse 64% 58% at 68% 36%,#c9d0de 0%,#a3acbf 30%,#6f7690 54%,#3a3350 76%,#161122 92%),
+   radial-gradient(ellipse 46% 38% at 78% 84%,rgba(184,118,62,.55),transparent 52%),
+   radial-gradient(ellipse 40% 32% at 15% 12%,rgba(139,92,246,.52),transparent 42%);
+  background-blend-mode:normal,screen,screen;
+  box-shadow:inset -13px -10px 32px rgba(0,0,0,.4),inset 10px 8px 24px rgba(255,255,255,.05)}
+.moon .orb::after{content:"";position:absolute;width:100%;height:100%;border-radius:50%;background:#08060f;opacity:.9;left:-62%;top:0;filter:blur(2.5px)}
+/* tappable moon (direction B): a violet rim reads "tappable" by light, not by a label */
+.moon.tap::before{content:"";position:absolute;inset:-3px;border-radius:50%;border:1px solid rgba(139,92,246,.55);box-shadow:0 0 10px rgba(139,92,246,.35)}
+
+/* ───────────────────────── staged loading (oracle-loading-v2 device, upright) ───────────────────────── */
+.placements{display:flex;gap:8px;justify-content:center}
+.pl{width:96px;display:flex;flex-direction:column;align-items:center}
+.pl-glyph{position:relative;width:44px;height:44px}
+.pl-glow{position:absolute;inset:-26px;border-radius:50%;opacity:0;background:radial-gradient(circle,rgba(184,118,62,.32),rgba(184,118,62,.07) 50%,transparent 74%)}
+.pl-glyph svg{position:relative;width:44px;height:44px;fill:none;stroke:var(--faint);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.35}
+.pl-label{margin-top:12px;font-size:var(--t-cap);line-height:var(--l-cap);color:var(--muted);opacity:0;min-height:34px;text-align:center}
+.pl.lit .pl-glow{opacity:1}
+.pl.lit svg{stroke:var(--bronze-text);opacity:1;filter:drop-shadow(0 0 6px rgba(217,160,106,.6))}
+.pl.lit .pl-label{opacity:1}
+.stagetext{margin:28px auto 0;min-height:62px;max-width:280px;text-align:center;font-size:var(--t-read);line-height:var(--l-read);color:var(--text)}
+.stagetext.slow{color:var(--muted)}
+
+/* ───────────────────────── nav (shared parts) ───────────────────────── */
+.nav{position:absolute;left:0;right:0;bottom:0;z-index:5}
+.nav .fade{position:absolute;left:0;right:0;bottom:0;height:calc(56px + var(--ib) + 40px);background:linear-gradient(to top,rgba(8,6,15,.94) 0,rgba(8,6,15,.94) calc(56px + var(--ib)),rgba(8,6,15,0) 100%);pointer-events:none}
+.nav .row{position:absolute;left:0;right:0;bottom:var(--ib);height:56px;display:flex}
+.nav .row::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--violet-border)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--faint);position:relative}
+.tab svg{width:20px;height:20px;opacity:.55;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tab .lab{font-size:var(--t-cap);line-height:15px;font-weight:500;color:var(--faint)}
+.tab.on{color:var(--starlight)}
+.tab.on svg{opacity:1}
+.tab.on .lab{color:var(--starlight)}
+.tab.pressed{opacity:.6;transform:scale(.94)}
+
+/* ───────────────────────── motion (live replay + reduced motion) ───────────────────────── */
+@keyframes resolve{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.m-read{animation:resolve .6s ease-out both}
+.m-moon{animation:fadein .7s ease-out .2s both}
+.m-exit{animation:fadein .5s ease-out .5s both}
+.m-rest{animation:fadein .5s ease-out .6s both}
+.m-swap{animation:fadein .2s ease-out both}
+.settled *,.settled{animation:none!important}
+.settled .ember{opacity:1;transform:none}
+.rm *,.rm{animation:none!important;transition:none!important}
+.rm .ember{opacity:1;transform:none}
+/* reduced motion = class .rm, set from matchMedia('(prefers-reduced-motion: reduce)') by the page; the checkbox can override for review */
+
+/* ───────────────────────── overview page chrome ───────────────────────── */
+.wrap{max-width:1500px;margin:0 auto;padding:36px 24px 100px}
+h1{font-weight:600;font-size:28px;margin:0 0 6px}
+h2{font-weight:600;font-size:20px;margin:44px 0 10px;border-top:1px solid var(--page-border);padding-top:26px}
+h3{font-weight:600;font-size:15px;margin:0 0 6px}
+.dek{font-size:15px;line-height:1.55;color:var(--page-muted);max-width:820px;margin:0 0 10px}
+.dek b{color:var(--page-text);font-weight:600}
+.states{display:flex;flex-wrap:wrap;gap:30px 28px}
+.pair{display:flex;gap:14px;align-items:flex-start}
+.cell .cl{font:600 13px/1.3 var(--ff);margin:0 0 3px}
+.cell .cs{font:400 12.5px/1.45 var(--ff);color:var(--page-muted);margin:0 0 8px;max-width:384px}
+.cell .cs.copy{color:#b8a9d9}
+.frame{outline:1px solid rgba(255,255,255,.07);border-radius:2px}
+table.t{border-collapse:collapse;font:400 13px/1.45 var(--ff);width:100%;max-width:1200px}
+table.t th,table.t td{border-top:1px solid var(--page-border);padding:6px 10px 6px 0;text-align:left;vertical-align:top}
+table.t th{color:var(--page-muted);font-weight:600}
+.pc{display:inline-block;font:500 11px/1 var(--ff);background:rgba(251,113,133,.14);color:#fda4af;padding:2px 5px;border-radius:2px}
+.ok{color:#86d4a0}.warn{color:#f3c677}
+.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:14px 0 4px;font-size:13px;color:var(--page-muted)}
+.controls button{background:#141019;color:var(--page-text);border:1px solid var(--page-border);border-radius:4px;padding:8px 12px;font:inherit;min-height:36px}
