@@ -458,10 +458,11 @@ minimum).
 
 - **Access / portability:** in-app **"Export my data"** produces a JSON
   file of the user's charts, readings, horoscopes, diary entries,
-  connection data, saved profiles, crystals, and the `users` row.
-  (Known gap being closed: the export currently omits
-  `subscription_quotas` and the crystals tables were recently added —
-  counsel need not act on this, it's an engineering item.)
+  connection data, saved profiles, crystals, crystal recommendations,
+  monthly Oracle usage counters (`subscription_quotas`), the `users`
+  row, and (since 2026-10-07) the user's own `audit_logs` events —
+  event type and timestamp only; the free-form metadata is withheld
+  because it can hold other people's identifiers. See decision 12.
 - **Erasure:** in-app account deletion (§10).
 - **Rectification:** the user can edit their birth data in-app.
 - **Restriction / objection:** currently only via contacting
@@ -522,6 +523,10 @@ minimum).
 11. Whether an **Art. 30 record of processing** and/or a **DPIA** is
     advisable given the birth-data-at-scale + AI-transfer + third-party-
     data profile (we suspect a DPIA is at least worth doing).
+12. **`audit_logs` in the GDPR export** (added 2026-10-07) — we export
+    only the user's own audit events (type + timestamp), not the
+    metadata. Is that sufficient for an Art. 15 access request, and does
+    exporting the trail change the retention analysis in item 5?
 
 ---
 
