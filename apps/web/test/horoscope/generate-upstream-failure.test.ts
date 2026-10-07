@@ -141,6 +141,21 @@ describe('POST /api/horoscope/generate — post-fallback AI failure (§0.8 + LLM
     expect(captureException).not.toHaveBeenCalled()
   })
 
+  it('a primary+fallback TIMEOUT (AI_TimeoutError) degrades to the ratified 503 with no Sentry noise (GEMINI-SLOW-NO-FAILOVER)', async () => {
+    generateFinalText.mockRejectedValueOnce(
+      Object.assign(new Error('Gemini did not answer in time'), { name: 'AI_TimeoutError' }),
+    )
+    seed('chart-timeout')
+    const res = await POST(makeRequest('chart-timeout'))
+
+    expect(res.status).toBe(503)
+    expect(res.headers.get('Retry-After')).toBe('30')
+    const body = await res.json()
+    expect(body.code).toBe('AI_TEMPORARILY_UNAVAILABLE')
+    // A slow provider is a classified upstream condition, not a bug of ours.
+    expect(captureException).not.toHaveBeenCalled()
+  })
+
   it('an UNCLASSIFIED throw also degrades to 503, but is still Sentry-captured', async () => {
     generateFinalText.mockRejectedValueOnce(
       new TypeError("Cannot read properties of undefined (reading 'x')"),

@@ -1,7 +1,6 @@
 import * as Sentry from '@sentry/nextjs'
 import { calculateNatalChart } from '@stellaeum/astrology'
-import { GEMINI_THINKING_LEVEL, generateFinalText } from '@/lib/ai/generate-final-text'
-import { ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
+import { checkAi } from '@/lib/smoke/check-ai'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 
 /**
@@ -81,25 +80,6 @@ async function checkDatabase(): Promise<string> {
     throw new Error(`Supabase select failed: ${error.message}`)
   }
   return 'crystals select(1) ok'
-}
-
-async function checkAi(): Promise<string> {
-  // Deliberately English and trivial — the smoke test verifies the
-  // provider / model / SDK / structured-output path is alive, not
-  // Bulgarian fluency (that is Gate 9's job). A Bulgarian prompt here
-  // would also add literals to the check:bg-lint-baseline ratchet for no
-  // benefit.
-  const { model, text } = await generateFinalText({
-    system: 'Reply with exactly the word "ok" and nothing else.',
-    prompt: 'Say: ok',
-    maxOutputTokens: 200,
-    fallbackModel: ORACLE_FALLBACK_MODEL,
-    thinkingLevel: GEMINI_THINKING_LEVEL.smoke,
-  })
-  if (!text || text.trim().length === 0) {
-    throw new Error('generateFinalText returned empty text')
-  }
-  return `${model} → ${text.trim().slice(0, 48)}`
 }
 
 export async function GET(req: Request) {

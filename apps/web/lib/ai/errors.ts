@@ -14,6 +14,28 @@ type AIErrorLike = {
   statusCode?: unknown
 }
 
+/**
+ * Thrown by generateFinalText when a model call outlives its own timeout
+ * (GEMINI-SLOW-NO-FAILOVER). A slow Gemini call SUCCEEDS slowly instead of
+ * failing, so without a timeout nothing ever triggered the fallback model and a
+ * bad Google day held the request open until the platform limit. It is TRANSIENT
+ * by definition: isTransientAIError() below returns true for it, so the primary's
+ * timeout falls over to the fallback model and, when the fallback also times out,
+ * the route answers with aiTemporarilyUnavailableResponse() (the ratified
+ * «Звездите са временно недостъпни…» 503, no Sentry capture).
+ */
+export class AiTimeoutError extends Error {
+  readonly model: string
+  readonly timeoutMs: number
+
+  constructor(model: string, timeoutMs: number, options?: { cause?: unknown }) {
+    super(`Gemini model ${model} did not answer within ${timeoutMs} ms`, options)
+    this.name = 'AI_TimeoutError'
+    this.model = model
+    this.timeoutMs = timeoutMs
+  }
+}
+
 export const AI_TEMPORARILY_UNAVAILABLE_CODE = 'AI_TEMPORARILY_UNAVAILABLE'
 export const AI_RETRY_AFTER_SECONDS = 30
 
@@ -67,6 +89,8 @@ export function isTransientAIError(error: unknown): boolean {
     // exactly what "transient" means here — worth the same-provider
     // fallback attempt, not a hard fail.
     if (candidate.name === 'AI_NoOutputGeneratedError') return true
+    // Our own per-call timeout (see AiTimeoutError above).
+    if (candidate.name === 'AI_TimeoutError') return true
   }
   return false
 }
