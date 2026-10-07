@@ -43,12 +43,12 @@ Each rule: **rule — source.** "(drift)" marks where shipped code departs from 
 2. **R2: max 3–4 type sizes per screen.** Scale in `tokens.ts`: `sub 17/23`, `body 17/27`, `row 16/21`, `caption 12/17`, plus one reserved `eyebrow 9.5`. — Reference §0, §1. (drift: Днес uses ≥ 8.)
 3. **R3: tracked-caps uppercase is reserved — 0–1 per screen**, never on body-adjacent or long text; everything else is sentence case. — Reference §0. (drift: Днес ≥ 5, moon-detail 5, even the approved moon-detail mock-up.)
 4. **R1: one dominant element per screen, 6–8× the smallest text;** the hero is an object (moon, wheel, ember), not a headline; the largest text tier needs only ~3.5× caption. — Reference §0.
-5. **Reading text is serif and upright.** Lead and development in the body face; payoff in the display face. **No italic anywhere by default** (founder dislikes italics, 2026-10-07; my proposal is no italic role at all — research A.7). `index.tsx` and `_source-v4` still italicise the lead and hints; that is drift from this rule.
-6. **Bulgarian forms are required, not optional.** *New finding:* the currently shipped Playfair Display and EB Garamond have **no** Bulgarian localized forms (`research/TYPOGRAPHY-AND-REFERENCES.md` §A). A font used for Cyrillic body, italic or display must carry `cyrl/BGR` `locl` (verified candidates there). **Font pairing is yours to choose — not decided here.**
+5. **Reading text is serif and upright.** Lead and development in the body face; payoff in the display face. **No italic anywhere — RULED 2026-10-07; the italic face is dropped from the plan.** `index.tsx` and `_source-v4` still italicise the lead and hints; that is drift from this rule.
+6. **Bulgarian forms are required, not optional.** *New finding:* the currently shipped Playfair Display and EB Garamond have **no** Bulgarian localized forms (`research/TYPOGRAPHY-AND-REFERENCES.md` §A). A font used for Cyrillic body, italic or display must carry `cyrl/BGR` `locl` (verified candidates there). **Font pairing: PENDING the founder's ruling after another look at the renders (research A.6).** Never tag Bulgarian text `lang="ru"` (screen readers would read it in a Russian voice); on the web the Bulgarian forms can be switched off per element with `font-feature-settings: "locl" 0` while `lang="bg"` stays.
 7. **Cinzel is Latin and Roman numerals only, never Cyrillic** — HARD RULE, REVISIT-42 (six-plus recurrences). — Reference §1. (See contradiction C3: the web now falls back per glyph.)
-8. **No italic faces are loaded.** Upright everywhere removes the false-italic risk (synthesised italic loses Bulgarian italic forms) and the italic font files. — research A.5, A.7.
+8. **No italic faces are loaded (RULED 2026-10-07).** Upright everywhere removes the false-italic risk (synthesised italic loses Bulgarian italic forms) and the italic font files. — research A.5, A.7.
 9. **Minimum legible size**: 12 px caption; `faint` is 4.87:1 on base only because it was lifted on 2026-08-27; never go below it for text. — `DESIGN-RESEARCH` §D.
-10. **Tabular figures** for degrees, percentages, dates. — `DESIGN-RESEARCH` §B.1 (not yet set anywhere). **Monospace is retired in my recommendation** (dates and labels in the body face, 12 px floor) — ruling pending, research A.8.
+10. **Tabular figures** for degrees, percentages, dates. — `DESIGN-RESEARCH` §B.1 (not yet set anywhere). **Monospace is retired (RULED 2026-10-07):** dates and labels in the body face, tabular figures, 12 px floor — research A.8.
 11. **Bulgarian quotation marks „…“, no straight quotes**; informal ти everywhere; **new user-facing Bulgarian needs the founder's approval** (proposed skill rule; `CLAUDE.md`).
 12. **Check the longest real Bulgarian string for every slot** (lunar phase names 19 chars: «Изгряващ полумесец»; «Слънце · Луна · Асцендент» 25; list subtitles ≈ 37), never an English-length guess. — `BUILD_VERIFICATION_GUARDS` Guard 1; Reference R6.
 
@@ -102,7 +102,7 @@ Rules: **R4** — 1–2 accent roles per screen, one temperature (warm *or* cool
 | Surface | Who speaks | Rule |
 |---|---|---|
 | Readings, the Днес horoscope, the sun-sign quip, interpretations | the Oracle | second person, informal **ти** |
-| Loading and reveal **stage lines**, "taking longer" lines | the Oracle | present tense; "I" is allowed *(my reading of your ruling — confirm)* |
+| Loading and reveal **stage lines**, "taking longer" lines | the Oracle | present tense; "I" is allowed (approved 2026-10-07) |
 | **Empty states** and **guidance** (hints, next-step lines, invitations) | the Oracle | second person or "I"; never an instruction sentence standing in for a broken affordance (§3.2.3) |
 | Buttons, labels, tab names, settings, **form errors**, API error messages | **nobody** (neutral UI) | **no first person at all**: no «ние/нас/ни», no «-ам/-ям» as a speaker |
 | The one AI-unavailable message | ratified | «Звездите са временно недостъпни. Опитай отново след малко.» stays as is |
@@ -111,14 +111,14 @@ Rules: **R4** — 1–2 accent roles per screen, one temperature (warm *or* cool
 - **Present and future tense only.**
 - **Never a first-person past participle** (подредил/подредила, видял/видяла, направил/направила).
 - If a past event must be referenced, use impersonal or third-person phrasing (about the sky or the thing, not about the speaker).
-- **[Proposed by me, not a founder ruling — confirm]** Nothing addressed to the user may reveal the *user's* gender either (a compact pair «готов/а» is wrong twice).
+- Nothing in the copy may reveal the *user's* gender (approved 2026-10-07): reword first; a spelled-out pair is the fallback; a compact pair «готов/а» is never acceptable.
 - Enforcement: written into the Bulgarian skill as project rules 3–5; a validation check for Gemini output and a static content gate are *proposed*, not built (`VOICE-COPY-AUDIT-2026-10-07.md` §5).
 
 **What passes today:** the three stage lines in the oracle-loading mock-up («Чета небето над теб…», «Свързвам местата, които се светват…», «Подреждам думите…») are present tense, first person singular, genderless — compliant. The composed Днес copy is second person, present tense — compliant.
 
-**What does not:** existing copy that breaks the rule is **listed, not reworded**, in `VOICE-COPY-AUDIT-2026-10-07.md`: the company "we" in 44 error/UI strings (68 sites), 15 compact gender pairs / participles, ~110 user-voice first-person strings that need a ruling (is a journal prompt Oracle guidance or the user's own voice?), and ~10 Oracle-side "we" lines. All rewording needs your approval; one gender-neutral rewording of the moon-detail prompt is *proposed* there.
+**What does not:** existing copy that breaks the rule is **listed, not reworded**, in `VOICE-COPY-AUDIT-2026-10-07.md`: the company "we" in 44 error/UI strings (68 sites; fixed per screen during the parity pass), compact gender pairs (neutral rewordings proposed in `GENDER-NEUTRAL-REWORDINGS-PROPOSAL.md`, awaiting approval), and ~10 Oracle-side "we" lines (now ruled out). The ~110 user-voice first-person strings are allowed. All rewording needs your approval.
 
-**Open questions for you (not decided here):** (1) do journal stems, affirmations and journal prompts speak as the Oracle (second person) or as the user (first person)? (2) may the Oracle say an inclusive "we"? (3) are legal and support pages exempt from "no first person" (the company necessarily says "we" there)?
+**Rulings 2026-10-07 on the open questions:** (1) journal stems, affirmations and journal prompts may speak in the **user's own first-person voice**, with no gendered forms; (2) **the Oracle never says "we"**; (3) **legal and support pages are exempt** from the no-first-person rule; (4) the company "we" in plain UI (44 strings) is fixed **per screen during the parity pass, not now**.
 
 ---
 
@@ -237,7 +237,7 @@ Status: **RESOLVED** = settled by your 2026-10-07 rulings. **REC** = my recommen
 | **C10** | `orakul-v4`: a lit free-text ask-line | No user free text ever reaches the model (SYSTEM-MAP §4) | **CHANGE (your ruling): the Oracle takes no free text.** The mock-up's ask-line becomes topic choice. |
 | **C11** | `faint` #64748b (Reference) | `tokens.ts` #6d7e97; `_source-v4` #5d6a82 | **RESOLVED: #6d7e97.** Reference fixed; `_source-v4.html` (#5d6a82) still to correct when the mock-ups are next touched. |
 | **C12** | Oracle as FAB / nav glyph (research §2.6) | Shipped: in-screen invitation only | **REC: keep the in-screen invitation; no FAB.** It is built, it is the single lit exit, and a FAB adds a second persistent control. |
-| **C13** | "Web design is Petko's call" | You ordered web parity on a branch | **REC: you decide web design (your branch, your order); record Petko's earlier ownership as superseded.** Needs your confirmation — only you can say who owns it. |
+| **C13** | "Web design is Petko's call" | You ordered web parity on a branch | **RESOLVED 2026-10-07: the founder decides web design, the designer shapes the visual language, CC executes.** Petko's earlier ownership is superseded. |
 | **C14** | Onboarding research: show value late is wrong | Wizard is 4 steps; reveal flow fixes the *after* | **REC: leave to its own investigation; not a design-rule question.** |
 | **C15** | ти everywhere | `bulgarian-skill` default Вие | **RESOLVED: ти.** Skill updated and approved 2026-10-07. |
 | **C16** | «лунен дневник» in mock-ups | «Лунен Дневник» in moon-detail | **RESOLVED: «Лунен дневник» at sentence start, «лунен дневник» mid-sentence.** moon-detail fixed. |
@@ -251,7 +251,7 @@ Status: **RESOLVED** = settled by your 2026-10-07 rulings. **REC** = my recommen
 
 # 7. What I am deliberately not deciding
 
-Fonts (research §A — your pick, and the Bulgarian roman-form question first) · desktop shell · how much data the chart hero shows (C9) · whether web follows mobile exactly (C13) · the new-user reveal's copy and traits · all new Bulgarian copy.
+Fonts (research §A.6 — PENDING your ruling: Bulgarian forms everywhere or in display only) · desktop shell · how much data the chart hero shows (C9) · the new-user reveal's copy and traits · all new Bulgarian copy.
 
 # 8. After you approve this brief
 

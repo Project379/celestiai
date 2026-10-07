@@ -173,11 +173,12 @@ lands. Petko still owns the swap and the final ruling.
 | Pricing regime | €/call | 300 calls | % of €6,99/mo | % of €5,00/mo (annual) |
 |---|---|---|---|---|
 | Llama 3.3 70B (cap's original basis) | €0.0006–€0.0019 | €0.17–€0.56 | 2–8% | 3–11% |
-| Gemini 3.7 Flash — current (75% off) | €0.0033 | **€1.00** | ~14% | ~20% |
-| Gemini 3.7 Flash — **LIST price** | €0.0133 | **€4.00** | **~57%** | **~80%** |
+| Gemini — **measured** (AI Studio spend 2026-10-07) | ≈€0.0022 | **≈€0.66** | ~9% | ~13% |
+| Gemini — after the 2027 price doubling | ≈€0.0044 | **≈€1.30** | ~19% | ~26% |
+| ~~Gemini 3.7 Flash — LIST price (superseded)~~ | ~~€0.0133~~ | ~~€4.00~~ | ~~57%~~ | ~~80%~~ |
 | GPT-5.4-mini (quality fallback) | not quoted in brief — assume ≥ Gemini list; any cap must hold here too | | | |
 
-*Net basis (added 2026-10-07):* against the ex-ДДС price (€5.83/mo; €4.17/mo annual effective) the list-price row is ≈69% / ≈96% — before Stripe and app-store fees. SYSTEM-MAP §"Break-even" uses a per-call cost ~15× lower and concludes the cap is comfortably safe; **the two documents disagree and that is not resolved here.**
+> **CORRECTED 2026-10-07 (founder, from AI Studio billing):** actual Gemini spend was **€0.14 over 28 days (~70 requests) ≈ €0.002/call**; the 2026-10-01 test day was ~45 calls ≈ €0.10. The list-price figure in this document (€0.0133/call) was **~6–15× too high** (it assumed removing a 75% discount from a catalog price; billing shows no such cost). At the measured cost, 300 calls/month ≈ **€0.66** (~11% of the €5.83 net price), ≈ **€1.30** after the 2027 doubling (~22% of net). Caveat: the sample is small and includes smoke-test probes. A project spend cap is being set in AI Studio. **The "Reading" and "Options" text below was written against the superseded list-price figure; read it as history — its conclusion that the cap is a margin input does not hold at the measured cost.**
 
 ### Reading
 

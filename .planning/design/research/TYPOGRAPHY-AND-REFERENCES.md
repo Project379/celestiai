@@ -22,7 +22,7 @@ tags: "[verified] = I ran or read it today · [sourced] = external, link given �
 
 Why it matters [sourced from the project's own research + common knowledge of the script]: Bulgarian italic differs most from Russian italic (г, д, и, й, к, л, п, т, ц, ч, ш, щ, ю), and some roman forms (д, л, ж…) differ too. A Bulgarian reader sees a Russian-form italic as slightly foreign — and `DESIGN-RESEARCH` §C.1 says the burden of "warm" sits on the writing and its look.
 
-**Mechanism [verified]:** the browser (and React Native on iOS/Android with the right `lang`/locale) picks Bulgarian forms through OpenType `locl` when the text is tagged `bg`. A font without a `cyrl/BGR` language system silently ignores the tag. **CSS cannot add forms a font lacks.** On the web the fix is `lang="bg"` (already set on `<html>`) plus fonts that have them. On React Native this needs a separate check — I did not test whether RN applies `locl` for a `bg` locale; **that is an open risk for any font choice on mobile.**
+**Mechanism [verified]:** the browser (and React Native on iOS/Android with the right `lang`/locale) picks Bulgarian forms through OpenType `locl` when the text is tagged `bg`. A font without a `cyrl/BGR` language system silently ignores the tag. **CSS cannot add forms a font lacks.** *(Correction 2026-10-07, founder: on the **web**, Bulgarian forms CAN be switched off per element with `font-feature-settings: "locl" 0` while keeping `lang="bg"`, so "Bulgarian forms in display only" is achievable on the web. Never tag Bulgarian text `lang="ru"` — screen readers would read it with a Russian voice. For React Native see A.9.)* On the web the fix is `lang="bg"` (already set on `<html>`) plus fonts that have them. On React Native this needs a separate check — I did not test whether RN applies `locl` for a `bg` locale; **that is an open risk for any font choice on mobile.**
 
 ## A.2 What I screened (all from Google Fonts, SIL OFL)
 
@@ -55,7 +55,7 @@ Probed with fontTools, 40+ font files. Results that matter [verified]:
 - **EB Garamond:** left and right identical — no Bulgarian forms.
 - **Source Serif 4, Spectral, Playfair 2, Cormorant Garamond:** with `lang="bg"` the **upright** text changes a lot: `т` is drawn in an `m`-like form, `д` grows a foot/looped form, `л` becomes a pointed Λ, `ж`, `и`, `ш` change.
 
-**Honest caveat — this is exactly the thing I cannot judge and you can.** In Bulgarian book typography the *italic* forms are the strongly different ones; how far the *upright* forms should differ is a matter of taste and tradition, and these four fonts all choose the strong version when `lang="bg"` is set. If roman `т` as `m` looks wrong to you, the choices are: use these fonts with `lang="bg"` only on italics/display; use a font with a milder roman set (Lora/Vollkorn are candidates I did not render); or accept Russian-style roman forms and only localise italics — which no tested font allows to be split by CSS alone (`locl` is on or off per language).
+**Honest caveat — this is exactly the thing I cannot judge and you can.** In Bulgarian book typography the *italic* forms are the strongly different ones; how far the *upright* forms should differ is a matter of taste and tradition, and these four fonts all choose the strong version when `lang="bg"` is set. If roman `т` as `m` looks wrong to you, the choices are: use these fonts with `lang="bg"` only on italics/display; use a font with a milder roman set (Lora/Vollkorn are candidates I did not render); or accept Russian-style roman forms and only localise italics — which — correction 2026-10-07 — **on the web CAN be split per element** with `font-feature-settings: "locl" 0` under `lang="bg"` (never tag text `lang="ru"`); in React Native it cannot (A.9).
 
 ## A.4 Three pairings (display + body), rendered with real app strings
 
@@ -95,7 +95,7 @@ What the renders show [verified by looking, not by metrics]:
 - Paragraph lengths differ between the columns because the Bulgarian forms are wider.
 - Caveats unchanged from A.1/A.5: React Native may not apply `locl` from the device locale (untested); Playfair 2 / Source Serif 4 / Cormorant are variable fonts (static instances may be needed); Cormorant is thin at 17–19 px on dark.
 
-## A.7 Italics — proposal (founder dislikes them; default is upright everywhere)
+## A.7 Italics — RULED 2026-10-07: none; the italic face is dropped from the plan (original proposal below)
 
 **Proposal: no italic role at all.**
 1. **The job italics did is already done by other means.** Today italics mark (a) the greeting, (b) the reading's lead line, (c) the two instruction hints, (d) the chart name, (e) the Oracle's placeholder/ask-line. With the voice rule (the Oracle is the speaker everywhere) italic can no longer mean "the Oracle speaking"; bronze, position and the display face (the payoff) already carry hierarchy.
@@ -103,7 +103,7 @@ What the renders show [verified by looking, not by metrics]:
 3. **Fewer files.** Upright-only drops the italic face from the bundle and removes the false-italic risk entirely (rule 8 in the brief).
 4. **If you ever want one:** the only defensible role is the **Oracle's single opening line of a reading** — one line per screen, never a hint or label. I do not recommend it; I name it only because you asked for at most one.
 
-## A.8 Monospace for dates and labels — ruling needed; my recommendation: retire it
+## A.8 Monospace for dates and labels — RULED 2026-10-07: retired (body font, tabular figures, 12 px floor); evidence below
 
 Render: `typography/mono-vs-body-font.png` — eight real strings (date lines, diary date, specimen label, moon facts, upcoming dates, week-track labels, legend caps, numbers that must align) at the sizes the mock-ups/code use, in ① the mono stack (Consolas stands in for Menlo / Android monospace), ② today's body font, ③ a candidate body font (Source Serif 4) — ② and ③ with tabular figures.
 
@@ -116,6 +116,17 @@ Findings:
 - A mono face is a fifth typeface in the bundle for four small usages.
 
 **Recommendation:** no monospace anywhere. Dates and labels in the body font, sentence case, tabular figures on, **12 px minimum** (retire the 8–10.5 px sizes with it). The tracked-caps legend labels fall under R3, not under this ruling.
+
+## A.9 React Native and Bulgarian forms — report only (2026-10-07)
+
+**Not tested on a device.** This machine has no Android emulator, no `adb` and no iOS device, and you asked for a device build (not Expo web); an Expo-web result would say nothing about native shaping. What I could verify is the API surface in the installed React Native 0.81.5 source:
+
+- **[verified in source]** `fontVariant` maps to a fixed list of OpenType features (`smcp`, `tnum`, `lnum`, `onum`, `pnum`, `ss01`–`ss05` …); there is **no way to pass an arbitrary feature such as `locl` 0**. So "Bulgarian forms off for one element" is, as far as the public API goes, **not available in React Native** without a native module or a second font file.
+- **[verified in source]** the Android text code never sets a text locale (no `setTextLocale`/`LocaleList` in `views/text`), and `Text` has no `lang` prop. Shaping therefore uses the platform default locale (the device's), which means Bulgarian forms would appear **only on a device whose system locale resolves to Bulgarian** — and on every other device the same string would show Russian-style forms.
+- **[verified]** `tabular-nums` (`tnum`) IS available through `fontVariant` — relevant to the monospace ruling.
+- **Not known:** whether iOS CoreText picks `locl` from the preferred language, and whether a bundled custom font gets Bulgarian forms on either platform.
+
+**Test I would run on a dev-client build (a one-screen harness):** render the same Bulgarian string in each candidate font on (a) a device set to Bulgarian, (b) the same device set to English, (c) set to Russian; photograph all three. Expected failure to look for: forms follow the *device* locale, not the content — which would make font choice B/C/D depend on the user's phone language. If so, the remedy is separate static font files (one with the Bulgarian forms baked in as the default glyphs), not CSS.
 
 ---
 

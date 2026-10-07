@@ -81,7 +81,7 @@ Decision needed: does the Oracle ever say “we” (inclusive, "we humans")? If 
 
 ## 2.F Not voice, but found while auditing
 
-- `moon-phase.ts` `physicalAppearance`: «„млада луна",» ends with a **straight ASCII quote** — the skill requires „…“. Spelling-level defect; unchanged.
+- Straight closing quote after „…: **fixed for „млада луна“** (2026-10-07: 4 code sites + the mock-up). The same defect remains at 18 other sites (e.g. „близнаци", „Чайникът", „моментна снимка", „R", „камъкът на търговеца", „морска вода", the affirmation wrappers in both `LunarPhaseCard` files, `ManifestHistory`, `stars` descriptions) — listed, not fixed, because the ruling named only „млада луна“.
 - Diary-term casing outside the ruling: `ManifestDiaryContent.tsx:109` shows «лунен дневник» as a standalone label (mobile) and the web heading is «Лунен дневник»; the ruling covers sentence start and mid-sentence only, so standalone labels are unruled.
 - `you.tsx` / `YouHub.tsx` hint «лунен дневник — по три реда» starts lower-case; by your casing rule a sentence-start is capitalised. It sits as a hint under the label «Дневник», so I left it and list it.
 

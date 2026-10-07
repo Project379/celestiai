@@ -923,14 +923,15 @@ app-store fees. The LLM decision doc has been recomputed at the locked price. Ag
   line on every model checked** — by ~2.7× even in the worst case tested.
   Cost is not a launch risk on any model under consideration, at the cap.
 
-  **Unresolved (noted 2026-10-07): these break-even figures disagree with
-  `LLM-PROVIDER-DECISION-2026-08-27.md`.** That doc plans against list-price
-  Gemini at ≈€0.0133 per call; €5.83 ÷ €0.0133 ≈ 440 generations (not
-  800–950), so the cap is ~1.5× below break-even before store/Stripe fees,
-  not ~2.7×. On the net price, 300 calls at list cost ≈69% of monthly
-  revenue and ≈96% of the annual effective rate. The two docs use per-call
-  costs about 15× apart (this section implies ≈€0.0009 per call for the
-  current model). Which per-call cost is right is open.
+  **Resolved 2026-10-07 (founder, AI Studio billing): the per-call cost is
+  ≈€0.002** (€0.14 over 28 days, ~70 requests; lab figure €0.00265 in
+  ADVISOR-HANDOFF; small sample incl. smoke probes). At that cost 300
+  calls/month ≈ €0.66, ~11% of the €5.83 net price (≈€1.30 after the 2027
+  doubling), and break-even is ≈2,650 generations/month at €0.0022 (≈1,300
+  after the doubling), before store/Stripe fees. The "$0.0009" Llama-era
+  figure behind the ~6,700 above, and the ~$0.006 inferred replacement
+  figure behind "800–950", are both superseded. `LLM-PROVIDER-DECISION`'s
+  list-price table (€0.0133/call) was ~6× too high and is corrected there.
 
 **5. Health: OK.** The unit economics are measured and comfortable within
 the usage cap. The open issues are that the replacement-model costs are estimates, not
