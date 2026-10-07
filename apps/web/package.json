@@ -15,7 +15,8 @@
     "diag:hand-applied-schema": "node --env-file=.env.local scripts/diagnostics/audit-hand-applied-schema.mjs",
     "diag:probe-column": "node --env-file=.env.local scripts/diagnostics/probe-column-type.mjs",
     "diag:probe-diary": "node --env-file=.env.local scripts/diagnostics/probe-diary-schema.mjs",
-    "diag:dry-run-migration": "node --env-file=.env.local scripts/diagnostics/dry-run-migration.mjs"
+    "diag:dry-run-migration": "node --env-file=.env.local scripts/diagnostics/dry-run-migration.mjs",
+    "measure:gemini-latency": "vitest run --config vitest.latency.config.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.120",
