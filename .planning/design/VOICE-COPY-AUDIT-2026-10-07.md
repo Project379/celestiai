@@ -82,6 +82,7 @@ Decision needed: does the Oracle ever say “we” (inclusive, "we humans")? If 
 ## 2.F Not voice, but found while auditing
 
 - `moon-phase.ts` `physicalAppearance`: «„млада луна",» ends with a **straight ASCII quote** — the skill requires „…“. Spelling-level defect; unchanged.
+- Diary-term casing outside the ruling: `ManifestDiaryContent.tsx:109` shows «лунен дневник» as a standalone label (mobile) and the web heading is «Лунен дневник»; the ruling covers sentence start and mid-sentence only, so standalone labels are unruled.
 - `you.tsx` / `YouHub.tsx` hint «лунен дневник — по три реда» starts lower-case; by your casing rule a sentence-start is capitalised. It sits as a hint under the label «Дневник», so I left it and list it.
 
 # 3. What I did NOT find
@@ -99,12 +100,15 @@ Two defects: it has a gender pair, and it is the user speaking about themselves.
 | **1 (my pick)** | **«Какъв е напредъкът ти дотук и какво още трябва да се настрои?»** | Closest to the original meaning; a noun (напредък) replaces the participle; ти-register; "настрои" keeps the original's second clause. |
 | 2 | «Докъде са стигнали нещата и какво още трябва да се настрои?» | The participle agrees with "нещата" (things), not with a person; loses the personal "ти". |
 | 3 | «Какво вече е подредено и какво още трябва да се настрои?» | Impersonal passive participle on a thing (подредено), not on the speaker. |
+| 4 (first-person, genderless) | a present-tense stem in the style of the diary stems, e.g. «Напредвам към…» / «Настройвам още…» | Only if you rule that journal prompts speak as the user (§2.C); then the moon-detail prompt becomes such a stem. Included so you can choose a wording without first answering who speaks. |
 
 The other four journal prompts (2.B) have the same problem; if you pick a pattern for option 1, I can propose the matching four. I have not proposed them.
 
 # 5. Proposal — validating Oracle gender and tense in Gemini output (REPORT ONLY; no prompt or validator changed)
 
 **What exists:** `apps/web/lib/ai/validate-reading.ts` checks sentinel balance, no model-written digits, token resolution, script purity, and word count. `apps/web/lib/horoscope/prompts.ts` and `lib/oracle/prompts.ts` set the register ("ти" form) but say nothing about the speaker's own gender or tense.
+
+**Naming:** the prompts currently name the speaker "Stellaeum" (`You are Stellaeum, a mystical guide…`), not the Oracle; the voice rule would rename it in the prompt.
 
 **Proposed prompt rule (one line in each prompt's VOICE block):**
 > "You speak as the Oracle, which has no gender. Use present and future tense only. Never refer to yourself with a past participle (never forms like подредил / подредила / видял / видяла). If something already happened, say it impersonally or about the sky («небето се промени»). Do not use a form that would reveal the reader's gender either."
@@ -113,8 +117,10 @@ The other four journal prompts (2.B) have the same problem; if you pick a patter
 
 Detection (regex on the substituted plain text):
 
-1. First/second person perfect with a participle: `\b(съм|бях|си)\s+[а-яА-Я]+(ъл|ил|ял|ал|ел)(а)?\b`.
-2. Compact pairs: `[а-яА-Я]+(ъл|ил|ял|ен|ан)/(а|на|ла)\b`.
+1. First/second person perfect with a participle: `(?<![а-яА-Я])(съм|бях|си)\s+[а-яА-Я]+(ъл|ил|ял|ал|ел)(а)?(?![а-яА-Я])`.
+2. Compact pairs: `[а-яА-Я]+(ъл|ил|ял|ен|ан)/(а|на|ла)(?![а-яА-Я])`.
+
+(**JS note:** `\b` is ASCII-only even with the `u` flag, so it never matches next to Cyrillic; the patterns above use Unicode-aware lookarounds instead. They are untested against real output.)
 3. A short stop-list of gender-marked adjectives after «си» / «бъди» (готов, уморен, благодарен, сам…), maintained like the existing allow-lists.
 
 **Known weaknesses (honest):** (1) «си» is also the reflexive dative («взе си») and a verb-ending collision (профила си) — pattern 1 requires a participle directly after «си», so the common reflexive cases do not match, but I have not run it against real model output; it needs a corpus run before it is made blocking. (2) It cannot catch an adjective that carries gender without a «си/съм» (e.g. «Бъди внимателен»). (3) Regenerating costs a Gemini call (see GEMINI-SLOW-NO-FAILOVER); a rejection rate above a few percent would need the prompt fixed instead of retrying. **Suggested rollout:** log-only first (no reject), measure the hit rate on a day of cron horoscopes, then decide.

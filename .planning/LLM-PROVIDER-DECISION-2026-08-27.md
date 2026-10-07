@@ -177,6 +177,8 @@ lands. Petko still owns the swap and the final ruling.
 | Gemini 3.7 Flash — **LIST price** | €0.0133 | **€4.00** | **~57%** | **~80%** |
 | GPT-5.4-mini (quality fallback) | not quoted in brief — assume ≥ Gemini list; any cap must hold here too | | | |
 
+*Net basis (added 2026-10-07):* against the ex-ДДС price (€5.83/mo; €4.17/mo annual effective) the list-price row is ≈69% / ≈96% — before Stripe and app-store fees. SYSTEM-MAP §"Break-even" uses a per-call cost ~15× lower and concludes the cap is comfortably safe; **the two documents disagree and that is not resolved here.**
+
 ### Reading
 
 **At Llama prices, 300 is a pure circuit breaker.** It exists to catch a

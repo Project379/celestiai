@@ -48,7 +48,7 @@ Epistemic tags: **VERIFIED** = found in a file I read (cited); **INFERRED** = my
 | 18 | **Skeletons: bespoke, per-screen, layout-matching only; no generic skeleton system. Reduced-motion, delayed spinners, considered empty states: approved in principle, deferred to each screen. Light mode: not on the table.** | 2026-08-27 | `DESIGN-RESEARCH` §E | VERIFIED |
 | 19 | **Paywall/premium designed from scratch; `/pricing` is not a reference.** | 2026-08-27 | `DESIGN-RESEARCH` §E.2 | VERIFIED |
 | 20 | **Design floor 360×780** (not iPhone SE). | — | `index.tsx` comment citing `DEVICE-SUPPORT-POLICY.md` | VERIFIED |
-| 21 | **Voice**: knowing older sister / wise friend; no roasting; informal ти; no aggressive Western-wellness language; sits beside Orthodox tradition, not against. | 2026-04 | `MOBILE_UX_RESEARCH.md` §5, §7; `COMPETITOR_ANALYSIS.md` | VERIFIED |
+| 21 | **Voice** *(superseded 2026-10-07 by the founder's ruling: the Oracle is the speaker and has no gender — "older sister" no longer applies; see DESIGN-BRIEF §2.7)*: knowing older sister / wise friend; no roasting; informal ти; no aggressive Western-wellness language; sits beside Orthodox tradition, not against. | 2026-04 | `MOBILE_UX_RESEARCH.md` §5, §7; `COMPETITOR_ANALYSIS.md` | VERIFIED |
 | 22 | **Rejected approaches (all VERIFIED in code comments):** bronze ambient wash (2026-07-28 — bronze only for the invite); pinned invite (4 rounds, "reads as boxed", 2026-07-28); hairline-framed plate around the Big Three ("a container in everything but name"); mono-font section labels ("too rigid"); amber (retired for bronze 2026-08-16); wizard Roman-numeral steps; full-width section rules (replaced by half-width). | 2026-07/08 | `index.tsx`, `Plaque.tsx`, `ScreenShell.tsx` | VERIFIED |
 | 23 | **Approved mock-ups:** `oracle-loading-v2` (progress bar dropped by founder ruling), `birth-data-edit-v1` (called "approved mobile edit mock-up" in `birth-data.ts`), `chart-reveal-flow-v1` (**APPROVED as mocked up 2026-10-01**). | 2026-10-01 | `PLACEHOLDERS.md` CHART-REVEAL-FLOW; `birth-data.ts` comment | VERIFIED for reveal-flow; edit/oracle-loading INFERRED from comments (no dated approval line). Note: **all their Bulgarian copy except one message is still placeholder.** |
 | 24 | **Rejected 2026-10-07:** `desktop-shell-v1` ("generic AI design: pills, boxes, default patterns"). v1 of oracle-loading ("did not follow art direction"). | 2026-10-07 | your message; `oracle-loading-v2.html` comment | VERIFIED |
@@ -219,10 +219,10 @@ Also: **«Лунен дневник» / «Лунен Дневник»**, **На�
 
 | Screen | Element | Current state | Recommendation — reason |
 |---|---|---|---|
-| Днес | Hero object (moon) | In the mock-up the hero; in code reduced and pushed below the reading | **CHANGE** — R1 is gone; the language has one hero object per screen. Size and position are yours to judge on device. |
+| Днес | Hero object (moon) | In the mock-up the hero; in code reduced and pushed below the reading | **CHANGE** — Per brief C5: record reading-first as decided and amend R1 for Днес so the reading's payoff is the dominant element and the moon is secondary; size and position are yours to judge on device. |
 | Днес | Moon as rendered on device | Flat pale disc with two colour washes (not the layered lit sphere) | **CHANGE** — Material illustration of the moon is a designer task (brief §5 #5); code cannot close it. |
 | Днес | Planet-name highlight in readings | Bright yellow, a third accent | **CHANGE** — A third accent breaks R4; use bronzeText or starlight. |
-| Днес | Latin name in greeting / Карта label | «Nikolay Tonev» from profile | **DISCUSS** — Latin comes from the Clerk profile; transliterating by code risks wrong Bulgarian, so the choice (show as entered / ask in the wizard) is yours. |
+| Днес | Latin name in greeting / Карта label | «Nikolay Tonev» from profile | **KEEP (tentative)** — show the name as the user entered it; transliterating by code risks wrong Bulgarian, which you own. |
 | Днес | Reading before sky (IA order) | Horoscope first, sign quip, then небесен ритъм | **KEEP** — Reading-first matches Oura's "what matters now, first"; it was your call after many rounds. |
 | Днес | Greeting (bronze phrase + muted name) | Italic 19, two colours | **CHANGE** — Keep the two colours; make it upright (italic ruling). |
 | Днес | Section captions («дневен хороскоп», sign, «небесен ритъм») | Bronze tracked caps ×3 | **CHANGE** — R3 allows 0–1 tracked caps and C8 says bronze is not a label colour: sentence case, faint, at most one. |
@@ -241,13 +241,14 @@ Also: **«Лунен дневник» / «Лунен Дневник»**, **На�
 | Карта | Big Three plaque | Three stacked label/value rows, caps | **CHANGE** — Three caps rows violate R3; keep three rows, sentence case. |
 | Карта | Pedestal «Детайли» | Lit word + thread | **KEEP** — The lit word is the mechanism and, once other caps go, the one allowed caps item on the screen. |
 | Карта | Hint «Докосни планета за тълкуване» | Italic 15 | **CHANGE** — Same as Днес hints (§3.2.3); upright; remove when the planets read as touchable. |
-| Карта | Empty space below plaque | ~35–40% of screen | **DISCUSS** — Whitespace and composition are layout; only you can judge it on device. |
+| Карта | Empty space below plaque | ~35–40% of screen | **KEEP (tentative)** — pure layout; the wheel was already enlarged to fix it, and only you can judge the result on device. |
 | Ритъм | Whole screen | Pre-redesign (Tailwind, pill, chevron, card) | **CHANGE** — Pre-redesign, uses every banned device (pill, card, chevron, Tailwind slate). |
-| Ритъм | Mock-up concept (cold track, one ignited day) | Drawn, not built; data model differs | **DISCUSS** — The mock-up's weekly timeline needs data the app does not have; what Ритъм shows is a product call. |
+| Ритъм | Mock-up concept (cold track, one ignited day) | Drawn, not built; data model differs | **CHANGE (tentative)** — rebuild Ритъм to the mock-up's idea (cold track, one lit point) limited to the days `useTransitOverview` can actually supply, not the hard-coded weekly list. |
 | Ритъм | 56 px transit-count numeral | Off the type scale | **CHANGE** — Off the type scale (R2); a number is not an object hero. |
 | moon-detail | Layout (title, centred paragraph, 4 fields) | Definition-list page | **CHANGE** — Left-align the long paragraph; the rest is competent and stays. |
 | moon-detail | Five tracked-caps labels | R3 broken in mock-up and code | **CHANGE** — Five caps labels break R3; make the four fields faint sentence-case labels. |
 | moon-detail | Exit «Лунен Дневник» (CtaPanel) | Capitalisation differs from elsewhere | **KEEP** — Casing fixed 2026-10-07 («Лунен дневник»). |
+| Оракул | Lit free-text ask-line (`orakul-v4` mock-up) | The product has no free text; the Oracle takes a topic | **CHANGE** — settled: replace the ask-line with topic choice (brief C10). |
 | oracle-loading-v2 | Three lit sign-glyph row | Template silhouette; old glyph hand | **KEEP** — It shows data and has no container edge; revisit when the designer's glyphs arrive. |
 | oracle-loading-v2 | Stage text + "taking longer" line | 0 / 1.2 / 2.5 / 10 s | **KEEP** — Structure is right; the words follow the voice rule and need your approval. |
 | birth-data-edit-v1 | Star hero | Decorative on an edit screen | **CHANGE** — Decorative on an edit screen; shrink or drop it. |
@@ -255,7 +256,7 @@ Also: **«Лунен дневник» / «Лунен Дневник»**, **На�
 | birth-data-edit-v1 | Disabled «Запази» | Near-invisible | **CHANGE** — Keep the categorical change but leave the label readable and findable; invisible is not disabled. |
 | birth-data-edit-v1 | Missing back / unsaved-changes affordance | Not drawn | **CHANGE** — A way back and unsaved-changes handling are real needs the mock-up omits. |
 | chart-reveal-flow-v1 | Staged loading → reveal → horoscope → chart button | One flow, two variants | **KEEP** — Approved 2026-10-01. |
-| chart-reveal-flow-v1 | Big-three reveal (new users only) | Least defined part; copy placeholder | **DISCUSS** — Least-defined part; design it after its copy is approved. |
+| chart-reveal-flow-v1 | Big-three reveal (new users only) | Least defined part; copy placeholder | **KEEP (tentative)** — keep the approved flow; the new-user reveal waits on approved copy, so nothing to build yet. |
 | chart-reveal-flow-v1 | Mono date stamp | Differs from shipped screens | **CHANGE** — Mono is recommended retired (research A.8); body face, tabular figures, 12 px floor. |
 | System | Cinzel on Latin-only + Playfair fallback for Cyrillic | Web now falls through per glyph; mobile rule says never | **CHANGE** — Retire Cinzel for Cyrillic (C3); it stays for Latin and the Guide's Roman numerals only. |
 | System | Navbar (violet hairline + point, no fill) | Shipped | **KEEP** — Temperature-neutral, no fill; shipped and consistent with the language. |

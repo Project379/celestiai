@@ -25,7 +25,7 @@ how-to-read: every rule cites its source file. "R1–R7" are the rules in DESIGN
 
 **Stellaeum is a private room at night, lit by one lamp, with a precise old instrument on the table.**
 
-- **Mood.** Quiet, intimate, exact. Not mystical-theatrical; not wellness-soft; not a dashboard. The app talks like "a knowing older sister" (`MOBILE_UX_RESEARCH` §5, `COMPETITOR_ANALYSIS` §7): warm in what it says, cool in how it shows the sky. The founder's own formula: **a cold instrument that gives warm answers** (`_source-v4`, Ритъм: "a warm answer on a cold instrument"; `DESIGN-RESEARCH` §C.1).
+- **Mood.** Quiet, intimate, exact. Not mystical-theatrical; not wellness-soft; not a dashboard. The app talks like "a knowing older sister" *(superseded by §2.7: the Oracle has no gender — read this as warmth and knowing, not a sister)* (`MOBILE_UX_RESEARCH` §5, `COMPETITOR_ANALYSIS` §7): warm in what it says, cool in how it shows the sky. The founder's own formula: **a cold instrument that gives warm answers** (`_source-v4`, Ритъм: "a warm answer on a cold instrument"; `DESIGN-RESEARCH` §C.1).
 - **Materials.** Near-black glass; etched metal; a bronze rim and fittings (the parts a hand touches); small lit stones; fine grain. Nothing is plastic, nothing is paper. (`_source-v4`: "a recovered brass-and-glass instrument … not a flat diagram"; "grain and irregular light".)
 - **Light.** There are only two lights. **Violet** is the room — ambient moonlight, structural, present on every screen. **Bronze** is the lamp — the app speaking, or a fitting. A cool steel-blue exists only where the sky is *read* (the chart face, the guide). Light replaces boxes: emphasis is a glow with a transparent edge, never a filled or bordered shape (Reference §5–6).
 - **What it feels like in use.** You open it and one thing is lit. You know what it is and what to do next. Everything else is dark and still. It is quiet enough to read a paragraph in.
@@ -102,7 +102,7 @@ Rules: **R4** — 1–2 accent roles per screen, one temperature (warm *or* cool
 | Surface | Who speaks | Rule |
 |---|---|---|
 | Readings, the Днес horoscope, the sun-sign quip, interpretations | the Oracle | second person, informal **ти** |
-| Loading and reveal **stage lines**, "taking longer" lines | the Oracle | present tense, may use "I" |
+| Loading and reveal **stage lines**, "taking longer" lines | the Oracle | present tense; "I" is allowed *(my reading of your ruling — confirm)* |
 | **Empty states** and **guidance** (hints, next-step lines, invitations) | the Oracle | second person or "I"; never an instruction sentence standing in for a broken affordance (§3.2.3) |
 | Buttons, labels, tab names, settings, **form errors**, API error messages | **nobody** (neutral UI) | **no first person at all**: no «ние/нас/ни», no «-ам/-ям» as a speaker |
 | The one AI-unavailable message | ratified | «Звездите са временно недостъпни. Опитай отново след малко.» stays as is |
@@ -111,7 +111,7 @@ Rules: **R4** — 1–2 accent roles per screen, one temperature (warm *or* cool
 - **Present and future tense only.**
 - **Never a first-person past participle** (подредил/подредила, видял/видяла, направил/направила).
 - If a past event must be referenced, use impersonal or third-person phrasing (about the sky or the thing, not about the speaker).
-- Nothing addressed to the user may reveal the *user's* gender either (a compact pair «готов/а» is wrong twice).
+- **[Proposed by me, not a founder ruling — confirm]** Nothing addressed to the user may reveal the *user's* gender either (a compact pair «готов/а» is wrong twice).
 - Enforcement: written into the Bulgarian skill as project rules 3–5; a validation check for Gemini output and a static content gate are *proposed*, not built (`VOICE-COPY-AUDIT-2026-10-07.md` §5).
 
 **What passes today:** the three stage lines in the oracle-loading mock-up («Чета небето над теб…», «Свързвам местата, които се светват…», «Подреждам думите…») are present tense, first person singular, genderless — compliant. The composed Днес copy is second person, present tense — compliant.
@@ -229,7 +229,7 @@ Status: **RESOLVED** = settled by your 2026-10-07 rulings. **REC** = my recommen
 | **C2** | **R3: 0–1 tracked-caps per screen** | Approved `moon-detail-v1` has 5; Днес ≥ 5; research §9 says keep Cinzel eyebrows | **REC: R3 holds; fix the mock-ups, not the rule.** It is the biggest lever against "decorated, not considered". |
 | **C3** | **Cinzel never on Cyrillic** (hard rule) | Web falls back per glyph from Cinzel to Playfair so Cyrillic can sit on `font-cinzel` | **REC: retire Cinzel for anything Cyrillic; keep it only for Latin and the Guide's Roman numerals.** A Bulgarian-form display face makes the fallback unnecessary. |
 | **C4** | Mobile: Playfair Display + EB Garamond | Web: Manrope + Inter + Cinzel; neither mobile font has Bulgarian forms | **REC: one system, mobile's; web moves to it (your parity order).** Font choice itself is yours (research A.6 renders). |
-| **C5** | R1: the moon is Днес's hero, first | Code: reading-first IA, moon shrunk | **REC: record the reading-first order as decided (your call, ~10 correction rounds) and amend R1 for Днес to "the reading's payoff is the dominant element".** Where it sits on screen is yours to judge on device. |
+| **C5** | R1: the moon is Днес's hero, first | Code: reading-first IA, moon shrunk | **REC: record the reading-first order as decided (your call, ~10 correction rounds) and amend R1 for Днес to "the reading's payoff is the dominant element; the moon is secondary".** Same default in the KEEP/CHANGE table. Where things sit on screen is yours to judge on device. |
 | **C6** | Payoff colour: starlight (mock-ups) | Code: bronzeText | **REC: code stands (recorded founder decision); update the mock-ups.** |
 | **C7** | Invite pinned at the bottom (`dnes-v4`) | Code: in-flow after four failed pinned rounds | **REC: in-flow stands; update the mock-up.** (The overlap I previously cited from the mock-up render is removed — mobile layout is judged on device only.) |
 | **C8** | Bronze = "the app speaking" / invitations / fittings | Code uses bronze for section captions and labels | **REC: bronze means one thing — the Oracle speaking (now consistent with §2.7); captions move to faint/starlight.** |
@@ -244,7 +244,8 @@ Status: **RESOLVED** = settled by your 2026-10-07 rulings. **REC** = my recommen
 | **C17** | Tab labels: mono caps (ДНЕС) | Device: mixed-case serif «Днес» | **REC: mixed-case «Днес» (shipped).** R3 reserves caps; mono is recommended retired (research A.8). |
 | **C18** | Reduced-motion and delayed spinners "approved in principle, deferred" | Mock-ups define both | **REC: make reduced-motion mandatory in every UI-parity screen pass; keep delayed spinners deferred.** Accessibility cost is small, and the mock-ups already specify it. |
 | **C19** | Near-black base #08060f is the identity | Halation research suggests a lighter floor | **REC: keep #08060f until a device test says otherwise.** No evidence on your device yet; changing it touches every screen. |
-| **C20** | `FEATURES.md` "9.99/mo target" | `COMPETITOR_ANALYSIS` €6.99; research monthly + annual | **RESOLVED: €6.99/month, €59.99/year.** FEATURES.md and every other disagreeing doc fixed; PRICE-BASIS closed (it was the revenue basis for the unit-economics math, not the price). |
+| **C20** | `FEATURES.md` "9.99/mo target" | `COMPETITOR_ANALYSIS` €6.99; research monthly + annual | **RESOLVED: €6.99/month, €59.99/year.** FEATURES.md and every other disagreeing doc fixed; PRICE-BASIS closed as a *price* question (it was the revenue basis for the unit-economics math). **The cost-basis disagreement between SYSTEM-MAP and the LLM decision doc is NOT closed** — see the note in each. |
+| **C21** | §1 Mood and current-state #21: the app talks like "a knowing older sister" | §2.7 (founder, 2026-10-07): the Oracle has no gender | **RESOLVED: the Oracle is genderless; the "older sister" image is superseded** (§1 annotated). |
 
 ---
 
