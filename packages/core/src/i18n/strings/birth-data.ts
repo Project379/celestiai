@@ -17,3 +17,13 @@ export const BIRTH_DATA_SAVED_MESSAGE = 'Данните са запазени. �
  * changing it is a one-line, copy-locked edit shared by both platforms.
  */
 export const BIRTH_DATA_ENTRY_LABEL = 'Рождени данни'
+
+/**
+ * Edit-dialog chrome (web EditBirthDataDialog). Moved back out of inline JSX
+ * text in c8d32da, where the one-step save collapsed their ternaries and left
+ * them as unlocked JSX text (JSX-COPY-UNLOCKED). Wording unchanged.
+ */
+export const BIRTH_DATA_EDIT_EYEBROW = 'Редакция'
+export const BIRTH_DATA_EDIT_TITLE = 'Редактиране на данни'
+export const BIRTH_DATA_EDIT_SUBTITLE = 'Промени каквото е нужно - резултатите се обновяват веднага.'
+export const BIRTH_DATA_EDIT_CANCEL = 'Отказ'

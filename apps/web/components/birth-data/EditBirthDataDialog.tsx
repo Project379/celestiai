@@ -8,6 +8,12 @@ import {
   type UpdateBirthData,
   approximateTimeRanges,
 } from '@stellaeum/core/charts/schemas'
+import {
+  BIRTH_DATA_EDIT_CANCEL,
+  BIRTH_DATA_EDIT_EYEBROW,
+  BIRTH_DATA_EDIT_SUBTITLE,
+  BIRTH_DATA_EDIT_TITLE,
+} from '@stellaeum/core/i18n/strings/birth-data'
 import { CitySearch } from './CitySearch'
 import { CelestialIcon } from '@/components/icons/CelestialIcons'
 import type { ChartRow } from '@/lib/types/chart'
@@ -168,13 +174,13 @@ export function EditBirthDataDialog({
           <div className="mb-7">
             <p className="mb-2 flex items-center gap-3 font-cinzel text-[10px] font-semibold uppercase tracking-[0.42em] text-amber-300/80">
               <span aria-hidden className="h-1 w-1 rotate-45 bg-amber-300/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-              Редакция
+              {BIRTH_DATA_EDIT_EYEBROW}
             </p>
             <h2 className="font-display text-[1.5rem] font-semibold leading-[1.15] tracking-tight text-slate-100">
-              Редактиране на данни
+              {BIRTH_DATA_EDIT_TITLE}
             </h2>
             <p className="mt-2 font-display text-[14px] font-light leading-relaxed text-slate-400">
-              Промени каквото е нужно - резултатите се обновяват веднага.
+              {BIRTH_DATA_EDIT_SUBTITLE}
             </p>
           </div>
 
@@ -353,7 +359,7 @@ export function EditBirthDataDialog({
               <svg className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Отказ
+              {BIRTH_DATA_EDIT_CANCEL}
             </button>
             {/* Save: a real <button> (button role), >= 48px tall, named by its visible
                 text. Disabled until a field actually differs (a no-op edit would never
