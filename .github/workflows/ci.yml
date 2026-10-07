@@ -6,11 +6,11 @@ name: CI
 # pre-existing pull_request one for that reason, not narrowed from a wider
 # push list like astrology.yml's (this workflow never had a push trigger
 # before today).
+# ui-parity (2026-10-07): push runs on every branch so long-lived feature
+# branches get the same gate as main; PRs likewise, whatever the base.
 on:
   pull_request:
-    branches: [main]
   push:
-    branches: [main]
 
 jobs:
   check:
