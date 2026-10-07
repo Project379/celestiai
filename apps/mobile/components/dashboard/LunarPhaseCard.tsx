@@ -196,7 +196,7 @@ export function LunarPhaseCard() {
 
           <View style={{ gap: 28 }}>
             <ManifestField label="Подходящо за" body={phase.bestFor} />
-            <ManifestField label="Афирмация" body={`„${phase.affirmation}"`} />
+            <ManifestField label="Афирмация" body={`„${phase.affirmation}“`} />
             <ManifestField label="Кристал" body={phase.crystal} />
             <ManifestField label="Ритуал" body={phase.ritual} />
           </View>

@@ -78,7 +78,7 @@ describe('validateReading', () => {
 
   it('allows the degree sign, prime and Bulgarian typographic punctuation', () => {
     const raw = pad(
-      'Твоето [planet:sun]Слънце[/planet] на [pos:sun] — то е „домът" на волята ти…',
+      'Твоето [planet:sun]Слънце[/planet] на [pos:sun] — то е „домът“ на волята ти…',
     )
     const r = validateReading(raw, VALUES, { minWords: 20, maxWords: 200 })
     expect(r.ok).toBe(true)

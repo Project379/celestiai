@@ -155,7 +155,7 @@ export function LunarPhaseCard() {
                 <ManifestField label="Подходящо за" body={phase.bestFor} />
                 <ManifestField
                   label="Афирмация"
-                  body={`„${phase.affirmation}"`}
+                  body={`„${phase.affirmation}“`}
                 />
                 <ManifestField label="Кристал" body={phase.crystal} />
                 <ManifestField label="Ритуал" body={phase.ritual} />

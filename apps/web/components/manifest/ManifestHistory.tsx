@@ -86,7 +86,7 @@ function HistoryItem({ entry }: { entry: ManifestEntry }) {
                     {['I', 'II', 'III'][i]}
                   </span>
                   <p className="font-display text-[14.5px] font-light leading-[1.8] text-slate-200/95">
-                    „{intention}"
+                    „{intention}“
                   </p>
                 </li>
               ))}
