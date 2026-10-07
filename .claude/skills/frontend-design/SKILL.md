@@ -4,6 +4,8 @@ description: Create distinctive, production-grade frontend interfaces with high 
 license: Complete terms in LICENSE.txt
 ---
 
+> **Never leads Stellaeum work; `.planning/design/DESIGN-BRIEF.md` overrides this skill.** (Founder ruling 2026-10-07.) Where this skill and the brief disagree, the brief wins; use this skill only for mechanics (accessibility, performance, code hygiene), never for look, layout, or component style.
+
 This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
 
 The user provides frontend requirements: a component, page, application, or interface to build. They may include context about the purpose, audience, or technical constraints.
