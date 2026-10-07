@@ -48,6 +48,9 @@ is ever worth re-checking.
   needs to reach ~3.5× caption, because the glyph carries the real
   size-contrast weight (per Apple Weather's own pattern — a hero numeral,
   not a hero headline).
+  **Днес exception (brief C5, founder-approved 2026-10-07):** on Днес the
+  reading's payoff is the dominant element and the moon is secondary; the
+  paragraph above describes the rule for every other screen.
 - **R2 — max 3–4 distinct type sizes per screen.** `tokens.ts`'s scale
   (`sub`/`body`/`row`/`caption`, plus the one reserved `eyebrow`) is the
   budget. A screen mapping every text element onto more than these tiers is

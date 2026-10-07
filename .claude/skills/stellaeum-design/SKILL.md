@@ -26,7 +26,7 @@ Materials: near-black glass, etched metal, a bronze rim, small lit stones, fine 
 **Type** (tokens in `apps/mobile/components/design-system/tokens.ts`; never hard-code a size or family).
 - One family: **Spectral BG**. Upright only: **no italics, no monospace**. Weights Regular / Medium / SemiBold / Bold via the `font.*` tokens, not weight classes (`stellaeum/no-font-weight`).
 - Scale: caption 12/17 · row 16/21 Medium · body 17/27 · sub 17/23 SemiBold · reading 20/31 · display 26/32 SemiBold · cta 22/28 Bold · eyebrow 12/17 SemiBold tracked. **12 px floor, no exceptions.** Tabular figures for degrees, dates, percentages.
-- **R2:** at most 3–4 sizes per screen. **R3:** tracked caps 0–1 per screen. **R1:** one dominant element, 6–8× the smallest text, and it's an object (moon, wheel, ember), not a headline.
+- **R2:** at most 3–4 sizes per screen. **R3:** tracked caps 0–1 per screen. **R1:** one dominant element, 6–8× the smallest text, and it's an object (moon, wheel, ember), not a headline. **Exception, Днес only (C5, approved):** the reading's payoff is the dominant element and the moon is secondary; judge Днес against that, not against an object-hero R1.
 - Reading text is serif and upright. Bulgarian quotes „…". Never tag Bulgarian `lang="ru"`.
 - Check the **longest real Bulgarian string** for every slot (e.g. «Изгряващ полумесец» 19, «Слънце · Луна · Асцендент» 25, list subtitles ≈ 37) before choosing a layout. **R6.**
 
