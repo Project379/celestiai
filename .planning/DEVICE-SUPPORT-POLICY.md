@@ -1,6 +1,6 @@
 ---
 title: Device support policy
-status: living document — the reference for "what device should this layout/feature work on"
+status: living document — the reference for "what device should this layout/feature work on" (design size ruling added 2026-10-07: primary 384×832, floor 360×780)
 created: 2026-09-04
 supersedes: the iPhone SE (375x667) reference used in the 2026-09-03 Днес
   layout measurement (Gemini cost/rate-limit report, item 3) — that
@@ -104,7 +104,14 @@ approval risk, review time, or anything else store-side.
 
 ## Design floor — separate from the install floor
 
-**360×780 CSS px**, not iPhone SE's 375×667.
+> **RULING 2026-10-07 (founder): two sizes, not one.**
+> - **Primary design size: 384×832 dp.** Mock-ups and screens are designed for it. Source: StatCounter, Bulgaria, September 2026 — 384×832 is the most common mobile viewport at **13.4%** (Samsung Galaxy A/S class). *Figure supplied by the founder; not independently re-fetched in this session.*
+> - **Floor: 360×780 dp.** Nothing may break, clip or overflow at this size. Every mock-up is drawn at 384×832 **and also shows its 360×780 state.**
+> - The earlier 390 px working width (iPhone 14/15-class) is no longer a design target; it is only one more width to sanity-check.
+> - **Review devices (Android Studio, API 34 Google APIs x86_64):** primary = 1080×2340 @ 450 dpi (= 384×832 dp); floor = 1080×2340 @ 480 dpi (= 360×780 dp). Plus Expo Go on the founder's iPhone.
+> - **Mobile layout is judged only on a device or emulator, by the founder** — never from a web render.
+
+**360×780 CSS px** is the floor (below); not iPhone SE's 375×667.
 
 ### Why not iPhone SE
 

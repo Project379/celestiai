@@ -81,7 +81,7 @@ No `test:e2e` script or Playwright config exists in this repo — the smoke-test
 
 ## Branches
 
-`main` is the long-lived branch and deploys to production on push. `ui-parity` (created 2026-10-07) is the short-lived UI branch: preview deploys only, never merged without the founder's say. CI runs on every push and PR.
+`main` is the long-lived branch and deploys to production on push. `ui-parity` (created 2026-10-07) is the short-lived UI branch: preview deploys only, never merged without the founder's say. Order of work there: all mobile screens first (design size 384×832, floor 360×780), web afterwards; until mobile is approved web gets only shared tokens, fonts and copy-file changes (`.planning/UI-PARITY-PLAN.md`). Merge `main` into it daily. CI runs on every push and PR.
 
 ## GSD Workflow
 

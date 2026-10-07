@@ -142,14 +142,14 @@
     <div class="notes">
       <h3>The flow</h3>
       <ul>
-        <li><span class="tag">1 loading</span> ember hero + Sun / Moon / Ascendant lighting with the stage lines (0 / 1.2 / 2.5 s), exactly oracle-loading-v2. Chart compute is ≈1 ms server-side, so the placements are known immediately; the wait is the horoscope.</li>
+        <li><span class="tag">1 loading</span> ember hero + Sun / Moon / Ascendant lighting with the stage lines (0 / 1.5 / 3.0 s), exactly oracle-loading-v2. Chart compute is ≈1 ms server-side, so the placements are known immediately; the wait is the horoscope.</li>
         <li><span class="tag">2 reveal</span> <b>new user only.</b> Fills the horoscope wait instead of adding to it: each placement in turn grows and its label becomes the display line; a one-line trait sits under it. Skip is available from the first frame. Once ever.</li>
         <li><span class="tag">3 horoscope</span> today's reading in the Оракул answer type (italic lead → body → Playfair payoff), the ember settles as the hero.</li>
         <li><span class="tag">4 chart</span> one lit phrase + ember (the app's invitation device, never a boxed button), a real button: role, label, ≥48 px.</li>
       </ul>
       <h3>States shown</h3>
       <ul>
-        <li><b>p50 / p90 / slow:</b> horoscope arrives at 4.2 / 8.5 / 20 s. At ≥10 s the stage line becomes the "taking longer" line.</li>
+        <li><b>p50 / p90 / slow:</b> horoscope arrives at 3.1 / 8.0 / 20 s (measured 2026-10-07: 10 real generations, p50 3.1 s, p90 8.0 s, max 14.3 s — that slowest one went through the fallback model). At ≥10 s the stage line becomes the "taking longer" line (unchanged: fires for 1 of 10 measured horoscopes, the 14.3 s one). Earlier figures (4.2 / 8.5 s) are superseded.</li>
         <li><b>Horoscope failed</b> (503, validation twice, or the edit-race 409): the horoscope slot becomes one quiet line and the chart button still appears — a failed horoscope never blocks the chart. Retry belongs to Днес (it already requests the horoscope).</li>
         <li><b>Chart compute failed:</b> the only state with a different button — one lit "try again" phrase instead of the chart button.</li>
         <li><b>Reduced motion:</b> glyphs static and lit, no fades/growth/twinkle/breathing, text and sections swap instantly; the reveal is the three labels shown at once with a Continue.</li>
@@ -186,9 +186,9 @@
     traits: { sun:'Ядрото ти — как светиш.', moon:'Вътрешният ти свят — от какво се нуждаеш.', asc:'Как те виждат другите.' } // PLACEHOLDER traits
   }
   const PL = [['sun','leo'],['moon','pisces'],['asc','scorpio']]
-  const STAGE_AT = [0,1.2,2.5], SLOW_AT = 10
+  const STAGE_AT = [0,1.5,3.0], SLOW_AT = 10
   const REVEAL_START = 3.0, REVEAL_STEP = 1.7
-  const SCEN = { p50:{t:4.2,label:'p50 — 4.2 s'}, p90:{t:8.5,label:'p90 — 8.5 s'}, slow:{t:20,label:'slow — 20 s'}, hfail:{t:6,fail:true,label:'horoscope fails @ 6 s'}, cfail:{t:1.0,cfail:true,label:'chart compute fails @ 1 s'} }
+  const SCEN = { p50:{t:3.1,label:'p50 — 3.1 s'}, p90:{t:8.0,label:'p90 — 8.0 s'}, slow:{t:20,label:'slow — 20 s'}, hfail:{t:6,fail:true,label:'horoscope fails @ 6 s'}, cfail:{t:1.0,cfail:true,label:'chart compute fails @ 1 s'} }
   const $ = id => document.getElementById(id)
   let st = { variant:'edit', scen:'p90', timers:[], raf:0, skipped:false }
 

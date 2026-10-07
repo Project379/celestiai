@@ -94,13 +94,13 @@
 <body>
 <div class="wrap">
   <h1>Оракул — зареждане · placements light up · v2</h1>
-  <p class="dek">Mock-up only — nothing wired in. No bar, no percentage, no fake progress. The reading's own placements light up one at a time; text steps at 0 s / 1.2 s / 2.5 s and switches to a "taking longer" line after ~10 s; the reading fades in on arrival. <b>All Bulgarian is PLACEHOLDER copy.</b></p>
+  <p class="dek">Mock-up only — nothing wired in. No bar, no percentage, no fake progress. The reading's own placements light up one at a time; text steps at 0 s / 1.5 s / 3.0 s and switches to a "taking longer" line after ~10 s (stage timings re-derived 2026-10-07 from a live measurement: Oracle p50 4.1 s, p90 8.9 s, max 12.2 s); the reading fades in on arrival. <b>All Bulgarian is PLACEHOLDER copy.</b></p>
 
   <div class="controls">
     <select id="scenario" aria-label="scenario">
-      <option value="3.3">p50 — 3.3 s</option>
-      <option value="6.6" selected>p90 — 6.6 s</option>
-      <option value="20">20 s (hard retry; "taking longer" shows)</option>
+      <option value="4.1">p50 — 4.1 s</option>
+      <option value="8.9" selected>p90 — 8.9 s</option>
+      <option value="20">20 s (slow; "taking longer" shows)</option>
     </select>
     <select id="topic" aria-label="topic">
       <option value="general">general</option>
@@ -143,8 +143,8 @@
       <p>The three-glyph row. It is built only from the existing glow mechanism and glyphs.ts paths. Per the design reference a new composition is flagged, not slipped in. It replaces the current Oracle loading glyph (spinning ring + rotating diamond via <code>useSpin</code>/<code>usePing</code>).</p>
       <h3>Pacing findings</h3>
       <ul>
-        <li>Measured p50 is 3.3 s and min 2.7 s, so with stages at 0 / 1.2 / 2.5 s every one of the 20 measured calls had all three stages (and glyphs) on screen before the reading arrived. The text steps are now 0 / 1.2 / 2.5 s and each glyph lights together with its stage.</li>
-        <li>The 10 s line only shows on a hard retry — it did not occur in any of 20 measured calls.</li>
+        <li>Re-measured 2026-10-07 (20 real Oracle generations, one at a time, thinking level low): min 2.7 s, p50 4.1 s, p90 8.9 s, p95 9.2 s, max 12.2 s. The earlier figures in this file (p50 3.3 s, p90 6.6 s) came from an earlier run on a quieter day and are superseded. Text steps are now 0 / 1.5 s / 3.0 s: the third stage (and its glyph) is on screen for 17 of the 20 measured calls (85%); the other 3 finish before 3.0 s and never need it. Each glyph still lights together with its stage.</li>
+        <li>The "taking longer" threshold stays at 10 s — the measurement supports it. It sits just above p95 (9.2 s) and fires for exactly 1 of the 20 measured calls (12.2 s, 5%), i.e. for a genuinely slow call, not an ordinary one (12 s would have caught the same single call). It is well below the 25 s primary-model timeout, after which the fallback model answers (GEMINI-SLOW-NO-FAILOVER). Earlier text claimed the line never fired in 20 calls; that was true of the earlier, faster run and is superseded.</li>
       </ul>
       <h3>Reduced motion</h3>
       <p>All three glyphs shown static and lit; no breathing, twinkle or fades; text still advances on the same timings but swaps instantly; the reading appears without a fade.</p>
@@ -171,9 +171,9 @@
     career: [['mc','aquarius'],['saturn','capricorn'],['sun','leo']],
     health: [['h6','capricorn'],['mars','virgo'],['sun','leo']]
   }
-  const STAGE_AT = [0, 1.2, 2.5]        // text stages, per ruling (2nd round)
+  const STAGE_AT = [0, 1.5, 3.0]        // text stages — re-derived 2026-10-07 (was 0 / 1.2 / 2.5); third stage shows for ~85% of measured calls
   const LIGHT_AT = STAGE_AT             // glyph k lights WITH text stage k — aligned, per ruling
-  const SLOW_AT = 10                    // "taking longer" line, per ruling
+  const SLOW_AT = 10                    // "taking longer" line — unchanged: just above measured p95 (9.2 s); fires for 1 of 20 measured calls
   const $ = id => document.getElementById(id)
   let timers = [], raf
 

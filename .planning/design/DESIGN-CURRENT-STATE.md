@@ -151,7 +151,7 @@ Found late: `mockups/download (2).jpg` and `download (3).jpg` are **real device 
 
 **Evidence:** `oracle-loading-v2-arrival-3s.png` (rendered at t≈3.7 s).
 
-**Embodies:** the ember hero (R1), three **sign glyphs lighting in sequence** with «<планета> в <знак>» labels, italic stage line, 0/1.2/2.5 s stages, "taking longer" line at 10 s, reading arrives by fade. No bar, no percentage.
+**Embodies:** the ember hero (R1), three **sign glyphs lighting in sequence** with «<планета> в <знак>» labels, italic stage line, 0/1.5/3.0 s stages (re-derived 2026-10-07; were 0/1.2/2.5), "taking longer" line at 10 s (unchanged) at 10 s, reading arrives by fade. No bar, no percentage.
 
 **Follows decisions:** yes — R1, R2 (uses only existing sizes), **R3 zero tracked caps**, R4 one accent, no Cinzel, faint `#6d7e97`, glyph paths verbatim from `glyphs.ts`, reduced-motion handled, R7 (colour + glow + label ≥ 2 dimensions).
 
@@ -186,7 +186,7 @@ Found late: `mockups/download (2).jpg` and `download (3).jpg` are **real device 
 **Weak / open:**
 - The reveal state I captured shows the dev string "(the edit variant has no big-three reveal)" — the mock-up's own scaffolding, not a design. The **new-user reveal itself is the least defined part** (traits copy all placeholder).
 - The horoscope page has a **mono date stamp** («1 октомври») — the "specimen label" treatment the mobile app moved *off* mono for ("too rigid") — an inconsistency with the shipped screens.
-- Wait time: p90 8.5 s of "staging" before the user sees anything they asked for; the flow is honest about it but it is a long theatre for the first thing a new user does.
+- Wait time: p90 ≈ 8.0 s (measured 2026-10-07; the mock-up first assumed 8.5 s) of "staging" before the user sees anything they asked for; the flow is honest about it but it is a long theatre for the first thing a new user does.
 
 ---
 
@@ -250,7 +250,7 @@ Also: **«Лунен дневник» / «Лунен Дневник»**, **На�
 | moon-detail | Exit «Лунен Дневник» (CtaPanel) | Capitalisation differs from elsewhere | **KEEP** — Casing fixed 2026-10-07 («Лунен дневник»). |
 | Оракул | Lit free-text ask-line (`orakul-v4` mock-up) | The product has no free text; the Oracle takes a topic | **CHANGE** — settled: replace the ask-line with topic choice (brief C10). |
 | oracle-loading-v2 | Three lit sign-glyph row | Template silhouette; old glyph hand | **KEEP** — It shows data and has no container edge; revisit when the designer's glyphs arrive. |
-| oracle-loading-v2 | Stage text + "taking longer" line | 0 / 1.2 / 2.5 / 10 s | **KEEP** — Structure is right; the words follow the voice rule and need your approval. |
+| oracle-loading-v2 | Stage text + "taking longer" line | 0 / 1.5 / 3.0 / 10 s (stages re-derived 2026-10-07; slow-line threshold unchanged) | **KEEP** — Structure is right; the words follow the voice rule and need your approval. |
 | birth-data-edit-v1 | Star hero | Decorative on an edit screen | **CHANGE** — Decorative on an edit screen; shrink or drop it. |
 | birth-data-edit-v1 | Lit-line fields | Underline + glow + caret | **KEEP** — The language's input device. |
 | birth-data-edit-v1 | Disabled «Запази» | Near-invisible | **CHANGE** — Keep the categorical change but leave the label readable and findable; invisible is not disabled. |

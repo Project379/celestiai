@@ -71,7 +71,7 @@ Rules: **R4** — 1–2 accent roles per screen, one temperature (warm *or* cool
 
 - `space`: 4/8/12/16/20/24/32 for structural padding. `rhythm` for reading: **micro 4 · tight 12 · paragraph 20 · group 40** — each ≥ 2× its neighbour so groups are visible. Departures are allowed if stated (the Big Three row gap 16; pedestal gap 48). — Reference §1.
 - Gaps carry meaning: *tight = belongs together; group = a new beat.* — `index.tsx` round-9 note.
-- Design floor **360×780**; check 390. Bottom clearance = tab bar (56 + inset) + 52. — `index.tsx`; `ScreenShell.tsx`.
+- **Primary design size 384×832 dp; floor 360×780 dp** (founder ruling 2026-10-07; StatCounter Bulgaria, September 2026: 384×832 is the most common mobile viewport, 13.4%, Samsung Galaxy A/S class — figure supplied by the founder). Mock-ups are drawn at 384×832 **and also show the 360×780 state**; nothing may break, clip or overflow at the floor. Review devices: Android Studio emulators 1080×2340 @ 450 dpi (= 384×832) and @ 480 dpi (= 360×780), API 34 Google APIs x86_64, plus Expo Go on the founder's iPhone. Bottom clearance = tab bar (56 + inset) + 52. — `DEVICE-SUPPORT-POLICY.md`; `ScreenShell.tsx`.
 - **Navbar and pinned elements must never overlap content** (Guard 1). **Mobile layout is judged only by the founder, on a device or emulator.** Web renders of mobile screens (including the Expo-web harness and renders of the HTML mock-ups' phone frames) are approximations; this brief reports no mobile layout defect from them. The overlaps earlier drafts listed on Днес and Карта are already fixed on device and are removed.
 
 ## 2.4 Motion
@@ -161,6 +161,7 @@ Rule set:
 
 ## 3.4 Web and desktop
 
+- **Order of work (founder ruling 2026-10-07): all mobile screens are designed and built first** — Page 1 Днес + nav bar (all states and animations), then Карта, the reveal flow, Ти, Оракул, and the rest. **Web is brought to match afterwards, screen by screen, once mobile is approved.** Until then web gets only the shared tokens, fonts and copy-file changes — no layout work. See `UI-PARITY-PLAN.md`.
 - **Decision on record:** web shows the mobile layout in a centred column; mobile tokens exist as CSS variables; fonts are self-hosted; Cinzel falls back per glyph to Playfair. **The desktop-shell choices are on hold** (your 2026-10-07 message). — chat; `apps/web/app/mobile-tokens.css`.
 - **Evidence only (no decision):** Material's adaptive guidance answers large screens with *panes* (list-detail, supporting pane), not a wider phone column; comfortable reading measure is 50–75 characters, and a 430 px column of 17 px serif is below it. See research §C. A designer should compare "centred column" with "centred column + quiet supporting pane" before one is chosen.
 - **Web and mobile are currently two different design languages** (DESIGN-CURRENT-STATE §3). Parity means moving web *to* this brief, not blending.
@@ -255,4 +256,4 @@ Fonts (decided: Spectral BG) · desktop shell · how much data the chart hero sh
 
 # 8. After you approve this brief
 
-Turn it into a **design skill** loaded before any UI or mock-up work (your Phase 0 item 5), including the anti-pattern list as a checklist. Then, and only then: mock-ups of Днес, Карта and the reveal flow at 390 px and desktop, two directions each, rendered and critiqued by me against this brief before you see them.
+Turn it into a **design skill** loaded before any UI or mock-up work (your Phase 0 item 5), including the anti-pattern list as a checklist. Then Page 1 (Днес + nav bar, all states and animations) as a mobile mock-up at **384×832 with its 360×780 state**, rendered and critiqued by me against this brief for type and colour (never for mobile layout) before you see it. Desktop mock-ups are deferred until mobile is approved.
