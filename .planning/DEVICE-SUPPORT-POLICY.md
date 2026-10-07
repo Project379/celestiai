@@ -217,6 +217,15 @@ an explicit exclusion — not a commitment to either outcome now.
 
 ---
 
+## Real-device checks for when the budget Android arrives
+
+Things an emulator cannot settle. Add to this list; tick them on the phone.
+
+- **Base colour on a real OLED Android (BASE-COLOUR-HALATION, brief C19).** The base `#08060f` stays until this check says otherwise. Look at Днес and Карта in a dark room at normal and low brightness: does light text on the near-black base halate (glow/bleed, smeared small text), is the base crushed (banding in the violet atmosphere, black smear on scroll)? Compare with the iPhone. Only if it fails does lifting the floor (and so every screen) get reopened.
+- RevenueCat purchase test and scrcpy review (see the handoff queue).
+
+---
+
 ## Register
 
 Tracked as `DEVICE-SUPPORT-FLOOR` (RESOLVED), `DEVICE-PASS-STALE`

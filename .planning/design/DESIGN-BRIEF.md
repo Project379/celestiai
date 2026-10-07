@@ -1,7 +1,7 @@
 ---
 title: Stellaeum design brief
 created: 2026-10-07
-status: DRAFT for founder approval, updated 2026-10-07 with your rulings (price, faint token, casing, voice, italics direction, mobile-layout correction) and with my recommendation pre-filled on every contradiction in §6 — you only override. Not in force until you approve it. Nothing in it changes a product decision you have not already made — where sources disagree I list the disagreement (§6) and do not pick.
+status: APPROVED by the founder 2026-10-07. All §6 recommendation (REC) rows approved as written on the same day (C14 stays a register row, not a design rule). Changes after this date go through the founder.
 companion docs: DESIGN-CURRENT-STATE.md (what exists, honestly assessed) · research/TYPOGRAPHY-AND-REFERENCES.md (fonts, reference products)
 how-to-read: every rule cites its source file. "R1–R7" are the rules in DESIGN-LANGUAGE-REFERENCE.md §0. Bulgarian strings here are existing strings only; anything new is marked PLACEHOLDER_COPY.
 ---
@@ -72,7 +72,7 @@ Rules: **R4** — 1–2 accent roles per screen, one temperature (warm *or* cool
 - `space`: 4/8/12/16/20/24/32 for structural padding. `rhythm` for reading: **micro 4 · tight 12 · paragraph 20 · group 40** — each ≥ 2× its neighbour so groups are visible. Departures are allowed if stated (the Big Three row gap 16; pedestal gap 48). — Reference §1.
 - Gaps carry meaning: *tight = belongs together; group = a new beat.* — `index.tsx` round-9 note.
 - **Primary design size 384×832 dp; floor 360×780 dp** (founder ruling 2026-10-07; StatCounter Bulgaria, September 2026: 384×832 is the most common mobile viewport, 13.4%, Samsung Galaxy A/S class — figure supplied by the founder). Mock-ups are drawn at 384×832 **and also show the 360×780 state**; nothing may break, clip or overflow at the floor. Review devices: Android Studio emulators 1080×2340 @ 450 dpi (= 384×832) and @ 480 dpi (= 360×780), API 34 Google APIs x86_64, plus Expo Go on the founder's iPhone. Bottom clearance = tab bar (56 + inset) + 52. — `DEVICE-SUPPORT-POLICY.md`; `ScreenShell.tsx`.
-- **Navbar and pinned elements must never overlap content** (Guard 1). **Mobile layout is judged only by the founder, on a device or emulator.** Web renders of mobile screens (including the Expo-web harness and renders of the HTML mock-ups' phone frames) are approximations; this brief reports no mobile layout defect from them. The overlaps earlier drafts listed on Днес and Карта are already fixed on device and are removed.
+- **Navbar and pinned elements must never overlap content** (Guard 1). **Two different things (founder ruling 2026-10-07):** (a) **Mock-ups are renders by design.** The self-critique of a mock-up covers layout and structure (hierarchy, one hero and one exit, spacing and rhythm, fit at the 360×780 floor, longest-string wrap) as well as type and colour. (b) **Built mobile code is judged on device by the founder only.** Web or Expo-web renders of built mobile screens (the harness) are approximations: no mobile layout defect is reported from them, only type and colour. The overlaps earlier drafts listed on Днес and Карта are already fixed on device and are removed.
 
 ## 2.4 Motion
 
@@ -222,7 +222,7 @@ From `DESIGNER_BRIEF_ASSETS.md` (still open unless noted) plus gaps found in thi
 
 # 6. Contradictions between sources — my recommendation pre-filled; you only override
 
-Status: **RESOLVED** = settled by your 2026-10-07 rulings. **REC** = my recommendation and a one-line reason; it is not in force until you accept it or stay silent on a row you read.
+Status: **RESOLVED** = settled by your 2026-10-07 rulings. **REC** = a recommendation with a one-line reason. **All twelve REC rows (C1, C2, C5–C9, C12, C14, C17–C19) were APPROVED as recommended by the founder on 2026-10-07 and are in force;** C14 stays a register row.
 
 | # | Source A says | Source B says | Recommendation — one-line reason |
 |---|---|---|---|
@@ -252,7 +252,7 @@ Status: **RESOLVED** = settled by your 2026-10-07 rulings. **REC** = my recommen
 
 # 7. What I am deliberately not deciding
 
-Fonts (decided: Spectral BG) · desktop shell · how much data the chart hero shows (C9) · the new-user reveal's copy and traits · all new Bulgarian copy.
+Fonts (decided: Spectral BG) · desktop shell · the new-user reveal's copy and traits · all new Bulgarian copy. (C9, how much data the chart hero shows, is decided: a quiet hero, details in the sheet.)
 
 # 8. After you approve this brief
 
