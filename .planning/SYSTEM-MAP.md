@@ -534,7 +534,7 @@ compliance audit §8–§9):**
 | DB query times under load | UNKNOWN | The load test. Blocked on M4 (streaming-endpoint extraction) per the load-test plan. |
 | JS bundle size (web + mobile) | UNKNOWN | A bundle analyzer run — a few hours for a one-off look, half a day for a CI regression gate. |
 | Mobile cold start | UNKNOWN | Timed on a real device / emulator with the profiler. Needs a device pass. |
-| Oracle generation wall-clock time | UNKNOWN | Time the real end-to-end call. The 10-reading audit measured tokens and cost but not latency. |
+| Oracle generation wall-clock time | MEASURED 2026-10-07 | 20 Oracle + 10 horoscope generations, one at a time, thinking level low, through the production prompt builders and `generateFinalText` (not the routes' auth/DB steps): Oracle p50 4.1 s, p90 8.9 s, max 12.2 s; horoscope p50 3.1 s, p90 8.0 s, max 14.3 s. Gate 9 (10 calls fired 2 s apart) reads higher — 6-8.5 s median — because the calls overlap. Re-run with `pnpm --filter @stellaeum/web run measure:gemini-latency`. |
 
 The load test (Scenarios B and C: 100 concurrent warm-cache, 50
 concurrent cold-cache) is a named pre-launch gate and is **blocked** — the

@@ -2,8 +2,29 @@ import type { GoogleLanguageModelOptions } from '@ai-sdk/google'
 import { generateText, Output } from 'ai'
 import { z } from 'zod'
 import { AI_MODEL, gemini, isUpstreamAiError } from './client'
-import { getAIStatusCode, isTransientAIError } from './errors'
+import { AiTimeoutError, getAIStatusCode, isTransientAIError } from './errors'
 import { sanitizeFinalAIOutput } from './final-output'
+
+/**
+ * GEMINI-SLOW-NO-FAILOVER (2026-10-07). Per-call timeouts: the primary model gets
+ * its own, then the fallback model gets ITS OWN, so the worst case for one
+ * generateFinalText() is primary + fallback, never "until the platform kills us".
+ *
+ * Numbers come from a live measurement (20 Oracle + 10 horoscope generations, one
+ * at a time, thinking level low, 2026-10-07): p50 4.1 s / p90 8.9 s / max 12.2 s for
+ * the Oracle, p50 3.1 s / p90 8.0 s / max 14.3 s for the horoscope. 25 s is ~1.75x the
+ * worst observed call and well above p90, so a legitimate slow-but-fine generation is
+ * not cut off; the 2026-10-01 incident (40-80 s calls) is. The fallback gets 20 s: it
+ * is the last chance before the user-visible 503, so it is shorter than the primary.
+ *
+ * Worst case per route request = 2 attempts (the routes' validation retry) x
+ * (25 + 20) s = 90 s, plus overhead, against maxDuration 300 s; test/ai/failover-bounds.test.ts
+ * pins this against the route sources. SMOKE_AI_TIMEOUT_MS is shorter on purpose: the
+ * smoke client gives up at 45 s and a silent fallback must surface as a failure fast.
+ */
+export const GEMINI_PRIMARY_TIMEOUT_MS = 25_000
+export const GEMINI_FALLBACK_TIMEOUT_MS = 20_000
+export const SMOKE_AI_TIMEOUT_MS = 15_000
 
 interface GenerateFinalTextOptions {
   fallbackModel?: string
@@ -12,6 +33,8 @@ interface GenerateFinalTextOptions {
   system: string
   /** Required, per call type: see GEMINI_THINKING_LEVEL. */
   thinkingLevel: GeminiThinkingLevel
+  /** Per-call timeout override (defaults: GEMINI_PRIMARY_TIMEOUT_MS / GEMINI_FALLBACK_TIMEOUT_MS). */
+  timeoutMs?: { primary: number; fallback: number }
 }
 
 /**
@@ -152,18 +175,41 @@ function logAiUsage(model: string, result: { providerMetadata?: Record<string, u
  * composed retry shape and worst-case call count.
  */
 export async function generateFinalText(options: GenerateFinalTextOptions) {
-  const { fallbackModel, thinkingLevel, ...callOptions } = options
+  const { fallbackModel, thinkingLevel, timeoutMs, ...callOptions } = options
+  const primaryTimeoutMs = timeoutMs?.primary ?? GEMINI_PRIMARY_TIMEOUT_MS
+  const fallbackTimeoutMs = timeoutMs?.fallback ?? GEMINI_FALLBACK_TIMEOUT_MS
 
-  async function callModel(model: string) {
-    const result = await generateText({
-      model: gemini(model),
-      ...callOptions,
-      maxRetries: 0,
-      output: Output.object({ schema: finalTextSchema }),
-      providerOptions: {
-        google: geminiFinalOnlyOptions(thinkingLevel),
-      },
-    })
+  async function callModel(model: string, callTimeoutMs: number) {
+    // Own timer (not AbortSignal.timeout) so the timeout is observable and clearable:
+    // we know it was OUR deadline that fired, and no timer outlives a fast answer.
+    const controller = new AbortController()
+    let timedOut = false
+    const timer = setTimeout(() => {
+      timedOut = true
+      controller.abort(new AiTimeoutError(model, callTimeoutMs))
+    }, callTimeoutMs)
+
+    let result
+    try {
+      result = await generateText({
+        model: gemini(model),
+        ...callOptions,
+        maxRetries: 0,
+        abortSignal: controller.signal,
+        output: Output.object({ schema: finalTextSchema }),
+        providerOptions: {
+          google: geminiFinalOnlyOptions(thinkingLevel),
+        },
+      })
+    } catch (err) {
+      if (timedOut) {
+        console.warn('[AI] Model call timed out.', { model, timeoutMs: callTimeoutMs })
+        throw new AiTimeoutError(model, callTimeoutMs, { cause: err })
+      }
+      throw err
+    } finally {
+      clearTimeout(timer)
+    }
     // Log here, BEFORE forcing `.output` below — usage/providerMetadata
     // live on `result` as soon as generateText() resolves, regardless of
     // whether the lazy `.output` getter is about to throw
@@ -187,7 +233,7 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
   let servedModel = AI_MODEL
   let result
   try {
-    result = await callModel(AI_MODEL)
+    result = await callModel(AI_MODEL, primaryTimeoutMs)
   } catch (primaryError) {
     if (
       !fallbackModel ||
@@ -209,7 +255,7 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
       statusCode: getAIStatusCode(primaryError),
     })
     servedModel = fallbackModel
-    result = await callModel(fallbackModel)
+    result = await callModel(fallbackModel, fallbackTimeoutMs)
   }
 
   const text = sanitizeFinalAIOutput(result.output.content)

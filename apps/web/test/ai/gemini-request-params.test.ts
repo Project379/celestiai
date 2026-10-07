@@ -67,10 +67,20 @@ describe('Gemini request body (what actually goes on the wire)', () => {
 })
 
 describe('no deprecated parameter anywhere in application code', () => {
-  const root = path.resolve(__dirname, '../..')
-  const skip = new Set(['node_modules', '.next', 'test', 'scripts', '.turbo'])
+  // Scans ALL application code that could ever build a Gemini request, including code
+  // that does not exist yet (the diary v2 branch will land in apps/web, apps/mobile and
+  // packages/core): every .ts/.tsx under these roots except tests, scripts and build output.
+  const repo = path.resolve(__dirname, '../../../..')
+  const roots = ['apps/web', 'apps/mobile', 'packages/core/src', 'packages/astrology/src'].map((r) => path.join(repo, r))
+  const skip = new Set(['node_modules', '.next', 'test', 'tests', 'scripts', '.turbo', '.expo', 'android', 'ios', 'dist', 'coverage'])
   function walk(dir: string, out: string[] = []): string[] {
-    for (const name of readdirSync(dir)) {
+    let names: string[] = []
+    try {
+      names = readdirSync(dir)
+    } catch {
+      return out
+    }
+    for (const name of names) {
       if (skip.has(name)) continue
       const full = path.join(dir, name)
       if (statSync(full).isDirectory()) walk(full, out)
@@ -78,16 +88,43 @@ describe('no deprecated parameter anywhere in application code', () => {
     }
     return out
   }
+  const files = roots.flatMap((r) => walk(r))
   const stripComments = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+  const rel = (f: string) => path.relative(repo, f).replace(/\\/g, '/')
 
-  it('has no thinkingBudget / temperature / topP / topK / top_p / top_k key in app, lib, components, hooks', () => {
+  it('scans a meaningful number of files across all four roots (the scan is not silently empty)', () => {
+    expect(files.length).toBeGreaterThan(300)
+    for (const r of ['apps/web/', 'apps/mobile/', 'packages/core/src/']) {
+      expect(files.some((f) => rel(f).startsWith(r)), r).toBe(true)
+    }
+  })
+
+  it('has no thinkingBudget / temperature / topP / topK / top_p / top_k key', () => {
     const offenders: string[] = []
-    for (const file of walk(root)) {
+    for (const file of files) {
       const code = stripComments(readFileSync(file, 'utf8'))
       if (/\b(thinkingBudget|temperature|topP|topK|top_p|top_k)\s*:/.test(code)) {
         // the canvas star-colour code uses the word "temperature" for blackbody physics, not an LLM parameter
         if (/CelestialCanvas\.tsx$/.test(file)) continue
-        offenders.push(path.relative(root, file))
+        offenders.push(rel(file))
+      }
+    }
+    expect(offenders).toEqual([])
+  })
+
+  it('calls the model only through generateFinalText (no direct generateText / streamText / provider import elsewhere)', () => {
+    const allowed = new Set(['apps/web/lib/ai/generate-final-text.ts', 'apps/web/lib/ai/client.ts'])
+    const offenders: string[] = []
+    for (const file of files) {
+      if (allowed.has(rel(file))) continue
+      const code = stripComments(readFileSync(file, 'utf8'))
+      if (
+        /\b(generateText|streamText|generateObject|streamObject)\s*\(/.test(code) ||
+        /import\s*\{[^}]*\b(generateText|streamText|generateObject|streamObject)\b[^}]*\}\s*from\s*['"]ai['"]/.test(code) ||
+        /from\s+['"]@ai-sdk\/google['"]/.test(code) ||
+        /generativelanguage\.googleapis\.com/.test(code)
+      ) {
+        offenders.push(rel(file))
       }
     }
     expect(offenders).toEqual([])

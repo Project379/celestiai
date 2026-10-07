@@ -18,8 +18,9 @@
     "check:build": "turbo run build",
     "i18n:update-copy-lock": "node scripts/i18n/generate-copy-lock.mjs",
     "test:oracle-gate9": "pnpm --filter @stellaeum/web run test:oracle-gate9",
-    "check:all": "pnpm run check:strictness && pnpm run check:bg-strings && pnpm run check:copy-lock && pnpm run check:bg-lint-baseline && pnpm run check:error-codes && pnpm run check:rpc-contract && pnpm run check:env-consistency && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run check:placeholders && pnpm run check:build",
-    "supabase": "supabase"
+    "check:all": "pnpm run check:strictness && pnpm run check:bg-strings && pnpm run check:copy-lock && pnpm run check:bg-lint-baseline && pnpm run check:error-codes && pnpm run check:rpc-contract && pnpm run check:data-coverage && pnpm run check:env-consistency && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run check:placeholders && pnpm run check:build",
+    "supabase": "supabase",
+    "check:data-coverage": "pnpm --filter @stellaeum/web exec vitest run test/gdpr/data-coverage.test.ts"
   },
   "devDependencies": {
     "dictionary-bg": "^2.0.0",
