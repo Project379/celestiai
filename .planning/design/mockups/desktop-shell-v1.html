@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desktop shell — mock-up v1</title>
+<!--
+  MOCK-UP v1 — NOTHING BUILT. The web app shows the MOBILE layout in a centred column on desktop
+  (ui-parity plan). This page is only the shell: viewport -> column -> tab bar. No screen content.
+
+  COPY: no new Bulgarian. The five tab labels are the approved ones from navbar-v4.html
+  (ДНЕС КАРТА КРЪГ РИТЪМ ТИ). The Cyrillic specimen under "Font fallback" reuses the existing
+  «Натална карта» / «Кристал за днес» wording only to show the Cinzel -> Playfair glyph fallback.
+
+  Tokens are the real --m-* values from apps/web/app/mobile-tokens.css. Fonts are the real
+  self-hosted woff2 files from apps/web/app/fonts (open from the repo so the relative paths resolve).
+
+  DECISIONS FOR THE FOUNDER are listed at the bottom — the frame above reflects my recommendation
+  for each, switchable where it is a visual choice.
+-->
+<style>
+  @font-face{font-family:'CinzelL';src:url('../../../apps/web/app/fonts/cinzel-latin-600-normal.woff2') format('woff2');font-weight:600}
+  @font-face{font-family:'PFLat';src:url('../../../apps/web/app/fonts/playfair-display-latin-wght-normal.woff2') format('woff2');font-weight:400 900}
+  @font-face{font-family:'PFCyr';src:url('../../../apps/web/app/fonts/playfair-display-cyrillic-wght-normal.woff2') format('woff2');font-weight:400 900}
+  :root{
+    --m-base:#08060f; --m-surface1:#0f0b1c; --m-surface2:#161029; --m-violet-border:rgba(139,92,246,.25);
+    --m-bronze-text:#d9a06a; --m-text:#e2e8f0; --m-muted:#94a3b8; --m-faint:#6d7e97;
+    --m-space-lg:16px; --m-space-xl:20px; --m-rhythm-group:40px; --m-column-width:430px;
+    --page-bg:#0c0a12; --page-surface:#141019; --page-text:#e9e6f0; --page-muted:#948fa3; --page-border:#241f30;
+    --cinzel:'CinzelL','PFLat','PFCyr',Georgia,serif;
+    --mono:"SFMono-Regular",Consolas,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page-bg);color:var(--page-text);font-family:var(--sans);line-height:1.55;padding:0 0 80px}
+  .wrap{max-width:1160px;margin:0 auto;padding:40px 24px 0}
+  h1{font-weight:500;font-size:24px;margin:0 0 6px}
+  h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#8f8aa0;margin:36px 0 10px;font-family:var(--mono);font-weight:400}
+  .dek{font-size:14px;color:var(--page-muted);max-width:780px;margin:0 0 20px}
+  .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+  .ctl .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8f8aa0;min-width:92px}
+  .ctl button{background:var(--page-surface);color:var(--page-text);border:1px solid var(--page-border);border-radius:4px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+  .ctl button[aria-pressed=true]{border-color:var(--m-bronze-text);color:var(--m-bronze-text)}
+
+  /* ── the "browser window" ── */
+  .stage{border:1px solid var(--page-border);border-radius:6px;overflow:hidden;background:#000;margin:18px auto 0}
+  .viewport{--vw:1440;width:calc(var(--vw)*1px);height:820px;position:relative;transform-origin:top left;overflow:hidden}
+  .stage-fit{overflow:hidden}
+
+  /* ── the shell under test ── */
+  .shell{position:absolute;inset:0;background:var(--m-base);display:flex;justify-content:center}
+  .shell.bg-starfield{background:
+    radial-gradient(1px 1px at 12% 18%,#fff8 50%,transparent 51%),radial-gradient(1px 1px at 78% 30%,#fff7 50%,transparent 51%),
+    radial-gradient(1px 1px at 33% 72%,#fff6 50%,transparent 51%),radial-gradient(1px 1px at 91% 81%,#fff7 50%,transparent 51%),
+    radial-gradient(1px 1px at 55% 9%,#fff6 50%,transparent 51%),radial-gradient(1px 1px at 5% 60%,#fff5 50%,transparent 51%),
+    var(--m-base)}
+  .column{width:100%;max-width:var(--m-column-width);height:100%;position:relative;background:var(--m-base);
+    border-left:1px solid var(--m-violet-border);border-right:1px solid var(--m-violet-border);display:flex;flex-direction:column}
+  .vp-narrow .column{border-left:0;border-right:0}
+  .scroll{flex:1;overflow:hidden;padding:var(--m-space-xl)}
+  .eyebrow{font-family:var(--cinzel);font-weight:600;font-size:9.5px;letter-spacing:2.66px;text-transform:uppercase;color:var(--m-bronze-text)}
+  .skel{background:var(--m-surface1);border:1px solid var(--m-violet-border);border-radius:10px;margin-top:var(--m-rhythm-group)}
+  .skel.t{height:96px;margin-top:20px} .skel.h{height:210px} .skel.s{height:120px}
+  .note{font-family:var(--mono);font-size:10px;color:var(--m-faint);margin-top:8px}
+  .tabbar{display:flex;border-top:1px solid var(--m-violet-border);background:var(--m-surface1);padding:10px 4px calc(10px + env(safe-area-inset-bottom,0px))}
+  .tabbar span{flex:1;text-align:center;font-family:var(--cinzel);font-weight:600;font-size:9.5px;letter-spacing:2.66px;color:var(--m-faint)}
+  .tabbar span.on{color:var(--m-bronze-text)}
+  .tabbar.viewport-bottom{position:absolute;left:0;right:0;bottom:0;justify-content:center;border-top:1px solid var(--m-violet-border)}
+  .tabbar.viewport-bottom .in{display:flex;width:100%;max-width:var(--m-column-width)}
+  .tabbar.viewport-bottom .in span{flex:1}
+  .gutter-note{position:absolute;top:14px;font-family:var(--mono);font-size:10px;color:#5d5870}
+  .gutter-note.l{left:18px}.gutter-note.r{right:18px;text-align:right}
+  .dim{position:absolute;top:0;bottom:0;border-left:1px dashed #8b5cf655;pointer-events:none}
+
+  .spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:6px}
+  .card{background:var(--page-surface);border:1px solid var(--page-border);border-radius:6px;padding:16px 18px;font-size:13.5px}
+  .card b{color:var(--m-bronze-text);font-weight:500}
+  .sample{font-family:var(--cinzel);font-weight:600;letter-spacing:.18em;text-transform:uppercase;font-size:18px;margin:8px 0;color:var(--m-text)}
+  .sample.bad{font-family:Georgia,serif;opacity:.7}
+  ol.dec{padding-left:20px;margin:6px 0 0} ol.dec li{margin:0 0 12px;max-width:820px}
+  ol.dec li span{color:var(--page-muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Desktop shell — mock-up v1</h1>
+  <p class="dek">Mobile layout, centred, on desktop. Only the shell is drawn: viewport, column, tab bar. Use the controls to
+  see how it behaves from 1440 px down to a phone. Nothing here is built; no screen content is shown.</p>
+
+  <div class="ctl"><span class="k">Viewport</span>
+    <button data-vw="1440" aria-pressed="true">1440 desktop</button>
+    <button data-vw="1024" aria-pressed="false">1024 laptop</button>
+    <button data-vw="768" aria-pressed="false">768 tablet</button>
+    <button data-vw="430" aria-pressed="false">430 phone (full-bleed)</button>
+  </div>
+  <div class="ctl"><span class="k">Outside column</span>
+    <button data-bg="plain" aria-pressed="true">flat base</button>
+    <button data-bg="stars" aria-pressed="false">faint starfield</button>
+  </div>
+  <div class="ctl"><span class="k">Tab bar</span>
+    <button data-tab="column" aria-pressed="true">inside the column</button>
+    <button data-tab="viewport" aria-pressed="false">full-width strip, tabs centred</button>
+  </div>
+  <div class="ctl"><span class="k">Column width</span>
+    <button data-cw="430" aria-pressed="true">430 px</button>
+    <button data-cw="480" aria-pressed="false">480 px</button>
+  </div>
+
+  <div class="stage-fit stage" id="stage">
+    <div class="viewport" id="vp">
+      <div class="shell" id="shell">
+        <span class="gutter-note l">viewport background</span>
+        <span class="gutter-note r" id="wnote">column 430 px</span>
+        <div class="column" id="col">
+          <div class="scroll">
+            <div class="eyebrow">НАТАЛНА КАРТА</div>
+            <div class="skel h"></div>
+            <div class="skel s"></div>
+            <div class="skel t"></div>
+            <div class="note">screen content area — real screens drop in unchanged from mobile</div>
+          </div>
+          <div class="tabbar" id="tabbar-in"><span class="on">ДНЕС</span><span>КАРТА</span><span>КРЪГ</span><span>РИТЪМ</span><span>ТИ</span></div>
+        </div>
+        <div class="tabbar viewport-bottom" id="tabbar-vp" hidden><div class="in"><span class="on">ДНЕС</span><span>КАРТА</span><span>КРЪГ</span><span>РИТЪМ</span><span>ТИ</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Font fallback — Cinzel has no Cyrillic</h2>
+  <div class="spec">
+    <div class="card"><b>After (built)</b> — Cinzel for Latin, Playfair Display per glyph for Cyrillic
+      <div class="sample">Натална карта · IV · Кристал за днес</div></div>
+    <div class="card"><b>Before</b> — Cyrillic dropped to the system serif
+      <div class="sample bad">Натална карта · IV · Кристал за днес</div></div>
+  </div>
+
+  <h2>What I need from you</h2>
+  <ol class="dec">
+    <li><b>Column width.</b> 430 px (iPhone Pro Max width — the widest phone the mobile screens were drawn for) or 480 px.
+      <span>I recommend 430: the type scale was validated at 390 px, so a wider column gains nothing and risks re-wrapping.</span></li>
+    <li><b>Outside the column.</b> Flat base colour or a faint starfield.
+      <span>I recommend flat base — the column already carries the atmosphere, and a second background competes with it.</span></li>
+    <li><b>Tab bar.</b> Inside the column (as mobile) or a full-width strip with centred tabs.
+      <span>I recommend inside the column — a full-width bar puts five tabs under a 430 px column's empty gutters.</span></li>
+    <li><b>Narrow screens.</b> Below 430 px the column goes full-bleed with no side borders (shown in the 430 preview). Agreed?</li>
+    <li><b>Out of scope for the shell.</b> Legal pages, pricing and the sign-in / sign-up pages are text or Clerk pages. I plan to leave them
+      full-width, not in the column, and let the footer stay where it is. Say if you want them inside too.</li>
+  </ol>
+</div>
+<script>
+  const vp=document.getElementById('vp'), stage=document.getElementById('stage'), shell=document.getElementById('shell');
+  const col=document.getElementById('col'), wnote=document.getElementById('wnote');
+  function fit(){
+    const vw=+vp.style.getPropertyValue('--vw')||1440, avail=Math.min(1160,window.innerWidth-48);
+    const s=Math.min(1,avail/vw); vp.style.transform='scale('+s+')';
+    stage.style.width=(vw*s)+'px'; stage.style.height=(820*s)+'px';
+    vp.classList.toggle('vp-narrow',vw<=430);
+  }
+  function group(attr,fn){
+    document.querySelectorAll('['+attr+']').forEach(b=>b.addEventListener('click',()=>{
+      document.querySelectorAll('['+attr+']').forEach(x=>x.setAttribute('aria-pressed',x===b));
+      fn(b.getAttribute(attr));}));
+  }
+  group('data-vw',v=>{vp.style.setProperty('--vw',v);fit()});
+  group('data-bg',v=>shell.classList.toggle('bg-starfield',v==='stars'));
+  group('data-tab',v=>{document.getElementById('tabbar-in').hidden=v==='viewport';document.getElementById('tabbar-vp').hidden=v!=='viewport'});
+  group('data-cw',v=>{document.documentElement.style.setProperty('--m-column-width',v+'px');wnote.textContent='column '+v+' px'});
+  vp.style.setProperty('--vw',1440); fit(); addEventListener('resize',fit);
+</script>
+</body>
+</html>
