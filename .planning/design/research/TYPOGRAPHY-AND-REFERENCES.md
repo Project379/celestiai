@@ -59,7 +59,7 @@ Probed with fontTools, 40+ font files. Results that matter [verified]:
 
 ## A.4 Three pairings (display + body), rendered with real app strings
 
-Image: `typography/pairings-in-app-sizes.png` — four phone-width columns, same copy (real strings from `index.tsx`, `moon-detail`, `compliance-copy.ts`), sizes from `tokens.ts` (body 17/27, lead italic 19, caption 12, CTA 22). Column A is the shipped combination for comparison.
+**[Superseded 2026-10-07 — see A.6; the image was deleted because it used italic leads.]** Image was: `typography/pairings-in-app-sizes.png` — four phone-width columns, same copy (real strings from `index.tsx`, `moon-detail`, `compliance-copy.ts`), sizes from `tokens.ts` (body 17/27, lead italic 19, caption 12, CTA 22). Column A is the shipped combination for comparison.
 
 | | Display | Body + italic voice | What it keeps | What changes | Risk |
 |---|---|---|---|---|---|
@@ -76,6 +76,46 @@ Image: `typography/pairings-in-app-sizes.png` — four phone-width columns, same
 3. **Variable fonts on React Native:** B and parts of C are variable (`opsz`/`wght`). Expo/RN handling of variable axes is limited; static instances would be needed. **Not tested.** Spectral ships as static files and is the lowest-risk for native.
 4. **Self-hosting:** all candidates are OFL; the web already self-hosts via `next/font/local` (ui-parity foundation). Subsets: latin + latin-ext + cyrillic.
 5. **Tabular figures** for degrees/percentages (`DESIGN-RESEARCH` §B.1): check `tnum` per font — present in Source Serif 4, Spectral, Cormorant (listed in GSUB); not verified in rendering.
+
+## A.6 Upright renders, Bulgarian forms vs Russian-style forms (2026-10-07, replaces the old pairings render)
+
+Each pairing rendered twice, **fully upright (no italic anywhere)**, same 390 px column, same sizes (app type scale), same strings: the Днес reading (three beats + sign quip), greeting, moon block and long paragraph (shipped `physicalAppearance`), Карта labels (name, Big Three rows, «Детайли», hint), the Bulgarian-distinctive letters in a row, and long words. Left `lang="bg"`, right `lang="ru"`. The old `pairings-in-app-sizes.png` (italic leads) was deleted as superseded.
+
+| Pairing | Render |
+|---|---|
+| A · shipped today (Playfair Display + EB Garamond; static files from the app) | `typography/pairing-A-upright-bg-vs-ru.png` |
+| B · Playfair 2 + Source Serif 4 | `typography/pairing-B-upright-bg-vs-ru.png` |
+| C · Cormorant Garamond + Spectral | `typography/pairing-C-upright-bg-vs-ru.png` |
+| D · Spectral only | `typography/pairing-D-upright-bg-vs-ru.png` |
+| All four, `lang="bg"` only, side by side | `typography/pairings-upright-glance-bg.png` |
+
+What the renders show [verified by looking, not by metrics]:
+- **A:** the two columns are identical. Both shipped fonts ignore `lang="bg"`.
+- **B, C, D:** with `lang="bg"` the **upright** letters change a lot, and all three fonts choose the same strong style: в like a rounded «в», д like a **g**-shape, и like a **u**, к like a **k**, л like **Λ**, т like an **m**, п like **n**. That is the Bulgarian-italic-derived roman set. Whether that is how you want upright Bulgarian body text to look is the question the renders exist to answer; CSS cannot give the Russian-style roman with Bulgarian italics from the same font (`locl` is per language).
+- Paragraph lengths differ between the columns because the Bulgarian forms are wider.
+- Caveats unchanged from A.1/A.5: React Native may not apply `locl` from the device locale (untested); Playfair 2 / Source Serif 4 / Cormorant are variable fonts (static instances may be needed); Cormorant is thin at 17–19 px on dark.
+
+## A.7 Italics — proposal (founder dislikes them; default is upright everywhere)
+
+**Proposal: no italic role at all.**
+1. **The job italics did is already done by other means.** Today italics mark (a) the greeting, (b) the reading's lead line, (c) the two instruction hints, (d) the chart name, (e) the Oracle's placeholder/ask-line. With the voice rule (the Oracle is the speaker everywhere) italic can no longer mean "the Oracle speaking"; bronze, position and the display face (the payoff) already carry hierarchy.
+2. **Bulgarian italic is the highest-risk glyph set.** Every italic shipped today (EB Garamond Italic) is the Russian-style form (A.1 table). Doing it right means a second family of italic files with Bulgarian forms, on a platform where `locl` is untested.
+3. **Fewer files.** Upright-only drops the italic face from the bundle and removes the false-italic risk entirely (rule 8 in the brief).
+4. **If you ever want one:** the only defensible role is the **Oracle's single opening line of a reading** — one line per screen, never a hint or label. I do not recommend it; I name it only because you asked for at most one.
+
+## A.8 Monospace for dates and labels — ruling needed; my recommendation: retire it
+
+Render: `typography/mono-vs-body-font.png` — eight real strings (date lines, diary date, specimen label, moon facts, upcoming dates, week-track labels, legend caps, numbers that must align) at the sizes the mock-ups/code use, in ① the mono stack (Consolas stands in for Menlo / Android monospace), ② today's body font, ③ a candidate body font (Source Serif 4) — ② and ③ with tabular figures.
+
+Where mono is specified today: the mock-ups use `--mono` for eyebrows, date stamps, specimen labels, week-track labels, and upcoming-list dates; shipped code uses `font.mono` only in `NatalWheelLegend` (2 labels) and `ManifestDiaryContent` (2 date lines) — Днес and Карта already moved off it as "too rigid" (recorded rejection, current-state #22).
+
+Findings:
+- **Mono wins at 8–10 px** in the render: at 9.5 px EB Garamond is hard to read and the mono line is not. That is a size problem, not a typeface problem — the brief's own floor is 12 px (§2.1 rule 9) and every mono use above is below it.
+- **Mono is not one face.** iOS gets Menlo, Android gets whatever `monospace` resolves to, so the same Cyrillic string renders in two different faces; neither has Bulgarian forms. The body font is the one face with control.
+- **Alignment** (the one real job of mono) is solved by tabular figures: the last row of the render aligns in ② and ③.
+- A mono face is a fifth typeface in the bundle for four small usages.
+
+**Recommendation:** no monospace anywhere. Dates and labels in the body font, sentence case, tabular figures on, **12 px minimum** (retire the 8–10.5 px sizes with it). The tracked-caps legend labels fall under R3, not under this ruling.
 
 ---
 

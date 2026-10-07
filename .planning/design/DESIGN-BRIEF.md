@@ -1,7 +1,7 @@
 ---
 title: Stellaeum design brief
 created: 2026-10-07
-status: DRAFT for founder approval. Not in force until you approve it. Nothing in it changes a product decision you have not already made — where sources disagree I list the disagreement (§6) and do not pick.
+status: DRAFT for founder approval, updated 2026-10-07 with your rulings (price, faint token, casing, voice, italics direction, mobile-layout correction) and with my recommendation pre-filled on every contradiction in §6 — you only override. Not in force until you approve it. Nothing in it changes a product decision you have not already made — where sources disagree I list the disagreement (§6) and do not pick.
 companion docs: DESIGN-CURRENT-STATE.md (what exists, honestly assessed) · research/TYPOGRAPHY-AND-REFERENCES.md (fonts, reference products)
 how-to-read: every rule cites its source file. "R1–R7" are the rules in DESIGN-LANGUAGE-REFERENCE.md §0. Bulgarian strings here are existing strings only; anything new is marked PLACEHOLDER_COPY.
 ---
@@ -43,12 +43,12 @@ Each rule: **rule — source.** "(drift)" marks where shipped code departs from 
 2. **R2: max 3–4 type sizes per screen.** Scale in `tokens.ts`: `sub 17/23`, `body 17/27`, `row 16/21`, `caption 12/17`, plus one reserved `eyebrow 9.5`. — Reference §0, §1. (drift: Днес uses ≥ 8.)
 3. **R3: tracked-caps uppercase is reserved — 0–1 per screen**, never on body-adjacent or long text; everything else is sentence case. — Reference §0. (drift: Днес ≥ 5, moon-detail 5, even the approved moon-detail mock-up.)
 4. **R1: one dominant element per screen, 6–8× the smallest text;** the hero is an object (moon, wheel, ember), not a headline; the largest text tier needs only ~3.5× caption. — Reference §0.
-5. **Reading text is serif; the voice is italic.** Lead (opener) in italic; development in roman; payoff in the display face. — `index.tsx` `beatStyle`; `_source-v4` `.reading`.
+5. **Reading text is serif and upright.** Lead and development in the body face; payoff in the display face. **No italic anywhere by default** (founder dislikes italics, 2026-10-07; my proposal is no italic role at all — research A.7). `index.tsx` and `_source-v4` still italicise the lead and hints; that is drift from this rule.
 6. **Bulgarian forms are required, not optional.** *New finding:* the currently shipped Playfair Display and EB Garamond have **no** Bulgarian localized forms (`research/TYPOGRAPHY-AND-REFERENCES.md` §A). A font used for Cyrillic body, italic or display must carry `cyrl/BGR` `locl` (verified candidates there). **Font pairing is yours to choose — not decided here.**
 7. **Cinzel is Latin and Roman numerals only, never Cyrillic** — HARD RULE, REVISIT-42 (six-plus recurrences). — Reference §1. (See contradiction C3: the web now falls back per glyph.)
-8. **No italic on a font that lacks an italic face** (synthesised italic loses Bulgarian italic forms and looks false). — my finding, §A.5 of the research file; consistent with `chart.tsx` ("Playfair has no italic face loaded").
+8. **No italic faces are loaded.** Upright everywhere removes the false-italic risk (synthesised italic loses Bulgarian italic forms) and the italic font files. — research A.5, A.7.
 9. **Minimum legible size**: 12 px caption; `faint` is 4.87:1 on base only because it was lifted on 2026-08-27; never go below it for text. — `DESIGN-RESEARCH` §D.
-10. **Tabular figures** for degrees, percentages, dates. — `DESIGN-RESEARCH` §B.1 (not yet set anywhere).
+10. **Tabular figures** for degrees, percentages, dates. — `DESIGN-RESEARCH` §B.1 (not yet set anywhere). **Monospace is retired in my recommendation** (dates and labels in the body face, 12 px floor) — ruling pending, research A.8.
 11. **Bulgarian quotation marks „…“, no straight quotes**; informal ти everywhere; **new user-facing Bulgarian needs the founder's approval** (proposed skill rule; `CLAUDE.md`).
 12. **Check the longest real Bulgarian string for every slot** (lunar phase names 19 chars: «Изгряващ полумесец»; «Слънце · Луна · Асцендент» 25; list subtitles ≈ 37), never an English-length guess. — `BUILD_VERIFICATION_GUARDS` Guard 1; Reference R6.
 
@@ -72,7 +72,7 @@ Rules: **R4** — 1–2 accent roles per screen, one temperature (warm *or* cool
 - `space`: 4/8/12/16/20/24/32 for structural padding. `rhythm` for reading: **micro 4 · tight 12 · paragraph 20 · group 40** — each ≥ 2× its neighbour so groups are visible. Departures are allowed if stated (the Big Three row gap 16; pedestal gap 48). — Reference §1.
 - Gaps carry meaning: *tight = belongs together; group = a new beat.* — `index.tsx` round-9 note.
 - Design floor **360×780**; check 390. Bottom clearance = tab bar (56 + inset) + 52. — `index.tsx`; `ScreenShell.tsx`.
-- **Navbar and pinned elements must never overlap content** (Guard 1) — visible as a defect in `dnes-v4` and `karta-v4` renders.
+- **Navbar and pinned elements must never overlap content** (Guard 1). **Mobile layout is judged only by the founder, on a device or emulator.** Web renders of mobile screens (including the Expo-web harness and renders of the HTML mock-ups' phone frames) are approximations; this brief reports no mobile layout defect from them. The overlaps earlier drafts listed on Днес and Карта are already fixed on device and are removed.
 
 ## 2.4 Motion
 
@@ -94,6 +94,31 @@ Rules: **R4** — 1–2 accent roles per screen, one temperature (warm *or* cool
 - **Hero objects built from light, not stock imagery:** the moon (layered gradients + depth-twin + grain), the wheel (bevelled bronze rim, dark etched face, gems), the ember, the placed star, the cut gem (`clip-path`). — `_source-v4`.
 - **No decorative illustration, no mascots**; empty states use the invitation device, not art. — `DESIGNER_BRIEF_ASSETS` §1a.
 - Real material illustration for the moon and the instrument face is a **designer task**, acknowledged as the gap code cannot close (`_source-v4` "What code alone cannot close"; the two device captures show how far the shipped objects are from the mock-ups).
+
+## 2.7 Voice — who speaks (founder ruling 2026-10-07)
+
+**The Oracle is the speaker.** The app has one voice with a name, and it is the Oracle's.
+
+| Surface | Who speaks | Rule |
+|---|---|---|
+| Readings, the Днес horoscope, the sun-sign quip, interpretations | the Oracle | second person, informal **ти** |
+| Loading and reveal **stage lines**, "taking longer" lines | the Oracle | present tense, may use "I" |
+| **Empty states** and **guidance** (hints, next-step lines, invitations) | the Oracle | second person or "I"; never an instruction sentence standing in for a broken affordance (§3.2.3) |
+| Buttons, labels, tab names, settings, **form errors**, API error messages | **nobody** (neutral UI) | **no first person at all**: no «ние/нас/ни», no «-ам/-ям» as a speaker |
+| The one AI-unavailable message | ratified | «Звездите са временно недостъпни. Опитай отново след малко.» stays as is |
+
+**The Oracle has no gender.**
+- **Present and future tense only.**
+- **Never a first-person past participle** (подредил/подредила, видял/видяла, направил/направила).
+- If a past event must be referenced, use impersonal or third-person phrasing (about the sky or the thing, not about the speaker).
+- Nothing addressed to the user may reveal the *user's* gender either (a compact pair «готов/а» is wrong twice).
+- Enforcement: written into the Bulgarian skill as project rules 3–5; a validation check for Gemini output and a static content gate are *proposed*, not built (`VOICE-COPY-AUDIT-2026-10-07.md` §5).
+
+**What passes today:** the three stage lines in the oracle-loading mock-up («Чета небето над теб…», «Свързвам местата, които се светват…», «Подреждам думите…») are present tense, first person singular, genderless — compliant. The composed Днес copy is second person, present tense — compliant.
+
+**What does not:** existing copy that breaks the rule is **listed, not reworded**, in `VOICE-COPY-AUDIT-2026-10-07.md`: the company "we" in 44 error/UI strings (68 sites), 15 compact gender pairs / participles, ~110 user-voice first-person strings that need a ruling (is a journal prompt Oracle guidance or the user's own voice?), and ~10 Oracle-side "we" lines. All rewording needs your approval; one gender-neutral rewording of the moon-detail prompt is *proposed* there.
+
+**Open questions for you (not decided here):** (1) do journal stems, affirmations and journal prompts speak as the Oracle (second person) or as the user (first person)? (2) may the Oracle say an inclusive "we"? (3) are legal and support pages exempt from "no first person" (the company necessarily says "we" there)?
 
 ---
 
@@ -125,7 +150,7 @@ Rule set:
 | Настройка на картата (wizard) | your star being placed, one question at a time | answer the line | lit answer line; dots for progress (no numerals) |
 | Хороскоп и карта след запазване (reveal flow) | your chart being read | read today, then go to the chart | «Към картата» lit phrase (+ skip on the new-user reveal) |
 | Днес | today's sky, one lit object | read it → «Питай Оракула» | the single CtaPanel |
-| Оракул | the answer arriving from a light | read; ask again | lit ask-line (note C10: the shipped Oracle is topic-based, not free text) |
+| Оракул | the answer arriving from a light | read; ask again | topic choice, **not** a free-text ask-line (settled: the Oracle takes no free text; the `orakul-v4` ask-line is CHANGE — C10) |
 | Карта | the instrument | touch a planet; «Детайли» | pedestal word |
 | Ритъм | cold week track, one point warm | read today's point | the ignited point itself |
 | Кръг | two lights, one unlit | light the second ("добави") | the unlit orb |
@@ -194,30 +219,32 @@ From `DESIGNER_BRIEF_ASSETS.md` (still open unless noted) plus gaps found in thi
 
 ---
 
-# 6. Contradictions between sources — for your ruling (none resolved silently)
+# 6. Contradictions between sources — my recommendation pre-filled; you only override
 
-| # | Source A says | Source B says | Why it matters |
+Status: **RESOLVED** = settled by your 2026-10-07 rulings. **REC** = my recommendation and a one-line reason; it is not in force until you accept it or stay silent on a row you read.
+
+| # | Source A says | Source B says | Recommendation — one-line reason |
 |---|---|---|---|
-| **C1** | **No cards, no pills, no chips, no glass** (`_source-v4`; Reference §5) | `MOBILE_UX_RESEARCH` §9: "introduce a subtle card style: 1px violet border, 16 px radius"; **pill-shaped scroll chips**; bento launchpad §2.1; `COMPETITOR_ANALYSIS`: "Cosmic Glassmorphism"; skill `mystical-dark-ui` (cards, pills, glass) | The older research and one installed skill actively prescribe what the language bans. |
-| **C2** | **R3: 0–1 tracked-caps per screen** | The approved `moon-detail-v1` has **5**; `dnes-v4` mock-up eyebrow + plaque + pedestal; Днес code ≥ 5; `MOBILE_UX_RESEARCH` §9 calls Cinzel tracked eyebrows "iconic, keep them"; Guide eyebrow | The rule is broken by the approved mock-ups themselves. |
-| **C3** | **Cinzel never on Cyrillic** (Reference hard rule) | Web foundation (your 2026-10-02 plan) falls back per glyph from Cinzel to Playfair so Cyrillic can sit on `font-cinzel` | Same font stack rendering Cyrillic through a fallback is exactly what the rule bans — unless Cinzel is retired. |
-| **C4** | Mobile type = **Playfair Display + EB Garamond** (tokens) | Web type = **Manrope + Inter + Cinzel** | Two typographic systems; and **neither Playfair Display nor EB Garamond has Bulgarian forms** (new finding). |
-| **C5** | **R1:** the moon is Днес's hero, first (`dnes-v4`) | Днес code (reading-first IA reorder, moon shrunk to 0.345); the July device capture still has the moon first | The screen's dominant object has changed without a ruling recorded in the design docs. |
-| **C6** | Payoff colour: **starlight** (`_source-v4`, `dnes-v4`) | Code: **bronzeText** ("the app speaking") | Removes the categorical break between spine/lead and payoff. |
-| **C7** | Invite is **pinned** at the bottom (`dnes-v4` mock-up) | Code moved it in-flow after four failed pinned rounds; the mock-up render shows it **overlapping the tab bar** | Mock-up and build disagree; the mock-up itself has the Guard-1 defect. |
-| **C8** | Bronze = "the app speaking" / invitations / fittings (Reference §2) | Code uses bronze as the **colour of section captions and labels** (Днес, moon-detail, Ритъм numeral) | Bronze has lost its single meaning. |
-| **C9** | Карта is a **cool instrument**: five quiet gems, one bronze fitting (`karta-v4`) | Device capture: **six-plus saturated accent colours**, five aspect-line colours, yellow/cyan lines, a Roman «I» button; `MOBILE_UX_RESEARCH` §8 wants "correct science" density (degrees, orbs, patterns) | How much of the data lives *on* the hero vs. in the sheet is undecided. |
-| **C10** | `orakul-v4`: Оракул has a **lit ask-line (free-text input)** | `SYSTEM-MAP` §4 / ORACLE-INPUT-STRUCTURED: **no user free text ever reaches the model**; Oracle takes a chart id + topic enum | The approved mock-up depicts an input the product deliberately does not have. |
-| **C11** | `faint` = **#64748b** (Reference §1 table) | `tokens.ts` **#6d7e97** (corrected 2026-08-27); `_source-v4` CSS **#5d6a82** | Three values for one token across docs. |
-| **C12** | Oracle as **FAB / nav-bar glyph** on every screen (`MOBILE_UX_RESEARCH` §2.6) | Shipped: Oracle only via in-screen invitation | The research IA was not built; which is intended? |
-| **C13** | "**Web design is Petko's call**" (`DESIGN-RESEARCH` §E.6) | You ordered web parity on a branch | Who decides web? |
-| **C14** | Onboarding research: collecting everything, show value late is wrong (`DESIGN-RESEARCH` §C.2) | Wizard is 4 steps; reveal flow now fixes the *after*, not the *before* | Partial-value-before-time remains un-ruled (its own investigation). |
-| **C15** | **ти everywhere** (code, handoff) | `bulgarian-skill` default is Вие; its astrology samples are all Вие; device capture shows an AI reading in Вие | Fixed in the model prompt; skill proposal pending. |
-| **C16** | Дневник in mock-ups is **«лунен дневник»** | moon-detail CtaPanel «Лунен Дневник» | Casing of a product term. |
-| **C17** | Tab labels in mock-ups: **mono caps** (ДНЕС) | Device: mixed-case serif «Днес» | Which is canonical? |
-| **C18** | `DESIGN-RESEARCH` §E: **reduced-motion and delayed spinners approved in principle but deferred** | Mock-ups define reduced-motion behaviour and a staged loading state | Approved in principle but not scheduled. |
-| **C19** | Near-black base `#08060f` as the identity | Halation research recommends a lighter floor (`DESIGN-RESEARCH` §C.4); *not ruled* | Affects every screen if it ever moves. |
-| **C20** | Pricing: `FEATURES.md` "9.99/mo target" | `COMPETITOR_ANALYSIS` €6.99; `MOBILE_UX_RESEARCH` monthly + annual, numbers placeholders | Not a design rule, but the paywall design depends on it. |
+| **C1** | **No cards, no pills, no chips, no glass** (`_source-v4`; Reference §5) | `MOBILE_UX_RESEARCH` §9 (card style, pill chips), §2.1 bento; `COMPETITOR_ANALYSIS` "Cosmic Glassmorphism"; skill `mystical-dark-ui` | **REC: the language wins; mark the old research sections superseded.** The skill is deleted (RESOLVED 2026-10-07); the research text still prescribes the banned things. |
+| **C2** | **R3: 0–1 tracked-caps per screen** | Approved `moon-detail-v1` has 5; Днес ≥ 5; research §9 says keep Cinzel eyebrows | **REC: R3 holds; fix the mock-ups, not the rule.** It is the biggest lever against "decorated, not considered". |
+| **C3** | **Cinzel never on Cyrillic** (hard rule) | Web falls back per glyph from Cinzel to Playfair so Cyrillic can sit on `font-cinzel` | **REC: retire Cinzel for anything Cyrillic; keep it only for Latin and the Guide's Roman numerals.** A Bulgarian-form display face makes the fallback unnecessary. |
+| **C4** | Mobile: Playfair Display + EB Garamond | Web: Manrope + Inter + Cinzel; neither mobile font has Bulgarian forms | **REC: one system, mobile's; web moves to it (your parity order).** Font choice itself is yours (research A.6 renders). |
+| **C5** | R1: the moon is Днес's hero, first | Code: reading-first IA, moon shrunk | **REC: record the reading-first order as decided (your call, ~10 correction rounds) and amend R1 for Днес to "the reading's payoff is the dominant element".** Where it sits on screen is yours to judge on device. |
+| **C6** | Payoff colour: starlight (mock-ups) | Code: bronzeText | **REC: code stands (recorded founder decision); update the mock-ups.** |
+| **C7** | Invite pinned at the bottom (`dnes-v4`) | Code: in-flow after four failed pinned rounds | **REC: in-flow stands; update the mock-up.** (The overlap I previously cited from the mock-up render is removed — mobile layout is judged on device only.) |
+| **C8** | Bronze = "the app speaking" / invitations / fittings | Code uses bronze for section captions and labels | **REC: bronze means one thing — the Oracle speaking (now consistent with §2.7); captions move to faint/starlight.** |
+| **C9** | Карта is a cool instrument, five quiet gems | Device: six-plus saturated accents, five aspect colours | **REC: hero stays quiet (1–2 accents); degrees, orbs, aspects live in the details sheet.** R4; the "correct science" need is met one tap away. |
+| **C10** | `orakul-v4`: a lit free-text ask-line | No user free text ever reaches the model (SYSTEM-MAP §4) | **CHANGE (your ruling): the Oracle takes no free text.** The mock-up's ask-line becomes topic choice. |
+| **C11** | `faint` #64748b (Reference) | `tokens.ts` #6d7e97; `_source-v4` #5d6a82 | **RESOLVED: #6d7e97.** Reference fixed; `_source-v4.html` (#5d6a82) still to correct when the mock-ups are next touched. |
+| **C12** | Oracle as FAB / nav glyph (research §2.6) | Shipped: in-screen invitation only | **REC: keep the in-screen invitation; no FAB.** It is built, it is the single lit exit, and a FAB adds a second persistent control. |
+| **C13** | "Web design is Petko's call" | You ordered web parity on a branch | **REC: you decide web design (your branch, your order); record Petko's earlier ownership as superseded.** Needs your confirmation — only you can say who owns it. |
+| **C14** | Onboarding research: show value late is wrong | Wizard is 4 steps; reveal flow fixes the *after* | **REC: leave to its own investigation; not a design-rule question.** |
+| **C15** | ти everywhere | `bulgarian-skill` default Вие | **RESOLVED: ти.** Skill updated and approved 2026-10-07. |
+| **C16** | «лунен дневник» in mock-ups | «Лунен Дневник» in moon-detail | **RESOLVED: «Лунен дневник» at sentence start, «лунен дневник» mid-sentence.** moon-detail fixed. |
+| **C17** | Tab labels: mono caps (ДНЕС) | Device: mixed-case serif «Днес» | **REC: mixed-case «Днес» (shipped).** R3 reserves caps; mono is recommended retired (research A.8). |
+| **C18** | Reduced-motion and delayed spinners "approved in principle, deferred" | Mock-ups define both | **REC: make reduced-motion mandatory in every UI-parity screen pass; keep delayed spinners deferred.** Accessibility cost is small, and the mock-ups already specify it. |
+| **C19** | Near-black base #08060f is the identity | Halation research suggests a lighter floor | **REC: keep #08060f until a device test says otherwise.** No evidence on your device yet; changing it touches every screen. |
+| **C20** | `FEATURES.md` "9.99/mo target" | `COMPETITOR_ANALYSIS` €6.99; research monthly + annual | **RESOLVED: €6.99/month, €59.99/year.** FEATURES.md and every other disagreeing doc fixed; PRICE-BASIS closed (it was the revenue basis for the unit-economics math, not the price). |
 
 ---
 

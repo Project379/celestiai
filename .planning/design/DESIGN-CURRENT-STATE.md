@@ -1,7 +1,7 @@
 ---
 title: Design — current state (Phase 1a)
 created: 2026-10-07
-status: for founder review. Nothing here is defended. The last table is empty on purpose — KEEP / CHANGE / DISCUSS is yours.
+status: for founder review. Nothing here is defended. 2026-10-07: the last table is now pre-filled with my recommendation and a one-line reason per row — you only override. Mobile layout claims derived from web/mock-up renders were removed (see the correction note in §0).
 how-evidence-was-gathered: |
   Read every file in .planning/design/**, the retired research docs' stubs, MOBILE_UX_RESEARCH.md, COMPETITOR_*.md, DESIGN-RESEARCH-2026-08-27.md,
   DESIGNER_BRIEF_ASSETS.md, the mobile screen code (index.tsx, chart.tsx, rhythm.tsx, moon-detail.tsx, ScreenShell, tokens, States, NavRow,
@@ -10,6 +10,8 @@ how-evidence-was-gathered: |
 ---
 
 # 0. What I could and could not see — read this first
+
+> **Correction (founder, 2026-10-07):** web renders of mobile screens are approximations. Mobile layout is judged only by the founder, on a device or emulator. The tab-bar / «Питай Оракула» / «Погледни нагоре» / Карта-hint overlaps this document previously reported came from mock-up and web-harness renders; they are already fixed on device and have been removed from the findings and from the CHANGE pre-fill. My render-based critique applies to **mock-ups and web only**.
 
 | Screen | What the screenshot is | Why |
 |---|---|---|
@@ -68,7 +70,7 @@ Found late: `mockups/download (2).jpg` and `download (3).jpg` are **real device 
 - Order is: date → greeting → **«небесен ритъм»** caption → phase name in tracked caps → moon → **«дневен хороскоп»** caption → reading. Captions are **orange-bronze, lower-case, small** — read as form labels.
 - The reading is in **Вие** («Вашият ден е под влиянието на Меркурий… Вие можете да използвате…») and the planet names are highlighted **bright yellow** — a third accent colour not in the language (R4). (Prompt has since been fixed to ти; the highlight colour is in code.)
 - The greeting shows the name in **Latin** («Nikolay Tonev») in italic, from the Clerk profile.
-- «Питай Оракула» sits over the bottom of the reading with the reading's last line fading behind it; a stray ember dot floats at the far left. The glow reads as an **orange band across the screen**, not a lit phrase.
+- «Питай Оракула» sat over the bottom of the reading with the reading's last line fading behind it (July capture; **fixed on device since, per founder**); a stray ember dot floats at the far left. The glow reads as an **orange band across the screen**, not a lit phrase.
 - Tab bar: stock icons with **Cyrillic labels in mixed case** (Днес, Карта…) — the mock-up's mono caps (ДНЕС) did not ship.
 
 **Карта (device, 27 July):**
@@ -105,7 +107,6 @@ Found late: `mockups/download (2).jpg` and `download (3).jpg` are **real device 
 - `ErrorState` (`States.tsx`) is a **rounded (12px), bordered, tinted box** — a card, in the language that bans cards. `LoadingState` is a stock `ActivityIndicator`. `EmptyState` ends in a chevron `NavRow`.
 - The date line + greeting + captions + disclosure + hints: **six different small-text treatments** in the first 2 screens of scroll.
 
-**Mock-up flaws (not just code):** in `dnes-mockup-v4.png` the pinned «Питай Оракула» sits **on top of the tab bar** (text overlaps the icons) — the guard-1 problem the docs describe, visible in the reference itself.
 
 ## 2.2 Карта
 
@@ -119,7 +120,6 @@ Found late: `mockups/download (2).jpg` and `download (3).jpg` are **real device 
 
 **Anti-pattern / generic assessment:**
 - The mock-up is the most **designed** thing in the set: it has an object. The code keeps that. Residual concern: the screenshot shows ~35–40% of the screen empty below the plaque (recorded as the reason the wheel grew) — the composition is a circle floating in a column.
-- Mock-up flaw: the hint «докосни планета» **overlaps the tab bar** in the render.
 - Three tracked-caps lines stacked under a 280 px circle is the "engraved plaque" idea, but at phone size it reads as a **small-caps list** — the same label/value pair repeated three times.
 
 ## 2.3 Ритъм
@@ -215,49 +215,49 @@ Also: **«Лунен дневник» / «Лунен Дневник»**, **На�
 
 ---
 
-# 5. KEEP / CHANGE / DISCUSS — yours to fill
+# 5. KEEP / CHANGE / DISCUSS — pre-filled with my recommendation (override any row)
 
-| Screen | Element | Current state | KEEP / CHANGE / DISCUSS |
+| Screen | Element | Current state | Recommendation — reason |
 |---|---|---|---|
-| Днес | Hero object (moon) | In the mock-up the hero; in code reduced and pushed below the reading | |
-| Днес | Moon as rendered on device | Flat pale disc with two colour washes (not the layered lit sphere) | |
-| Днес | Planet-name highlight in readings | Bright yellow, a third accent | |
-| Днес | Latin name in greeting / Карта label | «Nikolay Tonev» from profile | |
-| Днес | Reading before sky (IA order) | Horoscope first, sign quip, then небесен ритъм | |
-| Днес | Greeting (bronze phrase + muted name) | Italic 19, two colours | |
-| Днес | Section captions («дневен хороскоп», sign, «небесен ритъм») | Bronze tracked caps ×3 | |
-| Днес | Half-width hairline dividers | Added by founder correction | |
-| Днес | AI-generated disclosure line | 12 px faint under the caption | |
-| Днес | Instruction hints («Плъзни надолу…», «…докосни «Повече детайли»…») | Italic 14 faint ×2 | |
-| Днес | Reading body size | 20/31 (token is 17/27) | |
-| Днес | Spine + payoff (LeadLine) | Bronze spine; payoff Playfair bronze + glow | |
-| Днес | «Повече детайли» (ember + tracked caps) | Subordinate link | |
-| Днес | «Питай Оракула» (CtaPanel) | The one exit | |
-| Днес | Scroll-reveal choreography | Fade/rise/rotate per fragment | |
-| Днес | Error / loading / empty states | Bordered box / spinner / chevron row | |
-| Карта | Wheel as instrument (rim, face, gems) | Hero; enlarged to 0.88 width | |
-| Карта | Wheel as shipped on device (multicolour planets, 5 aspect-line colours, Ascendant line, Roman «I» button) | Dense data chart, not the cold instrument | |
-| Карта | Specimen label + name | «натална карта» caps + italic name 19 | |
-| Карта | Big Three plaque | Three stacked label/value rows, caps | |
-| Карта | Pedestal «Детайли» | Lit word + thread | |
-| Карта | Hint «Докосни планета за тълкуване» | Italic 15 | |
-| Карта | Empty space below plaque | ~35–40% of screen | |
-| Ритъм | Whole screen | Pre-redesign (Tailwind, pill, chevron, card) | |
-| Ритъм | Mock-up concept (cold track, one ignited day) | Drawn, not built; data model differs | |
-| Ритъм | 56 px transit-count numeral | Off the type scale | |
-| moon-detail | Layout (title, centred paragraph, 4 fields) | Definition-list page | |
-| moon-detail | Five tracked-caps labels | R3 broken in mock-up and code | |
-| moon-detail | Exit «Лунен Дневник» (CtaPanel) | Capitalisation differs from elsewhere | |
-| oracle-loading-v2 | Three lit sign-glyph row | Template silhouette; old glyph hand | |
-| oracle-loading-v2 | Stage text + "taking longer" line | 0 / 1.2 / 2.5 / 10 s | |
-| birth-data-edit-v1 | Star hero | Decorative on an edit screen | |
-| birth-data-edit-v1 | Lit-line fields | Underline + glow + caret | |
-| birth-data-edit-v1 | Disabled «Запази» | Near-invisible | |
-| birth-data-edit-v1 | Missing back / unsaved-changes affordance | Not drawn | |
-| chart-reveal-flow-v1 | Staged loading → reveal → horoscope → chart button | One flow, two variants | |
-| chart-reveal-flow-v1 | Big-three reveal (new users only) | Least defined part; copy placeholder | |
-| chart-reveal-flow-v1 | Mono date stamp | Differs from shipped screens | |
-| System | Cinzel on Latin-only + Playfair fallback for Cyrillic | Web now falls through per glyph; mobile rule says never | |
-| System | Navbar (violet hairline + point, no fill) | Shipped | |
-| System | ErrorState bordered rose box | Violates "no cards" | |
-| System | Web design language (Manrope/Inter/glass/amber) | Different language from mobile | |
+| Днес | Hero object (moon) | In the mock-up the hero; in code reduced and pushed below the reading | **CHANGE** — R1 is gone; the language has one hero object per screen. Size and position are yours to judge on device. |
+| Днес | Moon as rendered on device | Flat pale disc with two colour washes (not the layered lit sphere) | **CHANGE** — Material illustration of the moon is a designer task (brief §5 #5); code cannot close it. |
+| Днес | Planet-name highlight in readings | Bright yellow, a third accent | **CHANGE** — A third accent breaks R4; use bronzeText or starlight. |
+| Днес | Latin name in greeting / Карта label | «Nikolay Tonev» from profile | **DISCUSS** — Latin comes from the Clerk profile; transliterating by code risks wrong Bulgarian, so the choice (show as entered / ask in the wizard) is yours. |
+| Днес | Reading before sky (IA order) | Horoscope first, sign quip, then небесен ритъм | **KEEP** — Reading-first matches Oura's "what matters now, first"; it was your call after many rounds. |
+| Днес | Greeting (bronze phrase + muted name) | Italic 19, two colours | **CHANGE** — Keep the two colours; make it upright (italic ruling). |
+| Днес | Section captions («дневен хороскоп», sign, «небесен ритъм») | Bronze tracked caps ×3 | **CHANGE** — R3 allows 0–1 tracked caps and C8 says bronze is not a label colour: sentence case, faint, at most one. |
+| Днес | Half-width hairline dividers | Added by founder correction | **KEEP** — Half-width hairline is the settings-row language and your correction. |
+| Днес | AI-generated disclosure line | 12 px faint under the caption | **KEEP** — An AI-disclosure line is a compliance item (`compliance-copy.ts`); only its look is open. |
+| Днес | Instruction hints («Плъзни надолу…», «…докосни «Повече детайли»…») | Italic 14 faint ×2 | **CHANGE** — If an affordance needs a sentence the affordance is wrong (§3.2.3); remove each hint once its affordance reads on device — your call when. |
+| Днес | Reading body size | 20/31 (token is 17/27) | **CHANGE** — Promote 20/31 to a named reading token and delete the one-off sizes (R2); the size itself is your device call. |
+| Днес | Spine + payoff (LeadLine) | Bronze spine; payoff Playfair bronze + glow | **KEEP** — The spine/payoff structure works; payoff colour stays bronzeText (recorded decision, C6). |
+| Днес | «Повече детайли» (ember + tracked caps) | Subordinate link | **CHANGE** — Tracked caps → sentence case lit phrase (R3); keep the ember and its subordinate position. |
+| Днес | «Питай Оракула» (CtaPanel) | The one exit | **KEEP** — The single lit exit; the language's core device. |
+| Днес | Scroll-reveal choreography | Fade/rise/rotate per fragment | **CHANGE** — Drop rotate and overshoot (brief bans bouncy overshoots); keep fade + rise, and add reduced-motion. |
+| Днес | Error / loading / empty states | Bordered box / spinner / chevron row | **CHANGE** — Bordered box, stock spinner and chevron row break "no boxes / bespoke loading"; use a quiet line and staged loading. |
+| Карта | Wheel as instrument (rim, face, gems) | Hero; enlarged to 0.88 width | **KEEP** — The strongest screen on R1; the instrument is the idea. |
+| Карта | Wheel as shipped on device (multicolour planets, 5 aspect-line colours, Ascendant line, Roman «I» button) | Dense data chart, not the cold instrument | **CHANGE** — Six-plus accents break R4; the hero stays quiet and the data moves to the sheet (C9). |
+| Карта | Specimen label + name | «натална карта» caps + italic name 19 | **CHANGE** — Caps → sentence case, name upright; the Latin-name issue is the DISCUSS row above. |
+| Карта | Big Three plaque | Three stacked label/value rows, caps | **CHANGE** — Three caps rows violate R3; keep three rows, sentence case. |
+| Карта | Pedestal «Детайли» | Lit word + thread | **KEEP** — The lit word is the mechanism and, once other caps go, the one allowed caps item on the screen. |
+| Карта | Hint «Докосни планета за тълкуване» | Italic 15 | **CHANGE** — Same as Днес hints (§3.2.3); upright; remove when the planets read as touchable. |
+| Карта | Empty space below plaque | ~35–40% of screen | **DISCUSS** — Whitespace and composition are layout; only you can judge it on device. |
+| Ритъм | Whole screen | Pre-redesign (Tailwind, pill, chevron, card) | **CHANGE** — Pre-redesign, uses every banned device (pill, card, chevron, Tailwind slate). |
+| Ритъм | Mock-up concept (cold track, one ignited day) | Drawn, not built; data model differs | **DISCUSS** — The mock-up's weekly timeline needs data the app does not have; what Ритъм shows is a product call. |
+| Ритъм | 56 px transit-count numeral | Off the type scale | **CHANGE** — Off the type scale (R2); a number is not an object hero. |
+| moon-detail | Layout (title, centred paragraph, 4 fields) | Definition-list page | **CHANGE** — Left-align the long paragraph; the rest is competent and stays. |
+| moon-detail | Five tracked-caps labels | R3 broken in mock-up and code | **CHANGE** — Five caps labels break R3; make the four fields faint sentence-case labels. |
+| moon-detail | Exit «Лунен Дневник» (CtaPanel) | Capitalisation differs from elsewhere | **KEEP** — Casing fixed 2026-10-07 («Лунен дневник»). |
+| oracle-loading-v2 | Three lit sign-glyph row | Template silhouette; old glyph hand | **KEEP** — It shows data and has no container edge; revisit when the designer's glyphs arrive. |
+| oracle-loading-v2 | Stage text + "taking longer" line | 0 / 1.2 / 2.5 / 10 s | **KEEP** — Structure is right; the words follow the voice rule and need your approval. |
+| birth-data-edit-v1 | Star hero | Decorative on an edit screen | **CHANGE** — Decorative on an edit screen; shrink or drop it. |
+| birth-data-edit-v1 | Lit-line fields | Underline + glow + caret | **KEEP** — The language's input device. |
+| birth-data-edit-v1 | Disabled «Запази» | Near-invisible | **CHANGE** — Keep the categorical change but leave the label readable and findable; invisible is not disabled. |
+| birth-data-edit-v1 | Missing back / unsaved-changes affordance | Not drawn | **CHANGE** — A way back and unsaved-changes handling are real needs the mock-up omits. |
+| chart-reveal-flow-v1 | Staged loading → reveal → horoscope → chart button | One flow, two variants | **KEEP** — Approved 2026-10-01. |
+| chart-reveal-flow-v1 | Big-three reveal (new users only) | Least defined part; copy placeholder | **DISCUSS** — Least-defined part; design it after its copy is approved. |
+| chart-reveal-flow-v1 | Mono date stamp | Differs from shipped screens | **CHANGE** — Mono is recommended retired (research A.8); body face, tabular figures, 12 px floor. |
+| System | Cinzel on Latin-only + Playfair fallback for Cyrillic | Web now falls through per glyph; mobile rule says never | **CHANGE** — Retire Cinzel for Cyrillic (C3); it stays for Latin and the Guide's Roman numerals only. |
+| System | Navbar (violet hairline + point, no fill) | Shipped | **KEEP** — Temperature-neutral, no fill; shipped and consistent with the language. |
+| System | ErrorState bordered rose box | Violates "no cards" | **CHANGE** — Bordered rose box is a card; replace with a quiet line (same as the Днес states row). |
+| System | Web design language (Manrope/Inter/glass/amber) | Different language from mobile | **CHANGE** — Web moves to the brief per your parity order; who owns web is C13, yours to confirm. |
