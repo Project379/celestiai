@@ -32,6 +32,8 @@
 ### The in-between
 Most modern Bulgarian writing — blogs, newsletters, casual business emails — lives in a middle register that uses Вие but keeps a conversational tone. This is the safest default for general-purpose text.
 
+> **Stellaeum override:** product copy is informal **ти** only. See "Stellaeum project rules" in SKILL.md; do not apply this default to the app.
+
 ---
 
 ## 2. Natural Expression Patterns

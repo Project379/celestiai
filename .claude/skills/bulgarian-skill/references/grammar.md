@@ -254,3 +254,13 @@ But word order is flexible because verb conjugation identifies the subject:
 8. **Forgetting "да"**: *"Искам пиша" → Искам да пиша
 9. **Wrong aspect in subjunctive**: "Да пишеш!" (imperfective — do keep writing) vs. "Да напишеш!" (perfective — write it once / get it done)
 10. **Preposition confusion**: "в"→"във" before words starting with в/ф; "с"→"със" before words starting with с/з
+
+---
+
+## Project addenda (proposed 2026-10-07 — BULGARIAN-SKILL-UPDATE)
+
+### Possessive adjectives (мой / твой / негов / неин / наш / ваш / техен)
+They agree with the possessed noun's **grammatical gender**, not with the myth behind it. Слънце (neuter) → твоето Слънце; Луна (feminine) → твоята Луна; Венера (feminine) → твоята Венера; Меркурий, Марс, Сатурн (masculine) → твоят Меркурий, твоят Марс. The recurring error is defaulting to masculine (*"твоят Слънце") for a planet that sounds masculine or mythological.
+
+### Clause-level clitic placement
+Short pronouns and particles (ми, ти, му, ѝ, ни, ви, ги, се, ще, не са…) attach after the **first stressed constituent** of the clause, not automatically after the verb. A clitic never begins a clause. "Какво ти тежи?" (not *"Какво тежи ти"); "Днес ще ти кажа"; "На Иван му казах". The cluster-internal order (dative before accusative) in §9 is a separate rule.

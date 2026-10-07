@@ -211,3 +211,10 @@ Before finalizing any Bulgarian text, check for:
 13. ✅ Hyphen with по- and най-: по-добър, най-висок
 14. ✅ "предвид" (one word, NOT *"в предвид" or *"на предвид")
 15. ✅ "вляво", "вдясно", "впоследствие" — written as one word
+
+---
+
+## Project addenda (proposed 2026-10-07 — BULGARIAN-SKILL-UPDATE)
+
+### Gender pairs in UI copy
+Write both forms out: "доволен или доволна", "несигурен или несигурна". Do not compact to "доволен/а": fleeting-vowel adjectives lose the vowel in the feminine (доволен → доволна, несигурен → несигурна), so "несигурен/на" is not a clean slash form either. Better still, reword so no gender is needed.

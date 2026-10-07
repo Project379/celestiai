@@ -1,5 +1,7 @@
 # Bulgarian Astrology Terminology and Phrasing
 
+> **Stellaeum override:** the sample sentences in §7–§9 are written in the formal Вие register. In this project they must be re-cast in informal **ти** ("Звездите те подкрепят…", "Слънцето ти е в Лъв…", "Ти си зодия Лъв", "Внимавай с договорите…"). The terminology tables (§1–§6) stand. Possessives follow the grammatical gender of the planet: твоето Слънце, твоята Луна, твоят Меркурий.
+
 This reference covers the complete vocabulary, phrasing conventions, and natural expression patterns used in Bulgarian astrological writing. Use it whenever generating horoscopes, natal chart interpretations, astrology articles, or any content touching astrological concepts.
 
 ## Table of Contents

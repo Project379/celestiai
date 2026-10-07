@@ -5,6 +5,56 @@ description: Comprehensive Bulgarian language skill covering grammar, orthograph
 
 # Bulgarian Language Skill
 
+## Stellaeum project rules (these OVERRIDE the general defaults below)
+
+*Approved by the founder 2026-10-07 (with the casing and voice rulings below) — register row BULGARIAN-SKILL-UPDATE. The founder is the final word on Bulgarian.*
+
+1. **New user-facing Bulgarian stops for founder approval.** Do not add, reword or "improve" any string the user will see — UI label, error, notification, stage line, reading template — without showing it to the founder first and getting an explicit yes. Mark unapproved copy `PLACEHOLDER_COPY` in mock-ups and never commit it to a content-home file. A string passing `check:bg-strings` or `check:copy-lock` is not approval; it only means the spelling is valid and the lock was regenerated.
+2. **Register: informal ти, always.** Never Вие/Ви/Ваш in product copy. The general advice below that Вие is the "safest default" does not apply here. Only Кръг, a jointly addressed pair, uses plural — that is number agreement, not register.
+3. **The Oracle is the speaker.** Wherever the app says something to the user — readings, the daily horoscope, loading and reveal stage lines, empty states, guidance — the voice is the Oracle's. Plain UI (buttons, labels, settings, form errors) stays neutral: no first person at all. The ratified «Звездите са временно недостъпни. Опитай отново след малко.» stays as is.
+4. **The Oracle has NO gender.** It speaks in present and future tense only. Never first-person past participles (подредил/подредила, видял/видяла, направил/направила). If a past event must be referenced, use impersonal or third-person phrasing («Подредиха се…», «Небето се промени»). The same applies to anything that would need the *user's* gender (си уморен/а, си направил/а): reword so no gender is needed. Never invent a replacement wording for existing copy — propose it to the founder.
+5. **Gender pairs are spelled out** (only where the user's own gender truly cannot be avoided). "доволен или доволна", never "доволен/а" or "доволен/на" — fleeting-vowel adjectives (доволен, несигурен, уморен) do not compact evenly. Prefer rewording so no gender is needed ("Как се чувстваш днес?").
+6. **Clitics sit after the first stressed constituent, not after the verb.** "Какво ти тежи?" not "Какво тежи ти"; "Днес ще ти кажа", "Тя ми каза". A clitic never opens a clause. Check every composed string, not only fragments — the clause-level rule only shows once the string is assembled.
+7. **Possessives with personified nouns.** Слънце is neuter, Луна feminine, but the model (and humans) default to the masculine article/possessive for "mythological" planets. Agree with the grammatical gender: "твоето Слънце", "твоята Луна", "твоят Меркурий", "твоята Венера" — never "твоят Слънце".
+8. **Route composed strings through `packages/core/src/i18n/bg-grammar.ts`** (в→във, с→със, agreement, ordinals) instead of hand-rolling the rule.
+9. **Quotes:** Bulgarian „…“ quotes in new copy; follow the copy files for ellipsis.
+
+### Glossary — product terms, exactly as they appear in the copy files
+
+Capitalisation and form are part of the term. Do not "correct" them without asking. (Source: `apps/mobile/app/(authed)/(tabs)/_layout.tsx`, `packages/core/src/**`, the mock-ups. Checked 2026-10-07.)
+
+| Term | Form to use | Notes |
+|---|---|---|
+| Tab 1 | **Днес** | tab title and label; mock-ups render the bar label in caps (ДНЕС) |
+| Tab 2 | **Карта** | the chart tab |
+| Tab 3 | **Кръг** | the people graph; "Твоят кръг" is the heading form |
+| Tab 4 | **Ритъм** | |
+| Tab 5 | **Ти** | the app addresses the user in the second person |
+| The AI | **Оракул** (noun), **Питай Оракула** (the one exit on Днес) | Оракулът as subject, Оракула as object / after "Питай" |
+| The chart | **натална карта** (lower case mid-text, 27 files); **Натална карта** (sentence start, 3 files) | not "рождена карта" |
+| Sky block on Днес | **небесен ритъм** (lower-case caption) | |
+| Moon diary | **Лунен дневник** at the start of a sentence, label or heading; **лунен дневник** mid-sentence | Only the first word is capitalised, never «Лунен Дневник». Founder ruling 2026-10-07; moon-detail CtaPanel fixed the same day |
+| Chart details | **Детайли** | the Карта pedestal word |
+| Big three | **Слънце**, **Луна**, **Асцендент** | order as written; "Слънце · Луна · Асцендент" |
+| Guide | **Ръководство** | |
+| Paid tier | **Премиум** | |
+| Birth data | **рождени данни** | «Рождени данни» as an entry label is PENDING approval |
+
+### Founder-approved strings so far
+
+Only strings the founder has explicitly approved belong here. The copy-lock (`scripts/i18n/copy-lock.json`, 2,898 entries) is the machine snapshot of reviewed copy, not a list of approved wording.
+
+- «Данните са запазени. Картата ти е обновена.» — shown once after a successful birth-data edit (approved 2026-10-01).
+- «Звездите са временно недостъпни. Опитай отново след малко.» — the single AI-unavailable message (ratified; failover adds no new copy).
+- The five tab labels above.
+- «Питай Оракула».
+
+**Pending, NOT approved:** «Рождени данни» (edit entry label), «Изчисляваме картата ти.» (proposed first line for a new user's chart), the reveal-flow traits / skip / chart-button / failure copy, and every `PLACEHOLDER_COPY` string in the mock-ups.
+
+**Known shipped defect:** `moon-detail` content (`PHASE_META` in `packages/core/src/lib/moon-phase.ts`, mock-up text «Какъв прогрес съм направил/а…») contains a compact gender pair and a first-person past participle, which violates rules 4 and 5. A gender-neutral rewording has been proposed to the founder; it is not changed until approved.
+
+---
+
 This skill encapsulates the rules, conventions, and expressive patterns of the Bulgarian language. It is the authoritative reference for producing grammatically correct, naturally sounding Bulgarian text.
 
 **CRITICAL RULE: NEVER translate English to Bulgarian word-for-word. Bulgarian has its own sentence logic, its own phrasing patterns, its own way of packaging thoughts. Read `references/natural-phrasing.md` FIRST for any text generation task.**
