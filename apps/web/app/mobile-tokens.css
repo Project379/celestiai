@@ -1,0 +1,56 @@
+/*
+ * Mobile design tokens as CSS variables — the web side of the ui-parity pass.
+ * Source of truth: apps/mobile/components/design-system/tokens.ts. Values are
+ * copied, not derived; test/ui/mobile-tokens-sync.test.ts fails if they drift.
+ * Prefixed --m- so they cannot collide with the existing web theme variables
+ * (--color-*), which stay in place until each screen is moved over.
+ */
+:root {
+  /* color */
+  --m-base: #08060f;
+  --m-surface1: #0f0b1c;
+  --m-surface2: #161029;
+  --m-violet: #8b5cf6;
+  --m-violet-border: rgba(139, 92, 246, 0.25);
+  --m-bronze: #b8763e;
+  --m-bronze-text: #d9a06a;
+  --m-cool: #5b8fc7;
+  --m-cool-text: #bcd6ef;
+  --m-starlight: #f5f7fc;
+  --m-plaque-cool: #c9def2;
+  --m-rose: #fb7185;
+  --m-text: #e2e8f0;
+  --m-muted: #94a3b8;
+  --m-faint: #6d7e97;
+
+  /* space */
+  --m-space-xs: 4px;
+  --m-space-sm: 8px;
+  --m-space-md: 12px;
+  --m-space-lg: 16px;
+  --m-space-xl: 20px;
+  --m-space-2xl: 24px;
+  --m-space-3xl: 32px;
+
+  /* reading rhythm */
+  --m-rhythm-micro: 4px;
+  --m-rhythm-tight: 12px;
+  --m-rhythm-paragraph: 20px;
+  --m-rhythm-group: 40px;
+
+  /* type scale (size / line-height) */
+  --m-type-sub-size: 17px;
+  --m-type-sub-line: 23px;
+  --m-type-body-size: 17px;
+  --m-type-body-line: 27px;
+  --m-type-row-size: 16px;
+  --m-type-row-line: 21px;
+  --m-type-caption-size: 12px;
+  --m-type-caption-line: 17px;
+  --m-type-eyebrow-size: 9.5px;
+  --m-type-eyebrow-line: 13px;
+  --m-type-eyebrow-tracking: 2.66px;
+
+  /* shell */
+  --m-column-width: 430px;
+}

@@ -2,31 +2,11 @@ import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { bgBG } from '@clerk/localizations'
 import { dark } from '@clerk/themes'
-import { Manrope, Inter, Cinzel } from 'next/font/google'
+import { fontVariableClasses } from './fonts'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { PostHogProvider } from '@/components/analytics/PostHogProvider'
 import { SignOutCacheSweeper } from '@/components/birth-data/ChartVersion'
 import './globals.css'
-
-const manrope = Manrope({
-  subsets: ['latin', 'latin-ext', 'cyrillic', 'cyrillic-ext'],
-  variable: '--font-display',
-  weight: ['400', '500', '600', '700', '800'],
-  display: 'swap',
-})
-
-const inter = Inter({
-  subsets: ['latin', 'latin-ext', 'cyrillic', 'cyrillic-ext'],
-  variable: '--font-body',
-  display: 'swap',
-})
-
-const cinzel = Cinzel({
-  subsets: ['latin'],
-  variable: '--font-cinzel',
-  weight: ['400', '600', '700'],
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: {
@@ -79,7 +59,7 @@ export default function RootLayout({
         },
       }}
     >
-      <html lang="bg" className={`dark ${manrope.variable} ${inter.variable} ${cinzel.variable}`} suppressHydrationWarning>
+      <html lang="bg" className={`dark ${fontVariableClasses}`} suppressHydrationWarning>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </head>

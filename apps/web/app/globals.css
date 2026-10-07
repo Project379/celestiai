@@ -1,3 +1,5 @@
+@import './mobile-tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -30,6 +32,15 @@
 }
 
 /* ─── Font stacks ─── */
+:root {
+  /* Per-subset families from app/fonts.ts, walked glyph by glyph: Latin from the
+     latin file, Cyrillic from the cyrillic file. */
+  --font-display: var(--ff-manrope-latin), var(--ff-manrope-latin-ext), var(--ff-manrope-cyrillic);
+  --font-body: var(--ff-inter-latin), var(--ff-inter-latin-ext), var(--ff-inter-cyrillic);
+  --font-playfair: var(--ff-playfair-latin), var(--ff-playfair-latin-ext), var(--ff-playfair-cyrillic);
+  /* Cinzel has no Cyrillic: the per-glyph fallback is Playfair Display. */
+  --font-cinzel: var(--ff-cinzel-latin), var(--font-playfair);
+}
 .font-display {
   font-family: var(--font-display), system-ui, sans-serif;
 }
