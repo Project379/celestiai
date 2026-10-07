@@ -137,16 +137,31 @@ interface GoogleUsageMetadata {
  * confirming the earlier €0.0022 estimate undershot. Still readable via
  * Vercel Runtime Logs by grepping "[AI usage]" for production numbers.
  */
-function logAiUsage(model: string, result: { providerMetadata?: Record<string, unknown> }): void {
+/** Thinking tokens above this share of maxOutputTokens are logged as a spike (2026-10-07). */
+export const THINKING_SPIKE_SHARE = 0.5
+
+function logAiUsage(
+  model: string,
+  result: { providerMetadata?: Record<string, unknown> },
+  maxOutputTokens: number,
+): void {
   const usage = (result.providerMetadata?.google as { usageMetadata?: GoogleUsageMetadata } | undefined)
     ?.usageMetadata
+  const thoughts = usage?.thoughtsTokenCount ?? null
   console.log('[AI usage]', JSON.stringify({
     model,
     promptTokenCount: usage?.promptTokenCount ?? null,
     candidatesTokenCount: usage?.candidatesTokenCount ?? null,
-    thoughtsTokenCount: usage?.thoughtsTokenCount ?? null,
+    thoughtsTokenCount: thoughts,
     totalTokenCount: usage?.totalTokenCount ?? null,
+    maxOutputTokens,
   }))
+  // Spikes must be visible without reading every line: grep "[AI thinking spike]" in Vercel
+  // Runtime Logs. A spike is not a failure by itself; it is the early warning for the
+  // starvation failure (thinking eats the ceiling and the answer is cut), HOROSCOPE-THINKING-STARVATION.
+  if (thoughts !== null && thoughts > maxOutputTokens * THINKING_SPIKE_SHARE) {
+    console.warn('[AI thinking spike]', JSON.stringify({ model, thoughtsTokenCount: thoughts, maxOutputTokens }))
+  }
 }
 
 /**
@@ -220,7 +235,7 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
     // the getter access below succeeds. Logging inside callModel also
     // means a primary-then-fallback sequence logs both attempts, not just
     // whichever one ultimately succeeded.
-    logAiUsage(model, result)
+    logAiUsage(model, result, callOptions.maxOutputTokens)
     void result.output
     return result
   }

@@ -168,7 +168,7 @@ describe('Gemini latency (live, sequential)', () => {
           generateFinalText({
             system,
             prompt,
-            maxOutputTokens: 2000,
+            maxOutputTokens: 3000,
             fallbackModel: ORACLE_FALLBACK_MODEL,
             thinkingLevel: GEMINI_THINKING_LEVEL.horoscope,
           }),

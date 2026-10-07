@@ -148,6 +148,7 @@ describe('generateFinalText', () => {
         candidatesTokenCount: 24,
         thoughtsTokenCount: 862,
         totalTokenCount: 2541,
+        maxOutputTokens: 100,
       }),
     )
 
@@ -194,6 +195,7 @@ describe('generateFinalText', () => {
         candidatesTokenCount: 56,
         thoughtsTokenCount: 78,
         totalTokenCount: 1368,
+        maxOutputTokens: 100,
       }),
     )
     // No prompt/response content or user identifiers in the logged payload.
@@ -219,9 +221,48 @@ describe('generateFinalText', () => {
         candidatesTokenCount: null,
         thoughtsTokenCount: null,
         totalTokenCount: null,
+        maxOutputTokens: 100,
       }),
     )
 
     logSpy.mockRestore()
+  })
+})
+
+describe('generateFinalText — thinking-token visibility', () => {
+  function usageResult(thoughtsTokenCount: number) {
+    return {
+      output: { content: 'Текст' },
+      providerMetadata: {
+        google: { usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 20, thoughtsTokenCount, totalTokenCount: 30 + thoughtsTokenCount } },
+      },
+    } as never
+  }
+
+  it('logs the ceiling next to the thinking tokens on every call, with no spike warning for a normal call', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.mocked(generateText).mockResolvedValueOnce(usageResult(40))
+
+    await generateFinalText(request)
+
+    const line = log.mock.calls.find((c) => c[0] === '[AI usage]')
+    expect(JSON.parse(line?.[1] as string)).toMatchObject({ thoughtsTokenCount: 40, maxOutputTokens: 100 })
+    expect(warn.mock.calls.some((c) => c[0] === '[AI thinking spike]')).toBe(false)
+    log.mockRestore()
+    warn.mockRestore()
+  })
+
+  it('warns "[AI thinking spike]" when thinking tokens exceed half the ceiling', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.mocked(generateText).mockResolvedValueOnce(usageResult(60))
+
+    await generateFinalText(request)
+
+    const spike = warn.mock.calls.find((c) => c[0] === '[AI thinking spike]')
+    expect(JSON.parse(spike?.[1] as string)).toMatchObject({ thoughtsTokenCount: 60, maxOutputTokens: 100 })
+    log.mockRestore()
+    warn.mockRestore()
   })
 })
