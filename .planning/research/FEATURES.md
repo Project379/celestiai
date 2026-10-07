@@ -148,7 +148,7 @@ Minimum viable product - what's needed to validate the concept.
 - [x] **Basic Transit Info** - Moon phases, Mercury retrograde, major events
 - [x] **User Authentication (Clerk)** - Required for saving data
 - [x] **Single Profile Support** - Start simple, add multi-profile later
-- [x] **Bulgarian + English Languages** - Target market + broader reach
+- [x] **Bulgarian language** - Target market. **Launch is Bulgarian only** (PROJECT.md: English localization deferred through Phase D; REQUIREMENTS LOC-01 is not in v1). Corrected 2026-10-07 — this line used to claim Bulgarian + English.
 - [x] **Freemium Paywall** - Validate willingness to pay
 
 ### Add After Validation (v1.x)
@@ -217,8 +217,8 @@ Features to defer until product-market fit is established.
 | **Journal** | No | No | No | Yes (prompts) | No | Yes (P2) |
 | **Meditation/Audio** | No | No | No | Yes (library) | No | Future (P3) |
 | **Tarot** | No | Yes (new) | Yes | No | No | Future (P3) |
-| **Price** | Free + subscription | Freemium ($varies) | $20/mo | $12/mo or $108/yr | $9.99/unlock | 9.99/mo target |
-| **Languages** | English only | English only | English only | English only | English only | Bulgarian + English |
+| **Price** | Free + subscription | Freemium ($varies) | $20/mo | $12/mo or $108/yr | $9.99/unlock | €6.99/mo, €59.99/yr (locked 2026-10-07) |
+| **Languages** | English only | English only | English only | English only | English only | Bulgarian only at launch |
 | **Tone** | Harsh/controversial | Neutral/psychological | Friendly | Inclusive/positive | Technical | Positive/growth-oriented |
 
 ### Competitive Insights
@@ -233,7 +233,7 @@ Features to defer until product-market fit is established.
 
 5. **Gap: Privacy-First** - Co-Star criticized for contact scraping, phone number requirements. Stellaeum should be privacy-conscious.
 
-6. **Pricing Insight** - CHANI at $12/mo and Sanctuary at $20/mo are high end. TimePassages at $9.99 proves precision users will pay. Our 9.99/mo target is competitive.
+6. **Pricing Insight** - CHANI at $12/mo and Sanctuary at $20/mo are high end. TimePassages at $9.99 proves precision users will pay. Our locked price (€6.99/mo, €59.99/yr) undercuts all of them.
 
 ---
 
@@ -252,7 +252,7 @@ Features to defer until product-market fit is established.
 | **Poor customer support** | High | Nebula, various | In-app support, clear help documentation |
 | **Repetitive content over time** | Medium | Various | AI variation, journaling tie-in for fresh context |
 | **Sun sign only, not personalized** | High | Basic apps | Full natal chart integration |
-| **Expensive for what you get** | Medium | Sanctuary ($20/mo) | Competitive pricing (9.99), clear value |
+| **Expensive for what you get** | Medium | Sanctuary ($20/mo) | Competitive pricing (€6.99/mo), clear value |
 
 **Confidence: HIGH** - Based on App Store reviews, Trustpilot, Reddit, and review aggregators
 

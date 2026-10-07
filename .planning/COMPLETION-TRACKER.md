@@ -862,7 +862,7 @@ the `docs/` specs were corrected for this drift 2026-08-28. Current AI
 truth: SYSTEM-MAP §4; provider-swap status: see `.planning/PLACEHOLDERS.md`
 LLM-MODEL. Web (Next.js 15)
 and mobile (Expo SDK 54,
-Solito) share ~90% of code via `packages/core`, `packages/astrology`.
+no Solito) share logic (~14% of TS lines: `packages/core`, `packages/astrology`), not UI.
 
 **Who works on it:** one founder (Toni), doing product/design/business calls
 and running device tests; Claude Code sessions do the engineering, docs, and

@@ -28,7 +28,7 @@ workspaces, two apps and four packages.
 ```
 apps/
   web/       Next.js 15 — the primary surface, most features ship here first
-  mobile/    Expo SDK 54 — React Native, ~90% code-shared with web via Solito
+  mobile/    Expo SDK 54 — React Native; shares logic with web via packages/core + packages/astrology (~14% of TS lines), not UI; no Solito
 packages/
   core/      Framework-agnostic business logic and data access
   astrology/ Swiss Ephemeris wrapper (native sweph binding)
@@ -77,8 +77,12 @@ because it's empty. Safe to ignore or delete; not part of the real structure.
 
 ## 2. The gates
 
-`pnpm run check:all` runs eight gates in sequence, in this order — the order
-matters, cheap/fast gates run before slow ones (typecheck, lint, test):
+`pnpm run check:all` runs twelve gates in sequence (updated 2026-10-07; it was eight
+when this was written), in this order — cheap/fast gates run before slow ones.
+The four added since: `check:rpc-contract`, `check:env-consistency`,
+`check:placeholders` (register ↔ code markers), and `check:build` (a real
+`next build`, because `tsc --noEmit` never validates Next route exports or
+`next/font` option rules). Gates 1–8 below keep their original numbering:
 
 1. **`check:strictness`** — `packages/core/tsconfig.json` must have
    `noUncheckedIndexedAccess: true`, or carry an explicit
@@ -94,8 +98,8 @@ matters, cheap/fast gates run before slow ones (typecheck, lint, test):
    translated (see §8, the Bulgarian workstream, for what does catch those).
 
 3. **`check:copy-lock`** — compares every Cyrillic literal in the tree
-   against `scripts/i18n/copy-lock.json` (currently 3,025 unique
-   entries), which is the "approved copy" snapshot. **Fails on any drift —
+   against `scripts/i18n/copy-lock.json` (currently 2,898 entries,
+   2026-10-07), which is the "approved copy" snapshot. **Fails on any drift —
    added, removed, or changed Bulgarian text that hasn't been re-approved.**
    This is the one to internalize: a failure here on a genuinely new
    Bulgarian string is **correct behaviour, not a bug in the gate.** The fix
@@ -109,7 +113,7 @@ matters, cheap/fast gates run before slow ones (typecheck, lint, test):
 4. **`check:bg-lint-baseline`** — a *ratcheting* baseline on top of the
    ESLint rule `no-new-bg-strings` (in `packages/config/eslint/`), which
    flags a Cyrillic literal sitting outside a designated "content home"
-   file. Baseline is currently **1,778** (started at 1,336 on 2026-07-30;
+   file. Baseline constant in the script is **1,716**, actual count 1,708 (it only ratchets down — lower the constant when it drops) (started at 1,336 on 2026-07-30; peaked at 1,778;
    existing debt is grandfathered, new instances beyond the baseline fail).
    Rises only when a reviewed batch of new user-facing strings lands
    outside a content-home file — check the script's own header comment for
@@ -138,7 +142,7 @@ matters, cheap/fast gates run before slow ones (typecheck, lint, test):
 A failure in any of 1–5 almost always means exactly what it says — read the
 script's own header comment (they're all deliberately well-commented, written
 to explain *why* the gate exists, not just what it checks) before assuming
-it's wrong. Baseline numbers (1,778 / 3,025 unique entries) are the tripwire
+it's wrong. Baseline numbers (1,716 / 2,898 entries, 2026-10-07) are the tripwire
 for drift — if you find yourself needing to raise either one, that's a
 decide-and-proceed-with-report item per §6, not a silent edit.
 
@@ -150,19 +154,24 @@ Everything below has cost real time once. Read this before you hit any of
 them a second time.
 
 **NEVER `supabase db push`.** Production's migration ledger
-(`supabase_migrations.schema_migrations`) holds 6 rows; the repo holds 16
-migration files — 13 are unrecorded in the ledger, and separately, 16
-production tables from the Drizzle era have no `CREATE TABLE` in any tracked
-migration at all (the old `packages/db/drizzle` directory was deleted with
-no SQL record left behind). A blind `db push` would try to replay all 13
-unrecorded migrations against a database where most of that work is already
-done — including `20260413141504_schema_hardening.sql`'s
-`ALTER TABLE public.users DROP COLUMN subscription_tier`, which is a live
-column today. That is not a no-op, it is data loss. **Safe pattern:**
-`supabase migration repair --status applied <version>`, one migration file
-at a time, only after independently confirming that specific migration's
-effect already exists in production (read the schema, don't assume). Never
-push blind.
+(`supabase_migrations.schema_migrations`), checked 2026-10-07 with
+`supabase migration list`: **25 rows; the repo holds 24 migration files and
+all 24 are recorded.** The 25th ledger row, `20260928120000 full_diary_v2`
+(19 statements), has **no file in this checkout** — it belongs to Petko's
+branch (register: MIGRATION-PROCESS-GAP, DIARY-REMINDER-EXPORT). Separately,
+16 production tables from the Drizzle era have no `CREATE TABLE` in any
+tracked migration at all (the old `packages/db/drizzle` directory was deleted
+with no SQL record left behind), and `20260901120000` is recorded with a NULL
+name/statements. (When this was first written the ledger held 6 rows against
+13 unrecorded files; those were reconciled one at a time with `migration
+repair`.) `db push` is still never safe: it would see the remote-only
+`full_diary_v2` row, the Drizzle-era tables, and `20260413141504_schema_hardening.sql`'s
+`ALTER TABLE public.users DROP COLUMN subscription_tier` replay risk. **How
+migrations are applied here:** direct SQL in one transaction, then
+`supabase migration repair --status applied <version>` against the **session**
+port (swap `:6543` for `:5432` in `DATABASE_URL`), only after the file is on
+`main`, and only after reading the schema to confirm what exists. Never push
+blind.
 
 **EAS never validates env values.** A build can go fully green while
 shipping a literal placeholder string as `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`

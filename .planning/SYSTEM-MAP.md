@@ -165,7 +165,8 @@ Turborepo, with two apps and four shared packages:
 - `apps/web` — the Next.js 15 website. Most features are built here first.
   Also hosts all the server-side API routes.
 - `apps/mobile` — the Expo / React Native app (iOS + Android). Shares
-  roughly 90% of its code with web through a library called Solito.
+  logic (not UI; roughly 14% of the TypeScript) with web through
+  `packages/core` and `packages/astrology`. Solito is not used.
 - `packages/core` — the load-bearing shared package: plain business logic
   and database access, deliberately free of any web/mobile framework code.
 - `packages/astrology` — wraps the Swiss Ephemeris astronomy library.
@@ -910,10 +911,10 @@ user count, and how many subscribers cover the bill.
 
 **4. Break-even — with a caveat.** The audit's break-even math uses a
 **€5.83 net per subscriber** assumption. That figure is not consistent
-across the project's own documents: the LLM decision doc works from
-€9,99/mo list, and the live pricing page shows €6,99/mo and €59,99/yr.
-**The break-even numbers are only meaningful once the real net price is
-fixed.** Against the audit's own €5.83 assumption:
+across the project's own documents: the price is now locked (2026-10-07) at
+€6,99/mo and €59,99/yr, and €5.83 is exactly €6,99 ÷ 1.20 (net of 20% ДДС),
+so the audit figure is consistent with it; it still excludes Stripe and
+app-store fees. The LLM decision doc has been recomputed at the locked price. Against the audit's own €5.83 assumption:
 
 - Current model: a subscriber would need ~6,700 Oracle generations/month
   to go margin-negative.
@@ -923,12 +924,11 @@ fixed.** Against the audit's own €5.83 assumption:
   Cost is not a launch risk on any model under consideration, at the cap.
 
 **5. Health: OK.** The unit economics are measured and comfortable within
-the usage cap. The open issues are the inconsistent price basis across
-docs, and that the replacement-model costs are estimates, not
+the usage cap. The open issues are that the replacement-model costs are estimates, not
 measurements — and the cap must be re-derived when the model swaps (a
 named cross-reference to update).
 
-**What would make it GOOD:** a single agreed net-price figure used
+**What would make it GOOD:** the net-price figure (€5.83 ex-ДДС, before store/Stripe fees) used
 everywhere; the replacement model's cost measured on real calls; and the
 premium cap re-derived at that model's list price (not its current
 promotional price).

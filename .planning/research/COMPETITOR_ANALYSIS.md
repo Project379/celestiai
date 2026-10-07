@@ -284,7 +284,7 @@ If Bulgaria validates, the natural expansion path multiplies the market dramatic
 1. **Over-abstraction:** By removing all astrology terminology, they alienate users who *want* to learn. Stellaeum teaches while it reads.
 2. **Complex UX:** Too many tiers, too many features, steep onboarding. Stellaeum keeps it simple.
 3. **No localization:** English-only. Same gap as Co-Star for the Bulgarian market.
-4. **Expensive at scale:** $14.99/mo for full access is 50% more than Stellaeum's €9.99/mo.
+4. **Expensive at scale:** $14.99/mo for full access is more than twice Stellaeum's €6.99/mo.
 5. **No cultural sensitivity:** Generic "wellness" framing. Doesn't acknowledge any specific spiritual tradition.
 
 ---
@@ -355,7 +355,7 @@ If Bulgaria validates, the natural expansion path multiplies the market dramatic
 #### Sanctuary's Vulnerabilities
 
 1. **Doesn't scale:** Every dollar of revenue requires human labor. Stellaeum's AI Oracle has near-zero marginal cost.
-2. **Expensive for users:** A 30-minute reading can cost $30–$60+. Stellaeum gives unlimited AI readings for €9.99/mo.
+2. **Expensive for users:** A 30-minute reading can cost $30–$60+. Stellaeum gives unlimited AI readings for €6.99/mo.
 3. **Inconsistent quality:** Reader quality varies. AI Oracle delivers consistent, high-quality output every time.
 4. **Small market:** ~2M downloads vs Co-Star's 30M+. Hasn't achieved breakout growth because the model doesn't support virality.
 

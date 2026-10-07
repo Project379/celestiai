@@ -164,17 +164,17 @@ lands. Petko still owns the swap and the final ruling.
 - **List price** (discount removed): $0.0036 ÷ 0.25 = **$0.0144 per call**
   — 4× the current price. This is the figure to plan against, per the
   research's own warning.
-- **Subscription price:** €9,99/mo, or €99,99/yr (annual effective ≈
-  €8,33/mo) — Phase 7 settled on EUR. USD→EUR at ≈ 0.93: $0.0144 ≈
+- **Subscription price:** €6,99/mo, or €59,99/yr (annual effective ≈
+  €5,00/mo) — locked 2026-10-07; percentages below recomputed from the original €9,99/€99,99 basis — Phase 7 settled on EUR. USD→EUR at ≈ 0.93: $0.0144 ≈
   **€0.0133 per call**.
 
 ### Cost per premium user per month, at the cap
 
-| Pricing regime | €/call | 300 calls | % of €9,99/mo | % of €8,33/mo (annual) |
+| Pricing regime | €/call | 300 calls | % of €6,99/mo | % of €5,00/mo (annual) |
 |---|---|---|---|---|
-| Llama 3.3 70B (cap's original basis) | €0.0006–€0.0019 | €0.17–€0.56 | 2–6% | 2–7% |
-| Gemini 3.7 Flash — current (75% off) | €0.0033 | **€1.00** | ~10% | ~12% |
-| Gemini 3.7 Flash — **LIST price** | €0.0133 | **€4.00** | **~40%** | **~48%** |
+| Llama 3.3 70B (cap's original basis) | €0.0006–€0.0019 | €0.17–€0.56 | 2–8% | 3–11% |
+| Gemini 3.7 Flash — current (75% off) | €0.0033 | **€1.00** | ~14% | ~20% |
+| Gemini 3.7 Flash — **LIST price** | €0.0133 | **€4.00** | **~57%** | **~80%** |
 | GPT-5.4-mini (quality fallback) | not quoted in brief — assume ≥ Gemini list; any cap must hold here too | | | |
 
 ### Reading
@@ -186,15 +186,15 @@ or 3,000 would not move the P&L. That is the regime the cap was designed
 in.
 
 **At Gemini list price, 300 stops being only a circuit breaker and becomes
-a margin input.** €4.00/user/month at the cap is ~40% of monthly
-subscription revenue (~48% against the annual effective rate), before
+a margin input.** €4.00/user/month at the cap is ~57% of monthly
+subscription revenue (~80% against the annual effective rate), before
 Stripe fees, hosting, the Swiss Ephemeris licence, and support. The
 *average* premium user will not hit 300 — average cost sits far below the
 cap — but the cap is what bounds the expensive tail, and at 4× the
 per-call price that tail is 4× more costly. A cohort of 5–10% power users
 near the cap now meaningfully shifts blended COGS per premium user.
 
-**So: 300 is still a safety net at the discounted price (~10% of revenue —
+**So: 300 is still a safety net at the discounted price (~14% of revenue —
 noticeable but tolerable). At list price it is a real bill.** Planning
 against the promotional price is the trap the research is warning about.
 

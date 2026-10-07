@@ -158,7 +158,7 @@ last open item (the 3 orphan ledger rows) closed with MIGRATIONS.
 | SUPABASE-PLAN | Free tier pauses on inactivity. RESOLVED 2026-10-01: founder confirmed the project is on the paid plan | CONFIG | Toni | Launch | RESOLVED | | n/a |
 | EAS-SENTRY-DSN | EAS env var carrying the mobile Sentry DSN unconfirmed | CONFIG | Toni | — | OPEN | | n/a |
 | MOON-PARITY | Moon detail is mobile-only; violates the parity ruling | DECISION | Toni | Launch | OPEN | | n/a |
-| PRICE-BASIS | €9.99 in the LLM decision doc vs €6.99 on the live pricing page | DECISION | Toni | Paywall | OPEN | | n/a |
+| PRICE-BASIS | Revenue basis for the unit-economics math (cost-per-user as % of price, net-per-subscriber). Price locked €6.99/mo, €59.99/yr; LLM decision doc and SYSTEM-MAP recomputed | DECISION | Toni | Paywall | RESOLVED | 2026-10-07 | n/a |
 | ANALYTICS-VENDOR | PostHog Cloud EU chosen 2026-09-03 — cookieless (memory persistence), five events only (signup completed, birth data submitted, chart first viewed, free Oracle reading generated, subscription started), no autocapture/session replay/heatmaps/surveys/feature flags/experiments. This resolves the cookie-consent question this row existed to answer — see COOKIE-CONSENT | DECISION | Toni | Launch | RESOLVED | 2026-09-03 | n/a |
 | EN-LOCALE | English deferred; FEATURES.md still claims BG+EN | DECISION | Toni | — | OPEN | | n/a |
 | LLM-RETENTION | Zero-data-retention status on the chosen provider unknown | EXTERNAL | Petko | Privacy policy | OPEN | | n/a |

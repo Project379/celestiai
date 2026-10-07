@@ -647,7 +647,7 @@ Specifically for the Oracle FAB:
 - **Cache aggressively.** Pre-computed chart explanations (Sun in Leo, Moon in Cancer, Asc in Virgo, etc.) are shared across users. ~100 combinations × base placements fits in Supabase with 30-day TTL. First user pays the generation cost; subsequent users hit cache.
 - **Pre-generate daily horoscopes.** Per reference doc: one per (sun-sign × moon-phase) × day = <100 unique combinations per day. Generate via Vercel Cron at midnight Sofia time. Днес hero reading is a *lookup*, not a per-user LLM call. Massive cost saver.
 - **Free-tier hardcap.** 3 Oracle queries/month for free users. Clear UX when hit: "Изчерпа свободните си разговори с Оракула. Премиум?" Premium = unlimited but still rate-limited (20/day) to prevent abuse.
-- **Unit economics check:** €9.99/mo Premium must cost <€3 in AI per user per month. Track monthly. Reference doc §5 codifies this.
+- **Unit economics check:** €6.99/mo Premium must cost <€3 in AI per user per month. Track monthly. Reference doc §5 codifies this.
 
 ### 11.8 Bulgarian TTS for meditations / audio — deferred, not canceled
 **Decided:** Not MVP. Reconsider after authority-figure partnerships land (§7). Voiced forecasts by Мира Кунева or Николай Дойнов becomes a genuine differentiator later; text-only for now.
@@ -736,7 +736,7 @@ Reference doc §5: BgGPT (INSAIT) is primary, not fallback. This is a quality + 
 - **The editorial voice won't drift.** Frontier models hallucinate Russian-flavored phrasing, wrong gendered forms, awkward formality — especially bad in astrology copy where register matters. BgGPT is native.
 - **But: Oracle FAB responses must be eval'd in Bulgarian.** Per reference doc §5, run 20 real prompts through BgGPT + Claude + GPT-4o with native speakers before picking. Oracle quality hinges on this.
 - **Fallback is a real failure mode, not a config option.** When BgGPT goes down and Claude takes over, tone *will* shift. Design a "оракулът е днес по-малко в своята стихия" disclaimer or silent-degrade gracefully — don't let users see Russian-tinged Bulgarian without context.
-- **Premium unit economics.** Reference doc §5: €9.99/user/month must cost <€3 in AI. BgGPT pricing isn't public yet (verify before commit). If BgGPT is more expensive than frontier models, cache harder.
+- **Premium unit economics.** Reference doc §5: €6.99/user/month must cost <€3 in AI. BgGPT pricing isn't public yet (verify before commit). If BgGPT is more expensive than frontier models, cache harder.
 
 ### 13.3 Кръг ghost profiles have GDPR implications the design must handle
 

@@ -120,7 +120,7 @@ hand-copy values from mockup CSS into a new screen; reference this file.
 | `rose` | `#fb7185` | (check current consumers before reusing — not audited in this pass) |
 | `text` | `#e2e8f0` | Warm-neutral body/label color, used everywhere as default text |
 | `muted` | `#94a3b8` | Secondary text |
-| `faint` | `#64748b` | Tertiary/label text |
+| `faint` | `#6d7e97` | Tertiary/label text (lifted from `#64748b` 2026-08-27 for 4.5:1; confirmed 2026-10-07) |
 
 ### Space (`space`)
 

@@ -44,7 +44,7 @@
 *Bulgaria adopts Euro Jan 1, 2026*
 -   **Freemium Model**:
     -   **Free**: Basic Natal Chart, Daily General Horoscope, **Ad-Supported**.
-    -   **Premium (€9.99/mo)**: Ad-Free, Interactive Transits, Unlimited AI Oracle, Deep Analysis, Synastry.
+    -   **Premium (€6.99/mo, €59.99/yr)**: Ad-Free, Interactive Transits, Unlimited AI Oracle, Deep Analysis, Synastry.
 -   **Payment Gateway**:
     -   **Stripe**: Primary handler.
     -   **In-App Purchases (IAP)**: RevenueCat integration.
