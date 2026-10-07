@@ -142,6 +142,11 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
     return result
   }
 
+  // STELLAEUM_PLACEHOLDER: GEMINI-SLOW-NO-FAILOVER — the primary call has no
+  // timeout of its own, so a slow-but-succeeding Gemini (40–80s on 2026-10-01,
+  // zero errors) never reaches the fallback below, which fires only on
+  // transient/upstream errors. Pre-launch fix (not built): ~15s timeout on the
+  // primary → fallbackModel → existing 503. See .planning/PLACEHOLDERS.md.
   let servedModel = AI_MODEL
   let result
   try {
