@@ -75,7 +75,10 @@ vi.mock('@stellaeum/astrology', () => ({
 // @/lib/ai/client is deliberately NOT mocked — this test exercises the
 // REAL isUpstreamAiError / isTransientAIError classifiers the route imports.
 const { generateFinalText } = vi.hoisted(() => ({ generateFinalText: vi.fn() }))
-vi.mock('@/lib/ai/generate-final-text', () => ({ generateFinalText }))
+vi.mock('@/lib/ai/generate-final-text', () => ({
+  GEMINI_THINKING_LEVEL: { oracle: 'low', horoscope: 'low', smoke: 'low' },
+  generateFinalText,
+}))
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { POST } from '@/app/api/horoscope/generate/route'

@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import * as Sentry from '@sentry/nextjs'
 import { AI_MODEL, isUpstreamAiError, ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
 import { aiTemporarilyUnavailableResponse, isTransientAIError } from '@/lib/ai/errors'
-import { generateFinalText } from '@/lib/ai/generate-final-text'
+import { GEMINI_THINKING_LEVEL, generateFinalText } from '@/lib/ai/generate-final-text'
 import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
@@ -397,6 +397,7 @@ export async function POST(req: Request) {
           prompt: chartPromptText,
           maxOutputTokens: 2000,
           fallbackModel: ORACLE_FALLBACK_MODEL,
+          thinkingLevel: GEMINI_THINKING_LEVEL.oracle,
         })
         servedModel = model
         // `text` is already sanitizeFinalAIOutput()-cleaned by

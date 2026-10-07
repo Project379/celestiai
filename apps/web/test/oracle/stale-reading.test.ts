@@ -45,6 +45,7 @@ vi.mock('@/lib/ai/validate-reading', () => ({
 }))
 vi.mock('@stellaeum/core/oracle/planet-parser', () => ({ stripSentinels: vi.fn((t: string) => t) }))
 vi.mock('@/lib/ai/generate-final-text', () => ({
+  GEMINI_THINKING_LEVEL: { oracle: 'low', horoscope: 'low', smoke: 'low' },
   generateFinalText: vi.fn(async () => ({ model: 'fake-model', text: 'a generated reading' })),
 }))
 
