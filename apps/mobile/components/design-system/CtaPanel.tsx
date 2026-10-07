@@ -202,7 +202,7 @@ export function CtaPanel({
       <View style={{ flex: hint ? 1 : undefined, alignItems: hint ? 'flex-start' : 'center' }}>
         <Text
           style={{
-            fontFamily: font.displaySemibold,
+            fontFamily: font.displayStrong,
             fontSize: hint ? 17 : 20,
             letterSpacing: hint ? undefined : 0.2,
             color: accentTextColor,

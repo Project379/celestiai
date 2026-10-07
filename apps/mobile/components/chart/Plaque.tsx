@@ -145,7 +145,7 @@ const TEXT_CONTRAST_SHADOW = {
   textShadowOffset: { width: 0, height: 0 },
 } as const
 const LABEL_STYLE = {
-  fontFamily: font.displayRegular,
+  fontFamily: font.display,
   fontSize: 12,
   letterSpacing: 1.92,
   textTransform: 'uppercase' as const,
@@ -153,7 +153,7 @@ const LABEL_STYLE = {
   ...TEXT_CONTRAST_SHADOW,
 }
 const VALUE_STYLE = {
-  fontFamily: font.displayRegular,
+  fontFamily: font.display,
   fontSize: 15,
   letterSpacing: 2.4, // .16em at 15px
   textTransform: 'uppercase' as const,

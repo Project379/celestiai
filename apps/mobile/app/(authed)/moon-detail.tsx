@@ -54,7 +54,7 @@ export default function MoonDetailScreen() {
           own quip size) — that part of round 4 stands. */}
       <Text
         style={{
-          fontFamily: font.displayRegular,
+          fontFamily: font.display,
           fontSize: 13,
           letterSpacing: 0.32,
           color: color.bronzeText,
@@ -67,7 +67,7 @@ export default function MoonDetailScreen() {
 
       <Text
         style={{
-          fontFamily: font.displaySemibold,
+          fontFamily: font.displayStrong,
           fontSize: 26,
           color: color.starlight,
           textAlign: 'center',
@@ -82,8 +82,7 @@ export default function MoonDetailScreen() {
           than a size invented separately for this screen. */}
       <Text
         style={{
-          fontFamily: font.bodyItalic,
-          fontStyle: 'italic',
+          fontFamily: font.body,
           fontSize: 15,
           color: color.muted,
           textAlign: 'center',
@@ -120,7 +119,7 @@ export default function MoonDetailScreen() {
 
       <View style={{ marginTop: rhythm.group + 10, borderTopWidth: 1, borderTopColor: 'rgba(226,232,240,0.08)' }}>
         <Field label="Най-добра за" body={phase.bestFor} first />
-        <Field label="Афирмация" body={phase.affirmation} italic />
+        <Field label="Афирмация" body={phase.affirmation} />
         <Field label="Кристал" body={phase.crystal} />
         <Field label="Ритуал" body={phase.ritual} />
       </View>
@@ -128,8 +127,7 @@ export default function MoonDetailScreen() {
       <View style={{ marginTop: rhythm.group + 10 }}>
         <Text
           style={{
-            fontFamily: font.bodyItalic,
-            fontStyle: 'italic',
+            fontFamily: font.body,
             fontSize: type.body.fontSize,
             lineHeight: type.body.lineHeight,
             color: color.muted,
@@ -146,7 +144,7 @@ export default function MoonDetailScreen() {
   )
 }
 
-function Field({ label, body, italic, first }: { label: string; body: string; italic?: boolean; first?: boolean }) {
+function Field({ label, body, first }: { label: string; body: string; first?: boolean }) {
   return (
     <View
       style={{
@@ -157,7 +155,7 @@ function Field({ label, body, italic, first }: { label: string; body: string; it
     >
       <Text
         style={{
-          fontFamily: font.displayRegular,
+          fontFamily: font.display,
           fontSize: 12,
           letterSpacing: 0.29,
           textTransform: 'uppercase',
@@ -169,8 +167,6 @@ function Field({ label, body, italic, first }: { label: string; body: string; it
       <Text
         style={{
           ...type.body,
-          fontFamily: italic ? font.bodyItalic : font.body,
-          fontStyle: italic ? 'italic' : 'normal',
           color: color.text,
           marginTop: 7,
         }}

@@ -114,7 +114,7 @@ export function AppLoadingScreen() {
         </Svg>
         <Text
           style={{
-            fontFamily: font.displaySemibold,
+            fontFamily: font.displayStrong,
             fontSize: 22,
             letterSpacing: 6,
             color: color.starlight,

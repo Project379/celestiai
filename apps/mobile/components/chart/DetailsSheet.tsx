@@ -68,7 +68,7 @@ export function DetailsSheet({
           <SafeAreaView edges={['bottom']}>
             <View style={{ paddingHorizontal: space.xl, paddingTop: space.xl }}>
               <View className="flex-row items-start justify-between" style={{ marginBottom: rhythm.paragraph }}>
-                <Text style={{ fontFamily: font.displayRegular, fontSize: 20, color: color.starlight }}>
+                <Text style={{ fontFamily: font.display, fontSize: 20, color: color.starlight }}>
                   Детайли
                 </Text>
                 <Pressable

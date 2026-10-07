@@ -33,13 +33,19 @@
 
 /* ─── Font stacks ─── */
 :root {
-  /* Per-subset families from app/fonts.ts, walked glyph by glyph: Latin from the
-     latin file, Cyrillic from the cyrillic file. */
-  --font-display: var(--ff-manrope-latin), var(--ff-manrope-latin-ext), var(--ff-manrope-cyrillic);
-  --font-body: var(--ff-inter-latin), var(--ff-inter-latin-ext), var(--ff-inter-cyrillic);
-  --font-playfair: var(--ff-playfair-latin), var(--ff-playfair-latin-ext), var(--ff-playfair-cyrillic);
-  /* Cinzel has no Cyrillic: the per-glyph fallback is Playfair Display. */
-  --font-cinzel: var(--ff-cinzel-latin), var(--font-playfair);
+  /* One family (app/fonts.ts): Spectral with Bulgarian forms frozen in. The four
+     historical names stay as aliases so the ~80 files that say font-cinzel /
+     font-playfair / font-display / font-body keep working; hierarchy now comes from
+     weight, size and colour. Renaming the classes is part of each screen's parity pass. */
+  --font-display: var(--ff-spectral);
+  --font-body: var(--ff-spectral);
+  --font-playfair: var(--ff-spectral);
+  --font-cinzel: var(--ff-spectral);
+}
+/* No italic or bold synthesis: the italic face is dropped from the plan, so an
+   `italic` utility renders upright rather than as a false slant. */
+html {
+  font-synthesis: none;
 }
 .font-display {
   font-family: var(--font-display), system-ui, sans-serif;

@@ -20,7 +20,7 @@ interface ManifestEntryFormProps {
  * Оракул's own ask-line device (bronze underline + italic placeholder),
  * not a bordered/filled box — same "no cards, bronze is a fitting not a
  * container" rule as the rest of this design system. Heading/lead now
- * render in font.displaySemibold/font.bodyItalic (was font-cinzel, which
+ * render in font.displayStrong/font.body (was font-cinzel, which
  * has no Cyrillic glyphs at all — heading/lead are Bulgarian text, so
  * that was a silent fallback-font bug, not a style choice).
  *
@@ -73,7 +73,7 @@ export function ManifestEntryForm({
   return (
     <View style={{ gap: rhythm.group }}>
       <View>
-        <Text style={{ fontFamily: font.displaySemibold, fontSize: 23, color: color.starlight, letterSpacing: -0.11 }}>
+        <Text style={{ fontFamily: font.displayStrong, fontSize: 23, color: color.starlight, letterSpacing: -0.11 }}>
           {prompt.heading}
         </Text>
         {/* Founder correction (this batch, round 6): this screen missed
@@ -83,8 +83,7 @@ export function ManifestEntryForm({
             own quip text. */}
         <Text
           style={{
-            fontFamily: font.bodyItalic,
-            fontStyle: 'italic',
+            fontFamily: font.body,
             fontSize: type.body.fontSize,
             lineHeight: type.body.lineHeight,
             color: color.muted,
@@ -133,7 +132,7 @@ export function ManifestEntryForm({
         >
           <Text
             style={{
-              fontFamily: font.displaySemibold,
+              fontFamily: font.displayStrong,
               fontSize: 14,
               letterSpacing: 0.1,
               color: color.bronzeText,
@@ -152,7 +151,7 @@ export function ManifestEntryForm({
       </View>
 
       {savedFlash && (
-        <Text style={{ textAlign: 'right', fontFamily: font.displayRegular, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: color.bronzeText }}>
+        <Text style={{ textAlign: 'right', fontFamily: font.display, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: color.bronzeText }}>
           Записано в дневника
         </Text>
       )}
@@ -180,7 +179,7 @@ function Field({ label, placeholder, value, onChangeText }: FieldProps) {
           "small caption above a value" role on both screens. */}
       <Text
         style={{
-          fontFamily: font.displayRegular,
+          fontFamily: font.display,
           fontSize: 12,
           letterSpacing: 0.29,
           textTransform: 'uppercase',
@@ -200,8 +199,7 @@ function Field({ label, placeholder, value, onChangeText }: FieldProps) {
         maxLength={500}
         textAlignVertical="top"
         style={{
-          fontFamily: font.bodyItalic,
-          fontStyle: 'italic',
+          fontFamily: font.body,
           fontSize: type.body.fontSize,
           lineHeight: type.body.lineHeight,
           color: color.text,

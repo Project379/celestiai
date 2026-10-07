@@ -55,7 +55,7 @@ export default function RootLayout({
           colorInputBackground: 'rgba(20, 28, 45, 0.8)',
           colorInputText: '#E2E8F0',
           borderRadius: '0.5rem',
-          fontFamily: 'var(--font-display), var(--font-body), system-ui, sans-serif',
+          fontFamily: 'var(--font-display), Georgia, serif',
         },
       }}
     >

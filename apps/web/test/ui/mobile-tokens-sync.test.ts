@@ -49,7 +49,7 @@ describe('mobile-tokens.css mirrors tokens.ts', () => {
 
   it('type scale sizes and line heights', () => {
     const pairs = [...block('type').matchAll(/^\s{2}(\w+):\s*\{[^}]*fontSize:\s*([\d.]+)[^}]*lineHeight:\s*(\d+)/gm)]
-    expect(pairs.length).toBe(5)
+    expect(pairs.length).toBe(8)
     for (const [, key, size, line] of pairs) {
       expect(vars[`--m-type-${key}-size`], key).toBe(`${size}px`)
       expect(vars[`--m-type-${key}-line`], key).toBe(`${line}px`)

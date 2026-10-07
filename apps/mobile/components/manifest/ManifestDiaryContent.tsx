@@ -98,7 +98,7 @@ export function ManifestDiaryContent() {
             overlap a left-aligned label. */}
         <Text
           style={{
-            fontFamily: font.displayRegular,
+            fontFamily: font.display,
             fontSize: 13,
             letterSpacing: 0.32,
             color: color.bronzeText,
@@ -110,7 +110,7 @@ export function ManifestDiaryContent() {
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 }}>
           <MoonGlyph illumination={phase.illumination} isWaxing={phase.isWaxing} size={20} animated={false} outlineWidth={0} darkOpacity={0.85} />
-          <Text style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 0.4, color: color.cool }}>
+          <Text style={{ fontFamily: font.body, fontVariant: ['tabular-nums'], fontSize: 10.5, letterSpacing: 0.4, color: color.cool }}>
             {todayFormatted} · {phase.name.toLowerCase()}
           </Text>
         </View>
@@ -155,21 +155,21 @@ export function ManifestDiaryContent() {
           (see tokens.ts's own warning), so "Предишни страници"/"Сподели
           дневника"/the guide sentence were silently rendering in a
           fallback font, not a style choice. Rebuilt in the same token
-          family as the rest of this redesign (font.displayRegular for
+          family as the rest of this redesign (font.display for
           tracked caps, font.body for reading text, color.bronzeText for
           the one live link) instead of nativewind's slate/amber classes. */}
       <View>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 16, marginBottom: rhythm.paragraph }}>
-          <Text style={{ fontFamily: font.displayRegular, fontSize: 12, letterSpacing: 1.68, textTransform: 'uppercase', color: color.bronzeText }}>
+          <Text style={{ fontFamily: font.display, fontSize: 12, letterSpacing: 1.68, textTransform: 'uppercase', color: color.bronzeText }}>
             Предишни страници
           </Text>
           <View style={{ height: 1, flex: 1, backgroundColor: 'rgba(226,232,240,0.1)' }} />
-          <Text style={{ fontFamily: font.mono, fontSize: 10, color: color.faint }}>
+          <Text style={{ fontFamily: font.body, fontVariant: ['tabular-nums'], fontSize: 10, color: color.faint }}>
             {entries.length} {entries.length === 1 ? 'запис' : 'записа'}
           </Text>
           {entries.length > 0 && (
             <Pressable onPress={handleShare} hitSlop={8} style={({ pressed }) => pressFeedback(pressed)}>
-              <Text style={{ fontFamily: font.displayRegular, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: color.faint }}>
+              <Text style={{ fontFamily: font.display, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: color.faint }}>
                 ↗ Сподели дневника
               </Text>
             </Pressable>

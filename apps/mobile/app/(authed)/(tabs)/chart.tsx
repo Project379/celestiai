@@ -164,11 +164,11 @@ export default function ChartScreen() {
               Founder device-pass fix (this batch, uniformity): was still
               font.mono (12px) — index.tsx's own caption already moved off
               mono for reading "too rigid" against this app's warm serif
-              type system; matched here too (font.displayRegular, 13px,
+              type system; matched here too (font.display, 13px,
               same letterSpacing ratio). Color stays faint (not bronze) —
               this is a cool-temperature screen; bronze is reserved for
               the invite/pedestal fittings specifically. */}
-          <Text style={{ fontFamily: font.displayRegular, fontSize: 13, letterSpacing: 0.32, color: color.faint, textTransform: 'uppercase' }}>
+          <Text style={{ fontFamily: font.display, fontSize: 13, letterSpacing: 0.32, color: color.faint, textTransform: 'uppercase' }}>
             натална карта
           </Text>
           {/* Founder device-pass fix (this batch, uniformity): size
@@ -179,7 +179,7 @@ export default function ChartScreen() {
               just where it's been observed). Italic stays EBGaramond —
               PlayfairDisplay has no italic face loaded (see
               app/_layout.tsx's font map). */}
-          <Text style={{ fontFamily: font.bodyItalic, fontStyle: 'italic', fontSize: 19, lineHeight: 26, paddingLeft: 3, color: color.muted, marginTop: 3 }}>
+          <Text style={{ fontFamily: font.body, fontSize: 19, lineHeight: 26, paddingLeft: 3, color: color.muted, marginTop: 3 }}>
             {displayName}
           </Text>
           <View style={{ alignItems: 'center' }}>
@@ -222,8 +222,7 @@ export default function ChartScreen() {
                 shifting the centered line off-axis. */}
             <Text
               style={{
-                fontFamily: 'EBGaramond-Italic',
-                fontStyle: 'italic',
+                fontFamily: font.body,
                 fontSize: 15,
                 lineHeight: 21,
                 color: color.faint,

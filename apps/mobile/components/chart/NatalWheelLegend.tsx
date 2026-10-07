@@ -72,7 +72,7 @@ export function NatalWheelLegend() {
                     font-display classes point at unloaded family names per
                     tailwind.config.js's own tracked-issue comment, so this
                     file can't rely on className for font family at all). */}
-                <Text style={{ fontFamily: font.mono }} className="text-[9.5px] font-semibold uppercase tracking-[0.38em] text-bronze/80">
+                <Text style={{ fontFamily: font.body, fontVariant: ['tabular-nums'] }} className="text-[9.5px] font-semibold uppercase tracking-[0.38em] text-bronze/80">
                   Легенда
                 </Text>
               </View>
@@ -172,7 +172,7 @@ export function NatalWheelLegend() {
 
               <View className="mt-4 border-t border-white/[0.05] pt-3">
                 {/* REVISIT-42 fix — see the header caption above. */}
-                <Text style={{ fontFamily: font.mono }} className="text-[8.5px] font-semibold uppercase tracking-[0.28em] text-slate-600">
+                <Text style={{ fontFamily: font.body, fontVariant: ['tabular-nums'] }} className="text-[8.5px] font-semibold uppercase tracking-[0.28em] text-slate-600">
                   За детайли → раздел Речник
                 </Text>
               </View>

@@ -82,13 +82,13 @@ const BG_DATE_FORMAT = new Intl.DateTimeFormat('bg-BG', {
 // Founder device-pass fix (this batch, font choice): these read "too
 // rigid" on device — font.mono resolves to Menlo/system-monospace, a
 // technical/code typeface with none of the warmth the rest of this
-// atmospheric screen carries. Switched to font.displayRegular (Playfair
+// atmospheric screen carries. Switched to font.display (Playfair
 // Display), the SAME typeface type.eyebrow already uses for the moon's
 // tracked-caps phase name — reuses an existing warm tracked-caps
 // primitive already proven on this screen, not a new font introduced for
 // this one spot.
 const SECTION_CAPTION_STYLE = {
-  fontFamily: font.displayRegular,
+  fontFamily: font.display,
   fontSize: 12,
   letterSpacing: 0.29,
   color: color.bronzeText,
@@ -343,14 +343,14 @@ export default function DnesScreen() {
              legibility at 390px: 9.5→10.5, 13→14. */}
       {/* Font choice fix (this batch): matches SECTION_CAPTION_STYLE's own
           fix below — font.mono read as rigid/technical against this
-          screen's otherwise warm serif type system. Same font.displayRegular
+          screen's otherwise warm serif type system. Same font.display
           swap for consistency; this is the same visual family as every
           other caption on the screen now, not a second treatment. */}
       {/* Founder device-pass fix (this batch, legibility): 10.5 → 13 — the
           whole date line read small against the rest of the screen's
           type after the font-choice fix above; bumped as one line, not
           a per-word tweak. */}
-      <Text style={{ fontFamily: font.displayRegular, fontSize: 13, letterSpacing: 0.32, color: color.faint, marginTop: 24 }}>
+      <Text style={{ fontFamily: font.display, fontSize: 13, letterSpacing: 0.32, color: color.faint, marginTop: 24 }}>
         {todayFormatted}
       </Text>
       {/* marginBottom removed: MoonHero already supplies its own top gap
@@ -369,7 +369,7 @@ export default function DnesScreen() {
           start, with nothing before it to absorb the overhang. lineHeight
           gives it vertical room, paddingLeft gives it horizontal room; same
           fix applied to chart.tsx's «Докосни» hint, same root cause. */}
-      <Text style={{ fontFamily: font.bodyItalic, fontStyle: 'italic', fontSize: 19, lineHeight: 26, paddingLeft: 3, color: color.muted, marginTop: 3 }}>
+      <Text style={{ fontFamily: font.body, fontSize: 19, lineHeight: 26, paddingLeft: 3, color: color.muted, marginTop: 3 }}>
         <Text style={{ color: color.bronzeText }}>{greetingPhrase}</Text>
         {`,${greetingNamePart}`}
       </Text>
@@ -411,8 +411,7 @@ export default function DnesScreen() {
                 primitive. */}
             <Text
               style={{
-                fontFamily: 'EBGaramond-Italic',
-                fontStyle: 'italic',
+                fontFamily: font.body,
                 fontSize: 14,
                 lineHeight: 20,
                 color: color.faint,
@@ -486,8 +485,7 @@ export default function DnesScreen() {
         >
           <Text
             style={{
-              fontFamily: 'EBGaramond-Italic',
-              fontStyle: 'italic',
+              fontFamily: font.body,
               fontSize: 16,
               color: color.muted,
               textAlign: 'center',
@@ -547,8 +545,7 @@ export default function DnesScreen() {
         <Animated.View style={detailLinkRevealStyle}>
           <Text
             style={{
-              fontFamily: 'EBGaramond-Italic',
-              fontStyle: 'italic',
+              fontFamily: font.body,
               fontSize: 14,
               lineHeight: 20,
               color: color.faint,
@@ -613,7 +610,7 @@ export default function DnesScreen() {
             </View>
             <Text
               style={{
-                fontFamily: font.displayRegular,
+                fontFamily: font.display,
                 fontSize: 13,
                 letterSpacing: 2.08,
                 textTransform: 'uppercase',
@@ -712,7 +709,7 @@ function lastIndex<T>(arr: T[]): number {
 // horoscope reading is the app speaking to the user, not the sky being
 // read — recolored to color.bronzeText so the glow and the text it lights
 // are the same hue family.
-const PAYOFF_TEXT_STYLE = { fontFamily: font.displayRegular, color: color.bronzeText } as const
+const PAYOFF_TEXT_STYLE = { fontFamily: font.display, color: color.bronzeText } as const
 
 // Pure glow wrapper — `children` supplies its own fully-styled <Text> (this
 // call site's plain-string payoffs and HoroscopeBody's mixed-chunk payoffs
@@ -737,7 +734,7 @@ function PayoffGlow({ children }: { children: ReactNode }) {
 
 function beatStyle(index: number, last: number): { fontFamily: string; marginTop: number } {
   if (last === 0) return { fontFamily: font.body, marginTop: 0 }
-  if (index === 0) return { fontFamily: font.bodyItalic, marginTop: 0 }
+  if (index === 0) return { fontFamily: font.body, marginTop: 0 }
   if (index === last) return { fontFamily: font.bodyMedium, marginTop: rhythm.group }
   return { fontFamily: font.body, marginTop: rhythm.paragraph }
 }
@@ -881,7 +878,7 @@ function HoroscopeParagraph({
     >
       {anchor && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: rhythm.micro }}>
-          <Text style={{ fontFamily: font.cinzel, fontSize: 14, color: color.bronze }}>{PLANET_GLYPHS[anchor]}</Text>
+          <Text style={{ fontFamily: font.display, fontSize: 14, color: color.bronze }}>{PLANET_GLYPHS[anchor]}</Text>
           <Text style={{ ...type.caption, color: color.muted }}>{PLANETS_BG[anchor]}</Text>
         </View>
       )}
@@ -889,7 +886,7 @@ function HoroscopeParagraph({
         style={{
           ...type.body,
           ...HOROSCOPE_BODY_STYLE,
-          ...(role === 'opener' ? { fontFamily: font.bodyItalic, color: color.text } : { fontFamily: font.body, color: color.text }),
+          ...(role === 'opener' ? { fontFamily: font.body, color: color.text } : { fontFamily: font.body, color: color.text }),
         }}
       >
         {renderSentinelChunks(chunks)}

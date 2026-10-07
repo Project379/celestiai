@@ -14,8 +14,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
-        body: ['var(--font-body)', 'var(--font-display)', 'system-ui', 'sans-serif'],
+        // All four resolve to Spectral (app/fonts.ts); names kept as aliases.
+        display: ['var(--font-display)', 'Georgia', 'serif'],
+        body: ['var(--font-body)', 'Georgia', 'serif'],
         cinzel: ['var(--font-cinzel)', 'Georgia', 'serif'],
         playfair: ['var(--font-playfair)', 'Georgia', 'serif'],
       },

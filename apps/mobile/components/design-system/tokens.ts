@@ -2,7 +2,6 @@
 // See .planning/research/MOBILE_ALPHA_REDESIGN.md §0 for the familiarity
 // brief and §0.3 (type scale) for the measured-width validation behind
 // every size below — none of these are guesses.
-import { Platform } from 'react-native'
 
 export const color = {
   base: '#08060f',
@@ -92,23 +91,19 @@ export const rhythm = {
   group: 40,
 } as const
 
+// One family: Spectral with the Bulgarian forms frozen in (see app/_layout.tsx and
+// scripts/fonts/build-spectral-bg.py). Hierarchy comes from weight, size and colour.
+// No italic face and no monospace (both retired by founder ruling 2026-10-07): dates
+// and labels use `body` with `fontVariant: ['tabular-nums']`.
+//   body          Regular   — reading text, captions
+//   bodyMedium    Medium    — rows, small labels
+//   display       SemiBold  — headings, the payoff, sub-headings
+//   displayStrong Bold      — the one lit exit (CtaPanel) and pedestal words
 export const font = {
-  displayRegular: 'PlayfairDisplay-Regular',
-  displaySemibold: 'PlayfairDisplay-SemiBold',
-  // Roman numerals + Latin-only text ONLY (Cinzel has no Cyrillic glyphs)
-  // — scoped to the Astrology Guide surface, not used here.
-  cinzel: 'Cinzel-Regular',
-  // mockup `--mono: "SFMono-Regular", Consolas, Menlo, monospace` — the
-  // date/specimen-label family (`.label-mark`, `.karta-label`). No custom
-  // mono font is embedded in this app (only the 8 files in assets/fonts/);
-  // this is the system monospace stack, same category of choice the
-  // mockup itself made (a system font stack, not a custom face). Platform-
-  // specific because RN's generic 'monospace' family name only resolves
-  // reliably on Android — iOS needs an explicit named font.
-  mono: Platform.select({ ios: 'Menlo', default: 'monospace' }) as string,
-  body: 'EBGaramond-Regular',
-  bodyMedium: 'EBGaramond-Medium',
-  bodyItalic: 'EBGaramond-Italic',
+  body: 'SpectralBG-Regular',
+  bodyMedium: 'SpectralBG-Medium',
+  display: 'SpectralBG-SemiBold',
+  displayStrong: 'SpectralBG-Bold',
 } as const
 
 // Type scale, each size validated against the longest real Bulgarian
@@ -145,18 +140,22 @@ export const font = {
 //     tradeoff, not a broken layout. Most real combinations (see
 //     tokens.ts's own measurement script in the MOBILE_ALPHA_REDESIGN.md
 //     §14 record) fit on one line comfortably below 330px.
+// Scale proposed 2026-10-07 against the brief (R2: 3-4 sizes per screen; 12 px floor):
+//   caption 12/17 Regular · row 16/21 Medium · body 17/27 Regular · sub 17/23 SemiBold
+//   reading 20/31 Regular (the Днес reading; promoted from a one-off override)
+//   display 26/32 SemiBold (phase name, screen titles) · cta 22/28 Bold (the one exit)
+//   eyebrow 12/17 SemiBold tracked — the floor is 12, so the old 9.5 px tier is gone.
 export const type = {
-  sub: { fontFamily: font.displayRegular, fontSize: 17, lineHeight: 23 },
+  sub: { fontFamily: font.display, fontSize: 17, lineHeight: 23 },
   body: { fontFamily: font.body, fontSize: 17, lineHeight: 27 },
+  reading: { fontFamily: font.body, fontSize: 20, lineHeight: 31 },
   row: { fontFamily: font.bodyMedium, fontSize: 16, lineHeight: 21 },
   caption: { fontFamily: font.body, fontSize: 12, lineHeight: 17 },
-  // Tracked-caps eyebrow — mockup `.phase-mark` (Днес) and the sibling
-  // `.plaque`/`.pedestal span` treatment (Карта). RN has no CSS `em`
-  // tracking unit: letterSpacing is absolute px, so `.28em` at 9.5px is
-  // computed here (9.5 * 0.28 = 2.66), not eyeballed — flagged per the
-  // "flag every unit conversion" rule. R3-reserved on Днес per the doc
-  // reconciliation: the one tracked-caps eyebrow use on that screen.
-  eyebrow: { fontFamily: font.displayRegular, fontSize: 9.5, letterSpacing: 2.66, lineHeight: 13 },
+  display: { fontFamily: font.display, fontSize: 26, lineHeight: 32 },
+  cta: { fontFamily: font.displayStrong, fontSize: 22, lineHeight: 28 },
+  // Tracked-caps eyebrow (R3: reserved, 0-1 per screen). RN letterSpacing is absolute
+  // px: 0.15em at 12 px = 1.8.
+  eyebrow: { fontFamily: font.display, fontSize: 12, letterSpacing: 1.8, lineHeight: 17 },
 } as const
 
 // Premium pass, item #1 (2026-07-24) — shared press-feedback primitive.

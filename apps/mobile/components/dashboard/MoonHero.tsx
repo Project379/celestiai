@@ -1,7 +1,7 @@
 import { Text, View, useWindowDimensions } from 'react-native'
 
 import { MoonGlyph } from '@/components/dashboard/MoonGlyph'
-import { color, type } from '@/components/design-system/tokens'
+import { color, font, type } from '@/components/design-system/tokens'
 
 /**
  * Днес's hero, split out of index.tsx (Stage 2, 2026-07-27) per the
@@ -92,7 +92,7 @@ export function MoonHero({
       {/* Founder device-pass fix (2026-07-28, legibility): 12 → 15 —
           "so even grandmas can read it," same reasoning as the greeting
           and meteor note (index.tsx). */}
-      <Text style={{ fontFamily: 'EBGaramond-Italic', fontStyle: 'italic', fontSize: 15, color: color.muted, marginTop: 4, textAlign: 'center' }}>
+      <Text style={{ fontFamily: font.body, fontSize: 15, color: color.muted, marginTop: 4, textAlign: 'center' }}>
         {subLabel}
       </Text>
       <View style={{ marginTop: 8 }}>

@@ -1,0 +1,61 @@
+{
+  "upstream": "google/fonts@e4acad48be939e92f6fa35a006453db71be1f868 ofl/spectral",
+  "files": {
+    "Regular": {
+      "frozen_glyphs": 23,
+      "cmap_entries_repointed": 23,
+      "ttf": {
+        "path": "apps/mobile/assets/fonts/SpectralBG-Regular.ttf",
+        "bytes": 206292,
+        "sha256": "588a0b40225c18c6cae21b7ac85382697b44c553a786261f90a69202fc06a27a"
+      },
+      "woff2": {
+        "path": "apps/web/app/fonts/spectral-bg-400.woff2",
+        "bytes": 67744,
+        "sha256": "87920e2cb718f011cdb9060283d2395f0c7746c16c4e6df16ee4107a007b6ad3"
+      }
+    },
+    "Medium": {
+      "frozen_glyphs": 23,
+      "cmap_entries_repointed": 23,
+      "ttf": {
+        "path": "apps/mobile/assets/fonts/SpectralBG-Medium.ttf",
+        "bytes": 216508,
+        "sha256": "c36ecd7047ad436ef077e948031f7d8514e86f08a3799f5a747a20dd2087eb25"
+      },
+      "woff2": {
+        "path": "apps/web/app/fonts/spectral-bg-500.woff2",
+        "bytes": 74688,
+        "sha256": "6058d0b058cf7cfcd55562b5ad4f54824c8660f95b6e8b415f6e56c7f8ef5124"
+      }
+    },
+    "SemiBold": {
+      "frozen_glyphs": 23,
+      "cmap_entries_repointed": 23,
+      "ttf": {
+        "path": "apps/mobile/assets/fonts/SpectralBG-SemiBold.ttf",
+        "bytes": 216596,
+        "sha256": "1d190917349fb62dffdd9f86c54f2c7b228e6fdf2d2d3bad8ad98bfa5371ce47"
+      },
+      "woff2": {
+        "path": "apps/web/app/fonts/spectral-bg-600.woff2",
+        "bytes": 75500,
+        "sha256": "39382e47681f89e2a83ec9583d3161748fa0a2ceabd979e06dd1eb3126b736e4"
+      }
+    },
+    "Bold": {
+      "frozen_glyphs": 23,
+      "cmap_entries_repointed": 23,
+      "ttf": {
+        "path": "apps/mobile/assets/fonts/SpectralBG-Bold.ttf",
+        "bytes": 216752,
+        "sha256": "b3cafd84dc96e1f369bfc0f58335f5dbdc12c2ae6feab76d14babb28f140fce8"
+      },
+      "woff2": {
+        "path": "apps/web/app/fonts/spectral-bg-700.woff2",
+        "bytes": 74880,
+        "sha256": "85158005979319c9e5c48608fab3b39024cdf937527b5472da443e058e9e7c3f"
+      }
+    }
+  }
+}

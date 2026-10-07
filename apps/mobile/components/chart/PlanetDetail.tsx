@@ -322,7 +322,7 @@ export function PlanetDetail({
                   entry point. */}
               {interpretation.brief && (
                 <Text
-                  style={{ ...typeScale.body, fontFamily: font.bodyItalic, color: '#dde3ee', marginBottom: rhythm.group }}
+                  style={{ ...typeScale.body, fontFamily: font.body, color: '#dde3ee', marginBottom: rhythm.group }}
                 >
                   {interpretation.brief.charAt(0).toUpperCase() + interpretation.brief.slice(1)}
                 </Text>

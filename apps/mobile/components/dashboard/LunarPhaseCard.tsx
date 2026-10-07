@@ -126,7 +126,7 @@ export function LunarPhaseCard() {
         </Pressable>
 
         <View className="flex-1 pt-1">
-          <Text style={{ fontFamily: font.displayRegular, fontSize: 19, lineHeight: 25 }} className="text-bronze-text/95">
+          <Text style={{ fontFamily: font.display, fontSize: 19, lineHeight: 25 }} className="text-bronze-text/95">
             {phase.name}
           </Text>
           <Text style={{ fontFamily: font.body }} className="mt-1.5 text-[12px] text-slate-400">

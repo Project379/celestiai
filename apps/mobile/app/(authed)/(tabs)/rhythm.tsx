@@ -95,7 +95,7 @@ export default function RhythmScreen() {
             overview.data.pacing.emphasis === 'quiet' ? (
               <>
                 <Text
-                  style={{ fontFamily: font.displaySemibold, fontSize: 56, lineHeight: 62 }}
+                  style={{ fontFamily: font.displayStrong, fontSize: 56, lineHeight: 62 }}
                   className="tracking-tight text-bronze-text/95"
                 >
                   Тих ден
@@ -107,7 +107,7 @@ export default function RhythmScreen() {
             ) : (
               <>
                 <Text
-                  style={{ fontFamily: font.displaySemibold, fontSize: 56, lineHeight: 62 }}
+                  style={{ fontFamily: font.displayStrong, fontSize: 56, lineHeight: 62 }}
                   className="tracking-tight text-bronze-text/95"
                 >
                   {overview.data.activeTransits.length}

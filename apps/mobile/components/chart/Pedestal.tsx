@@ -32,7 +32,7 @@ import { hapticInvite } from '@/lib/haptics'
  * position convention, both invitations now read as the same language.
  *
  * Founder device-pass fix (2026-07-28, font match): «Детайли» now uses
- * the exact same family as «Питай Оракула» (font.displaySemibold, no
+ * the exact same family as «Питай Оракула» (font.displayStrong, no
  * textTransform, CtaPanel's lighter letterSpacing) instead of its own
  * uppercase tracked-caps treatment — both invitations render in the same
  * typeface, first-letter-uppercase only, per instruction.
@@ -110,7 +110,7 @@ export function Pedestal({ onPress }: { onPress: () => void }) {
       </View>
       <Text
         style={{
-          fontFamily: font.displaySemibold,
+          fontFamily: font.displayStrong,
           fontSize: 19,
           letterSpacing: 0.2,
           color: color.bronzeText,

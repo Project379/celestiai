@@ -23,15 +23,17 @@ SplashScreen.preventAutoHideAsync()
 // native config plugins, only a full dev-client/EAS build can. Production
 // rollout should migrate to the config-plugin embed for build-time loading;
 // tracked as a rollout item (MOBILE-ALPHA-REDESIGN deliverables).
+//
+// One family (founder decision 2026-10-07, pairing D): Spectral with the Bulgarian
+// letterforms frozen in as the default glyphs, built by
+// scripts/fonts/build-spectral-bg.py. Static, upright only — React Native cannot
+// set a text locale or toggle `locl`, so the forms are baked into the files and
+// look the same on every device whatever its system language.
 const FONT_ASSETS = {
-  'Cinzel-Regular': require('../assets/fonts/Cinzel-Regular.ttf'),
-  'Cinzel-SemiBold': require('../assets/fonts/Cinzel-SemiBold.ttf'),
-  'PlayfairDisplay-Regular': require('../assets/fonts/PlayfairDisplay-Regular.ttf'),
-  'PlayfairDisplay-SemiBold': require('../assets/fonts/PlayfairDisplay-SemiBold.ttf'),
-  'PlayfairDisplay-Bold': require('../assets/fonts/PlayfairDisplay-Bold.ttf'),
-  'EBGaramond-Regular': require('../assets/fonts/EBGaramond-Regular.ttf'),
-  'EBGaramond-Medium': require('../assets/fonts/EBGaramond-Medium.ttf'),
-  'EBGaramond-Italic': require('../assets/fonts/EBGaramond-Italic.ttf'),
+  'SpectralBG-Regular': require('../assets/fonts/SpectralBG-Regular.ttf'),
+  'SpectralBG-Medium': require('../assets/fonts/SpectralBG-Medium.ttf'),
+  'SpectralBG-SemiBold': require('../assets/fonts/SpectralBG-SemiBold.ttf'),
+  'SpectralBG-Bold': require('../assets/fonts/SpectralBG-Bold.ttf'),
 }
 
 // Web-parity defaults: per-day content (daily horoscope, crystal-of-the-day)

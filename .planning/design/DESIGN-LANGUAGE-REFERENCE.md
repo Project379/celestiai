@@ -157,6 +157,8 @@ don't drift into it silently.
 
 ### Font families
 
+> **SUPERSEDED 2026-10-07 (founder decision, pairing D).** The whole app now uses ONE family, **Spectral BG** — Spectral with the Bulgarian letterforms frozen in as default glyphs (`scripts/fonts/build-spectral-bg.py`), static upright Regular / Medium / SemiBold / Bold, no italic, no monospace. Current tokens (`components/design-system/tokens.ts`): `font.body` Regular · `font.bodyMedium` Medium · `font.display` SemiBold · `font.displayStrong` Bold; scale: caption 12/17, row 16/21, body 17/27, sub 17/23, reading 20/31, display 26/32, cta 22/28, eyebrow 12/17 (12 px floor). The table and the Cinzel rules below are kept as history of what shipped before; `displayRegular`, `bodyItalic`, `mono` and `cinzel` no longer exist.
+
 | Token | Family | Role |
 |---|---|---|
 | `displayRegular`/`displaySemibold` | PlayfairDisplay | Display/hero text |

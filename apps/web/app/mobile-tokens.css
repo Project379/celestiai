@@ -47,9 +47,15 @@
   --m-type-row-line: 21px;
   --m-type-caption-size: 12px;
   --m-type-caption-line: 17px;
-  --m-type-eyebrow-size: 9.5px;
-  --m-type-eyebrow-line: 13px;
-  --m-type-eyebrow-tracking: 2.66px;
+  --m-type-reading-size: 20px;
+  --m-type-reading-line: 31px;
+  --m-type-display-size: 26px;
+  --m-type-display-line: 32px;
+  --m-type-cta-size: 22px;
+  --m-type-cta-line: 28px;
+  --m-type-eyebrow-size: 12px;
+  --m-type-eyebrow-line: 17px;
+  --m-type-eyebrow-tracking: 1.8px;
 
   /* shell */
   --m-column-width: 430px;

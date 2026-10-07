@@ -53,7 +53,7 @@ function PreviewNavbar({ active }: { active: 'Днес' | 'Карта' | 'Кръ
           return (
             <View key={item.key} style={{ alignItems: 'center', gap: 5 }}>
               <NavIcon focused={focused}>{item.icon(c)}</NavIcon>
-              <Text style={{ fontFamily: font.mono, fontSize: 7.5, letterSpacing: 0.4, color: c, opacity: focused ? 1 : 0.75 }}>
+              <Text style={{ fontFamily: font.body, fontVariant: ['tabular-nums'], fontSize: 7.5, letterSpacing: 0.4, color: c, opacity: focused ? 1 : 0.75 }}>
                 {item.key.toUpperCase()}
               </Text>
             </View>
@@ -172,10 +172,10 @@ export default function Stage2Preview() {
                 bigger) — kept in sync manually since this preview doesn't
                 import the real route (that route needs Clerk/API context
                 this harness doesn't have). */}
-            <Text style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 0.29, color: color.faint, marginTop: 24 }}>
+            <Text style={{ fontFamily: font.body, fontVariant: ['tabular-nums'], fontSize: 10.5, letterSpacing: 0.29, color: color.faint, marginTop: 24 }}>
               четвъртък, 25 юли
             </Text>
-            <Text style={{ fontFamily: font.bodyItalic, fontStyle: 'italic', fontSize: 14, color: color.muted, marginTop: 3 }}>
+            <Text style={{ fontFamily: font.body, fontSize: 14, color: color.muted, marginTop: 3 }}>
               Добър вечер, Николай.
             </Text>
             <MoonHero
@@ -199,10 +199,10 @@ export default function Stage2Preview() {
           <ScreenShell temperature="cool">
             {/* Reproduces chart.tsx's karta-label/karta-name — same
                 manual-sync note as Днес above. */}
-            <Text style={{ fontFamily: font.mono, fontSize: 9.5, letterSpacing: 0.29, color: color.faint }}>
+            <Text style={{ fontFamily: font.body, fontVariant: ['tabular-nums'], fontSize: 9.5, letterSpacing: 0.29, color: color.faint }}>
               натална карта
             </Text>
-            <Text style={{ fontFamily: font.displayRegular, fontSize: 13.5, color: color.muted, marginTop: 3 }}>
+            <Text style={{ fontFamily: font.display, fontSize: 13.5, color: color.muted, marginTop: 3 }}>
               Николай Тонев
             </Text>
             <View style={{ alignItems: 'center' }}>
@@ -210,7 +210,7 @@ export default function Stage2Preview() {
               <NatalWheel chart={MOCK_CHART} size={280} onPlanetSelect={() => {}} selectedPlanet={null} />
               {/* Order reversed 2026-07-27: tap hint (in-flow now, was
                   pinned), then Plaque, then Pedestal — matches chart.tsx. */}
-              <Text style={{ fontFamily: 'EBGaramond-Italic', fontStyle: 'italic', fontSize: 11.5, color: color.faint, textAlign: 'center', marginTop: 10 }}>
+              <Text style={{ fontFamily: font.body, fontSize: 11.5, color: color.faint, textAlign: 'center', marginTop: 10 }}>
                 докосни планета за тълкуване
               </Text>
               <Plaque
