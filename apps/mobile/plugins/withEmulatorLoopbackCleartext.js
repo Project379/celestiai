@@ -21,6 +21,22 @@ const NETWORK_SECURITY_CONFIG_XML = `<?xml version="1.0" encoding="utf-8"?>
 </network-security-config>
 `
 
+// Debug builds only: `expo start` + `a` loads the dev client's JS from Metro
+// over plain HTTP at localhost / 127.0.0.1 (via adb reverse), which
+// release-style builds must never allow. Gradle overlays src/debug/res over
+// src/main/res for the debug variant only, so this same-named file replaces
+// the one above in debug, while release and preview builds keep the
+// 10.0.2.2-only config.
+const DEBUG_NETWORK_SECURITY_CONFIG_XML = `<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>
+`
+
 const withNetworkSecurityConfigFile = (config) =>
   withDangerousMod(config, [
     'android',
@@ -28,6 +44,12 @@ const withNetworkSecurityConfigFile = (config) =>
       const xmlDir = path.join(config.modRequest.platformProjectRoot, 'app/src/main/res/xml')
       fs.mkdirSync(xmlDir, { recursive: true })
       fs.writeFileSync(path.join(xmlDir, 'network_security_config.xml'), NETWORK_SECURITY_CONFIG_XML)
+      const debugXmlDir = path.join(config.modRequest.platformProjectRoot, 'app/src/debug/res/xml')
+      fs.mkdirSync(debugXmlDir, { recursive: true })
+      fs.writeFileSync(
+        path.join(debugXmlDir, 'network_security_config.xml'),
+        DEBUG_NETWORK_SECURITY_CONFIG_XML,
+      )
       return config
     },
   ])

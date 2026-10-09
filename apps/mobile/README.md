@@ -55,3 +55,21 @@ prebuild, check the merged manifest under
 
 `expo.autolinking.exclude` in `package.json` drops the Solana wallet adapter that
 Clerk pulls in transitively (Clerk Web3 sign-in is off). See the comment there.
+
+## Dev client + Metro on the Android emulator
+
+Debug builds allow cleartext HTTP to `10.0.2.2`, `localhost` and `127.0.0.1`
+(`plugins/withEmulatorLoopbackCleartext.js` writes a `src/debug` resource that
+overlays the main one; release and preview builds keep `10.0.2.2` only — check
+`app/build/intermediates/merged_res/release/**/xml_network_security_config.xml.flat`
+if in doubt). Plain `npx expo start` + `a` opens the dev client at your **LAN IP**,
+which is blocked, so tell Expo to use loopback:
+
+    npx expo start --localhost --android      # or: REACT_NATIVE_PACKAGER_HOSTNAME=localhost npx expo start --android
+
+Gotchas (observed 2026-10-09): the first launch right after Metro starts can
+fail with `SocketTimeoutException` (Metro isn't ready yet) — the error screen's
+**Reload** button crashes (`DevLauncherController` NPE), so instead
+`adb shell am force-stop com.stellaeum.app` and reopen the app / press `a` again.
+After `expo prebuild`, re-check that `git diff package.json` hasn't picked up the
+rewritten `android`/`ios` scripts (see above).
