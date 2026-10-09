@@ -21,7 +21,7 @@ export type HoroscopeDate = 'today' | 'yesterday'
  * new key, query refetches). Mirrors web's getTodayString in
  * apps/web/hooks/useDailyHoroscope.ts.
  */
-function getTodayString(): string {
+export function getTodayString(): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Sofia',
   }).format(new Date())
@@ -35,7 +35,7 @@ function getYesterdayString(): string {
   }).format(today)
 }
 
-function getCacheKey(chartId: string, date: string): string {
+export function getCacheKey(chartId: string, date: string): string {
   // REVISIT-50 harmonization — unprefixed stellaeum.* convention. No
   // migration needed: a cache miss on the old key just refetches.
   return `stellaeum.horoscope.daily.${chartId}.${date}.v1`

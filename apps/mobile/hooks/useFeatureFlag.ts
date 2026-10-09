@@ -33,7 +33,7 @@
  * call-site refactor is zero LOC at vendor-swap time.
  */
 
-export type FeatureFlag = 'daily_horoscope' | 'oracle' | 'push' | 'media_recommendations'
+export type FeatureFlag = 'daily_horoscope' | 'oracle' | 'push' | 'media_recommendations' | 'dnes_v2'
 
 export function useFeatureFlag(flag: FeatureFlag): boolean {
   switch (flag) {
@@ -45,5 +45,8 @@ export function useFeatureFlag(flag: FeatureFlag): boolean {
       return process.env.EXPO_PUBLIC_FF_PUSH !== 'false'
     case 'media_recommendations':
       return process.env.EXPO_PUBLIC_FF_MEDIA_RECOMMENDATIONS === 'true'
+    // Днес redesign (docs: .planning/design/dnes/). Default OFF, 'true' turns it on.
+    case 'dnes_v2':
+      return process.env.EXPO_PUBLIC_FF_DNES_V2 === 'true'
   }
 }

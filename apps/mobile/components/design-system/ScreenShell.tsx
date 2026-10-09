@@ -105,8 +105,12 @@ export function ScreenShell({
   // behavior (the invite, moon, meteor fragments on Днес) — not debug-only,
   // despite this prop's earlier life as a one-off investigation aid.
   onScroll,
+  // Днес v2: one fixed screen, no scrolling. Children render in a plain flex View
+  // (no horizontal padding; the screen owns its own) over the same wash and stars.
+  fixed = false,
 }: {
   children: ReactNode
+  fixed?: boolean
   temperature?: Temperature
   pinnedBottom?: ReactNode
   back?: boolean
@@ -180,6 +184,9 @@ export function ScreenShell({
           ))}
         </Svg>
       )}
+      {fixed ? (
+        <View style={{ flex: 1 }}>{children}</View>
+      ) : (
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -200,6 +207,7 @@ export function ScreenShell({
       >
         {children}
       </ScrollView>
+      )}
       {pinnedBottom && (
         <>
           {/* Dissolves scrolled content before it reaches the pinned

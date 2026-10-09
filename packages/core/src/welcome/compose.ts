@@ -52,6 +52,11 @@ function timeGreeting(tod: ReturnType<typeof getTimeOfDay>): string {
   }
 }
 
+/** «Добро утро» / «Добър ден» / «Добър вечер» / «Благословена нощ» for a 0-23 hour. */
+export function greetingFor(hour: number): string {
+  return timeGreeting(getTimeOfDay(hour))
+}
+
 /**
  * Phase-specific opening that already accounts for the current illumination.
  * These are the fixed half of the summary; the dynamic half is the sign tail.

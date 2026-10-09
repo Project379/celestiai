@@ -22,6 +22,15 @@
   --m-text: #e2e8f0;
   --m-muted: #94a3b8;
   --m-faint: #6d7e97;
+  --m-disclosure: #676c76;
+  --m-lilac: #b9a6ee;
+  --m-orchid: #cdb0d6;
+  --m-glyph-lilac: #cfc2f5;
+  --m-glyph-lilac-hi: #efe9ff;
+  --m-bronze-lit: #e8b987;
+  --m-read-soft: #c3cad8;
+  --m-read-mid: #dbe0ea;
+  --m-read-lit: #f7f3ea;
 
   /* space */
   --m-space-xs: 4px;

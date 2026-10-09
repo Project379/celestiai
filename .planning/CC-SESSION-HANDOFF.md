@@ -173,6 +173,15 @@ port (swap `:6543` for `:5432` in `DATABASE_URL`), only after the file is on
 `main`, and only after reading the schema to confirm what exists. Never push
 blind.
 
+**Dev client "There was a problem loading the project: SocketTimeoutException".** The dev client
+gives up after ~10 s while Metro is still doing its first, cold bundle (fresh `expo start`,
+`--clear`, cold cache). **Never tap Reload on that screen, it crashes the app.** Run
+`pnpm --filter @stellaeum/mobile run dev:android` (apps/mobile/scripts/dev-android.mjs): it
+reuses or starts Metro, builds the bundle first with no client timeout, then force-stops the app
+and opens the dev-client deep link. Run it again whenever the error screen appears. Avoid
+`--clear` unless the cache is really suspect. `--restart` restarts Metro (needed to change an
+`EXPO_PUBLIC_*` value).
+
 **EAS never validates env values.** A build can go fully green while
 shipping a literal placeholder string as `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
 or `EXPO_PUBLIC_SENTRY_DSN` — this happened on the very first APK ever

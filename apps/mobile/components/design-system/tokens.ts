@@ -46,6 +46,20 @@ export const color = {
   // `muted`'s 7.85:1 so it still reads as subordinate, not body text.
   // If either of `base`/`faint` changes, re-run the contrast check.
   faint: '#6d7e97',
+  // Днес v2 (founder-approved 2026-10-09). `disclosure` is a DELIBERATE exception
+  // to the 7:1 text rule for the AI-disclosure line only (about 3.8:1 on `base`).
+  // Never use it for anything else and never go dimmer.
+  disclosure: '#676c76',
+  // Днес v2 palette, taken from the approved mock-ups (.planning/design/dnes/).
+  lilac: '#b9a6ee',
+  orchid: '#cdb0d6',
+  glyphLilac: '#cfc2f5',
+  glyphLilacHi: '#efe9ff',
+  bronzeLit: '#e8b987',
+  // Horoscope body text steps, dimmest (sky) to brightest (advice).
+  readSoft: '#c3cad8',
+  readMid: '#dbe0ea',
+  readLit: '#f7f3ea',
 } as const
 
 export const space = {

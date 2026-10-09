@@ -28,8 +28,16 @@ import { useDailyHoroscope } from '@/hooks/useDailyHoroscope'
 import { AI_GENERATED_DISCLOSURE_BG } from '@/lib/legal/compliance-copy'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
+import { useFeatureFlag } from '@/hooks/useFeatureFlag'
+import { DnesV2Screen } from '@/components/dnes/DnesV2Screen'
 
 const TAB_BAR_BASE_HEIGHT = 56
+
+/** Днес. The redesign (components/dnes/) is behind EXPO_PUBLIC_FF_DNES_V2, off by default. */
+export default function DnesScreen() {
+  const v2 = useFeatureFlag('dnes_v2')
+  return v2 ? <DnesV2Screen /> : <DnesScreenV1 />
+}
 
 /**
  * Днес — MOBILE-ALPHA-REDESIGN v3, live since Round A cutover (2026-07-22).
@@ -148,7 +156,7 @@ const HOROSCOPE_BODY_STYLE = {
   lineHeight: 31,
 } as const
 
-export default function DnesScreen() {
+function DnesScreenV1() {
   const { push } = useGuardedNavigation()
   const { apiFetch } = useApiClient()
   const { user } = useUser()

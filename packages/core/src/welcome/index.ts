@@ -1,4 +1,4 @@
-export { composeWelcome, meteorNote } from './compose'
+export { composeWelcome, greetingFor, meteorNote } from './compose'
 export type { WelcomeContext, WelcomeLines } from './compose'
 
 export {

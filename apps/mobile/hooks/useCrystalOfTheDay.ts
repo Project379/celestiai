@@ -28,12 +28,14 @@ interface UseCrystalOfTheDayResult {
  * (data, error) simultaneous state to render that correctly (e.g. show the
  * old crystal with a subtle "refresh failed" affordance).
  *
- * Side effect to be aware of: each authenticated read auto-collects the
+ * Side effect to be aware of (unless `collect: false`): each authenticated read auto-collects the
  * crystal into user_daily_crystals via the unique-index idempotent insert
  * pattern documented in @stellaeum/core/crystals/today. First mount of the
  * day creates the row.
  */
-export function useCrystalOfTheDay(): UseCrystalOfTheDayResult {
+export function useCrystalOfTheDay(options: { collect?: boolean } = {}): UseCrystalOfTheDayResult {
+  // Днес v2 passes { collect: false }: showing the crystal is a pure read there.
+  const collect = options.collect !== false
   const { isLoaded, isSignedIn } = useAuth()
   const { apiFetch } = useApiClient()
 
@@ -46,7 +48,7 @@ export function useCrystalOfTheDay(): UseCrystalOfTheDayResult {
     setIsLoading(true)
     setError(null)
     try {
-      const raw = await apiFetch('/api/crystals/today')
+      const raw = await apiFetch(collect ? '/api/crystals/today' : '/api/crystals/today?collect=0')
       const parsed = CrystalOfTheDayResponseSchema.parse(raw)
       setData(parsed)
     } catch (err) {
@@ -55,7 +57,7 @@ export function useCrystalOfTheDay(): UseCrystalOfTheDayResult {
     } finally {
       setIsLoading(false)
     }
-  }, [isLoaded, isSignedIn, apiFetch])
+  }, [isLoaded, isSignedIn, apiFetch, collect])
 
   useEffect(() => {
     refetch()
