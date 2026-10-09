@@ -10,6 +10,7 @@
  * (Petko), reconciled onto the token-injection architecture, same as
  * lib/oracle/prompts.ts. See that file's header comment.
  */
+import { BULGARIAN_QUALITY_RULES } from '@/lib/ai/bulgarian-quality'
 import { buildLegacyDailyHoroscopePrompt } from './prompts-legacy'
 import { dnesV2Server } from './v2'
 
@@ -46,7 +47,7 @@ FORMAT (the reading is shown as three short lines on a phone, one under the othe
 - Each paragraph is 8 to 10 words, between 54 and 62 characters including spaces, so that it fills two full lines on a phone. Count them. A shorter or longer paragraph is rejected and you will be asked again. Most first attempts come out too short: aim for about 58 characters. The [planet:…] markers do NOT count toward the length
 - Paragraph 1, "the sky today": name the day's most important active influence and what it is doing
 - Paragraph 2, "how you will feel it": where this shows up concretely in the person's day, mood, relationships, or work
-- Paragraph 3, "advice for the day": one specific, practical suggestion, ending on a warm note
+- Paragraph 3, "advice for the day": one specific, practical suggestion that says WHAT to do or notice. Never end on a vague tail such as «с много вяра», «с цялата си сила» or «с лекота»; warmth comes from a concrete image or verb, not from an empty intensifier
 - Every paragraph must add a new insight; no filler, no repetition, no generic encouragement, no fragments
 - Short words and simple sentences. Do not stack clauses; split an idea rather than chain it
 
@@ -59,6 +60,8 @@ LANGUAGE:
 - Output must be entirely in Bulgarian using Cyrillic
 - Grammar: the Sun and the Moon take the definite article when they are the subject: write «Слънцето» and «Луната», never bare «Слънце» or «Луна» as a subject («Слънцето докосва…», not «Слънце докосва…»). The other planets keep their plain names: «Марс», «Венера», «Юпитер»
 - Every character must be Cyrillic or standard Bulgarian punctuation — no Latin letters, no other scripts
+
+${BULGARIAN_QUALITY_RULES}
 
 SENTINEL MARKERS:
 - Every time you mention a planet by name, wrap it as [planet:KEY]BulgarianName[/planet]

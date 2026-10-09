@@ -7,6 +7,10 @@
     },
     {
       "path": "/api/cron/sign-month",
+      "schedule": "0 4 24-26 * *"
+    },
+    {
+      "path": "/api/cron/sign-month",
       "schedule": "0 4 1-3 * *"
     },
     {

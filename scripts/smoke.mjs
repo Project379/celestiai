@@ -17,8 +17,9 @@
  *                                                + push_tokens reads, no send
  *   GET /api/cron/cleanup-deleted-accounts?probe=1 — expired-account query,
  *                                                no delete
- *   GET /api/cron/sign-month?probe=1          — sign_month_texts read; reports how many
- *                                                signs lack this month's text, no model call
+ *   GET /api/cron/sign-month?probe=1          — sign_month_texts read; reports phase and the
+ *                                                pending/published/rejected counts, no model
+ *                                                call, no email
  *   (recommendation-catalog cron removed from vercel.json and this probe
  *   list — RECOMMENDATION-CONTENT-LICENSING, .planning/PLACEHOLDERS.md,
  *   the feature is disabled pending licensing. The route itself still
@@ -283,9 +284,13 @@ await checkCron('/api/cron/daily-horoscope', (j) => badTransport(j.web) || badTr
 await checkCron('/api/cron/cleanup-deleted-accounts', (j) =>
   typeof j.eligible === 'number' ? null : 'no eligible count',
 )
-// Skips with a warning (not a failure) while the sign_month_texts table does not exist yet.
+// Skips with a warning (not a failure) while the sign_month_texts table does not exist yet (or lacks
+// the status column). Once migrated: the probe must report its phase and the status counts.
 await checkCron('/api/cron/sign-month', (j) =>
-  j.skipped === true || typeof j.missing === 'number' ? null : 'no missing count',
+  j.skipped === true ||
+  (typeof j.missing === 'number' && typeof j.pending === 'number' && typeof j.published === 'number' && typeof j.phase === 'string')
+    ? null
+    : 'no phase/status counts',
 )
 await checkSmoke()
 

@@ -27,6 +27,8 @@ export const GEMINI_FALLBACK_TIMEOUT_MS = 20_000
 export const SMOKE_AI_TIMEOUT_MS = 15_000
 
 interface GenerateFinalTextOptions {
+  /** Serve this model instead of AI_MODEL (offline comparisons and the monthly editor pass). */
+  model?: string
   fallbackModel?: string
   maxOutputTokens: number
   prompt: string
@@ -190,7 +192,8 @@ function logAiUsage(
  * composed retry shape and worst-case call count.
  */
 export async function generateFinalText(options: GenerateFinalTextOptions) {
-  const { fallbackModel, thinkingLevel, timeoutMs, ...callOptions } = options
+  const { model: modelOverride, fallbackModel, thinkingLevel, timeoutMs, ...callOptions } = options
+  const primaryModel = modelOverride ?? AI_MODEL
   const primaryTimeoutMs = timeoutMs?.primary ?? GEMINI_PRIMARY_TIMEOUT_MS
   const fallbackTimeoutMs = timeoutMs?.fallback ?? GEMINI_FALLBACK_TIMEOUT_MS
 
@@ -245,10 +248,10 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
   // zero errors) never reaches the fallback below, which fires only on
   // transient/upstream errors. Pre-launch fix (not built): ~15s timeout on the
   // primary → fallbackModel → existing 503. See .planning/PLACEHOLDERS.md.
-  let servedModel = AI_MODEL
+  let servedModel = primaryModel
   let result
   try {
-    result = await callModel(AI_MODEL, primaryTimeoutMs)
+    result = await callModel(primaryModel, primaryTimeoutMs)
   } catch (primaryError) {
     if (
       !fallbackModel ||
@@ -266,7 +269,7 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
 
     console.warn('[AI] Primary model unavailable; trying model fallback.', {
       fallbackModel,
-      primaryModel: AI_MODEL,
+      primaryModel,
       statusCode: getAIStatusCode(primaryError),
     })
     servedModel = fallbackModel

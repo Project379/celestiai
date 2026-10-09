@@ -54,7 +54,9 @@ describe('regenerate own horoscope (one-off)', () => {
     const values = buildHoroscopePlaceholderValues(transitPlanets, calculation, transitAspects)
 
     let note = ''
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    // Like the route: a reading valid in every way but a little short is served if every try only failed on length.
+    let shortButValid: { content: string; text: string; model: string } | null = null
+    for (let attempt = 1; attempt <= 5; attempt++) {
       const { model, text } = await generateFinalText({
         system: buildDnesV2Prompt(),
         prompt: promptText + note,
@@ -65,6 +67,8 @@ describe('regenerate own horoscope (one-off)', () => {
       const v = validateReading(text, values, { minWords: 15, maxWords: 45, threeShortParts: true })
       if (!v.ok) {
         console.info(`[attempt ${attempt}] rejected: ${v.code}: ${v.detail}`)
+        console.info(text.split(/\r?\n/).filter(Boolean).join(' / '))
+        shortButValid = v.code === 'PART_TOO_SHORT' && v.content ? { content: v.content, text: v.text ?? '', model } : null
         note = `\n\nYour previous answer was rejected: ${v.detail} Write exactly 3 paragraphs separated by one blank line, each ONE sentence of 8 to 10 words (54 to 62 characters, about 58), with no digits, and Слънцето/Луната with the article when they are the subject.`
         continue
       }
@@ -78,6 +82,18 @@ describe('regenerate own horoscope (one-off)', () => {
       console.info(`[saved] attempt ${attempt}, model ${model}\n${v.text}`)
       return
     }
-    throw new Error('No valid reading after 3 attempts; the old row is untouched')
+    if (shortButValid) {
+      const { error } = await supabase
+        .from('daily_horoscopes')
+        .upsert(
+          { chart_id: chart.id, user_id: userId, date: today, content: shortButValid.content, model_version: shortButValid.model, generated_at: new Date().toISOString() },
+          { onConflict: 'chart_id,date' },
+        )
+      if (error) throw new Error(`save failed: ${error.message}`)
+      console.info(`[saved short-but-valid] model ${shortButValid.model}
+${shortButValid.text}`)
+      return
+    }
+    throw new Error('No valid reading after 5 attempts; the old row is untouched')
   })
 })

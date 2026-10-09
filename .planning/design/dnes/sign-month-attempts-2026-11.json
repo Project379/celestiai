@@ -1,0 +1,629 @@
+{
+  "month": "2026-11",
+  "runs": [
+    {
+      "model": "gemini-3.7-flash",
+      "results": {
+        "aries": {
+          "ok": true,
+          "text": "Новолунието проправя път през тъмнината. Позволи на новото да покълне.",
+          "reason": null,
+          "tries": 1,
+          "ms": 4428
+        },
+        "taurus": {
+          "ok": true,
+          "text": "Новолунието посява тишина в нощта. Усети какво даваш и какво пристъпва към теб.",
+          "reason": null,
+          "tries": 1,
+          "ms": 14017
+        },
+        "gemini": {
+          "ok": true,
+          "text": "Пълнолунието е в твоя знак и озарява лицето ти. Забележи какво искаш да покажеш.",
+          "reason": null,
+          "tries": 4,
+          "ms": 30863
+        },
+        "cancer": {
+          "ok": true,
+          "text": "Новолунието пали топъл огън. Спомни си какво твориш само за своя радост.",
+          "reason": null,
+          "tries": 1,
+          "ms": 5782
+        },
+        "leo": {
+          "ok": true,
+          "text": "Новолунието в корените ти притихва. Вслушай се кое ти дава подслон.",
+          "reason": null,
+          "tries": 1,
+          "ms": 9135
+        },
+        "virgo": {
+          "ok": true,
+          "text": "Пълнолунието озарява върха на пътя ти. Остави излишното зад себе си.",
+          "reason": null,
+          "tries": 1,
+          "ms": 10199
+        },
+        "libra": {
+          "ok": true,
+          "text": "Новолунието кротко събира онова, което цениш. Виж накъде само тръгва твоето внимание.",
+          "reason": null,
+          "tries": 1,
+          "ms": 4289
+        },
+        "scorpio": {
+          "ok": true,
+          "text": "Слънцето в твоя знак огрява дълбините. Посрещни онова, което търси светлина.",
+          "reason": null,
+          "tries": 2,
+          "ms": 20115
+        },
+        "sagittarius": {
+          "ok": false,
+          "text": null,
+          "reason": "EDITOR_REJECTED",
+          "tries": 4,
+          "ms": 29468
+        },
+        "capricorn": {
+          "ok": true,
+          "text": "Новолунието отваря тихо небе за мечтите ти. Довери копнежа си на нощта.",
+          "reason": null,
+          "tries": 1,
+          "ms": 9749
+        },
+        "aquarius": {
+          "ok": true,
+          "text": "Новолунието огрява високото пред теб. Потърси накъде тихомълком гледаш.",
+          "reason": null,
+          "tries": 1,
+          "ms": 4005
+        },
+        "pisces": {
+          "ok": true,
+          "text": "Пълнолунието притихва в твоите корени. Пусни всичко чуждо и си дай покой.",
+          "reason": null,
+          "tries": 1,
+          "ms": 4329
+        }
+      },
+      "attempts": [
+        {
+          "sign": "aries",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Новолунието отваря път през дълбоките промени. Усети какво е готово да се прероди.",
+          "generationVerdict": null,
+          "accepted": "Новолунието проправя път през тъмнината. Позволи на новото да покълне.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Новолунието проправя път през тъмнината. Позволи на новото да покълне.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "taurus",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Новолунието засажда нова тишина в близостта. Усети какво даваш и какво пристъпва към теб.",
+          "generationVerdict": null,
+          "accepted": "Новолунието посява тишина в нощта. Усети какво даваш и какво пристъпва към теб.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Новолунието посява тишина в нощта. Усети какво даваш и какво пристъпва към теб.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "gemini",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Пълнолунието в твоя знак разпръсква светлина. Забележи кое в теб иска да се види ясно.",
+          "generationVerdict": "BANNED_PHRASE: в теб (say «в твоя знак»)",
+          "accepted": null
+        },
+        {
+          "sign": "gemini",
+          "tryNumber": 2,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Пълнолунието е в твоя знак и озарява погледа. Забележи кое свое лице искаш да покажеш.",
+          "generationVerdict": null,
+          "accepted": null,
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "REJECT",
+            "action": "rejected",
+            "verdict": "EDITOR_REJECTED"
+          }
+        },
+        {
+          "sign": "gemini",
+          "tryNumber": 3,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Пълнолунието в твоя знак събужда искра. Вслушай се коя своя черта да осветиш.",
+          "generationVerdict": null,
+          "accepted": null,
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Пълнолунието в твоя знак събужда искра. Виж какво в теб търси светлина.",
+            "action": "rewritten",
+            "verdict": "BANNED_PHRASE: в теб (say «в твоя знак»)"
+          }
+        },
+        {
+          "sign": "gemini",
+          "tryNumber": 4,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Пълнолунието е в твоя знак и озарява лицето ти. Забележи коя своя черта искаш да покажеш.",
+          "generationVerdict": null,
+          "accepted": "Пълнолунието е в твоя знак и озарява лицето ти. Забележи какво искаш да покажеш.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Пълнолунието е в твоя знак и озарява лицето ти. Забележи какво искаш да покажеш.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "cancer",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Новолунието пали топъл огън. Спомни си какво твориш само за своя радост.",
+          "generationVerdict": null,
+          "accepted": "Новолунието пали топъл огън. Спомни си какво твориш само за своя радост.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Новолунието пали топъл огън. Спомни си какво твориш само за своя радост.",
+            "action": "unchanged",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "leo",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Новолунието в корените ти притихва. Вслушай се кое ти дава подслон.",
+          "generationVerdict": null,
+          "accepted": "Новолунието в корените ти притихва. Вслушай се кое ти дава подслон.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Новолунието в корените ти притихва. Вслушай се кое ти дава подслон.",
+            "action": "unchanged",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "virgo",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Пълнолунието озарява върха на пътя ти. Запитай се кое наистина заслужава твоя труд.",
+          "generationVerdict": null,
+          "accepted": "Пълнолунието озарява върха на пътя ти. Остави излишното зад себе си.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Пълнолунието озарява върха на пътя ти. Остави излишното зад себе си.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "libra",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Новолунието кротко събира онова, което цениш. Виж накъде само тръгва твоето внимание.",
+          "generationVerdict": null,
+          "accepted": "Новолунието кротко събира онова, което цениш. Виж накъде само тръгва твоето внимание.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Новолунието кротко събира онова, което цениш. Виж накъде само тръгва твоето внимание.",
+            "action": "unchanged",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "scorpio",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Сезонът ти грее с пълна сила. Открий с какво искаш да те помнят на тази светлина.",
+          "generationVerdict": null,
+          "accepted": null,
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "REJECT",
+            "action": "rejected",
+            "verdict": "EDITOR_REJECTED"
+          }
+        },
+        {
+          "sign": "scorpio",
+          "tryNumber": 2,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Слънцето в твоя знак огрява дълбините. Запитай се какво от теб иска да се види.",
+          "generationVerdict": null,
+          "accepted": "Слънцето в твоя знак огрява дълбините. Посрещни онова, което търси светлина.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Слънцето в твоя знак огрява дълбините. Посрещни онова, което търси светлина.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "sagittarius",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Сезонът ти разпалва нов пламък. Помни коя своя искреност искаш да покажеш на света.",
+          "generationVerdict": null,
+          "accepted": null,
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "REJECT",
+            "action": "rejected",
+            "verdict": "EDITOR_REJECTED"
+          }
+        },
+        {
+          "sign": "sagittarius",
+          "tryNumber": 2,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Сезонът ти носи своя ярък пламък. Открий коя черта искаш да свети по-силно.",
+          "generationVerdict": null,
+          "accepted": null,
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Сезонът запалва своя ярък пламък. Разпознай кое в теб иска да свети по-силно.",
+            "action": "rewritten",
+            "verdict": "BANNED_PHRASE: в теб (say «в твоя знак»)"
+          }
+        },
+        {
+          "sign": "sagittarius",
+          "tryNumber": 3,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Сезонът ти започва с ясен огън. Запитай се какво от своята истина избираш да покажеш.",
+          "generationVerdict": null,
+          "accepted": null,
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "REJECT",
+            "action": "rejected",
+            "verdict": "EDITOR_REJECTED"
+          }
+        },
+        {
+          "sign": "sagittarius",
+          "tryNumber": 4,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Твоят сезон разпалва нов пламък. Открий коя своя черта искаш да покажеш на света.",
+          "generationVerdict": null,
+          "accepted": null,
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "REJECT",
+            "action": "rejected",
+            "verdict": "EDITOR_REJECTED"
+          }
+        },
+        {
+          "sign": "capricorn",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Новолунието отваря тихо небе за мечтите ти. Довери копнежа си на онзи, когото усещаш близък.",
+          "generationVerdict": null,
+          "accepted": "Новолунието отваря тихо небе за мечтите ти. Довери копнежа си на нощта.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Новолунието отваря тихо небе за мечтите ти. Довери копнежа си на нощта.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "aquarius",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Новолунието огрява високото пред теб. Запитай се накъде тихомълком гледаш.",
+          "generationVerdict": null,
+          "accepted": "Новолунието огрява високото пред теб. Потърси накъде тихомълком гледаш.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Новолунието огрява високото пред теб. Потърси накъде тихомълком гледаш.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "pisces",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.7-flash",
+          "generationRaw": "Пълнолунието притихва в твоите корени. Пусни всичко чуждо и си дай покой.",
+          "generationVerdict": null,
+          "accepted": "Пълнолунието притихва в твоите корени. Пусни всичко чуждо и си дай покой.",
+          "editor": {
+            "model": "gemini-3.7-flash",
+            "raw": "Пълнолунието притихва в твоите корени. Пусни всичко чуждо и си дай покой.",
+            "action": "unchanged",
+            "verdict": null
+          }
+        }
+      ]
+    },
+    {
+      "model": "gemini-3.1-pro-preview",
+      "results": {
+        "aries": {
+          "ok": true,
+          "text": "Новолунието тихо отваря нов път. Усети кое вече се преобразява.",
+          "reason": null,
+          "tries": 2,
+          "ms": 37220
+        },
+        "taurus": {
+          "ok": true,
+          "text": "Новолунието озарява близостта ти с другите. Забележи какво даваш и какво приемаш.",
+          "reason": null,
+          "tries": 1,
+          "ms": 19555
+        },
+        "gemini": {
+          "ok": true,
+          "text": "Пълнолунието огрява всяко твое лице. Позволи на най-истинското да излезе на светло.",
+          "reason": null,
+          "tries": 1,
+          "ms": 25403
+        },
+        "cancer": {
+          "ok": true,
+          "text": "Новолунието разпалва радостта и творчеството. Открий какво създаваш само за себе си.",
+          "reason": null,
+          "tries": 1,
+          "ms": 19617
+        },
+        "leo": {
+          "ok": true,
+          "text": "Новолунието притихва дълбоко в корените ти. Вслушай се какво ти носи истинска опора.",
+          "reason": null,
+          "tries": 1,
+          "ms": 22355
+        },
+        "virgo": {
+          "ok": true,
+          "text": "Пълнолунието осветява посоката ти. Виж ясно кое си струва всяка стъпка.",
+          "reason": null,
+          "tries": 1,
+          "ms": 20991
+        },
+        "libra": {
+          "ok": true,
+          "text": "Новолунието се ражда в онова, което цениш. Проследи накъде тихо пътува вниманието ти.",
+          "reason": null,
+          "tries": 1,
+          "ms": 20988
+        },
+        "scorpio": {
+          "ok": true,
+          "text": "Слънцето събира цялата светлина върху теб. Почувствай какво си струва да разкриеш.",
+          "reason": null,
+          "tries": 1,
+          "ms": 20706
+        },
+        "sagittarius": {
+          "ok": true,
+          "text": "Слънцето се завръща при теб. Остави топлината му да разпали нова искра.",
+          "reason": null,
+          "tries": 1,
+          "ms": 24498
+        },
+        "capricorn": {
+          "ok": true,
+          "text": "Новолунието изпълва мечтите със светлина. Приюти една нова надежда в тишината.",
+          "reason": null,
+          "tries": 1,
+          "ms": 38723
+        },
+        "aquarius": {
+          "ok": true,
+          "text": "Новолунието осветява високото, към което вървиш. Улови тихите си копнежи.",
+          "reason": null,
+          "tries": 1,
+          "ms": 13644
+        },
+        "pisces": {
+          "ok": true,
+          "text": "Пълнолунието се спуска в най-дълбоките ти води. Пусни шума навън и си дай време за покой.",
+          "reason": null,
+          "tries": 1,
+          "ms": 22324
+        }
+      },
+      "attempts": [
+        {
+          "sign": "aries",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Новолунието в дълбоките промени разпалва тих огън. Усети кое е готово да се прероди.",
+          "generationVerdict": null,
+          "accepted": null,
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Новолунието разпалва тих огън. Усети кое в теб е готово да се прероди.",
+            "action": "rewritten",
+            "verdict": "BANNED_PHRASE: в теб (say «в твоя знак»)"
+          }
+        },
+        {
+          "sign": "aries",
+          "tryNumber": 2,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Новолунието в дълбоките промени отваря нов път. Усети кое вече се преобразява.",
+          "generationVerdict": null,
+          "accepted": "Новолунието тихо отваря нов път. Усети кое вече се преобразява.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Новолунието тихо отваря нов път. Усети кое вече се преобразява.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "taurus",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Новолунието озарява близостта ти с другите. Забележи какво даваш и какво приемаш.",
+          "generationVerdict": null,
+          "accepted": "Новолунието озарява близостта ти с другите. Забележи какво даваш и какво приемаш.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Новолунието озарява близостта ти с другите. Забележи какво даваш и какво приемаш.",
+            "action": "unchanged",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "gemini",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Пълнолунието в твоя знак те огрява изцяло. Запитай се кое свое лице избираш да покажеш.",
+          "generationVerdict": null,
+          "accepted": "Пълнолунието огрява всяко твое лице. Позволи на най-истинското да излезе на светло.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Пълнолунието огрява всяко твое лице. Позволи на най-истинското да излезе на светло.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "cancer",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Новолунието разпалва радостта и творчеството. Запитай се какво създаваш само за себе си.",
+          "generationVerdict": null,
+          "accepted": "Новолунието разпалва радостта и творчеството. Открий какво създаваш само за себе си.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Новолунието разпалва радостта и творчеството. Открий какво създаваш само за себе си.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "leo",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Новолунието притихва у дома и в корените ти. Вслушай се какво прави едно място твое.",
+          "generationVerdict": null,
+          "accepted": "Новолунието притихва дълбоко в корените ти. Вслушай се какво ти носи истинска опора.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Новолунието притихва дълбоко в корените ти. Вслушай се какво ти носи истинска опора.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "virgo",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Пълнолунието осветява високото, към което вървиш. Запитай се кое си струва усилията.",
+          "generationVerdict": null,
+          "accepted": "Пълнолунието осветява посоката ти. Виж ясно кое си струва всяка стъпка.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Пълнолунието осветява посоката ти. Виж ясно кое си струва всяка стъпка.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "libra",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Новолунието се ражда в онова, което цениш. Проследи накъде тихо пътува вниманието ти.",
+          "generationVerdict": null,
+          "accepted": "Новолунието се ражда в онова, което цениш. Проследи накъде тихо пътува вниманието ти.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Новолунието се ражда в онова, което цениш. Проследи накъде тихо пътува вниманието ти.",
+            "action": "unchanged",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "scorpio",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Сезонът ти събира цялата светлина върху теб. Запитай се какво избираш да разкриеш.",
+          "generationVerdict": null,
+          "accepted": "Слънцето събира цялата светлина върху теб. Почувствай какво си струва да разкриеш.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Слънцето събира цялата светлина върху теб. Почувствай какво си струва да разкриеш.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "sagittarius",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Слънцето се връща в твоя знак. Запитай се коя своя искра искаш да разпалиш.",
+          "generationVerdict": null,
+          "accepted": "Слънцето се завръща при теб. Остави топлината му да разпали нова искра.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Слънцето се завръща при теб. Остави топлината му да разпали нова искра.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "capricorn",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Новолунието в приятелствата и мечтите носи светлина. Сподели една надежда с доверен човек.",
+          "generationVerdict": null,
+          "accepted": "Новолунието изпълва мечтите със светлина. Приюти една нова надежда в тишината.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Новолунието изпълва мечтите със светлина. Приюти една нова надежда в тишината.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "aquarius",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Новолунието осветява високото, към което вървиш. Улови тихите си копнежи.",
+          "generationVerdict": null,
+          "accepted": "Новолунието осветява високото, към което вървиш. Улови тихите си копнежи.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Новолунието осветява високото, към което вървиш. Улови тихите си копнежи.",
+            "action": "unchanged",
+            "verdict": null
+          }
+        },
+        {
+          "sign": "pisces",
+          "tryNumber": 1,
+          "generationModel": "gemini-3.1-pro-preview",
+          "generationRaw": "Пълнолунието се спуска у дома и в корените ти. Пусни шума навън и си дай време за покой.",
+          "generationVerdict": null,
+          "accepted": "Пълнолунието се спуска в най-дълбоките ти води. Пусни шума навън и си дай време за покой.",
+          "editor": {
+            "model": "gemini-3.1-pro-preview",
+            "raw": "Пълнолунието се спуска в най-дълбоките ти води. Пусни шума навън и си дай време за покой.",
+            "action": "rewritten",
+            "verdict": null
+          }
+        }
+      ]
+    }
+  ]
+}

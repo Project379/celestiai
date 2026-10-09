@@ -56,8 +56,9 @@ const CONTENT_HOME_GLOBS = [
   '**/lib/dnes/copy.ts',
   '**/lib/dnes/format.ts',
   // Monthly sign text: the generation prompt, the "we" word list and month names.
-  '**/lib/sign-month/prompt.ts',
-  '**/lib/sign-month/generate.ts',
+  '**/lib/sign-month/*.ts',
+  // Shared Bulgarian writing rules injected into generation prompts.
+  '**/lib/ai/bulgarian-quality.ts',
   '**/horoscope/prompts-legacy.ts',
   '**/diary/prompts.ts',
   '**/CelestialCanvas.tsx',
