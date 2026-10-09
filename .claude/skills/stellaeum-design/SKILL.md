@@ -31,11 +31,13 @@ Materials: near-black glass, etched metal, a bronze rim, small lit stones, fine 
 - Check the **longest real Bulgarian string** for every slot (e.g. «Изгряващ полумесец» 19, «Слънце · Луна · Асцендент» 25, list subtitles ≈ 37) before choosing a layout. **R6.**
 
 **Colour** (tokens only).
-- base `#08060f` the room · surface1/2 tonal elevation, **no borders** · violet = structural ground, never a second accent · **bronze = the Oracle speaking, fittings, and TAPPABLE TEXT; never a container, never a label colour** · cool steel-blue only where the sky is read (Карта, Guide) · starlight for chrome · text/muted/faint (faint ≥ 4.5:1, lowest allowed text colour) · rose for errors only.
+- base `#08060f` the room · surface1/2 tonal elevation, **no borders** · violet = structural ground, never a second accent · **bronze = the Oracle speaking, fittings, and TAPPABLE TEXT ONLY: if it is not tappable it is never bronze (headings, labels, captions, body: never); never a container, never a label colour** · cool steel-blue only where the sky is read (Карта, Guide) · starlight for chrome · text/muted/faint (faint ≥ 4.5:1, lowest allowed text colour) · rose for errors only.
 - **R4:** 1–2 accent roles per screen, one temperature leading. Warm: Днес, Оракул, Ти, Кръг, Кристал, Дневник. Cool: Карта, Guide. Navbar is temperature-neutral (violet hairline, violet point; never bronze).
 - No pure white, no neon, no rainbow, no pastel, no light mode.
 
 **Text actions (founder rule, 2026-10-09, app-wide).** Any tappable *text* that is not a button-with-a-container (e.g. «Повече», «Събери», «Питай Оракула», inline links) is set in `bronzeText` with a **thin bronze line under it that fades out to both ends**, the same family as the line under «Питай Оракула». It keeps a **press glow**: while pressed the word goes `bronzeLit` and a soft halo (SVG radial gradient, not stacked text layers) fades in, then back out quickly on release; reduced motion makes it instant. Never a pill, box or chevron. A disabled/done state (e.g. «Събрано») is `faint`, no line, no glow. On web this becomes a hover style. Reference implementation: `apps/mobile/components/dnes/LitPressable.tsx`. (This widens bronze from "the Oracle speaking" to "the Oracle speaking and the words you can tap"; it is not a label colour.)
+
+**Strict bronze (founder rule, 2026-10-09):** non-tappable text is never bronze. On Днес the heading «Дневен хороскоп» is `text`; the three level labels use the violet family `violetText` → `lilac` → `roseSoft` (violet, lilac, soft rose; `rose` itself stays errors-only). Bronze text on Днес is only «Питай Оракула», «Повече», «Събери» and the active page dot. Decorative light (the horizon line, glows, the ember) is not text and may stay bronze.
 
 **Light replaces boxes.** Emphasis is a glow with a transparent edge. Elevation is tonal, not shadow.
 

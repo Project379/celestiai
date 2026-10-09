@@ -7,9 +7,12 @@ import { TEXT_FIT_ADVANCES, TEXT_FIT_UNITS_PER_EM } from './text-fit-table'
  * glyph with greedy word wrap, no kerning, so it is a slight over-estimate.
  *
  * Numbers (Днес v2, founder spec): content column = screen width - 56px, so
- * 304px on the 360px floor.
+ * 304px on the 360px floor. The horoscope levels inset their text 6px each side
+ * (LEVEL_TEXT_INSET in apps/mobile/lib/dnes/layout.ts), so the measured column is 292.
  */
-export const DNES_FLOOR_COLUMN_PX = 304
+export const DNES_FLOOR_COLUMN_PX = 292
+/** The month page is not inset: its text uses the full content column. */
+export const DNES_MONTH_COLUMN_PX = 304
 /** Keep a margin: platform text layout is not byte-identical to this estimate. */
 export const TEXT_FIT_SAFETY = 0.97
 
@@ -89,7 +92,7 @@ export function fillsHoroscopePart(text: string): boolean {
 }
 
 export function fitsMonthText(text: string): boolean {
-  return countWrappedLines(text, MONTH_TEXT_SIZE_PX, DNES_FLOOR_COLUMN_PX) <= MONTH_TEXT_MAX_LINES
+  return countWrappedLines(text, MONTH_TEXT_SIZE_PX, DNES_MONTH_COLUMN_PX) <= MONTH_TEXT_MAX_LINES
 }
 
 /**

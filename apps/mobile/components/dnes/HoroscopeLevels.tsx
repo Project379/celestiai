@@ -13,15 +13,15 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { color, font } from '@/components/design-system/tokens'
 import { AI_GENERATED_DISCLOSURE_BG } from '@/lib/legal/compliance-copy'
 import { DNES_COPY } from '@/lib/dnes/copy'
-import { DNES_MAX_FONT_SCALE, LEVEL_LABEL_HEIGHT, LEVEL_LINE_HEIGHT, type DnesMetrics } from '@/lib/dnes/layout'
+import { DISCLOSURE_BLEED, DNES_MAX_FONT_SCALE, LEVEL_LABEL_HEIGHT, LEVEL_LINE_HEIGHT, LEVEL_TEXT_INSET, type DnesMetrics } from '@/lib/dnes/layout'
 import type { HoroscopeParts } from '@/lib/dnes/format'
 
 export type LevelsState = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; parts: HoroscopeParts }
 
 const LEVELS = [
-  { key: 'sky', label: DNES_COPY.levelSky, labelColor: color.lilac, bodyColor: color.readSoft, body: font.body },
-  { key: 'feel', label: DNES_COPY.levelFeel, labelColor: color.orchid, bodyColor: color.readMid, body: font.body },
-  { key: 'advice', label: DNES_COPY.levelAdvice, labelColor: color.bronzeText, bodyColor: color.readLit, body: font.bodyMedium },
+  { key: 'sky', label: DNES_COPY.levelSky, labelColor: color.violetText, bodyColor: color.readSoft, body: font.body },
+  { key: 'feel', label: DNES_COPY.levelFeel, labelColor: color.lilac, bodyColor: color.readMid, body: font.body },
+  { key: 'advice', label: DNES_COPY.levelAdvice, labelColor: color.roseSoft, bodyColor: color.readLit, body: font.bodyMedium },
 ] as const
 
 const FADE_H = 34
@@ -84,7 +84,7 @@ export const HoroscopeLevels = memo(function HoroscopeLevels({ state, m }: { sta
     <View style={{ flex: 1, alignItems: 'center' }}>
       <Text
         maxFontSizeMultiplier={DNES_MAX_FONT_SCALE}
-        style={{ marginTop: m.headingMargin, ...text(15, 21, color.bronzeText, font.display) }}
+        style={{ marginTop: m.headingMargin, ...text(15, 21, color.text, font.display) }}
       >
         {DNES_COPY.horoscopeHeading}
       </Text>
@@ -125,7 +125,7 @@ export const HoroscopeLevels = memo(function HoroscopeLevels({ state, m }: { sta
                   </Text>
                   <Text
                     maxFontSizeMultiplier={DNES_MAX_FONT_SCALE}
-                    style={{ marginTop: 6, ...text(16, LEVEL_LINE_HEIGHT, lv.bodyColor, lv.body) }}
+                    style={{ marginTop: 6, paddingHorizontal: LEVEL_TEXT_INSET, ...text(16, LEVEL_LINE_HEIGHT, lv.bodyColor, lv.body) }}
                   >
                     {state.parts[lv.key]}
                   </Text>
@@ -163,7 +163,8 @@ export const HoroscopeLevels = memo(function HoroscopeLevels({ state, m }: { sta
       {/* EU AI Act Art. 50 disclosure. Quiet but present; never removed, never inside the scroll. */}
       <Text
         maxFontSizeMultiplier={DNES_MAX_FONT_SCALE}
-        style={{ marginTop: 6, ...text(12, 17, color.disclosure), opacity: ready ? 1 : 0 }}
+        // Wider than the column by DISCLOSURE_BLEED each side so the sentence stays on one line at 360.
+        style={{ marginTop: 6, marginHorizontal: -DISCLOSURE_BLEED, ...text(12, 17, color.disclosure), opacity: ready ? 1 : 0 }}
       >
         {AI_GENERATED_DISCLOSURE_BG}
       </Text>

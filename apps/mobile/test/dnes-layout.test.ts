@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { contentBottom, dnesMetrics, oracleTop } from '@/lib/dnes/layout'
+import { contentBottom, DISCLOSURE_BLEED, DISCLOSURE_ONE_LINE_MIN_WIDTH, dnesMetrics, oracleTop } from '@/lib/dnes/layout'
 
 // The two emulators we verify on (Android, gesture nav). Measured on the emulator:
 // top inset 48, bottom inset 24. Screen area below the top inset = full height - 48.
@@ -35,5 +35,19 @@ describe('Днес v2 fit', () => {
   it('three-button navigation (bottom inset 48) at the floor takes the tightest tier, then the levels scroll', () => {
     const { metrics } = dnesMetrics(780 - 48, 48, 304)
     expect(metrics.tier).toBe(3)
+  })
+})
+
+describe('AI disclosure line', () => {
+  it('is one line at both verified widths (it may bleed past the column by DISCLOSURE_BLEED each side)', () => {
+    for (const s of SIZES) {
+      const oneLine = s.w + 2 * DISCLOSURE_BLEED >= 307
+      expect(oneLine).toBe(true)
+      expect(s.w >= DISCLOSURE_ONE_LINE_MIN_WIDTH).toBe(true)
+    }
+  })
+
+  it('still sits at least 8px from the screen edge at 360', () => {
+    expect((360 - 304) / 2 - DISCLOSURE_BLEED).toBeGreaterThanOrEqual(8)
   })
 })

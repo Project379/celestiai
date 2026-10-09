@@ -23,10 +23,15 @@ export const DNES_MAX_FONT_SCALE = 1.2
 export const LEVEL_LINE_HEIGHT = 25
 export const LEVEL_LABEL_HEIGHT = 18
 const HEADING_HEIGHT = 21
-// 12/17. The sentence needs ~307px in Spectral BG (measured on the emulator): one line
-// when the content column is at least DISCLOSURE_ONE_LINE_MIN_WIDTH wide, otherwise two.
+// 12/17. The sentence needs ~307px in Spectral BG (measured on the emulator). The line is allowed
+// to bleed DISCLOSURE_BLEED px past the content column on each side (still 8px+ from the screen
+// edge at 360), so it is one line when column + 2*bleed >= 307, otherwise two.
 const DISCLOSURE_LINE = 17
-export const DISCLOSURE_ONE_LINE_MIN_WIDTH = 312
+export const DISCLOSURE_BLEED = 10
+export const DISCLOSURE_ONE_LINE_MIN_WIDTH = 307 - 2 * DISCLOSURE_BLEED
+/** Horizontal inset of the level text inside the content column (keeps the first line off the edge).
+    packages/core/src/dnes/text-fit.ts measures against column - 2 * this. */
+export const LEVEL_TEXT_INSET = 6
 const MASTHEAD_HEIGHT = 26
 // 19px dot row (7px dot + glow, 12px of hit slop is outside layout) + 2px above
 const DOTS_BLOCK = 21

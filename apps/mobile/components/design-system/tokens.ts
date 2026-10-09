@@ -56,6 +56,11 @@ export const color = {
   glyphLilac: '#cfc2f5',
   glyphLilacHi: '#efe9ff',
   bronzeLit: '#e8b987',
+  // Horoscope level labels (founder rule 2026-10-09: non-tappable text is never bronze).
+  // violetText is a lifted `violet` (7.4:1 on base; the structural violet itself is 4.75:1).
+  // roseSoft is NOT `rose`, which stays errors-only. Both measured on base: 7.4 and 10.2.
+  violetText: '#a78bfa',
+  roseSoft: '#e3a9bc',
   // Horoscope body text steps, dimmest (sky) to brightest (advice).
   readSoft: '#c3cad8',
   readMid: '#dbe0ea',
