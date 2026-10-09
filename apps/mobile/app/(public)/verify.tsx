@@ -107,7 +107,7 @@ export default function VerifyScreen() {
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <ScrollView
           className="flex-1"
