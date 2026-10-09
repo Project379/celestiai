@@ -3,13 +3,8 @@ import type { ZodiacSign } from '@stellaeum/astrology/client'
 
 import { verifyCronSecret } from '@/lib/auth/cron-secret'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import {
-  generateSignMonthText,
-  isYearMonth,
-  SIGN_KEYS,
-  SIGN_MONTH_MODEL,
-  usedMarkers,
-} from '@/lib/sign-month/generate'
+import { isYearMonth, SIGN_KEYS, SIGN_MONTH_MODEL, usedMarkers } from '@/lib/sign-month/generate'
+import { generateWithChain, newModelChain } from '@/lib/sign-month/model-chain'
 import { nextYearMonth, sofiaDayOfMonth, sofiaYearMonth } from '@/lib/sign-month/month'
 import { buildReviewEmail, sendReviewEmail } from '@/lib/sign-month/review-email'
 
@@ -89,6 +84,14 @@ export async function GET(req: Request) {
         'sign_month_texts is missing or outdated: apply supabase/migrations/20261009120000_sign_month_texts.sql by hand (never db push), then supabase migration repair --status applied 20261009120000',
     })
   }
+  if (readError && tableMissing) {
+    // At most ONE Sentry warning per run. Nothing can be written; users see the evergreen texts.
+    Sentry.captureMessage('Monthly sign text: sign_month_texts is missing or outdated (migration not applied); nothing was generated', {
+      level: 'warning',
+      extra: { ym, phase },
+    })
+    return Response.json({ phase, month: ym, skipped: true, warning: 'sign_month_texts migration not applied' })
+  }
   if (readError) {
     Sentry.captureException(readError, { extra: { context: 'GET /api/cron/sign-month: read existing' } })
     return Response.json({ error: 'Internal error' }, { status: 500 })
@@ -143,14 +146,18 @@ export async function GET(req: Request) {
   const usedStarts = rows.filter((r) => r.status !== 'rejected').flatMap((r) => usedMarkers(String(r.content)))
   const generated: string[] = []
   const failed: { sign: string; reason: string }[] = []
+  const unexpected: string[] = []
   let outOfTime = 0
+  // pro first, then the app's flash model; each with the editor pass. A model that throws is
+  // skipped for the rest of the run and reported once below.
+  const chain = newModelChain([SIGN_MONTH_MODEL, undefined])
   for (const sign of missing) {
     if (Date.now() - startedAt > GENERATE_BUDGET_MS) {
       outOfTime += 1
       continue
     }
     try {
-      const r = await generateSignMonthText(sign, ym, usedStarts, { model: SIGN_MONTH_MODEL })
+      const r = await generateWithChain(chain, sign, ym, usedStarts)
       if (!r.ok) {
         failed.push({ sign, reason: r.reason })
         continue
@@ -168,9 +175,24 @@ export async function GET(req: Request) {
         usedStarts.push(...usedMarkers(r.content))
       }
     } catch (err) {
-      Sentry.captureException(err, { extra: { context: 'GET /api/cron/sign-month: generate', sign, ym } })
+      // Not a model outage (those are handled by the chain): reported once after the loop.
+      unexpected.push(`${sign}: ${err instanceof Error ? err.message : 'unknown'}`)
       failed.push({ sign, reason: err instanceof Error ? err.message : 'unknown' })
     }
+  }
+  // One Sentry event for the whole run, however many signs hit the outage.
+  if (chain.outages.length > 0) {
+    Sentry.captureMessage(
+      `Monthly sign text: ${chain.outages.map((o) => o.model).join(' and ')} unavailable this run` +
+        (chain.outages.length < chain.models.length ? ' (fell back to the next model)' : ' (every model down; evergreen shows)'),
+      { level: 'error', extra: { ym, outages: chain.outages } },
+    )
+  }
+  if (unexpected.length > 0) {
+    Sentry.captureMessage('Monthly sign text: unexpected errors while generating', {
+      level: 'error',
+      extra: { ym, unexpected },
+    })
   }
 
   // ---- EMAIL THE FOUNDER ----------------------------------------------------------------------
@@ -239,5 +261,14 @@ export async function GET(req: Request) {
       extra: { ym, failed },
     })
   }
-  return Response.json({ phase, month: ym, generated: generated.length, skipped: have.size, outOfTime, failed, email })
+  return Response.json({
+    phase,
+    month: ym,
+    generated: generated.length,
+    skipped: have.size,
+    outOfTime,
+    failed,
+    email,
+    modelOutages: chain.outages.map((o) => o.model),
+  })
 }

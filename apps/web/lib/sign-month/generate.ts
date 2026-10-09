@@ -15,8 +15,12 @@ import {
   buildSignMonthUserPrompt,
 } from './prompt'
 
-/** Model for the monthly cron. undefined = the app's AI_MODEL. Set from the model comparison. */
-export const SIGN_MONTH_MODEL: string | undefined = undefined
+/**
+ * First model for the monthly cron (founder choice 2026-10-09, from the model comparison). If it is
+ * unavailable the cron falls back to the app's AI_MODEL (flash) with the same editor pass, then to
+ * the evergreen text (lib/sign-month/model-chain.ts).
+ */
+export const SIGN_MONTH_MODEL: string | undefined = 'gemini-3.1-pro-preview'
 
 export const SIGN_KEYS = Object.keys(ZODIAC_SIGNS_BG) as ZodiacSign[]
 
