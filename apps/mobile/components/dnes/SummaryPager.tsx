@@ -10,6 +10,7 @@ import { DNES_COPY } from '@/lib/dnes/copy'
 import { DNES_MAX_FONT_SCALE, type DnesMetrics } from '@/lib/dnes/layout'
 import { hapticSelect } from '@/lib/haptics'
 import { LitPressable } from './LitPressable'
+import { ClearView } from './StarClear'
 import { SignGlyph } from './SignGlyph'
 
 export interface SignsPage {
@@ -313,7 +314,7 @@ export const SummaryPager = memo(function SummaryPager({
 
   return (
     <View style={{ alignItems: 'center' }}>
-      <View style={{ height: m.swipeH, width }}>
+      <ClearView zoneId="pager-band" style={{ height: m.swipeH, width }}>
         <ScrollView
           ref={scroller}
           horizontal
@@ -340,8 +341,8 @@ export const SummaryPager = memo(function SummaryPager({
             </View>
           ))}
         </ScrollView>
-      </View>
-      <View style={{ marginTop: 2, flexDirection: 'row', gap: 3 }}>
+      </ClearView>
+      <ClearView zoneId="pager-dots" style={{ marginTop: 2, flexDirection: 'row', gap: 3 }}>
         {pages.map((p, i) => (
           <Pressable
             key={p.kind}
@@ -354,7 +355,7 @@ export const SummaryPager = memo(function SummaryPager({
             <Dot active={i === index} />
           </Pressable>
         ))}
-      </View>
+      </ClearView>
     </View>
   )
 })

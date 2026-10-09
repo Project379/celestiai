@@ -1,7 +1,6 @@
 import { memo, useEffect, useState } from 'react'
 import {
   ScrollView,
-  Text,
   View,
   type LayoutChangeEvent,
   type NativeScrollEvent,
@@ -13,6 +12,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { color, font } from '@/components/design-system/tokens'
 import { AI_GENERATED_DISCLOSURE_BG } from '@/lib/legal/compliance-copy'
 import { DNES_COPY } from '@/lib/dnes/copy'
+import { ClearText } from './StarClear'
 import { DISCLOSURE_BLEED, DNES_MAX_FONT_SCALE, LEVEL_LABEL_HEIGHT, LEVEL_LINE_HEIGHT, LEVEL_TEXT_INSET, type DnesMetrics } from '@/lib/dnes/layout'
 import type { HoroscopeParts } from '@/lib/dnes/format'
 
@@ -82,12 +82,13 @@ export const HoroscopeLevels = memo(function HoroscopeLevels({ state, m }: { sta
 
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Text
+      <ClearText
+        zoneId="lv-heading"
         maxFontSizeMultiplier={DNES_MAX_FONT_SCALE}
         style={{ marginTop: m.headingMargin, ...text(15, 21, color.text, font.display) }}
       >
         {DNES_COPY.horoscopeHeading}
-      </Text>
+      </ClearText>
 
       <View style={{ flex: 1, alignSelf: 'stretch' }}>
         <ScrollView
@@ -117,26 +118,28 @@ export const HoroscopeLevels = memo(function HoroscopeLevels({ state, m }: { sta
                       <View style={{ height: m.connectorGapAfter }} />
                     </>
                   )}
-                  <Text
+                  <ClearText
+                    zoneId={`lv-label-${lv.key}`}
                     maxFontSizeMultiplier={DNES_MAX_FONT_SCALE}
                     style={text(13, LEVEL_LABEL_HEIGHT, lv.labelColor, font.display)}
                   >
                     {lv.label}
-                  </Text>
-                  <Text
+                  </ClearText>
+                  <ClearText
+                    zoneId={`lv-body-${lv.key}`}
                     maxFontSizeMultiplier={DNES_MAX_FONT_SCALE}
                     style={{ marginTop: 6, paddingHorizontal: LEVEL_TEXT_INSET, ...text(16, LEVEL_LINE_HEIGHT, lv.bodyColor, lv.body) }}
                   >
                     {state.parts[lv.key]}
-                  </Text>
+                  </ClearText>
                 </View>
               ))}
             </Animated.View>
           ) : (
             <View style={{ marginTop: m.firstLevelGap, minHeight: LEVEL_LINE_HEIGHT * 2, justifyContent: 'center' }}>
-              <Text maxFontSizeMultiplier={DNES_MAX_FONT_SCALE} style={text(16, LEVEL_LINE_HEIGHT, color.muted)}>
+              <ClearText zoneId="lv-status" maxFontSizeMultiplier={DNES_MAX_FONT_SCALE} style={text(16, LEVEL_LINE_HEIGHT, color.muted)}>
                 {state.kind === 'loading' ? DNES_COPY.loading : DNES_COPY.unavailable}
-              </Text>
+              </ClearText>
             </View>
           )}
         </ScrollView>
@@ -161,13 +164,14 @@ export const HoroscopeLevels = memo(function HoroscopeLevels({ state, m }: { sta
       </View>
 
       {/* EU AI Act Art. 50 disclosure. Quiet but present; never removed, never inside the scroll. */}
-      <Text
+      <ClearText
+        zoneId="lv-disclosure"
         maxFontSizeMultiplier={DNES_MAX_FONT_SCALE}
         // Wider than the column by DISCLOSURE_BLEED each side so the sentence stays on one line at 360.
         style={{ marginTop: 6, marginHorizontal: -DISCLOSURE_BLEED, ...text(12, 17, color.disclosure), opacity: ready ? 1 : 0 }}
       >
         {AI_GENERATED_DISCLOSURE_BG}
-      </Text>
+      </ClearText>
     </View>
   )
 })

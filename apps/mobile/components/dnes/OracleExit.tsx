@@ -7,6 +7,7 @@ import { hapticInvite } from '@/lib/haptics'
 import { ORACLE_MIN_HEIGHT } from '@/lib/dnes/layout'
 import { DNES_COPY } from '@/lib/dnes/copy'
 import { GlowText } from './GlowText'
+import { ClearView } from './StarClear'
 
 // «Питай Оракула»: the screen's one lit exit. Words centred over a line; no box,
 // no fill, no pill. The halo is two stacked text shadows (see GlowText); the line
@@ -29,6 +30,8 @@ export function OracleExit({ onPress, bottom }: { onPress: () => void; bottom: n
       style={{ position: 'absolute', left: 0, right: 0, bottom, alignItems: 'center' }}
       pointerEvents="box-none"
     >
+      {/* The exit's whole tappable box is kept clear of stars. */}
+      <ClearView zoneId="oracle-exit" pointerEvents="box-none">
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={DNES_COPY.askOracle}
@@ -99,6 +102,7 @@ export function OracleExit({ onPress, bottom }: { onPress: () => void; bottom: n
           </Svg>
         )}
       </Pressable>
+      </ClearView>
     </View>
   )
 }

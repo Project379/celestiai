@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
-import { Text, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useFocusEffect } from 'expo-router'
+import { View, useWindowDimensions, type LayoutChangeEvent } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useUser } from '@clerk/expo'
 import type { ZodiacSign } from '@stellaeum/astrology/client'
@@ -39,6 +40,8 @@ import {
   TAB_BAR_BASE_HEIGHT,
   topStackHeight,
 } from '@/lib/dnes/layout'
+import { setClearZones, setClearZonesEnabled } from '@/lib/starClear'
+import { ClearText } from './StarClear'
 import { HoroscopeLevels, type LevelsState } from './HoroscopeLevels'
 import { HorizonLine } from './HorizonLine'
 import { OracleExit } from './OracleExit'
@@ -160,6 +163,22 @@ export function DnesV2Screen() {
   const { metrics: m } = dnesMetrics(screenH, insets.bottom, contentW)
   // The band under the horoscope slot: the Oracle exit and its gap above the nav, plus the nav.
   const navH = TAB_BAR_BASE_HEIGHT + insets.bottom
+  // Starfield: keep 14px clear of every word and tappable element (lib/starClear.ts). Zones count
+  // only while Днес is on show. The status bar and the tab bar are text too, so they are zones.
+  useFocusEffect(
+    useCallback(() => {
+      setClearZonesEnabled(true)
+      return () => setClearZonesEnabled(false)
+    }, []),
+  )
+  useEffect(() => {
+    setClearZones('system-bars', [
+      // measureInWindow counts from just below the status bar, so the status bar is above y = 0.
+      { x: 0, y: -insets.top, w: winW, h: insets.top },
+      { x: 0, y: winH - navH, w: winW, h: navH },
+    ])
+    return () => setClearZones('system-bars', null)
+  }, [winW, winH, insets.top, navH])
   const oracleBottom = navH + ORACLE_GAP_ABOVE_NAV
   const reserved = oracleBottom + ORACLE_MIN_HEIGHT
   // Measured height of everything above the horoscope slot (it can differ a little from the
@@ -201,18 +220,20 @@ export function DnesV2Screen() {
         <View onLayout={(e: LayoutChangeEvent) => setTopH(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
         {/* Masthead: greeting left, date right, one baseline */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Text
+          <ClearText
+            zoneId="masthead-greeting"
             maxFontSizeMultiplier={DNES_MAX_FONT_SCALE}
             style={{ fontFamily: font.bodyMedium, fontSize: 20, lineHeight: 26, color: color.text, flexShrink: 1 }}
           >
             {greeting}
-          </Text>
-          <Text
+          </ClearText>
+          <ClearText
+            zoneId="masthead-date"
             maxFontSizeMultiplier={DNES_MAX_FONT_SCALE}
             style={{ fontFamily: font.body, fontSize: 13, lineHeight: 18, color: color.muted, marginLeft: 8 }}
           >
             {dateText}
-          </Text>
+          </ClearText>
         </View>
 
         {chart === null ? (

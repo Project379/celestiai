@@ -1,8 +1,9 @@
-import { useEffect, useMemo } from 'react'
-import { StyleSheet, useWindowDimensions } from 'react-native'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated'
 
+import { starIsClear, useClearZones } from '@/lib/starClear'
 import { color } from './tokens'
 
 // Proof surface for the starfield-port pass — borrows the RECIPE from web's
@@ -36,6 +37,9 @@ import { color } from './tokens'
 // this generalizes for free.
 
 const STAR_COUNT = 48
+// A screen that reports clear zones (lib/starClear.ts) draws the first STAR_COUNT candidates that
+// keep clear of them, so there are more candidates than stars.
+const CANDIDATE_COUNT = STAR_COUNT * 6
 const GROUP_COUNT = 4
 const TWINKLE_MS = 2600
 
@@ -61,7 +65,7 @@ function centerFadeFactor(nx: number, ny: number): number {
 function useStarfield(width: number, height: number): Star[] {
   return useMemo(() => {
     const stars: Star[] = []
-    for (let i = 0; i < STAR_COUNT; i++) {
+    for (let i = 0; i < CANDIDATE_COUNT; i++) {
       const nx = Math.random()
       const ny = Math.random()
       const fade = centerFadeFactor(nx, ny)
@@ -70,7 +74,7 @@ function useStarfield(width: number, height: number): Star[] {
         y: ny * height,
         r: 0.6 + Math.random() * 1.3,
         opacity: (0.25 + Math.random() * 0.55) * fade,
-        group: i % GROUP_COUNT,
+        group: 0,
       })
     }
     return stars
@@ -108,7 +112,20 @@ function TwinkleGroup({ stars, phaseMs, width, height }: { stars: Star[]; phaseM
 
 export function AmbientBackground() {
   const { width, height } = useWindowDimensions()
-  const stars = useStarfield(width, height)
+  const candidates = useStarfield(width, height)
+  const zones = useClearZones()
+  const layer = useRef<View>(null)
+  // Zones are in window coordinates; the stars are in this layer's. Measure the offset.
+  const [origin, setOrigin] = useState({ x: 0, y: 0 })
+  const stars = useMemo(() => {
+    const local = zones.map((z) => ({ ...z, x: z.x - origin.x, y: z.y - origin.y }))
+    const kept: Star[] = []
+    for (const c of candidates) {
+      if (kept.length >= STAR_COUNT) break
+      if (local.length === 0 || starIsClear(c.x, c.y, c.r, local)) kept.push({ ...c, group: kept.length % GROUP_COUNT })
+    }
+    return kept
+  }, [candidates, zones, origin])
   const groups = useMemo(
     () => Array.from({ length: GROUP_COUNT }, (_, g) => stars.filter((s) => s.group === g)),
     [stars],
@@ -116,6 +133,13 @@ export function AmbientBackground() {
 
   return (
     <>
+      <View
+        ref={layer}
+        collapsable={false}
+        pointerEvents="none"
+        style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1 }}
+        onLayout={() => layer.current?.measureInWindow((x, y) => setOrigin((o) => (o.x === x && o.y === y ? o : { x, y })))}
+      />
       <Svg
         width={width}
         height={height}
