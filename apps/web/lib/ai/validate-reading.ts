@@ -21,6 +21,7 @@
  * On any failure the caller regenerates once, then shows a user-visible
  * error rather than displaying broken output.
  */
+import { fitsHoroscopePart } from '@stellaeum/core/dnes/text-fit'
 import {
   findPlaceholderTokens,
   PlaceholderSubstitutionError,
@@ -38,6 +39,9 @@ export type ReadingValidationFailure = {
     | 'PLACEHOLDER_SURVIVED'
     | 'NON_BULGARIAN_SCRIPT'
     | 'WORD_COUNT_OUT_OF_RANGE'
+    | 'PARTS_NOT_THREE'
+    | 'PART_TOO_LONG'
+    | 'DIGITS_IN_TEXT'
   detail: string
 }
 export type ReadingValidationResult =
@@ -55,6 +59,12 @@ export interface ValidateReadingOptions {
   /** Inclusive word-count bounds for the final (substituted) text. */
   minWords: number
   maxWords: number
+  /**
+   * Daily horoscope (Днес v2): the text must be exactly three paragraphs and each must
+   * fit two lines of 16px on the 360px floor (packages/core/src/dnes/text-fit.ts), so
+   * the phone never has to cut a line.
+   */
+  threeShortParts?: boolean
 }
 
 /**
@@ -221,6 +231,32 @@ export function validateReading(
       ok: false,
       code: 'WORD_COUNT_OUT_OF_RANGE',
       detail: `${wordCount} words; expected ${opts.minWords}-${opts.maxWords}.`,
+    }
+  }
+
+  if (opts.threeShortParts) {
+    // Днес v2 bans numbers: a token that expanded to a figure, or a digit the model wrote.
+    if (/\d/.test(text)) {
+      return { ok: false, code: 'DIGITS_IN_TEXT', detail: 'The reading contains a digit; the v2 prompt bans numbers.' }
+    }
+    const parts = text
+      .split(/\n\s*\n/)
+      .map((p) => p.replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+    if (parts.length !== 3) {
+      return {
+        ok: false,
+        code: 'PARTS_NOT_THREE',
+        detail: `${parts.length} paragraph(s); expected exactly 3 separated by a blank line.`,
+      }
+    }
+    const tooLong = parts.findIndex((p) => !fitsHoroscopePart(p))
+    if (tooLong !== -1) {
+      return {
+        ok: false,
+        code: 'PART_TOO_LONG',
+        detail: `Paragraph ${tooLong + 1} (${parts[tooLong]!.length} characters) does not fit two lines on a 360px screen.`,
+      }
     }
   }
 

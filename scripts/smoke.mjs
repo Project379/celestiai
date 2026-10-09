@@ -17,6 +17,8 @@
  *                                                + push_tokens reads, no send
  *   GET /api/cron/cleanup-deleted-accounts?probe=1 — expired-account query,
  *                                                no delete
+ *   GET /api/cron/sign-month?probe=1          — sign_month_texts read; reports how many
+ *                                                signs lack this month's text, no model call
  *   (recommendation-catalog cron removed from vercel.json and this probe
  *   list — RECOMMENDATION-CONTENT-LICENSING, .planning/PLACEHOLDERS.md,
  *   the feature is disabled pending licensing. The route itself still
@@ -228,6 +230,7 @@ async function checkCron(path, assert) {
     }
     const problem = assert(json)
     if (problem) return record(path, false, problem)
+    if (typeof json.warning === 'string') console.warn(`[smoke] WARNING ${path}: ${json.warning}`)
     return record(path, true, JSON.stringify(stripProbe(json)))
   } catch (err) {
     return record(path, false, String(err))
@@ -279,6 +282,10 @@ await checkCSP()
 await checkCron('/api/cron/daily-horoscope', (j) => badTransport(j.web) || badTransport(j.mobile))
 await checkCron('/api/cron/cleanup-deleted-accounts', (j) =>
   typeof j.eligible === 'number' ? null : 'no eligible count',
+)
+// Skips with a warning (not a failure) while the sign_month_texts table does not exist yet.
+await checkCron('/api/cron/sign-month', (j) =>
+  j.skipped === true || typeof j.missing === 'number' ? null : 'no missing count',
 )
 await checkSmoke()
 

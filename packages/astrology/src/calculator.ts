@@ -225,3 +225,19 @@ export function calculateNatalChart(input: ChartInput): ChartData {
     birthTimeKnown: input.birthTimeKnown,
   }
 }
+
+/**
+ * Does the Moon change zodiac sign during this calendar day at the birth place?
+ * (Local midnight to 23:59.) With an unknown birth time this is exactly the case where
+ * the Moon sign cannot be told, so the app labels it as approximate. The Moon moves
+ * about 13 degrees a day, so this is true for roughly 4 birthdays in 9.
+ */
+export function moonChangesSignDuringDay(date: Date, lat: number, lon: number): boolean {
+  const moonSignAt = (localTime: string) => {
+    const { utcHours, dayOffset } = localTimeToUTC(date, localTime, lat, lon)
+    const jd = getJulianDayUTC(date, utcHours, dayOffset)
+    const flags = sweph.constants.SEFLG_MOSEPH | sweph.constants.SEFLG_SPEED
+    return getZodiacSign(sweph.calc_ut(jd, PLANET_IDS.moon, flags).data[0])
+  }
+  return moonSignAt('00:00') !== moonSignAt('23:59')
+}

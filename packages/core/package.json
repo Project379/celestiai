@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./moon-phase": "./src/lib/moon-phase.ts",
+    "./dnes/text-fit": "./src/dnes/text-fit.ts",
     "./welcome": "./src/welcome/index.ts",
     "./crystals/today": "./src/crystals/today.ts",
     "./crystals/schemas": "./src/crystals/schemas.ts",

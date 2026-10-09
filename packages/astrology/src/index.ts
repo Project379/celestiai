@@ -55,7 +55,7 @@ export {
 export type { AspectDefinition } from './constants'
 
 // Calculator (will be added in Task 2)
-export { calculateNatalChart } from './calculator'
+export { calculateNatalChart, moonChangesSignDuringDay } from './calculator'
 
 // Transit calculation
 export type { TransitData, TransitAspect } from './transit'

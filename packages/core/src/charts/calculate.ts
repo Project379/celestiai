@@ -1,4 +1,4 @@
-import { calculateNatalChart } from '@stellaeum/astrology'
+import { calculateNatalChart, moonChangesSignDuringDay } from '@stellaeum/astrology'
 import type { ChartData } from '@stellaeum/astrology'
 import { createCoreSupabaseClient } from '../lib/supabase'
 
@@ -60,6 +60,7 @@ export async function calculateChartForUser(
         mc: cached.mc as ChartData['mc'],
         birthTimeKnown: cached.birth_time_known,
       }
+      withMoonUncertainty(cachedChart, chart)
       return { ok: true, data: cachedChart, cached: true }
     }
 
@@ -89,6 +90,7 @@ export async function calculateChartForUser(
         console.error('[core/charts/calculate] cache write failed:', insertError)
       }
 
+      withMoonUncertainty(chartData, chart)
       return { ok: true, data: chartData, cached: false }
     } catch (calcErr) {
       console.error('[core/charts/calculate] calculation error:', calcErr)
@@ -97,5 +99,21 @@ export async function calculateChartForUser(
   } catch (err) {
     console.error('[core/charts/calculate] unhandled error:', err)
     return { ok: false, error: 'INTERNAL' }
+  }
+}
+
+/**
+ * Adds `moonSignUncertain` (computed on every response, never stored, so it also covers
+ * charts calculated before the field existed). Only when the birth time is unknown.
+ */
+function withMoonUncertainty(
+  data: ChartData,
+  chart: { birth_date: string; latitude: number; longitude: number },
+): void {
+  if (data.birthTimeKnown) return
+  try {
+    data.moonSignUncertain = moonChangesSignDuringDay(new Date(chart.birth_date), chart.latitude, chart.longitude)
+  } catch (err) {
+    console.error('[core/charts/calculate] moon uncertainty check failed:', err)
   }
 }

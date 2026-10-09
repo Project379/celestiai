@@ -9,6 +9,7 @@ import { checkAndLogGeneration } from '@/lib/ai/check-bg-output'
 import { validateReading, type ReadingValidationResult } from '@/lib/ai/validate-reading'
 import { logAuditEvent } from '@/lib/audit'
 import { buildDailyHoroscopePrompt } from '@/lib/horoscope/prompts'
+import { dnesV2Server, isNewFormatHoroscope } from '@/lib/horoscope/v2'
 import { MAX_STALE_REGENS_PER_DAY } from '@/lib/horoscope/regen-cap'
 import { buildTransitOverview } from '@/lib/horoscope/transit-analysis'
 import {
@@ -170,13 +171,34 @@ export async function POST(req: Request) {
       return Response.json({ content: null, unavailable: true, reason: 'regen_cap' }, { status: 200 })
     }
 
-    if (cachedHoroscope) {
+    // Днес v2 upgrade (FF_DNES_V2_SERVER on only): the app asks `?upgrade=1` when today's row
+    // is in the old long format. We replace THAT row once with a 3-part reading. It does not
+    // count against anything: this route has no quota (see TIER above), and the one-per-day
+    // claim below is skipped because the row already exists. The old row is never deleted:
+    // if generation fails the old content is returned unchanged.
+    const v2 = dnesV2Server()
+    const upgrading =
+      v2 &&
+      url.searchParams.get('upgrade') === '1' &&
+      requestedDate === today &&
+      !!cachedHoroscope &&
+      cachedHoroscope.content !== '' &&
+      !isNewFormatHoroscope(cachedHoroscope.content)
+
+    if (cachedHoroscope && !upgrading) {
       return Response.json({
         content: cachedHoroscope.content,
         cached: true,
         generatedAt: cachedHoroscope.generated_at,
       })
     }
+    /** Upgrade fallback: hand back the old row as-is. */
+    const keepOldRow = () =>
+      Response.json({
+        content: cachedHoroscope!.content,
+        cached: true,
+        generatedAt: cachedHoroscope!.generated_at,
+      })
 
     if (requestedDate !== today) {
       return Response.json({ content: null, unavailable: true }, { status: 200 })
@@ -315,7 +337,9 @@ export async function POST(req: Request) {
     // NOTE (2026-09-01): this INSERT claim is ALSO the effective per-day
     // ceiling now that the monthly quota is gone — one row per (chart_id,
     // date), so one paid generation per chart per day. Do not remove it.
-    const { error: claimError } = await supabase.from('daily_horoscopes').insert({
+    const { error: claimError } = upgrading
+      ? { error: null }
+      : await supabase.from('daily_horoscopes').insert({
       chart_id: chartId,
       user_id: userId,
       date: requestedDate,
@@ -365,18 +389,20 @@ export async function POST(req: Request) {
 
     // Generate + validate before display. See the RETRY SHAPE comment on
     // oracle/generate/route.ts's maxDuration export for the composed retry
-    // axes (identical here). Word-count band (30-160) is unaffected by the
-    // FORMAT change — this surface's bounds were already loose and
-    // script-purity/placeholder-integrity are the load-bearing checks.
+    // axes (identical here). Днес v2: exactly three paragraphs, each short
+    // enough for two lines on a 360px screen (validateReading threeShortParts),
+    // so the phone never has to cut a line. Word band 15-45 follows from that.
     let finalContent: string | null = null
     let finalPlainText = ''
     let servedModel: string = AI_MODEL
     let lastValidation: ReadingValidationResult | null = null
+    // Second attempt only: tell the model what was wrong with the first (length, mostly).
+    let retryNote = ''
     try {
       for (let attempt = 1; attempt <= 2 && finalContent === null; attempt++) {
         const { model, text } = await generateFinalText({
           system: systemPrompt,
-          prompt: promptText,
+          prompt: promptText + retryNote,
           maxOutputTokens: 3000,
           fallbackModel: ORACLE_FALLBACK_MODEL,
           thinkingLevel: GEMINI_THINKING_LEVEL.horoscope,
@@ -385,11 +411,25 @@ export async function POST(req: Request) {
         // `text` is already sanitizeFinalAIOutput()-cleaned by
         // generateFinalText — validateReading sees the reasoning-leakage-
         // stripped text, per the ordering this reconciliation requires.
-        const validation = validateReading(text, placeholderValues, {
-          minWords: 30,
-          maxWords: 160,
-        })
+        const validation = validateReading(
+          text,
+          placeholderValues,
+          v2 ? { minWords: 15, maxWords: 45, threeShortParts: true } : { minWords: 30, maxWords: 160 },
+        )
         lastValidation = validation
+        if (
+          v2 &&
+          !validation.ok &&
+          (validation.code === 'PART_TOO_LONG' ||
+            validation.code === 'PARTS_NOT_THREE' ||
+            validation.code === 'DIGITS_IN_TEXT' ||
+            validation.code === 'MODEL_WROTE_DIGITS')
+        ) {
+          retryNote =
+            '\n\nYour previous answer was rejected: ' +
+            validation.detail +
+            ' Write exactly 3 paragraphs separated by one blank line, each ONE short sentence of at most 50 characters, with no digits.'
+        }
         if (validation.ok) {
           finalContent = validation.content
           finalPlainText = validation.text
@@ -403,6 +443,7 @@ export async function POST(req: Request) {
         }
       }
     } catch (err) {
+      if (upgrading) return keepOldRow()
       await releaseClaimOnFailure()
       // LLM-FAILOVER (Option B — graceful degradation, 2026-09-09): see
       // oracle/generate/route.ts for the full rationale. Any post-fallback
@@ -424,6 +465,7 @@ export async function POST(req: Request) {
     }
 
     if (finalContent === null) {
+      if (upgrading) return keepOldRow()
       await releaseClaimOnFailure()
       const failCode =
         lastValidation && !lastValidation.ok ? lastValidation.code : 'UNKNOWN'
@@ -451,6 +493,7 @@ export async function POST(req: Request) {
       .eq('id', chartId)
       .single()
     if (!chartNow || chartNow.birth_data_edited_at !== chart.birth_data_edited_at) {
+      if (upgrading) return keepOldRow()
       await releaseClaimOnFailure()
       return toErrorResponse(
         new ApiError(409, RETRY_LATER_MESSAGE, 'CHART_EDITED_DURING_GENERATION'),
@@ -460,16 +503,24 @@ export async function POST(req: Request) {
 
     // .upsert() returns { error }, it does not throw — check it explicitly
     // so a silent cache-write failure is visible.
-    const { error: saveError } = await supabase.from('daily_horoscopes').upsert(
-      {
-        chart_id: chartId,
-        user_id: userId,
-        date: requestedDate,
-        content: finalContent,
-        model_version: servedModel,
-      },
-      { onConflict: 'chart_id,date' },
-    )
+    const { error: saveError } = upgrading
+      ? // Replace the old row only if it is still the one we read (a concurrent upgrade wins).
+        await supabase
+          .from('daily_horoscopes')
+          .update({ content: finalContent, model_version: servedModel, generated_at: new Date().toISOString() })
+          .eq('chart_id', chartId)
+          .eq('date', requestedDate)
+          .eq('content', cachedHoroscope!.content)
+      : await supabase.from('daily_horoscopes').upsert(
+          {
+            chart_id: chartId,
+            user_id: userId,
+            date: requestedDate,
+            content: finalContent,
+            model_version: servedModel,
+          },
+          { onConflict: 'chart_id,date' },
+        )
     if (saveError) {
       console.error('[Horoscope Generate] Failed to save horoscope:', {
         chartId,

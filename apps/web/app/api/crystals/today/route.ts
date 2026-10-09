@@ -32,7 +32,10 @@ export async function GET(request: Request) {
       windowMs: 60_000,
     })
 
-    const data = await getCrystalOfTheDay(userId)
+    // `?collect=0` is a pure read (Днес v2). Without it the legacy auto-collect stays,
+    // so the web dashboard and Кристали keep counting streaks until they are migrated.
+    const collect = new URL(request.url).searchParams.get('collect') !== '0'
+    const data = await getCrystalOfTheDay(userId, { collect })
     return Response.json(data)
   } catch (error) {
     if (error instanceof ApiError) {

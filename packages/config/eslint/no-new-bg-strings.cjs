@@ -52,6 +52,13 @@ const CONTENT_HOME_GLOBS = [
   '**/welcome/compose.ts',
   '**/welcome/meteor-showers.ts',
   '**/welcome/sign-quips.ts',
+  // Днес v2: all its Bulgarian lives in copy.ts; format.ts holds weekday/month names.
+  '**/lib/dnes/copy.ts',
+  '**/lib/dnes/format.ts',
+  // Monthly sign text: the generation prompt, the "we" word list and month names.
+  '**/lib/sign-month/prompt.ts',
+  '**/lib/sign-month/generate.ts',
+  '**/horoscope/prompts-legacy.ts',
   '**/diary/prompts.ts',
   '**/CelestialCanvas.tsx',
   '**/astrology/src/constants.ts',

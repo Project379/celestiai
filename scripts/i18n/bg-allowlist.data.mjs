@@ -342,4 +342,26 @@ export const BG_ALLOWLIST = [
   "ДДС",
   "КЗП",
 
+  // Днес v2 (2026-10-09): abbreviated month names for the masthead date
+  // («сряда, 7 окт.»). The dictionary has the full words, not the abbreviations.
+  // Founder approved the date format in the step-1 strings table.
+  "ян",
+  "февр",
+  "апр",
+  "авг",
+  "септ",
+  "окт",
+  "ноем",
+  "дек",
+  "прибл",
+
+  // Monthly sign text validator (apps/web/lib/sign-month/generate.ts): word STEMS used to check that a
+  // generated note names the sky event, and jargon stems it must not contain. Not user-facing text.
+  "слънц",
+  "новолун",
+  "пълнолун",
+  "новин",
+  "оппозиц",
+  "конюнкц",
+
 ]

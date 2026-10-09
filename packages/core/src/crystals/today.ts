@@ -20,6 +20,14 @@ export interface GetCrystalOfTheDayOptions {
    * opts in.
    */
   includeHistory?: boolean
+  /**
+   * Whether a signed-in read also collects today's crystal (default true, the legacy
+   * behaviour: web dashboard, Кристали, streak history). Днес v2 passes false: showing
+   * the crystal there is a PURE READ, and collecting happens only on a «Събери» tap
+   * (POST /api/crystals/daily/collect). With false, `collectedToday` reports whether
+   * a row for today already exists.
+   */
+  collect?: boolean
 }
 
 /**
@@ -53,6 +61,7 @@ export async function getCrystalOfTheDay(
   options: GetCrystalOfTheDayOptions = {},
 ): Promise<CrystalOfTheDayResponse> {
   const includeHistory = options.includeHistory === true
+  const collect = options.collect !== false
   const supabase = createCoreSupabaseClient()
   const catalog = await fetchCatalog(supabase)
 
@@ -86,21 +95,23 @@ export async function getCrystalOfTheDay(
   }
 
   if (userId) {
-    // Auto-collect on read. The unique index on (user_id, date) makes this
-    // a no-op if already collected. Error code 23505 (unique_violation) is
-    // swallowed — that IS the success case for a second read on the same day.
-    const { error: insertError } = await supabase
-      .from('user_daily_crystals')
-      .insert({
-        user_id: userId,
-        crystal_id: pick.id,
-        date: today,
-      })
+    if (collect) {
+      // Legacy auto-collect on read. The unique index on (user_id, date) makes this
+      // a no-op if already collected. Error code 23505 (unique_violation) is
+      // swallowed — that IS the success case for a second read on the same day.
+      const { error: insertError } = await supabase
+        .from('user_daily_crystals')
+        .insert({
+          user_id: userId,
+          crystal_id: pick.id,
+          date: today,
+        })
 
-    if (insertError && insertError.code !== '23505') {
-      console.warn('[core/crystals/today] auto-collect failed', insertError)
+      if (insertError && insertError.code !== '23505') {
+        console.warn('[core/crystals/today] auto-collect failed', insertError)
+      }
+      collectedToday = true
     }
-    collectedToday = true
 
     const sixtyDaysAgo = daysBefore(today, 60)
 
@@ -144,6 +155,7 @@ export async function getCrystalOfTheDay(
         days.map((d) => d.date),
         today,
       )
+      if (!collect) collectedToday = days.some((d) => d.date === today)
     } else {
       // Lean fetch for non-history callers (dashboard, /api/crystals/today).
       const { data: rows } = await supabase
@@ -154,6 +166,7 @@ export async function getCrystalOfTheDay(
 
       const dates = (rows ?? []).map((r) => r.date as string)
       streak = computeStreak(dates, today)
+      if (!collect) collectedToday = dates.includes(today)
     }
   }
 
@@ -187,9 +200,9 @@ export async function getCrystalOfTheDay(
   }
 }
 
+/** Today's calendar date in Europe/Sofia (YYYY-MM-DD): the app's day, not the UTC day. */
 function todayIsoDate(): string {
-  const now = new Date()
-  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Sofia' }).format(new Date())
 }
 
 function daysBefore(iso: string, n: number): string {

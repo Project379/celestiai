@@ -24,43 +24,38 @@ export type CollectDailyCrystalResult =
  * `user_daily_crystals` — the second call on the same day returns
  * `alreadyCollected: true`.
  *
- * Pick-unification fix (M3): the pre-extraction route handler picked
- * the daily stone via `catalog.filter(...lunarPhase).slice(0,1)`,
- * while the read path (`getCrystalOfTheDay`) picks via deterministic
- * `sort-by-slug + daysSinceEpochUTC % matches.length`. On a day with
- * multiple matches the POST could collect a different stone than the
- * GET had just displayed. We now delegate pick selection to
- * `getCrystalOfTheDay` so the read and the manual write agree. The
- * auto-collect side effect inside `getCrystalOfTheDay` also happens
- * to insert the row for free — this function only needs to detect
- * whether it was a fresh insert or a no-op.
+ * Pick-unification (M3): the pick comes from `getCrystalOfTheDay` (deterministic
+ * sort-by-slug + days-since-epoch), so the read and the manual write agree.
+ * Днес v2 split (2026-10-09): reading never collects any more for Днес; this is
+ * the only write on that path.
  */
 export async function collectDailyCrystal(
   userId: string,
 ): Promise<CollectDailyCrystalResult> {
   try {
-    // Snapshot whether today's row already existed BEFORE calling
-    // getCrystalOfTheDay (which will insert it if missing).
     const supabase = createCoreSupabaseClient()
-    const today = todayIsoDate()
 
-    const { data: existingRows } = await supabase
+    // Pure read: today's pick, no side effect. The pick is the same one every
+    // surface shows (M3 pick-unification), so a tap collects what the user saw.
+    const data = await getCrystalOfTheDay(userId, { collect: false })
+    const today = data.today
+
+    // Collecting is this function's own write. The unique (user_id, date) index makes
+    // it idempotent: a second tap the same day hits 23505 and reports alreadyCollected.
+    const { error } = await supabase
       .from('user_daily_crystals')
-      .select('crystal_id')
-      .eq('user_id', userId)
-      .eq('date', today)
-      .limit(1)
+      .insert({ user_id: userId, crystal_id: data.crystal.id, date: today })
 
-    const alreadyCollected = (existingRows?.length ?? 0) > 0
-
-    // Delegate to the canonical picker + auto-collect path.
-    const data = await getCrystalOfTheDay(userId)
+    if (error && error.code !== '23505') {
+      console.error('[core/crystals/daily-collect] insert failed:', error)
+      return { ok: false, error: 'INTERNAL' }
+    }
 
     return {
       ok: true,
       data: {
         crystal: data.crystal,
-        alreadyCollected,
+        alreadyCollected: error?.code === '23505',
       },
     }
   } catch (err) {
@@ -69,7 +64,3 @@ export async function collectDailyCrystal(
   }
 }
 
-function todayIsoDate(): string {
-  const now = new Date()
-  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
-}

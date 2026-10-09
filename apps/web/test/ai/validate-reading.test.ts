@@ -84,3 +84,41 @@ describe('validateReading', () => {
     expect(r.ok).toBe(true)
   })
 })
+
+describe('validateReading: three short parts (Днес v2)', () => {
+  const opts = { minWords: 15, maxWords: 45, threeShortParts: true }
+  const SEP = '\n\n'
+  const GOOD = [
+    '[planet:mercury]Меркурий[/planet] подкрепя твоето Слънце и носи общуване.',
+    'Юпитер подкрепя Луната ти: разговорите днес са по-топли.',
+    'Говори открито и не отлагай важния разговор.',
+  ].join(SEP)
+  const VALS = { ...VALUES }
+
+  it('accepts three short paragraphs', () => {
+    const r = validateReading(GOOD, VALS, opts)
+    expect(r.ok).toBe(true)
+  })
+
+  it('rejects a digit, including one that a token expands to (the v2 prompt bans numbers)', () => {
+    const withToken = [GOOD.split(SEP)[0] + ' [taspect:mercury-sun]', 'Добре.', 'Говори.'].join(SEP)
+    const r = validateReading(withToken, { ...VALUES, 'taspect:mercury-sun': 'тригон (орб 1.2°)' }, { ...opts, minWords: 3 })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.code).toBe('DIGITS_IN_TEXT')
+  })
+
+  it('rejects anything but three paragraphs', () => {
+    const two = ['Юпитер подкрепя Луната ти.', 'Говори открито днес, без страх и без бързане.'].join(SEP)
+    const r = validateReading(two, VALUES, { ...opts, minWords: 5 })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.code).toBe('PARTS_NOT_THREE')
+  })
+
+  it('rejects a paragraph too long for two lines on a 360px screen', () => {
+    const long =
+      'Днес транзитното Слънце оформя силен секстил, който събужда у теб скрита решителност и дълбока увереност във всичко.'
+    const r = validateReading([GOOD.split(SEP)[0], long, 'Говори открито.'].join(SEP), VALS, opts)
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.code).toBe('PART_TOO_LONG')
+  })
+})

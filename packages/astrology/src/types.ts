@@ -85,6 +85,11 @@ export interface ChartData {
   mc: PointData
   /** Whether birth time was known (affects house/ascendant accuracy) */
   birthTimeKnown: boolean
+  /**
+   * Birth time unknown AND the Moon changes sign during the birth day, so the Moon sign
+   * shown is an estimate. Set by the chart API on every response; absent on older clients.
+   */
+  moonSignUncertain?: boolean
 }
 
 /**
