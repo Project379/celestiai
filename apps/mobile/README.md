@@ -36,3 +36,22 @@ you do:
    prebuild generated nothing and failed. Use local prebuild to
    *instrument* a failure (grep the generated tree, confirm what
    references what), not to *validate* a fix before an EAS build.
+
+## Expo CLI telemetry is off
+
+`EXPO_NO_TELEMETRY=1` is set in `eas.json` for every build profile and listed
+in `.env.example`. For local `expo` commands, copy that line into your own
+`apps/mobile/.env` (gitignored), or run `npx expo telemetry --disable` once per
+machine. We don't send anything to Segment via Expo's CLI.
+
+## Android manifest permissions
+
+`plugins/withStripLegacyStoragePermissions.js` removes `READ_/WRITE_EXTERNAL_STORAGE`
+(declared by `expo-file-system`; we never use shared storage). After any local
+prebuild, check the merged manifest under
+`android/app/build/intermediates/merged_manifests/<variant>/` still lacks them.
+
+## Autolinking exclusions
+
+`expo.autolinking.exclude` in `package.json` drops the Solana wallet adapter that
+Clerk pulls in transitively (Clerk Web3 sign-in is off). See the comment there.

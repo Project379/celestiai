@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "main": "expo-router/entry",
+  "expo": {
+    "autolinking": {
+      "//": "Excluded from native autolinking: Clerk (@clerk/clerk-js) pulls in the Solana wallet adapter only for its Web3 sign-in, which is off in the Clerk dashboard and unused by our code. Its Android codegen path (262 chars under the pnpm store) exceeds Windows MAX_PATH and breaks local Android builds. Decision 2026-10-09 (dependency audit). Re-check if Clerk Web3 / Solana sign-in is ever enabled.",
+      "exclude": [
+        "@solana-mobile/mobile-wallet-adapter-protocol"
+      ]
+    }
+  },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",

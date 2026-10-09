@@ -8,6 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
+        "EXPO_NO_TELEMETRY": "1",
         "EXPO_PUBLIC_APP_VARIANT": "development"
       },
       "ios": {
@@ -17,6 +18,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
+        "EXPO_NO_TELEMETRY": "1",
         "EXPO_PUBLIC_APP_VARIANT": "preview"
       },
       "android": {
@@ -29,6 +31,7 @@
     "production": {
       "autoIncrement": true,
       "env": {
+        "EXPO_NO_TELEMETRY": "1",
         "EXPO_PUBLIC_APP_VARIANT": "production"
       }
     }
