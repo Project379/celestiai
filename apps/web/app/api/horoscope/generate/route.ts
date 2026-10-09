@@ -399,7 +399,8 @@ export async function POST(req: Request) {
     // Second attempt only: tell the model what was wrong with the first (length, mostly).
     let retryNote = ''
     try {
-      for (let attempt = 1; attempt <= 2 && finalContent === null; attempt++) {
+      // v2 gets a third attempt: the 3-part length window is narrow and models undershoot it.
+      for (let attempt = 1; attempt <= (v2 ? 3 : 2) && finalContent === null; attempt++) {
         const { model, text } = await generateFinalText({
           system: systemPrompt,
           prompt: promptText + retryNote,
@@ -423,12 +424,14 @@ export async function POST(req: Request) {
           (validation.code === 'PART_TOO_LONG' ||
             validation.code === 'PARTS_NOT_THREE' ||
             validation.code === 'DIGITS_IN_TEXT' ||
+            validation.code === 'PART_TOO_SHORT' ||
+            validation.code === 'LUMINARY_WITHOUT_ARTICLE' ||
             validation.code === 'MODEL_WROTE_DIGITS')
         ) {
           retryNote =
             '\n\nYour previous answer was rejected: ' +
             validation.detail +
-            ' Write exactly 3 paragraphs separated by one blank line, each ONE short sentence of at most 50 characters, with no digits.'
+            ' Write exactly 3 paragraphs separated by one blank line, each ONE sentence of 8 to 10 words (54 to 62 characters, about 58), with no digits, and Слънцето/Луната with the article when they are the subject.'
         }
         if (validation.ok) {
           finalContent = validation.content
@@ -462,6 +465,25 @@ export async function POST(req: Request) {
         })
       }
       return aiTemporarilyUnavailableResponse()
+    }
+
+    // A reading that is valid in every way but a little SHORT is cosmetic (it simply fits), unlike a
+    // too-long or malformed one. If every attempt only failed on length, serve the last one rather
+    // than make the user wait for nothing. Observed: models undershoot the narrow length window.
+    if (
+      finalContent === null &&
+      v2 &&
+      lastValidation &&
+      !lastValidation.ok &&
+      lastValidation.code === 'PART_TOO_SHORT' &&
+      lastValidation.content
+    ) {
+      console.warn('[Horoscope Generate] serving a reading that is valid but short after all attempts', {
+        chartId,
+        detail: lastValidation.detail,
+      })
+      finalContent = lastValidation.content
+      finalPlainText = lastValidation.text ?? ''
     }
 
     if (finalContent === null) {

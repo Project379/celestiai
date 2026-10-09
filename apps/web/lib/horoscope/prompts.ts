@@ -43,15 +43,21 @@ PLAIN LANGUAGE, NO NUMBERS (critical - follow exactly):
 
 FORMAT (the reading is shown as three short lines on a phone, one under the other):
 - Write exactly 3 paragraphs separated by one blank line, each ONE sentence, nothing else: no headings, no labels, no bullets, no numbering
-- Each paragraph is at most 60 characters including spaces. Count them. A longer paragraph is rejected and you will be asked again, so keep every one short and plain
+- Each paragraph is 8 to 10 words, between 54 and 62 characters including spaces, so that it fills two full lines on a phone. Count them. A shorter or longer paragraph is rejected and you will be asked again. Most first attempts come out too short: aim for about 58 characters. The [planet:…] markers do NOT count toward the length
 - Paragraph 1, "the sky today": name the day's most important active influence and what it is doing
 - Paragraph 2, "how you will feel it": where this shows up concretely in the person's day, mood, relationships, or work
 - Paragraph 3, "advice for the day": one specific, practical suggestion, ending on a warm note
 - Every paragraph must add a new insight; no filler, no repetition, no generic encouragement, no fragments
 - Short words and simple sentences. Do not stack clauses; split an idea rather than chain it
 
+SIZE EXAMPLES (these show the LENGTH only, about 56 to 61 characters each; do not copy the words):
+- Юпитер подкрепя Луната ти и разговорите стават по-топли.
+- Слънцето събужда твоя Марс и ти дава сили за действие днес.
+- Усещаш прилив на сили и увереност във всичко, което започваш.
+
 LANGUAGE:
 - Output must be entirely in Bulgarian using Cyrillic
+- Grammar: the Sun and the Moon take the definite article when they are the subject: write «Слънцето» and «Луната», never bare «Слънце» or «Луна» as a subject («Слънцето докосва…», not «Слънце докосва…»). The other planets keep their plain names: «Марс», «Венера», «Юпитер»
 - Every character must be Cyrillic or standard Bulgarian punctuation — no Latin letters, no other scripts
 
 SENTINEL MARKERS:

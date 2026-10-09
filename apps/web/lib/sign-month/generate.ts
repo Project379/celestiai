@@ -25,20 +25,25 @@ export function isYearMonth(v: string): boolean {
   return /^\d{4}-(0[1-9]|1[0-2])$/.test(v)
 }
 
-/** Whole-sign houses: house 1 is the reader's own sign. Plain themes and concrete ideas. */
-const HOUSE: { area: string; ideas: string[] }[] = [
-  { area: 'yourself and a fresh start', ideas: ['change one habit that shows', 'say what you want for yourself out loud', 'update how you present yourself'] },
-  { area: 'money and what you value', ideas: ['review your spending for one week', 'ask for what your work is worth', 'sell or give away something unused'] },
-  { area: 'talking, learning and short trips', ideas: ['write the message you keep postponing', 'start a short course or book', 'visit a nearby place you have never seen'] },
-  { area: 'home and family', ideas: ['call a relative you have not spoken to', 'fix one thing at home that annoys you', 'cook a meal for your family'] },
-  { area: 'joy, creativity and romance', ideas: ['make something with your hands', 'plan a real date or a play evening', 'share a small creative piece with someone'] },
-  { area: 'daily work and health routines', ideas: ['fix your sleep time', 'sort the one task you keep dodging', 'book the check-up you have delayed'] },
-  { area: 'partners and close one-to-one bonds', ideas: ['tell a close person what you expect', 'ask a partner what they need', 'settle one old disagreement'] },
-  { area: 'shared money, trust and deep change', ideas: ['talk about a shared debt or bill', 'let go of one thing you cling to', 'ask for help with something heavy'] },
-  { area: 'beliefs, study and far horizons', ideas: ['plan a trip, even a small one', 'read something that disagrees with you', 'sign up for a class'] },
-  { area: 'career and public life', ideas: ['show your boss one finished result', 'update your CV or portfolio', 'say yes to one visible task'] },
-  { area: 'friends, groups and long-term hopes', ideas: ['message a friend you miss', 'join a group around a hope of yours', 'write down one goal for next year'] },
-  { area: 'rest, solitude and endings', ideas: ['spend one evening alone without a screen', 'finish and close one old thing', 'walk alone somewhere quiet'] },
+/**
+ * Whole-sign houses: house 1 is the reader's own sign. For each area: its plain name, how to say
+ * it in Bulgarian after "новолунието/пълнолунието", and a few REFLECTIVE invitations that fit
+ * anyone of any sign. They never assume the reader's circumstances (no debts, partners, jobs,
+ * relatives): an invitation to notice or choose, not a chore.
+ */
+const HOUSE: { area: string; areaBg: string; invites: string[] }[] = [
+  { area: 'yourself', areaBg: 'в твоя знак', invites: ['notice what you want to be known for', 'choose one quality you want to show more', 'give your attention to how you begin your days'] },
+  { area: 'personal finances and values', areaBg: 'в личните финанси и ценностите', invites: ['notice what you truly value', 'ask yourself what is enough', 'notice where your energy actually goes'] },
+  { area: 'communication and learning', areaBg: 'в общуването и ученето', invites: ['say one honest thing out loud', 'listen to someone without hurrying', 'notice the words you use about yourself'] },
+  { area: 'home and family', areaBg: 'у дома и в семейството', invites: ['notice what makes a place feel like home', 'make room for rest in your space', 'think about what you carry from where you come from'] },
+  { area: 'joy and creativity', areaBg: 'в радостта и творчеството', invites: ['let yourself enjoy something without a reason', 'follow what makes you playful', 'notice what you make just for yourself'] },
+  { area: 'daily rhythm and health', areaBg: 'в ежедневието и здравето', invites: ['notice what your body asks for', 'choose one small habit that serves you', 'look at what your days are made of'] },
+  { area: 'close bonds', areaBg: 'във връзките', invites: ['notice what you give and what you receive', 'ask what closeness means to you', 'make space for someone to be heard'] },
+  { area: 'shared finances and deep change', areaBg: 'в общите финанси и дълбоките промени', invites: ['notice what you hold on to and what you could let go', 'allow yourself to need others', 'look at what is ready to change'] },
+  { area: 'horizons and beliefs', areaBg: 'в далечните хоризонти и убежденията', invites: ['stay curious about something new', 'ask yourself what you believe and why', 'let a bigger question in'] },
+  { area: 'life goals and recognition', areaBg: 'в житейските цели и признанието', invites: ['notice what you want to be remembered for', 'choose what deserves your effort', 'see which work feels like yours'] },
+  { area: 'friendships and hopes', areaBg: 'в приятелствата и мечтите', invites: ['notice who lifts you', 'name a hope without judging it', 'share a wish with someone you trust'] },
+  { area: 'quiet and endings', areaBg: 'в тишината и завършванията', invites: ['allow yourself a quiet moment', 'notice what is quietly ending', 'rest without having to earn it'] },
 ]
 
 function houseOf(reader: ZodiacSign, target: string): number {
@@ -111,7 +116,7 @@ export async function buildSkyFacts(
         ownDays === daysInMonth
           ? "the sun is in the reader's own sign all month, their personal high season"
           : "the sun is in the reader's own sign for part of the month, their personal high season",
-      say: 'твоят сезон, слънцето е в твоя знак',
+      say: 'сезонът ти започва (или е в разгара си), вниманието е към теб',
       stems: ['сезон', 'слънц'],
       house: 1,
       score: 10,
@@ -124,8 +129,8 @@ export async function buildSkyFacts(
     const a = elong(rows[i]!)
     const b = elong(rows[i + 1]!)
     const h = houseOf(sign, rows[i + 1]!.moon.sign)
-    if (a > 300 && b < 60) events.push({ plain: 'a new moon, a fresh start', say: 'новолуние', stems: ['новолун', 'нова луна', 'млада луна'], house: h, score: 5 + angular(h) })
-    if (a < 180 && b >= 180) events.push({ plain: 'a full moon, when something comes to a head', say: 'пълнолуние', stems: ['пълнолун', 'пълна луна'], house: h, score: 4 + angular(h) })
+    if (a > 300 && b < 60) events.push({ plain: 'a new moon, a fresh start', say: h === 1 ? 'новолунието е в твоя знак' : `новолунието ${HOUSE[h - 1]!.areaBg}`, stems: ['новолун', 'нова луна', 'млада луна'], house: h, score: 5 + angular(h) })
+    if (a < 180 && b >= 180) events.push({ plain: 'a full moon, when something comes to a head', say: h === 1 ? 'пълнолунието е в твоя знак' : `пълнолунието ${HOUSE[h - 1]!.areaBg}`, stems: ['пълнолун', 'пълна луна'], house: h, score: 4 + angular(h) })
   }
 
   // Mercury seems to run backwards: messages and plans get tangled (said plainly, no jargon).
@@ -143,16 +148,16 @@ export async function buildSkyFacts(
   const main: SkyEvent = events[0] ?? { plain: 'a quiet month in the sky', say: 'тих месец', stems: [], house: 1, score: 0 }
   const h = HOUSE[main.house - 1]!
 
-  // One idea per sign, chosen by the sign's place in the zodiac, so neighbours differ.
-  const idea = h.ideas[(SIGN_KEYS.indexOf(sign) + month) % h.ideas.length]!
+  // One reflective invitation per sign, chosen by the sign's place in the zodiac, so neighbours differ.
+  const idea = h.invites[(SIGN_KEYS.indexOf(sign) + month) % h.invites.length]!
 
   return {
     stems: main.stems,
     text: [
       `Main sky event for this sign this month: ${main.plain}. Say it in plain Bulgarian as: ${main.say}.`,
-      `It touches this area of the reader's life: ${h.area}.`,
-      `This sign's character: ${SIGN_TRAIT[sign]}. Let the suggestion fit it.`,
-      `Base the suggestion on this idea (reword it in your own plain words and make it fit this sign): ${idea}.`,
+      `The area of life it touches: ${h.area}.`,
+      `This sign's character: ${SIGN_TRAIT[sign]}. Let the tone fit it.`,
+      `Sentence 2 is a gentle invitation that fits ANYONE of this sign, based on this (reword it in your own plain words): ${idea}.`,
     ].join('\n'),
   }
 }
@@ -171,9 +176,23 @@ const JARGON = ['ретроград', 'транзит', 'аспект', 'три�
 const GO_WORDS = ['започни', 'начало', 'твори', 'тръгни', 'действай', 'ускори', 'напред']
 const REST_WORDS = ['почивай', 'почивка', 'отпочини', 'спри', 'забави', 'пауза', 'покой']
 const BAD_STARTS = ['време', 'подреди']
+const STOCK_PHRASE = 'ново начало'
+// Adjectives that agree with the reader and so reveal gender (свободен/свободна). Not exhaustive:
+// the prompt is the main guard; this catches the common ones.
+const GENDERED = ['свободен', 'свободна', 'готов', 'готова', 'сам', 'сама', 'спокоен', 'спокойна', 'щастлив', 'щастлива', 'силен', 'силна', 'уверен', 'уверена', 'смел', 'смела', 'добър', 'добра']
+/** What to remember from a finished note so later signs vary: its opening verb and any stock phrase. */
+export const usedMarkers = (text: string): string[] => [
+  ...startWords(text).slice(1),
+  ...(text.toLowerCase().includes(STOCK_PHRASE) ? [STOCK_PHRASE] : []),
+]
+// Words that assume the reader's circumstances (debt, a partner, a job, relatives, a house that
+// needs fixing...). The note must fit anyone of the sign, so none of these may appear.
+const ASSUMES = ['дълг', 'сметк', 'рисунк', 'резюме', 'роднин', 'счупен', 'шеф', 'партньор', 'проект', 'работодат', 'дете', 'деца', 'съпру', 'гадже', 'брак', 'пари ', 'бюджет']
+// Chores, not invitations: the note invites, it does not assign tasks.
+const CHORES = ['плати', 'обнови', 'поправи', 'продай', 'изпрати', 'позвъни', 'почисти', 'запиши', 'предай', 'смени', 'поискай', 'сготви']
 
 export const firstWord = (text: string) => text.toLowerCase().match(/[\p{L}]+/u)?.[0] ?? ''
-/** First word of each sentence: the verbs/openers that must differ across signs. */
+/** First word of each sentence. Index 1 is the opening verb of the invitation. */
 export const startWords = (text: string): string[] =>
   text
     .split(/(?<=[.!?])\s+/)
@@ -195,15 +214,25 @@ export function rejectReason(
   const v = validateReading(cleaned, {}, { minWords: 6, maxWords: 16 })
   if (!v.ok) return `${v.code}: ${v.detail}`
   if (sentenceCount(cleaned) !== 2) return 'NOT_TWO_SENTENCES'
-  if (!fitsMonthText(cleaned)) return 'TOO_LONG: does not fit two lines on a 360px screen'
+  if (!fitsMonthText(cleaned)) return 'TOO_LONG: does not fit three lines on a 360px screen'
   if (usesWe(cleaned)) return 'FIRST_PERSON_PLURAL'
   const lower = cleaned.toLowerCase()
   if (lower.includes('с лекота')) return 'BANNED_PHRASE: с лекота'
+  if (lower.split(/[^\p{L}]+/u).some((w) => GENDERED.includes(w))) return 'GENDERED_FORM'
+  if (lower.includes('в теб')) return 'BANNED_PHRASE: в теб (say «в твоя знак»)'
+  const assumed = ASSUMES.find((w) => lower.includes(w))
+  if (assumed) return `ASSUMES_CIRCUMSTANCES: ${assumed}`
+  const chore = CHORES.find((w) => startWords(cleaned).slice(1).includes(w))
+  if (chore) return `CHORE_NOT_INVITATION: ${chore}`
   if (BAD_STARTS.includes(firstWord(cleaned))) return `BANNED_START: ${firstWord(cleaned)}`
   const starts = startWords(cleaned)
   const used = usedStarts.map((w) => w.toLowerCase())
-  const clash = starts.find((w, i) => used.includes(w) || starts.indexOf(w) !== i)
-  if (clash) return `START_ALREADY_USED: ${clash}`
+  // Only the VERB that opens sentence 2 must differ from the other signs' (sentence 1 naturally
+  // opens with the event: Новолунието, Пълнолунието, Сезонът).
+  const verb = starts[1]
+  if (verb && used.includes(verb)) return `VERB_ALREADY_USED: ${verb}`
+  // The stock phrase «ново начало» may appear in at most one note per month.
+  if (lower.includes(STOCK_PHRASE) && used.includes(STOCK_PHRASE)) return `PHRASE_ALREADY_USED: ${STOCK_PHRASE}`
   if (stems.length > 0 && !stems.some((st) => (cleaned.split(/(?<=[.!?])\s+/)[0] ?? '').toLowerCase().includes(st))) {
     return 'FIRST_SENTENCE_DOES_NOT_NAME_THE_SKY_EVENT'
   }
@@ -215,7 +244,7 @@ export function rejectReason(
 
 /**
  * One sign, up to 4 tries. Each rejection tells the model what was wrong.
- * `usedStarts` = the first word of each sentence of the notes already written for the other signs this month.
+ * `usedStarts` = the opening verb of sentence 2 of the notes already written for the other signs this month.
  */
 export async function generateSignMonthText(
   sign: ZodiacSign,
@@ -240,7 +269,7 @@ export async function generateSignMonthText(
     const why = rejectReason(cleaned, sign, usedStarts, facts.stems)
     if (why === null) return { ok: true, content: cleaned, model, attempts: attempt }
     reason = why
-    note = `\n\nYour previous answer was rejected (${why}). Fix exactly that. Write exactly two plain sentences, at most 55 characters in total.`
+    note = `\n\nYour previous answer was rejected (${why}). Fix exactly that. Write exactly two sentences, at most 95 characters in total.`
   }
   return { ok: false, reason, attempts: 4 }
 }

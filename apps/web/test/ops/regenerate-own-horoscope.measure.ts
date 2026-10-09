@@ -65,7 +65,7 @@ describe('regenerate own horoscope (one-off)', () => {
       const v = validateReading(text, values, { minWords: 15, maxWords: 45, threeShortParts: true })
       if (!v.ok) {
         console.info(`[attempt ${attempt}] rejected: ${v.code}: ${v.detail}`)
-        note = `\n\nYour previous answer was rejected: ${v.detail} Write exactly 3 paragraphs separated by one blank line, each ONE short sentence of at most 50 characters, with no digits.`
+        note = `\n\nYour previous answer was rejected: ${v.detail} Write exactly 3 paragraphs separated by one blank line, each ONE sentence of 8 to 10 words (54 to 62 characters, about 58), with no digits, and Слънцето/Луната with the article when they are the subject.`
         continue
       }
       const { error } = await supabase

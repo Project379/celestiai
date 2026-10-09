@@ -16,7 +16,9 @@ export const TEXT_FIT_SAFETY = 0.97
 export const HOROSCOPE_PART_SIZE_PX = 16
 export const HOROSCOPE_PART_MAX_LINES = 2
 export const MONTH_TEXT_SIZE_PX = 15
-export const MONTH_TEXT_MAX_LINES = 2
+// Three lines: the founder's tone examples are two sentences of about 100 characters. The month
+// page drops its glyph when the swipe band is short, so three lines always fit (see SummaryPager).
+export const MONTH_TEXT_MAX_LINES = 3
 
 function advance(ch: string, sizePx: number): number {
   const units = TEXT_FIT_ADVANCES[ch.codePointAt(0) ?? 0]
@@ -44,8 +46,46 @@ export function countWrappedLines(text: string, sizePx: number, columnPx: number
   return lines
 }
 
+/**
+ * How full is the text, in lines: 1.0 = one full line, 1.5 = a full line and a half, 2.0 = two
+ * full lines. Same measure as countWrappedLines, so lines = ceil(fill) except for a short last line.
+ */
+export function wrappedFill(text: string, sizePx: number, columnPx: number): number {
+  const limit = columnPx * TEXT_FIT_SAFETY
+  const space = advance(' ', sizePx)
+  let lines = 1
+  let cur = 0
+  for (const word of text.trim().split(/\s+/)) {
+    if (!word) continue
+    let w = 0
+    for (const ch of word) w += advance(ch, sizePx)
+    if (cur === 0) cur = w
+    else if (cur + space + w <= limit) cur += space + w
+    else {
+      lines += 1
+      cur = w
+    }
+  }
+  return lines - 1 + cur / limit
+}
+
+/**
+ * Minimum fill for a Днес horoscope part: the parts should read as two FULL lines, not a line
+ * and a bit. Measured with the font table on the 360px floor: about 50 to 66 characters. (1.65 was tried first;
+ * the model could not hit it reliably, 1.55 still reads as two lines, not a line and a bit.)
+ */
+export const HOROSCOPE_PART_MIN_FILL = 1.55
+
 export function fitsHoroscopePart(text: string): boolean {
   return countWrappedLines(text, HOROSCOPE_PART_SIZE_PX, DNES_FLOOR_COLUMN_PX) <= HOROSCOPE_PART_MAX_LINES
+}
+
+/** A generated part that fits two lines AND fills them (see HOROSCOPE_PART_MIN_FILL). */
+export function fillsHoroscopePart(text: string): boolean {
+  return (
+    fitsHoroscopePart(text) &&
+    wrappedFill(text, HOROSCOPE_PART_SIZE_PX, DNES_FLOOR_COLUMN_PX) >= HOROSCOPE_PART_MIN_FILL
+  )
 }
 
 export function fitsMonthText(text: string): boolean {

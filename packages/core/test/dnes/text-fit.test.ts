@@ -14,7 +14,7 @@ describe('text-fit (two lines on the 360px floor)', () => {
     expect(countWrappedLines(long, 16, 304)).toBeGreaterThan(3)
   })
 
-  it('the monthly sample from the approved mock fits two lines at 15px', () => {
+  it('the monthly sample from the approved mock fits at 15px', () => {
     expect(fitsMonthText('Сезонът ти е в разгара си. Месецът е за решения, които отлагаш от лятото.')).toBe(true)
   })
 

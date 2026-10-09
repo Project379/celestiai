@@ -14,7 +14,7 @@ import { writeFileSync } from 'node:fs'
 import { describe, it } from 'vitest'
 
 import { ZODIAC_SIGNS_BG } from '@stellaeum/astrology/client'
-import { buildSkyFacts, generateSignMonthText, startWords, monthNameBg, SIGN_KEYS } from '@/lib/sign-month/generate'
+import { buildSkyFacts, generateSignMonthText, usedMarkers, monthNameBg, SIGN_KEYS } from '@/lib/sign-month/generate'
 import { sofiaYearMonth } from '@/lib/sign-month/month'
 
 function nextMonth(ym: string): string {
@@ -31,7 +31,7 @@ describe('monthly sign text sample', () => {
     for (const sign of SIGN_KEYS) {
       const facts = await buildSkyFacts(ym, sign)
       const r = await generateSignMonthText(sign, ym, usedStarts)
-      if (r.ok) usedStarts.push(...startWords(r.content))
+      if (r.ok) usedStarts.push(...usedMarkers(r.content))
       const text = r.ok ? r.content : `FAILED (${r.reason})`
       const chars = r.ok ? r.content.length : 0
       rows.push(`| ${ZODIAC_SIGNS_BG[sign]} · ${monthNameBg(ym)} | ${text} | ${chars} | ${r.attempts} | ${facts.text.split('\n').join(' ')} |`)

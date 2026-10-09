@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/nextjs'
 
 import { verifyCronSecret } from '@/lib/auth/cron-secret'
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
-import { generateSignMonthText, isYearMonth, SIGN_KEYS, startWords } from '@/lib/sign-month/generate'
+import { generateSignMonthText, isYearMonth, SIGN_KEYS, usedMarkers } from '@/lib/sign-month/generate'
 import { sofiaYearMonth } from '@/lib/sign-month/month'
 
 export const dynamic = 'force-dynamic'
@@ -62,7 +62,7 @@ export async function GET(req: Request) {
   if (probe) return Response.json({ probe: true, month: ym, existing: have.size, missing: missing.length })
 
   // No two signs start with the same word this month: carry the used first words forward.
-  const usedStarts = (existing ?? []).flatMap((r) => startWords(String(r.content)))
+  const usedStarts = (existing ?? []).flatMap((r) => usedMarkers(String(r.content)))
   const generated: string[] = []
   const failed: { sign: string; reason: string }[] = []
   for (const sign of missing) {
@@ -82,7 +82,7 @@ export async function GET(req: Request) {
       if (error) failed.push({ sign, reason: `save: ${error.message}` })
       else {
         generated.push(sign)
-        usedStarts.push(...startWords(r.content))
+        usedStarts.push(...usedMarkers(r.content))
       }
     } catch (err) {
       Sentry.captureException(err, { extra: { context: 'GET /api/cron/sign-month: generate', sign, ym } })

@@ -21,7 +21,7 @@
  * On any failure the caller regenerates once, then shows a user-visible
  * error rather than displaying broken output.
  */
-import { fitsHoroscopePart } from '@stellaeum/core/dnes/text-fit'
+import { fillsHoroscopePart, fitsHoroscopePart } from '@stellaeum/core/dnes/text-fit'
 import {
   findPlaceholderTokens,
   PlaceholderSubstitutionError,
@@ -42,7 +42,12 @@ export type ReadingValidationFailure = {
     | 'PARTS_NOT_THREE'
     | 'PART_TOO_LONG'
     | 'DIGITS_IN_TEXT'
+    | 'PART_TOO_SHORT'
+    | 'LUMINARY_WITHOUT_ARTICLE'
   detail: string
+  /** Set only for PART_TOO_SHORT: the reading is valid in every other way, just a little short. */
+  content?: string
+  text?: string
 }
 export type ReadingValidationResult =
   | {
@@ -146,6 +151,10 @@ function stripAllMarkup(text: string): string {
     .replace(/\[planet:[a-zA-Z]+\]/g, '')
     .replace(/\[\/planet\]/g, '')
 }
+
+// «Слънце» / «Луна» with no article, at the start of a part or right after a comma: the subject
+// position, where Bulgarian needs «Слънцето» / «Луната». («твоето Слънце» is fine: not matched.)
+const BARE_LUMINARY_SUBJECT = /(^|,\s*)(Слънце|Луна)(?![\p{L}])/u
 
 function countWords(text: string): number {
   const m = text.trim().match(/\S+/g)
@@ -256,6 +265,27 @@ export function validateReading(
         ok: false,
         code: 'PART_TOO_LONG',
         detail: `Paragraph ${tooLong + 1} (${parts[tooLong]!.length} characters) does not fit two lines on a 360px screen.`,
+      }
+    }
+    // Grammar: the Sun and the Moon take the definite article as the subject (Слънцето,
+    // Луната). A bare luminary at the start of a part, or right after a comma, is wrong.
+    const bare = parts.findIndex((p) => BARE_LUMINARY_SUBJECT.test(p))
+    if (bare !== -1) {
+      return {
+        ok: false,
+        code: 'LUMINARY_WITHOUT_ARTICLE',
+        detail: `Paragraph ${bare + 1} uses «Слънце» or «Луна» as the subject without the article; write «Слънцето» or «Луната».`,
+      }
+    }
+    // Each part should fill about two full lines, not a line and a bit.
+    const tooShort = parts.findIndex((p) => !fillsHoroscopePart(p))
+    if (tooShort !== -1) {
+      return {
+        ok: false,
+        code: 'PART_TOO_SHORT',
+        detail: `Paragraph ${tooShort + 1} (${parts[tooShort]!.length} characters) is too short: it must fill about two full lines, so write 54 to 62 characters.`,
+        content: substituted,
+        text,
       }
     }
   }
