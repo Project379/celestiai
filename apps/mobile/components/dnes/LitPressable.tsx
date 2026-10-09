@@ -7,13 +7,14 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg'
+import Svg, { Defs, Ellipse, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg'
 
 import { hapticSelect } from '@/lib/haptics'
 import { DNES_MAX_FONT_SCALE } from '@/lib/dnes/layout'
 
 /**
- * A text button that LIGHTS UP while pressed: a brighter colour plus a soft halo behind the
+ * A text action, in bronze with a thin line under it (the app-wide rule for tappable text), that
+ * LIGHTS UP while pressed: a brighter colour plus a soft halo behind the
  * letters, fading back quickly on release (like «Питай Оракула»). Reduced motion: the change
  * is instant, no fade. R7: two dimensions of difference (colour and glow). The halo is an
  * SVG ellipse, so it looks the same on Android and iOS. On web this becomes a hover style.
@@ -118,11 +119,19 @@ export const LitPressable = memo(function LitPressable({
         >
           {label}
         </Animated.Text>
-        {underline && !disabled && (
-          <View
-            pointerEvents="none"
-            style={{ height: 1, marginTop: 2, backgroundColor: 'rgba(196,176,252,0.55)', borderRadius: 1 }}
-          />
+        {underline && !disabled && box && (
+          // Thin bronze line under the word that fades out to both ends: the same family as the
+          // line under «Питай Оракула». Text actions are bronze, app-wide.
+          <Svg width={box.w} height={2} style={{ marginTop: 1 }} pointerEvents="none">
+            <Defs>
+              <LinearGradient id={`${id}-line`} x1="0%" y1="0%" x2="100%" y2="0%">
+                <Stop offset="0%" stopColor="rgb(217,160,106)" stopOpacity={0} />
+                <Stop offset="50%" stopColor="rgb(224,168,111)" stopOpacity={0.9} />
+                <Stop offset="100%" stopColor="rgb(217,160,106)" stopOpacity={0} />
+              </LinearGradient>
+            </Defs>
+            <Rect x={0} y={0.5} width={box.w} height={1} fill={`url(#${id}-line)`} />
+          </Svg>
         )}
       </View>
     </Pressable>

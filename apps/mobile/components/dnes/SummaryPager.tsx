@@ -126,17 +126,19 @@ const SignsView = memo(function SignsView({ p, m }: { p: SignsPage; m: DnesMetri
 
 const MoonView = memo(function MoonView({ p, m, active }: { p: MoonPage; m: DnesMetrics; active: boolean }) {
   const k = kOf(m)
+  // The moon takes what is left of the band after the title, two text rows and the link's line.
+  const moon = Math.min(72, m.swipeH - 77)
   return (
     <>
       <Title>{DNES_COPY.pageMoon}</Title>
       {/* MoonGlyph paints a halo larger than `size`; a fixed-height box keeps that overflow
           out of the layout so the page height stays what the budget says. Its breathing
           animation only runs while this page is the one on screen. */}
-      <View style={{ marginTop: Math.round(8 * k), height: Math.round(72 * k), alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ marginTop: Math.round(8 * k), height: moon, alignItems: 'center', justifyContent: 'center' }}>
         <MoonGlyph
           illumination={p.illumination}
           isWaxing={p.isWaxing}
-          size={Math.round(72 * k)}
+          size={moon}
           haloRatio={1.25}
           animated={active}
         />
@@ -159,9 +161,9 @@ const MoonView = memo(function MoonView({ p, m, active }: { p: MoonPage; m: Dnes
           label={DNES_COPY.moreLink}
           accessibilityLabel={DNES_COPY.moreLink}
           onPress={p.onMore}
-          baseColor={color.muted}
-          litColor={color.starlight}
-          haloRgb={[203, 210, 222]}
+          baseColor={color.bronzeText}
+          litColor={color.bronzeLit}
+          haloRgb={[224, 150, 90]}
           hitSlop={{ top: 13, bottom: 13, left: 16, right: 16 }}
           textStyle={{ fontFamily: font.body, fontSize: 13, lineHeight: 18 }}
           underline
@@ -173,17 +175,23 @@ const MoonView = memo(function MoonView({ p, m, active }: { p: MoonPage; m: Dnes
 
 const MonthView = memo(function MonthView({ p, m }: { p: MonthPage; m: DnesMetrics }) {
   const k = kOf(m)
+  // The note can run to three lines (66px). The glyph takes whatever room is left in the band,
+  // and is left out when there is not enough: title 20 + gaps + text 66 + a little air.
+  const room = m.swipeH - 20 - 66 - 18
+  const halo = Math.min(Math.round(56 * k), room)
   return (
     <>
       <Title>{p.title}</Title>
-      <View style={{ marginTop: Math.round(6 * k) }}>
-        <SignGlyph sign={p.sign} halo={Math.round(56 * k)} glyph={Math.round(30 * k)} strong idSuffix="month" />
-      </View>
-      {/* Two lines at most by the server's fit check, so it is never cut. */}
+      {halo >= 30 && (
+        <View style={{ marginTop: 6 }}>
+          <SignGlyph sign={p.sign} halo={halo} glyph={Math.round(halo * 0.55)} strong idSuffix="month" />
+        </View>
+      )}
+      {/* Three lines at most by the server's fit check, so it is never cut. */}
       <Text
         maxFontSizeMultiplier={DNES_MAX_FONT_SCALE}
         style={{
-          marginTop: Math.round(6 * k),
+          marginTop: halo >= 30 ? 6 : 10,
           fontFamily: font.body,
           fontSize: 15,
           lineHeight: 22,
@@ -233,9 +241,9 @@ const CrystalView = memo(function CrystalView({ p, m }: { p: CrystalPage; m: Dne
           accessibilityLabel={p.collected ? DNES_COPY.collected : DNES_COPY.collect}
           onPress={p.onCollect}
           disabled={p.collected || p.pending}
-          baseColor={p.collected ? color.faint : color.glyphLilac}
-          litColor={color.glyphLilacHi}
-          haloRgb={[167, 139, 250]}
+          baseColor={p.collected ? color.faint : color.bronzeText}
+          litColor={color.bronzeLit}
+          haloRgb={[224, 150, 90]}
           hitSlop={{ top: 12, bottom: 12, left: 20, right: 20 }}
           textStyle={{ fontFamily: font.display, fontSize: 15, lineHeight: 20, textAlign: 'center' }}
           underline={!p.collected}
