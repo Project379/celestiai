@@ -18,10 +18,8 @@ const SOURCE_TYPES = new Set(['today', 'moon', 'oracle', 'circle', 'crystal'])
 
 export function DiaryApp() {
   const searchParams = useSearchParams()
-  const [mode, setMode] = useState<ComposerMode | null>(() => {
-    const value = searchParams.get('mode')
-    return value === 'check_in' || value === 'note' || value === 'lunar_practice' ? value : null
-  })
+  const [mode, setMode] = useState<ComposerMode | null>(null)
+  const [openedEntry, setOpenedEntry] = useState<DiaryEntryV2 | null>(null)
   const [editing, setEditing] = useState<DiaryEntryV2 | null>(null)
   const [showCreateMenu, setShowCreateMenu] = useState(false)
   const [query, setQuery] = useState('')
@@ -79,6 +77,19 @@ export function DiaryApp() {
     }
   }
 
+  const [creationError, setCreationError] = useState<string | null>(null)
+  const openComposer = async (selected: ComposerMode) => {
+    setShowCreateMenu(false)
+    setCreationError(null)
+    if (selected !== 'check_in') { setMode(selected); return }
+    try {
+      const today = getDiaryDate()
+      const page = await fetch(`/api/diary/v2/entries?kind=check_in&from=${today}&to=${today}&limit=1`).then((response) => { if (!response.ok) throw new Error('Diary lookup failed'); return response.json() }) as { entries: DiaryEntryV2[] }
+      if (page.entries[0]) { setMode(null); setEditing(null); setOpenedEntry(page.entries[0]) }
+      else setMode('check_in')
+    } catch { setCreationError('Не успяхме да проверим днешния запис. Опитай отново.') }
+  }
+
   const drafts = diary.entries.filter((entry) => entry.status === 'draft')
   const completed = diary.entries.filter((entry) => entry.status === 'completed')
   const pendingStep = completed.find((entry) => entry.nextStep?.status === 'pending')
@@ -100,9 +111,9 @@ export function DiaryApp() {
         {!mode && !editing && <button type="button" aria-label="Нов запис" onClick={() => setShowCreateMenu((shown) => !shown)} className="absolute right-0 top-1 flex h-11 w-11 items-center justify-center rounded-full border border-amber-300/35 bg-amber-300/10 text-2xl font-light text-amber-200 transition-colors hover:bg-amber-300/15">+</button>}
       </header>
 
-      {pendingStep && !mode && !editing && <div className="mb-6 rounded-2xl border border-violet-300/15 bg-violet-400/5 p-4"><p className="text-xs uppercase tracking-widest text-violet-300">Твоята стъпка</p><p className="mt-2 font-display text-slate-200">{pendingStep.nextStep!.text}</p><div className="mt-3 flex gap-4 text-xs"><button onClick={() => void diary.updateEntry(pendingStep, { nextStep: { ...pendingStep.nextStep!, status: 'done' } })} className="text-emerald-300">Готово</button><button onClick={() => void diary.updateEntry(pendingStep, { nextStep: { ...pendingStep.nextStep!, status: 'carried', revisitOn: getDiaryDate(new Date(Date.now() + 86_400_000), pendingStep.timezone) } })} className="text-amber-300">Утре</button><button onClick={() => void diary.updateEntry(pendingStep, { nextStep: { ...pendingStep.nextStep!, status: 'let_go' } })} className="text-slate-400">Пускам го</button></div></div>}
+      {pendingStep && !mode && !editing && <div className="mb-6 rounded-2xl border border-violet-300/15 bg-violet-400/5 p-4"><p className="text-xs uppercase tracking-widest text-violet-300">Следваща стъпка от дневника</p><p className="mt-2 text-xs leading-5 text-slate-400">Това е действието, което записа в проверката си. Можеш да го изпълниш, отложиш или отмениш.</p><p className="mt-2 font-display text-slate-200">{pendingStep.nextStep!.text}</p><div className="mt-3 flex flex-wrap gap-4 text-xs"><button onClick={() => void diary.updateEntry(pendingStep, { nextStep: { ...pendingStep.nextStep!, status: 'done' } })} className="text-emerald-300">Изпълних я</button><button onClick={() => void diary.updateEntry(pendingStep, { nextStep: { ...pendingStep.nextStep!, status: 'carried', revisitOn: getDiaryDate(new Date(Date.now() + 86_400_000), pendingStep.timezone) } })} className="text-amber-300">Отлагам за утре</button><button onClick={() => void diary.updateEntry(pendingStep, { nextStep: { ...pendingStep.nextStep!, status: 'let_go' } })} className="text-slate-400">Отказвам се от нея</button></div></div>}
 
-      {showCreateMenu && !mode && !editing && <div className="mb-9 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70 shadow-2xl backdrop-blur-xl">{(Object.keys(MODE_LABEL) as ComposerMode[]).map((item) => <button key={item} onClick={() => { setMode(item); setShowCreateMenu(false) }} className="flex w-full items-center justify-between border-b border-white/[0.06] px-5 py-4 text-left last:border-0 hover:bg-white/[0.035]"><span className="font-display text-base text-slate-200">{MODE_LABEL[item]}</span><span className="text-slate-600">›</span></button>)}</div>}
+      {showCreateMenu && !mode && !editing && <div className="mb-9 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70 shadow-2xl backdrop-blur-xl">{(Object.keys(MODE_LABEL) as ComposerMode[]).map((item) => <button key={item} onClick={() => { void openComposer(item) }} className="flex w-full items-center justify-between border-b border-white/[0.06] px-5 py-4 text-left last:border-0 hover:bg-white/[0.035]"><span className="font-display text-base text-slate-200">{MODE_LABEL[item]}</span><span className="text-slate-600">›</span></button>)}</div>}
 
       {(mode || activeEntry) && <div className="mb-10"><DiaryComposer
         mode={activeEntry ? (activeEntry.kind === 'check_in' ? 'check_in' : activeEntry.kind === 'note' ? 'note' : 'lunar_practice') : mode!}
@@ -116,7 +127,8 @@ export function DiaryApp() {
         onSaved={() => { setMode(null); setEditing(null); void diary.refresh() }}
       /></div>}
 
-      {drafts.length > 0 && !mode && !editing && <section className="mb-9"><h2 className="mb-3 text-xs uppercase tracking-widest text-slate-500">Чернови</h2><div className="space-y-2">{drafts.map((draft) => <button key={draft.id} onClick={() => setEditing(draft)} className="flex w-full justify-between rounded-xl border border-slate-300/10 px-4 py-3 text-left"><span className="text-sm text-slate-300">{draft.title || MODE_LABEL[draft.kind as ComposerMode] || 'Чернова'}</span><span className="text-xs text-slate-600">{draft.entryDate}</span></button>)}</div></section>}
+      {creationError && <p role="alert" className="mb-4 text-sm text-rose-300">{creationError}</p>}
+      {drafts.length > 0 && !mode && !editing && <section className="mb-9"><h2 className="mb-3 text-xs uppercase tracking-widest text-slate-500">Чернови</h2><div className="space-y-2">{drafts.map((draft) => <div key={draft.id} className="flex items-center gap-3 rounded-xl border border-slate-300/10 px-4 py-3"><button onClick={() => setEditing(draft)} className="flex flex-1 justify-between text-left"><span className="text-sm text-slate-300">{draft.title || MODE_LABEL[draft.kind as ComposerMode] || 'Чернова'}</span><span className="text-xs text-slate-600">{draft.entryDate}</span></button><button aria-label="Изтрий черновата" onClick={() => { if (window.confirm('Да изтрием ли тази чернова завинаги?')) void diary.deleteEntry(draft) }} className="text-xs text-rose-300">Изтрий</button></div>)}</div></section>}
 
       {summary && summary.entryCount > 0 && <WeeklySummaryCard summary={summary} />}
 
@@ -127,7 +139,7 @@ export function DiaryApp() {
         {date && <button onClick={() => setDate(null)} className="text-xs text-amber-300">Изчисти датата</button>}
       </section>
 
-      {diary.error ? <p className="text-sm text-rose-300">{diary.error}</p> : diary.isLoading && diary.entries.length === 0 ? <p className="text-sm text-slate-500">Зареждане…</p> : <DiaryHistory entries={completed} onCreate={diary.createEntry} onDelete={diary.deleteEntry} onUpdate={diary.updateEntry} onDateSelect={setDate} questionHistory={questionHistory} />}
+      {diary.error ? <p className="text-sm text-rose-300">{diary.error}</p> : diary.isLoading && diary.entries.length === 0 ? <p className="text-sm text-slate-500">Зареждане…</p> : <DiaryHistory entries={completed} openedEntry={openedEntry} onCloseOpenedEntry={() => setOpenedEntry(null)} onCreate={diary.createEntry} onDelete={diary.deleteEntry} onUpdate={diary.updateEntry} onDateSelect={setDate} questionHistory={questionHistory} />}
       {diary.nextCursor && <button onClick={diary.loadMore} className="mt-6 text-sm text-amber-300">Още записи</button>}
 
       <footer className="mt-12 space-y-5 border-t border-slate-300/10 pt-7">

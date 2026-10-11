@@ -198,6 +198,10 @@ export function useDiaryEntries(filters: Partial<DiaryListQuery> = {}) {
         setSaveStates((states) => ({ ...states, [input.id]: 'saved-device' }))
         return local
       }
+      if (cause instanceof HttpError && cause.status === 409) {
+        const current = diaryEntryV2Schema.safeParse((cause.body as { current?: unknown })?.current)
+        setConflict({ operation: 'update', local, current: current.success ? current.data : null })
+      }
       setSaveStates((states) => ({ ...states, [input.id]: 'attention' }))
       throw cause
     }
@@ -234,6 +238,14 @@ export function useDiaryEntries(filters: Partial<DiaryListQuery> = {}) {
     try {
       await request(`/api/diary/v2/entries/${entry.id}?revision=${entry.revision}`, { method: 'DELETE' })
       setEntries((current) => current.filter((item) => item.id !== entry.id))
+      if (userId) {
+        const key = `stellaeum.diary.composer.v2.${userId}.${entry.kind}`
+        const stored = localStorage.getItem(key)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if ((parsed.draft ?? parsed).id === entry.id) localStorage.removeItem(key)
+        }
+      }
       return true
     } catch (cause) {
       if (cause instanceof HttpError && cause.status === 409) {
@@ -248,7 +260,7 @@ export function useDiaryEntries(filters: Partial<DiaryListQuery> = {}) {
       setSaveStates((states) => ({ ...states, [entry.id]: 'attention' }))
       return false
     }
-  }, [enqueue])
+  }, [enqueue, userId])
 
   const resolveWithServer = useCallback(() => {
     if (conflict?.current) setEntries((current) => mergeById(current, conflict.current!))

@@ -54,6 +54,7 @@ export async function POST(request: Request) {
     }
     const result = await createDiaryEntryV2(userId, validation.data)
     if (!result.ok) {
+      if (result.error === 'CONFLICT') return Response.json({ error: 'Вече имаш проверка за този ден. Отвори я за редактиране.', code: 'CONFLICT', current: result.current }, { status: 409 })
       if (result.error === 'INVALID_RELATED_ENTRY') {
         return Response.json({ error: 'Свързаният запис не беше намерен' }, { status: 400 })
       }

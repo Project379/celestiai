@@ -5,7 +5,7 @@ import { useUser } from '@clerk/expo'
 import * as Crypto from 'expo-crypto'
 import { ALL_LUNAR_PHASES, getLunarPhase, type LunarPhaseId } from '@stellaeum/core/moon-phase'
 import {
-  CHECK_IN_DIRECTIONS,
+  getCheckInDirections,
   DIARY_MOODS,
   DIARY_TOPICS,
   getCheckInAnotherPrompt,
@@ -88,7 +88,7 @@ const inputStyle = { fontFamily: font.body, fontSize: 16, lineHeight: 25, color:
 export function DiaryComposer({ mode, entry, source = null, saveState, questionHistory = [], onCreate, onUpdate, onClose, onSaved }: Props) {
   const { user } = useUser()
   const accountId = user?.id
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Sofia'
+  const timezone = entry?.timezone ?? 'Europe/Sofia'
   const storageKey = accountId ? composerKey(accountId, mode) : null
   const [draft, setDraft] = useState<Draft>(() => entry ? fromEntry(entry) : fresh(mode))
   const [localState, setLocalState] = useState<MobileDiarySaveState>('idle')
@@ -205,7 +205,7 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
       <Text style={{ fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: color.faint }}>Размисъл {Math.min(draft.iterations.length + 1, 8)}</Text>
       {draft.checkStep === 0 && <View style={{ gap: 18 }}><ChoiceGroup label="Как се чувстваш днес?" items={DIARY_MOODS.map((item) => ({ value: String(item.value), label: item.label }))} selected={draft.mood ? String(draft.mood) : null} onSelect={(value) => setDraft((d) => ({ ...d, mood: Number(value) }))} /><View style={{ flexDirection: 'row', gap: 20 }}><Action label="Продължи →" disabled={draft.mood === null} onPress={() => setDraft((d) => ({ ...d, checkStep: 1 }))} /><Action label="Пропусни" muted onPress={() => setDraft((d) => ({ ...d, checkStep: 1 }))} /></View></View>}
       {draft.checkStep === 1 && <View style={{ gap: 18 }}><ChoiceGroup label={getCheckInTopicPrompt(draft.mood)} items={DIARY_TOPICS} selected={null} onSelect={(value) => setDraft((current) => { const topic = value as Draft['focusTopic']; return { ...current, focusTopic: topic, topics: topic && !current.topics.includes(topic) ? [...current.topics, topic] : current.topics, checkStep: 2 } })} />{draft.iterations.length === 0 && <Action label="← Назад" muted onPress={() => setDraft((d) => ({ ...d, checkStep: 0 }))} />}</View>}
-      {draft.checkStep === 2 && <View style={{ gap: 18 }}><ChoiceGroup label="Как искаш да разгледаш тази тема?" items={CHECK_IN_DIRECTIONS.map((item) => ({ value: item.value, label: item.label }))} selected={draft.direction} onSelect={(value) => chooseDirection(value as DiaryDirection)} /><Action label="← Назад" muted onPress={() => setDraft((d) => ({ ...d, checkStep: 1 }))} /></View>}
+      {draft.checkStep === 2 && <View style={{ gap: 18 }}><ChoiceGroup label="Как искаш да разгледаш тази тема?" items={getCheckInDirections(draft.focusTopic, draft.mood).map((item) => ({ value: item.value, label: item.label }))} selected={draft.direction} onSelect={(value) => chooseDirection(value as DiaryDirection)} /><Action label="← Назад" muted onPress={() => setDraft((d) => ({ ...d, checkStep: 1 }))} /></View>}
       {draft.checkStep === 3 && draft.reflectionQuestion && draft.direction !== 'finish' && <View style={{ gap: 14 }}><Field label={draft.reflectionQuestion} value={draft.reflectionAnswer} onChange={(value) => setDraft((d) => ({ ...d, reflectionAnswer: value, nextStep: d.direction === 'step' ? value : d.nextStep }))} /><View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Action label="Друг въпрос" muted onPress={chooseAnotherQuestion} /><Action label="Продължи →" disabled={!draft.reflectionAnswer.trim()} onPress={commitIteration} /></View></View>}
       {draft.checkStep === 4 && <View style={{ gap: 18 }}>{draft.iterations.length > 0 && <View style={{ gap: 18 }}><Text style={{ fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: color.faint }}>Записани размисли</Text>{draft.iterations.map((iteration, index) => <Field key={`${iteration.questionId}:${index}`} label={iteration.question} value={iteration.answer} onChange={(answer) => updateIterationAnswer(index, answer)} />)}</View>}<Text style={{ fontFamily: font.displayRegular, fontSize: 19, lineHeight: 27, color: color.text }}>{getCheckInAnotherPrompt(draft.mood)}</Text><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 18 }}>{draft.iterations.length < 8 && <Action label="Добави още нещо" onPress={startAnotherIteration} />}<Action label="Готово" disabled={!meaningful(draft) || shownState === 'saving'} onPress={() => void complete()} /></View></View>}
     </View>}

@@ -18,10 +18,10 @@ const SOURCE_TYPES = new Set(['today', 'moon', 'oracle', 'circle', 'crystal'])
 
 export function DiaryApp() {
   const params = useLocalSearchParams<{ mode?: string; source?: string; sourceId?: string; sourceLabel?: string; sourcePath?: string }>()
-  const initialMode = params.mode === 'check_in' || params.mode === 'note' || params.mode === 'lunar_practice' ? params.mode : null
-  const [mode, setMode] = useState<MobileComposerMode | null>(initialMode)
+  const [mode, setMode] = useState<MobileComposerMode | null>(null)
   const [editing, setEditing] = useState<DiaryEntryV2 | null>(null)
   const [showCreateMenu, setShowCreateMenu] = useState(false)
+  const [openedEntry, setOpenedEntry] = useState<DiaryEntryV2 | null>(null)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [queryText, setQueryText] = useState('')
   const [kind, setKind] = useState<DiaryListQuery['kind']>()
@@ -61,10 +61,23 @@ export function DiaryApp() {
     catch { Alert.alert('Напомняне', 'Не успяхме да запазим настройката.') }
   }
 
+  const [creationError, setCreationError] = useState<string | null>(null)
+  const openComposer = async (selected: MobileComposerMode) => {
+    setShowCreateMenu(false)
+    setCreationError(null)
+    if (selected !== 'check_in') { setMode(selected); return }
+    try {
+      const today = getDiaryDate()
+      const page = await apiFetch(`/api/diary/v2/entries?kind=check_in&from=${today}&to=${today}&limit=1`) as { entries: DiaryEntryV2[] }
+      if (page.entries[0]) { setMode(null); setEditing(null); setSelectedEntryId(page.entries[0].id); setOpenedEntry(page.entries[0]) }
+      else setMode('check_in')
+    } catch { setCreationError('Не успяхме да проверим днешния запис. Опитай отново.') }
+  }
+
   const drafts = diary.entries.filter((entry) => entry.status === 'draft')
   const completed = diary.entries.filter((entry) => entry.status === 'completed')
   const pending = completed.find((entry) => entry.nextStep?.status === 'pending')
-  const selectedEntry = completed.find((entry) => entry.id === selectedEntryId) ?? null
+  const selectedEntry = diary.entries.find((entry) => entry.id === selectedEntryId) ?? openedEntry ?? null
   const questionHistory = useMemo<DiaryQuestionHistoryItem[]>(() => diary.entries
     .filter((entry) => entry.kind === 'check_in')
     .flatMap((entry) => {
@@ -76,13 +89,14 @@ export function DiaryApp() {
   return <View style={{ gap: rhythm.group }}>
     <View style={{ position: 'relative', alignItems: 'center', gap: 8, paddingHorizontal: 50 }}><Text style={{ fontFamily: font.displayRegular, fontSize: 13, letterSpacing: 1.4, textTransform: 'uppercase', color: color.bronzeText }}>Дневник</Text><Text style={{ fontFamily: font.displaySemibold, fontSize: 31, color: color.text }}>Как си днес?</Text><Text style={{ fontFamily: font.body, color: color.muted, textAlign: 'center' }}>Провери се, пиши свободно или следвай Луната.</Text>{!mode && !editing && <Pressable accessibilityLabel="Нов запис" onPress={() => setShowCreateMenu((shown) => !shown)} style={({ pressed }) => ({ position: 'absolute', right: 0, top: 0, width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(184,118,62,0.5)', backgroundColor: 'rgba(184,118,62,0.1)', alignItems: 'center', justifyContent: 'center', ...pressFeedback(pressed) })}><Text style={{ fontSize: 28, fontWeight: '300', lineHeight: 31, color: color.bronzeText }}>+</Text></Pressable>}</View>
 
-    {pending && !mode && !editing && <View style={{ borderWidth: 1, borderColor: 'rgba(167,139,250,0.2)', borderRadius: 16, padding: 16 }}><Text style={{ fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: '#c4b5fd' }}>Твоята стъпка</Text><Text style={{ marginTop: 8, fontFamily: font.body, color: color.text }}>{pending.nextStep!.text}</Text><View style={{ marginTop: 12, flexDirection: 'row', gap: 18 }}><SmallAction label="Готово" onPress={() => void diary.updateEntry(pending, { nextStep: { ...pending.nextStep!, status: 'done' } })} /><SmallAction label="Утре" onPress={() => void diary.updateEntry(pending, { nextStep: { ...pending.nextStep!, status: 'carried', revisitOn: getDiaryDate(new Date(Date.now() + 86_400_000), pending.timezone) } })} /><SmallAction label="Пускам го" muted onPress={() => void diary.updateEntry(pending, { nextStep: { ...pending.nextStep!, status: 'let_go' } })} /></View></View>}
+    {pending && !mode && !editing && <View style={{ borderWidth: 1, borderColor: 'rgba(167,139,250,0.2)', borderRadius: 16, padding: 16 }}><Text style={{ fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: '#c4b5fd' }}>Следваща стъпка от дневника</Text><Text style={{ marginTop: 8, fontSize: 12, lineHeight: 19, color: color.muted }}>Това е действието, което записа в проверката си. Можеш да го изпълниш, отложиш или отмениш.</Text><Text style={{ marginTop: 8, fontFamily: font.body, color: color.text }}>{pending.nextStep!.text}</Text><View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 18 }}><SmallAction label="Изпълних я" onPress={() => void diary.updateEntry(pending, { nextStep: { ...pending.nextStep!, status: 'done' } })} /><SmallAction label="Отлагам за утре" onPress={() => void diary.updateEntry(pending, { nextStep: { ...pending.nextStep!, status: 'carried', revisitOn: getDiaryDate(new Date(Date.now() + 86_400_000), pending.timezone) } })} /><SmallAction label="Отказвам се от нея" muted onPress={() => void diary.updateEntry(pending, { nextStep: { ...pending.nextStep!, status: 'let_go' } })} /></View></View>}
 
-    {showCreateMenu && !mode && !editing && <View style={{ overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(226,232,240,0.1)', borderRadius: 18, backgroundColor: 'rgba(11,16,32,0.92)' }}>{(Object.keys(MODE_LABEL) as MobileComposerMode[]).map((item) => <Pressable key={item} onPress={() => { setMode(item); setShowCreateMenu(false) }} style={({ pressed }) => ({ paddingHorizontal: 18, paddingVertical: 17, borderBottomWidth: item === 'lunar_practice' ? 0 : 1, borderBottomColor: 'rgba(226,232,240,0.07)', flexDirection: 'row', justifyContent: 'space-between', ...pressFeedback(pressed) })}><Text style={{ fontFamily: font.displaySemibold, color: color.text }}>{MODE_LABEL[item]}</Text><Text style={{ color: color.faint }}>›</Text></Pressable>)}</View>}
+    {showCreateMenu && !mode && !editing && <View style={{ overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(226,232,240,0.1)', borderRadius: 18, backgroundColor: 'rgba(11,16,32,0.92)' }}>{(Object.keys(MODE_LABEL) as MobileComposerMode[]).map((item) => <Pressable key={item} onPress={() => { void openComposer(item) }} style={({ pressed }) => ({ paddingHorizontal: 18, paddingVertical: 17, borderBottomWidth: item === 'lunar_practice' ? 0 : 1, borderBottomColor: 'rgba(226,232,240,0.07)', flexDirection: 'row', justifyContent: 'space-between', ...pressFeedback(pressed) })}><Text style={{ fontFamily: font.displaySemibold, color: color.text }}>{MODE_LABEL[item]}</Text><Text style={{ color: color.faint }}>›</Text></Pressable>)}</View>}
 
     {(mode || editing) && <DiaryComposer mode={editing ? (editing.kind === 'check_in' ? 'check_in' : editing.kind === 'note' ? 'note' : 'lunar_practice') : mode!} entry={editing} source={source} saveState={editing ? diary.saveStates[editing.id] : undefined} questionHistory={questionHistory} onCreate={diary.createEntry} onUpdate={diary.updateEntry} onClose={() => { setMode(null); setEditing(null) }} onSaved={() => { setMode(null); setEditing(null); void diary.refresh() }} />}
 
-    {drafts.length > 0 && !mode && !editing && <View><Text style={sectionLabel}>Чернови</Text>{drafts.map((draft) => <Pressable key={draft.id} onPress={() => setEditing(draft)} style={({ pressed }) => ({ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(226,232,240,0.08)', ...pressFeedback(pressed) })}><Text style={{ color: color.text }}>{draft.title || MODE_LABEL[draft.kind as MobileComposerMode] || 'Чернова'}</Text></Pressable>)}</View>}
+    {creationError && <Text accessibilityRole="alert" style={{ color: '#fda4af' }}>{creationError}</Text>}
+    {drafts.length > 0 && !mode && !editing && <View><Text style={sectionLabel}>Чернови</Text>{drafts.map((draft) => <View key={draft.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(226,232,240,0.08)' }}><Pressable onPress={() => setEditing(draft)} style={{ flex: 1 }}><Text style={{ color: color.text }}>{draft.title || MODE_LABEL[draft.kind as MobileComposerMode] || 'Чернова'}</Text></Pressable><SmallAction label="Изтрий" onPress={() => Alert.alert('Изтриване на чернова', 'Черновата ще бъде изтрита завинаги.', [{ text: 'Отказ', style: 'cancel' }, { text: 'Изтрий', style: 'destructive', onPress: () => { void diary.deleteEntry(draft) } }])} /></View>)}</View>}
 
     {summary && summary.entryCount > 0 && <WeeklySummaryCard summary={summary} />}
 
@@ -90,22 +104,22 @@ export function DiaryApp() {
 
     <DiaryCalendar entries={completed} selectedDate={date} onSelect={setDate} />
     {date && <SmallAction label="Изчисти датата" onPress={() => setDate(null)} />}
-    <View><Text style={sectionLabel}>Записи</Text>{diary.isLoading && completed.length === 0 ? <Text style={{ color: color.faint }}>Зареждане…</Text> : completed.map((entry) => <DiaryRow key={entry.id} entry={entry} onPress={() => setSelectedEntryId(entry.id)} />)}{diary.hasNextPage && <SmallAction label="Още записи" onPress={() => void diary.fetchNextPage()} />}</View>
+    <View><Text style={sectionLabel}>Записи</Text>{diary.isLoading && completed.length === 0 ? <Text style={{ color: color.faint }}>Зареждане…</Text> : completed.map((entry) => <DiaryRow key={entry.id} entry={entry} onPress={() => { setOpenedEntry(null); setSelectedEntryId(entry.id) }} />)}{diary.hasNextPage && <SmallAction label="Още записи" onPress={() => void diary.fetchNextPage()} />}</View>
 
     <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(226,232,240,0.08)', paddingTop: 18, gap: 14 }}><Pressable onPress={() => void saveReminder({ ...reminder, enabled: !reminder.enabled })} style={({ pressed }) => ({ flexDirection: 'row', justifyContent: 'space-between', ...pressFeedback(pressed) })}><Text style={{ color: color.muted }}>Вечерно напомняне</Text><Text style={{ color: reminder.enabled ? color.bronzeText : color.faint }}>{reminder.enabled ? 'Вкл.' : 'Изкл.'}</Text></Pressable>{reminder.enabled && <><SmallAction label={`Час · ${reminder.localTime}`} onPress={() => setShowReminderTime(true)} />{showReminderTime && <DateTimePicker mode="time" display={Platform.OS === 'ios' ? 'spinner' : 'default'} value={new Date(`2020-01-01T${reminder.localTime}:00`)} onChange={(_, date) => { if (Platform.OS !== 'ios') setShowReminderTime(false); if (date) { const localTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`; void saveReminder({ ...reminder, localTime }) } }} />}</>}<View style={{ flexDirection: 'row', gap: 20 }}><SmallAction label="Markdown" onPress={() => void shareDiaryExport(apiFetchRaw, 'markdown').catch(() => Alert.alert('Експорт', 'Не успяхме да подготвим файла.'))} /><SmallAction label="JSON" onPress={() => void shareDiaryExport(apiFetchRaw, 'json').catch(() => Alert.alert('Експорт', 'Не успяхме да подготвим файла.'))} /></View></View>
 
     <DiaryEntryModal
       entry={selectedEntry}
-      onClose={() => setSelectedEntryId(null)}
+      onClose={() => { setSelectedEntryId(null); setOpenedEntry(null) }}
       onDelete={() => {
         if (!selectedEntry) return
         Alert.alert('Изтриване', 'Записът ще бъде изтрит завинаги.', [
           { text: 'Отказ', style: 'cancel' },
-          { text: 'Изтрий', style: 'destructive', onPress: () => { void diary.deleteEntry(selectedEntry).then((ok) => { if (ok) setSelectedEntryId(null) }) } },
+          { text: 'Изтрий', style: 'destructive', onPress: () => { void diary.deleteEntry(selectedEntry).then((ok) => { if (ok) { setSelectedEntryId(null); setOpenedEntry(null) } }) } },
         ])
       }}
       onStep={(status) => { if (selectedEntry?.nextStep) void diary.updateEntry(selectedEntry, { nextStep: { ...selectedEntry.nextStep, status } }) }}
-      onNavigate={(path) => { setSelectedEntryId(null); push(path as never) }}
+      onNavigate={(path) => { setSelectedEntryId(null); setOpenedEntry(null); push(path as never) }}
       onCreate={diary.createEntry}
       onUpdate={diary.updateEntry}
       questionHistory={questionHistory}
@@ -192,7 +206,7 @@ function DiaryEntryModal({ entry, onClose, onDelete, onStep, onNavigate, onCreat
         <ScrollView style={{ marginTop: 24 }} contentContainerStyle={{ paddingBottom: 12, gap: 18 }} showsVerticalScrollIndicator={false}>
           {diaryEntrySections(entry).filter((section) => section.text).map((section, index) => <View key={index} style={{ gap: 7 }}>{section.label && <Text style={{ fontSize: 12, color: color.bronzeText }}>{section.label}</Text>}<Text style={{ fontFamily: font.body, fontSize: 17, lineHeight: 28, color: color.text }}>{section.text}</Text></View>)}
           {entry.topics.length > 0 && <Text style={{ fontSize: 11, color: color.faint }}>{entry.topics.map((topic) => DIARY_TOPICS.find((item) => item.value === topic)?.label ?? topic).join(' · ')}</Text>}
-          {entry.nextStep?.status === 'pending' && <View style={{ gap: 10, borderWidth: 1, borderColor: 'rgba(167,139,250,0.18)', borderRadius: 16, padding: 15 }}><Text style={{ color: color.text }}>{entry.nextStep.text}</Text><View style={{ flexDirection: 'row', gap: 16 }}><SmallAction label="Готово" onPress={() => onStep('done')} /><SmallAction label="Утре" onPress={() => onStep('carried')} /><SmallAction label="Пускам го" muted onPress={() => onStep('let_go')} /></View></View>}
+          {entry.nextStep?.status === 'pending' && <View style={{ gap: 10, borderWidth: 1, borderColor: 'rgba(167,139,250,0.18)', borderRadius: 16, padding: 15 }}><Text style={{ color: color.text }}>{entry.nextStep.text}</Text><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}><SmallAction label="Изпълних я" onPress={() => onStep('done')} /><SmallAction label="Отлагам за утре" onPress={() => onStep('carried')} /><SmallAction label="Отказвам се от нея" muted onPress={() => onStep('let_go')} /></View></View>}
           {entry.source?.path && <SmallAction label={`Към ${entry.source.label}`} onPress={() => onNavigate(entry.source!.path!)} />}
           <View style={{ borderWidth: 1, borderColor: 'rgba(251,191,36,0.16)', backgroundColor: 'rgba(251,191,36,0.035)', borderRadius: 18, padding: 16, gap: 8 }}><Text style={{ fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: color.bronzeText }}>{oracleSuggestion.eyebrow}</Text><Text style={{ fontFamily: font.displaySemibold, fontSize: 18, lineHeight: 24, color: color.text }}>{oracleSuggestion.title}</Text><Text style={{ fontFamily: font.body, fontSize: 14, lineHeight: 22, color: color.muted }}>{oracleSuggestion.description}</Text><View style={{ marginTop: 5 }}><SmallAction label={`${oracleSuggestion.action} →`} onPress={() => onNavigate(`/oracle?topic=${oracleSuggestion.topic}`)} /></View></View>
           {(entry.topics.includes('relationships') || entry.source?.type === 'crystal') && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 18 }}>{entry.topics.includes('relationships') && <SmallAction label="Отвори Кръг" onPress={() => onNavigate('/circle')} />}{entry.source?.type === 'crystal' && <SmallAction label="Виж кристалите" onPress={() => onNavigate('/you/crystals')} />}</View>}

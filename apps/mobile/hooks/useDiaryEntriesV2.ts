@@ -13,7 +13,7 @@ import {
   type UpdateDiaryEntryV2Input,
 } from '@stellaeum/core/diary/v2'
 import { ApiError, useApiClient } from '@/lib/api/client'
-import { enqueueDiaryMutation, readDiaryQueue, writeDiaryQueue } from '@/lib/diary/storage'
+import { enqueueDiaryMutation, readDiaryQueue, removeComposerDraft, writeDiaryQueue } from '@/lib/diary/storage'
 
 export type MobileDiarySaveState = 'idle' | 'saving' | 'saved' | 'saved-device' | 'attention'
 export interface MobileDiaryConflict { operation: 'update' | 'delete'; local: DiaryEntryV2; current: DiaryEntryV2 | null }
@@ -120,6 +120,10 @@ export function useDiaryEntriesV2(filters: Partial<DiaryListQuery> = {}) {
         setSaveStates((states) => ({ ...states, [input.id]: 'saved-device' }))
         return local
       }
+      if (cause instanceof ApiError && cause.status === 409) {
+        const current = diaryEntryV2Schema.safeParse((cause.body as { current?: unknown })?.current)
+        setConflict({ operation: 'update', local: localEntry(input), current: current.success ? current.data : null })
+      }
       setSaveStates((states) => ({ ...states, [input.id]: 'attention' }))
       throw cause
     }
@@ -155,6 +159,7 @@ export function useDiaryEntriesV2(filters: Partial<DiaryListQuery> = {}) {
     try {
       await apiFetch(`/api/diary/v2/entries/${entry.id}?revision=${entry.revision}`, { method: 'DELETE' })
       updateCache(null, entry.id)
+      await removeComposerDraft(userId, entry.kind, entry.id)
       return true
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 409) {

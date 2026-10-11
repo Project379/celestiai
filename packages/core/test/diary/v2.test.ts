@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DIARY_REFLECTION_QUESTIONS, getCheckInAnotherPrompt, getCheckInTopicPrompt, getDiaryOracleSuggestion, getDirectionQuestion, getReflectionQuestion, selectReflectionQuestion } from '../../src/diary/flow'
+import { DIARY_REFLECTION_QUESTIONS, getCheckInDirections, getCheckInAnotherPrompt, getCheckInTopicPrompt, getDiaryOracleSuggestion, getDirectionQuestion, getReflectionQuestion, selectReflectionQuestion } from '../../src/diary/flow'
 import { getDiaryDate, getNextReminderDueAt } from '../../src/diary/time'
 import { createDiaryEntryV2Schema } from '../../src/diary/v2'
 import { getManifestPromptSelection } from '../../src/diary/prompts'
@@ -23,7 +23,21 @@ const base = {
 
 describe('diary v2 flow', () => {
   it('provides a broad curated question bank', () => {
-    expect(DIARY_REFLECTION_QUESTIONS).toHaveLength(90)
+    expect(DIARY_REFLECTION_QUESTIONS).toHaveLength(135)
+  })
+  it.each(['work', 'relationships', 'health', 'progress', 'other'] as const)('provides questions for every offered direction on %s', (topic) => {
+    for (const option of getCheckInDirections(topic, 2)) {
+      const question = selectReflectionQuestion({ entryId: 'daily', mood: 2, topics: [topic], direction: option.value })
+      if (option.value === 'finish') expect(question).toBeNull()
+      else {
+        expect(question?.topic).toBe(topic)
+        expect(question?.direction).toBe(option.value)
+      }
+    }
+  })
+  it('adapts direction labels to positive mood and the selected topic', () => {
+    expect(getCheckInDirections('work', 5)[0].label).toContain('хубавия')
+    expect(getCheckInDirections('work', 2)[1].label).toContain('работата')
   })
   it.each([
     [1, 'difficult'], [2, 'difficult'], [3, 'mixed'], [4, 'good'], [5, 'good'], [null, 'open'],

@@ -1,6 +1,6 @@
 import type { DiaryTopic } from './flow-types'
 
-export type DiaryDirection = 'express' | 'understand' | 'step' | 'finish'
+export type DiaryDirection = 'express' | 'understand' | 'step' | 'calm' | 'support' | 'appreciate' | 'finish'
 
 export interface DiaryQuestionHistoryItem {
   entryId: string
@@ -42,6 +42,20 @@ export const CHECK_IN_DIRECTIONS: readonly { value: DiaryDirection; label: strin
   { value: 'step', label: 'Да избера следваща стъпка' },
   { value: 'finish', label: 'Не сега' },
 ]
+
+export function getCheckInDirections(topic: DiaryTopic | null, mood: number | null) {
+  const positive = mood !== null && mood >= 4
+  const subject = topic === 'work' ? 'работата' : topic === 'relationships' ? 'отношенията' : topic === 'health' ? 'състоянието си' : topic === 'progress' ? 'напредъка си' : 'случилото се'
+  return [
+    { value: 'express' as const, label: positive ? 'Да разкажа за хубавия момент' : 'Да споделя какво чувствам' },
+    { value: 'understand' as const, label: `Да разбера по-добре ${subject}` },
+    { value: 'step' as const, label: positive ? 'Да запазя това, което ми помага' : 'Да избера малка промяна' },
+    { value: 'calm' as const, label: 'Да намеря спокойствие' },
+    { value: 'support' as const, label: 'Да помисля от каква подкрепа имам нужда' },
+    { value: 'appreciate' as const, label: 'Да забележа за какво съм благодарен/благодарна' },
+    { value: 'finish' as const, label: 'Да продължа към друга тема' },
+  ]
+}
 
 export function getCheckInTopicPrompt(mood: number | null): string {
   if (mood !== null && mood <= 2) return 'Какво те притеснява най-много?'
@@ -118,7 +132,7 @@ export function getDiaryOracleSuggestion(entry: {
 type MoodBand = 'low' | 'mixed' | 'high' | 'any'
 type QuestionSeed = readonly [text: string, moods: readonly MoodBand[], pattern?: boolean]
 
-const QUESTION_TEXTS: Record<DiaryTopic, Record<Exclude<DiaryDirection, 'finish'>, readonly QuestionSeed[]>> = {
+const QUESTION_TEXTS: Record<DiaryTopic, Record<'express' | 'understand' | 'step', readonly QuestionSeed[]>> = {
   work: {
     express: [
       ['Кое от работния ден още стои в мислите ти?', ['any']],
@@ -251,7 +265,13 @@ const QUESTION_TEXTS: Record<DiaryTopic, Record<Exclude<DiaryDirection, 'finish'
   },
 }
 
-export const DIARY_REFLECTION_QUESTIONS: readonly DiaryReflectionQuestion[] = Object.entries(QUESTION_TEXTS).flatMap(
+const EXTRA_QUESTIONS: DiaryReflectionQuestion[] = DIARY_TOPICS.flatMap(({ value: topic, label }) => [
+  ...['Какво би ти помогнало да си поемеш дъх точно сега?', `Кое напрежение, свързано с ${label.toLowerCase()}, можеш да оставиш за по-късно?`, 'Кога днес усети спокойствие и какво го направи възможно?'].map((text, index) => ({ id: `${topic}.calm.${index + 1}`, text, topic, direction: 'calm' as const, moods: ['any'] as const })),
+  ...['Каква подкрепа ти липсва в тази ситуация?', 'Кой човек би могъл да те изслуша без да те съди?', 'Как би поискал/поискала помощ с едно ясно изречение?'].map((text, index) => ({ id: `${topic}.support.${index + 1}`, text, topic, direction: 'support' as const, moods: ['any'] as const })),
+  ...['Кой малък хубав момент искаш да запомниш?', 'Какво оцени в себе си днес, дори денят да беше труден?', 'Кой или какво направи тази част от деня по-лека?'].map((text, index) => ({ id: `${topic}.appreciate.${index + 1}`, text, topic, direction: 'appreciate' as const, moods: ['any'] as const })),
+])
+
+export const DIARY_REFLECTION_QUESTIONS: readonly DiaryReflectionQuestion[] = [...Object.entries(QUESTION_TEXTS).flatMap(
   ([topic, directions]) => Object.entries(directions).flatMap(([direction, questions]) =>
     questions.map(([text, moods, pattern], index) => ({
       id: `${topic}.${direction}.${index + 1}`,
@@ -262,7 +282,7 @@ export const DIARY_REFLECTION_QUESTIONS: readonly DiaryReflectionQuestion[] = Ob
       pattern,
     })),
   ),
-)
+), ...EXTRA_QUESTIONS]
 
 function moodBand(mood: number | null): MoodBand {
   if (mood === null) return 'any'

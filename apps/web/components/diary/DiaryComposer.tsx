@@ -6,7 +6,7 @@ import { ALL_LUNAR_PHASES, getLunarPhase, type LunarPhaseId } from '@stellaeum/c
 import {
   DIARY_MOODS,
   DIARY_TOPICS,
-  CHECK_IN_DIRECTIONS,
+  getCheckInDirections,
   getCheckInAnotherPrompt,
   getCheckInTopicPrompt,
   selectReflectionQuestion,
@@ -146,7 +146,7 @@ const chipClass = 'rounded-full border px-3 py-1.5 font-display text-xs transiti
 export function DiaryComposer({ mode, entry, source = null, saveState, questionHistory = [], onCreate, onUpdate, onClose, onSaved }: Props) {
   const { user } = useUser()
   const accountId = user?.id
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Sofia'
+  const timezone = entry?.timezone ?? 'Europe/Sofia'
   const storageKey = accountId ? `stellaeum.diary.composer.v2.${accountId}.${mode}` : null
   const [draft, setDraft] = useState<DraftData>(() => entry ? draftFromEntry(entry) : newDraft(mode))
   const [localState, setLocalState] = useState<DiarySaveState>('idle')
@@ -385,7 +385,7 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
               <p className="mb-1 font-display text-lg text-slate-200">Как искаш да разгледаш тази тема?</p>
               <p className="mb-3 text-xs text-slate-500">{DIARY_TOPICS.find((item) => item.value === draft.focusTopic)?.label}</p>
               <div className="flex flex-wrap gap-2">
-                {CHECK_IN_DIRECTIONS.map((item) => <button key={item.value} type="button" onClick={() => chooseDirection(item.value)} className={`${chipClass} ${draft.direction === item.value ? 'border-amber-300/70 bg-amber-400/10 text-amber-200' : 'border-slate-500/25 text-slate-400'}`}>{item.label}</button>)}
+                {getCheckInDirections(draft.focusTopic, draft.mood).map((item) => <button key={item.value} type="button" onClick={() => chooseDirection(item.value)} className={`${chipClass} ${draft.direction === item.value ? 'border-amber-300/70 bg-amber-400/10 text-amber-200' : 'border-slate-500/25 text-slate-400'}`}>{item.label}</button>)}
               </div>
               <button type="button" onClick={() => setDraft((d) => ({ ...d, checkStep: 1 }))} className="mt-5 text-xs text-slate-500">← Назад</button>
             </div>

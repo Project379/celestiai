@@ -8,6 +8,8 @@ import { DiaryComposer, type ComposerMode } from './DiaryComposer'
 
 interface Props {
   entries: DiaryEntryV2[]
+  openedEntry?: DiaryEntryV2 | null
+  onCloseOpenedEntry?: () => void
   onCreate: (input: CreateDiaryEntryV2Input) => Promise<DiaryEntryV2>
   onDelete: (entry: DiaryEntryV2) => Promise<boolean>
   onUpdate: (entry: DiaryEntryV2, patch: Omit<UpdateDiaryEntryV2Input, 'revision'>) => Promise<DiaryEntryV2>
@@ -32,12 +34,12 @@ function entrySections(entry: DiaryEntryV2): { label?: string; text: string }[] 
   ]
 }
 
-export function DiaryHistory({ entries, onCreate, onDelete, onUpdate, onDateSelect, questionHistory }: Props) {
+export function DiaryHistory({ openedEntry, onCloseOpenedEntry, entries, onCreate, onDelete, onUpdate, onDateSelect, questionHistory }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const completed = entries.filter((entry) => entry.status === 'completed')
-  const selectedEntry = completed.find((entry) => entry.id === selectedId) ?? null
+  const selectedEntry = entries.find((entry) => entry.id === (openedEntry?.id ?? selectedId)) ?? openedEntry ?? null
   return (
     <section className="space-y-7">
       <DiaryCalendar entries={completed} onDateSelect={onDateSelect} />
@@ -57,12 +59,12 @@ export function DiaryHistory({ entries, onCreate, onDelete, onUpdate, onDateSele
         entry={selectedEntry}
         confirmDelete={confirmDelete === selectedEntry.id}
         isEditing={editingId === selectedEntry.id}
-        onClose={() => { setSelectedId(null); setEditingId(null); setConfirmDelete(null) }}
+        onClose={() => { setSelectedId(null); setEditingId(null); setConfirmDelete(null); onCloseOpenedEntry?.() }}
         onEdit={() => setEditingId(selectedEntry.id)}
         onCancelEdit={() => setEditingId(null)}
         onDelete={() => setConfirmDelete(selectedEntry.id)}
         onCancelDelete={() => setConfirmDelete(null)}
-        onConfirmDelete={() => void onDelete(selectedEntry).then((ok) => { if (ok) { setSelectedId(null); setConfirmDelete(null) } })}
+        onConfirmDelete={() => void onDelete(selectedEntry).then((ok) => { if (ok) { setSelectedId(null); setConfirmDelete(null); onCloseOpenedEntry?.() } })}
         onUpdate={onUpdate}
         onCreate={onCreate}
         questionHistory={questionHistory}
@@ -115,7 +117,7 @@ function DiaryEntryDialog({ entry, confirmDelete, isEditing, onClose, onEdit, on
       <div className="space-y-6">
         {entrySections(entry).filter((section) => section.text).map((section, index) => <div key={index}>{section.label && <p className="mb-2 text-xs text-amber-300/70">{section.label}</p>}<p className="whitespace-pre-wrap font-display text-[17px] leading-8 text-slate-200">{section.text}</p></div>)}
         {entry.topics.length > 0 && <p className="text-xs text-slate-500">{entry.topics.map((topic) => DIARY_TOPICS.find((item) => item.value === topic)?.label ?? topic).join(' · ')}</p>}
-        {entry.nextStep && <div className="rounded-2xl border border-violet-300/15 bg-violet-400/5 p-5"><p className="text-sm text-slate-200">{entry.nextStep.text}</p>{entry.nextStep.status === 'pending' && <div className="mt-4 flex flex-wrap gap-4 text-xs"><button onClick={() => void onUpdate(entry, { nextStep: { ...entry.nextStep!, status: 'done' } })} className="text-emerald-300">Готово</button><button onClick={() => void onUpdate(entry, { nextStep: { ...entry.nextStep!, status: 'carried' } })} className="text-amber-300">Все още искам</button><button onClick={() => void onUpdate(entry, { nextStep: { ...entry.nextStep!, status: 'let_go' } })} className="text-slate-400">Пускам го</button></div>}</div>}
+        {entry.nextStep && <div className="rounded-2xl border border-violet-300/15 bg-violet-400/5 p-5"><p className="text-sm text-slate-200">{entry.nextStep.text}</p>{entry.nextStep.status === 'pending' && <div className="mt-4 flex flex-wrap gap-4 text-xs"><button onClick={() => void onUpdate(entry, { nextStep: { ...entry.nextStep!, status: 'done' } })} className="text-emerald-300">Изпълних я</button><button onClick={() => void onUpdate(entry, { nextStep: { ...entry.nextStep!, status: 'carried' } })} className="text-amber-300">Все още искам</button><button onClick={() => void onUpdate(entry, { nextStep: { ...entry.nextStep!, status: 'let_go' } })} className="text-slate-400">Отказвам се от нея</button></div>}</div>}
         {entry.source?.path && <Link href={entry.source.path} className="inline-block text-xs text-violet-300">Към {entry.source.label} →</Link>}
         <ExploreLinks entry={entry} />
       </div>

@@ -38,7 +38,7 @@ export const diaryNextStepSchema = z.object({
 
 export const checkInIterationSchema = z.object({
   topic: diaryTopicSchema,
-  direction: z.enum(['express', 'understand', 'step']),
+  direction: z.enum(['express', 'understand', 'step', 'calm', 'support', 'appreciate']),
   questionId: z.string().max(80),
   question: z.string().max(500),
   answer: z.string().max(DIARY_TEXT_MAX),
@@ -55,7 +55,7 @@ export const checkInContentSchema = z.object({
   reflectionQuestionId: z.string().max(80).nullable(),
   reflectionQuestion: z.string().max(500).nullable(),
   reflectionAnswer: z.string().max(DIARY_TEXT_MAX),
-  direction: z.enum(['express', 'understand', 'step', 'finish']).nullable(),
+  direction: z.enum(['express', 'understand', 'step', 'calm', 'support', 'appreciate', 'finish']).nullable(),
   detailQuestion: z.string().max(500).nullable(),
   detailAnswer: z.string().max(DIARY_TEXT_MAX),
   iterations: z.array(checkInIterationSchema).max(8).optional(),

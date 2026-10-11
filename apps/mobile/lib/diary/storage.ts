@@ -40,3 +40,13 @@ export async function clearDiaryStorage(userId: string) {
   const prefix = `stellaeum.diary.`
   await AsyncStorage.multiRemove(keys.filter((key) => key.startsWith(prefix) && key.includes(`.${userId}`)))
 }
+
+export async function removeComposerDraft(userId: string, kind: string, entryId: string) {
+  const key = composerKey(userId, kind)
+  const stored = await AsyncStorage.getItem(key)
+  if (!stored) return
+  try {
+    const parsed = JSON.parse(stored)
+    if ((parsed.draft ?? parsed).id === entryId) await AsyncStorage.removeItem(key)
+  } catch { /* An unreadable draft is retained for recovery. */ }
+}

@@ -165,6 +165,15 @@ export async function createDiaryEntryV2(
     return { ok: false, error: 'INVALID_RELATED_ENTRY' }
   }
   const supabase = createCoreSupabaseClient()
+  if (input.kind === 'check_in') {
+    const { data: daily, error: dailyError } = await supabase.from('diary_entries').select('*')
+      .eq('user_id', userId).eq('kind', 'check_in').eq('entry_date', input.entryDate)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle()
+    if (dailyError) return { ok: false, error: 'WRITE_FAILED', message: dailyError.message }
+    if (daily) return daily.id === input.id
+      ? { ok: true, entry: rowToEntry(daily as DiaryRow), created: false }
+      : { ok: false, error: 'CONFLICT', current: rowToEntry(daily as DiaryRow) }
+  }
   const { data, error } = await supabase
     .from('diary_entries')
     .insert(createRow(userId, input))
@@ -181,6 +190,12 @@ export async function createDiaryEntryV2(
       .eq('user_id', userId)
       .maybeSingle()
     if (existing) return { ok: true, entry: rowToEntry(existing as DiaryRow), created: false }
+    if (input.kind === 'check_in') {
+      const { data: daily } = await supabase.from('diary_entries').select('*')
+        .eq('user_id', userId).eq('kind', 'check_in').eq('entry_date', input.entryDate)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (daily) return { ok: false, error: 'CONFLICT', current: rowToEntry(daily as DiaryRow) }
+    }
   }
   console.error('[core/diary/v2] create failed:', error)
   return { ok: false, error: 'WRITE_FAILED', message: error?.message ?? 'unknown' }
