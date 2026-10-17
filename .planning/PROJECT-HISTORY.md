@@ -408,3 +408,11 @@ deploy real and verified working; remaining before launch — a mobile
 visual-polish pass (Batch 8), the Apple/Google store enrolment clock (not
 yet started, gated on money), a Bulgarian lawyer's privacy policy (brief
 written, not sent), and the AI-model decision (open since April).
+
+---
+
+## 2026-10-07 — Ownership of the diary v2 branch
+
+**Founder ruling:** Toni owns integrating Petko's diary v2 branch, not Petko. The register rows that were Petko's branch checklist (`DIARY-REMINDER-EXPORT`, and the diary part of `MIGRATION-PROCESS-GAP`) are now owned by Toni. When the branch appears on GitHub, Claude Code does the integration audit and reports it to the founder: the migration file matches production, rebase on `main`, the deletion cascade, the GDPR export, the Gemini parameters, and `check:all`.
+
+To make that audit mostly self-checking, `check:all` now includes a data-coverage gate (every table with a user-owned column must be in the account-deletion path and the GDPR export, or on a commented allowlist) and a Gemini guard that scans all application code, including code that does not exist yet, for deprecated parameters and for model calls outside `generateFinalText`.

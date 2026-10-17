@@ -2,14 +2,39 @@ import type { GoogleLanguageModelOptions } from '@ai-sdk/google'
 import { generateText, Output } from 'ai'
 import { z } from 'zod'
 import { AI_MODEL, gemini, isUpstreamAiError } from './client'
-import { getAIStatusCode, isTransientAIError } from './errors'
+import { AiTimeoutError, getAIStatusCode, isTransientAIError } from './errors'
 import { sanitizeFinalAIOutput } from './final-output'
+
+/**
+ * GEMINI-SLOW-NO-FAILOVER (2026-10-07). Per-call timeouts: the primary model gets
+ * its own, then the fallback model gets ITS OWN, so the worst case for one
+ * generateFinalText() is primary + fallback, never "until the platform kills us".
+ *
+ * Numbers come from a live measurement (20 Oracle + 10 horoscope generations, one
+ * at a time, thinking level low, 2026-10-07): p50 4.1 s / p90 8.9 s / max 12.2 s for
+ * the Oracle, p50 3.1 s / p90 8.0 s / max 14.3 s for the horoscope. 25 s is ~1.75x the
+ * worst observed call and well above p90, so a legitimate slow-but-fine generation is
+ * not cut off; the 2026-10-01 incident (40-80 s calls) is. The fallback gets 20 s: it
+ * is the last chance before the user-visible 503, so it is shorter than the primary.
+ *
+ * Worst case per route request = 2 attempts (the routes' validation retry) x
+ * (25 + 20) s = 90 s, plus overhead, against maxDuration 300 s; test/ai/failover-bounds.test.ts
+ * pins this against the route sources. SMOKE_AI_TIMEOUT_MS is shorter on purpose: the
+ * smoke client gives up at 45 s and a silent fallback must surface as a failure fast.
+ */
+export const GEMINI_PRIMARY_TIMEOUT_MS = 25_000
+export const GEMINI_FALLBACK_TIMEOUT_MS = 20_000
+export const SMOKE_AI_TIMEOUT_MS = 15_000
 
 interface GenerateFinalTextOptions {
   fallbackModel?: string
   maxOutputTokens: number
   prompt: string
   system: string
+  /** Required, per call type: see GEMINI_THINKING_LEVEL. */
+  thinkingLevel: GeminiThinkingLevel
+  /** Per-call timeout override (defaults: GEMINI_PRIMARY_TIMEOUT_MS / GEMINI_FALLBACK_TIMEOUT_MS). */
+  timeoutMs?: { primary: number; fallback: number }
 }
 
 /**
@@ -46,12 +71,47 @@ interface GenerateFinalTextOptions {
  * the overflow itself. See .planning/PLACEHOLDERS.md THINKING-BUDGET-
  * SPIKE and THINKING-BUDGET-NOT-A-CAP.
  */
-export const GEMINI_FINAL_ONLY_OPTIONS = {
-  thinkingConfig: {
-    thinkingBudget: 300,
-    includeThoughts: false,
-  },
-} satisfies GoogleLanguageModelOptions
+/**
+ * 2026-10-07 — thinking_budget → thinking_level (Google deprecation notice:
+ * `thinking_budget` and the sampling params `temperature`, `top_p`, `top_k` return
+ * 400 on upcoming Gemini models). The two rows above are history: the numeric
+ * budget (300) was never a hard cap either (THINKING-BUDGET-NOT-A-CAP), and
+ * `thinkingLevel` is the supported control on current Gemini 3 models, so the call
+ * now sends ONLY `thinkingLevel` (never both — the API rejects the pair). Like the
+ * budget, a level is a preference the model may exceed, so the real protection
+ * against thinking starving the answer stays what it was: generous
+ * `maxOutputTokens` at the call site plus the retryable fallback in errors.ts.
+ * No temperature / topP / topK is passed anywhere (the AI SDK omits them when
+ * undefined — verified against the real request body in
+ * test/ai/gemini-request-params.test.ts).
+ *
+ * Level per call type (see .planning/PLACEHOLDERS.md THINKING-LEVEL-MIGRATION):
+ *   oracle     'low' — user-visible Bulgarian prose; measured by Gate 9 before/after.
+ *   horoscope  'low' — same prose task, shorter; kept equal to the Oracle so nothing
+ *                      about its quality changes in this migration.
+ *   smoke      'low' — a probe that must answer "ok". It cannot be 'minimal':
+ *                      probed live 2026-10-07, `gemini-3.7-flash` (the primary)
+ *                      answers 400 "Thinking level MINIMAL is not supported for this
+ *                      model" while the 3.6 fallback accepts it — so 'minimal' would
+ *                      make every call fail over to 3.6 and the smoke test would
+ *                      silently stop testing the primary model.
+ */
+export type GeminiThinkingLevel = 'low' | 'medium' | 'high' // 'minimal' deliberately excluded: 400 on the primary model
+
+export const GEMINI_THINKING_LEVEL = {
+  oracle: 'low',
+  horoscope: 'low',
+  smoke: 'low',
+} as const satisfies Record<string, GeminiThinkingLevel>
+
+export function geminiFinalOnlyOptions(thinkingLevel: GeminiThinkingLevel) {
+  return {
+    thinkingConfig: {
+      thinkingLevel,
+      includeThoughts: false,
+    },
+  } satisfies GoogleLanguageModelOptions
+}
 
 const finalTextSchema = z.object({
   content: z
@@ -77,16 +137,31 @@ interface GoogleUsageMetadata {
  * confirming the earlier €0.0022 estimate undershot. Still readable via
  * Vercel Runtime Logs by grepping "[AI usage]" for production numbers.
  */
-function logAiUsage(model: string, result: { providerMetadata?: Record<string, unknown> }): void {
+/** Thinking tokens above this share of maxOutputTokens are logged as a spike (2026-10-07). */
+export const THINKING_SPIKE_SHARE = 0.5
+
+function logAiUsage(
+  model: string,
+  result: { providerMetadata?: Record<string, unknown> },
+  maxOutputTokens: number,
+): void {
   const usage = (result.providerMetadata?.google as { usageMetadata?: GoogleUsageMetadata } | undefined)
     ?.usageMetadata
+  const thoughts = usage?.thoughtsTokenCount ?? null
   console.log('[AI usage]', JSON.stringify({
     model,
     promptTokenCount: usage?.promptTokenCount ?? null,
     candidatesTokenCount: usage?.candidatesTokenCount ?? null,
-    thoughtsTokenCount: usage?.thoughtsTokenCount ?? null,
+    thoughtsTokenCount: thoughts,
     totalTokenCount: usage?.totalTokenCount ?? null,
+    maxOutputTokens,
   }))
+  // Spikes must be visible without reading every line: grep "[AI thinking spike]" in Vercel
+  // Runtime Logs. A spike is not a failure by itself; it is the early warning for the
+  // starvation failure (thinking eats the ceiling and the answer is cut), HOROSCOPE-THINKING-STARVATION.
+  if (thoughts !== null && thoughts > maxOutputTokens * THINKING_SPIKE_SHARE) {
+    console.warn('[AI thinking spike]', JSON.stringify({ model, thoughtsTokenCount: thoughts, maxOutputTokens }))
+  }
 }
 
 /**
@@ -115,18 +190,41 @@ function logAiUsage(model: string, result: { providerMetadata?: Record<string, u
  * composed retry shape and worst-case call count.
  */
 export async function generateFinalText(options: GenerateFinalTextOptions) {
-  const { fallbackModel, ...callOptions } = options
+  const { fallbackModel, thinkingLevel, timeoutMs, ...callOptions } = options
+  const primaryTimeoutMs = timeoutMs?.primary ?? GEMINI_PRIMARY_TIMEOUT_MS
+  const fallbackTimeoutMs = timeoutMs?.fallback ?? GEMINI_FALLBACK_TIMEOUT_MS
 
-  async function callModel(model: string) {
-    const result = await generateText({
-      model: gemini(model),
-      ...callOptions,
-      maxRetries: 0,
-      output: Output.object({ schema: finalTextSchema }),
-      providerOptions: {
-        google: GEMINI_FINAL_ONLY_OPTIONS,
-      },
-    })
+  async function callModel(model: string, callTimeoutMs: number) {
+    // Own timer (not AbortSignal.timeout) so the timeout is observable and clearable:
+    // we know it was OUR deadline that fired, and no timer outlives a fast answer.
+    const controller = new AbortController()
+    let timedOut = false
+    const timer = setTimeout(() => {
+      timedOut = true
+      controller.abort(new AiTimeoutError(model, callTimeoutMs))
+    }, callTimeoutMs)
+
+    let result
+    try {
+      result = await generateText({
+        model: gemini(model),
+        ...callOptions,
+        maxRetries: 0,
+        abortSignal: controller.signal,
+        output: Output.object({ schema: finalTextSchema }),
+        providerOptions: {
+          google: geminiFinalOnlyOptions(thinkingLevel),
+        },
+      })
+    } catch (err) {
+      if (timedOut) {
+        console.warn('[AI] Model call timed out.', { model, timeoutMs: callTimeoutMs })
+        throw new AiTimeoutError(model, callTimeoutMs, { cause: err })
+      }
+      throw err
+    } finally {
+      clearTimeout(timer)
+    }
     // Log here, BEFORE forcing `.output` below — usage/providerMetadata
     // live on `result` as soon as generateText() resolves, regardless of
     // whether the lazy `.output` getter is about to throw
@@ -137,7 +235,7 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
     // the getter access below succeeds. Logging inside callModel also
     // means a primary-then-fallback sequence logs both attempts, not just
     // whichever one ultimately succeeded.
-    logAiUsage(model, result)
+    logAiUsage(model, result, callOptions.maxOutputTokens)
     void result.output
     return result
   }
@@ -145,7 +243,7 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
   let servedModel = AI_MODEL
   let result
   try {
-    result = await callModel(AI_MODEL)
+    result = await callModel(AI_MODEL, primaryTimeoutMs)
   } catch (primaryError) {
     if (
       !fallbackModel ||
@@ -167,7 +265,7 @@ export async function generateFinalText(options: GenerateFinalTextOptions) {
       statusCode: getAIStatusCode(primaryError),
     })
     servedModel = fallbackModel
-    result = await callModel(fallbackModel)
+    result = await callModel(fallbackModel, fallbackTimeoutMs)
   }
 
   const text = sanitizeFinalAIOutput(result.output.content)

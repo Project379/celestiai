@@ -265,7 +265,10 @@ async function checkSmoke() {
         `${summary} — ${failed.map((c) => `${c.name}: ${c.detail}`).join('; ')}`,
       )
     }
-    return record('GET /api/smoke', true, summary)
+    // Name the model that served the AI probe in the CI log (the route already FAILS the
+    // probe when the fallback served it; this makes a primary answer visible, not just "ai:ok").
+    const aiDetail = json.checks.find((c) => c.name === 'ai')?.detail
+    return record('GET /api/smoke', true, aiDetail ? `${summary} — ai: ${aiDetail}` : summary)
   } catch (err) {
     return record('GET /api/smoke', false, String(err))
   }

@@ -42,7 +42,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { validateReading } from '@/lib/ai/validate-reading'
-import { generateFinalText } from '@/lib/ai/generate-final-text'
+import { GEMINI_THINKING_LEVEL, generateFinalText, type GeminiThinkingLevel } from '@/lib/ai/generate-final-text'
 import { ORACLE_FALLBACK_MODEL } from '@/lib/ai/client'
 import { buildSystemPrompt } from '@/lib/oracle/prompts'
 
@@ -60,12 +60,19 @@ const FIXTURE = JSON.parse(
 const SYSTEM_PROMPT = buildSystemPrompt('general')
 
 async function generate(userPrompt: string): Promise<string> {
+  // Wall-clock per call (added 2026-10-07 for the thinking_level migration:
+  // before/after runs compare latency, and nothing else in the gate measured it).
+  // Includes the fallback attempt when the primary fails transiently.
+  const t0 = Date.now()
   const { text } = await generateFinalText({
     system: SYSTEM_PROMPT,
     prompt: userPrompt,
     maxOutputTokens: 2000, // matches the route — see THINKING-BUDGET-SPIKE fix, PLACEHOLDERS.md
     fallbackModel: ORACLE_FALLBACK_MODEL,
+    // GATE9_THINKING_LEVEL overrides the production level for A/B runs (2026-10-07).
+    thinkingLevel: (process.env.GATE9_THINKING_LEVEL as GeminiThinkingLevel | undefined) ?? GEMINI_THINKING_LEVEL.oracle,
   })
+  console.log('[gate9 call]', JSON.stringify({ ms: Date.now() - t0 }))
   return text
 }
 

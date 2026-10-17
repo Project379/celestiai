@@ -75,7 +75,10 @@ vi.mock('@stellaeum/astrology', () => ({
 // @/lib/ai/client is deliberately NOT mocked — this test exercises the
 // REAL isUpstreamAiError / isTransientAIError classifiers the route imports.
 const { generateFinalText } = vi.hoisted(() => ({ generateFinalText: vi.fn() }))
-vi.mock('@/lib/ai/generate-final-text', () => ({ generateFinalText }))
+vi.mock('@/lib/ai/generate-final-text', () => ({
+  GEMINI_THINKING_LEVEL: { oracle: 'low', horoscope: 'low', smoke: 'low' },
+  generateFinalText,
+}))
 
 import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { POST } from '@/app/api/horoscope/generate/route'
@@ -135,6 +138,21 @@ describe('POST /api/horoscope/generate — post-fallback AI failure (§0.8 + LLM
     expect(typeof body.error).toBe('string')
     expect(body.error.length).toBeGreaterThan(0)
     // An upstream/transport failure is classified — no Sentry noise.
+    expect(captureException).not.toHaveBeenCalled()
+  })
+
+  it('a primary+fallback TIMEOUT (AI_TimeoutError) degrades to the ratified 503 with no Sentry noise (GEMINI-SLOW-NO-FAILOVER)', async () => {
+    generateFinalText.mockRejectedValueOnce(
+      Object.assign(new Error('Gemini did not answer in time'), { name: 'AI_TimeoutError' }),
+    )
+    seed('chart-timeout')
+    const res = await POST(makeRequest('chart-timeout'))
+
+    expect(res.status).toBe(503)
+    expect(res.headers.get('Retry-After')).toBe('30')
+    const body = await res.json()
+    expect(body.code).toBe('AI_TEMPORARILY_UNAVAILABLE')
+    // A slow provider is a classified upstream condition, not a bug of ours.
     expect(captureException).not.toHaveBeenCalled()
   })
 

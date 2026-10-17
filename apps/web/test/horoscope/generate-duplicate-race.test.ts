@@ -87,6 +87,7 @@ vi.mock('@stellaeum/astrology', () => ({
 const generateFinalTextCallCount = vi.hoisted(() => ({ count: 0 }))
 
 vi.mock('@/lib/ai/generate-final-text', () => ({
+  GEMINI_THINKING_LEVEL: { oracle: 'low', horoscope: 'low', smoke: 'low' },
   generateFinalText: vi.fn(async () => {
     generateFinalTextCallCount.count += 1
     // Simulate real generation latency — long enough that a genuinely
