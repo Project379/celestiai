@@ -1,4 +1,24 @@
 import type { DiaryTopic } from './flow-types'
+import type { CheckInIteration, DiaryFeeling } from './v2'
+
+/** Include the answer on the current screen when the user explicitly saves. */
+export function getCompletedCheckInIterations(value: {
+  iterations: CheckInIteration[]
+  checkStep: number
+  focusTopic: DiaryTopic | null
+  direction: DiaryDirection | null
+  reflectionQuestionId: string | null
+  reflectionQuestion: string | null
+  reflectionAnswer: string
+  rejectedQuestionIds: string[]
+}): CheckInIteration[] {
+  if (value.checkStep !== 3 || !value.focusTopic || !value.direction || value.direction === 'finish' || !value.reflectionQuestionId || !value.reflectionQuestion || !value.reflectionAnswer.trim()) return value.iterations
+  return [...value.iterations, {
+    topic: value.focusTopic, direction: value.direction,
+    questionId: value.reflectionQuestionId, question: value.reflectionQuestion,
+    answer: value.reflectionAnswer.trim(), skippedQuestionIds: value.rejectedQuestionIds.slice(-10),
+  }]
+}
 
 export type DiaryDirection = 'express' | 'understand' | 'step' | 'calm' | 'support' | 'appreciate' | 'finish'
 
@@ -21,12 +41,24 @@ export interface DiaryReflectionQuestion {
 }
 
 export const DIARY_MOODS = [
-  { value: 1, label: 'Много тежко' },
-  { value: 2, label: 'Трудно' },
-  { value: 3, label: 'Смесено' },
-  { value: 4, label: 'Добре' },
-  { value: 5, label: 'Много добре' },
+  { value: 1, feeling: 'sad', label: 'Тъжно' },
+  { value: 2, feeling: 'anxious', label: 'Тревожно' },
+  { value: 3, feeling: 'mixed', label: 'Смесено' },
+  { value: 4, feeling: 'calm', label: 'Спокойно' },
+  { value: 5, feeling: 'joyful', label: 'Радостно' },
 ] as const
+
+export function getDiaryFeeling(entry: { content: unknown }): DiaryFeeling | null {
+  const feeling = (entry.content as { feeling?: unknown } | null)?.feeling
+  return DIARY_MOODS.find((item) => item.feeling === feeling)?.feeling ?? null
+}
+
+/** Older entries rated the day; do not reinterpret those ratings as explicit emotions. */
+export function getDiaryFeelingLabel(entry: { mood: number | null; content: unknown }): string | null {
+  const feeling = getDiaryFeeling(entry)
+  if (feeling) return DIARY_MOODS.find((item) => item.feeling === feeling)!.label
+  return entry.mood ? [null, 'Много тежък ден', 'Труден ден', 'Смесен ден', 'Добър ден', 'Много добър ден'][entry.mood] ?? null : null
+}
 
 export const DIARY_TOPICS: readonly { value: DiaryTopic; label: string }[] = [
   { value: 'work', label: 'Работа и учене' },
@@ -43,28 +75,34 @@ export const CHECK_IN_DIRECTIONS: readonly { value: DiaryDirection; label: strin
   { value: 'finish', label: 'Не сега' },
 ]
 
-export function getCheckInDirections(topic: DiaryTopic | null, mood: number | null) {
+export function getCheckInDirections(topic: DiaryTopic | null, mood: number | null, feeling?: DiaryFeeling | null) {
   const positive = mood !== null && mood >= 4
   const subject = topic === 'work' ? 'работата' : topic === 'relationships' ? 'отношенията' : topic === 'health' ? 'състоянието си' : topic === 'progress' ? 'напредъка си' : 'случилото се'
   return [
-    { value: 'express' as const, label: positive ? 'Да разкажа за хубавия момент' : 'Да споделя какво чувствам' },
+    { value: 'express' as const, label: feeling === 'anxious' ? 'Да споделя какво ме тревожи' : feeling === 'sad' ? 'Да разкажа какво ме натъжи' : feeling === 'calm' ? 'Да разкажа какво ми носи спокойствие' : positive ? 'Да разкажа за хубавия момент' : 'Да споделя какво чувствам' },
     { value: 'understand' as const, label: `Да разбера по-добре ${subject}` },
     { value: 'step' as const, label: positive ? 'Да запазя това, което ми помага' : 'Да избера малка промяна' },
     { value: 'calm' as const, label: 'Да намеря спокойствие' },
     { value: 'support' as const, label: 'Да помисля от каква подкрепа имам нужда' },
-    { value: 'appreciate' as const, label: 'Да забележа за какво съм благодарен/благодарна' },
+    { value: 'appreciate' as const, label: 'Да помисля за какво изпитвам благодарност' },
     { value: 'finish' as const, label: 'Да продължа към друга тема' },
   ]
 }
 
-export function getCheckInTopicPrompt(mood: number | null): string {
+export function getCheckInTopicPrompt(mood: number | null, feeling?: DiaryFeeling | null): string {
+  if (feeling === 'sad') return 'Какво те натъжи?'
+  if (feeling === 'anxious') return 'Какво те тревожи?'
+  if (feeling === 'calm') return 'Какво ти донесе спокойствие?'
+  if (feeling === 'joyful') return 'Какво те зарадва?'
   if (mood !== null && mood <= 2) return 'Какво те притеснява най-много?'
-  if (mood === 3) return 'Кое е най-силно в мислите ти?'
+  if (mood === 3) return 'Какво те занимава най-много?'
   if (mood !== null && mood >= 4) return 'На какво искаш да обърнеш внимание?'
-  return 'Какво е най-силно в мислите ти?'
+  return 'За какво искаш да поговориш със себе си?'
 }
 
-export function getCheckInAnotherPrompt(mood: number | null): string {
+export function getCheckInAnotherPrompt(mood: number | null, feeling?: DiaryFeeling | null): string {
+  if (feeling === 'sad') return 'Има ли още нещо, което ти тежи?'
+  if (feeling === 'anxious') return 'Има ли още нещо, което те тревожи?'
   return mood !== null && mood <= 3
     ? 'Притеснява ли те нещо друго?'
     : 'Има ли още нещо, върху което искаш да помислиш?'

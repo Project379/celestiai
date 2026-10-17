@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs'
 import {
   diaryEntryPageSchema,
   diaryEntryV2Schema,
+  DIARY_PAGE_SIZE,
   type CreateDiaryEntryV2Input,
   type DiaryEntryV2,
   type DiaryListQuery,
@@ -59,7 +60,7 @@ async function request(path: string, init?: RequestInit): Promise<unknown> {
 function mergeById(entries: DiaryEntryV2[], entry: DiaryEntryV2) {
   const found = entries.some((item) => item.id === entry.id)
   const next = found ? entries.map((item) => item.id === entry.id ? entry : item) : [entry, ...entries]
-  return next.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || b.id.localeCompare(a.id))
+  return next.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || b.id.localeCompare(a.id)).slice(0, DIARY_PAGE_SIZE)
 }
 
 export function useDiaryEntries(filters: Partial<DiaryListQuery> = {}) {
@@ -73,6 +74,8 @@ export function useDiaryEntries(filters: Partial<DiaryListQuery> = {}) {
   const [saveStates, setSaveStates] = useState<Record<string, DiarySaveState>>({})
   const [conflict, setConflict] = useState<DiaryConflict | null>(null)
   const flushing = useRef(false)
+  const loadVersion = useRef(0)
+  const [pagination, setPagination] = useState({ scope: '', cursors: [null] as (string | null)[], index: 0 })
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams()
@@ -81,6 +84,14 @@ export function useDiaryEntries(filters: Partial<DiaryListQuery> = {}) {
     }
     return params.toString()
   }, [filters])
+
+  const scope = `${userId}:${queryString}`
+  const pageIndex = pagination.scope === scope ? pagination.index : 0
+  const pageCursors = pagination.scope === scope ? pagination.cursors : [null]
+  const cursor = pageCursors[pageIndex] ?? null
+  useEffect(() => {
+    setPagination({ scope, cursors: [null], index: 0 })
+  }, [scope])
 
   const readQueue = useCallback((): PendingMutation[] => {
     if (!queueKey) return []
@@ -113,24 +124,28 @@ export function useDiaryEntries(filters: Partial<DiaryListQuery> = {}) {
     writeQueue(queue)
   }, [readQueue, writeQueue])
 
-  const load = useCallback(async (append = false) => {
+  const load = useCallback(async () => {
     if (!userId) return
+    const version = ++loadVersion.current
     setIsLoading(true)
+    setEntries([])
+    setNextCursor(null)
     try {
       const params = new URLSearchParams(queryString)
-      if (append && nextCursor) params.set('cursor', nextCursor)
+      params.set('limit', String(DIARY_PAGE_SIZE))
+      if (cursor) params.set('cursor', cursor)
       const page = diaryEntryPageSchema.parse(await request(`/api/diary/v2/entries?${params}`))
-      setEntries((current) => append
-        ? page.entries.reduce(mergeById, current)
-        : page.entries)
+      if (version !== loadVersion.current) return
+      setEntries(page.entries)
       setNextCursor(page.nextCursor)
       setError(null)
     } catch {
+      if (version !== loadVersion.current) return
       setError('Не успяхме да заредим дневника.')
     } finally {
-      setIsLoading(false)
+      if (version === loadVersion.current) setIsLoading(false)
     }
-  }, [nextCursor, queryString, userId])
+  }, [cursor, queryString, userId])
 
   const flushQueue = useCallback(async () => {
     if (!queueKey || flushing.current || !navigator.onLine) return
@@ -173,13 +188,14 @@ export function useDiaryEntries(filters: Partial<DiaryListQuery> = {}) {
 
   useEffect(() => {
     if (!userId) return
-    void flushQueue().finally(() => load(false))
-    const online = () => void flushQueue().then(() => load(false))
+    let active = true
+    void flushQueue().finally(() => { if (active) void load() })
+    const online = () => void flushQueue().then(() => { if (active) void load() })
     window.addEventListener('online', online)
-    return () => window.removeEventListener('online', online)
+    return () => { active = false; ++loadVersion.current; window.removeEventListener('online', online) }
     // Reload when the account or filters change; mutation callbacks handle their own cache updates.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, queryString])
+  }, [userId, queryString, cursor])
 
   const createEntry = useCallback(async (input: CreateDiaryEntryV2Input) => {
     const local = localEntry(input)
@@ -300,7 +316,15 @@ export function useDiaryEntries(filters: Partial<DiaryListQuery> = {}) {
   return {
     entries, nextCursor, isLoading, error, saveStates, conflict,
     createEntry, updateEntry, deleteEntry,
-    loadMore: () => load(true), refresh: () => load(false),
+    pageNumber: pageIndex + 1,
+    hasPreviousPage: pageIndex > 0,
+    nextPage: () => {
+      if (!isLoading && nextCursor) setPagination({ scope, cursors: [...pageCursors.slice(0, pageIndex + 1), nextCursor], index: pageIndex + 1 })
+    },
+    previousPage: () => {
+      if (!isLoading && pageIndex > 0) setPagination({ scope, cursors: pageCursors, index: pageIndex - 1 })
+    },
+    refresh: load,
     resolveWithServer, saveConflictAsNew, dismissConflict: () => setConflict(null),
   }
 }

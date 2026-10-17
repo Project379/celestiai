@@ -69,3 +69,7 @@ export function PersonTabIcon({ color, size = 24 }: TabIconProps) {
     </Svg>
   )
 }
+
+export function DiaryTabIcon({ color, size = 24 }: TabIconProps) {
+  return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={STROKE_WIDTH} strokeLinecap="round" strokeLinejoin="round"><Path d="M6 3h13v18H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM7 3v18M10 8h6M10 12h6" /></Svg>
+}

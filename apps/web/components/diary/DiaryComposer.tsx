@@ -1,12 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+
 import { ALL_LUNAR_PHASES, getLunarPhase, type LunarPhaseId } from '@stellaeum/core/moon-phase'
 import {
   DIARY_MOODS,
   DIARY_TOPICS,
   getCheckInDirections,
+  getDiaryFeeling,
+  getCompletedCheckInIterations,
   getCheckInAnotherPrompt,
   getCheckInTopicPrompt,
   selectReflectionQuestion,
@@ -18,10 +20,12 @@ import { getDiaryDate } from '@stellaeum/core/diary/time'
 import type {
   CreateDiaryEntryV2Input,
   CheckInIteration,
+  DiaryFeeling,
   DiaryEntryV2,
   UpdateDiaryEntryV2Input,
 } from '@stellaeum/core/diary/v2'
 import type { DiarySaveState } from '@/hooks/useDiaryEntries'
+import { DiaryUnsavedDialog } from './DiaryUnsavedDialog'
 
 export type ComposerMode = 'check_in' | 'note' | 'lunar_practice'
 
@@ -30,6 +34,7 @@ interface DraftData {
   mode: ComposerMode
   title: string
   mood: number | null
+  feeling: DiaryFeeling | null
   topics: CreateDiaryEntryV2Input['topics']
   focusTopic: CreateDiaryEntryV2Input['topics'][number] | null
   checkStep: number
@@ -47,13 +52,6 @@ interface DraftData {
   nextStep: string
 }
 
-interface StoredDraft {
-  accountId: string
-  baseRevision: number | null
-  pendingOperation: 'upsert'
-  draft: DraftData
-}
-
 interface Props {
   mode: ComposerMode
   entry?: DiaryEntryV2 | null
@@ -62,6 +60,7 @@ interface Props {
   questionHistory?: readonly DiaryQuestionHistoryItem[]
   onCreate: (input: CreateDiaryEntryV2Input) => Promise<DiaryEntryV2>
   onUpdate: (entry: DiaryEntryV2, patch: Omit<UpdateDiaryEntryV2Input, 'revision'>) => Promise<DiaryEntryV2>
+  closeRequestRef?: { current: (() => void) | null }
   onClose: () => void
   onSaved: (entry: DiaryEntryV2) => void
 }
@@ -69,23 +68,10 @@ interface Props {
 function newDraft(mode: ComposerMode): DraftData {
   const phase = getLunarPhase()
   return {
-    id: crypto.randomUUID(), mode, title: '', mood: null, topics: [], focusTopic: null, checkStep: 0,
+    id: crypto.randomUUID(), mode, title: '', mood: null, feeling: null, topics: [], focusTopic: null, checkStep: 0,
     iterations: [], reflectionQuestionId: null, reflectionQuestion: null, rejectedQuestionIds: [],
     reflectionAnswer: '', direction: null, detailAnswer: '', noteBody: '',
     phaseId: phase.id, variantIndex: 0, lunarAnswers: ['', '', ''], nextStep: '',
-  }
-}
-
-function normalizeStoredDraft(value: Partial<DraftData>, mode: ComposerMode): DraftData {
-  const normalized = { ...newDraft(mode), ...value, mode }
-  return {
-    ...normalized,
-    topics: Array.isArray(value.topics) ? value.topics : [],
-    iterations: Array.isArray(value.iterations) ? value.iterations : [],
-    rejectedQuestionIds: Array.isArray(value.rejectedQuestionIds) ? value.rejectedQuestionIds : [],
-    lunarAnswers: Array.isArray(value.lunarAnswers) && value.lunarAnswers.length === 3
-      ? value.lunarAnswers as [string, string, string]
-      : ['', '', ''],
   }
 }
 
@@ -101,7 +87,7 @@ function draftFromEntry(entry: DiaryEntryV2): DraftData {
       ? [{ topic: content.focusTopic ?? entry.topics[0] ?? 'other', direction: content.direction, questionId: content.reflectionQuestionId, question: content.reflectionQuestion, answer: content.reflectionAnswer, skippedQuestionIds: content.skippedQuestionIds ?? [] }]
       : []
     return {
-      ...newDraft('check_in'), id: entry.id, title: entry.title ?? '', mood: entry.mood,
+      ...newDraft('check_in'), id: entry.id, title: entry.title ?? '', mood: entry.mood, feeling: getDiaryFeeling(entry),
       topics: entry.topics, focusTopic: content.focusTopic ?? entry.topics[0] ?? null,
       checkStep: 4, iterations: content.iterations ?? legacyIteration, reflectionQuestionId: null,
       reflectionQuestion: content.reflectionQuestion ?? null, rejectedQuestionIds: content.skippedQuestionIds ?? [],
@@ -111,7 +97,7 @@ function draftFromEntry(entry: DiaryEntryV2): DraftData {
   }
   if (entry.kind === 'note') {
     return {
-      ...newDraft('note'), id: entry.id, title: entry.title ?? '', mood: entry.mood,
+      ...newDraft('note'), id: entry.id, title: entry.title ?? '', mood: entry.mood, feeling: getDiaryFeeling(entry),
       topics: entry.topics, noteBody: (entry.content as { body?: string }).body ?? '',
       nextStep: entry.nextStep?.text ?? '',
     }
@@ -122,7 +108,7 @@ function draftFromEntry(entry: DiaryEntryV2): DraftData {
   const promptId = entry.promptId ?? content.promptId ?? `${entry.phaseId ?? 'new'}:0`
   const variantIndex = Number(promptId.split(':').at(-1)) || 0
   return {
-    ...newDraft('lunar_practice'), id: entry.id, title: entry.title ?? '', mood: entry.mood,
+    ...newDraft('lunar_practice'), id: entry.id, title: entry.title ?? '', mood: entry.mood, feeling: getDiaryFeeling(entry),
     topics: entry.topics, phaseId: (entry.phaseId ?? 'new') as LunarPhaseId,
     variantIndex, lunarAnswers: [
       content.answers?.[0] ?? (content as { intentions?: string[] }).intentions?.[0] ?? '',
@@ -143,39 +129,15 @@ function hasMeaningfulContent(draft: DraftData) {
 const inputClass = 'w-full border-b border-amber-300/30 bg-transparent px-0 py-2 font-display text-[15px] leading-7 text-slate-100 outline-none placeholder:text-slate-600 focus:border-amber-300/70'
 const chipClass = 'rounded-full border px-3 py-1.5 font-display text-xs transition-colors'
 
-export function DiaryComposer({ mode, entry, source = null, saveState, questionHistory = [], onCreate, onUpdate, onClose, onSaved }: Props) {
-  const { user } = useUser()
-  const accountId = user?.id
+export function DiaryComposer({ mode, entry, source = null, questionHistory = [], onCreate, onUpdate, onClose, onSaved, closeRequestRef }: Props) {
   const timezone = entry?.timezone ?? 'Europe/Sofia'
-  const storageKey = accountId ? `stellaeum.diary.composer.v2.${accountId}.${mode}` : null
   const [draft, setDraft] = useState<DraftData>(() => entry ? draftFromEntry(entry) : newDraft(mode))
   const [localState, setLocalState] = useState<DiarySaveState>('idle')
+  const [showClosePrompt, setShowClosePrompt] = useState(false)
   const serverEntry = useRef<DiaryEntryV2 | null>(entry ?? null)
-  const hydratedEntryId = useRef<string | null>(entry?.id ?? null)
-  const saveChain = useRef(Promise.resolve())
-  const lastQueued = useRef('')
-  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    if (entry) {
-      if (hydratedEntryId.current === entry.id) return
-      const next = draftFromEntry(entry)
-      setDraft(next)
-      serverEntry.current = entry
-      hydratedEntryId.current = entry.id
-      return
-    }
-    hydratedEntryId.current = null
-    if (!storageKey) return
-    try {
-      const stored = localStorage.getItem(storageKey)
-      if (stored) {
-        const parsed = JSON.parse(stored) as DraftData | StoredDraft
-        setDraft(normalizeStoredDraft('draft' in parsed ? parsed.draft : parsed, mode))
-      }
-      else setDraft(newDraft(mode))
-    } catch { setDraft(newDraft(mode)) }
-  }, [entry, mode, storageKey])
+  const initialSnapshot = useRef(JSON.stringify(draft))
+  const saving = useRef(false)
+  const hasChanges = JSON.stringify(draft) !== initialSnapshot.current
 
   const prompt = useMemo(
     () => getManifestPromptSelection(draft.phaseId, 0, draft.variantIndex),
@@ -196,14 +158,14 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
       nextStep,
     }
     if (value.mode === 'note') {
-      return { ...common, kind: 'note', content: { version: 1, body: value.noteBody }, phaseId: null, phaseName: null, promptId: null, promptVersion: null }
+      return { ...common, kind: 'note', content: { version: 1, feeling: value.feeling, body: value.noteBody }, phaseId: null, phaseName: null, promptId: null, promptVersion: null }
     }
     if (value.mode === 'lunar_practice') {
       const phase = ALL_LUNAR_PHASES.find((item) => item.id === value.phaseId)!
       return {
         ...common, kind: 'lunar_practice',
         content: {
-          version: 1, promptId: selected.id, promptVersion: 1,
+          version: 1, feeling: value.feeling, promptId: selected.id, promptVersion: 1,
           heading: selected.prompt.heading, lead: selected.prompt.lead,
           fieldLabels: selected.prompt.fieldLabels, answers: value.lunarAnswers,
         },
@@ -211,11 +173,12 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
         promptId: selected.id, promptVersion: 1,
       }
     }
-    const lastIteration = value.iterations.at(-1)
+    const iterations = getCompletedCheckInIterations(value)
+    const lastIteration = iterations.at(-1)
     return {
       ...common, kind: 'check_in',
       content: {
-        version: 1, flowVersion: 'check-in-v3', currentStep: status === 'completed' ? 'close' : value.checkStep === 0 ? 'mood' : value.checkStep === 1 ? 'topic' : value.checkStep === 2 ? 'direction' : value.checkStep === 3 ? 'reflection' : 'another',
+        version: 1, feeling: value.feeling, flowVersion: 'check-in-v3', currentStep: status === 'completed' ? 'close' : value.checkStep === 0 ? 'mood' : value.checkStep === 1 ? 'topic' : value.checkStep === 2 ? 'direction' : value.checkStep === 3 ? 'reflection' : 'another',
         focusTopic: value.focusTopic, questionVersion: 1,
         skippedQuestionIds: (lastIteration?.skippedQuestionIds ?? value.rejectedQuestionIds).slice(-10),
         reflectionQuestionId: lastIteration?.questionId ?? value.reflectionQuestionId,
@@ -223,7 +186,7 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
         reflectionAnswer: lastIteration?.answer ?? value.reflectionAnswer,
         direction: lastIteration?.direction ?? value.direction,
         detailQuestion: null, detailAnswer: value.detailAnswer,
-        iterations: value.iterations,
+        iterations,
       },
       phaseId: null, phaseName: null, promptId: null, promptVersion: null,
     }
@@ -256,7 +219,7 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
       reflectionQuestion: question?.text ?? null,
       rejectedQuestionIds: excludeQuestionIds,
       reflectionAnswer: preserveAnswer && direction === current.direction ? current.reflectionAnswer : '',
-      nextStep: preserveAnswer && direction === 'step' && direction === current.direction ? current.reflectionAnswer : '',
+
     }))
   }
 
@@ -320,43 +283,34 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
     return saved
   }, [buildInput, onCreate, onUpdate])
 
-  useEffect(() => {
-    if (!storageKey || !hasMeaningfulContent(draft)) return
-    localStorage.setItem(storageKey, JSON.stringify({
-      accountId: accountId!,
-      baseRevision: serverEntry.current?.revision ?? null,
-      pendingOperation: 'upsert',
-      draft,
-    } satisfies StoredDraft))
-    setLocalState('saved-device')
-    const snapshot = JSON.stringify(draft)
-    if (snapshot === lastQueued.current) return
-    if (autoTimer.current) clearTimeout(autoTimer.current)
-    autoTimer.current = setTimeout(() => {
-      lastQueued.current = snapshot
-      const value = JSON.parse(snapshot) as DraftData
-      saveChain.current = saveChain.current
-        .then(() => persist(value, serverEntry.current?.status === 'completed' ? 'completed' : 'draft'))
-        .then(() => undefined)
-        .catch(() => setLocalState('attention'))
-    }, 900)
-    return () => { if (autoTimer.current) clearTimeout(autoTimer.current) }
-  }, [accountId, draft, persist, storageKey])
-
   const complete = async () => {
-    if (autoTimer.current) clearTimeout(autoTimer.current)
+    if (saving.current) return
+    saving.current = true
     setLocalState('saving')
-    await saveChain.current
     try {
       const saved = await persist(draft, 'completed')
-      if (storageKey) localStorage.removeItem(storageKey)
+      initialSnapshot.current = JSON.stringify(draft)
       onSaved(saved)
     } catch { setLocalState('attention') }
+    finally { saving.current = false }
   }
 
+  const requestClose = () => {
+    if (saving.current) return
+    if (!hasChanges) { onClose(); return }
+    setShowClosePrompt(true)
+  }
+  useImperativeHandle(closeRequestRef, () => requestClose)
+  useEffect(() => {
+    if (!hasChanges) return
+    const beforeUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = '' }
+    window.addEventListener('beforeunload', beforeUnload)
+    return () => window.removeEventListener('beforeunload', beforeUnload)
+  }, [hasChanges])
+
   const canComplete = hasMeaningfulContent(draft)
-  const shownState = saveState ?? localState
-  const stateLabel = shownState === 'saving' ? 'Запазване…' : shownState === 'saved' ? 'Запазено' : shownState === 'saved-device' ? 'Запазено на устройството' : shownState === 'attention' ? 'Нуждае се от внимание' : ''
+  const shownState = localState
+  const stateLabel = shownState === 'saving' ? 'Запазване…' : shownState === 'saved' ? 'Запазено' : shownState === 'attention' ? 'Не успяхме да запазим. Опитай отново.' : hasChanges ? 'Незапазени промени' : ''
 
   return (
     <section className="rounded-2xl border border-slate-300/10 bg-slate-950/35 p-5 sm:p-7">
@@ -364,7 +318,7 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
         <h2 className="font-display text-xl text-slate-100">
           {mode === 'check_in' ? 'Проверка със себе си' : mode === 'note' ? 'Свободен запис' : 'Лунен дневник'}
         </h2>
-        <button type="button" onClick={onClose} className="text-sm text-slate-400 hover:text-slate-200">Затвори</button>
+        <button type="button" onClick={requestClose} className="text-sm text-slate-400 hover:text-slate-200">Затвори</button>
       </div>
 
       {mode === 'check_in' && (
@@ -372,11 +326,11 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
           <p className="text-xs uppercase tracking-[0.18em] text-slate-600">Размисъл {Math.min(draft.iterations.length + 1, 8)}</p>
           {draft.checkStep === 0 && <div>
             <p className="mb-3 font-display text-lg text-slate-200">Как се чувстваш днес?</p>
-            <div className="flex flex-wrap gap-2">{DIARY_MOODS.map((item) => <button key={item.value} type="button" onClick={() => setDraft((d) => ({ ...d, mood: item.value }))} className={`${chipClass} ${draft.mood === item.value ? 'border-amber-300/70 bg-amber-400/10 text-amber-200' : 'border-slate-500/25 text-slate-400'}`}>{item.label}</button>)}</div>
+            <div className="flex flex-wrap gap-2">{DIARY_MOODS.map((item) => <button key={item.value} type="button" onClick={() => setDraft((d) => ({ ...d, mood: item.value, feeling: item.feeling }))} className={`${chipClass} ${draft.feeling === item.feeling ? 'border-amber-300/70 bg-amber-400/10 text-amber-200' : 'border-slate-500/25 text-slate-400'}`}>{item.label}</button>)}</div>
             <div className="mt-6 flex gap-5"><button type="button" disabled={draft.mood === null} onClick={() => setDraft((d) => ({ ...d, checkStep: 1 }))} className="text-sm text-amber-300 disabled:opacity-40">Продължи →</button><button type="button" onClick={() => setDraft((d) => ({ ...d, checkStep: 1 }))} className="text-xs text-slate-500">Пропусни</button></div>
           </div>}
           {draft.checkStep === 1 && <div>
-            <p className="mb-3 font-display text-lg text-slate-200">{getCheckInTopicPrompt(draft.mood)}</p>
+            <p className="mb-3 font-display text-lg text-slate-200">{getCheckInTopicPrompt(draft.mood, draft.feeling)}</p>
             <div className="flex flex-wrap gap-2">{DIARY_TOPICS.map((topic) => <button key={topic.value} type="button" onClick={() => setDraft((current) => ({ ...current, focusTopic: topic.value, topics: current.topics.includes(topic.value) ? current.topics : [...current.topics, topic.value], checkStep: 2 }))} className={`${chipClass} border-slate-500/25 text-slate-300 hover:border-violet-300/50`}>{topic.label}</button>)}</div>
             {draft.iterations.length === 0 && <button type="button" onClick={() => setDraft((d) => ({ ...d, checkStep: 0 }))} className="mt-5 text-xs text-slate-500">← Назад</button>}
           </div>}
@@ -385,7 +339,7 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
               <p className="mb-1 font-display text-lg text-slate-200">Как искаш да разгледаш тази тема?</p>
               <p className="mb-3 text-xs text-slate-500">{DIARY_TOPICS.find((item) => item.value === draft.focusTopic)?.label}</p>
               <div className="flex flex-wrap gap-2">
-                {getCheckInDirections(draft.focusTopic, draft.mood).map((item) => <button key={item.value} type="button" onClick={() => chooseDirection(item.value)} className={`${chipClass} ${draft.direction === item.value ? 'border-amber-300/70 bg-amber-400/10 text-amber-200' : 'border-slate-500/25 text-slate-400'}`}>{item.label}</button>)}
+                {getCheckInDirections(draft.focusTopic, draft.mood, draft.feeling).map((item) => <button key={item.value} type="button" onClick={() => chooseDirection(item.value)} className={`${chipClass} ${draft.direction === item.value ? 'border-amber-300/70 bg-amber-400/10 text-amber-200' : 'border-slate-500/25 text-slate-400'}`}>{item.label}</button>)}
               </div>
               <button type="button" onClick={() => setDraft((d) => ({ ...d, checkStep: 1 }))} className="mt-5 text-xs text-slate-500">← Назад</button>
             </div>
@@ -399,8 +353,8 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
           )}
           {draft.checkStep === 4 && <div>
             {draft.iterations.length > 0 && <div className="mb-8 space-y-6"><p className="text-xs uppercase tracking-[0.18em] text-slate-600">Записани размисли</p>{draft.iterations.map((iteration, index) => <label key={`${iteration.questionId}:${index}`} className="block"><span className="font-display text-sm text-slate-300">{iteration.question}</span><textarea className={`${inputClass} mt-2 min-h-20 resize-y`} value={iteration.answer} onChange={(event) => updateIterationAnswer(index, event.target.value)} maxLength={20_000} /></label>)}</div>}
-            <p className="font-display text-lg text-slate-200">{getCheckInAnotherPrompt(draft.mood)}</p>
-            <div className="mt-5 flex flex-wrap gap-3">{draft.iterations.length < 8 && <button type="button" onClick={startAnotherIteration} className="rounded-full border border-violet-300/35 px-4 py-2 text-sm text-violet-200">Добави още нещо</button>}<button type="button" disabled={!canComplete || shownState === 'saving'} onClick={() => void complete()} className="rounded-full border border-amber-300/40 px-5 py-2 text-sm text-amber-200 disabled:opacity-40">Готово</button></div>
+            <p className="font-display text-lg text-slate-200">{getCheckInAnotherPrompt(draft.mood, draft.feeling)}</p>
+            <div className="mt-5 flex flex-wrap gap-3">{draft.iterations.length < 8 && <button type="button" onClick={startAnotherIteration} className="rounded-full border border-violet-300/35 px-4 py-2 text-sm text-violet-200">Добави още нещо</button>}</div>
           </div>}
         </div>
       )}
@@ -435,8 +389,9 @@ export function DiaryComposer({ mode, entry, source = null, saveState, questionH
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-slate-300/10 pt-5">
         <span className={`text-xs ${shownState === 'attention' ? 'text-rose-300' : 'text-slate-500'}`}>{stateLabel}</span>
-        {mode !== 'check_in' && <button type="button" disabled={!canComplete || shownState === 'saving'} onClick={() => void complete()} className="rounded-full border border-amber-300/40 px-5 py-2 text-sm text-amber-200 disabled:opacity-40">Завърши</button>}
+        <button type="button" disabled={!canComplete || shownState === 'saving'} onClick={() => void complete()} className="rounded-full border border-amber-300/40 px-5 py-2 text-sm text-amber-200 disabled:opacity-40">Запази</button>
       </div>
+      {showClosePrompt && <DiaryUnsavedDialog canSave={canComplete} saving={shownState === 'saving'} failed={shownState === 'attention'} onSave={() => void complete()} onDiscard={onClose} onContinue={() => setShowClosePrompt(false)} />}
     </section>
   )
 }
@@ -446,5 +401,5 @@ function TopicPicker({ draft, setDraft }: { draft: DraftData; setDraft: Dispatch
 }
 
 function MoodAndTopics({ draft, setDraft }: { draft: DraftData; setDraft: Dispatch<SetStateAction<DraftData>> }) {
-  return <div className="space-y-5"><div><p className="mb-3 font-display text-sm text-slate-300">Настроение (по желание)</p><div className="flex flex-wrap gap-2">{DIARY_MOODS.map((mood) => <button key={mood.value} type="button" onClick={() => setDraft((d) => ({ ...d, mood: mood.value }))} className={`${chipClass} ${draft.mood === mood.value ? 'border-amber-300/70 text-amber-200' : 'border-slate-500/25 text-slate-400'}`}>{mood.value}</button>)}</div></div><TopicPicker draft={draft} setDraft={setDraft} /></div>
+  return <div className="space-y-5"><div><p className="mb-3 font-display text-sm text-slate-300">Как се чувстваш? (по желание)</p><div className="flex flex-wrap gap-2">{DIARY_MOODS.map((mood) => <button key={mood.value} type="button" onClick={() => setDraft((d) => ({ ...d, mood: mood.value, feeling: mood.feeling }))} className={`${chipClass} ${draft.feeling === mood.feeling ? 'border-amber-300/70 text-amber-200' : 'border-slate-500/25 text-slate-400'}`}>{mood.label}</button>)}</div></div><TopicPicker draft={draft} setDraft={setDraft} /></div>
 }

@@ -39,6 +39,7 @@
     "./diary/v2": "./src/diary/v2.ts",
     "./diary/flow": "./src/diary/flow.ts",
     "./diary/time": "./src/diary/time.ts",
+    "./diary/review": "./src/diary/review.ts",
     "./oracle/planet-parser": "./src/oracle/planet-parser.ts",
     "./recommendations/schemas": "./src/recommendations/schemas.ts",
     "./recommendations/ranking": "./src/recommendations/ranking.ts",

@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 import { useUser } from '@clerk/expo'
 import * as Crypto from 'expo-crypto'
-import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   diaryEntryPageSchema,
   diaryEntryV2Schema,
+  DIARY_PAGE_SIZE,
   type CreateDiaryEntryV2Input,
   type DiaryEntryPage,
   type DiaryEntryV2,
@@ -32,34 +33,42 @@ export function useDiaryEntriesV2(filters: Partial<DiaryListQuery> = {}) {
   const [conflict, setConflict] = useState<MobileDiaryConflict | null>(null)
   const flushing = useRef(false)
   const serializedFilters = useMemo(() => JSON.stringify(filters), [filters])
-  const queryKey = useMemo(() => ['diary-v2', userId, serializedFilters] as const, [serializedFilters, userId])
+  const scope = `${userId}:${serializedFilters}`
+  const [pagination, setPagination] = useState({ scope: '', cursors: [null] as (string | null)[], index: 0 })
+  const pageIndex = pagination.scope === scope ? pagination.index : 0
+  const pageCursors = pagination.scope === scope ? pagination.cursors : [null]
+  const cursor = pageCursors[pageIndex] ?? null
+  useEffect(() => {
+    setPagination({ scope, cursors: [null], index: 0 })
+  }, [scope])
+  const queryKey = useMemo(() => ['diary-v2', userId, serializedFilters, cursor] as const, [serializedFilters, userId, cursor])
 
-  const query = useInfiniteQuery({
+  const query = useQuery({
     queryKey,
     enabled: Boolean(userId),
-    initialPageParam: null as string | null,
-    queryFn: async ({ pageParam }) => {
+    gcTime: 0,
+    queryFn: async () => {
       const params = new URLSearchParams()
       for (const [key, value] of Object.entries(filters)) if (value !== undefined && value !== '') params.set(key, String(value))
-      if (pageParam) params.set('cursor', pageParam)
+      params.set('limit', String(DIARY_PAGE_SIZE))
+      if (cursor) params.set('cursor', cursor)
       return diaryEntryPageSchema.parse(await apiFetch(`/api/diary/v2/entries?${params}`))
     },
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   })
 
-  const entries = useMemo(() => query.data?.pages.flatMap((page) => page.entries) ?? [], [query.data])
+  const entries = useMemo(() => query.data?.entries ?? [], [query.data])
 
   const updateCache = useCallback((entry: DiaryEntryV2 | null, removeId?: string) => {
-    queryClient.setQueryData<InfiniteData<DiaryEntryPage>>(queryKey, (current) => {
+    queryClient.setQueryData<DiaryEntryPage>(queryKey, (current) => {
       if (!current) return current
-      const pages = current.pages.map((page, pageIndex) => ({
-        ...page,
-        entries: page.entries
+      return {
+        ...current,
+        entries: current.entries
           .filter((item) => item.id !== removeId && item.id !== entry?.id)
-          .concat(entry && pageIndex === 0 ? [entry] : [])
-          .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || b.id.localeCompare(a.id)),
-      }))
-      return { ...current, pages }
+          .concat(entry ? [entry] : [])
+          .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || b.id.localeCompare(a.id))
+          .slice(0, DIARY_PAGE_SIZE),
+      }
     })
   }, [queryClient, queryKey])
 
@@ -212,7 +221,16 @@ export function useDiaryEntriesV2(filters: Partial<DiaryListQuery> = {}) {
     entries, isLoading: query.isPending, error: query.error, saveStates, conflict,
     createEntry, updateEntry, deleteEntry, resolveWithServer, saveConflictAsNew,
     dismissConflict: () => setConflict(null), flushQueue,
-    hasNextPage: query.hasNextPage, fetchNextPage: query.fetchNextPage,
+    pageNumber: pageIndex + 1,
+    isFetching: query.isFetching,
+    hasNextPage: Boolean(query.data?.nextCursor),
+    hasPreviousPage: pageIndex > 0,
+    nextPage: () => {
+      if (!query.isFetching && query.data?.nextCursor) setPagination({ scope, cursors: [...pageCursors.slice(0, pageIndex + 1), query.data.nextCursor], index: pageIndex + 1 })
+    },
+    previousPage: () => {
+      if (!query.isFetching && pageIndex > 0) setPagination({ scope, cursors: pageCursors, index: pageIndex - 1 })
+    },
     refresh: query.refetch,
   }
 }

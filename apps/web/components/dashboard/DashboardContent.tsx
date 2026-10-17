@@ -225,8 +225,8 @@ export function DashboardContent({
           className="group flex items-center justify-between rounded-2xl border border-amber-300/15 bg-amber-400/[0.04] px-5 py-4 transition-colors hover:border-amber-300/35"
         >
           <div>
-            <p className="font-display text-base text-slate-200">Как си след днешното?</p>
-            <p className="mt-1 text-xs text-slate-500">Кратка проверка със себе си</p>
+            <p className="font-display text-base text-slate-200">Как се чувстваш днес?</p>
+            <p className="mt-1 text-xs text-slate-500">Отдели няколко минути за себе си</p>
           </div>
           <span className="text-amber-300 transition-transform group-hover:translate-x-1">→</span>
         </Link>

@@ -1,4 +1,5 @@
 import type { DiaryEntryV2 } from './v2'
+import { getDiaryFeelingLabel } from './flow'
 
 const BOM = String.fromCharCode(0xfeff)
 
@@ -45,7 +46,7 @@ export function buildFullDiaryMarkdown(entries: DiaryEntryV2[], exportedAt = new
       entry.kind === 'note' ? 'Свободен запис' : 'Лунен дневник'
     )
     const metadata = [
-      entry.mood ? `Настроение: ${entry.mood}/5` : null,
+      getDiaryFeelingLabel(entry),
       entry.topics.length ? `Теми: ${entry.topics.join(', ')}` : null,
       entry.status === 'draft' ? 'Чернова' : null,
     ].filter(Boolean)

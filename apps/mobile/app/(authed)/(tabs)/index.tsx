@@ -649,10 +649,10 @@ export default function DnesScreen() {
         >
           <View>
             <Text style={{ fontFamily: font.displaySemibold, fontSize: 16, color: color.text }}>
-              Как си след днешното?
+              Как се чувстваш днес?
             </Text>
             <Text style={{ marginTop: 4, fontFamily: font.body, fontSize: 13, color: color.faint }}>
-              Кратка проверка със себе си
+              Отдели няколко минути за себе си
             </Text>
           </View>
           <Text style={{ color: color.bronzeText }}>→</Text>

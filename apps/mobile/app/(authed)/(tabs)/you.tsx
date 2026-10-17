@@ -1,5 +1,5 @@
-import { useUser } from '@clerk/expo'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { useClerk, useUser } from '@clerk/expo'
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ZODIAC_SIGNS_BG } from '@stellaeum/astrology/client'
@@ -11,6 +11,7 @@ import { useFirstChart } from '@/hooks/useFirstChart'
 import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import { getDisplayName } from '@/lib/clerk/displayName'
 import { hapticSelect } from '@/lib/haptics'
+import { clearDiaryStorage } from '@/lib/diary/storage'
 
 // Systemic navbar-clearance rule (2026-07-27, audit) — see rhythm.tsx's
 // matching comment; same flat-120 gap found and fixed here.
@@ -25,7 +26,7 @@ const TAB_BAR_CLEARANCE = 52
 // P.8/P.10/P.11) populate the destination content.
 const BASE_SECTIONS = [
   { label: 'Кристали',    hint: 'месечни прозорци + дневна серия', route: '/you/crystals' as const        },
-  { label: 'Дневник',     hint: 'лунен дневник — по три реда',     route: '/rhythm/journal' as const       },
+  { label: 'Дневник',     hint: 'проверки, размисли и свободни записи', route: '/diary' as const          },
   { label: 'Ръководство', hint: 'история, планети, аспекти, лунни фази', route: '/you/guide' as const     },
   { label: 'Премиум',     hint: 'абонамент и плащане',             route: '/you/premium' as const          },
   { label: 'Настройки',   hint: 'акаунт, поверителност, данни',    route: '/you/settings' as const         },
@@ -67,6 +68,7 @@ function getBigThreeLabel(
 export default function YouScreen() {
   const { push } = useGuardedNavigation()
   const { user } = useUser()
+  const { signOut } = useClerk()
   const firstChart = useFirstChart()
   const chart = useChart(firstChart.data?.id)
   const insets = useSafeAreaInsets()
@@ -120,6 +122,13 @@ export default function YouScreen() {
             </Pressable>
           ))}
         </View>
+
+        <Pressable accessibilityRole="button" onPress={() => Alert.alert('Изход от профила', 'Наистина ли искаш да излезеш?', [
+          { text: 'Отказ', style: 'cancel' },
+          { text: 'Изход', style: 'destructive', onPress: () => {
+            void (user?.id ? clearDiaryStorage(user.id) : Promise.resolve()).then(() => signOut()).catch(() => Alert.alert('Изход', 'Не успяхме да излезем от профила. Опитай отново.'))
+          } },
+        ])} style={({ pressed }) => pressFeedback(pressed)} className="border-t border-slate-800/60 py-5"><Text style={{ fontFamily: font.bodyMedium }} className="text-[13px] text-slate-400">Изход от профила</Text></Pressable>
 
       </ScrollView>
     </SafeAreaView>

@@ -3,6 +3,9 @@ import { z } from 'zod'
 export const DIARY_TIMEZONE_DEFAULT = 'Europe/Sofia'
 export const DIARY_CONTENT_VERSION = 1
 export const DIARY_TEXT_MAX = 20_000
+export const DIARY_PAGE_SIZE = 20
+export const diaryFeelingSchema = z.enum(['sad', 'anxious', 'mixed', 'calm', 'joyful'])
+export type DiaryFeeling = z.infer<typeof diaryFeelingSchema>
 
 export const diaryEntryKindSchema = z.enum([
   'legacy_lunar',
@@ -47,6 +50,7 @@ export const checkInIterationSchema = z.object({
 
 export const checkInContentSchema = z.object({
   version: z.literal(DIARY_CONTENT_VERSION),
+  feeling: diaryFeelingSchema.nullable().optional(),
   flowVersion: z.enum(['check-in-v1', 'check-in-v2', 'check-in-v3']),
   currentStep: z.enum(['mood', 'topic', 'reflection', 'direction', 'another', 'close']),
   focusTopic: diaryTopicSchema.nullable().optional(),
@@ -63,6 +67,7 @@ export const checkInContentSchema = z.object({
 
 export const noteContentSchema = z.object({
   version: z.literal(DIARY_CONTENT_VERSION),
+  feeling: diaryFeelingSchema.nullable().optional(),
   body: z.string().max(DIARY_TEXT_MAX),
 })
 
@@ -74,6 +79,7 @@ const lunarAnswersSchema = z.tuple([
 
 export const lunarPracticeContentSchema = z.object({
   version: z.literal(DIARY_CONTENT_VERSION),
+  feeling: diaryFeelingSchema.nullable().optional(),
   promptId: z.string().max(100),
   promptVersion: z.literal(1),
   heading: z.string().max(200),
@@ -202,6 +208,7 @@ export interface DiaryWeeklySummary {
   to: string
   entryCount: number
   moods: Record<string, number>
+  feelings?: Record<string, number>
   topics: Record<string, number>
   practices: Record<string, number>
   steps: Record<string, number>
@@ -241,6 +248,7 @@ export const diaryWeeklySummarySchema = z.object({
   to: z.string().date(),
   entryCount: z.number().int().nonnegative(),
   moods: z.record(z.string(), z.number().int().nonnegative()),
+  feelings: z.record(z.string(), z.number().int().nonnegative()).default({}),
   topics: z.record(z.string(), z.number().int().nonnegative()),
   practices: z.record(z.string(), z.number().int().nonnegative()),
   steps: z.record(z.string(), z.number().int().nonnegative()),

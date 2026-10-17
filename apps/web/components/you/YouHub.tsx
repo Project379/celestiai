@@ -3,15 +3,20 @@
 import Link from 'next/link'
 import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useClerk } from '@clerk/nextjs'
+import { AccountSubscriptionPage } from '@/components/auth/AccountSubscriptionPage'
+import { DataAccountPage } from '@/components/auth/DataAccountPage'
+import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog'
 import { BIRTH_DATA_ENTRY_LABEL } from '@stellaeum/core/i18n/strings/birth-data'
 import { EditBirthDataDialog } from '@/components/birth-data/EditBirthDataDialog'
 import { SavedMessage } from '@/components/birth-data/SavedMessage'
 import { useInvalidateChartDerived } from '@/components/birth-data/ChartVersion'
 import type { ChartRow } from '@/lib/types/chart'
+import { AccountSectionDialog } from './AccountSectionDialog'
 
 const BASE_SECTIONS = [
   { label: 'Кристали',    hint: 'месечни прозорци + дневна серия', href: '/you/crystals'        },
-  { label: 'Дневник',     hint: 'лунен дневник — по три реда',     href: '/rhythm/journal'      },
+  { label: 'Дневник',     hint: 'проверки, размисли и свободни записи', href: '/rhythm/journal'   },
   { label: 'Ръководство', hint: 'планети, знаци, къщи, аспекти',    href: '/you/guide'           },
 ] as const
 
@@ -49,6 +54,9 @@ export function YouHub({
 }) {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
+  const [accountSection, setAccountSection] = useState<'subscription' | 'data' | null>(null)
+  const { openUserProfile } = useClerk()
+  const [showLogout, setShowLogout] = useState(false)
   const invalidateChartDerived = useInvalidateChartDerived()
   const dismissSaved = useCallback(() => setShowSaved(false), [])
 
@@ -121,9 +129,22 @@ export function YouHub({
         ))}
       </motion.ul>
 
-      <p className="mt-12 font-display text-[12.5px] font-light leading-[1.7] text-slate-600">
-        Премиум, настройки и акаунт — в менюто горе вдясно.
-      </p>
+      <section className="mt-10">
+        <h2 className="mb-2 font-display text-sm text-slate-500">Профил и акаунт</h2>
+        <div className="divide-y divide-slate-800/60">
+          <button type="button" aria-haspopup="dialog" onClick={() => openUserProfile({ appearance: { variables: { colorPrimary: '#fbbf24', colorBackground: '#08060f', colorText: '#e2e8f0', colorTextSecondary: '#94a3b8' }, elements: { modalBackdrop: 'bg-black/70 backdrop-blur-sm', modalContent: 'rounded-2xl border border-white/10 shadow-2xl' } } })} className="group flex min-h-12 w-full items-baseline justify-between gap-4 py-6 text-left"><span className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-200 group-hover:text-amber-200">Настройки</span><span className="font-display text-[13px] text-slate-500">профил и сигурност</span></button>
+          {([
+            { id: 'subscription', label: 'Абонамент', hint: 'премиум и плащания' },
+            { id: 'data', label: 'Данни и акаунт', hint: 'експорт, поверителност и изтриване' },
+          ] as const).map((section) => <button key={section.id} type="button" aria-haspopup="dialog" onClick={() => setAccountSection(section.id)} className="group flex min-h-12 w-full items-baseline justify-between gap-4 py-6 text-left"><span className="font-cinzel text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-200 group-hover:text-amber-200">{section.label}</span><span className="font-display text-[13px] text-slate-500">{section.hint}</span></button>)}
+          <button type="button" onClick={() => setShowLogout(true)} className="w-full py-6 text-left font-display text-sm text-slate-400 hover:text-rose-300">Изход от профила</button>
+        </div>
+        {accountSection && <AccountSectionDialog title={accountSection === 'subscription' ? 'Абонамент' : 'Данни и акаунт'} onClose={() => setAccountSection(null)}>
+          {accountSection === 'subscription' && <AccountSubscriptionPage />}
+          {accountSection === 'data' && <DataAccountPage />}
+        </AccountSectionDialog>}
+      </section>
+      <LogoutConfirmDialog isOpen={showLogout} onClose={() => setShowLogout(false)} />
 
       {chart && (
         <EditBirthDataDialog

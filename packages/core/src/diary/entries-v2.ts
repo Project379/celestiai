@@ -8,7 +8,7 @@ import type {
   DiaryWeeklySummary,
   UpdateDiaryEntryV2Input,
 } from './v2'
-import { createDiaryEntryV2Schema, legacyLunarContentSchema } from './v2'
+import { createDiaryEntryV2Schema, diaryFeelingSchema, legacyLunarContentSchema } from './v2'
 
 type DiaryRow = {
   id: string
@@ -344,7 +344,12 @@ export async function listDiaryEntriesV2(
   if (options.topic) query = query.contains('topics', [options.topic])
   if (options.from) query = query.gte('entry_date', options.from)
   if (options.to) query = query.lte('entry_date', options.to)
-  if (options.query) query = query.ilike('search_text', `%${options.query.replace(/[\\%_]/g, '\\$&')}%`)
+  if (options.query) {
+    const pattern = `%${options.query.replace(/[\\%_]/g, '\\$&')}%`
+    // Quote filter values so punctuation in a search cannot change the OR filter.
+    const filterValue = JSON.stringify(pattern)
+    query = query.or(`title.ilike.${filterValue},search_text.ilike.${filterValue}`)
+  }
   if (cursor) {
     query = query.or(
       `occurred_at.lt.${cursor.occurredAt},and(occurred_at.eq.${cursor.occurredAt},id.lt.${cursor.id})`,
@@ -371,12 +376,12 @@ export async function summarizeDiaryWeek(
   to: string,
 ): Promise<DiaryWeeklySummary> {
   const supabase = createCoreSupabaseClient()
-  const rows: { mood: number | null; topics: string[] | null; prompt_id: string | null; next_step: unknown }[] = []
+  const rows: { mood: number | null; topics: string[] | null; prompt_id: string | null; next_step: unknown; content: unknown }[] = []
   const pageSize = 1_000
   for (let offset = 0; ; offset += pageSize) {
     const { data, error } = await supabase
       .from('diary_entries')
-      .select('mood,topics,prompt_id,next_step')
+      .select('mood,topics,prompt_id,next_step,content')
       .eq('user_id', userId)
       .eq('status', 'completed')
       .gte('entry_date', from)
@@ -391,11 +396,14 @@ export async function summarizeDiaryWeek(
     to,
     entryCount: rows.length,
     moods: {},
+    feelings: {},
     topics: {},
     practices: {},
     steps: {},
   }
   for (const row of rows) {
+    const feeling = diaryFeelingSchema.safeParse((row.content as { feeling?: unknown } | null)?.feeling)
+    if (feeling.success) summary.feelings![feeling.data] = (summary.feelings![feeling.data] ?? 0) + 1
     if (row.mood) summary.moods[String(row.mood)] = (summary.moods[String(row.mood)] ?? 0) + 1
     for (const topic of (row.topics as string[] | null) ?? []) {
       summary.topics[topic] = (summary.topics[topic] ?? 0) + 1

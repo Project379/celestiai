@@ -88,12 +88,14 @@ export function AccountSubscriptionPage() {
   }
 
   return (
-    <div className="-mx-4 -my-6 sm:-mx-6">
+    <div>
       <SettingsContent
         tier={overview.tier}
         subscriptionProvider={overview.subscriptionProvider}
         subscriptionData={overview.subscriptionData}
         subscriptionExpiresAt={overview.subscriptionExpiresAt}
+        subscriptionStatus={overview.subscriptionStatus}
+        onSubscriptionChanged={() => setRetryToken((token) => token + 1)}
       />
     </div>
   )

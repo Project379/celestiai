@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CreateDiaryEntryV2Input, DiaryEntryV2, UpdateDiaryEntryV2Input } from '@stellaeum/core/diary/v2'
-import { DIARY_TOPICS, getDiaryEntryDisplayTitle, getDiaryOracleSuggestion, type DiaryQuestionHistoryItem } from '@stellaeum/core/diary/flow'
+import { DIARY_TOPICS, getDiaryFeelingLabel, getDiaryEntryDisplayTitle, getDiaryOracleSuggestion, type DiaryQuestionHistoryItem } from '@stellaeum/core/diary/flow'
 import { DiaryComposer, type ComposerMode } from './DiaryComposer'
 
 interface Props {
@@ -17,7 +17,6 @@ interface Props {
   questionHistory: readonly DiaryQuestionHistoryItem[]
 }
 
-const MOODS = ['—', 'Много тежко', 'Трудно', 'Смесено', 'Добре', 'Много добре']
 
 function entrySections(entry: DiaryEntryV2): { label?: string; text: string }[] {
   if (entry.kind === 'legacy_lunar') return ((entry.content as { intentions?: string[] }).intentions ?? []).map((text) => ({ text }))
@@ -38,14 +37,13 @@ export function DiaryHistory({ openedEntry, onCloseOpenedEntry, entries, onCreat
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
-  const completed = entries.filter((entry) => entry.status === 'completed')
   const selectedEntry = entries.find((entry) => entry.id === (openedEntry?.id ?? selectedId)) ?? openedEntry ?? null
   return (
     <section className="space-y-7">
-      <DiaryCalendar entries={completed} onDateSelect={onDateSelect} />
-      {completed.length === 0 ? <p className="text-sm text-slate-500">Все още няма завършени записи.</p> : (
+      <DiaryCalendar entries={entries} onDateSelect={onDateSelect} />
+      {entries.length === 0 ? <p className="text-sm text-slate-500">Все още няма записи.</p> : (
         <ul className="divide-y divide-slate-300/10">
-          {completed.map((entry) => (
+          {entries.map((entry) => (
             <li key={entry.id} className="py-5">
               <button type="button" onClick={() => setSelectedId(entry.id)} className="flex w-full items-start justify-between gap-4 text-left">
                 <p className="font-display text-base text-slate-200">{getDiaryEntryDisplayTitle(entry)}</p>
@@ -87,21 +85,28 @@ function DiaryEntryDialog({ entry, confirmDelete, isEditing, onClose, onEdit, on
   onCreate: Props['onCreate']
   questionHistory: Props['questionHistory']
 }) {
+  const composerCloseRef = useRef<(() => void) | null>(null)
+  const requestClose = useCallback(() => {
+    if (isEditing && composerCloseRef.current) composerCloseRef.current()
+    else onClose()
+  }, [isEditing, onClose])
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') requestClose() }
     document.body.style.overflow = 'hidden'
     window.addEventListener('keydown', closeOnEscape)
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', closeOnEscape)
     }
-  }, [onClose])
+  }, [requestClose])
 
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/80 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={getDiaryEntryDisplayTitle(entry)}>
-    <button type="button" aria-label="Затвори записа" onClick={onClose} className="absolute inset-0 cursor-default" />
+    <button type="button" aria-label="Затвори записа" onClick={requestClose} className="absolute inset-0 cursor-default" />
     <article className={`relative z-10 max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[2rem] border border-white/10 bg-[#0b1020] shadow-2xl sm:rounded-[2rem] ${isEditing ? 'p-3 sm:p-5' : 'px-6 pb-8 pt-6 sm:px-10 sm:py-9'}`}>
       {isEditing ? <DiaryComposer
+        key={entry.id}
+        closeRequestRef={composerCloseRef}
         mode={(entry.kind === 'check_in' ? 'check_in' : entry.kind === 'note' ? 'note' : 'lunar_practice') as ComposerMode}
         entry={entry}
         questionHistory={questionHistory}
@@ -111,7 +116,7 @@ function DiaryEntryDialog({ entry, confirmDelete, isEditing, onClose, onEdit, on
         onSaved={() => onCancelEdit()}
       /> : <>
       <header className="mb-8 flex items-start justify-between gap-5">
-        <div><p className="text-xs text-slate-500">{entry.entryDate}{entry.mood ? ` · ${MOODS[entry.mood]}` : ''}</p><h2 className="mt-3 font-display text-3xl leading-tight text-slate-100">{getDiaryEntryDisplayTitle(entry)}</h2></div>
+        <div><p className="text-xs text-slate-500">{entry.entryDate}{entry.mood ? ` · ${getDiaryFeelingLabel(entry)}` : ''}</p><h2 className="mt-3 font-display text-3xl leading-tight text-slate-100">{getDiaryEntryDisplayTitle(entry)}</h2></div>
         <button type="button" onClick={onClose} className="rounded-full border border-slate-300/10 px-3 py-1.5 text-sm text-slate-400">Затвори</button>
       </header>
       <div className="space-y-6">

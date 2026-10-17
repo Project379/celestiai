@@ -31,6 +31,7 @@ const CHAIN_METHODS = [
   'maybeSingle',
   'limit',
   'order',
+  'or',
   'in',
   'gt',
   'gte',

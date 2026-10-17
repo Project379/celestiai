@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { DIARY_REFLECTION_QUESTIONS, getCheckInDirections, getCheckInAnotherPrompt, getCheckInTopicPrompt, getDiaryOracleSuggestion, getDirectionQuestion, getReflectionQuestion, selectReflectionQuestion } from '../../src/diary/flow'
+import { DIARY_REFLECTION_QUESTIONS, getDiaryFeelingLabel, getCompletedCheckInIterations, getCheckInDirections, getCheckInAnotherPrompt, getCheckInTopicPrompt, getDiaryOracleSuggestion, getDirectionQuestion, getReflectionQuestion, selectReflectionQuestion } from '../../src/diary/flow'
 import { getDiaryDate, getNextReminderDueAt } from '../../src/diary/time'
 import { createDiaryEntryV2Schema } from '../../src/diary/v2'
 import { getManifestPromptSelection } from '../../src/diary/prompts'
+import { buildFullDiaryMarkdown } from '../../src/diary/export-v2'
 
 const base = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -22,6 +23,48 @@ const base = {
 }
 
 describe('diary v2 flow', () => {
+  it('does not reinterpret old day ratings as specific feelings', () => {
+    expect(getDiaryFeelingLabel({ mood: 2, content: {} })).toBe('Труден ден')
+    expect(getDiaryFeelingLabel({ mood: 2, content: { feeling: 'anxious' } })).toBe('Тревожно')
+    expect(getDiaryFeelingLabel({ mood: null, content: {} })).toBeNull()
+  })
+
+  it.each([
+    ['sad', 1, 'Какво те натъжи?'], ['anxious', 2, 'Какво те тревожи?'],
+    ['calm', 4, 'Какво ти донесе спокойствие?'], ['joyful', 5, 'Какво те зарадва?'],
+  ] as const)('adapts follow-up questions to the feeling %s', (feeling, mood, question) => {
+    expect(getCheckInTopicPrompt(mood, feeling)).toBe(question)
+  })
+
+  it('preserves feelings in saved notes and exports their labels', () => {
+    const input = createDiaryEntryV2Schema.parse({ ...base, kind: 'note', mood: 2, content: { version: 1, body: 'Мисля за утрешния ден.', feeling: 'anxious' } })
+    expect(input.content.feeling).toBe('anxious')
+    const markdown = buildFullDiaryMarkdown([{ ...input, revision: 1, completedAt: base.occurredAt, createdAt: base.occurredAt, updatedAt: base.occurredAt }])
+    expect(markdown).toContain('Тревожно')
+    expect(markdown).not.toContain('2/5')
+  })
+  it('keeps the current answer when saving halfway through a check-in', () => {
+    const current = {
+      iterations: [], checkStep: 3, focusTopic: 'work' as const, direction: 'support' as const,
+      reflectionQuestionId: 'work.support.1', reflectionQuestion: 'От каква подкрепа имаш нужда?',
+      reflectionAnswer: '  От ясен приоритет за утре.  ', rejectedQuestionIds: [],
+    }
+    expect(getCompletedCheckInIterations(current)).toEqual([{
+      topic: 'work', direction: 'support', questionId: 'work.support.1',
+      question: current.reflectionQuestion, answer: 'От ясен приоритет за утре.', skippedQuestionIds: [],
+    }])
+    expect(current.iterations).toEqual([])
+  })
+
+  it('does not duplicate a reflection already added to the check-in', () => {
+    const iteration = { topic: 'work' as const, direction: 'support' as const, questionId: 'work.support.1', question: 'Каква подкрепа ти е нужна?', answer: 'Почивка.', skippedQuestionIds: [] }
+    expect(getCompletedCheckInIterations({ iterations: [iteration], checkStep: 4, focusTopic: 'work', direction: 'support', reflectionQuestionId: iteration.questionId, reflectionQuestion: iteration.question, reflectionAnswer: iteration.answer, rejectedQuestionIds: [] })).toEqual([iteration])
+  })
+
+  it('keeps earlier reflections when an additional question was left unanswered', () => {
+    const iteration = { topic: 'work' as const, direction: 'support' as const, questionId: 'work.support.1', question: 'Каква подкрепа ти е нужна?', answer: 'Почивка.', skippedQuestionIds: [] }
+    expect(getCompletedCheckInIterations({ iterations: [iteration], checkStep: 3, focusTopic: 'health', direction: 'understand', reflectionQuestionId: 'health.understand.1', reflectionQuestion: 'Как се чувстваш?', reflectionAnswer: ' ', rejectedQuestionIds: [] })).toEqual([iteration])
+  })
   it('provides a broad curated question bank', () => {
     expect(DIARY_REFLECTION_QUESTIONS).toHaveLength(135)
   })
