@@ -111,7 +111,16 @@ export async function maybePromptPushPermission(apiFetch: ApiFetch): Promise<voi
     logError('ERR-MOB-PUSH-001', err)
     return
   }
-  if (alreadyPrompted === 'true') return
+  if (alreadyPrompted === 'true') {
+    try {
+      if ((await Notifications.getPermissionsAsync()).status === 'granted') {
+        await registerPushToken(apiFetch)
+      }
+    } catch (err) {
+      logError('ERR-MOB-PUSH-002', err)
+    }
+    return
+  }
 
   let permStatus: string
   try {
@@ -125,6 +134,7 @@ export async function maybePromptPushPermission(apiFetch: ApiFetch): Promise<voi
     // OS already has a decision; record our flag so we don't re-check
     // every fresh generation.
     await safeSetFlag()
+    if (permStatus === 'granted') await registerPushToken(apiFetch)
     return
   }
 

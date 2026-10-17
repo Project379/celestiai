@@ -7,7 +7,9 @@ import { tokenCache } from '@clerk/expo/token-cache'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
+import { useRouter } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
+import * as Notifications from 'expo-notifications'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
@@ -48,6 +50,7 @@ const queryClient = new QueryClient({
 })
 
 export default function RootLayout() {
+  const router = useRouter()
   const [fontsLoaded, fontError] = useFonts(FONT_ASSETS)
 
   useEffect(() => {
@@ -55,6 +58,16 @@ export default function RootLayout() {
       SplashScreen.hideAsync()
     }
   }, [fontsLoaded, fontError])
+
+  useEffect(() => {
+    const open = (response: Notifications.NotificationResponse | null) => {
+      const url = response?.notification.request.content.data?.url
+      if (typeof url === 'string' && url.startsWith('/')) router.push(url as never)
+    }
+    void Notifications.getLastNotificationResponseAsync().then(open)
+    const subscription = Notifications.addNotificationResponseReceivedListener(open)
+    return () => subscription.remove()
+  }, [router])
 
   if (!fontsLoaded && !fontError) {
     return null

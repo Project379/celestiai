@@ -15,14 +15,14 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Карта', href: '/chart'     },
   { label: 'Кръг',  href: '/circle'    },
   { label: 'Ритъм', href: '/rhythm'    },
-  { label: 'Ти',    href: '/you'       },
+  { label: 'Дневник', href: '/rhythm/journal' },
 ]
 
 // Оракул lives in the FAB (components/oracle/OracleFab.tsx) — not the nav.
 export function ProtectedNav() {
   const pathname = usePathname()
 
-  const activeHref = NAV_ITEMS.find((item) =>
+  const activeHref = [...NAV_ITEMS].sort((a, b) => b.href.length - a.href.length).find((item) =>
     pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
   )?.href
 

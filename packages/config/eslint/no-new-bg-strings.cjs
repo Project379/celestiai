@@ -53,6 +53,7 @@ const CONTENT_HOME_GLOBS = [
   '**/welcome/meteor-showers.ts',
   '**/welcome/sign-quips.ts',
   '**/diary/prompts.ts',
+  '**/diary/flow.ts',
   '**/CelestialCanvas.tsx',
   '**/astrology/src/constants.ts',
   '**/i18n/bg-grammar.ts',

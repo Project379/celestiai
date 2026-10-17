@@ -1,5 +1,7 @@
 import { Tabs } from 'expo-router'
-import { Text, View } from 'react-native'
+import { Image, Pressable, Text, View } from 'react-native'
+import { useUser } from '@clerk/expo'
+import { useGuardedNavigation } from '@/hooks/useGuardedNavigation'
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -10,6 +12,7 @@ import { color, font } from '@/components/design-system/tokens'
 import {
   CircleTabIcon,
   PersonTabIcon,
+  DiaryTabIcon,
   PulseTabIcon,
   SunTabIcon,
   WheelTabIcon,
@@ -94,6 +97,8 @@ function TabLabel({ label, focused }: { label: string; focused: boolean }) {
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets()
+  const { user } = useUser()
+  const { push } = useGuardedNavigation()
 
   return (
     <View className="flex-1 bg-bg">
@@ -170,18 +175,23 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="you"
+          name="diary"
           options={{
-            title: 'Ти',
+            title: 'Дневник',
             tabBarIcon: ({ color: c, focused }) => (
               <NavIcon focused={focused}>
-                <PersonTabIcon color={c} />
+                <DiaryTabIcon color={c} />
               </NavIcon>
             ),
-            tabBarLabel: ({ focused }) => <TabLabel label="Ти" focused={focused} />,
+            tabBarLabel: ({ focused }) => <TabLabel label="Дневник" focused={focused} />,
           }}
         />
+        <Tabs.Screen name="you" options={{ href: null }} />
       </Tabs>
+
+      <Pressable accessibilityRole="button" accessibilityLabel="Твоят профил" onPress={() => { hapticSelect(); push('/you') }} style={{ position: 'absolute', top: insets.top + 8, right: 20, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
+        {user?.imageUrl ? <Image source={{ uri: user.imageUrl }} style={{ width: 32, height: 32, borderRadius: 16 }} /> : <PersonTabIcon color={color.starlight} size={24} />}
+      </Pressable>
 
       <OracleEntry />
     </View>

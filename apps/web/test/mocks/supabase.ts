@@ -31,6 +31,7 @@ const CHAIN_METHODS = [
   'maybeSingle',
   'limit',
   'order',
+  'or',
   'in',
   'gt',
   'gte',
@@ -38,6 +39,7 @@ const CHAIN_METHODS = [
   'not',
   'lte',
   'is',
+  'range',
 ] as const
 
 function makeBuilder(result: QueryResult) {

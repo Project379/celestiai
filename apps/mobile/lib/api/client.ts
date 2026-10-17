@@ -37,7 +37,7 @@ export function useApiClient() {
   const getTokenRef = useRef(getToken)
   getTokenRef.current = getToken
 
-  const apiFetch = useCallback(async (path: string, init?: RequestInit): Promise<unknown> => {
+  const apiFetchRaw = useCallback(async (path: string, init?: RequestInit): Promise<Response> => {
     if (!API_BASE) {
       throw new Error('Missing EXPO_PUBLIC_API_BASE env var')
     }
@@ -62,8 +62,15 @@ export function useApiClient() {
       )
     }
 
-    return res.json()
+    return res
   }, [])
 
-  return { apiFetch }
+  const apiFetch = useCallback(async (path: string, init?: RequestInit): Promise<unknown> => {
+    const res = await apiFetchRaw(path, init)
+
+    if (res.status === 204) return null
+    return res.json()
+  }, [apiFetchRaw])
+
+  return { apiFetch, apiFetchRaw }
 }

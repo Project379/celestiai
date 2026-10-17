@@ -4,6 +4,7 @@ import { createServiceSupabaseClient } from '@/lib/supabase/service'
 import { logAuditEvent } from '@/lib/audit'
 import { ApiError } from '@/lib/auth/guards'
 import { assertRateLimit } from '@/lib/rate-limit'
+import { listAllDiaryEntriesV2 } from '@stellaeum/core/diary/entries-v2'
 
 /**
  * GET /api/gdpr/export
@@ -42,7 +43,7 @@ export async function GET() {
     chartsRes,
     readingsRes,
     horoscopesRes,
-    diaryRes,
+    diaryEntries,
     spacesRes,
     membersRes,
     invitesRes,
@@ -53,6 +54,8 @@ export async function GET() {
     recommendationDeliveriesRes,
     recommendationStatesRes,
     recommendationEventsRes,
+    diaryReminderRes,
+    diaryReminderDeliveriesRes,
     birthDataEditsRes,
     pushSubscriptionsRes,
     pushTokensRes,
@@ -63,7 +66,7 @@ export async function GET() {
       supabase.from('charts').select('*').eq('user_id', userId),
       supabase.from('ai_readings').select('*').eq('user_id', userId),
       supabase.from('daily_horoscopes').select('*').eq('user_id', userId),
-      supabase.from('diary_entries').select('*').eq('user_id', userId),
+      listAllDiaryEntriesV2(userId, supabase),
       spaceIds.length > 0
         ? supabase.from('connection_spaces').select('*').in('id', spaceIds)
         : Promise.resolve({ data: [] }),
@@ -80,6 +83,8 @@ export async function GET() {
       supabase.from('recommendation_deliveries').select('*').eq('user_id', userId),
       supabase.from('user_recommendation_work_states').select('*').eq('user_id', userId),
       supabase.from('recommendation_events').select('*').eq('user_id', userId),
+      supabase.from('diary_reminder_preferences').select('*').eq('user_id', userId).maybeSingle(),
+      supabase.from('diary_reminder_deliveries').select('*').eq('user_id', userId),
       // Birth-data edit ledger (quota-exemption bookkeeping) — user-linked, so exported.
       supabase.from('birth_data_edits').select('*').eq('user_id', userId),
       // Notification registrations + their preference columns (morning_enabled,
@@ -136,7 +141,7 @@ export async function GET() {
     charts: chartsRes.data ?? [],
     aiReadings: readingsRes.data ?? [],
     dailyHoroscopes: horoscopesRes.data ?? [],
-    diaryEntries: diaryRes.data ?? [],
+    diaryEntries,
     connectionSpaces: spacesRes.data ?? [],
     connectionMembers: membersRes.data ?? [],
     connectionInvites: invitesRes.data ?? [],
@@ -148,6 +153,8 @@ export async function GET() {
     recommendationDeliveries: recommendationDeliveriesRes.data ?? [],
     recommendationWorkStates: recommendationStatesRes.data ?? [],
     recommendationEvents: recommendationEventsRes.data ?? [],
+    diaryReminderPreference: diaryReminderRes.data ?? null,
+    diaryReminderDeliveries: diaryReminderDeliveriesRes.data ?? [],
     birthDataEdits: birthDataEditsRes.data ?? [],
     pushSubscriptions: pushSubscriptionsRes.data ?? [],
     pushTokens: pushTokensRes.data ?? [],

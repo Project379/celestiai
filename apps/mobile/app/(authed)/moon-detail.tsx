@@ -140,7 +140,16 @@ export default function MoonDetailScreen() {
         >
           {phase.journalPrompt}
         </Text>
-        <CtaPanel label="Лунен Дневник" onPress={() => push('/rhythm/journal')} />
+        <CtaPanel
+          label="Лунен Дневник"
+          onPress={() => push({
+            pathname: '/rhythm/journal' as never,
+            params: {
+              mode: 'lunar_practice', source: 'moon', sourceLabel: 'Луната',
+              sourcePath: '/moon-detail',
+            },
+          })}
+        />
       </View>
     </ScreenShell>
   )

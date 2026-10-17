@@ -1,6 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 import { CrystalGem, type GemVariant } from './CrystalGem'
 import { LockBadge } from '@/components/tier/PremiumLock'
 import { CRYSTALS_COLLECT_LOCKED } from '@/lib/tier/locked-copy'
@@ -296,6 +297,13 @@ export function CrystalDetailPanel({
                     {CRYSTALS_COLLECT_LOCKED}
                   </div>
                 )}
+                <Link
+                  href={`/rhythm/journal?mode=lunar_practice&source=crystal&sourceId=${encodeURIComponent(crystal.slug)}&sourceLabel=${encodeURIComponent(crystal.nameBg ?? crystal.nameEn)}&sourcePath=${encodeURIComponent('/you/crystals')}`}
+                  className="mt-5 font-cinzel text-[10px] uppercase tracking-[0.24em] text-amber-200/90"
+                  onClick={onClose}
+                >
+                  Запиши практика с този кристал
+                </Link>
               </div>
             </div>
           </motion.div>

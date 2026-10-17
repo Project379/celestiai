@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useRouter } from 'expo-router'
 import { BackHandler, Pressable, ScrollView, Text, View } from 'react-native'
 
 import type { CatalogRow } from '@stellaeum/core/crystals/queries'
@@ -65,6 +66,7 @@ export function CrystalDetailPanel({
   onCollect,
   onClose,
 }: CrystalDetailPanelProps) {
+  const router = useRouter()
   useEffect(() => {
     if (!crystal) return
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -196,6 +198,16 @@ export function CrystalDetailPanel({
                 </Text>
               </View>
             )}
+            <Pressable
+              onPress={() => {
+                onClose()
+                router.push(`/rhythm/journal?mode=lunar_practice&source=crystal&sourceId=${crystal.slug}&sourceLabel=${encodeURIComponent(crystal.name_bg ?? crystal.name_en)}&sourcePath=${encodeURIComponent('/you/crystals')}` as never)
+              }}
+              className="mt-5 px-4 py-3"
+              style={({ pressed }) => pressFeedback(pressed)}
+            >
+              <Text className="text-center font-cinzel text-[10px] uppercase tracking-[0.24em] text-bronze-text">Запиши практика с този кристал</Text>
+            </Pressable>
           </View>
         </ScrollView>
       </View>

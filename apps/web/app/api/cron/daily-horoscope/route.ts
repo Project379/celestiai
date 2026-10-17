@@ -121,7 +121,7 @@ async function sendWebPush(
     // Fetch all active push subscriptions
     const { data: subscriptions, error } = await supabase
       .from('push_subscriptions')
-      .select('id, endpoint, p256dh, auth')
+      .select('id, endpoint, p256dh, auth, morning_enabled')
       .limit(WEB_PUSH_SELECT_CEILING)
 
     if (error) {
@@ -129,14 +129,15 @@ async function sendWebPush(
       return { sent: 0, failed: 0, expired: 0, error: 'subscription fetch failed' }
     }
 
-    if (!subscriptions || subscriptions.length === 0) {
+    const eligibleSubscriptions = (subscriptions ?? []).filter((subscription) => subscription.morning_enabled !== false)
+    if (eligibleSubscriptions.length === 0) {
       return probe ? { sent: 0, failed: 0, expired: 0, eligible: 0 } : { sent: 0, failed: 0, expired: 0 }
     }
 
     // Probe: VAPID config validated, subscriptions readable — stop before
     // fanning out any actual sends.
     if (probe) {
-      return { sent: 0, failed: 0, expired: 0, eligible: subscriptions.length }
+      return { sent: 0, failed: 0, expired: 0, eligible: eligibleSubscriptions.length }
     }
 
     const payload = JSON.stringify({
@@ -168,8 +169,8 @@ async function sendWebPush(
 
     // Send notification to each subscriber, WEB_PUSH_CONCURRENCY at a time
     // rather than one at a time — see the constant's doc comment above.
-    for (let i = 0; i < subscriptions.length; i += WEB_PUSH_CONCURRENCY) {
-      const batch = subscriptions.slice(i, i + WEB_PUSH_CONCURRENCY)
+    for (let i = 0; i < eligibleSubscriptions.length; i += WEB_PUSH_CONCURRENCY) {
+      const batch = eligibleSubscriptions.slice(i, i + WEB_PUSH_CONCURRENCY)
       const results = await Promise.allSettled(
         batch.map((sub) =>
           webpush.sendNotification(
@@ -306,7 +307,7 @@ async function sendMobilePush(
 ): Promise<{ sent: number; failed: number; revoked: number; eligible?: number; error?: string }> {
   const { data: tokenRows, error } = await supabase
     .from('push_tokens')
-    .select('token')
+    .select('token,morning_enabled')
     .is('revoked_at', null)
     .limit(PUSH_TOKENS_SELECT_CEILING)
 
@@ -315,13 +316,14 @@ async function sendMobilePush(
     return { sent: 0, failed: 0, revoked: 0, error: 'push_tokens fetch failed' }
   }
 
-  if (!tokenRows || tokenRows.length === 0) {
+  const eligibleTokenRows = (tokenRows ?? []).filter((row) => row.morning_enabled !== false)
+  if (eligibleTokenRows.length === 0) {
     return probe ? { sent: 0, failed: 0, revoked: 0, eligible: 0 } : { sent: 0, failed: 0, revoked: 0 }
   }
 
   const expo = new Expo()
 
-  const validTokens = tokenRows
+  const validTokens = eligibleTokenRows
     .map((row: { token: string }) => row.token)
     .filter((token: string) => {
       if (Expo.isExpoPushToken(token)) return true

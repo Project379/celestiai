@@ -1,5 +1,5 @@
-import { Redirect, useNavigation, useRouter } from 'expo-router'
-import { useEffect } from 'react'
+import { Redirect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
+import { useEffect, useRef } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated from 'react-native-reanimated'
@@ -36,8 +36,12 @@ import { maybePromptPushPermission } from '@/lib/notifications/maybePromptPushPe
  * directly above the caption on mobile).
  */
 export default function OracleScreen() {
+  const params = useLocalSearchParams<{ topic?: string }>()
   const firstChart = useFirstChart()
   const chartId = firstChart.data?.id ?? null
+  const initialTopic = ['general', 'love', 'career', 'health'].includes(params.topic ?? '')
+    ? params.topic as 'general' | 'love' | 'career' | 'health'
+    : null
 
   // While useFirstChart resolves, render an empty surface so the
   // header animates in cleanly without a flash of fallback content.
@@ -56,10 +60,10 @@ export default function OracleScreen() {
     return <Redirect href="/" />
   }
 
-  return <OracleScreenInner chartId={chartId} />
+  return <OracleScreenInner chartId={chartId} initialTopic={initialTopic} />
 }
 
-function OracleScreenInner({ chartId }: { chartId: string }) {
+function OracleScreenInner({ chartId, initialTopic }: { chartId: string; initialTopic: 'general' | 'love' | 'career' | 'health' | null }) {
   const router = useRouter()
   const navigation = useNavigation()
   const { apiFetch } = useApiClient()
@@ -98,6 +102,14 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
     },
     isPremium,
   })
+
+  const appliedInitialTopic = useRef(false)
+  useEffect(() => {
+    if (!appliedInitialTopic.current && initialTopic && !activeTopic) {
+      appliedInitialTopic.current = true
+      selectTopic(initialTopic)
+    }
+  }, [activeTopic, initialTopic, selectTopic])
 
   // Custom header back: when a topic reading is open, the screen renders
   // grid+reading inline gated by activeTopic local state — the system back
@@ -238,12 +250,17 @@ function OracleScreenInner({ chartId }: { chartId: string }) {
               </Text>
             )}
 
-            {!isGenerating && !generationError && currentReading && (
-              <ReadingBody
-                content={currentReading.content}
-                generatedAt={currentReading.generatedAt}
-              />
-            )}
+            {!isGenerating && !generationError && currentReading && <>
+              <ReadingBody content={currentReading.content} generatedAt={currentReading.generatedAt} />
+              <Pressable
+                onPress={() => router.push(`/rhythm/journal?mode=note&source=oracle&sourceId=${activeTopic}&sourceLabel=${encodeURIComponent('Оракул')}&sourcePath=${encodeURIComponent(`/oracle?topic=${activeTopic}`)}` as never)}
+                accessibilityRole="button"
+                className="mt-6 rounded-xl border border-bronze/25 px-4 py-3"
+                style={({ pressed }) => pressFeedback(pressed)}
+              >
+                <Text className="text-center font-cinzel text-[10px] uppercase tracking-[0.25em] text-bronze/90">Запиши какво отекна</Text>
+              </Pressable>
+            </>}
           </>
         )}
       </ScrollView>

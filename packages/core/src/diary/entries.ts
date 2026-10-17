@@ -51,6 +51,7 @@ export interface UpdateDiaryEntryInput {
 export interface DiaryEntryRow {
   id: string
   user_id: string
+  kind: 'legacy_lunar'
   /** ISO date YYYY-MM-DD. */
   entry_date: string
   phase_id: string
@@ -59,6 +60,7 @@ export interface DiaryEntryRow {
   intentions: string[]
   created_at: string
   updated_at: string
+  revision: number
 }
 
 // ─── Result unions ───────────────────────────────────────────────────
@@ -111,6 +113,7 @@ export async function listDiaryEntries(
     .from('diary_entries')
     .select('*')
     .eq('user_id', userId)
+    .eq('kind', 'legacy_lunar')
     .order('entry_date', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(DIARY_ENTRIES_HARD_CEILING)
@@ -155,6 +158,7 @@ export async function upsertDiaryEntry(
     .select('*')
     .eq('user_id', userId)
     .eq('entry_date', input.entryDate)
+    .eq('kind', 'legacy_lunar')
     .maybeSingle()
 
   if (existing) {
@@ -170,9 +174,11 @@ export async function upsertDiaryEntry(
         phase_id: input.phaseId,
         phase_name: input.phaseName,
         intentions: input.intentions,
+        revision: (existing as DiaryEntryRow).revision + 1,
       })
       .eq('id', (existing as DiaryEntryRow).id)
       .eq('user_id', userId)
+      .eq('kind', 'legacy_lunar')
       .select()
       .single()
 
@@ -194,6 +200,7 @@ export async function upsertDiaryEntry(
     .from('diary_entries')
     .insert({
       user_id: userId,
+      kind: 'legacy_lunar',
       entry_date: input.entryDate,
       phase_id: input.phaseId,
       phase_name: input.phaseName,
@@ -222,6 +229,7 @@ export async function upsertDiaryEntry(
         .select('*')
         .eq('user_id', userId)
         .eq('entry_date', input.entryDate)
+        .eq('kind', 'legacy_lunar')
         .maybeSingle()
 
       if (refetchError || !winnerRow) {
@@ -239,9 +247,11 @@ export async function upsertDiaryEntry(
           phase_id: input.phaseId,
           phase_name: input.phaseName,
           intentions: input.intentions,
+          revision: (winnerRow as DiaryEntryRow).revision + 1,
         })
         .eq('id', (winnerRow as DiaryEntryRow).id)
         .eq('user_id', userId)
+        .eq('kind', 'legacy_lunar')
         .select()
         .single()
 
@@ -283,6 +293,7 @@ export async function getDiaryEntry(
     .select('*')
     .eq('id', id)
     .eq('user_id', userId)
+    .eq('kind', 'legacy_lunar')
     .single()
 
   if (error || !data) {
@@ -316,12 +327,17 @@ export async function updateDiaryEntry(
     return getDiaryEntry(userId, id)
   }
 
+  const current = await getDiaryEntry(userId, id)
+  if (!current.ok) return current
+  updateData.revision = current.data.revision + 1
+
   // updated_at is maintained by the diary_entries_updated_at trigger.
   const { data, error } = await supabase
     .from('diary_entries')
     .update(updateData)
     .eq('id', id)
     .eq('user_id', userId)
+    .eq('kind', 'legacy_lunar')
     .select()
     .single()
 
@@ -356,6 +372,7 @@ export async function deleteDiaryEntry(
     .delete()
     .eq('id', id)
     .eq('user_id', userId)
+    .eq('kind', 'legacy_lunar')
 
   if (error) {
     console.error('[core/diary/entries] delete failed:', error)

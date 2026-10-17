@@ -60,7 +60,10 @@ export function PushNotificationBanner() {
       .then(async (reg) => {
         setRegistration(reg)
         const existing = await reg.pushManager.getSubscription()
-        setIsSubscribed(!!existing)
+        const preferences = existing
+          ? await fetch('/api/push/preferences').then((response) => response.ok ? response.json() : null)
+          : null
+        setIsSubscribed(Boolean(existing && preferences?.morning))
       })
       .catch((err) => {
         console.error('[PushNotificationBanner] Service worker registration failed:', err)
@@ -92,6 +95,10 @@ export function PushNotificationBanner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscription }),
       })
+      await fetch('/api/push/preferences', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: 'morning', enabled: true }),
+      })
 
       setIsSubscribed(true)
     } catch (err) {
@@ -108,20 +115,10 @@ export function PushNotificationBanner() {
     setIsLoading(true)
 
     try {
-      const subscription = await registration.pushManager.getSubscription()
-      if (!subscription) {
-        setIsSubscribed(false)
-        return
-      }
-
-      // Remove from browser
-      await subscription.unsubscribe()
-
-      // Remove from DB
-      await fetch('/api/push/unsubscribe', {
-        method: 'POST',
+      await fetch('/api/push/preferences', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endpoint: subscription.endpoint }),
+        body: JSON.stringify({ category: 'morning', enabled: false }),
       })
 
       setIsSubscribed(false)
